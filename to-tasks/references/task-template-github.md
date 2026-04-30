@@ -1,6 +1,6 @@
 # Task template — GitHub
 
-Use this body when publishing a child work item to GitHub via `gh issue create`. The title is set on the command line; this is the body. The "task" framing covers both Story-shaped children of a Feature parent and Task-shaped children of a Story parent — adjust the level of detail accordingly.
+Use this body when publishing a Task-shaped child of a Story parent to GitHub via `gh issue create`. The title is set on the command line; this is the body.
 
 ```markdown
 ## Slice

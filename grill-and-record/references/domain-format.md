@@ -43,7 +43,7 @@ Use this structure when writing `DOMAIN.md`.
 
 - Group terms into multiple tables when natural clusters emerge (by subdomain, lifecycle, or actor). One table is fine if all terms belong to a single cohesive domain — don't force groupings.
 - Use **bold** for term names in `Relationships` and `Flagged ambiguities` sections.
-- The `Relationships` section is first-class — keep it current whenever cardinality or boundaries become clearer in conversation.
+- The `Relationships` section is first-class — keep it current whenever cardinality or boundaries become clearer.
 - The example dialogue uses **Dev** and **Domain expert** as speakers. Keep it to 3-5 exchanges that clarify boundaries between related concepts.
 - Definitions: one sentence, present tense, define what the term IS — not what it does.
 
