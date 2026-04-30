@@ -95,7 +95,7 @@ Present one recommended interface design:
 
 Be opinionated — the user wants a strong recommendation, not a menu.
 
-Offer to run `/grill-me` on the design if the user wants to stress-test it.
+Offer to run `grill-me` (or `grill-and-record` if the project has `DOMAIN.md` or `docs/adr/`) on the design if the user wants to stress-test it.
 
 ### 7. Create or update issue(s)
 
