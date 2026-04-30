@@ -450,6 +450,30 @@ For the user's work context (no repos initially, ADO tracker):
    - `to-tasks` optionally publishing paired sibling-repo issues automatically (currently just flags them)
    - Setup-time CLI validation (skill checks `gh`/`az` availability before dispatching, gives clear install hint if missing)
 
+#### Phase 6 outcomes (executed 2026-04-30)
+
+Phase 6 was mostly a no-op — the README had already been brought to its final shape during Phase 1, and `/init` turned out to be safe by default (no mitigation needed). One stale phrasing to fix and one finding to document.
+
+**README delta.** Single substantive fix: the `to-tasks` description still claimed it could break "Feature → Stories, or Story → Tasks." That was vestigial from earlier design exploration — the final design restricts `to-tasks` to **Story → Tasks only**, with `to-story --parent <feature-id>` as the way to split a Feature into Stories. Updated line 25 to match. Also added two one-liners to the Notes section: a `/init` interop note (see below) and a pointer to `plans/skills-restructure.md` for design history.
+
+**`/init` investigation.** Verified against the official Claude Code docs ([code.claude.com/docs/en/memory.md](https://code.claude.com/docs/en/memory.md), "Set up a project CLAUDE.md" tip block):
+
+> "If a CLAUDE.md already exists, `/init` suggests improvements rather than overwriting it."
+
+The bootstrap-on-ask mode (`to-feature` / `to-story` / `to-tasks`) is therefore safe to run before or after a user runs `/init`. There's also an opt-in `CLAUDE_CODE_NEW_INIT=1` environment flag that enables an interactive multi-phase flow with explicit "review-proposal-before-write" gating — extra safety if a user wants it, but not required for the skills to play nice. **No wrapper skill or workflow-ordering rule needed.** Original Phase 6 mitigation plan (write a `humana/skills/init/` wrapper) is dropped.
+
+**Deferred enhancements snapshot (still deferred).** None promoted to active work in this restructure. Listed here so future-me has a single place to find them:
+
+- **ADO PR / work-item enrichment in `backfill-adrs`** — current implementation has GitHub PR/issue enrichment via `gh pr view` / `gh issue view`. The ADO branch is scaffolded but not implemented (`az repos pr show`, `az boards work-item show`). Promote when the user adopts ADO actively in a repo where they want to backfill history.
+- **Paired sibling-repo issue auto-publishing in `to-tasks`** — currently `to-tasks` flags cross-repo blockers as "Blocked by: sibling repo (<name>) — contract change required" but does not create the paired issue in the sibling repo. Auto-publishing would close the loop, but introduces multi-repo write semantics (auth, idempotency, naming) that haven't earned the complexity yet.
+- **Setup-time CLI validation** — skills currently fail at the dispatch step with whatever error `gh` or `az` produces if missing. Could prefilght-check at skill activation and give a clean install hint. Low value for the user (who already has both installed); higher value for first-time-on-a-new-machine setup. Promote if it bites in practice.
+
+**Sandbox repo retained.** `gh repo delete haxorize/skills-sandbox --yes` whenever the next round of skill smoke-testing wraps. Not deleted now since `grill-and-record` still hasn't had a real-feature smoke test (deferred from Phase 2 step 1) and the sandbox is a useful target if no real feature surfaces soon.
+
+#### Restructure complete
+
+Phases 1, 2, 3, 4, and 6 done. Phase 5 (work-backlog ADO onboarding) is its own self-contained chunk and waits until the user is on the work machine with ADO access.
+
 ## Open items / risks
 
 1. **Self-contained format duplication.** `domain-format.md` and `adr-format.md` are duplicated across `grill-and-record`, `harden-domain`, and `backfill-adrs`. Drift risk is real but small. Mitigation: when updating one, grep the other locations and update in lockstep.

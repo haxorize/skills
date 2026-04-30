@@ -22,7 +22,7 @@ Personal collection of repo-agnostic agent skills, hoisted into `~/.claude/skill
 
 - **`to-feature`** — Synthesize a Feature-level (PRD-shaped) artifact and publish it. Use only when scope is broad enough to warrant multiple stories underneath. ADO: Feature work item. GitHub: feature/PRD issue.
 - **`to-story`** — Synthesize a Story-level (single-feature spec) artifact and publish it. Default entry point for turning a grilled plan into a tracked work item. ADO: User Story. GitHub: story-shaped issue.
-- **`to-tasks`** — Break a parent work item (Feature → Stories, or Story → Tasks) into child slices. Tracer-bullet style; parent-type-aware.
+- **`to-tasks`** — Break a parent User Story into child Tasks. Tracer-bullet style; verifies the parent is a Story before slicing. To split a Feature into Stories, run `to-story --parent <feature-id>` repeatedly instead.
 
 ### Architecture
 
@@ -61,3 +61,5 @@ ln -s ~/code/src/humana/skills/grill-me ~/.claude/skills/
 
 - Several skills reference `DOMAIN.md` (from `harden-domain` / `grill-and-record`) and `docs/adr/` (from `adr` / `backfill-adrs`). They degrade gracefully in projects that don't use those conventions.
 - The `to-feature`, `to-story`, and `to-tasks` skills operate in three modes: declared (CLAUDE.md present with tracker block), bootstrap-on-ask (repo present, asks once and writes the block), and no-repo CLI-only (publish via tracker CLI without touching files; saves tracker config to memory).
+- Bootstrap-on-ask is safe to use alongside Claude Code's built-in `/init` — `/init` preserves existing CLAUDE.md sections rather than overwriting them, so the order of operations doesn't matter.
+- See [`plans/skills-restructure.md`](plans/skills-restructure.md) for the design history and rationale behind the current skill set.
