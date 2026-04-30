@@ -395,6 +395,33 @@ Add `DOMAIN.md` to `a11y-health-ui` too (cross-references the API repo's DOMAIN.
 
 Phases 3 and 4 are owned by me; user reviews diffs before each is applied.
 
+#### Phase 4 outcomes (executed 2026-04-30)
+
+Mirrored Phase 3's audit-then-port-then-delete sequence on `a11y-health-ui`. Three commits landed: `4c69cf4` (API DOMAIN.md cross-ref), `256373e` (UI Phase 4 migration), and a skills-repo commit with this addendum.
+
+**Audit:** UI CLAUDE.md was already strong on stack-specific guidance for the visible surfaces (TanStack Router routes/generated tree, generated client, shadcn primitives, base-nova rule, system-preference dark mode, path aliases). Genuine gaps that needed closing:
+
+- TanStack Form + TanStack Query mutations were silent — added one-line declarations under Tooling rather than a separate Data section (parity with API CLAUDE.md's flat structure).
+- Accessibility wasn't declared as a CLAUDE.md rule despite being product DNA — added a tight section listing the bar (keyboard map, focus management, ARIA, contrast in both color modes, reduced-motion) with an explicit pointer to ADR 0008 and a "no suppressions without recorded justification" rule.
+- No `## Architecture Decisions` pointer to `docs/adr/` (the API CLAUDE.md had one; the UI didn't despite carrying 9 ADRs).
+- No `## Sibling repos` declaration — added the `../a11y-health-api` bullet that `to-tasks` parses for cross-repo blocker flagging.
+- No `## Issue tracker` block — added (GitHub, optional hierarchy).
+
+**Conventions doc deferred.** The plan flagged a possible `docs/conventions/data-fetching.md` for TanStack Form/Query depth. Skipped — the CLAUDE.md signal is enough to direct exploration into existing patterns under `src/integrations/` and the route loaders. Earn the conventions doc when concrete project-specific rules emerge (cache-key shape, optimistic-update pattern). Premature scaffolding otherwise.
+
+**UI DOMAIN.md.** Created as a thin pointer file. Honest accounting: there are no UI-only domain terms today — screens render API concepts (App, Brand, Org Unit, Scan Run, Score Snapshot) unchanged via the generated client. Stubbed `## UI-only terms` with "(None yet. Populate as UI-specific concepts emerge — e.g., a screen-naming convention, a search-param vocabulary…)" rather than fabricate placeholder entries. Added a symmetric `## Cross-repo` section to the API DOMAIN.md pointing back at the new UI DOMAIN.md (its own commit, `4c69cf4`).
+
+**Vocabulary normalization.** Found one stale "feature spec" reference in UI `tdd/SKILL.md:20` (mirror of the API tdd fix from Phase 3). Updated to "story" — the new artifact name. Final sweep across both repos: zero `UBIQUITOUS_LANGUAGE`, `write-feature-spec`, `spec-to-tasks`, or `feature spec` matches outside the deleted skill directories themselves.
+
+**Step 8 (verify) skipped.** Phase 3 already verified the same global skills against the same workflow on the API side (#54 comparison). Phase 4's only delta was stack-specific guidance, auditable directly from the diff. Re-running `to-story` against an old UI commit would generate friction without new signal — the recent UI commits (CI tweaks, lint fixes, version bumps) lack rich enough conversation context to make a useful comparison anyway. Verify-via-diff-review.
+
+**Rough edges encountered:**
+
+- **oxfmt formatting bounce on first commit.** Pre-commit hook `pnpm fmt:check` failed because oxfmt prefers `_emphasis_` over `*emphasis*`. Trivial: ran `pnpm fmt`, re-staged, re-committed cleanly. The Phase-3-flagged "always `git add -A` after Edit" rule caught this — the second stage picked up the formatter's change automatically. Worth carrying forward as a Markdown-author note: when authoring Markdown for repos with oxfmt, default to `_underscore_` emphasis to avoid the bounce.
+- **Pre-commit hook is well-tiered.** The full chain (fmt:check → lint → typecheck) ran in ~3 seconds and caught the only issue at the first gate. Confirms ADR 0009's tiered split is paying off in practice.
+
+**Bonus housekeeping:** API DOMAIN.md now also has the symmetric cross-repo section. Both repos point at each other in prose, matching the plan's "each repo's DOMAIN.md cross-references its sibling" rule.
+
 ### Phase 5: Work backlog (ADO) onboarding
 
 For the user's work context (no repos initially, ADO tracker):
