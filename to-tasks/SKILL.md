@@ -1,6 +1,6 @@
 ---
 name: to-tasks
-description: Break a parent User Story into child Task work items on the project's issue tracker. Tracer-bullet style — each Task is a thin vertical slice through every integration layer. Use after `to-story` when ready to break the Story into trackable chunks. ADO: creates Tasks under a User Story. GitHub: creates task-shaped issues under a story-shaped parent issue.
+description: Break a parent User Story into child Task work items on the project's issue tracker. Tracer-bullet style — each Task is a thin vertical slice through every integration layer. Use after `to-story` when ready to break the Story into trackable chunks. ADO — creates Tasks under a User Story. GitHub — creates task-shaped issues under a story-shaped parent issue.
 ---
 
 # To Tasks

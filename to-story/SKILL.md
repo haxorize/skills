@@ -1,6 +1,6 @@
 ---
 name: to-story
-description: Synthesize the current conversation into a Story-level (single-feature spec) artifact and publish it to the project's issue tracker. The default for turning a conversation into a tracked work item — most workflows start here. Use `to-feature` instead only when scope explicitly needs multiple stories beneath it (PRD-shaped, multi-story, epic-level). ADO: creates a User Story under a parent Feature. GitHub: creates an issue with a story-shaped template. Synthesizes from context — no interviewing.
+description: Synthesize the current conversation into a Story-level (single-feature spec) artifact and publish it to the project's issue tracker. The default for turning a conversation into a tracked work item — most workflows start here. Use `to-feature` instead only when scope explicitly needs multiple stories beneath it (PRD-shaped, multi-story, epic-level). ADO — creates a User Story under a parent Feature. GitHub — creates an issue with a story-shaped template. Synthesizes from context — no interviewing.
 ---
 
 # To Story
