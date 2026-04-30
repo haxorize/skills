@@ -1,0 +1,49 @@
+# Task template — GitHub
+
+Use this body when publishing a child work item to GitHub via `gh issue create`. The title is set on the command line; this is the body. The "task" framing covers both Story-shaped children of a Feature parent and Task-shaped children of a Story parent — adjust the level of detail accordingly.
+
+```markdown
+## Slice
+
+One sentence describing what this thin vertical slice delivers end-to-end. Use canonical terms from `DOMAIN.md`.
+
+## Layers touched
+
+- **Data:** schema/migration/seed changes (or "none")
+- **Backend:** endpoints/handlers/services (or "none")
+- **Client:** generated client / hooks / state (or "none")
+- **UI:** components / routes / forms (or "none")
+- **Tests:** boundary tests / integration tests added (or "none")
+
+## Acceptance
+
+- [ ] Specific, testable outcome 1
+- [ ] Specific, testable outcome 2
+
+## Mode
+
+**HITL** or **AFK**. One word, then a short reason.
+
+- HITL — UX shape needs human eye, security-sensitive logic, ambiguous behavior
+- AFK — mechanical, single-module, well-tested seam, no judgment calls
+
+## Blocked by
+
+If this slice depends on another slice or a sibling-repo change, list it here. Use real issue numbers if blockers were filed first (`to-tasks` publishes in dependency order so real IDs are available).
+
+- Blocked by: #<issue-number> — what specifically must land first
+- Blocked by: ../<sibling-repo> — contract change required (file there first)
+
+If unblocked, omit this section.
+
+## Parent
+
+Parent: #<issue-number>
+```
+
+## Notes
+
+- Default labels are applied via CLI flags from the `Issue tracker:` block in CLAUDE.md.
+- Each child task references at least one parent acceptance criterion (the `to-tasks` self-review check).
+- Naming (routes, query keys, model names, search-param keys) must match across sibling tasks. Drift here is the highest-cost mistake when slicing.
+- Use checkboxes in `Acceptance` so reviewers can tick them as they verify.

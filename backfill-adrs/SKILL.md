@@ -1,0 +1,67 @@
+---
+name: backfill-adrs
+description: Sweep recent git history for architectural decisions that should have been recorded as ADRs but weren't. Use when adopting ADR practice retroactively, after a long stretch of un-recorded work, or when a new contributor needs the "why" behind existing shape. NOT for recording a single fresh decision — use the standalone `adr` skill for that.
+---
+
+# Backfill ADRs
+
+Sweep recent git history for architectural decisions that should have been recorded as ADRs but weren't, and write the qualifying ones.
+
+This is the archaeological mode. Use the standalone `adr` skill for fresh single-record use (a decision you just made).
+
+## Workflow
+
+### 1. Confirm scan range
+
+Default suggestion: **last 90 days OR last 200 commits, whichever is shorter**. Confirm with the user before scanning — different teams have different "ADR debt" horizons.
+
+### 2. Read git log
+
+```
+git log --oneline --since="<date>" | head -<n>
+```
+
+For each commit that smells like a design choice (new module, new dependency, schema change, infra change, test-strategy change), capture the SHA and one-line subject.
+
+### 3. Follow PR / work-item references via tracker dispatch
+
+Most commits reference a PR or work item; the rationale lives there, not in the commit message.
+
+- **GitHub** (v1 supported): `gh pr view <number>`, `gh issue view <number>` for PR/issue descriptions and discussion
+- **Azure DevOps** (v1: TODO; scaffolded but not implemented): `az repos pr show --id <pr-id>`, `az boards work-item show --id <id>` once implemented
+
+If the tracker isn't declared in `CLAUDE.md`, fall back to commit message and code-only inference.
+
+### 4. Apply the ADR gate
+
+For each candidate, all three criteria must hold:
+
+1. **Hard to reverse** — undoing this later carries real cost
+2. **Surprising without context** — a future reader will wonder "why this way?"
+3. **Result of a real trade-off** — there were genuine alternatives and one was picked for specific reasons
+
+Reject any candidate that fails. Bug fixes, reversible style choices, and routine feature additions don't qualify.
+
+### 5. Quiz the user on the candidate list
+
+Walk through each candidate one at a time:
+
+- **Title** — short kebab-case slug
+- **Why it qualifies** — which of the three criteria it meets
+- **Rationale source** — commit / PR / work item / file
+
+Ask the user to confirm or refine each. Drop rejected candidates without arguing.
+
+### 6. Write approved ADRs
+
+Use the format in [references/adr-format.md](references/adr-format.md). ADRs live in `docs/adr/<NNNN>-<slug>.md` — scan for the highest existing number, increment by one for each new ADR, in chronological order of the underlying decisions.
+
+### 7. Stop
+
+Once the candidate list is exhausted, stop. Don't keep mining for more — the goal is to seed the log, not exhaustively document every past choice.
+
+## Notes
+
+- **Lazily create `docs/adr/`** if missing.
+- **Dedupe against existing ADRs.** Read the existing log first; skip candidates already covered.
+- **Prefer fewer high-quality ADRs** over many marginal ones. The bar is the gate; if a candidate borderline-qualifies, drop it.

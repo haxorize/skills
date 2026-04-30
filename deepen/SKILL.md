@@ -31,7 +31,7 @@ Two principles that sharpen every proposal:
 
 Read first, in parallel:
 
-- `UBIQUITOUS_LANGUAGE.md` — use domain vocabulary in candidate descriptions ("the billing rollup module," not "the AggregatorService")
+- `DOMAIN.md` — use domain vocabulary in candidate descriptions ("the billing rollup module," not "the AggregatorService")
 - `docs/adr/` — recorded decisions you should not re-litigate (proceed silently if absent)
 
 Then check for prior architectural work:
@@ -51,7 +51,7 @@ Use the Agent tool with subagent_type=Explore to navigate the codebase. Don't fo
 - Where have pure functions been extracted just for testability, but the real bugs hide in how they're called?
 - Where do tightly-coupled modules create integration risk in the seams between them?
 - Which parts of the codebase are untested or hard to test?
-- Where do domain terms from UBIQUITOUS_LANGUAGE.md leak across module boundaries?
+- Where do domain terms from DOMAIN.md leak across module boundaries?
 
 The friction you encounter IS the signal.
 

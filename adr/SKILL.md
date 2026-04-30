@@ -1,6 +1,6 @@
 ---
 name: adr
-description: Architecture Decision Records — capture why a non-obvious design choice was made. Use when recording a design decision, capturing rationale for a non-obvious choice, or backfilling ADRs from history.
+description: Architecture Decision Record — capture why a single non-obvious design choice was made. Use when the user has just made a decision and wants to record it (post code-review, mid-implementation, after a grill), or wants to capture rationale for a fresh non-obvious choice. For sweeping git history to recover un-recorded decisions, use `backfill-adrs` instead.
 ---
 
 # ADR
@@ -35,7 +35,7 @@ If the decision is easy to reverse, skip — you'll just reverse it. If it's not
 - Personal-preference workflow choices (memory file owns this)
 - Routine feature additions (PR descriptions own this)
 
-## Workflow: record one ADR
+## Workflow
 
 ### 1. Apply the gate
 
@@ -64,36 +64,3 @@ Optional sections — only when they add real value, not for completeness:
 ### 4. Show and save
 
 Show the draft to the user. Save to `docs/adr/<NNNN>-<slug>.md` once approved.
-
-## Workflow: backfill from history
-
-Run this once to seed the ADR log, then archive the workflow.
-
-### 1. Gather signals
-
-Read in parallel:
-
-- `git log --oneline | head -100` for recent design-shaped commits
-- This project's auto-memory `MEMORY.md` (under `~/.claude/projects/`) and any project-flavored entries
-- Closed feature spec issues (`gh issue list --state closed --label spec`)
-- `CLAUDE.md`, `UBIQUITOUS_LANGUAGE.md`, key model and service files
-
-### 2. Draft candidate list
-
-For each candidate, list:
-
-- **Title** — short kebab-case slug
-- **Why it qualifies** — which of the three criteria it meets
-- **Rationale source** — where the "why" comes from (commit, memory, file, conversation)
-
-Prefer fewer high-quality ADRs over many marginal ones.
-
-### 3. Walk the user through each candidate
-
-One at a time. For each: confirm the gate holds, ask the user to refine the rationale, draft the ADR, save.
-
-If the user rejects a candidate, drop it and move on — don't argue.
-
-### 4. Stop
-
-Once the candidate list is exhausted, stop. Don't keep mining for more — the goal is to seed the log, not exhaustively document every past choice.
