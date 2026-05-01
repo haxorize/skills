@@ -16,6 +16,22 @@ What user-facing pain or business need motivates this feature. One paragraph.
 
 - What this feature explicitly does not include (so reviewers don't expand scope)
 
+## Acceptance criteria
+
+Typed prefixes (`**AC1:**`, `**AC2:**`) so child Stories can reference them by ID via `Covers: AC1, AC3` lines. IDs are append-only — when an AC is removed, its ID moves to `## Removed acceptance criteria` and is never reused; the next added AC takes the next unused integer.
+
+- [ ] **AC1:** Specific, testable Feature-level outcome
+- [ ] **AC2:** Specific, testable Feature-level outcome
+- [ ] **AC4:** Specific, testable Feature-level outcome
+
+The example skips `AC3` to show the gap preserved on removal.
+
+## Removed acceptance criteria
+
+History of ACs that were active and have since been retired. Strike-through, removal date, one-line reason. Omit the heading if nothing has been removed.
+
+- ~~**AC3:** Original criterion text~~ — removed 2026-05-01: reason in one line
+
 ## Stories underneath
 
 Sub-features that decompose this Feature. Each one becomes its own Story (file via `to-story --parent <this-issue-number>`).

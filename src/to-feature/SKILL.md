@@ -59,7 +59,8 @@ Before showing the user, check:
 - Scope (broad enough to warrant multiple stories — if it shrinks to one, redirect to `to-story`)
 - Ambiguity (any requirement readable two ways)
 - Domain language matches `DOMAIN.md`
-- Story map: parent coverage (every Feature AC referenced by ≥1 Story), naming-table dedup, dependency acyclicity (skip if decomposition deferred)
+- AC IDs: append-only — no reused IDs across active and `## Removed acceptance criteria`; gaps from removals preserved (no renumbering)
+- Story map: every active Feature AC ID appears in at least one Story's `Covers:` line; no `Covers:` line references a removed AC ID; naming-table dedup; dependency acyclicity (skip if no story map — flat mode or deferred decomposition)
 
 ### 9. Present draft to user
 

@@ -55,6 +55,8 @@ Before showing the user, check:
 - Scope (focused enough for one story, or needs decomposition into a Feature)
 - Ambiguity (any requirement readable two ways)
 - Domain language matches `DOMAIN.md`
+- AC IDs: append-only — no reused IDs across active and `## Removed acceptance criteria`; gaps from removals preserved (no renumbering)
+- `## Layers touched` populated for each layer (`none` is a valid value; missing layers are not)
 - Naming consistency vs. parent's story map (where `Hierarchy: required`) — surface conflicts before publish
 - User-story line matches step 6 classification (Connextra for user-facing, absent otherwise)
 
@@ -73,6 +75,6 @@ If a required CLAUDE.md field is missing, fail fast with a clear "add this to CL
 
 Gated on the parent tracker enforcing hierarchy — ADO default; GitHub projects opt in via CLAUDE.md.
 
-After publishing, fetch the parent Feature's description via `az boards work-item show <feature-id>`. Locate the story-map markers (`<!-- BEGIN STORY MAP -->` / `<!-- END STORY MAP -->`); append an entry below the snapshot separator with this Story's tracker ID, scope summary, and shared names it touches. The snapshot section is immutable — never modify entries above the separator.
+After publishing, fetch the parent Feature's description via `az boards work-item show <feature-id>`. Locate the story-map markers (`<!-- BEGIN STORY MAP -->` / `<!-- END STORY MAP -->`); append an entry below the snapshot separator with this Story's tracker ID, scope summary, the parent Feature AC IDs it covers (`Covers: AC1, AC3`), and shared names it touches. The `Covers:` line keeps coverage queryable uniformly above and below the separator. The snapshot section is immutable — never modify entries above the separator.
 
 The Story is the durable artifact; the append is best-effort. Skip silently if the parent has no map block (deferred, missing markers, or malformed) — that parent isn't using this workflow. If the parent has a map block but the append fails: on revision conflict, retry once with a fresh fetch; on permission denied, surface immediately (no retry — config issue, not transient); on any other error, surface with the published Story ID and the failure reason so the user can manually add an entry. The Story always publishes regardless.

@@ -38,6 +38,16 @@ What the user sees / can do once this ships. Concrete, observable. If the change
 
 Use module names from `DOMAIN.md` where applicable, not file paths.
 
+## Layers touched
+
+Which integration layers the Story crosses. Drives `from-work-item` cold-start and Task slicing. Mark each present layer with one phrase; mark absent layers `none`.
+
+- **Data:** schema/migration/seed work expected (or `none`)
+- **Backend:** endpoints/handlers/services (or `none`)
+- **Client:** generated client / hooks / state (or `none`)
+- **UI:** components / routes / forms (or `none`)
+- **Tests:** boundary / integration coverage expected (or `none`)
+
 ## Approach
 
 The approach the team agreed on. Include the data shape, key types, and integration points with adjacent modules. Reference existing ADRs the approach respects.
@@ -52,19 +62,27 @@ What gets tested at which seam.
 ## Out of scope
 
 What this story explicitly does not include (so reviewers don't expand scope).
+
+## Removed acceptance criteria
+
+History of ACs that were active in the AC field and have since been retired. Strike-through, removal date, one-line reason. Omit the heading if nothing has been removed.
+
+- ~~**AC3:** Original criterion text~~ — removed 2026-05-01: reason in one line
 ```
 
 ## Acceptance Criteria (ADO field)
 
-Author as Markdown bullets, converted to HTML before publishing:
+Author as Markdown bullets, converted to HTML before publishing.
+
+Use typed prefixes (`**AC1:**`, `**AC2:**`) so child Tasks can reference them by ID via `Covers: AC1, AC3` lines. IDs are append-only — when an AC is removed, its ID moves to `## Removed acceptance criteria` in the description body (not this field) and is never reused; the next added AC takes the next unused integer.
 
 ```markdown
-- Specific, testable outcome 1
-- Specific, testable outcome 2
-- Specific, testable outcome 3
+- **AC1:** Specific, testable outcome 1
+- **AC2:** Specific, testable outcome 2
+- **AC4:** Specific, testable outcome 4
 ```
 
-Each criterion is a single concrete check. Avoid "works correctly" — say what "correct" looks like.
+The example skips `AC3` to show the gap preserved on removal. Each criterion is a single concrete check. Avoid "works correctly" — say what "correct" looks like.
 
 ## Markdown → HTML conversion
 

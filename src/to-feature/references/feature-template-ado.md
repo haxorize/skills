@@ -42,6 +42,12 @@ The approach the team agreed on. Include the major modules touched, the data sha
 - Existing ADRs this Feature must respect
 - Performance / scale targets if non-default
 
+## Removed acceptance criteria
+
+History of ACs that were active in the AC field and have since been retired. Strike-through, removal date, one-line reason. Omit the heading if nothing has been removed.
+
+- ~~**AC3:** Original criterion text~~ — removed 2026-05-01: reason in one line
+
 ## Story Decomposition
 
 <!-- BEGIN STORY MAP -->
@@ -80,12 +86,17 @@ If decomposition was deferred at Feature creation, the body of `## Story Decompo
 
 ## Acceptance Criteria
 
-ADO renders Acceptance Criteria as a separate field. Author as Markdown bullets, converted to HTML before publishing:
+ADO renders Acceptance Criteria as a separate field. Author as Markdown bullets, converted to HTML before publishing.
+
+Use typed prefixes (`**AC1:**`, `**AC2:**`) so child Stories can reference them by ID via `Covers: AC1, AC3` lines. IDs are append-only — when an AC is removed, its ID moves to `## Removed acceptance criteria` in the description body (not this field) and is never reused; the next added AC takes the next unused integer.
 
 ```markdown
-- Outcome 1 measurable success criterion
-- Outcome 2 measurable success criterion
+- **AC1:** Outcome 1 measurable success criterion
+- **AC2:** Outcome 2 measurable success criterion
+- **AC4:** Outcome 4 measurable success criterion
 ```
+
+The example skips `AC3` to show the gap preserved on removal.
 
 ## Markdown → HTML conversion
 

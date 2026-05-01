@@ -17,11 +17,19 @@ What the user sees / can do once this ships. Concrete, observable. If the change
 
 ## Acceptance criteria
 
-- [ ] Specific, testable outcome 1
-- [ ] Specific, testable outcome 2
-- [ ] Specific, testable outcome 3
+Typed prefixes (`**AC1:**`, `**AC2:**`) so child Tasks can reference them by ID via `Covers: AC1, AC3` lines. IDs are append-only — when an AC is removed, its ID moves to `## Removed acceptance criteria` and is never reused; the next added AC takes the next unused integer.
 
-Each criterion is a single concrete check. Avoid "works correctly" — say what "correct" looks like.
+- [ ] **AC1:** Specific, testable outcome 1
+- [ ] **AC2:** Specific, testable outcome 2
+- [ ] **AC4:** Specific, testable outcome 4
+
+The example skips `AC3` to show the gap preserved on removal. Each criterion is a single concrete check. Avoid "works correctly" — say what "correct" looks like.
+
+## Removed acceptance criteria
+
+History of ACs that were active and have since been retired. Strike-through, removal date, one-line reason. Omit the heading if nothing has been removed.
+
+- ~~**AC3:** Original criterion text~~ — removed 2026-05-01: reason in one line
 
 ## Modules touched
 
@@ -29,6 +37,16 @@ Each criterion is a single concrete check. Avoid "works correctly" — say what 
 - `<module name>` — what changes here
 
 Use module names from `DOMAIN.md` where applicable, not file paths (paths drift; concepts don't).
+
+## Layers touched
+
+Which integration layers the Story crosses. Drives `from-work-item` cold-start and Task slicing. Mark each present layer with one phrase; mark absent layers `none`.
+
+- **Data:** schema/migration/seed work expected (or `none`)
+- **Backend:** endpoints/handlers/services (or `none`)
+- **Client:** generated client / hooks / state (or `none`)
+- **UI:** components / routes / forms (or `none`)
+- **Tests:** boundary / integration coverage expected (or `none`)
 
 ## Approach
 

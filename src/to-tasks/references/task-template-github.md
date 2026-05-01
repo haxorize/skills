@@ -15,10 +15,11 @@ One sentence describing what this thin vertical slice delivers end-to-end. Use c
 - **UI:** components / routes / forms (or "none")
 - **Tests:** boundary tests / integration tests added (or "none")
 
-## Acceptance
+## Covers
 
-- [ ] Specific, testable outcome 1
-- [ ] Specific, testable outcome 2
+Parent Story AC IDs this Task verifies. Comma-separated, no quotes. Used by `to-tasks --reconcile` to detect stale references mechanically when parent ACs change.
+
+Covers: AC1, AC3
 
 ## Mode
 
@@ -44,6 +45,5 @@ Parent: #<issue-number>
 ## Notes
 
 - Default labels are applied via CLI flags from the `Issue tracker:` block in CLAUDE.md.
-- Each child task references at least one parent acceptance criterion (the `to-tasks` self-review check).
+- Each Task's `## Covers` lists at least one parent Story AC ID — the `to-tasks` self-review check is a mechanical lookup against the parent's active AC IDs.
 - Naming (routes, query keys, model names, search-param keys) must match across sibling tasks. Drift here is the highest-cost mistake when slicing.
-- Use checkboxes in `Acceptance` so reviewers can tick them as they verify.

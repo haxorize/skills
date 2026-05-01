@@ -68,7 +68,8 @@ Walk through the Task list with the user. Iterate until approved.
 
 Before publishing, check:
 
-- **Parent coverage** — every parent Story acceptance criterion is referenced by at least one Task
+- **Parent coverage** — every active parent Story AC ID appears in at least one Task's `## Covers` line
+- **Covers references resolve** — every AC ID in any Task's `## Covers` exists on the parent Story and is active (not in `## Removed acceptance criteria`); surface stale references for user decision before publishing
 - **Naming consistency** — route paths, query keys, model names, search-param keys identical across Tasks
 - **Domain language matches `DOMAIN.md`**
 - **No placeholders** (no TBD/TODO)

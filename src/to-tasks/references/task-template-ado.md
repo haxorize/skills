@@ -32,6 +32,12 @@ One sentence describing what this thin vertical slice delivers end-to-end. Use c
 - **UI:** components / routes / forms (or "none")
 - **Tests:** boundary tests / integration tests added (or "none")
 
+## Covers
+
+Parent Story AC IDs this Task verifies. Comma-separated, no quotes. Used by `to-tasks --reconcile` to detect stale references mechanically when parent ACs change.
+
+Covers: AC1, AC3
+
 ## Mode
 
 **HITL** or **AFK**. One word, then a short reason.

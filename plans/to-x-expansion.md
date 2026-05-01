@@ -49,10 +49,12 @@ Before committing any markup-dependent design to ADO, verify Jira Align ↔ ADO 
 
 ### Phase 1 — Template changes
 
-- [ ] `to-feature/references/feature-template-ado.md` and `feature-template-github.md` — typed AC prefixes, `## Removed acceptance criteria` section.
-- [ ] `to-story/references/story-template-ado.md` and `story-template-github.md` — typed AC prefixes, `## Layers touched` section, `## Removed acceptance criteria` section.
-- [ ] `to-tasks/references/task-template-ado.md` and `task-template-github.md` — `## Covers` section listing referenced AC IDs.
-- [ ] Update self-review checks in each SKILL.md to use AC-ID lookups instead of prose judgment.
+- [x] `to-feature/references/feature-template-ado.md` and `feature-template-github.md` — typed AC prefixes, `## Removed acceptance criteria` section. ADO: AC field uses typed prefixes; Removed section lives in description body between `## Constraints` and `## Story Decomposition`. GH: new `## Acceptance criteria` section parallel to ADO's AC field; `## Removed acceptance criteria` immediately below it.
+- [x] `to-story/references/story-template-ado.md` and `story-template-github.md` — typed AC prefixes, `## Layers touched` section, `## Removed acceptance criteria` section. ADO: AC field uses typed prefixes; `## Layers touched` and `## Removed acceptance criteria` in description body. GH: typed prefixes on existing `## Acceptance criteria` checkboxes; `## Removed acceptance criteria` immediately below; `## Layers touched` after `## Modules touched`.
+- [x] `to-tasks/references/task-template-ado.md` and `task-template-github.md` — `## Covers` section listing referenced AC IDs. GH variant: dropped the per-Task `## Acceptance` checkboxes (parent ACs now own concrete outcomes via stable IDs); `## Covers` is the only AC-coupling on Tasks.
+- [x] Update self-review checks in each SKILL.md to use AC-ID lookups instead of prose judgment. `to-feature` checks story-map AC ID coverage; `to-story` checks AC ID append-only invariant + `## Layers touched` populated; `to-tasks` checks parent coverage and `Covers:` reference resolution against active parent AC IDs.
+
+**Risk noted at landing:** Phase 0 sync verification was not yet run. If Jira Align ↔ ADO sync mangles typed prefixes (`**AC1:**`), strike-through, or the new section headings, these templates will need rework. Phase 0 must run before any of these templates are exercised against production ADO.
 
 ### Phase 2 — Maintenance modes
 
