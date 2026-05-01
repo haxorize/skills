@@ -50,7 +50,7 @@ Symlink each skill directory into `~/.claude/skills/`:
 ```bash
 cd ~/code/src/humana/skills
 for skill in */; do
-  [ "$skill" = "plans/" ] && continue
+  case "$skill" in plans/|docs/) continue;; esac
   ln -s "$(pwd)/${skill%/}" ~/.claude/skills/
 done
 ```
@@ -67,3 +67,4 @@ ln -s ~/code/src/humana/skills/grill-me ~/.claude/skills/
 - The `to-feature`, `to-story`, and `to-tasks` skills operate in three modes: declared (CLAUDE.md present with tracker block), bootstrap-on-ask (repo present, asks once and writes the block), and no-repo CLI-only (publish via tracker CLI without touching files; saves tracker config to memory).
 - Bootstrap-on-ask is safe to use alongside Claude Code's built-in `/init` — `/init` preserves existing CLAUDE.md sections rather than overwriting them, so the order of operations doesn't matter.
 - See [`plans/skills-restructure.md`](plans/skills-restructure.md) for the design history and rationale behind the current skill set.
+- Design decisions about specific skills are recorded as ADRs in [`docs/adr/`](docs/adr/).

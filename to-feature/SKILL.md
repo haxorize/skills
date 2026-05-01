@@ -38,13 +38,19 @@ Broader than a single story — what areas are touched, what are the major sub-f
 
 Lead with a recommendation. Let the user push back or confirm before drafting. Not interviewing — this is a pre-publication direction check. If the user pushes back, revise the sketch and re-propose; do not interview through it. Skip only when there's genuinely one defensible shape (rare; force yourself to think of two).
 
-### 6. Draft the feature
+### 6. Decompose into Stories
+
+Decompose the chosen approach into Stories. For each Story capture: title, one-paragraph scope, the parent Feature acceptance criteria it covers, and any shared names (route paths, model names, query keys) it touches. Build a dependency graph between Stories. Quiz the user on the list — iterate until approved.
+
+If the user can't decompose yet, confirm explicitly and skip to step 7. The published Feature will carry `Story Decomposition: deferred at Feature creation.` in place of the map block; fill in later via `--update <feature-id>`. See [ADR-0001](../docs/adr/0001-story-map-append-only-living.md).
+
+### 7. Draft the feature
 
 Use the appropriate template:
 - GitHub: [references/feature-template-github.md](references/feature-template-github.md)
 - ADO: [references/feature-template-ado.md](references/feature-template-ado.md)
 
-### 7. Self-review
+### 8. Self-review
 
 Before showing the user, check:
 
@@ -53,14 +59,23 @@ Before showing the user, check:
 - Scope (broad enough to warrant multiple stories — if it shrinks to one, redirect to `to-story`)
 - Ambiguity (any requirement readable two ways)
 - Domain language matches `DOMAIN.md`
+- Story map: parent coverage (every Feature AC referenced by ≥1 Story), naming-table dedup, dependency acyclicity (skip if decomposition deferred)
 
-### 8. Present draft to user
+### 9. Present draft to user
 
 Iterate until approved.
 
-### 9. Publish via tracker dispatch
+### 10. Publish via tracker dispatch
 
 - **GitHub:** `gh issue create --title "..." --body-file <draft>` with default labels from CLAUDE.md. Parent linking via `Tracked-by:` line or template `Parent: #N` reference if `--parent` was provided. **Before creating the issue,** ensure every label in CLAUDE.md's `Default labels:` exists on the repo: `gh label list --json name --jq '.[].name'` once, then `gh label create <name>` for any missing. Idempotent and cheap; one-time per repo per label.
-- **ADO:** `az boards work-item create --type Feature --title "..." --description "<html>"` with project / area path / iteration / state from CLAUDE.md. The description field expects HTML — convert the Markdown feature draft before passing. Parent linking via `az boards work-item relation add --relation-type Parent --target-id <epic-id>`.
+- **ADO:** `az boards work-item create --type Feature --title "..." --description "<html>"` with project / area path / iteration / state from CLAUDE.md. The description field expects HTML — convert the Markdown feature draft before passing. The body's final section is `## Story Decomposition`; inside it, HTML markers (`<!-- BEGIN STORY MAP -->` / `<!-- END STORY MAP -->`) fence an append-only region with a `---` snapshot separator and an `*Emergent Stories appended below.*` sentinel — see [feature-template-ado.md](references/feature-template-ado.md) for the full structure. If decomposition was deferred, the section body is the single line `Story Decomposition: deferred at Feature creation.` (no markers). Parent linking via `az boards work-item relation add --relation-type Parent --target-id <epic-id>`.
 
 If a required CLAUDE.md field is missing, fail fast with a clear "add this to CLAUDE.md" message.
+
+The story-map embed (and the corresponding append-on-publish in `to-story` step 10) is gated on `Hierarchy: required` — ADO default. GitHub projects can opt in via CLAUDE.md.
+
+## Update mode
+
+`--update <feature-id>` short-circuits the create flow. Skips tracker resolution (uses the existing Feature's project), parent resolution, codebase exploration, approach selection, and Feature drafting. Runs only step 6 (decomposition with quiz) and the story-map portion of step 8 (self-review), then patches the Feature description in place.
+
+The snapshot section is one-shot replaced (not incrementally amended). Appended emergent-Story entries that `to-story` added below the snapshot separator are preserved — `--update` re-snapshots the plan without losing the record of what shipped.

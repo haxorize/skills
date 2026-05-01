@@ -40,6 +40,8 @@ Lead with a recommendation. Let the user push back or confirm before drafting. N
 
 ### 6. Draft the story
 
+Classify the story as user-facing (has a real user role with a stated goal) or non-user-facing (refactor, infra, observability, dependency upgrade, security hardening). User-facing stories lead the body with a Connextra user-story line (`**User story:** As a [role], I want [goal] so that [benefit].`); non-user-facing stories omit it and describe the developer-facing or operational outcome in `## User-facing behavior` instead.
+
 Use the appropriate template:
 - GitHub: [references/story-template-github.md](references/story-template-github.md)
 - ADO: [references/story-template-ado.md](references/story-template-ado.md)
@@ -53,6 +55,8 @@ Before showing the user, check:
 - Scope (focused enough for one story, or needs decomposition into a Feature)
 - Ambiguity (any requirement readable two ways)
 - Domain language matches `DOMAIN.md`
+- Naming consistency vs. parent's story map (where `Hierarchy: required`) — surface conflicts before publish
+- User-story line matches step 6 classification (Connextra for user-facing, absent otherwise)
 
 ### 8. Present draft to user
 
@@ -64,3 +68,11 @@ Iterate until approved.
 - **ADO:** `az boards work-item create --type "User Story" --title "..." --description "<html>"` with project / area path / iteration / state from CLAUDE.md. The description field expects HTML — convert the Markdown story draft before passing. Parent linking via `az boards work-item relation add --relation-type Parent --target-id <feature-id>`.
 
 If a required CLAUDE.md field is missing, fail fast with a clear "add this to CLAUDE.md" message.
+
+### 10. Append to parent's story map (where `Hierarchy: required`)
+
+Gated on the parent tracker enforcing hierarchy — ADO default; GitHub projects opt in via CLAUDE.md.
+
+After publishing, fetch the parent Feature's description via `az boards work-item show <feature-id>`. Locate the story-map markers (`<!-- BEGIN STORY MAP -->` / `<!-- END STORY MAP -->`); append an entry below the snapshot separator with this Story's tracker ID, scope summary, and shared names it touches. The snapshot section is immutable — never modify entries above the separator.
+
+The Story is the durable artifact; the append is best-effort. Skip silently if the parent has no map block (deferred, missing markers, or malformed) — that parent isn't using this workflow. If the parent has a map block but the append fails: on revision conflict, retry once with a fresh fetch; on permission denied, surface immediately (no retry — config issue, not transient); on any other error, surface with the published Story ID and the failure reason so the user can manually add an entry. The Story always publishes regardless. See [ADR-0001](../docs/adr/0001-story-map-append-only-living.md).

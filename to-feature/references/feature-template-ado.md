@@ -16,7 +16,7 @@ Use this when publishing a Feature work item to Azure DevOps via `az boards work
 
 ## Description (markdown body — converted to HTML before publishing)
 
-Author the body as Markdown:
+Author the body as Markdown. The `## Story Decomposition` section at the bottom is the story map (see `to-feature` SKILL.md step 6 and [ADR-0001](../../docs/adr/0001-story-map-append-only-living.md)); inside it, HTML markers fence an append-only region so `to-story` can locate and append to it.
 
 ```markdown
 ## Problem
@@ -32,14 +32,6 @@ What user-facing pain or business need motivates this Feature. One paragraph.
 
 - What this Feature explicitly does not include
 
-## Stories underneath
-
-Sub-features that decompose this Feature. Each becomes its own User Story (file via `to-story --parent <this-feature-id>`):
-
-- Story 1 — short title
-- Story 2 — short title
-- Story 3 — short title
-
 ## Approach
 
 The approach the team agreed on. Include the major modules touched, the data shape, and the integration points. Use canonical terms from `DOMAIN.md`.
@@ -49,7 +41,42 @@ The approach the team agreed on. Include the major modules touched, the data sha
 - Compliance / contractual / org constraints not visible in the code
 - Existing ADRs this Feature must respect
 - Performance / scale targets if non-default
+
+## Story Decomposition
+
+<!-- BEGIN STORY MAP -->
+*Snapshot from `<YYYY-MM-DD>`. Original decomposition; emergent Stories from `to-story --parent <feature-id>` append below the separator.*
+
+### Story 1 — short title
+
+One-paragraph scope.
+
+Covers: AC1, AC3
+
+### Story 2 — short title
+
+One-paragraph scope.
+
+Covers: AC2
+
+### Naming consistency
+
+| Name | Used in |
+|---|---|
+| `/api/v1/widgets` | Story 1, Story 2 |
+| `widgetId` | Story 1 |
+
+### Dependencies
+
+- Story 2 depends on Story 1
+
+---
+*Emergent Stories appended below.*
+
+<!-- END STORY MAP -->
 ```
+
+If decomposition was deferred at Feature creation, the body of `## Story Decomposition` is the single line `Story Decomposition: deferred at Feature creation.` (no markers). See `to-feature` SKILL.md step 6.
 
 ## Acceptance Criteria
 
@@ -88,5 +115,6 @@ HTML=$(python3 -c "import sys, markdown; print(markdown.markdown(sys.stdin.read(
 ## Notes
 
 - ADO enforces Epic → Feature → User Story → Task. A Feature without a parent Epic is allowed but flagged in most team configs; resolve a parent Epic ID before publishing.
-- The `Stories underneath` list is informational — actual child stories are linked via the parent-child relation when each Story is created.
+- Inside the `## Story Decomposition` section, the snapshot separator is a `---` rule followed by the line `*Emergent Stories appended below.*` — the snapshot section sits above it, the appended-emergent region below.
+- The Story Decomposition section captures decomposition rationale (titles, scopes, coverage, naming consistency, dependencies); child Stories are linked via the parent-child relation when each Story is created. The map and the relation graph are independent — the map records intent, the graph records what shipped.
 - After create: `az boards work-item relation add --id <new-feature-id> --relation-type Parent --target-id <epic-id>`.

@@ -2,7 +2,11 @@
 
 Use this body when publishing a Story-level issue to GitHub via `gh issue create`. The title is set on the command line; this is the body.
 
+Lead with the Connextra user-story line for user-facing stories; omit it for non-user-facing stories (see `to-story` SKILL.md step 6 for the classification rule).
+
 ```markdown
+**User story:** As a [role], I want [goal] so that [benefit].
+
 ## Problem
 
 What user-facing pain or behavior gap motivates this story. One paragraph. Use canonical terms from `DOMAIN.md`.

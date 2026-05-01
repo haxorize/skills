@@ -1,0 +1,3 @@
+# Story map: append-only living, embedded in Feature description
+
+`to-feature` embeds a story-map block in the ADO Feature description (titles, scopes, coverage matrix, naming table, dependency edges, fenced by HTML markers). `to-story --parent <feature-id>` appends emergent Stories below a snapshot separator — original snapshot entries stay immutable, but the table grows so handoff engineers shipping Stories weeks apart catch each other's naming drift. We rejected pure-snapshot (original choice — naming-consistency check stops working once Stories ship after the snapshot), authoritative (incompatible with the explicitly-expected workflow of emergent Stories), and full-living (loses original-intent framing for retros).

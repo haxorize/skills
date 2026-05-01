@@ -7,20 +7,22 @@ Use this when publishing a User Story to Azure DevOps via `az boards work-item c
 | ADO field (display name) | Reference name | Source | CLI flag |
 |---|---|---|---|
 | Title | `System.Title` | Set on command line | `--title` |
-| Notes (a.k.a. Description in stock Agile/Scrum templates) | `System.Description` | Body markdown converted to HTML | `--description` |
+| Description | `System.Description` | Body markdown converted to HTML | `--description` |
 | Acceptance Criteria | `Microsoft.VSTS.Common.AcceptanceCriteria` | Acceptance bullets converted to HTML | `--fields "Microsoft.VSTS.Common.AcceptanceCriteria=<html>"` |
 | Area Path | `System.AreaPath` | From CLAUDE.md `Area path:` | `--area` |
 | Iteration Path | `System.IterationPath` | From CLAUDE.md `Iteration:` | `--iteration` |
 | State | `System.State` | From CLAUDE.md `Default state:` (typically `New`) | `--fields "System.State=..."` |
 | Parent (Feature) | (relation) | From `--parent <feature-id>` arg | post-create: `az boards work-item relation add --relation-type Parent --target-id <feature-id>` |
 
-The body field's display name varies by process template. Stock Agile/Scrum show it as **Description**; some customized templates (including the user's work org) relabel it to **Notes**. The reference name is always `System.Description`, so `--description` is the correct CLI flag in either case. To verify against a specific project, run `az boards work-item show --id <existing-story-id> --output json --query 'fields'` and confirm a `System.Description` key is present.
+The reference name is `System.Description`; `--description` is the correct CLI flag. To verify against a specific project, run `az boards work-item show --id <existing-story-id> --output json --query 'fields'` and confirm a `System.Description` key is present.
 
-## Notes / Description (markdown body — converted to HTML before publishing)
+## Description (markdown body — converted to HTML before publishing)
 
-Author the body as Markdown:
+Author the body as Markdown. Lead with the Connextra user-story line for user-facing stories; omit it for non-user-facing stories (see `to-story` SKILL.md step 6 for the classification rule).
 
 ```markdown
+**User story:** As a [role], I want [goal] so that [benefit].
+
 ## Problem
 
 What user-facing pain or behavior gap motivates this story. One paragraph. Use canonical terms from `DOMAIN.md`.
@@ -69,13 +71,13 @@ Each criterion is a single concrete check. Avoid "works correctly" — say what 
 ADO rich-text fields (Description, Acceptance Criteria) render HTML by default; Markdown rendering is an opt-in per-org setting. To stay portable, convert at publish time:
 
 ```bash
-pandoc -f markdown -t html notes.md > notes.html
+pandoc -f markdown -t html description.md > description.html
 pandoc -f markdown -t html acceptance.md > acceptance.html
 
 az boards work-item create \
   --type "User Story" \
   --title "$TITLE" \
-  --description "$(cat notes.html)" \
+  --description "$(cat description.html)" \
   --fields \
     "Microsoft.VSTS.Common.AcceptanceCriteria=$(cat acceptance.html)" \
     "System.State=New" \
@@ -86,7 +88,7 @@ az boards work-item create \
 Or, if `pandoc` is not available, a Python one-liner:
 
 ```bash
-HTML=$(python3 -c "import sys, markdown; print(markdown.markdown(sys.stdin.read()))" < notes.md)
+HTML=$(python3 -c "import sys, markdown; print(markdown.markdown(sys.stdin.read()))" < description.md)
 ```
 
 ## Notes
