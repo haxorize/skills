@@ -78,3 +78,67 @@ Gated on the parent tracker enforcing hierarchy — ADO default; GitHub projects
 After publishing, fetch the parent Feature's description via `az boards work-item show <feature-id>`. Locate the story-map markers (`<!-- BEGIN STORY MAP -->` / `<!-- END STORY MAP -->`); append an entry below the snapshot separator with this Story's tracker ID, scope summary, the parent Feature AC IDs it covers (`Covers: AC1, AC3`), and shared names it touches. The `Covers:` line keeps coverage queryable uniformly above and below the separator. The snapshot section is immutable — never modify entries above the separator.
 
 The Story is the durable artifact; the append is best-effort. Skip silently if the parent has no map block (deferred, missing markers, or malformed) — that parent isn't using this workflow. If the parent has a map block but the append fails: on revision conflict, retry once with a fresh fetch; on permission denied, surface immediately (no retry — config issue, not transient); on any other error, surface with the published Story ID and the failure reason so the user can manually add an entry. The Story always publishes regardless.
+
+## Update mode
+
+`--update <story-id>` short-circuits the create flow and patches an existing Story in place. Skips tracker resolution (uses the Story's existing project), parent resolution (already linked), and approach selection (already chosen at creation). Runs codebase exploration only when the proposed change expands scope.
+
+### Cold-start
+
+Fetch the current Story body, the Story's AC field, and the parent Feature body so the patch is parent-aware:
+
+- **ADO:** `az boards work-item show <story-id> --output json` — pull `System.Description`, `Microsoft.VSTS.Common.AcceptanceCriteria`, and the parent relation. Then `az boards work-item show <parent-feature-id> --output json` — pull description (for the story-map snapshot) and AC field (for the parent's active AC IDs).
+- **GitHub:** `gh issue view <story-number> --json body,title`. Resolve parent via the `Parent: #N` line in the body; fetch parent body the same way.
+
+Parse:
+
+- **Active Story AC IDs** from the AC field (ADO) or `## Acceptance criteria` section (GitHub).
+- **Removed Story AC IDs** from `## Removed acceptance criteria` in the Story description body (not the AC field on ADO — Removed history lives in description per Phase 1).
+- **Active parent Feature AC IDs** — used to validate that any new or revised `Covers:` reference in the parent's story map (if a subsequent `to-feature --update` re-snapshots) resolves cleanly.
+- `.claude/queue.md` entries (or memory equivalent — see `## Naming-drift queue`) that mention this Story's tracker ID — surface as cold-start context.
+
+### AC ID handling on revision
+
+AC IDs are append-only across the active list and `## Removed acceptance criteria`:
+
+- **Edit-in-place** keeps the same AC ID. Default for wordsmithing or tightening.
+- **Substantive change** (semantics shift, not wording): prompt the user — edit-in-place (keep ID) or remove+add. Remove+add moves the old AC to `## Removed acceptance criteria` with strike-through, the removal date, and a one-line reason. The new AC takes the next unused integer past `max(active ∪ removed)`.
+- **New AC** always takes the next unused integer.
+- **Removed AC** moves to `## Removed acceptance criteria` (description body, not the AC field). Never reuse its ID; never renumber gaps.
+
+### Self-review (in `--update` mode)
+
+Re-run all step 7 checks. Two are additionally load-bearing in update mode:
+
+- **Append-only invariant:** the union of post-update active and removed AC IDs is a superset of pre-update active and removed AC IDs; no pre-existing ID has changed text without the user explicitly choosing edit-in-place.
+- **`## Layers touched`** still populated for each layer. Any layer that flipped from present to `none`, or vice versa, is a re-snapshot signal — see the next subsection.
+
+### Re-snapshot prompt for parent
+
+If the update materially changes scope (added/removed ACs, changed module list, layer reshape that's visible in the parent's story map), prompt the user to also run `to-feature --update <parent-feature-id>` to re-snapshot the story map. The skill does not auto-cascade — Story `--update` patches the Story only.
+
+Sibling `Covers:` references on the parent's emergent-Story entries (below the snapshot separator) are not validated by this skill; they're validated when `to-feature --update` next runs and re-snapshots.
+
+### Patch
+
+- **ADO:** convert Markdown → HTML per step 9, then `az boards work-item update --id <story-id> --description "<html>" --fields "Microsoft.VSTS.Common.AcceptanceCriteria=<html>"`.
+- **GitHub:** `gh issue edit <story-number> --body-file <draft>`.
+
+### Naming-drift queue write
+
+If the patch introduces names that differ from siblings (other Stories under the same parent Feature, or Tasks under this Story), append entries to the queue per the `## Naming-drift queue` section. Surface drift as a warning during self-review; never block the patch — sometimes the new name is correct and the sibling needs renaming.
+
+## Naming-drift queue
+
+Pending sibling work-item updates flagged during publish. Read on `--update` cold-start; written by any publish (create or `--update`) that surfaces a name diverging from a sibling.
+
+- **Repo mode:** `.claude/queue.md` at the repo root. Create on first write.
+- **No-repo CLI-only mode:** memory entry keyed by tracker context (e.g., `Naming-drift queue — work-backlog`).
+
+Entry format:
+
+```markdown
+- [ ] **<work-item-id>** — `<observed-name>` differs from `<canonical-name>` (introduced by <work-item-type> #<id> on <YYYY-MM-DD>)
+```
+
+The queue is informational. Surface relevant entries on cold-start; never block a publish on it.

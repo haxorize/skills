@@ -58,10 +58,13 @@ Before committing any markup-dependent design to ADO, verify Jira Align ↔ ADO 
 
 ### Phase 2 — Maintenance modes
 
-- [ ] `to-story --update <story-id>` — single Story patch. Cold-start parent-aware (Story + parent Feature body). Prompt to re-snapshot the parent Feature on material scope change.
-- [ ] `to-tasks --update <task-id>` — single Task body patch.
-- [ ] `to-tasks --reconcile <story-id>` — multi-Task diff against current Story; implements ADR-0003 reconcile semantics (state-aware, mark-not-delete, terminology-drift cold-start).
-- [ ] Naming-drift queue: a durable `.claude/queue.md` (or memory entry) tracking pending sibling `--update`s. Written by any publish that surfaces drift; surfaced on `--update` cold-start.
+- [x] `to-story --update <story-id>` — single Story patch. Cold-start fetches Story body, AC field, and parent Feature body so `Covers:` references are validated parent-aware. AC ID handling is append-only with edit-in-place vs. remove+add prompt on substantive changes. Self-review re-runs step 7 with append-only invariant as the load-bearing check. Re-snapshot prompt for parent Feature on material scope change (no auto-cascade).
+- [x] `to-tasks --update <task-id>` — single Task body patch. Cold-start fetches Task body and parent Story (description + AC field). Self-review checks `## Covers` references resolve to active parent ACs, `## Layers touched` populated, naming consistency vs sibling Tasks.
+- [x] `to-tasks --reconcile <story-id>` — multi-Task diff against current Story. Buckets Tasks into Stale Covers / Unknown Covers / Healthy + Covered / Uncovered ACs. State-aware per ADR-0003 (Done/Closed leave alone; In Progress surface for decision; New safe to revise/close). GitHub state default is **assignee-presence** (`In-progress signal:` override deferred to Phase 4). Mark-not-delete via state transition to Removed (ADO) or `gh issue close --reason not_planned` (GitHub). Reads removed ACs from description body, not the AC field on ADO.
+- [x] Naming-drift queue: durable `.claude/queue.md` (repo mode) or memory entry keyed by tracker context (no-repo CLI-only). Entry format codified in each skill that has `--update` or `--reconcile`. Read on cold-start; written by any publish that surfaces drift; never blocks.
+- [x] Pre-existing `to-feature --update` AC-ID-preservation verification — codified the patch-scope invariant (only text between BEGIN/END markers replaced; AC field and other description sections preserved verbatim). Cold-start now explicitly fetches the description in full, and the self-review section narrows to story-map checks only (skip placeholder/contradiction/scope/ambiguity/domain — the rest of the body is untouched).
+
+**Open at landing:** Phase 0 sync verification still pending; if Jira Align ↔ ADO sync mangles typed AC prefixes, strike-through, story-map markers, or `## Removed acceptance criteria` headings, all of Phase 2's parsing assumptions need rework. Phase 0 must run before any of these maintenance modes are exercised against production ADO.
 
 ### Phase 3 — New skills
 
