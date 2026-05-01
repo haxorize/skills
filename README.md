@@ -24,6 +24,10 @@ Personal collection of repo-agnostic agent skills, hoisted into `~/.claude/skill
 - **`to-story`** — Synthesize a Story-level (single-feature spec) artifact and publish it. Default entry point for turning a grilled plan into a tracked work item. ADO: User Story. GitHub: story-shaped issue.
 - **`to-tasks`** — Break a parent User Story into child Tasks. Tracer-bullet style; verifies the parent is a Story before slicing. To split a Feature into Stories, run `to-story --parent <feature-id>` repeatedly instead.
 
+### Implementation
+
+- **`tdd`** — Test-driven development workflow using vertical slices. Universal RED/GREEN/refactor core; project commands resolved via CLAUDE.md `## Commands`; stack-specific finalization (migrations, primitive uplift, browser checks) deferred to active convention skills.
+
 ### Architecture
 
 - **`deepen`** — Module-deepening refactor proposals.

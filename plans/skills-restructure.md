@@ -28,6 +28,7 @@ Restructure the `humana/skills` repo to adopt a Matt Pocock-inspired workflow (g
 | `context7-mcp` | Keep, unchanged | |
 | Per-repo `write-feature-spec` (UI + API) | **Delete** (after migration verified) | |
 | Per-repo `spec-to-tasks` (UI + API) | **Delete** (after migration verified) | |
+| `tdd` | **Promoted from per-repo (follow-on)** | Universal RED/GREEN/refactor core; stack epicycles displaced to convention skills (`database`, `shadcn`, `testing-e2e`); commands resolved via CLAUDE.md `## Commands`. Per-repo copies (UI + API) deleted after API live trial passes. See "TDD promotion" section. |
 
 ## Conventions
 
@@ -486,3 +487,89 @@ Phases 1, 2, 3, 4, and 6 done. Phase 5 (work-backlog ADO onboarding) is its own 
 8. **ADO no-repo workflow requires pre-existing parent IDs.** With `Hierarchy: required` (default for ADO), `to-feature` needs an Epic ID, `to-story` needs a Feature ID, `to-tasks` needs a Story ID. In no-repo mode (work backlog without a configured CLAUDE.md), the user must look these up in the ADO web UI before invoking. Mitigation: Phase 5 step 4 captures default parent IDs in the memory entry alongside the tracker config. Friction remains for one-off work in unfamiliar areas where no defaults apply — accept this; the alternative (auto-discover or auto-create Epics) is too magical and risks creating misplaced parents.
 9. **ADO field shape assumptions.** Skills target the stock Agile/Scrum process template field shape: Feature gets `System.Description` + `Microsoft.VSTS.Common.AcceptanceCriteria`; User Story gets the same (regardless of whether the body field is labeled "Description" or "Notes" in the UI); Task gets `System.Description` only. Reference names are immutable across templates so this is robust against display-name relabeling, but a heavily customized template that adds or replaces fields would need a per-project override. Mitigation: Phase 5 step 3 verifies the field shape against the user's project before first publish.
 10. **Markdown → HTML dependency.** ADO rich-text fields render HTML by default; templates are authored in Markdown for editability. Conversion requires `pandoc` (preferred) or Python `markdown` on the publishing machine. Mitigation: Phase 5 step 2 surfaces the install requirement up front. If neither is available, the skills should fail fast with a clear install hint rather than passing raw Markdown to ADO (which would render as plain text with no formatting).
+
+## TDD promotion (follow-on)
+
+The per-repo `tdd` skills in `a11y-health-api/.claude/skills/tdd/` and `a11y-health-ui/.claude/skills/tdd/` mirror each other in shape (Plan → Tracer bullet → RED/GREEN → Refactor → Lint+typecheck → Update docs) but carry stack-specific commands and stack-specific epicycles. This phase promotes them to a single global `humana/skills/tdd/`, mirroring the Phase 3/4 pattern that retired `write-feature-spec` and `spec-to-tasks`.
+
+Unlike that earlier pair (which Phase 3 audited as "essentially zero stack/product guidance — both skill-flow boilerplate"), the per-repo `tdd` skills carry real stack-aware content: API has Alembic migration generation as Step 5; UI has a unit-vs-e2e tracer-bullet fork, a `src/components/ui/` lift-to-primitives refactor cue, and a manual `pnpm dev` browser-check nudge. Promotion only works if that content has somewhere clean to land.
+
+### Final shape
+
+A single `humana/skills/tdd/SKILL.md` carrying the universal RED/GREEN/refactor core, symlinked to `~/.claude/skills/tdd/`. No `references/` folder — `tdd` carries no template artifacts. Frontmatter `description:` carries forward verbatim from the per-repo skills (already project-agnostic).
+
+The skill itself is the canonical workflow spec — see `humana/skills/tdd/SKILL.md`. The design-only deltas from the per-repo originals are below.
+
+### Project-agnostic phrasings
+
+- **Commands.** Skill says: *"Run your project's test command (see CLAUDE.md `## Commands`). If your project has separate inner-loop and outer-loop test commands, pick the loop that matches the behavior you're proving."* No `uv run pytest` / `pnpm test` enumeration.
+- **Sibling-skill references.** Skill says: *"For test fixtures and patterns, see your project's testing skill(s). For conventions on the layer you're touching (endpoint shape, component composition, schema design, etc.), consult the matching convention skill."* No by-name pointers at `testing` / `testing-unit` / `fastapi` / `database` — the model already sees the active-skill list at activation time, and category-with-purpose is enough cue.
+- **Stack epicycles displaced** to their rightful convention skill:
+  - **Alembic migration + roundtrip** — already fully covered in the `## Alembic migrations` section of `a11y-health-api/.claude/skills/database/SKILL.md`. No content to migrate; per-repo API `tdd` Step 5 dissolves into the existing `database` skill.
+  - **Lift-to-primitives** — universalized into the global `tdd` refactor section (above). Trust the active layer skill (`shadcn` for UI, `database`/`fastapi` for backend) to fill in the directory implicitly.
+  - **Browser check** — universalized into the global `tdd` coda (above). Not stack-specific in spirit; UI work anywhere benefits from a browser eyeball.
+- **Drop, do not migrate.** The UI per-repo `tdd`'s TanStack-intent discovery paragraph (`npx @tanstack/intent@latest list ...`) duplicates UI CLAUDE.md's "Skill Loading" preamble. Drop entirely.
+
+### Phases
+
+#### Phase A: Build (no-risk addition to skills repo)
+
+1. Create `humana/skills/tdd/SKILL.md` with the universal workflow.
+2. Symlink with `ln -s ~/code/src/humana/skills/tdd ~/.claude/skills/` (per the README install loop).
+3. Update `humana/skills/README.md` skill list with `tdd`.
+
+#### Phase B: Diff-by-prose audit (both repos)
+
+For each per-repo `tdd/SKILL.md`, walk line-by-line and confirm every step has a home — global `tdd`, displaced convention skill, or CLAUDE.md `## Commands`. Catalog any orphans before proceeding.
+
+Expected residue from prior investigation (no action required if confirmed):
+
+- API Step 5 (Alembic) → already in `database/SKILL.md`. Confirm coverage matches.
+- UI Step 4 lift-to-primitives → universalized into global `tdd`'s refactor section.
+- UI Step 5 browser check → universalized into global `tdd`'s coda.
+- UI TanStack-intent discovery paragraph → duplicate of UI CLAUDE.md "Skill Loading" preamble. Drop.
+- Commands across both repos → already in each CLAUDE.md `## Commands`.
+
+If any orphan surfaces that doesn't fit one of these buckets, decide its home before Phase C.
+
+#### Phase C: API live trial + delete per-repo `tdd`
+
+1. **Pick the next API feature** (or contrived small one) that touches a SQLAlchemy model — Alembic generation is the highest-stakes displacement and the only one with a "silent fail in prod" mode (forgetting `alembic revision` can ship a model change without a migration, which then breaks deploy). Other displacements (formatter, typechecker, lint, browser check) all bounce locally.
+2. **Drive TDD with the global skill loaded.** Watch for: RED/GREEN cadence intact; formatter/typechecker run; migration generated and roundtrip-tested via the Q3-nudge → `database` skill path; "if you couldn't run end-to-end, say so" coda fires when warranted.
+3. **Hard gate:** if the global flow systematically misses Alembic generation (even with the project-finalization nudge in place), abort the deletion, restore status quo, and revisit before proceeding. The nudge is the load-bearing mitigation; if it doesn't fire reliably, the migration's premise is broken — fall back to either a structured `## Project finalization` block in CLAUDE.md or keep per-repo `tdd` as a stack-specific addendum.
+4. **On pass:** delete `a11y-health-api/.claude/skills/tdd/`. Single atomic commit in the API repo.
+
+#### Phase D: UI delete per-repo `tdd`
+
+Riding on the API trial signal + diff-by-prose audit. UI displacements are all locally-bouncing failures (pre-commit `fmt:check + lint + typecheck` catches everything; browser check is a manual nudge with no silent-fail mode). No live trial earned — same trade-off Phase 4 took.
+
+1. Delete `a11y-health-ui/.claude/skills/tdd/`. Single atomic commit in the UI repo.
+
+#### Phase A outcomes (executed 2026-04-30)
+
+Created `humana/skills/tdd/SKILL.md` with the universal workflow. Symlinked to `~/.claude/skills/tdd/`. Added an "Implementation" section to `humana/skills/README.md` between "Publishing to a tracker" and "Architecture" with a one-line `tdd` entry.
+
+#### Phase B outcomes (executed 2026-04-30)
+
+Audited both per-repo `tdd/SKILL.md` files line-by-line against the global skill, displaced convention skills, and CLAUDE.md `## Commands` blocks. **No orphans.** Confirmed:
+
+- API Step 5 (Alembic migration + roundtrip) is fully covered in the `## Alembic migrations` section of `a11y-health-api/.claude/skills/database/SKILL.md` — `revision --autogenerate`, "always review autogenerated output before applying," and the `downgrade base && upgrade head` roundtrip all present.
+- UI Step 4 lift-to-primitives → universalized into the global `tdd` refactor section.
+- UI Step 5 browser check → universalized into the global `tdd` coda.
+- UI TanStack-intent discovery paragraph → fully covered by UI CLAUDE.md's "Skill Loading" preamble. Dropped, not migrated.
+- Test/lint/format commands → resolved by each repo's existing CLAUDE.md `## Commands` block.
+- UI pre-commit-hook commentary (the only piece outside the buckets above) → dropped as stack-specific; the principle "run lint/typecheck before commit" is captured implicitly by Step 5's ordering.
+
+**Per-repo `tdd` skills retained.** Do not delete `a11y-health-api/.claude/skills/tdd/` or `a11y-health-ui/.claude/skills/tdd/` until Phase C's API live trial passes — they continue to win activation in API/UI sessions during the gate window.
+
+A `project` memory entry under `~/.claude/projects/-Users-haxorize-code-src-humana/memory/project_tdd_promotion_trial.md` carries the trial-trigger so the next API session that touches a SQLAlchemy model surfaces the gate.
+
+### Open items / risks (TDD promotion)
+
+1. **Universal `lift-to-primitives` may feel toothless.** Generalizing from "lift to `src/components/ui/`" to "lift to existing project primitives or shared modules" loses concreteness. Mitigation: trust the active layer skill (`shadcn` for UI, `database`/`fastapi` for backend) to fill in the directory. If the universal phrasing produces visibly worse refactors in practice, fall back to either adding the cue to `shadcn/SKILL.md` explicitly or a per-repo CLAUDE.md addendum.
+2. **Finalization-nudge effectiveness is the load-bearing mitigation.** *"Consult any other active project skills for finalization steps relevant to this slice"* is the only tether between `tdd` and the displaced epicycles. If the model declares victory before checking `database` for Alembic, the migration costs us. Phase C's API live trial is the only runtime check, and failure mode is silent (no error, just a missing migration in the next commit). Re-verify on the first few API features that touch models; if the nudge under-fires, escalate to a structured `## Project finalization` CLAUDE.md block rather than rolling back the global skill.
+3. **UI deletion gated on API trial signal, not UI signal.** The two stacks have different displacement risk profiles, but if the global skill turns out to phrase one stack's workflow more naturally than the other (e.g., RED/GREEN cadence written in pytest cycle-time reads awkwardly when a Vitest cycle is 10× faster, or a Playwright cycle is 10× slower), the UI side won't surface it until first real use. Mitigation: revisit if the UI side reports friction within the first few uses.
+
+### Done when
+
+Phases A-D complete. Both per-repo `tdd` skills deleted. `humana/skills/README.md` lists `tdd`. Stale-reference grep across both repos for "`uv run pytest`", "`pnpm test`", and per-repo `tdd` paths returns no orphan callouts that should have moved.
