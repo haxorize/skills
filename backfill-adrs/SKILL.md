@@ -27,10 +27,12 @@ For each commit that smells like a design choice (new module, new dependency, sc
 
 Most commits reference a PR or work item; the rationale lives there, not in the commit message.
 
-- **GitHub** (v1 supported): `gh pr view <number>`, `gh issue view <number>` for PR/issue descriptions and discussion
-- **Azure DevOps** (v1: TODO; scaffolded but not implemented): `az repos pr show --id <pr-id>`, `az boards work-item show --id <id>` once implemented
+Read `CLAUDE.md` for an `Issue tracker:` block to determine which tracker to query:
 
-If the tracker isn't declared in `CLAUDE.md`, fall back to commit message and code-only inference.
+- **GitHub**: `gh pr view <number>` and `gh issue view <number>` for PR/issue description and discussion. Use `--comments` to include the thread.
+- **Azure DevOps**: `az repos pr show --id <pr-id>` for PR rationale, `az boards work-item show --id <id>` for work-item description and discussion.
+
+If no tracker block is declared, fall back to commit message and code-only inference.
 
 ### 4. Apply the ADR gate
 

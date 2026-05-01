@@ -61,6 +61,6 @@ Iterate until approved.
 ### 9. Publish via tracker dispatch
 
 - **GitHub:** `gh issue create --title "..." --body-file <draft>` with default labels from CLAUDE.md. Parent linking via template `Parent: #N` reference if `--parent` was provided. **Before creating the issue,** ensure every label in CLAUDE.md's `Default labels:` exists on the repo: `gh label list --json name --jq '.[].name'` once, then `gh label create <name>` for any missing. Idempotent and cheap; one-time per repo per label.
-- **ADO:** `az boards work-item create --type "User Story" --title "..." --description ...` with project / area path / iteration / state from CLAUDE.md. Parent linking via `az boards work-item relation add --relation-type Parent --target-id <feature-id>`.
+- **ADO:** `az boards work-item create --type "User Story" --title "..." --description "<html>"` with project / area path / iteration / state from CLAUDE.md. The description field expects HTML — convert the Markdown story draft before passing. Parent linking via `az boards work-item relation add --relation-type Parent --target-id <feature-id>`.
 
 If a required CLAUDE.md field is missing, fail fast with a clear "add this to CLAUDE.md" message.
