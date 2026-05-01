@@ -4,7 +4,7 @@ Use this when publishing a Task work item to Azure DevOps via `az boards work-it
 
 ## Field mapping
 
-| ADO field | Reference name | Source | CLI flag |
+| ADO field (display name) | Reference name | Source | CLI flag |
 |---|---|---|---|
 | Title | `System.Title` | Set on command line | `--title` |
 | Description (HTML) | `System.Description` | Body markdown converted to HTML | `--description` |
