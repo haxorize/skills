@@ -64,6 +64,20 @@ Bad (too vague): `Helps with API development.`
 
 Bad (summarizes workflow): `Gather requirements, draft SKILL.md, then iterate with the user. Use when creating a skill.`
 
+## Frontmatter pitfalls
+
+The frontmatter parses as strict YAML — unquoted colons inside `description:` render as "Error in user YAML" on GitHub's preview. Use em-dashes (or another non-colon separator) when separating clauses.
+
+Bad: `description: Stress-test plans. ADO: creates Tasks under a Story. GitHub: creates issues.`
+
+Good: `description: Stress-test plans. ADO — creates Tasks under a Story. GitHub — creates issues.`
+
+## Skill bodies don't cite repo ADRs
+
+Skills are symlinked from this repo into `~/.claude/skills/` and run from inside *the user's* project — not from this repo. Markdown links from a skill body to `../../docs/adr/<NNNN>-...` resolve to `~/docs/adr/...` once hoisted (broken), and even a bare prose mention like "See ADR-0001" points at nothing the user has in their own project.
+
+Lineage runs ADR → skill, not skill → ADR. Each ADR's prose names the skill(s) it shapes; that's the durable record. A future maintainer wondering "is there an ADR for this mechanism?" greps `docs/adr/` from inside this repo and finds it. The reverse pointer breaks the moment the skill is hoisted — don't write it.
+
 ## Writing style
 
 - **Imperative voice** for instructions ("Write one test"; not "You should write one test").

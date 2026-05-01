@@ -42,7 +42,7 @@ Lead with a recommendation. Let the user push back or confirm before drafting. N
 
 Decompose the chosen approach into Stories. For each Story capture: title, one-paragraph scope, the parent Feature acceptance criteria it covers, and any shared names (route paths, model names, query keys) it touches. Build a dependency graph between Stories. Quiz the user on the list — iterate until approved.
 
-If the user can't decompose yet, confirm explicitly and skip to step 7. The published Feature will carry `Story Decomposition: deferred at Feature creation.` in place of the map block; fill in later via `--update <feature-id>`. See [ADR-0001](../docs/adr/0001-story-map-append-only-living.md).
+If the user can't decompose yet, confirm explicitly and skip to step 7. The published Feature will carry `Story Decomposition: deferred at Feature creation.` in place of the map block; fill in later via `--update <feature-id>`.
 
 ### 7. Draft the feature
 

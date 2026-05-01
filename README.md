@@ -48,9 +48,8 @@ Personal collection of repo-agnostic agent skills, hoisted into `~/.claude/skill
 Symlink each skill directory into `~/.claude/skills/`:
 
 ```bash
-cd ~/code/src/humana/skills
+cd ~/code/src/humana/skills/src
 for skill in */; do
-  case "$skill" in plans/|docs/) continue;; esac
   ln -s "$(pwd)/${skill%/}" ~/.claude/skills/
 done
 ```
@@ -58,7 +57,7 @@ done
 Or link a single skill:
 
 ```bash
-ln -s ~/code/src/humana/skills/grill-me ~/.claude/skills/
+ln -s ~/code/src/humana/skills/src/grill-me ~/.claude/skills/
 ```
 
 ## Notes
@@ -68,3 +67,4 @@ ln -s ~/code/src/humana/skills/grill-me ~/.claude/skills/
 - Bootstrap-on-ask is safe to use alongside Claude Code's built-in `/init` — `/init` preserves existing CLAUDE.md sections rather than overwriting them, so the order of operations doesn't matter.
 - See [`plans/skills-restructure.md`](plans/skills-restructure.md) for the design history and rationale behind the current skill set.
 - Design decisions about specific skills are recorded as ADRs in [`docs/adr/`](docs/adr/).
+- This repo eats its own dog food — see [`DOMAIN.md`](DOMAIN.md), maintained by `harden-domain`, for the suite's canonical terms.

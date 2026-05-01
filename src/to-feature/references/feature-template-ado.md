@@ -16,7 +16,7 @@ Use this when publishing a Feature work item to Azure DevOps via `az boards work
 
 ## Description (markdown body — converted to HTML before publishing)
 
-Author the body as Markdown. The `## Story Decomposition` section at the bottom is the story map (see `to-feature` SKILL.md step 6 and [ADR-0001](../../docs/adr/0001-story-map-append-only-living.md)); inside it, HTML markers fence an append-only region so `to-story` can locate and append to it.
+Author the body as Markdown. The `## Story Decomposition` section at the bottom is the story map (see `to-feature` SKILL.md step 6); inside it, HTML markers fence an append-only region so `to-story` can locate and append to it.
 
 ```markdown
 ## Problem
