@@ -38,6 +38,7 @@ Ubiquitous-language glossary for the entire skills repo at `~/code/src/humana/sk
 | **User Story** | A single-feature spec sized to one delivery slice | Story (accepted shorthand), Spec |
 | **Task** | A vertical-slice unit of implementation work under a User Story | Subtask, Step |
 | **Bug** | An issue-shaped work item describing observed defective behavior | Defect, Issue |
+| **KTLO Feature** | A "keep the lights on" Feature — a recurring per-PI bucket for one of {security vulnerabilities, tech debt, support requests, bug fixes}. Carries no AC field and no Story map; body is slim (Scope, Out of scope, Cadence/SLA, Constraints, Notes). | Bucket Feature, Maintenance Feature, Enabler Feature (overloaded — SAFe's Enabler is foundational-tech work, not maintenance) |
 | **Work item** | The tracker-neutral umbrella term for any of the above | Item, Ticket |
 
 ## Acceptance criteria
@@ -180,6 +181,7 @@ Ubiquitous-language glossary for the entire skills repo at `~/code/src/humana/sk
 - A **User Story** belongs to exactly one **Feature** under `Hierarchy: required`; parent linking is optional under `Hierarchy: optional`.
 - A **Task** belongs to exactly one **User Story** — never directly to a **Feature**.
 - A **Feature** contains zero or more **User Stories** in its **Story map** (a **Snapshot** above the **Snapshot separator**, an **Append region** below).
+- A **KTLO Feature** is a **Feature** that sits outside the to-X publishing path — drafted via `grill-me` against a versioned `docs/ktlo/<category>.md`, published manually, with no AC field and no **Story map**. Child **User Stories** parent to it via `to-story --parent <ktlo-feature-id>` and behave normally; the parent's missing ACs are structural (a **Task**'s `## Covers` references its parent **Story**'s ACs, not the **Feature**'s).
 - A **Story map** carries a **Coverage matrix**, a **Naming table**, and **Dependency edges** between the child Stories.
 - A **User Story** is classified as **user-facing** (body leads with a **Connextra user-story line**) or **non-user-facing** (body leads with a **`## User-facing behavior`** section).
 - An **AC** belongs to exactly one **Feature**, **User Story**, or **Bug**, and is identified by a stable, append-only **AC ID**.
