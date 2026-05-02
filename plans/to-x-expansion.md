@@ -75,8 +75,10 @@ Before committing any markup-dependent design to ADO, verify Jira Align ↔ ADO 
 
 ### Phase 4 — GitHub-side adaptations
 
-- [ ] `Severity labels:` CLAUDE.md block convention — bootstrap-on-ask for `to-bug`.
-- [ ] `In-progress signal:` CLAUDE.md block — overrides default assignee-based heuristic for `to-tasks --reconcile` Task-state detection on GitHub (assignee-presence is the default; teams override if their process differs).
+- [x] `Severity labels:` CLAUDE.md block convention codified. Consumer already exists in `src/to-bug/SKILL.md` step 4 and `src/to-bug/references/bug-template-github.md` (bootstrap-on-ask flow with default scale `critical / high / medium / low`). Phase 4 adds a README `## Conventions` bullet plus a **Severity label** entry in DOMAIN.md's Tracker integration table. No retroactive ADR — design is settled in the skill body.
+- [x] `In-progress signal:` CLAUDE.md block — label-based override shipped (ADR-0011). `src/to-tasks/SKILL.md` reconcile cold-start now reads the signal from CLAUDE.md and applies it during state detection; assignee-presence remains the default when the line is absent. Single label only (no multi-label OR-match). Project-status form deferred per ADR-0011 to keep the GitHub API surface small. ADO ignores the signal — `System.State` is authoritative. README `## Conventions` and DOMAIN.md updated to match.
+
+**Open at landing:** none — Phase 4 is GitHub-only, so the Phase 0 sync gate doesn't apply. ADO behavior is unchanged.
 
 ### Phase 5 — Documentation & rollout
 
@@ -138,6 +140,7 @@ Swept the full 10-commit history (default window override per the cleanup task).
 | 0008 | ADO publishing: Markdown authoring with HTML conversion and reference-name field targeting | `docs/adr/0008-ado-publishing-markdown-and-reference-names.md` (backfilled) |
 | 0009 | Synthesis-only stance for publishing skills (no-interview) | `docs/adr/0009-synthesis-only-publishing-skills.md` (backfilled) |
 | 0010 | `tdd` promoted to global with active-skill finalization nudge | `docs/adr/0010-tdd-global-with-finalization-nudge.md` (backfilled) |
+| 0011 | GitHub state detection via `In-progress signal:` CLAUDE.md block | `docs/adr/0011-in-progress-signal-claude-md.md` |
 
 ## Notes
 

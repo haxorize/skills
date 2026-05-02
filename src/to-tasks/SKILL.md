@@ -130,13 +130,14 @@ If the patch introduces names that differ from sibling Tasks, append entries to 
 
 - Fetch the parent Story:
   - **ADO:** `az boards work-item show <story-id> --output json --expand relations` — `System.Description`, `Microsoft.VSTS.Common.AcceptanceCriteria`, and child Task relations (`System.LinkTypes.Hierarchy-Forward`).
-  - **GitHub:** `gh issue view <story-number> --json body,title`. Children are issues whose body contains `Parent: #<story-number>` — find via `gh search issues "in:body Parent: #<story-number>" --json number,title,body,state,assignees`.
+  - **GitHub:** `gh issue view <story-number> --json body,title`. Children are issues whose body contains `Parent: #<story-number>` — find via `gh search issues "in:body Parent: #<story-number>" --json number,title,body,state,assignees,labels`.
 - Parse **active AC IDs** from the AC field (ADO) or `## Acceptance criteria` section (GitHub), and **removed AC IDs** from `## Removed acceptance criteria` in the description body (not the AC field on ADO).
 - Pull DOMAIN.md and surface terms changed since the Story's last revision — terminology drift is a leading indicator that Tasks are stale.
 - Read `.claude/queue.md` entries referencing the Story or any of its child Tasks.
+- On GitHub, read the **In-progress signal** from CLAUDE.md's `Issue tracker:` block — see `### In-progress signal (GitHub)` below. ADO ignores the signal; state is read directly from `System.State`.
 - For each child Task, fetch body and state:
   - **ADO:** `az boards work-item show <task-id>` — `System.Description` and `System.State`.
-  - **GitHub:** already fetched above; state is open/closed plus `assignees`.
+  - **GitHub:** already fetched above; state is open/closed plus `assignees` and `labels`.
 
 ### Build the diff
 
@@ -155,13 +156,26 @@ For each active AC ID on the parent:
 
 Task state gates whether reconcile auto-modifies, surfaces for decision, or leaves alone:
 
-| State | ADO | GitHub (default) | Behavior |
+| State | ADO | GitHub | Behavior |
 |---|---|---|---|
 | Done / Closed | `Done` / `Closed` / `Removed` | issue closed | Leave alone; surface as historical |
-| In Progress / Active | `Active` / `In Progress` / `Committed` | issue open + assignee present | Never auto-modify; surface per-Task for user decision |
-| New / Not Started | `New` / `To Do` / `Proposed` | issue open + no assignee | Safe to revise body, close, or transition to Removed |
+| In Progress / Active | `Active` / `In Progress` / `Committed` | issue open + In-progress signal matches | Never auto-modify; surface per-Task for user decision |
+| New / Not Started | `New` / `To Do` / `Proposed` | issue open + In-progress signal does not match | Safe to revise body, close, or transition to Removed |
 
-GitHub state-detection default is **assignee-presence**: an open issue with one or more assignees is treated as In Progress; an open issue with no assignees is New. The `In-progress signal:` CLAUDE.md block override (label-based, project-board-based, etc.) is Phase 4 — `--reconcile` ships only the assignee-presence default for now.
+### In-progress signal (GitHub)
+
+GitHub has no native work-item state beyond `open` / `closed` — reconcile uses an **In-progress signal** to distinguish open-and-being-worked from open-and-not-yet-started. Declared per repo in CLAUDE.md's `Issue tracker:` block:
+
+| Declaration | Match condition |
+|---|---|
+| `In-progress signal: label <name>` | Open issue carries the named label |
+| (block absent — default) | Open issue has ≥1 assignee |
+
+Single label only — no multi-label OR-match. Closed issues are always Done regardless of the signal — `closed` and `closed --reason not_planned` are bucketed identically.
+
+`to-tasks` only reads the signal — reconcile never adds, removes, or transitions issues against the signal label. State changes remain the team's process on the board.
+
+If the line is malformed (e.g., `In-progress signal: label` with no name), warn and fall back to the assignee-presence default; do not block the reconcile pass.
 
 ### Mark, never delete
 

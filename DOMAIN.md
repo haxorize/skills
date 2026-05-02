@@ -143,6 +143,8 @@ Ubiquitous-language glossary for the entire skills repo at `~/code/src/humana/sk
 | **Sibling repo** | A repo declared adjacent to the current one in `CLAUDE.md`'s `## Sibling repos` section | Linked repo, Related repo |
 | **PI workspace** | A directory dedicated to cross-team backlog construction, declaring Sibling repos but holding no code itself | Backlog repo, Planning workspace |
 | **Label-precheck** | A GitHub-specific publish step ensuring every `Default labels:` value exists on the repo before `gh issue create` | Label sync |
+| **Severity label** | A GitHub label representing a Bug's severity (e.g., `sev:critical`), declared per repo in CLAUDE.md's `Severity labels:` block; ADO uses the native `Microsoft.VSTS.Common.Severity` field instead | Severity tag, Sev label |
+| **In-progress signal** | The CLAUDE.md `In-progress signal:` declaration telling `to-tasks --reconcile` how to distinguish open-and-being-worked from open-and-not-yet-started GitHub issues; defaults to assignee-presence when absent | WIP signal, Status signal |
 
 ## Process & cadence
 
@@ -181,6 +183,8 @@ Ubiquitous-language glossary for the entire skills repo at `~/code/src/humana/sk
 - **Tracker resolution** runs once per session in one of three modes (declared / bootstrap-on-ask / no-repo CLI-only); **Tracker dispatch** then selects the per-Tracker template and CLI for the resolved Tracker.
 - A **Cross-repo blocker** annotates a **Task** whose Vertical slice cannot land until a **Sibling repo** ships a contract change.
 - **Two-way sync** propagates content between **ADO** and **Jira Align** at the **Feature** level — markup that survives the round-trip cleanly is not guaranteed.
+- A **Severity label** is GitHub-only; on ADO, severity rides the native field and the `Severity labels:` block is ignored.
+- An **In-progress signal** is GitHub-only; on ADO, `--reconcile` reads `System.State` directly and the `In-progress signal:` line is ignored.
 - A **Module** has exactly one **Interface** and one **Implementation**; **Depth** is measured at the Interface and corresponds to the **Leverage** callers receive.
 - A **Port** is an **Interface** at a **Seam** with ≥2 **Adapters**; a single-Adapter Seam is just indirection, not a Port.
 - A **Module-deepening refactor** typically merges or absorbs **Pass-through** Modules into a **Deep module**; the **Deletion test** decides which is which.
