@@ -141,6 +141,7 @@ Swept the full 10-commit history (default window override per the cleanup task).
 | 0009 | Synthesis-only stance for publishing skills (no-interview) | `docs/adr/0009-synthesis-only-publishing-skills.md` (backfilled) |
 | 0010 | `tdd` promoted to global with active-skill finalization nudge | `docs/adr/0010-tdd-global-with-finalization-nudge.md` (backfilled) |
 | 0011 | GitHub state detection via `In-progress signal:` CLAUDE.md block | `docs/adr/0011-in-progress-signal-claude-md.md` |
+| 0012 | KTLO Features out of scope for the to-X publishing suite | `docs/adr/0012-ktlo-features-out-of-scope-for-to-x.md` |
 
 ## Notes
 
