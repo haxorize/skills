@@ -26,6 +26,7 @@ Ubiquitous-language glossary for the entire skills repo at `~/code/src/humana/sk
 | **Update mode** | Single-artifact maintenance mode invoked via `--update <work-item-id>` (see ADR-0003) | Patch, Edit, Revise |
 | **Reconcile mode** | Multi-artifact diff mode invoked via `--reconcile <story-id>`, proposing adds/closures/edits across child Tasks (see ADR-0003) | Sync, Realign |
 | **Cold-start** | A fresh Claude Code session entering a work item with no prior conversation context | Fresh session |
+| **Cold-start loader** | A Skill that fetches a published Work item back into the conversation as implementation context — embodied by `from-work-item` | Loader (when used alone) |
 | **Archaeological mode** | `backfill-adrs`'s mode for recovering un-recorded decisions from git history | — |
 
 ## Work item types
@@ -46,6 +47,7 @@ Ubiquitous-language glossary for the entire skills repo at `~/code/src/humana/sk
 | **Acceptance criterion (AC)** | A testable success condition on a Feature, User Story, or Bug | Requirement, Spec line |
 | **AC ID** | A stable, append-only identifier for an AC (`**AC1:**`, `**AC2:**`, ...) | AC number (implies renumbering) |
 | **`## Covers`** | The Task body section listing the parent AC IDs the Task addresses | Refs, Implements |
+| **Active AC** | An AC currently in force on a Feature, User Story, or Bug — not in `## Removed acceptance criteria` | Live AC (overloaded — sounds runtime) |
 | **Removed AC** | An AC moved to the `## Removed acceptance criteria` section (see ADR-0002 for format) | Deleted AC, Dropped AC |
 
 ## Story shape
@@ -125,6 +127,7 @@ Ubiquitous-language glossary for the entire skills repo at `~/code/src/humana/sk
 | **Glossary** | The set of canonical Domain terms within `DOMAIN.md` | Vocabulary, Lexicon |
 | **Bounded context** | (DDD) A subdomain with its own ubiquitous language | Context (when used alone — too generic) |
 | **Ubiquitous language** | (DDD) The shared vocabulary between developers and domain experts within a Bounded context | Domain language (acceptable casual usage) |
+| **Sibling reference file** | A `references/<name>.md` file duplicated byte-identically across multiple skills (`domain-format.md`, `adr-format.md`); ADR-0007 records the duplication, `scripts/lint-skills.sh` enforces equality | Shared reference (no source-of-truth — they are siblings, not a copy-of) |
 
 ## Tracker integration
 
@@ -132,7 +135,10 @@ Ubiquitous-language glossary for the entire skills repo at `~/code/src/humana/sk
 | --- | --- | --- |
 | **Tracker** | An issue/work-item system (ADO or GitHub) | Issue tracker (use Tracker), System |
 | **Tracker dispatch** | The per-Tracker selection of template + CLI inside each `to-X` Skill | Tracker handler |
-| **Tracker resolution** | The act of identifying which Tracker to use, in one of three modes (declared / bootstrap-on-ask / no-repo CLI-only) | Tracker setup |
+| **Tracker resolution** | The act of identifying which Tracker to use, in one of three modes (Declared / Bootstrap-on-ask / No-repo CLI-only) | Tracker setup |
+| **Declared (mode)** | Tracker-resolution mode used when CLAUDE.md already carries an `Issue tracker:` block — read the block, dispatch automatically, no prompts | Configured mode |
+| **Bootstrap-on-ask** | Tracker-resolution mode used when a repo is present but lacks an `Issue tracker:` block — ask once inline, preview an appended `## Issue tracker` section, write only on confirmation, never overwrite | First-run prompt |
+| **No-repo CLI-only mode** | Tracker-resolution mode used when no git repo is present — ask once, save as a `reference` memory keyed by tracker context, publish via tracker CLI without touching files | CLI-only |
 | **ADO (Azure DevOps)** | Microsoft's work-item tracker, with typed work-item types and a field-rich state machine | TFS, VSTS (deprecated names) |
 | **Jira Align** | A PI-level dependency/risk tracker that two-way syncs with ADO at the Feature level | — |
 | **GitHub** | An issue-based tracker that uses labels rather than types for shape distinctions | gh, GH |
@@ -145,6 +151,7 @@ Ubiquitous-language glossary for the entire skills repo at `~/code/src/humana/sk
 | **Severity label** | A GitHub label representing a Bug's severity (e.g., `sev:critical`), declared per repo in CLAUDE.md's `Severity labels:` block; ADO uses the native `Microsoft.VSTS.Common.Severity` field instead | Severity tag, Sev label |
 | **In-progress signal** | The CLAUDE.md `In-progress signal:` declaration telling `to-tasks --reconcile` how to distinguish open-and-being-worked from open-and-not-yet-started GitHub issues; defaults to assignee-presence when absent | WIP signal, Status signal |
 | **Iteration** | The ADO sprint assignment for a work item (field `System.IterationPath`), declared per-repo via the CLAUDE.md `Iteration:` block | Sprint (acceptable casually; **Iteration** is the field name) |
+| **Field reference name** | The stable, process-template-invariant ADO field identifier (`System.Description`, `Microsoft.VSTS.Common.AcceptanceCriteria`, `Microsoft.VSTS.Common.Severity`, `Microsoft.VSTS.TCM.ReproSteps`) that publishing skills target instead of the per-org display name (see ADR-0008) | Display name (rejected per ADR-0008) |
 
 ## Drift & consistency
 
@@ -157,6 +164,16 @@ Ubiquitous-language glossary for the entire skills repo at `~/code/src/humana/sk
 | **Cross-repo blocker** | A Task annotation marking dependence on a contract change in a Sibling repo (`Blocked by: ../<sibling-repo> — contract change required`) | Cross-repo dependency |
 | **Naming-drift queue** | A durable list of pending sibling `--update`s, offered when a publish surfaces drift | Update queue, Pending list |
 
+## Reconcile mechanics
+
+| Term | Definition | Aliases to avoid |
+| --- | --- | --- |
+| **Stale Covers** | Reconcile bucket — a child Task whose `## Covers` references at least one Removed AC ID | Outdated Covers |
+| **Unknown Covers** | Reconcile bucket — a child Task whose `## Covers` references an AC ID that does not exist on the parent | Bad Covers, Invalid Covers |
+| **Healthy Task** | Reconcile bucket — a child Task whose `## Covers` refs all resolve to Active ACs | Healthy (when used alone — too generic) |
+| **Uncovered AC** | A parent Active AC referenced by no child Task; reconcile proposes a new Task or a `## Covers` edit on an existing one | Orphan AC |
+| **Mark, never delete** | Suite-wide discipline — closing or transitioning to Removed instead of deleting work-item records, so reconcile preserves an audit trail in the body | Soft-delete (overloaded — means tombstoning in DB land) |
+
 ## Relationships
 
 - A **Skill** is a directory containing a `SKILL.md` plus optional **Reference files** under `references/`; **Repo-agnostic skills** in this repo are **Hoist**ed to `~/.claude/skills/`, **Convention skills** stay per-repo.
@@ -167,10 +184,15 @@ Ubiquitous-language glossary for the entire skills repo at `~/code/src/humana/sk
 - A **User Story** is classified as **user-facing** (body leads with a **Connextra user-story line**) or **non-user-facing** (body leads with a **`## User-facing behavior`** section).
 - An **AC** belongs to exactly one **Feature**, **User Story**, or **Bug**, and is identified by a stable, append-only **AC ID**.
 - A **Task** **Covers** one or more parent ACs (referenced by **AC ID**); a `Covers` reference to a **Removed AC** is a **Stale reference**.
+- **Reconcile mode** buckets each child Task as **Healthy Task**, **Stale Covers**, or **Unknown Covers**, and each parent **Active AC** as covered or **Uncovered**.
+- **Mark, never delete** governs every reconcile-driven removal — Tasks transition to Removed (ADO) or close with `--reason not_planned` (GitHub); the body record persists.
 - A **Bug** can be parented to a **Feature**, a **User Story**, or be parentless — tracker-config dependent.
 - A **Vertical slice** is the shape of exactly one **Task**; a **Tracer bullet** is the first **Vertical slice** in a delivery sequence; the **RED → GREEN → REFACTOR** cycle operates within one slice.
 - **Reconcile mode** operates on all **Tasks** under one **User Story**; **Update mode** operates on exactly one work item.
-- **Tracker resolution** runs once per session in one of three modes (declared / bootstrap-on-ask / no-repo CLI-only); **Tracker dispatch** then selects the per-Tracker template and CLI for the resolved Tracker.
+- **Tracker resolution** runs once per session in one of three modes — **Declared (mode)**, **Bootstrap-on-ask**, or **No-repo CLI-only mode**; **Tracker dispatch** then selects the per-Tracker template and CLI for the resolved Tracker.
+- **Field reference names** are immutable across ADO process templates; display names are not — publishing skills target the former.
+- A **Cold-start loader** (`from-work-item`) is read-only; it pulls a published work item back into the conversation but never mutates the tracker — revisions go through the corresponding `--update` mode on the publishing Skill.
+- A **Sibling reference file** is enforced byte-identical by `scripts/lint-skills.sh`; ADR-0007 records why duplication exists (symlink-per-skill install) and the lint mechanizes the editorial discipline.
 - A **Cross-repo blocker** annotates a **Task** whose Vertical slice cannot land until a **Sibling repo** ships a contract change.
 - **Two-way sync** propagates content between **ADO** and **Jira Align** at the **Feature** level — markup that survives the round-trip cleanly is not guaranteed.
 - A **Severity label** is GitHub-only; on ADO, severity rides the native field and the `Severity labels:` block is ignored.
@@ -191,11 +213,15 @@ Ubiquitous-language glossary for the entire skills repo at `~/code/src/humana/sk
 >
 > **Dev:** "Yes. What about Story 1's child Tasks? They reference `**AC2:**`, and Story 2's grilling reworded that AC."
 >
-> **Domain expert:** "If AC2 was removed entirely, it moves to `## Removed acceptance criteria` with strike-through. The Tasks now hold **stale references** — that's the case `to-tasks --reconcile` exists for. It diffs all Tasks under Story 1 against the current Story spec and proposes closures or rewrites, respecting work-item state."
+> **Domain expert:** "If AC2 was removed entirely, it moves to `## Removed acceptance criteria` with strike-through. Reconcile will bucket those Tasks as **Stale Covers** — that's exactly what `to-tasks --reconcile` exists for. It diffs all Tasks under Story 1 against the current Story spec and proposes closures or rewrites, respecting work-item state. **Mark, never delete** — closed Tasks transition to Removed (ADO) or close with `--reason not_planned` (GitHub); the body record persists."
 >
 > **Dev:** "And one of those Tasks waits on a sibling repo's API change first."
 >
 > **Domain expert:** "That's a **cross-repo blocker** — annotate the Task with `Blocked by: ../<sibling-repo> — contract change required`. Reconcile won't close it; the Task waits until the sibling ships. The **Snapshot** above the **snapshot separator** stays untouched — that record is rewritten only by `to-feature --update`."
+>
+> **Dev:** "Tomorrow I'm picking up that sibling work in a fresh session — what loads me back in?"
+>
+> **Domain expert:** "`from-work-item <task-id>`, the **Cold-start loader**. It reads the Task body, the parent Story's **Active ACs** (filtered by your `## Covers`), the parent Feature's Problem/Goals, the local `DOMAIN.md`, and ADRs matched against `## Layers touched`. ADO state comes from `System.State` directly; on GitHub the **In-progress signal** decides open-vs-being-worked. Loader is read-only — revisions still go through `to-tasks --update`."
 
 ## Flagged ambiguities
 
@@ -208,7 +234,9 @@ Ubiquitous-language glossary for the entire skills repo at `~/code/src/humana/sk
 - **"Hierarchy"** is overloaded: the work-item parent-child structure (Epic → Feature → User Story → Task) versus the `CLAUDE.md` `Hierarchy: required` configuration flag. Context usually disambiguates; in `SKILL.md` text, the config-flag usage dominates.
 - **"Issue"** is the GitHub-flavored synonym for **work item**. Use **work item** in tracker-neutral contexts; **issue** when GitHub-specific.
 - **"Reconcile"** vs **"Sync"** — **Reconcile** is the Skill verb for diffing Tasks against a current Story; **Sync** refers exclusively to **Two-way sync** between trackers (Jira Align ↔ ADO). Don't use Sync for the Skill operation.
-- **"Tracker"** vs **"Tracker dispatch"** vs **"Tracker resolution"** — **Tracker** is the system itself (ADO / GitHub); **Tracker dispatch** is the in-Skill mechanism that picks templates and CLI for that system; **Tracker resolution** is the act of identifying which Tracker to use (one of three modes).
+- **"Tracker"** vs **"Tracker dispatch"** vs **"Tracker resolution"** — **Tracker** is the system itself (ADO / GitHub); **Tracker dispatch** is the in-Skill mechanism that picks templates and CLI for that system; **Tracker resolution** is the act of identifying which Tracker to use (one of three modes — **Declared (mode)**, **Bootstrap-on-ask**, **No-repo CLI-only mode**).
+- **"Healthy"** alone is too generic — prefer **Healthy Task** in reconcile contexts to make the bucket sense unambiguous.
+- **"Reference name"** vs **"Reference file"** — **Field reference name** is the immutable ADO field identifier (`System.Description`, ...); **Reference file** is a doc under a Skill's `references/`. **Sibling reference file** is the lint-enforced subclass (ADR-0007). Don't conflate.
 - **"Module"** is severely overloaded: in **Architecture & deepening** it carries the Ousterhout sense (anything with an Interface and Implementation); in Python/JS it's a file or package; in some org charts it's a team's area. When ambiguity is possible, qualify the sense — "Ousterhout Module" or "Python module".
 - **"Boundary"** vs **"Seam"** — `deepen` deliberately avoids **Boundary** for the Seam concept because **Boundary** is reserved for DDD's **Bounded context**. Use **Seam** for the deepening sense, **Bounded context** for the DDD sense, never **Boundary**.
 - **"Interface"** is the broader Ousterhout-sense term in this repo (everything a caller must know — types, invariants, error modes, ordering, config); **Port** is the narrower term reserved for Interfaces at Seams that warrant ≥2 Adapters. Don't substitute "API" — that's HTTP-flavored and loses the invariant/error-mode/ordering nuance.
