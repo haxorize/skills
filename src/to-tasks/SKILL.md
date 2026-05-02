@@ -87,145 +87,17 @@ For each Task, use the appropriate template:
 
 If a required CLAUDE.md field is missing, fail fast with a clear "add this to CLAUDE.md" message.
 
-## Update mode
+If publish surfaces a name diverging from sibling Tasks under the same parent, append an entry to the naming-drift queue per [references/maintenance-modes.md](references/maintenance-modes.md). Surface as a warning; don't block.
 
-`--update <task-id>` patches a single Task body in place. Skips tracker resolution (uses the Task's existing project), parent resolution (already linked), sibling-repo read, and codebase exploration. Runs body re-draft → self-review → patch.
+## Maintenance modes
 
-### Cold-start
+Two flows operate on already-published Tasks:
 
-Fetch the current Task body and the parent Story:
+- **`--update <task-id>`** — patch a single Task body in place. Skips tracker / parent / sibling-repo / codebase resolution. Body re-draft → self-review → patch.
+- **`--reconcile <story-id>`** — diff all child Tasks under a parent Story against the current Story spec, propose adds / closures / edits, apply approved changes. State-aware: closed Tasks leave alone, in-progress surface for decision, new are safe to revise.
 
-- **ADO:** `az boards work-item show <task-id> --output json --expand relations` — pull `System.Description` and the parent Story relation (`System.LinkTypes.Hierarchy-Reverse`). Then `az boards work-item show <parent-story-id> --output json` — pull `System.Description` and `Microsoft.VSTS.Common.AcceptanceCriteria`.
-- **GitHub:** `gh issue view <task-number> --json body,title`. Resolve parent via the `Parent: #N` line; fetch parent the same way.
+Both modes read a **naming-drift queue** (`.claude/queue.md` in repo mode, memory entry in no-repo mode) on cold-start and append to it on publish when a name diverges from siblings. The queue is informational — surfaced as a warning, never blocking.
 
-Parse:
+GitHub reconcile uses an **In-progress signal** declared in CLAUDE.md's `Issue tracker:` block (`In-progress signal: label <name>`, defaults to assignee-presence) to distinguish open-being-worked from open-not-started. ADO reads `System.State` directly.
 
-- The Task's current `## Covers` line.
-- **Active parent AC IDs** from the parent Story's AC field (ADO) or `## Acceptance criteria` section (GitHub).
-- **Removed parent AC IDs** from `## Removed acceptance criteria` in the parent Story's description body (not the AC field on ADO).
-- `.claude/queue.md` entries mentioning this Task or its parent Story — see `## Naming-drift queue`.
-
-### Self-review (in `--update` mode)
-
-- **Covers references resolve** — every AC ID in `## Covers` exists on the parent Story and is active (not in `## Removed acceptance criteria`). If a reference is now stale, prompt: edit it out, repoint, or close the Task.
-- **`## Layers touched`** — populated for each layer (`none` is valid; missing is not).
-- **Naming consistency** — matches sibling Tasks under the same parent Story (route paths, query keys, model names, search-param keys).
-- **Domain language** — matches `DOMAIN.md`.
-- **No placeholders.**
-
-### Patch
-
-- **ADO:** convert Markdown → HTML, then `az boards work-item update --id <task-id> --description "<html>"`. Tasks have no AC field; do not pass `Microsoft.VSTS.Common.AcceptanceCriteria`.
-- **GitHub:** `gh issue edit <task-number> --body-file <draft>`.
-
-### Naming-drift queue write
-
-If the patch introduces names that differ from sibling Tasks, append entries to the queue per the `## Naming-drift queue` section. Surface drift as a warning during self-review; don't block.
-
-## Reconcile mode
-
-`--reconcile <story-id>` diffs all child Tasks under a parent Story against the current Story spec, proposes adds / closures / edits, and applies user-approved changes. The ID identifies the *parent* of the set, not a single Task — semantically different from `--update`'s ID.
-
-### Cold-start
-
-- Fetch the parent Story:
-  - **ADO:** `az boards work-item show <story-id> --output json --expand relations` — `System.Description`, `Microsoft.VSTS.Common.AcceptanceCriteria`, and child Task relations (`System.LinkTypes.Hierarchy-Forward`).
-  - **GitHub:** `gh issue view <story-number> --json body,title`. Children are issues whose body contains `Parent: #<story-number>` — find via `gh search issues "in:body Parent: #<story-number>" --json number,title,body,state,assignees,labels`.
-- Parse **active AC IDs** from the AC field (ADO) or `## Acceptance criteria` section (GitHub), and **removed AC IDs** from `## Removed acceptance criteria` in the description body (not the AC field on ADO).
-- Pull DOMAIN.md and surface terms changed since the Story's last revision — terminology drift is a leading indicator that Tasks are stale.
-- Read `.claude/queue.md` entries referencing the Story or any of its child Tasks.
-- On GitHub, read the **In-progress signal** from CLAUDE.md's `Issue tracker:` block — see `### In-progress signal (GitHub)` below. ADO ignores the signal; state is read directly from `System.State`.
-- For each child Task, fetch body and state:
-  - **ADO:** `az boards work-item show <task-id>` — `System.Description` and `System.State`.
-  - **GitHub:** already fetched above; state is open/closed plus `assignees` and `labels`.
-
-### Build the diff
-
-For each child Task, parse its `## Covers` line. Bucket each Task:
-
-- **Stale Covers** — at least one referenced AC ID is in the parent's removed list. Propose: edit `## Covers` to drop the stale ID (if other refs remain healthy), or close the Task.
-- **Unknown Covers** — at least one referenced AC ID does not exist on the parent (neither active nor removed). Propose: edit `## Covers` to point at the correct AC, drop the reference, or close.
-- **Healthy** — all `## Covers` refs resolve to active ACs.
-
-For each active AC ID on the parent:
-
-- **Covered** — at least one Healthy or Stale Task references it.
-- **Uncovered** — no Task references it. Propose: add a new Task slice, or update an existing Task's `## Covers`.
-
-### State-aware proposals
-
-Task state gates whether reconcile auto-modifies, surfaces for decision, or leaves alone:
-
-| State | ADO | GitHub | Behavior |
-|---|---|---|---|
-| Done / Closed | `Done` / `Closed` / `Removed` | issue closed | Leave alone; surface as historical |
-| In Progress / Active | `Active` / `In Progress` / `Committed` | issue open + In-progress signal matches | Never auto-modify; surface per-Task for user decision |
-| New / Not Started | `New` / `To Do` / `Proposed` | issue open + In-progress signal does not match | Safe to revise body, close, or transition to Removed |
-
-### In-progress signal (GitHub)
-
-GitHub has no native work-item state beyond `open` / `closed` — reconcile uses an **In-progress signal** to distinguish open-and-being-worked from open-and-not-yet-started. Declared per repo in CLAUDE.md's `Issue tracker:` block:
-
-| Declaration | Match condition |
-|---|---|
-| `In-progress signal: label <name>` | Open issue carries the named label |
-| (block absent — default) | Open issue has ≥1 assignee |
-
-Single label only — no multi-label OR-match. Closed issues are always Done regardless of the signal — `closed` and `closed --reason not_planned` are bucketed identically.
-
-`to-tasks` only reads the signal — reconcile never adds, removes, or transitions issues against the signal label. State changes remain the team's process on the board.
-
-If the line is malformed (e.g., `In-progress signal: label` with no name), warn and fall back to the assignee-presence default; do not block the reconcile pass.
-
-### Mark, never delete
-
-When reconcile "removes" a Task:
-
-- **ADO:** `az boards work-item update --id <task-id> --state Removed` (or the team-configured equivalent terminal state). Never `az boards work-item delete`.
-- **GitHub:** `gh issue close <task-number> --reason not_planned`. The audit trail is the closure event.
-
-The work-item record persists either way — the suite's history-in-body principle extends to keeping rejected slices visible.
-
-### Quiz the user
-
-Present the diff as a single proposal grouped by bucket:
-
-```text
-Stale Covers (N):
-  - Task #<id> "<title>" — Covers: AC2 (removed) — propose: drop AC2 from Covers
-  - ...
-
-Unknown Covers (N):
-  - Task #<id> "<title>" — Covers: AC9 (does not exist) — propose: ...
-
-Uncovered ACs (N):
-  - AC4 "..." — propose: add new Task "<slice title>" with Covers: AC4
-  - ...
-
-State conflicts (requires decision, N):
-  - Task #<id> (In Progress) — Covers: AC2 (removed) — pick: edit Covers / close / leave alone
-  - ...
-
-Healthy (N): listed for completeness, no action.
-```
-
-Iterate per bucket until approved. Apply approved changes — body patches via `az boards work-item update` / `gh issue edit`, state transitions via update / close. Publish new Tasks in dependency order so blockers can be referenced.
-
-### Naming-drift queue write
-
-If reconcile surfaces naming drift across sibling Tasks (e.g., one uses `widgetId`, another `widget_id`), append entries to the queue per `## Naming-drift queue`. The user resolves drift in subsequent `--update` calls; reconcile doesn't block.
-
-## Naming-drift queue
-
-Pending sibling work-item updates flagged during publish. Read on `--update` and `--reconcile` cold-start; written by any publish (create, `--update`, or `--reconcile`) that surfaces a name diverging from a sibling.
-
-- **Repo mode:** `.claude/queue.md` at the repo root. Create on first write.
-- **No-repo CLI-only mode:** memory entry keyed by tracker context (e.g., `Naming-drift queue — work-backlog`).
-
-Entry format:
-
-```markdown
-- [ ] **<work-item-id>** — `<observed-name>` differs from `<canonical-name>` (introduced by <work-item-type> #<id> on <YYYY-MM-DD>)
-```
-
-The queue is informational. Surface relevant entries on cold-start; never block a publish on it.
+Full mode mechanics — cold-start fetch commands, bucket definitions, state-transition tables, queue entry format — live in [references/maintenance-modes.md](references/maintenance-modes.md).
