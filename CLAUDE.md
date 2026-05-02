@@ -15,3 +15,7 @@ A repo of repo-agnostic Claude Code skills, symlinked into `~/.claude/skills/`. 
 ## Commit order
 
 When changes touch both an ADR and the skill that references it, commit the ADR first so reviewers see the rationale before the implementation.
+
+## Linting
+
+`bash scripts/lint-skills.sh` checks SKILL.md and reference files against the size caps and frontmatter conventions in [`src/write-skill/SKILL.md`](src/write-skill/SKILL.md). Run before committing skill changes.
