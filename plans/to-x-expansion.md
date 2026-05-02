@@ -82,10 +82,10 @@ Before committing any markup-dependent design to ADO, verify Jira Align ↔ ADO 
 
 ### Phase 5 — Documentation & rollout
 
-- [ ] Add `from-work-item` row to README skill inventory.
-- [ ] Update README `## Conventions` section with note on AC IDs and `## Removed acceptance criteria` patterns.
-- [ ] Document the **PI workspace** pattern (directory with CLAUDE.md declaring tracker config + sibling repos, no code). Format: a doc in `plans/pi-workspace-pattern.md` rather than an ADR — it's a usage convention, not an architectural decision.
-- [ ] DOMAIN.md already updated; verify post-Phase-0 if any markup conventions changed.
+- [x] Skill inventory updated — `to-bug` row added under `## Publishing to a tracker`; `from-work-item` row added under `## Implementation` ahead of `tdd` (cold-start, then execution; section name kept since `tdd` is the execution loop, not cold-start).
+- [x] README `## Conventions` extended with two bullets covering AC IDs (append-only with `max(active ∪ removed) + 1`; never reuse a removed ID; `## Covers` is the Task→AC link) and `## Removed acceptance criteria` (description body, strike-through preserves history; on ADO this lives in the description, not the AC field). Zero ADR citations, matching existing convention-bullet style.
+- [x] PI workspace pattern documented in `plans/pi-workspace-pattern.md`. Recipe-style (~70 lines): when to use, layout (CLAUDE.md sample with tracker config + sibling repos), workflow, naming-drift queue location (memory keyed by tracker context, not `.claude/queue.md`), interaction with `from-work-item`'s layer-mismatch warning, no-repo CLI fallback, and don'ts.
+- [ ] DOMAIN.md verification — gated on Phase 0. The DOMAIN.md content shipped through Phase 4 is already in place; verification confirms nothing in markup conventions had to change post-sync.
 
 ## Deferred / open
 
