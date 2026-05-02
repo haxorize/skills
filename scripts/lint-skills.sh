@@ -4,6 +4,10 @@
 #   - Frontmatter `description:` must be <= 1024 chars and contain no unquoted
 #     `: ` separator (use em-dashes — GitHub's strict YAML preview chokes on
 #     mid-value colons).
+#   - ADR-0007 sibling reference files must stay byte-identical. Symlink-per-
+#     skill install means we duplicate `domain-format.md` and `adr-format.md`
+#     across the skills that need them; ADR-0007 records this with mitigation
+#     "editorial discipline." This check turns the discipline into mechanism.
 #
 # Exit code 0 if clean, 1 if any check fails. List all failures, don't bail
 # on first hit.
@@ -56,6 +60,30 @@ for f in src/*/SKILL.md; do
     echo "FAIL: $f description has unquoted ': ' (use em-dash) — $desc"
     fail=1
   fi
+done
+
+sibling_groups=(
+  "src/grill-and-record/references/domain-format.md|src/harden-domain/references/domain-format.md"
+  "src/grill-and-record/references/adr-format.md|src/backfill-adrs/references/adr-format.md"
+)
+
+for group in "${sibling_groups[@]}"; do
+  IFS='|' read -ra files <<< "$group"
+  ref="${files[0]}"
+  if [ ! -f "$ref" ]; then
+    echo "FAIL: sibling reference $ref is missing"
+    fail=1
+    continue
+  fi
+  for other in "${files[@]:1}"; do
+    if [ ! -f "$other" ]; then
+      echo "FAIL: sibling reference $other is missing"
+      fail=1
+    elif ! cmp -s "$ref" "$other"; then
+      echo "FAIL: $other drifted from $ref (per ADR-0007 these must stay byte-identical)"
+      fail=1
+    fi
+  done
 done
 
 if [ "$fail" -eq 0 ]; then

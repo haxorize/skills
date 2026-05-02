@@ -26,7 +26,6 @@ Ubiquitous-language glossary for the entire skills repo at `~/code/src/humana/sk
 | **Update mode** | Single-artifact maintenance mode invoked via `--update <work-item-id>` (see ADR-0003) | Patch, Edit, Revise |
 | **Reconcile mode** | Multi-artifact diff mode invoked via `--reconcile <story-id>`, proposing adds/closures/edits across child Tasks (see ADR-0003) | Sync, Realign |
 | **Cold-start** | A fresh Claude Code session entering a work item with no prior conversation context | Fresh session |
-| **Streaming** | A one-Story-at-a-time grill+publish cadence | — |
 | **Archaeological mode** | `backfill-adrs`'s mode for recovering un-recorded decisions from git history | — |
 
 ## Work item types
@@ -145,16 +144,7 @@ Ubiquitous-language glossary for the entire skills repo at `~/code/src/humana/sk
 | **Label-precheck** | A GitHub-specific publish step ensuring every `Default labels:` value exists on the repo before `gh issue create` | Label sync |
 | **Severity label** | A GitHub label representing a Bug's severity (e.g., `sev:critical`), declared per repo in CLAUDE.md's `Severity labels:` block; ADO uses the native `Microsoft.VSTS.Common.Severity` field instead | Severity tag, Sev label |
 | **In-progress signal** | The CLAUDE.md `In-progress signal:` declaration telling `to-tasks --reconcile` how to distinguish open-and-being-worked from open-and-not-yet-started GitHub issues; defaults to assignee-presence when absent | WIP signal, Status signal |
-
-## Process & cadence
-
-| Term | Definition | Aliases to avoid |
-| --- | --- | --- |
-| **Program Increment (PI)** | A multi-Sprint, multi-team planning unit (SAFe-flavored), typically 8–12 weeks | Quarter (not synonymous) |
-| **Iteration** | A Sprint within a PI (ADO field name `System.IterationPath`) | Sprint (acceptable in casual speech, but Iteration is the field name) |
-| **Definition of Ready (DoR)** | The process gate confirming a work item is ready to be committed to a PI | Ready check |
-| **Definition of Done (DoD)** | The process gate confirming a work item is complete | Done check |
-| **PI commitment** | The set of work the team has signed up to deliver in the current PI | Plan, Forecast |
+| **Iteration** | The ADO sprint assignment for a work item (field `System.IterationPath`), declared per-repo via the CLAUDE.md `Iteration:` block | Sprint (acceptable casually; **Iteration** is the field name) |
 
 ## Drift & consistency
 
