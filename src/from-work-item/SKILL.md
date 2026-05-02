@@ -138,5 +138,3 @@ Refusing on Feature/Epic is the only case where the user's next move is structur
 ## Notes
 
 - `from-work-item` does not modify the work item. Loading is read-only; revisions go through `to-story --update` / `to-tasks --update` / `to-bug --update`.
-- `from-work-item` is the inverse of the `to-X` skills. Together they close the round-trip loop: synthesis pushes context out via `to-X`; the loader pulls it back in.
-- The handoff to `tdd` is convention, not coupling. `from-work-item` produces context; `tdd` consumes acceptance criteria and runs the test loop. Either skill is useful without the other.

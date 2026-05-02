@@ -36,13 +36,7 @@ If no tracker block is declared, fall back to commit message and code-only infer
 
 ### 4. Apply the ADR gate
 
-For each candidate, all three criteria must hold:
-
-1. **Hard to reverse** — undoing this later carries real cost
-2. **Surprising without context** — a future reader will wonder "why this way?"
-3. **Result of a real trade-off** — there were genuine alternatives and one was picked for specific reasons
-
-Reject any candidate that fails. Bug fixes, reversible style choices, and routine feature additions don't qualify.
+Apply the three-criteria gate per [references/adr-format.md](references/adr-format.md). Reject any candidate that fails. Bug fixes, reversible style choices, and routine feature additions don't qualify.
 
 ### 5. Quiz the user on the candidate list
 
