@@ -70,7 +70,7 @@ Bad (summarizes workflow): `Gather requirements, draft SKILL.md, then iterate wi
 
 ## Frontmatter pitfalls
 
-The frontmatter parses as strict YAML — unquoted colons inside `description:` render as "Error in user YAML" on GitHub's preview. Use em-dashes (or another non-colon separator) when separating clauses.
+The frontmatter parses as strict YAML. The specific hazard is an unquoted `: ` — a colon **followed by a space** — in the `description:` value: YAML reads it as a nested mapping and GitHub's preview renders "Error in user YAML." A colon with no trailing space (`http://`, `3:1`) is harmless, and colons inside backtick code-spans are fine — `scripts/lint-skills.sh` strips code-spans before scanning, so `` `to-tasks --update` `` is safe. When separating clauses, use em-dashes.
 
 Bad: `description: Stress-test plans. ADO: creates Tasks under a Story. GitHub: creates issues.`
 
@@ -100,6 +100,12 @@ Lineage runs ADR → skill, not skill → ADR. Each ADR's prose names the skill(
 - SKILL.md exceeds 200 lines
 - Content has distinct subtopics (e.g., migrations vs schema design)
 - Some content is only needed occasionally
+
+## Sharing a reference across skills
+
+When two skills need the same reference (e.g. a shared format doc), don't reach for a repo-root shared folder or a symlink between skills. Skills install individually — a user symlinks one skill's directory into `~/.claude/skills/` without the rest of the tree — so anything outside that skill's own `references/` doesn't travel with it.
+
+Instead, duplicate the file byte-identically into each skill's `references/`, and register the group in `scripts/lint-skills.sh` (`sibling_groups`) so any drift between copies fails lint. The duplication tax only stays bounded for short, stable docs — don't share high-churn content this way.
 
 ## Review checklist
 
