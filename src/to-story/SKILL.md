@@ -89,8 +89,8 @@ See [references/ado-hierarchy.md](references/ado-hierarchy.md) for full procedur
 
 ## Update mode
 
-`--update <story-id>` patches an existing Story in place. See [references/update-mode.md](references/update-mode.md) for cold-start commands, AC ID handling rules, self-review checks, re-snapshot prompt, reconcile prompt, patch commands, and the naming-drift queue format.
+`--update <story-id>` patches an existing Story in place. See [references/update-mode.md](references/update-mode.md) for cold-start commands, AC ID handling rules, self-review checks, re-snapshot prompt, reconcile prompt, and patch commands.
 
 ## Naming-drift queue
 
-Pending sibling work-item updates flagged during publish. Read on `--update` cold-start; written by any publish that surfaces a name diverging from a sibling. Storage: `.claude/queue.md` (repo mode) or a memory entry keyed by tracker context (no-repo mode). The queue is informational — surface relevant entries on cold-start; never block a publish on it. Entry format and full behavior: see [references/update-mode.md](references/update-mode.md#naming-drift-queue).
+This skill reads the queue on `--update` cold-start and appends to it on publish when a name diverges from a sibling. Definition, storage, and entry format: see [references/naming-drift-queue.md](references/naming-drift-queue.md).

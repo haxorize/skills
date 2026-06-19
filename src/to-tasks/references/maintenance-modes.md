@@ -35,7 +35,7 @@ Parse:
 
 ### Naming-drift queue write
 
-If the patch introduces names that differ from sibling Tasks, append entries to the queue per the `## Naming-drift queue` section. Surface drift as a warning during self-review; don't block.
+If the patch introduces names that differ from sibling Tasks, append an entry per [naming-drift-queue.md](naming-drift-queue.md). Surface drift as a warning during self-review; don't block.
 
 ## Reconcile mode
 
@@ -128,19 +128,6 @@ Iterate per bucket until approved. Apply approved changes — body patches via `
 
 ### Naming-drift queue write
 
-If reconcile surfaces naming drift across sibling Tasks (e.g., one uses `widgetId`, another `widget_id`), append entries to the queue per `## Naming-drift queue`. The user resolves drift in subsequent `--update` calls; reconcile doesn't block.
-
-## Naming-drift queue
-
-Pending sibling work-item updates flagged during publish. Read on `--update` and `--reconcile` cold-start; written by any publish (create, `--update`, or `--reconcile`) that surfaces a name diverging from a sibling.
-
-- **Repo mode:** `.claude/queue.md` at the repo root. Create on first write.
-- **No-repo CLI-only mode:** memory entry keyed by tracker context (e.g., `Naming-drift queue — work-backlog`).
-
-Entry format:
-
-```markdown
-- [ ] **<work-item-id>** — `<observed-name>` differs from `<canonical-name>` (introduced by <work-item-type> #<id> on <YYYY-MM-DD>)
-```
+If reconcile surfaces naming drift across sibling Tasks (e.g., one uses `widgetId`, another `widget_id`), append an entry per [naming-drift-queue.md](naming-drift-queue.md). The user resolves drift in subsequent `--update` calls; reconcile doesn't block.
 
 The queue is informational. Surface relevant entries on cold-start; never block a publish on it.

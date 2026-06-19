@@ -39,7 +39,7 @@ If the decision is easy to reverse, skip — you'll just reverse it. If it's not
 
 ### 1. Apply the gate
 
-Confirm out loud which of the three criteria the decision meets, and which alternatives were considered. If the gate fails, stop and tell the user.
+Confirm out loud which of the three criteria the decision meets, and which alternatives were considered. If any one is missing, do not write the ADR — stop and tell the user why.
 
 ### 2. Number and slug
 

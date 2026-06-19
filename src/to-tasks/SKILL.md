@@ -93,7 +93,7 @@ For each Task, use the appropriate template:
 
 If a required CLAUDE.md field is missing, fail fast with a clear "add this to CLAUDE.md" message.
 
-If publish surfaces a name diverging from sibling Tasks under the same parent, append an entry to the naming-drift queue per [references/maintenance-modes.md](references/maintenance-modes.md). Surface as a warning; don't block.
+If publish surfaces a name diverging from sibling Tasks under the same parent, append an entry to the naming-drift queue per [references/naming-drift-queue.md](references/naming-drift-queue.md). Surface as a warning; don't block.
 
 ## Maintenance modes
 
@@ -102,8 +102,8 @@ Two flows operate on already-published Tasks:
 - **`--update <task-id>`** — patch a single Task body in place. Skips tracker / parent / sibling-repo / codebase resolution. Body re-draft → self-review → patch.
 - **`--reconcile <story-id>`** — diff all child Tasks under a parent Story against the current Story spec, propose adds / closures / edits, apply approved changes. State-aware: closed Tasks leave alone, in-progress surface for decision, new are safe to revise.
 
-Both modes read a **naming-drift queue** (`.claude/queue.md` in repo mode, memory entry in no-repo mode) on cold-start and append to it on publish when a name diverges from siblings. The queue is informational — surfaced as a warning, never blocking.
+Both modes read and append to the **naming-drift queue** on cold-start and publish when a name diverges from siblings — see [references/naming-drift-queue.md](references/naming-drift-queue.md).
 
 GitHub reconcile uses an **In-progress signal** declared in CLAUDE.md's `Issue tracker:` block (`In-progress signal: label <name>`, defaults to assignee-presence) to distinguish open-being-worked from open-not-started. ADO reads `System.State` directly.
 
-Full mode mechanics — cold-start fetch commands, bucket definitions, state-transition tables, queue entry format — live in [references/maintenance-modes.md](references/maintenance-modes.md).
+Full mode mechanics — cold-start fetch commands, bucket definitions, and state-transition tables — live in [references/maintenance-modes.md](references/maintenance-modes.md).
