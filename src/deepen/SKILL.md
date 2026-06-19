@@ -1,6 +1,6 @@
 ---
 name: deepen
-description: Module-deepening refactors — surface architectural friction and propose deeper interfaces, ending in a tracked work item. Use when reviewing architecture, planning a refactor before implementing, deciding what to refactor next, finding coupling, or wanting to improve testability.
+description: Module-deepening refactors — surface architectural friction and propose deeper interfaces. Use when reviewing architecture, planning a refactor before implementing, deciding what to refactor next, finding coupling, or wanting to improve testability.
 ---
 
 # Deepen
@@ -11,11 +11,11 @@ Surface architectural friction and propose module-deepening refactors.
 
 Use these terms exactly in every suggestion. Consistent language is the point.
 
-- **Module** — anything with an interface and an implementation (function, class, package, slice). _Avoid_: unit, component, service.
-- **Interface** — everything a caller must know to use the module: types, invariants, error modes, ordering, config. Not just the type signature. _Avoid_: API, signature.
+- **Module** — anything with an interface and an implementation (function, class, package, slice). _Avoid_: unit (implies test isolation, not interface+implementation pairing), component (implies UI), service (implies network boundary).
+- **Interface** — everything a caller must know to use the module: types, invariants, error modes, ordering, config. Not just the type signature. _Avoid_: API (implies external/versioned), signature (omits invariants and error modes).
 - **Implementation** — the code inside.
 - **Depth** — leverage at the interface: a lot of behaviour behind a small interface. **Deep** = high leverage. **Shallow** = interface nearly as complex as the implementation.
-- **Seam** — where an interface lives; a place behaviour can be altered without editing in place. _Avoid_: boundary (clashes with DDD's bounded context).
+- **Seam** — where an interface lives; a place behaviour can be altered without editing in place. _Avoid_: boundary (clashes with DDD's bounded context, which has its own meaning in many codebases).
 - **Adapter** — a concrete thing satisfying an interface at a seam.
 - **Leverage** — what callers get from depth.
 - **Locality** — what maintainers get from depth: change, bugs, knowledge concentrated in one place.
@@ -40,40 +40,15 @@ Tests at the deepened interface replace the old shallow-module tests — delete 
 
 ## Work item tracker
 
-This skill works with either GitHub Issues or Azure DevOps work items. (GitHub calls them "issues"; ADO calls them "work items." This file uses **work item** generically.)
-
-**Resolve the tracker before Step 1.** Read `CLAUDE.md` for an `Issue tracker:` block. Three modes:
+Read `CLAUDE.md` for an `Issue tracker:` block before Step 1. Three modes:
 
 - **Declared** — block present. Read tracker name and conventions; dispatch automatically.
-- **Bootstrap-on-ask** — repo present, CLAUDE.md missing or no tracker block. Ask the user inline for tracker name and required fields. Then preview an appended `## Issue tracker` section; write to CLAUDE.md (or create a minimal CLAUDE.md if absent) on confirmation. **Always append, never overwrite.**
-- **No-repo CLI-only** — no git repo at all. Ask for tracker info. Publish via CLI. No file writes. Save to memory keyed by tracker context (e.g., `Tracker default — work-backlog`) so subsequent invocations don't re-ask.
+- **Bootstrap-on-ask** — repo present, CLAUDE.md missing or no tracker block. Ask the user inline, preview an appended `## Issue tracker` section, write on confirmation. **Always append, never overwrite.**
+- **No-repo CLI-only** — no git repo. Ask for tracker info; no file writes. Save to memory so subsequent invocations don't re-ask.
 
-**Hierarchy.** Refactor work items belong under a parent.
+**Hierarchy.** Refactor work items belong under a parent Feature (`Hierarchy: required`, ADO default). If `--parent <feature-id>` is not provided, prompt for it. GitHub defaults to `Hierarchy: optional` — don't prompt. Required fields: GitHub needs only the tracker name; ADO requires `Project:` minimum.
 
-- **`Hierarchy: required`** (default for ADO): refactor User Stories must link to a parent Feature. If `--parent <feature-id>` is provided, use it; otherwise interactively prompt for the Feature ID. If no Feature exists, suggest running `to-feature` first or (only if team config allows top-level Stories) accepting a parentless Story.
-- **`Hierarchy: optional`** (default for GitHub): parent linking is optional; only use `--parent` if provided. Do not prompt.
-
-**Required fields.** GitHub needs only the tracker name; ADO requires `Project:` minimum.
-
-**Search**
-- GitHub: `gh issue list --state all --search "<terms>"`
-- ADO: `az boards query --wiql "SELECT [System.Id], [System.Title], [System.State] FROM workitems WHERE [System.Title] CONTAINS '<term>'"` (one `CONTAINS` clause per term, `OR`'d together)
-
-**Create**
-- GitHub: `gh issue create --title "..." --body "..."`
-- ADO: `az boards work-item create --type "User Story" --title "..." --description "<html>"` — convert the **Work item template** (below) to HTML before passing
-
-**Update body**
-- GitHub: `gh issue edit <N> --body "..."`
-- ADO: `az boards work-item update --id <N> --description "<html>"` — HTML, same as Create
-
-**Add comment**
-- GitHub: `gh issue comment <N> --body "..."`
-- ADO: `az boards work-item update --id <N> --discussion "<markdown>"` — Markdown rendered (GA)
-
-Title and body only when filing — no labels, assignees, area paths, or iterations.
-
-If the chosen tool errors with auth/permission failure, fall back to giving the user the **Work item template** (below) and the title/body content to paste manually. Don't loop on auth.
+CLI dispatch commands (search, create, update, comment) and auth-failure fallback: see [references/tracker-dispatch.md](references/tracker-dispatch.md).
 
 ## Workflow
 
@@ -154,43 +129,11 @@ Then offer to grill the design before filing — `grill-me` for a stress-test, o
 
 If grilling in Step 6 disqualified the candidate (e.g., revealed it isn't actually deepenable, or the friction is a bug rather than architecture), don't file — return to Step 3 with the new understanding.
 
-Before filing, ensure `DOMAIN.md` is current: if the recommended module is named after a concept not in the glossary, add it now (create the file lazily if absent). If `grill-and-record` ran in Step 6, it will already have done this — skip.
+Before filing, check whether `DOMAIN.md` contains the recommended module's name. If not, add it now (create the file lazily if absent).
 
 Once the user approves, either **update an existing work item** or **create a new one** using the appropriate command from "Work item tracker" above.
 
 - If step 1 found an existing work item that covers this candidate, update it with a comment or revised body rather than filing a duplicate.
 - If the candidate is net-new, create a work item. Don't ask the user to review before creating — just create it and share the URL. On Azure DevOps, use type **User Story**; if the **Hierarchy** rules above resolved a parent Feature, link via `az boards work-item relation add --relation-type Parent --target-id <feature-id>`.
 
-## Work item template
-
-```markdown
-## Problem
-
-- Which modules are shallow and tightly coupled
-- What integration risk exists in the seams between them
-- Why this makes the codebase harder to navigate and maintain
-
-## Proposed Interface
-
-- Interface signature (types, methods, params)
-- Usage example showing how callers use it
-- What complexity it hides internally
-
-## Testing Strategy
-
-- New boundary tests to write (behaviors to verify at the interface)
-- Tests to update or remove (shallow module tests that become redundant, or tests that need renaming/restructuring)
-
-## Implementation Decisions
-
-Durable architectural guidance, NOT coupled to current file paths:
-
-- What the module should own (responsibilities)
-- What it should hide (implementation details)
-- What it should expose (the interface contract)
-- How callers should migrate to the new interface
-
-## Out of Scope
-
-What is explicitly not part of this refactor.
-```
+Work item template: see [references/work-item-template.md](references/work-item-template.md).
