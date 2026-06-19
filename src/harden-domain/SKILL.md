@@ -9,7 +9,7 @@ Sweep the codebase and the conversation for domain terminology, surface drift an
 
 This is the **deliberate sweep mode** — invoked when the user wants a focused pass to refresh the glossary. Inline updates during a grilling session are owned by `grill-and-record`.
 
-## Process
+## Workflow
 
 ### 1. Scan for domain terms
 

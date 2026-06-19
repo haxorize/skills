@@ -5,7 +5,7 @@ description: Create new agent skills with proper structure and size constraints.
 
 # Writing Skills
 
-## Process
+## Workflow
 
 1. **Gather requirements** — what domain, what use cases, any reference material?
 2. **Draft the skill** — SKILL.md with references if needed
