@@ -75,4 +75,6 @@ Tests and type checks verify code correctness, not feature correctness. If the s
 
 Check whether the changes affect anything documented in `README.md`, `CLAUDE.md`, or `DOMAIN.md` (e.g., new commands, changed structure, new conventions, new or renamed domain terms). Update if needed.
 
+Scan the implementation for non-obvious decisions — rejected alternatives, chosen patterns with tradeoffs, constraints future maintainers would need to know. If any exist, propose a one-sentence summary and offer to run `/adr`. Don't ask a yes/no question; synthesize from what was just built and let the user approve or discard.
+
 If this slice ships as its own PR, run `/review` before pushing.

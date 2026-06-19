@@ -33,13 +33,17 @@ description: Brief description. Use when [specific triggers].
 
 # Skill Name
 
-## Quick start
+## [Gate / Publication constraints / etc.]
 
-[Minimal working example or key conventions]
+[Optional: conditions that govern when or how the skill runs]
 
-## Workflows
+## Workflow
 
-[Step-by-step processes for common tasks]
+[Step-by-step process — the most common section name across the suite]
+
+## Notes
+
+[Optional: edge cases, degradation behavior, cross-skill interactions]
 
 ## References
 

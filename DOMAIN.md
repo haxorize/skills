@@ -199,7 +199,7 @@ Ubiquitous-language glossary for the entire skills repo. Covers the four main ar
 - **Reconcile mode** operates on all **Tasks** under one **User Story**; **Update mode** operates on exactly one work item.
 - **Tracker resolution** runs once per session in one of three modes — **Declared (mode)**, **Bootstrap-on-ask**, or **No-repo CLI-only mode**; **Tracker dispatch** then selects the per-Tracker template and CLI for the resolved Tracker.
 - **Field reference names** are immutable across ADO process templates; display names are not — publishing skills target the former.
-- A **Cold-start loader** (`from-work-item`) is read-only; it pulls a published work item back into the conversation but never mutates the tracker — revisions go through the corresponding `--update` mode on the publishing Skill.
+- A **Cold-start loader** (`from-work-item`) does not mutate any work item; it pulls a published work item back into the conversation — revisions go through the corresponding `--update` mode on the publishing Skill. The only file write is an appended `## Issue tracker` block to `CLAUDE.md` when the Bootstrap-on-ask flow runs.
 - A **Sibling reference file** is enforced byte-identical by `scripts/lint-skills.sh`; ADR-0007 records why duplication exists (symlink-per-skill install) and the lint mechanizes the editorial discipline.
 - A **Cross-repo blocker** annotates a **Task** whose Vertical slice cannot land until a **Sibling repo** ships a contract change.
 - **Two-way sync** propagates content between **ADO** and **Jira Align** at the **Feature** level — markup that survives the round-trip cleanly is not guaranteed.

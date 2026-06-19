@@ -30,7 +30,7 @@ The example dialogue uses **Dev** and **Domain expert** as speakers.
 
 ## ADRs
 
-When the gate triggers, ask the user out loud whether to record an ADR ("This sounds like an ADR — hard to reverse, the alternatives we just rejected aren't obvious. Want me to capture it?"). Do not delegate to the standalone `adr` skill — write the ADR file inline using [references/adr-format.md](references/adr-format.md) as the single source of truth for format.
+When the gate triggers, ask the user out loud whether to record an ADR ("This sounds like an ADR — hard to reverse, the alternatives we just rejected aren't obvious. Want me to capture it?"). Do not delegate to the standalone `adr` skill — write the ADR file inline using [references/adr-format.md](references/adr-format.md) as the single source of truth for format. (Delegating would interrupt the grill loop with `adr`'s own gate-confirmation flow, breaking the session rhythm.)
 
 ADRs live in `docs/adr/<NNNN>-<slug>.md`. Lazily create the directory. Numbering: scan `docs/adr/` for the highest existing number; increment by one. Slug is a short kebab-case summary of the decision.
 

@@ -137,4 +137,4 @@ Refusing on Feature/Epic is the only case where the user's next move is structur
 
 ## Notes
 
-- `from-work-item` does not modify the work item. Loading is read-only; revisions go through `to-story --update` / `to-tasks --update` / `to-bug --update`.
+- `from-work-item` does not modify the work item or any sibling work item. The only file write is an appended `## Issue tracker` block to `CLAUDE.md` when the Bootstrap-on-ask flow runs. Revisions to work items go through `to-story --update` / `to-tasks --update` / `to-bug --update`.
