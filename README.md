@@ -57,16 +57,13 @@ Personal collection of repo-agnostic agent skills, hoisted into `~/.claude/skill
 Symlink each skill directory into `~/.claude/skills/`:
 
 ```bash
-cd ~/code/src/humana/skills/src
-for skill in */; do
-  ln -s "$(pwd)/${skill%/}" ~/.claude/skills/
-done
+bash scripts/install.sh
 ```
 
-Or link a single skill:
+Or link a single skill (run from the repo root):
 
 ```bash
-ln -s ~/code/src/humana/skills/src/grill-me ~/.claude/skills/
+ln -s "$(pwd)/src/grill-me" ~/.claude/skills/
 ```
 
 ## Notes
@@ -74,6 +71,5 @@ ln -s ~/code/src/humana/skills/src/grill-me ~/.claude/skills/
 - Several skills reference `DOMAIN.md` (from `harden-domain` / `grill-and-record`) and `docs/adr/` (from `adr` / `backfill-adrs`). They degrade gracefully in projects that don't use those conventions.
 - The `to-feature`, `to-story`, and `to-tasks` skills operate in three modes: declared (CLAUDE.md present with tracker block), bootstrap-on-ask (repo present, asks once and writes the block), and no-repo CLI-only (publish via tracker CLI without touching files; saves tracker config to memory).
 - Bootstrap-on-ask is safe to use alongside Claude Code's built-in `/init` — `/init` preserves existing CLAUDE.md sections rather than overwriting them, so the order of operations doesn't matter.
-- See [`plans/skills-restructure.md`](plans/skills-restructure.md) for the design history and rationale behind the current skill set.
 - Design decisions about specific skills are recorded as ADRs in [`docs/adr/`](docs/adr/).
 - This repo eats its own dog food — see [`DOMAIN.md`](DOMAIN.md), maintained by `harden-domain`, for the suite's canonical terms.

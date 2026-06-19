@@ -1,6 +1,6 @@
 # Domain — Skills Repo
 
-Ubiquitous-language glossary for the entire skills repo at `~/code/src/humana/skills/`. Covers the four main areas of work the skill suite supports — shaping backlog work (Feature/Story/Task/Bug publishing), refactoring (deepen), recording decisions (ADRs), and implementation (TDD) — plus the meta-vocabulary of the skills themselves. Initial capture from the to-X expansion grilling on 2026-05-01 (see ADRs 0002–0005); hardened by sweeping every skill's `SKILL.md`, the README, and the repo's commit history.
+Ubiquitous-language glossary for the entire skills repo. Covers the four main areas of work the skill suite supports — shaping backlog work (Feature/Story/Task/Bug publishing), refactoring (deepen), recording decisions (ADRs), and implementation (TDD) — plus the meta-vocabulary of the skills themselves. Initial capture from the to-X expansion grilling on 2026-05-01 (see ADRs 0002–0005); hardened by sweeping every skill's `SKILL.md`, the README, and the repo's commit history.
 
 ## Skill mechanics
 
@@ -14,7 +14,6 @@ Ubiquitous-language glossary for the entire skills repo at `~/code/src/humana/sk
 | **Repo-agnostic skill** | A Skill that works in any project without per-repo config | Universal skill, Generic skill |
 | **Convention skill** | A project-local Skill encoding the conventions of a specific stack (e.g., a `database` Skill for Alembic patterns) | Stack skill, Project skill |
 | **Hoist** | The act of making a Repo-agnostic skill globally available by symlinking it into `~/.claude/skills/` | Promote (different stage), Install |
-| **Plan** | A multi-phase work-tracking doc under `plans/<name>.md` for non-trivial Skill changes | Roadmap, Tracking doc |
 
 ## Skill modes & verbs
 

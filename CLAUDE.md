@@ -6,7 +6,6 @@ A repo of repo-agnostic Claude Code skills, symlinked into `~/.claude/skills/`. 
 
 - [`DOMAIN.md`](DOMAIN.md) — vocabulary; `Aliases to avoid` is normative.
 - [`docs/adr/`](docs/adr/) — decision records.
-- [`plans/`](plans/) — multi-phase work trackers (current: [`plans/to-x-expansion.md`](plans/to-x-expansion.md)).
 
 ## Don't run the publishing skills on this repo
 

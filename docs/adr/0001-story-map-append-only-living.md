@@ -20,4 +20,4 @@ When a Feature decomposes into multiple Stories shipped weeks apart, decompositi
 - Retrospectives compare original synthesis (above separator) against emergent additions (below) without digging through revision history.
 - Append-on-publish is best-effort: `to-story` skips silently if the parent has no map block (deferred or non-participating Feature), surfaces permission errors immediately, and falls back to "add the row manually" on other failures. The Story always publishes regardless.
 - Establishes the in-body persistence principle that ADR-0002 extends to acceptance-criteria history — repo-wide preference for body-readable history over revision-history-API dives.
-- HTML comment markers may not survive Jira Align ↔ ADO sync round-trips intact; format compatibility must be verified before adopting in environments with bidirectional sync (same dependency as ADR-0002; both gated on the Phase-0 sync test in `plans/to-x-expansion.md`).
+- HTML comment markers may not survive Jira Align ↔ ADO sync round-trips intact; format compatibility must be verified before adopting in environments with bidirectional sync (same dependency as ADR-0002).
