@@ -225,16 +225,16 @@ Ubiquitous-language glossary for the entire skills repo. Covers the four main ar
 >
 > **Dev:** "And one of those Tasks waits on a sibling repo's API change first."
 >
-> **Domain expert:** "That's a **cross-repo blocker** — annotate the Task with `Blocked by: ../<sibling-repo> — contract change required`. Reconcile won't close it; the Task waits until the sibling ships. The **Snapshot** above the **snapshot separator** stays untouched — that record is rewritten only by `to-feature --update`."
+> **Domain expert:** "That's a **cross-repo blocker** — annotate the Task with `Blocked by: ../<sibling-repo> — contract change required`. Reconcile won't close it; the Task waits until the sibling ships. The **Snapshot** above the **Snapshot separator** stays untouched — that record is rewritten only by `to-feature --update`."
 >
 > **Dev:** "Tomorrow I'm picking up that sibling work in a fresh session — what loads me back in?"
 >
-> **Domain expert:** "`from-work-item <task-id>`, the **Cold-start loader**. It reads the Task body, the parent Story's **Active ACs** (filtered by your `## Covers`), the parent Feature's Problem/Goals, the local `DOMAIN.md`, and ADRs matched against `## Layers touched`. ADO state comes from `System.State` directly; on GitHub the **In-progress signal** decides open-vs-being-worked. Loader is read-only — revisions still go through `to-tasks --update`."
+> **Domain expert:** "`from-work-item <task-id>`, the **Cold-start loader**. It reads the Task body, the parent Story's **Active ACs** (filtered by your `## Covers`), the parent Feature's Problem/Goals, the local `DOMAIN.md`, and ADRs matched against `## Layers touched`. ADO state comes from `System.State` directly; on GitHub the **In-progress signal** decides open-vs-being-worked. It's read-only — revisions still go through `to-tasks --update`."
 
 ## Flagged ambiguities
 
 - **"Story"** is shorthand for **User Story**; both are accepted in conversation, but ADO's typed work item is **User Story**. Use the full form in template references, ADRs, and `SKILL.md` files; **Story** is fine in casual speech.
-- **"User story"** appears in two distinct places: (1) the work-item type **User Story** (title case), (2) the bold prefix on a **Connextra user-story line** (`**User story:** As a [role], I want ...`). Typography disambiguates; in prose, prefer **User Story** for the work item and **Connextra line** for the prefix.
+- **"User story"** appears in two distinct places: (1) the work-item type **User Story** (title case), (2) the bold prefix on a **Connextra user-story line** (`**User story:** As a [role], I want ...`). Typography disambiguates; in prose, prefer **User Story** for the work item and **Connextra user-story line** for the prefix.
 - **"Slice"** alone is ambiguous — it can mean **Vertical slice** (Task shape), **Layer** (stratum), or "section of a document." Prefer **Vertical slice** for Task shape and **Layer** for the stratum.
 - **"Drift"** must always be qualified — **naming drift**, **terminology drift**, or **scope drift**. The unqualified word is too vague.
 - **"Update"** is the canonical verb for the `--update` Skill mode. **Patch**, **edit**, and **revise** were considered and rejected (see ADR-0003).
