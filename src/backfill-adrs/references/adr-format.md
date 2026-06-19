@@ -32,7 +32,7 @@ Before writing, confirm out loud which of the three criteria the decision meets,
 2. **Surprising without context** — a future reader (or AFK agent) will look at the code and wonder "why did they do it this way?"
 3. **Result of a real trade-off** — there were genuine alternatives and one was picked for specific reasons.
 
-If any one is missing, do not write the ADR. If the decision is easy to reverse, skip — you'll just reverse it. If it's not surprising, nobody will wonder. If there was no real alternative, there's nothing to record beyond "we did the obvious thing."
+If any one is missing, do not write the ADR — stop and tell the user why. If the decision is easy to reverse, skip — you'll just reverse it. If it's not surprising, nobody will wonder. If there was no real alternative, there's nothing to record beyond "we did the obvious thing."
 
 ## Example
 

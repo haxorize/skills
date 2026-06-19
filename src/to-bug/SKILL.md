@@ -116,7 +116,7 @@ Fetch the current Bug body, repro steps, severity, and parent (if any):
 - **ADO:** `az boards work-item show <bug-id> --output json --expand relations` — pull `System.Description`, `Microsoft.VSTS.TCM.ReproSteps`, `Microsoft.VSTS.Common.Severity`, `System.State`, and the parent relation (`System.LinkTypes.Hierarchy-Reverse`).
 - **GitHub:** `gh issue view <issue-number> --json body,title,labels,state`. Severity is read from the `sev:*` label; type confirmed by the `bug` label.
 
-Read `.claude/queue.md` (or memory equivalent — see `## Naming-drift queue`) for entries mentioning this Bug; surface them as cold-start context.
+Read the naming-drift queue (see [references/naming-drift-queue.md](references/naming-drift-queue.md)) for entries mentioning this Bug; surface them as cold-start context.
 
 ### Self-review (in `--update` mode)
 
@@ -131,10 +131,8 @@ State is never transitioned by `to-bug --update` — that's the team's process o
 
 ### Naming-drift queue write
 
-If the patch introduces module names, route paths, or query keys that diverge from canonical names already in use elsewhere in the codebase or sibling work items, append entries to the queue per the `## Naming-drift queue` section. Surface drift as a warning during self-review; never block the patch.
+If the patch introduces module names, route paths, or query keys that diverge from canonical names already in use elsewhere in the codebase or sibling work items, append an entry per [references/naming-drift-queue.md](references/naming-drift-queue.md). Surface drift as a warning during self-review; never block the patch.
 
 ## Naming-drift queue
 
-Pending sibling work-item updates flagged during publish. Read on `--update` cold-start; written by any publish that surfaces a name diverging from canonical names already in use elsewhere in the codebase or sibling work items. Storage: `.claude/queue.md` (repo mode) or a memory entry keyed by tracker context (no-repo mode). The queue is informational — surface relevant entries on cold-start; never block a publish on it.
-
-Entry format: `- [ ] **<work-item-id>** — \`<observed-name>\` differs from \`<canonical-name>\` (introduced by <work-item-type> #<id> on <YYYY-MM-DD>)`
+This skill reads the queue on `--update` cold-start and appends to it on publish when a name diverges from canonical names already in use elsewhere in the codebase or sibling work items. Definition, storage, and entry format: see [references/naming-drift-queue.md](references/naming-drift-queue.md).

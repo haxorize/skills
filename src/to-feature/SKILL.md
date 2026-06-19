@@ -92,7 +92,7 @@ Fetch the current Feature description in full so the patch can preserve everythi
 - **ADO:** `az boards work-item show <feature-id> --output json` — pull `System.Description`. The AC field (`Microsoft.VSTS.Common.AcceptanceCriteria`) is not touched in this mode but read it to display active and removed AC IDs as cold-start context.
 - **GitHub:** `gh issue view <feature-number> --json body,title`.
 
-Read `.claude/queue.md` (or memory equivalent — see `## Naming-drift queue`) for entries mentioning this Feature; surface them as cold-start context.
+Read the naming-drift queue (see [references/naming-drift-queue.md](references/naming-drift-queue.md)) for entries mentioning this Feature; surface them as cold-start context.
 
 ### Patch scope (invariant)
 
@@ -115,4 +115,4 @@ Re-run the story-map checks from step 8 (every active Feature AC ID covered by a
 
 ## Naming-drift queue
 
-Pending sibling work-item updates. Read on `--update` cold-start; this skill does not write to the queue (drift surfaces during Story or Task publishes, not Feature re-snapshots). Storage: `.claude/queue.md` (repo mode) or a memory entry keyed by tracker context (no-repo mode). The queue is informational — surface relevant entries on cold-start; never block a publish on it.
+Read on `--update` cold-start; this skill does not write to the queue (drift surfaces during Story or Task publishes, not Feature re-snapshots). Definition, storage, and entry format: see [references/naming-drift-queue.md](references/naming-drift-queue.md).

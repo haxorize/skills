@@ -37,13 +37,10 @@ Summarize the glossary inline in the conversation. Suggest: "Consider adding a r
 
 ## Rules
 
-- **Be opinionated.** Pick the best term; list others as aliases to avoid.
 - **Flag conflicts explicitly** in the "Flagged ambiguities" section with a clear recommendation.
 - **Only domain terms.** Skip module/class names unless they have domain meaning. Skip generic programming concepts unless they have domain-specific meaning.
-- **Keep definitions tight.** One sentence max. Define what it IS, not what it does.
-- **`Relationships` is a first-class section.** Capture cardinality and boundaries between terms (e.g., "An **Invoice** belongs to exactly one **Customer**"). Update whenever a relationship becomes clearer.
-- **Group terms into tables** when natural clusters emerge (by subdomain, lifecycle, or actor). One table is fine if all terms belong to a single cohesive domain — don't force groupings.
-- **Write an example dialogue** (3-5 exchanges) between a **Dev** and a **Domain expert** that demonstrates how terms interact. The dialogue should clarify boundaries between related concepts.
+
+Output-shape rules — definition style, grouping into tables, the first-class `Relationships` section, and the example dialogue — live in [references/domain-format.md](references/domain-format.md).
 
 ## Re-running
 

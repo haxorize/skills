@@ -55,10 +55,4 @@ If the update adds or removes ACs, changes the module list, or reshapes layers, 
 
 ## Naming-drift queue
 
-If the patch introduces names differing from siblings (other Stories under the same parent Feature, or Tasks under this Story), append entries to `.claude/queue.md` (repo mode) or a memory entry keyed by tracker context (no-repo mode):
-
-```markdown
-- [ ] **<work-item-id>** — `<observed-name>` differs from `<canonical-name>` (introduced by <work-item-type> #<id> on <YYYY-MM-DD>)
-```
-
-Surface drift as a warning during self-review; never block the patch — sometimes the new name is correct and the sibling needs renaming.
+If the patch introduces names differing from siblings (other Stories under the same parent Feature, or Tasks under this Story), append an entry per [naming-drift-queue.md](naming-drift-queue.md). Surface drift as a warning during self-review; never block the patch — sometimes the new name is correct and the sibling needs renaming.
