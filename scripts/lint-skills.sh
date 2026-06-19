@@ -66,6 +66,7 @@ sibling_groups=(
   "src/grill-and-record/references/domain-format.md|src/harden-domain/references/domain-format.md"
   "src/grill-and-record/references/adr-format.md|src/backfill-adrs/references/adr-format.md"
   "src/to-bug/references/naming-drift-queue.md|src/to-feature/references/naming-drift-queue.md|src/to-story/references/naming-drift-queue.md|src/to-tasks/references/naming-drift-queue.md"
+  "src/to-bug/references/tracker-resolution.md|src/to-feature/references/tracker-resolution.md|src/to-story/references/tracker-resolution.md|src/to-tasks/references/tracker-resolution.md"
 )
 
 for group in "${sibling_groups[@]}"; do
