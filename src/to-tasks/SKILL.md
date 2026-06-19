@@ -48,7 +48,7 @@ If `CLAUDE.md` declares a `## Sibling repos` section, read it. The format is:
 - `<relative-path>`: <one-line description of relationship>
 ```
 
-For affected slices, mark **"Blocked by: sibling repo (<name>) — contract change required"**. Solo repos (no declaration) get vanilla behavior with no cross-repo annotations.
+Solo repos (no declaration) get vanilla behavior — no cross-repo annotations. Cross-repo blockers are flagged during drafting (step 5), which owns the `Blocked by:` annotation format.
 
 ### 4. Explore codebase and apply ADR gate
 
