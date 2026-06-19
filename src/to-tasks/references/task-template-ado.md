@@ -26,6 +26,8 @@ One sentence describing what this thin vertical slice delivers end-to-end. Use c
 
 ## Layers touched
 
+Describe the behavioral change at each layer in one phrase. No file paths, no function names, no code snippets.
+
 - **Data:** schema/migration/seed changes (or "none")
 - **Backend:** endpoints/handlers/services (or "none")
 - **Client:** generated client / hooks / state (or "none")
@@ -80,4 +82,4 @@ DESC_HTML=$(python3 -c "import sys, markdown; print(markdown.markdown(sys.stdin.
 
 - Tasks acceptance is verified at the parent Story level — each Task references at least one parent acceptance criterion (the `to-tasks` self-review check).
 - Naming (routes, query keys, model names, search-param keys) must match across sibling Tasks. Drift here is the highest-cost mistake when slicing.
-- ADO Bugs are not produced by this skill — they don't fit the Feature/Story/Task hierarchy. Bug creation stays manual or uses a future dedicated skill.
+- ADO Bugs are not produced by this skill — they don't fit the Feature/Story/Task hierarchy. If a defect surfaces during task breakdown, file it with `to-bug`.

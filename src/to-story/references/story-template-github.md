@@ -40,7 +40,7 @@ Use module names from `DOMAIN.md` where applicable, not file paths (paths drift;
 
 ## Layers touched
 
-Which integration layers the Story crosses. Drives `from-work-item` cold-start and Task slicing. Mark each present layer with one phrase; mark absent layers `none`.
+Which integration layers the Story crosses. Drives `from-work-item` cold-start and Task slicing. Describe the behavioral change at each layer in one phrase; mark absent layers `none`. No file paths, no function names, no code snippets.
 
 - **Data:** schema/migration/seed work expected (or `none`)
 - **Backend:** endpoints/handlers/services (or `none`)
@@ -50,11 +50,11 @@ Which integration layers the Story crosses. Drives `from-work-item` cold-start a
 
 ## Approach
 
-The approach the team agreed on (one of the proposed approaches from the grilling session). Include the data shape, key types, and integration points with adjacent modules. Reference existing ADRs the approach respects.
+The approach the team agreed on (one of the proposed approaches from the grilling session). State the design direction and key tradeoffs in plain language. Reference existing ADRs the approach respects. No code snippets, no file paths, no specific field or type names.
 
 ## Tests
 
-What gets tested at which seam. Reference any deepening opportunities surfaced during the grill.
+What gets tested at which seam. Use module names from `DOMAIN.md`, not file paths. Reference any deepening opportunities surfaced during the grill.
 
 - `<module>` — boundary tests for X behavior
 - `<module>` — integration test covering Y end-to-end

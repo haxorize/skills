@@ -9,13 +9,13 @@ Break a parent User Story into child Task work items on the project's issue trac
 
 Tasks are always children of a User Story — never directly under a Feature. If the user wants to break a Feature into stories, that's `to-story` (run repeatedly under the same Feature parent).
 
+## Publication constraints
+
+No file paths, no code snippets, and no specific field or type names in any published section. Every section — including `## Layers touched` — describes behavior and design intent only. These details drift; the issue must remain accurate after the code is written.
+
 ## Workflow
 
-### 1. Gather context
-
-If the user passes a parent reference (issue number / work-item ID / URL), fetch the parent Story via the tracker CLI. Otherwise work from current conversation.
-
-### 2. Resolve tracker
+### 1. Resolve tracker
 
 Read `CLAUDE.md` for an `Issue tracker:` block. Three modes:
 
@@ -25,7 +25,11 @@ Read `CLAUDE.md` for an `Issue tracker:` block. Three modes:
 
 Required fields: GitHub needs only the tracker name; ADO requires `Project:` minimum.
 
-### 3. Resolve parent Story
+Title prefix: if the tracker block declares `Title prefix:`, prepend it (with a trailing space) to each Task title before publishing.
+
+### 2. Resolve parent Story
+
+If the user passed a parent reference (issue number / work-item ID / URL), fetch the parent Story via the tracker CLI. Otherwise work from current conversation.
 
 - **`Hierarchy: required`** (default for ADO): if `--parent <story-id>` is provided, use it; otherwise interactively prompt for the User Story ID.
 - **`Hierarchy: optional`** (default for GitHub): parent linking is optional; only use `--parent` if provided. Do not prompt.
@@ -34,7 +38,7 @@ Verify the parent is the right type:
 - **ADO:** `az boards work-item show <id>` should return type `User Story`. Refuse and explain if it's a Feature, Epic, Task, or Bug.
 - **GitHub:** parent issue should look story-shaped (labels / template). Refuse if it looks PRD/feature-shaped — suggest running `to-story --parent <feature-id>` first to create a Story under it.
 
-### 4. Read sibling repos
+### 3. Read sibling repos
 
 If `CLAUDE.md` declares a `## Sibling repos` section, read it. The format is:
 
@@ -46,13 +50,15 @@ If `CLAUDE.md` declares a `## Sibling repos` section, read it. The format is:
 
 For affected slices, mark **"Blocked by: sibling repo (<name>) — contract change required"**. Solo repos (no declaration) get vanilla behavior with no cross-repo annotations.
 
-### 5. Explore codebase and apply ADR gate
+### 4. Explore codebase and apply ADR gate
 
 If the work isn't already grounded in the conversation, explore the touched modules. Identify durable architectural decisions — for any meeting the ADR gate (hard to reverse + surprising + real trade-off), record via the standalone `adr` skill before slicing.
 
-### 6. Draft vertical slices
+### 5. Draft vertical slices
 
 Each slice = one Task = thin vertical cut through every integration layer end-to-end. Prefer many thin Tasks over few thick ones.
+
+**Tests belong in the same Task as the behavior they verify.** Never file a test as its own Task — that is a horizontal cut, not a vertical slice. A proxy test for behavior X lives in the same Task as the proxy change for X; a component test for behavior Y lives in the same Task as the component change for Y. Each Task must be independently handable to `/tdd`. If writing a Task's tests would require another Task's implementation to exist first, merge them into one Task.
 
 For each Task:
 
@@ -60,11 +66,11 @@ For each Task:
 - **Flag cross-repo blockers** based on the `Sibling repos` declaration. If a Task needs an API contract change, mark it `Blocked by: ../sibling-repo — contract change required`.
 - **Name consistently across Tasks.** Route paths, query keys, model names, search-param keys must be identical in every Task that touches them.
 
-### 7. Quiz the user
+### 6. Quiz the user
 
 Walk through the Task list with the user. Iterate until approved.
 
-### 8. Self-review
+### 7. Self-review
 
 Before publishing, check:
 
@@ -74,7 +80,7 @@ Before publishing, check:
 - **Domain language matches `DOMAIN.md`**
 - **No placeholders** (no TBD/TODO)
 
-### 9. Publish in dependency order
+### 8. Publish in dependency order
 
 Publish blockers first so real work-item IDs can be referenced in later Tasks' "Blocked by" fields.
 

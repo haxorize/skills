@@ -9,6 +9,10 @@ Synthesize the current conversation into a Feature-level artifact (PRD-shaped) a
 
 `to-feature` is for **broad scope** — work that decomposes into multiple stories. The default for single-feature work is `to-story`. Use `to-feature` only when phrasings explicitly invoke PRD-shaped or multi-story scope.
 
+## Publication constraints
+
+No file paths, no code snippets, and no specific field or type names in any published section. Every section — including `## Approach` — describes behavior and design intent only. These details drift; the issue must remain accurate after the code is written.
+
 ## Workflow
 
 ### 1. Resolve tracker
@@ -20,6 +24,8 @@ Read `CLAUDE.md` for an `Issue tracker:` block. Three modes:
 - **No-repo CLI-only** — no git repo at all. Ask for tracker info. Publish via CLI. No file writes. Save to memory keyed by tracker context (e.g., `Tracker default — work-backlog`) so subsequent invocations don't re-ask.
 
 Required fields: GitHub needs only the tracker name; ADO requires `Project:` minimum.
+
+Title prefix: if the tracker block declares `Feature title prefix:`, use it; otherwise fall back to `Title prefix:`. If neither is present, use no prefix. Prepend the resolved prefix (with a trailing space) to the drafted title before publishing.
 
 ### 2. Resolve parent
 
@@ -40,7 +46,7 @@ Lead with a recommendation. Let the user push back or confirm before drafting. N
 
 ### 6. Decompose into Stories
 
-Decompose the chosen approach into Stories. For each Story capture: title, one-paragraph scope, the parent Feature acceptance criteria it covers, and any shared names (route paths, model names, query keys) it touches. Build a dependency graph between Stories. Quiz the user on the list — iterate until approved.
+Decompose the chosen approach into Stories. For each Story capture: title, one-paragraph scope, the parent Feature acceptance criteria it covers, and any shared names (route paths, model names, query keys) it touches. Build a dependency graph between Stories. Quiz the user once — walk through the list, gather corrections, and finalize before drafting. One review pass is the target; resolve scope disputes before moving on.
 
 If the user can't decompose yet, confirm explicitly and skip to step 7. The published Feature will carry `Story Decomposition: deferred at Feature creation.` in place of the map block; fill in later via `--update <feature-id>`.
 
@@ -100,20 +106,13 @@ Re-run the story-map checks from step 8 (every active Feature AC ID covered by a
 
 ### Patch
 
-- **ADO:** convert Markdown → HTML per step 10, then `az boards work-item update --id <feature-id> --description "<html>"` (description-only; do not pass `Microsoft.VSTS.Common.AcceptanceCriteria`).
+- **ADO:** The fetched description is already HTML. Convert **only the new story map section** from Markdown to HTML (using the pandoc or Python one-liner from `story-template-ado.md`), splice the result between the `<!-- BEGIN STORY MAP -->` and `<!-- END STORY MAP -->` markers in the existing HTML, write to a temp file, and patch:
+  ```bash
+  az boards work-item update --id <feature-id> --description "$(cat /tmp/feature_desc.html)"
+  ```
+  (description-only; do not pass `Microsoft.VSTS.Common.AcceptanceCriteria`). **Never pass the full fetched description through a Markdown → HTML converter** — it is already HTML and re-converting will double-encode any `<code>`, `<hr>`, and other HTML tags already present.
 - **GitHub:** `gh issue edit <feature-number> --body-file <draft>`.
 
 ## Naming-drift queue
 
-Pending sibling work-item updates flagged during publish. Read on `--update` cold-start; this skill does not write to the queue (drift surfaces during Story or Task publishes, not Feature re-snapshots).
-
-- **Repo mode:** `.claude/queue.md` at the repo root. Create on first write.
-- **No-repo CLI-only mode:** memory entry keyed by tracker context (e.g., `Naming-drift queue — work-backlog`).
-
-Entry format:
-
-```markdown
-- [ ] **<work-item-id>** — `<observed-name>` differs from `<canonical-name>` (introduced by <work-item-type> #<id> on <YYYY-MM-DD>)
-```
-
-The queue is informational. Surface relevant entries on cold-start; never block a publish on it.
+Pending sibling work-item updates. Read on `--update` cold-start; this skill does not write to the queue (drift surfaces during Story or Task publishes, not Feature re-snapshots). Storage: `.claude/queue.md` (repo mode) or a memory entry keyed by tracker context (no-repo mode). The queue is informational — surface relevant entries on cold-start; never block a publish on it.

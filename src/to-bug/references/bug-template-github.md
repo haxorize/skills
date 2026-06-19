@@ -38,7 +38,7 @@ Whether this bug indicates a regression and what the fix may destabilize.
 
 ## Layers touched
 
-Which integration layers the fix is expected to cross. Drives `from-work-item` cold-start when the Bug is loaded for implementation.
+Which integration layers the fix is expected to cross. Drives `from-work-item` cold-start when the Bug is loaded for implementation. Describe the behavioral change at each layer in one phrase; mark absent layers `none`. No file paths, no function names, no code snippets.
 
 - **Data:** schema/migration/seed work expected (or `none`)
 - **Backend:** endpoints/handlers/services (or `none`)

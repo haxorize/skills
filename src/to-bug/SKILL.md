@@ -9,6 +9,10 @@ Synthesize the current conversation into a Bug work item and publish it to the p
 
 `to-bug` is the default for filing a defect. Bugs are *not* parented under Stories — the fix is the slice. They can be filed parentless or attached to a Feature directly.
 
+## Publication constraints
+
+No file paths, no code snippets, and no specific field or type names in any published section. Exception: `## Repro`, `## Expected behavior`, and `## Actual behavior` are evidence sections — exact error messages, stack traces, environment URLs, and observable route names belong there.
+
 ## Workflow
 
 ### 1. Resolve tracker
@@ -20,6 +24,8 @@ Read `CLAUDE.md` for an `Issue tracker:` block. Three modes:
 - **No-repo CLI-only** — no git repo at all. Ask for tracker info. Publish via CLI. No file writes. Save to memory keyed by tracker context (e.g., `Tracker default — work-backlog`) so subsequent invocations don't re-ask.
 
 Required fields: GitHub needs only the tracker name; ADO requires `Project:` minimum.
+
+Title prefix: if the tracker block declares `Title prefix:`, prepend it (with a trailing space) to the drafted title before publishing.
 
 ### 2. Resolve parent (optional)
 
@@ -129,15 +135,6 @@ If the patch introduces module names, route paths, or query keys that diverge fr
 
 ## Naming-drift queue
 
-Pending sibling work-item updates flagged during publish. Read on `--update` cold-start; written by any publish (create or `--update`) that surfaces a name diverging from canonical names already in use elsewhere in the codebase or sibling work items.
+Pending sibling work-item updates flagged during publish. Read on `--update` cold-start; written by any publish that surfaces a name diverging from canonical names already in use elsewhere in the codebase or sibling work items. Storage: `.claude/queue.md` (repo mode) or a memory entry keyed by tracker context (no-repo mode). The queue is informational — surface relevant entries on cold-start; never block a publish on it.
 
-- **Repo mode:** `.claude/queue.md` at the repo root. Create on first write.
-- **No-repo CLI-only mode:** memory entry keyed by tracker context (e.g., `Naming-drift queue — work-backlog`).
-
-Entry format:
-
-```markdown
-- [ ] **<work-item-id>** — `<observed-name>` differs from `<canonical-name>` (introduced by <work-item-type> #<id> on <YYYY-MM-DD>)
-```
-
-The queue is informational. Surface relevant entries on cold-start; never block a publish on it.
+Entry format: `- [ ] **<work-item-id>** — \`<observed-name>\` differs from \`<canonical-name>\` (introduced by <work-item-type> #<id> on <YYYY-MM-DD>)`

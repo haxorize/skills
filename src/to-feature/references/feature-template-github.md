@@ -42,7 +42,7 @@ Sub-features that decompose this Feature. Each one becomes its own Story (file v
 
 ## Approach
 
-The approach the team agreed on (one of the proposed approaches from the grilling session). Include the major modules touched, the data shape, and the integration points. Use canonical terms from `DOMAIN.md`.
+The approach the team agreed on (one of the proposed approaches from the grilling session). State the design direction and key tradeoffs in plain language. Reference existing ADRs the approach respects. No code snippets, no file paths, no specific field or type names.
 
 ## Constraints
 

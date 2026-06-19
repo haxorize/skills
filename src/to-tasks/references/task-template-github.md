@@ -9,6 +9,8 @@ One sentence describing what this thin vertical slice delivers end-to-end. Use c
 
 ## Layers touched
 
+Describe the behavioral change at each layer in one phrase. No file paths, no function names, no code snippets.
+
 - **Data:** schema/migration/seed changes (or "none")
 - **Backend:** endpoints/handlers/services (or "none")
 - **Client:** generated client / hooks / state (or "none")

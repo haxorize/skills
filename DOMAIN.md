@@ -68,7 +68,9 @@ Ubiquitous-language glossary for the entire skills repo at `~/code/src/humana/sk
 | **Story decomposition** | The act of breaking a Feature into User Stories during `to-feature` step 6 | Story breakdown |
 | **Snapshot** | The Story-map region above the snapshot separator, rewritten exclusively by `to-feature --update` | — |
 | **Snapshot separator** | The `---` divider between the Snapshot and the Append region | Separator (when used alone) |
-| **Append region** | The mutable Story-map region below the snapshot separator, receiving entries for emergent Stories | — |
+| **Planned Story** | A User Story whose scope is listed in the parent Feature's Snapshot, identified by a matching `### Story N` heading; `to-story` stamps the tracker ID inline on that heading and skips the Append-region append | Decomposed Story |
+| **Emergent Story** | A User Story that arises after Feature publication with no corresponding Snapshot entry; `to-story` appends it to the Append region below the Snapshot separator | — |
+| **Append region** | The mutable Story-map region below the Snapshot separator, receiving entries only for Emergent Stories | — |
 | **Coverage matrix** | The Story-map sub-artifact mapping each child Story to the parent Feature ACs it covers | AC matrix |
 | **Naming table** | The Story-map sub-artifact listing names shared across Stories (route paths, query keys, model names) | Shared-names table |
 | **Dependency edges** | The Story-map sub-artifact recording which Stories depend on which siblings | Dependency graph (acceptable but less specific) |

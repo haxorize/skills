@@ -34,7 +34,7 @@ What user-facing pain or business need motivates this Feature. One paragraph.
 
 ## Approach
 
-The approach the team agreed on. Include the major modules touched, the data shape, and the integration points. Use canonical terms from `DOMAIN.md`.
+The approach the team agreed on. State the design direction and key tradeoffs in plain language. Reference existing ADRs the approach respects. No code snippets, no file paths, no specific field or type names.
 
 ## Constraints
 
