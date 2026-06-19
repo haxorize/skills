@@ -155,6 +155,11 @@ Ubiquitous-language glossary for the entire skills repo at `~/code/src/humana/sk
 | **In-progress signal** | The CLAUDE.md `In-progress signal:` declaration telling `to-tasks --reconcile` how to distinguish open-and-being-worked from open-and-not-yet-started GitHub issues; defaults to assignee-presence when absent | WIP signal, Status signal |
 | **Iteration** | The ADO sprint assignment for a work item (field `System.IterationPath`), declared per-repo via the CLAUDE.md `Iteration:` block | Sprint (acceptable casually; **Iteration** is the field name) |
 | **Field reference name** | The stable, process-template-invariant ADO field identifier (`System.Description`, `Microsoft.VSTS.Common.AcceptanceCriteria`, `Microsoft.VSTS.Common.Severity`, `Microsoft.VSTS.TCM.ReproSteps`) that publishing skills target instead of the per-org display name (see ADR-0008) | Display name (rejected per ADR-0008) |
+| **GLAPI gate** | The Greenlight API production deployment gate — blocks a prod deployment if any User Story linked via commits in the build lacks a passing test point in the team's PI test plan; automated by the `glapi-test-pass` skill | Greenlight gate (informal only), deploy gate |
+| **Test Case** | An ADO work item of type `Test Case`, created by `glapi-test-pass` to satisfy the GLAPI gate; linked to the User Story via a `Tested By` relation. Terminal state: `Closed` | — |
+| **Test point** | The ADO object linking a Test Case to a specific suite within a test plan; carries an `outcome` field (`unspecified` → `passed`). Captured as `TEST_POINT_ID` during gate automation | — |
+| **Requirement test suite** | An ADO test suite of `suiteType: requirementTestSuite`, scoped to one User Story (`requirementId`); created under the PI test plan's root suite during gate automation | Story suite (informal) |
+| **PI test plan** | The ADO test plan for the current Program Increment; name follows the pattern `<team>_Stories_<PI label>`. The GLAPI gate checks test points within this plan | Sprint test plan (wrong scope — PI spans multiple sprints) |
 
 ## Drift & consistency
 
