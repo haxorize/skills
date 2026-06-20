@@ -22,6 +22,26 @@ read_requires() {
   ' "$1/SKILL.md"
 }
 
+# Prune stale links: a symlink we own (its target points under this repo's
+# src/) whose target no longer exists — left behind when a skill is renamed or
+# removed. Scoped to repo-owned dangling links so it can never touch a real
+# directory or a symlink pointing at some other source (e.g. find-skills ->
+# .agents/skills/). A rename needs no special handling: the old name dangles
+# (pruned here) and the new name is missing (linked below).
+prune_stale() {
+  for link in "$TARGET_DIR"/*; do
+    [ -L "$link" ] || continue          # symlinks only; skip real dirs/files
+    [ -e "$link" ] && continue          # target resolves → still valid, keep
+    target="$(readlink "$link")"
+    case "$target" in
+      "$SKILLS_DIR"/*)                  # dangling AND points into our src/
+        rm "$link"
+        echo "prune $(basename "$link") (stale: $target no longer exists)"
+        ;;
+    esac
+  done
+}
+
 link_skill() {
   name="$1"
   skill="$SKILLS_DIR/$name"
@@ -47,6 +67,8 @@ link_skill() {
     fi
   done
 }
+
+prune_stale
 
 for skill in "$SKILLS_DIR"/*/; do
   link_skill "$(basename "$skill")"
