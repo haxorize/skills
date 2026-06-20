@@ -12,7 +12,7 @@ Ubiquitous-language glossary for the entire skills repo. Covers the four main ar
 | **Frontmatter** | The YAML metadata block at the top of `SKILL.md` (`name:`, `description:`) | Header, Metadata block |
 | **Reference file** | A supplementary doc under `references/<name>.md` (≤200 lines each) | Helper file, Sub-doc |
 | **Repo-agnostic skill** | A Skill that works in any project without per-repo config | Universal skill, Generic skill |
-| **Convention skill** | A project-local Skill encoding the conventions of a specific stack (e.g., a `database` Skill for Alembic patterns) | Stack skill, Project skill |
+| **Convention skill** | A project-local, **Model-invoked** Skill encoding the conventions of a specific stack (e.g., a `database` Skill for Alembic patterns); global skills discover and invoke it **by role**, named in CLAUDE.md `## Convention skills` | Stack skill, Project skill |
 | **Hoist** | The act of making a Repo-agnostic skill globally available by symlinking it into `~/.claude/skills/` | Promote (different stage), Install |
 
 ## Skill modes & verbs
@@ -93,8 +93,8 @@ Ubiquitous-language glossary for the entire skills repo. Covers the four main ar
 
 | Term | Definition | Aliases to avoid |
 | --- | --- | --- |
-| **Vertical slice** | A thin end-to-end cut through every Layer that delivers a single behavior | Slice (when used alone), Cut |
-| **Tracer bullet** | The first Vertical slice in a sequence | First test, Initial path |
+| **Vertical slice** | A thin end-to-end cut through every Layer, shaped to exactly one **Task** — built **Tracer bullet** first, then behavior by behavior (never Layer by Layer) | Slice (when used alone), Cut |
+| **Tracer bullet** | The first behavior built within a Vertical slice — the thinnest end-to-end path that proves the slice works | First test, Initial path |
 | **Layer** | A horizontal stratum of the codebase (Data, Backend, Client, UI, Tests) | Tier, Stack |
 | **`## Layers touched`** | The Story- or Task-body section enumerating affected Layers | Affected modules |
 | **HITL** | "Human-in-the-loop" Task mode — requires human review (UX-sensitive, ambiguous, security-relevant) | Manual |
@@ -102,6 +102,10 @@ Ubiquitous-language glossary for the entire skills repo. Covers the four main ar
 | **RED / GREEN / REFACTOR** | The TDD cycle: failing test, minimal pass, behavior-preserving improvement | Test-first, BDD cycle |
 | **Inner loop** | The fast test command (unit / type checks) used during RED/GREEN for behaviors testable without I/O | Unit-loop |
 | **Outer loop** | The slower test command (integration / browser / E2E) used when the slice crosses I/O boundaries | E2E-loop, Integration-loop |
+| **Build path** | The choice inside `implement` for the loaded slice: the **TDD path** (a Testable slice → `tdd`) or the **direct path** (docs, scripts, config, glue → built without test-first) | — |
+| **Testable slice** | A Vertical slice whose behaviors warrant RED → GREEN → REFACTOR (built via `tdd`) | — |
+| **Non-testable slice** | A Vertical slice built via the direct path because it has no meaningful test seam (documentation, scripts, config) | Untested slice (implies a gap, not a deliberate choice) |
+| **Close the loop** | The **mechanical** finalization pass run **once after the slice's behaviors are built and refactored** (not per behavior) — `feedback-loops` runs lint/format/typecheck, migrations, and doc updates, resolving commands via CLAUDE.md `## Commands` and deferring stack-specifics to Convention skills. Judgment review (`review-changes`) and `/simplify` live elsewhere (see below) | Finalize (overloaded), Wrap-up |
 
 ## Architecture & deepening
 
@@ -200,6 +204,7 @@ Ubiquitous-language glossary for the entire skills repo. Covers the four main ar
 - A **Skill** is a directory containing a `SKILL.md` plus optional **Reference files** under `references/`; **Repo-agnostic skills** in this repo are **Hoist**ed to `~/.claude/skills/`, **Convention skills** stay per-repo.
 - Every **Skill** is exactly one of **User-invoked** or **Model-invoked** — the **Invocation** axis. A **User-invoked skill** may reach **Model-invoked skills** via **Prose invocation**, but never another **User-invoked skill** (its `description` is hidden, so nothing can reach it). An **Orchestrator skill** delegates to **Behavior skills**; the **Extraction test** (a real second consumer) decides when a discipline graduates from inline text to its own **Behavior skill**.
 - A **Declared dependency** is a **Behavior skill** an **Orchestrator skill** requires; `scripts/install.sh` resolves it. **Format docs** (inert data — `domain-format.md`, `tracker-resolution.md`) stay **Sibling reference files** (ADR-0007); only **behaviors** become **Behavior skills**.
+- `implement` (Orchestrator skill) is the entry point `from-work-item` hands off to. It builds the **one Vertical slice** it is handed (the loaded **Task**, or a single-slice **User Story**): it picks a **Build path** (`tdd` for a Testable slice, direct otherwise), runs `/simplify` in the refactor step, then runs **Close the loop** once via `feedback-loops` (a Behavior skill). `tdd` invokes `feedback-loops` only as an end-of-cycle nudge (ADR-0010), so standalone use still finalizes; `implement` invokes it explicitly once. Judgment review is a separate step: `implement` *suggests* `review-changes` before the PR — it cannot invoke it, since both are User-invoked.
 - A **User Story** belongs to exactly one **Feature** under `Hierarchy: required`; parent linking is optional under `Hierarchy: optional`.
 - A **Task** belongs to exactly one **User Story** — never directly to a **Feature**.
 - A **Feature** contains zero or more **User Stories** in its **Story map** (a **Snapshot** above the **Snapshot separator**, an **Append region** below).
@@ -211,7 +216,7 @@ Ubiquitous-language glossary for the entire skills repo. Covers the four main ar
 - **Reconcile mode** buckets each child Task as **Healthy Task**, **Stale Covers**, or **Unknown Covers**, and each parent **Active AC** as covered or **Uncovered**.
 - **Mark, never delete** governs every reconcile-driven removal — Tasks transition to Removed (ADO) or close with `--reason not_planned` (GitHub); the body record persists.
 - A **Bug** can be parented to a **Feature**, a **User Story**, or be parentless — tracker-config dependent.
-- A **Vertical slice** is the shape of exactly one **Task**; a **Tracer bullet** is the first **Vertical slice** in a delivery sequence; the **RED → GREEN → REFACTOR** cycle operates within one slice.
+- A **Vertical slice** is the shape of exactly one **Task**; within it, the **Tracer bullet** is the first behavior built and the **RED → GREEN → REFACTOR** cycle operates per behavior. Build increments inside a slice are **behaviors**, never sub-slices.
 - **Reconcile mode** operates on all **Tasks** under one **User Story**; **Update mode** operates on exactly one work item.
 - **Tracker resolution** runs once per session in one of three modes — **Declared (mode)**, **Bootstrap-on-ask**, or **No-repo CLI-only mode**; **Tracker dispatch** then selects the per-Tracker template and CLI for the resolved Tracker.
 - **Field reference names** are immutable across ADO process templates; display names are not — publishing skills target the former.
@@ -251,7 +256,7 @@ Ubiquitous-language glossary for the entire skills repo. Covers the four main ar
 
 - **"Story"** is shorthand for **User Story**; both are accepted in conversation, but ADO's typed work item is **User Story**. Use the full form in template references, ADRs, and `SKILL.md` files; **Story** is fine in casual speech.
 - **"User story"** appears in two distinct places: (1) the work-item type **User Story** (title case), (2) the bold prefix on a **Connextra user-story line** (`**User story:** As a [role], I want ...`). Typography disambiguates; in prose, prefer **User Story** for the work item and **Connextra user-story line** for the prefix.
-- **"Slice"** alone is ambiguous — it can mean **Vertical slice** (Task shape), **Layer** (stratum), or "section of a document." Prefer **Vertical slice** for Task shape and **Layer** for the stratum.
+- **"Slice"** alone is ambiguous — it can mean **Vertical slice** (the shape of one **Task**), **Layer** (a stratum), or "section of a document." Prefer **Vertical slice** for the Task shape and **Layer** for the stratum. A build increment *within* a slice is a **behavior** (the first is the **Tracer bullet**), never a "slice."
 - **"Drift"** must always be qualified — **naming drift**, **terminology drift**, or **scope drift**. The unqualified word is too vague.
 - **"Update"** is the canonical verb for the `--update` Skill mode. **Patch**, **edit**, and **revise** were considered and rejected (see ADR-0003).
 - **"Iteration"** and **"Sprint"** are used interchangeably in casual speech, but **Iteration** is the formal ADO field name (`System.IterationPath`). Prefer **Iteration** in tracker-config contexts.

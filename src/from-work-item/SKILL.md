@@ -121,10 +121,10 @@ Loaded {type} #{ID}: "{title}"
   Queue entries: {count} pending — {brief if any}
   Warnings: {layer-mismatch / type-confirm flags, if any}
 
-Ready to implement. Hand off to /tdd (recommended), or proceed freeform.
+Ready to implement. Hand off to /implement (recommended), or proceed freeform.
 ```
 
-Then offer the user the choice. The skill itself doesn't run `tdd` — it loads context and stops. The user (or their next instruction) decides whether the slice goes through TDD or is small enough for direct implementation.
+Then offer the user the choice. The skill itself doesn't build — it loads context and stops. The user runs `/implement`, which picks the build path (TDD for a testable slice, direct otherwise) and drives the slice to done. Both are user-invoked, so `from-work-item` suggests `/implement` rather than invoking it.
 
 ## Refusal vs warning
 

@@ -11,6 +11,22 @@ Tests verify behavior through public interfaces, not implementation details. One
 
 For test fixtures and patterns, see your project's testing skill(s). For conventions on the layer you're touching (endpoint shape, component composition, schema design, etc.), consult the matching convention skill.
 
+## Slice vertically, never horizontally
+
+A **Vertical slice** cuts through every layer it touches to deliver one whole behavior, end to end. The **anti-pattern** is the horizontal slice — building a whole layer across many behaviors before any of them works end to end. Horizontal work has nothing to run until the last layer lands, so nothing is proven until the end.
+
+```
+HORIZONTAL (wrong)                 VERTICAL (right)
+build a layer at a time            build a behavior at a time
+                                   slice 1   slice 2   slice 3
+  UI      ████████████              UI    █  │   █    │   █
+  API     ████████████              API   █  │   █    │   █
+  Data    ████████████              Data  █  │   █    │   █
+  └ nothing runs until the end      └ each slice runs end-to-end
+```
+
+Build the first slice as a **Tracer bullet** — the thinnest path that touches every layer and proves the whole thing connects — then add behavior by behavior, each its own red/green step. Never widen one layer ahead of the others.
+
 ## Workflow
 
 ### 1. Plan
@@ -48,7 +64,7 @@ Rules:
 
 ### 4. Refactor
 
-After all tests pass, review the implementation before calling the task done:
+After all tests pass, review the implementation before calling the cycle done:
 
 - Extract duplication
 - Deepen modules (move complexity behind simple interfaces)
@@ -59,22 +75,10 @@ Run the test command after each refactor step. Never refactor while red.
 
 Then run `/simplify` to catch any remaining issues with reuse, quality, or efficiency. Fix anything it finds and re-run tests.
 
-### 5. Lint, format, typecheck
+## Closing the cycle
 
-After refactoring is complete and all tests pass, run the project's formatter, linter, and type-checker (see CLAUDE.md `## Commands`). Fix anything they surface, then re-run tests to confirm nothing broke.
+When the cycle's behaviors are built and refactored, close the loop: run the `feedback-loops` discipline once to finalize mechanically — format, lint, typecheck, stack finalization (migrations, codegen), and any doc updates the change made stale. This used to be tdd's own steps 5–8; it now lives in `feedback-loops` so every build path shares one mechanical finalize (ADR-0017, amends ADR-0010).
 
-### 6. Project finalization
+Tests prove code-correctness, not feature-correctness. If the slice touched behavior you couldn't actually run in a test — a UI flow, an external integration, a real ingest — say so and eyeball it (run the project's dev command, use `verify`) before declaring done.
 
-Consult any other active project skills for finalization steps relevant to this slice (e.g., database migrations after model changes). Apply them before declaring done.
-
-### 7. Verify what tests can't
-
-Tests and type checks verify code correctness, not feature correctness. If the slice touched behavior you couldn't actually run end-to-end (a UI flow, an external integration, a real ingest), say so explicitly instead of claiming the task is done. UI changes earn a quick browser eyeball via the project's dev command before declaring victory.
-
-### 8. Update docs
-
-Check whether the changes affect anything documented in `README.md`, `CLAUDE.md`, or `DOMAIN.md` (e.g., new commands, changed structure, new conventions, new or renamed domain terms). Update if needed.
-
-Scan the implementation for non-obvious decisions — rejected alternatives, chosen patterns with tradeoffs, constraints future maintainers would need to know. If any exist, propose a one-sentence summary and offer to run `/adr`. Don't ask a yes/no question; synthesize from what was just built and let the user approve or discard.
-
-If this slice ships as its own PR, run `/review` before pushing.
+When `tdd` runs under `implement`, `implement` drives review and the explicit close-the-loop pass; this nudge keeps standalone `tdd` finishing cleanly on its own.
