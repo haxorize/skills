@@ -2,21 +2,27 @@
 
 Personal collection of repo-agnostic agent skills, hoisted into `~/.claude/skills/` for use across projects.
 
-## Skills
+## How these fit together
+
+Every skill sits on one axis — **who can reach it** (see [`DOMAIN.md`](DOMAIN.md) → *Skill invocation*, and [ADR-0015](docs/adr/0015-model-invoked-vs-user-invoked-split.md)):
+
+- **User-invoked skills** — reachable only by a human typing them (`disable-model-invocation: true`). They **orchestrate** a workflow.
+- **Model-invoked skills** — reachable by the model or a human (the default). They hold a reusable **behavior** the model reaches for on its own, or that an orchestrator pulls in via a declared dependency.
+
+The route most work travels: **`/grill-and-record`** (or `/grill-me` with no codebase) → **`/to-feature` / `/to-story` / `/to-tasks`** to decompose → **`/from-work-item`** to load one slice → **`/implement`** to build it (it runs the `tdd` and `feedback-loops` behaviors) → **`/review-changes`** before the PR → ship. Detours branch off: a runnable question goes **`/handoff` → `/prototype` → `/handoff`**; a hard bug pulls in `diagnosing-bugs`; a conflicted merge pulls in `resolving-merge-conflicts`. Upkeep loops — **`/improve-design`**, **`/harden-domain`**, **`/backfill-adrs`** — run between features. When you don't remember which to reach for, ask **`/which-skill`**.
+
+## User-invoked skills
+
+Orchestrators a human runs by name.
+
+### Routing
+
+- **`which-skill`** — Ask which skill or flow fits your situation. A router over the user-invoked skills.
 
 ### Grilling
 
 - **`grill-me`** — Vanilla stress-testing through relentless interview. Zero setup, runs anywhere.
 - **`grill-and-record`** — Doc-aware grilling. Updates `DOMAIN.md` inline as terms resolve and offers ADRs when the gate triggers. Use in projects that have (or will have) a `DOMAIN.md` and an ADR log.
-
-### Domain language
-
-- **`harden-domain`** — Sweep the codebase to refresh `DOMAIN.md`. Deliberate sweep mode (inline domain capture during grilling lives in `grill-and-record`).
-
-### Decisions
-
-- **`adr`** — Capture a single fresh Architecture Decision Record after a deliberate decision.
-- **`backfill-adrs`** — Sweep recent git history for un-recorded architectural decisions and write the ones that pass the gate.
 
 ### Publishing to a tracker
 
@@ -28,16 +34,51 @@ Personal collection of repo-agnostic agent skills, hoisted into `~/.claude/skill
 
 ### Implementation
 
-- **`from-work-item`** — Cold-start loader. Pulls a published Task / Story / Bug back into the conversation, auto-detects type, and loads the right shape — parent context, `DOMAIN.md`, ADRs matched against `## Layers touched`. Refuses Feature/Epic with a redirect. Hands off to `tdd` or freeform.
-- **`tdd`** — Test-driven development workflow using vertical slices. Universal RED/GREEN/refactor core; project commands resolved via CLAUDE.md `## Commands`; stack-specific finalization (migrations, primitive uplift, browser checks) deferred to active convention skills.
+- **`from-work-item`** — Cold-start loader. Pulls a published Task / Story / Bug back into the conversation, auto-detects type, and loads the right shape — parent context, `DOMAIN.md`, ADRs matched against `## Layers touched`. Refuses Feature/Epic with a redirect. Hands off to `implement` or freeform.
+- **`implement`** — Build one loaded work-item slice end to end: pick the build path, build, refactor, and close the loop. Picks `tdd` for a testable slice or the direct path otherwise; runs `feedback-loops` once; suggests `review-changes` before the PR.
 
-### Architecture
+### Review
 
-- **`improve-design`** — Read-only design-quality review: surfaces architectural friction and proposes deeper module interfaces as a prioritized, vetted report.
+- **`review-changes`** — Read-only, project-aware judgment review of a diff before a PR, on a teammate's PR, or on a landed commit. Fans review lenses out to subagents, vets the findings, and presents a ranked, classified report. Never mutates.
+
+### Codebase health
+
+- **`improve-design`** — Read-only design-quality review of the whole codebase: surfaces architectural friction and proposes deeper module interfaces as a prioritized, vetted report.
+- **`harden-domain`** — Sweep the codebase to refresh `DOMAIN.md`. Deliberate sweep mode (inline domain capture during grilling lives in `grill-and-record`).
+- **`backfill-adrs`** — Sweep recent git history for un-recorded architectural decisions and write the ones that pass the gate.
+
+### Crossing sessions & prototyping
+
+- **`handoff`** — Fork the current conversation into a handoff document so a fresh session can pick the work up. Defaults to the OS temp dir; references durable artifacts rather than duplicating them.
+- **`prototype`** — Build a throwaway prototype to answer a design question — a runnable terminal app for state/logic questions, or several radically different UI variations toggleable from one route.
 
 ### Meta
 
 - **`write-skill`** — Conventions for writing new skills.
+
+## Model-invoked skills
+
+Behaviors the model reaches for on its own (or that an orchestrator declares as a dependency).
+
+### Grilling & domain
+
+- **`grilling`** — The relentless-interview discipline at the core of `grill-me` and `grill-and-record`.
+- **`domain-modeling`** — The discipline for capturing and sharpening ubiquitous language in `DOMAIN.md`.
+
+### Decisions
+
+- **`adr`** — Capture a single fresh Architecture Decision Record after a deliberate decision.
+
+### Design
+
+- **`codebase-design`** — Shared vocabulary and principles for designing deep modules (module / interface / depth / seam / adapter); consumed by `improve-design`, `review-changes`, and `diagnosing-bugs`.
+
+### Build & finalize
+
+- **`tdd`** — Test-driven development using vertical slices. Universal RED/GREEN/refactor core; project commands resolved via CLAUDE.md `## Commands`; stack-specific finalization deferred to convention skills and `feedback-loops`.
+- **`feedback-loops`** — The mechanical pass that closes the loop after a slice's behaviors are built and refactored: format, lint, typecheck, stack finalization, and doc updates.
+- **`diagnosing-bugs`** — Diagnosis loop for hard bugs and performance regressions, centered on standing up a tight red-capable feedback loop first. A declared dependency of `implement`.
+- **`resolving-merge-conflicts`** — Conflict-resolution loop for an in-progress merge or rebase that preserves both intents; delegates the project's checks to `feedback-loops`.
 
 ## Conventions
 
