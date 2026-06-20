@@ -20,4 +20,4 @@ This is the bare discipline — no document side effects. Two orchestrators laye
 - `grill-me` runs this loop and nothing else (a plain stress-test).
 - `grill-and-record` runs this loop and captures terminology and durable decisions as it goes (`DOMAIN.md` updates, opportunistic ADRs).
 
-Other skills reach for grilling at a natural "pressure-test this before committing" moment — e.g. `deepen` offers it before filing a refactor.
+Other skills reach for grilling at a natural "pressure-test this before committing" moment — e.g. `improve-design` offers it before filing a refactor.
