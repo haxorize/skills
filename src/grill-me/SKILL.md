@@ -2,10 +2,11 @@
 name: grill-me
 description: Stress-test a plan or design through relentless interview.
 disable-model-invocation: true
+requires: grilling
 ---
 
-Interview me relentlessly about every aspect of this plan until we reach a shared understanding. Walk down each branch of the design tree, resolving dependencies between decisions one-by-one. For each question, provide your recommended answer.
+# Grill Me
 
-Ask the questions one at a time.
+Run the `grilling` discipline: a relentless one-question-at-a-time interview that walks the design tree until you reach shared understanding, exploring the codebase to answer questions rather than asking when it can.
 
-If a question can be answered by exploring the codebase, explore the codebase instead.
+This is the plain stress-test — no document side effects. When the project keeps living docs (`DOMAIN.md`, an ADR log) and wants terminology and decisions captured as the conversation goes, use `grill-and-record` instead.

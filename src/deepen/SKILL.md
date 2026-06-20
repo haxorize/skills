@@ -2,42 +2,18 @@
 name: deepen
 description: Module-deepening refactors — surface architectural friction and propose deeper interfaces.
 disable-model-invocation: true
+requires: codebase-design
 ---
 
 # Deepen
 
 Surface architectural friction and propose module-deepening refactors.
 
-## Vocabulary
+## Design vocabulary
 
-Use these terms exactly in every suggestion. Consistent language is the point.
+This skill speaks the `codebase-design` vocabulary — **module**, **interface**, **implementation**, **depth** (deep/shallow), **seam**, **adapter**, **leverage**, **locality** — and its principles (the deletion test, "the interface is the test surface," "one adapter = hypothetical seam, two = real," internal-seams-are-private). Run the `codebase-design` behavior for the full definitions and use those terms exactly in every suggestion; don't drift into "component," "service," "API," or "boundary."
 
-- **Module** — anything with an interface and an implementation (function, class, package, slice). _Avoid_: unit (implies test isolation, not interface+implementation pairing), component (implies UI), service (implies network boundary).
-- **Interface** — everything a caller must know to use the module: types, invariants, error modes, ordering, config. Not just the type signature. _Avoid_: API (implies external/versioned), signature (omits invariants and error modes).
-- **Implementation** — the code inside.
-- **Depth** — leverage at the interface: a lot of behaviour behind a small interface. **Deep** = high leverage. **Shallow** = interface nearly as complex as the implementation.
-- **Seam** — where an interface lives; a place behaviour can be altered without editing in place. _Avoid_: boundary (clashes with DDD's bounded context, which has its own meaning in many codebases).
-- **Adapter** — a concrete thing satisfying an interface at a seam.
-- **Leverage** — what callers get from depth.
-- **Locality** — what maintainers get from depth: change, bugs, knowledge concentrated in one place.
-
-Principles that sharpen every proposal:
-
-- **Deletion test.** Imagine deleting the module. If complexity vanishes, it was a pass-through. If complexity reappears across N callers, it was earning its keep. "Concentrates complexity" is the signal you want.
-- **The interface is the test surface.** Callers and tests cross the same seam. If you want to test *past* the interface, the module is probably the wrong shape.
-- **One adapter = hypothetical seam. Two adapters = real seam.** Don't introduce a port unless at least two adapters are justified (typically production + test). A single-adapter seam is just indirection.
-- **Internal seams are private.** A deep module can have internal seams its own tests use; don't expose them through the external interface just because tests use them.
-
-## Dependency categories
-
-When framing a candidate, classify its dependencies. The category determines how the deepened module is tested across its seam.
-
-1. **In-process.** Pure computation, in-memory state, no I/O. Always deepenable — merge the modules, test through the new interface directly. No adapter needed.
-2. **Local-substitutable.** Dependencies with local test stand-ins (PGLite for Postgres, in-memory filesystem). Deepenable if the stand-in exists. Tested with the stand-in running in the suite. The seam is internal; no port at the external interface.
-3. **Remote but owned.** Your own services across a network (microservices, internal APIs). Define a port at the seam. Logic sits in the deep module; transport is injected as an adapter. In-memory adapter for tests, HTTP/gRPC/queue adapter for production.
-4. **True external.** Third-party services you don't control (Stripe, Twilio). Deep module takes the dependency as an injected port; tests provide a mock adapter.
-
-Tests at the deepened interface replace the old shallow-module tests — delete them, don't layer. Tests assert on observable outcomes through the interface, not internal state, so they survive internal refactors.
+When framing a candidate, classify its dependencies using `codebase-design`'s **dependency categories** (in-process / local-substitutable / remote-but-owned / true-external) — the category determines how the deepened module is tested across its seam, and whether a port is justified. Tests at the deepened interface replace the old shallow-module tests; delete them, don't layer.
 
 ## Work item tracker
 
@@ -102,7 +78,7 @@ If the user rejects a candidate with a **load-bearing reason** — a reason a fu
 Write a user-facing explanation of the chosen candidate:
 
 - The constraints any new interface would need to satisfy
-- The dependencies it would rely on, classified per Dependency categories above
+- The dependencies it would rely on, classified per `codebase-design`'s dependency categories
 - A rough illustrative code sketch to make the constraints concrete — this is not a proposal, just a way to ground the discussion
 
 If framing reveals this isn't a deepening candidate (e.g., modules are thin for good reason, or the friction is a bug/test gap rather than an architecture problem), say so and offer alternatives — filing a bug fix or test coverage work item instead, or skipping it entirely.
@@ -118,7 +94,7 @@ Then present one recommended interface design:
 - Interface signature (types, methods, params)
 - Usage example showing how callers use it
 - What complexity it hides internally
-- Dependency category for each external dependency (see Dependency categories) and the adapter strategy
+- Dependency category for each external dependency (per `codebase-design`) and the adapter strategy
 - What existing tests would be replaced by boundary tests
 - Trade-offs
 

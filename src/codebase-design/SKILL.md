@@ -1,0 +1,52 @@
+---
+name: codebase-design
+description: Shared vocabulary and principles for designing deep modules. Use when designing or improving a module's interface, finding deepening opportunities, deciding where a seam goes, making code more testable, or when another skill needs the deep-module vocabulary.
+---
+
+# Codebase Design
+
+Design **deep modules**: a lot of behaviour behind a small interface, placed at a clean seam, testable through that interface. Use this language and these principles wherever code is being designed or restructured. The aim is leverage for callers, locality for maintainers, and testability for everyone.
+
+## Vocabulary
+
+Use these terms exactly — don't substitute "component," "service," "API," or "boundary." Consistent language is the whole point.
+
+- **Module** — anything with an interface and an implementation. Deliberately scale-agnostic: a function, class, package, or tier-spanning slice. _Avoid_: unit (implies test isolation), component (implies UI), service (implies a network boundary).
+- **Interface** — everything a caller must know to use the module correctly: the type signature, but also invariants, ordering constraints, error modes, required configuration, and performance characteristics. _Avoid_: API (implies external/versioned), signature (too narrow — type-level only).
+- **Implementation** — the code inside the module. Distinct from **Adapter**: a thing can be a small adapter with a large implementation (a Postgres repo) or a large adapter with a small implementation (an in-memory fake). Reach for "adapter" when the seam is the topic; "implementation" otherwise.
+- **Depth** — leverage at the interface: how much behaviour a caller or test can exercise per unit of interface they have to learn. **Deep** = a lot of behaviour behind a small interface. **Shallow** = the interface is nearly as complex as the implementation.
+- **Seam** _(Michael Feathers)_ — a place where behaviour can be altered without editing in place; the location where a module's interface lives. Where to put the seam is its own design decision, distinct from what goes behind it. _Avoid_: boundary (clashes with DDD's bounded context).
+- **Adapter** — a concrete thing that satisfies an interface at a seam. Describes *role* (what slot it fills), not substance (what's inside).
+- **Leverage** — what callers get from depth: more capability per unit of interface learned. One implementation pays back across N call sites and M tests.
+- **Locality** — what maintainers get from depth: change, bugs, knowledge, and verification concentrate in one place rather than spreading across callers. Fix once, fixed everywhere.
+
+## Principles
+
+- **Depth is a property of the interface, not the implementation.** A deep module can be internally composed of small, swappable parts — they just aren't part of the interface. A module can have **internal seams** (private, used by its own tests) as well as the **external seam** at its interface; don't expose the internal ones just because tests use them.
+- **The deletion test.** Imagine deleting the module. If complexity vanishes, it was a pass-through. If complexity reappears across N callers, it was earning its keep. "Concentrates complexity" is the signal you want.
+- **The interface is the test surface.** Callers and tests cross the same seam. If you want to test *past* the interface, the module is probably the wrong shape.
+- **One adapter = hypothetical seam. Two adapters = real seam.** Don't introduce a port unless at least two adapters are justified (typically production + test). A single-adapter seam is just indirection.
+
+## Dependency categories
+
+When framing a candidate, classify its dependencies. The category determines how the deepened module is tested across its seam.
+
+1. **In-process.** Pure computation, in-memory state, no I/O. Always deepenable — merge the modules, test through the new interface directly. No adapter needed.
+2. **Local-substitutable.** Dependencies with local test stand-ins (PGLite for Postgres, in-memory filesystem). Deepenable if the stand-in exists. Tested with the stand-in running in the suite. The seam is internal; no port at the external interface.
+3. **Remote but owned.** Your own services across a network (microservices, internal APIs). Define a port at the seam. Logic sits in the deep module; transport is injected as an adapter. In-memory adapter for tests, HTTP/gRPC/queue adapter for production.
+4. **True external.** Third-party services you don't control (Stripe, Twilio). Deep module takes the dependency as an injected port; tests provide a mock adapter.
+
+Tests at the deepened interface replace the old shallow-module tests — delete them, don't layer. Tests assert on observable outcomes through the interface, not internal state, so they survive internal refactors.
+
+## Relationships
+
+- A **Module** has exactly one **Interface** — the surface it presents to callers and tests.
+- **Depth** is a property of a **Module**, measured against its **Interface**.
+- A **Seam** is where a **Module**'s **Interface** lives; an **Adapter** sits at a **Seam** and satisfies the **Interface**.
+- **Depth** produces **Leverage** for callers and **Locality** for maintainers.
+
+## Rejected framings
+
+- **Depth as the ratio of implementation lines to interface lines** (Ousterhout's literal measure): rewards padding the implementation. Use depth-as-leverage instead.
+- **"Interface" as the language `interface` keyword or a class's public methods**: too narrow — interface here includes every fact a caller must know (invariants, ordering, error modes, config).
+- **"Boundary"** for the seam concept: overloaded with DDD's bounded context. Say **seam** or **interface**.
