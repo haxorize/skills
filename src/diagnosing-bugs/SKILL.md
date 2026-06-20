@@ -1,6 +1,6 @@
 ---
 name: diagnosing-bugs
-description: Diagnosis loop for hard bugs and performance regressions. Use when the user says "diagnose"/"debug this", reports something broken/throwing/failing/slow, or when a build turns up an unplanned failure you can't quickly explain.
+description: Diagnosis loop for hard bugs and performance regressions. Use when the user says "diagnose"/"debug this", reports something broken or a performance regression, or when a build turns up an unplanned failure you can't quickly explain.
 requires: codebase-design, adr
 ---
 

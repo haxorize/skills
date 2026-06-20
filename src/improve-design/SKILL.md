@@ -28,7 +28,7 @@ Read `CLAUDE.md` for an `Issue tracker:` block before Step 1. Three modes:
 
 - **Declared** — block present. Read tracker name and conventions; dispatch automatically.
 - **Bootstrap-on-ask** — repo present, CLAUDE.md missing or no tracker block. Ask the user inline, preview an appended `## Issue tracker` section, write on confirmation. **Always append, never overwrite.**
-- **No-repo CLI-only** — no git repo. Ask for tracker info; no file writes. Save to memory so subsequent invocations don't re-ask.
+- **No-repo CLI-only** — no git repo. Ask for tracker info; no file writes. Save to memory keyed by tracker context (e.g., `Tracker default — work-backlog`) so subsequent invocations don't re-ask.
 
 **Hierarchy.** Refactor work items belong under a parent Feature (`Hierarchy: required`, ADO default). If `--parent <feature-id>` is not provided, prompt for it. GitHub defaults to `Hierarchy: optional` — don't prompt. Required fields: GitHub needs only the tracker name; ADO requires `Project:` minimum.
 
