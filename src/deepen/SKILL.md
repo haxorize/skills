@@ -1,6 +1,7 @@
 ---
 name: deepen
-description: Module-deepening refactors — surface architectural friction and propose deeper interfaces. Use when reviewing architecture, planning a refactor before implementing, deciding what to refactor next, finding coupling, or wanting to improve testability.
+description: Module-deepening refactors — surface architectural friction and propose deeper interfaces.
+disable-model-invocation: true
 ---
 
 # Deepen

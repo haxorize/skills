@@ -28,6 +28,20 @@ Ubiquitous-language glossary for the entire skills repo. Covers the four main ar
 | **Cold-start loader** | A Skill that fetches a published Work item back into the conversation as implementation context — embodied by `from-work-item` | Loader (when used alone) |
 | **Archaeological mode** | `backfill-adrs`'s mode for recovering un-recorded decisions from git history | — |
 
+## Skill invocation
+
+| Term | Definition | Aliases to avoid |
+| --- | --- | --- |
+| **Invocation** | The axis that splits every Skill by *who can reach it* — the human only, or the model too | Triggering, Activation |
+| **User-invoked skill** | A Skill reachable **only by a human typing its name**; carries `disable-model-invocation: true`, which hides its `description` from the model. The description is **human-facing** (a one-line summary, no trigger list). Its job is to **orchestrate**. | Manual skill, Human-only skill |
+| **Model-invoked skill** | A Skill reachable by **model or user** (the default — omit `disable-model-invocation`). The `description` is **model-facing** and keeps rich trigger phrasing so auto-invocation fires. Holds reusable discipline. | Auto skill, Agent skill |
+| **Orchestrator skill** | A (typically User-invoked) Skill that drives a workflow end-to-end and delegates reusable discipline to Behavior skills (`grill-me`, `grill-and-record`, `harden-domain`, `improve-design`) | Wrapper, Entry skill |
+| **Behavior skill** | A Model-invoked Skill holding a reusable discipline the model can reach for autonomously (`grilling`, `domain-modeling`, `codebase-design`) | Core skill (acceptable shorthand), Discipline skill (acceptable), Helper skill |
+| **Declared dependency** | A Behavior skill that an Orchestrator names as required; `scripts/install.sh` resolves it so the Orchestrator's Prose invocation always finds it. Relaxes ADR-0007 atomicity from "lone skill" to "skill + its declared deps" | Skill import, Require |
+| **Prose invocation** | The soft, Claude-mediated mechanism by which one Skill instructs Claude to run another (`Run the /grilling skill`). There is no hard cross-skill include; it works only if the target is a Model-invoked skill **and** installed | Cross-skill call, Skill reference (clashes with Reference file) |
+| **Extraction test** | The rule for when an Orchestrator's discipline becomes a separate Behavior skill: a real second consumer exists. *Reuse is the reason to extract, not the test for staying Model-invoked* — that test is "could the model usefully reach for this autonomously?" | — |
+| **Pairs-only naming** | The convention that an extracted Behavior skill takes a discipline/gerund name (`grilling`, `domain-modeling`, `codebase-design`, `feedback-loops`) while its Orchestrator keeps an action name (`grill-me`, `harden-domain`, `improve-design`); standalone skills (`to-feature`, `from-work-item`, `tdd`, `adr`, `write-skill`) are not renamed | Strict-global naming (rejected) |
+
 ## Work item types
 
 | Term | Definition | Aliases to avoid |
@@ -184,6 +198,8 @@ Ubiquitous-language glossary for the entire skills repo. Covers the four main ar
 ## Relationships
 
 - A **Skill** is a directory containing a `SKILL.md` plus optional **Reference files** under `references/`; **Repo-agnostic skills** in this repo are **Hoist**ed to `~/.claude/skills/`, **Convention skills** stay per-repo.
+- Every **Skill** is exactly one of **User-invoked** or **Model-invoked** — the **Invocation** axis. A **User-invoked skill** may reach **Model-invoked skills** via **Prose invocation**, but never another **User-invoked skill** (its `description` is hidden, so nothing can reach it). An **Orchestrator skill** delegates to **Behavior skills**; the **Extraction test** (a real second consumer) decides when a discipline graduates from inline text to its own **Behavior skill**.
+- A **Declared dependency** is a **Behavior skill** an **Orchestrator skill** requires; `scripts/install.sh` resolves it. **Format docs** (inert data — `domain-format.md`, `tracker-resolution.md`) stay **Sibling reference files** (ADR-0007); only **behaviors** become **Behavior skills**.
 - A **User Story** belongs to exactly one **Feature** under `Hierarchy: required`; parent linking is optional under `Hierarchy: optional`.
 - A **Task** belongs to exactly one **User Story** — never directly to a **Feature**.
 - A **Feature** contains zero or more **User Stories** in its **Story map** (a **Snapshot** above the **Snapshot separator**, an **Append region** below).

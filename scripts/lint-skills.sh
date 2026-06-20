@@ -4,6 +4,12 @@
 #   - Frontmatter `description:` must be <= 1024 chars and contain no unquoted
 #     `: ` separator (use em-dashes — GitHub's strict YAML preview chokes on
 #     mid-value colons).
+#   - Invocation axis (ADR-0015): a user-invoked skill carries
+#     `disable-model-invocation: true` and its description must be human-facing
+#     (a one-line summary, no "Use when…" trigger list — the model never sees
+#     it). A model-invoked skill (no such flag) must keep trigger phrasing so
+#     auto-invocation can fire. This is a heuristic on the "Use when/after/only"
+#     opener, the repo's conventional trigger marker.
 #   - ADR-0007 sibling reference files must stay byte-identical. Symlink-per-
 #     skill install means we duplicate `domain-format.md` and `adr-format.md`
 #     across the skills that need them; ADR-0007 records this with mitigation
@@ -59,6 +65,33 @@ for f in src/*/SKILL.md; do
   if printf '%s' "$stripped" | grep -qE ': '; then
     echo "FAIL: $f description has unquoted ': ' (use em-dash) — $desc"
     fail=1
+  fi
+
+  # Invocation axis (ADR-0015). A skill is user-invoked iff its frontmatter
+  # carries `disable-model-invocation: true`. The trigger marker is the
+  # conventional "Use when/after/only" opener (leading word-start avoids
+  # matching "reuse"); user-invoked must lack it, model-invoked must have it.
+  dmi=$(awk '
+    /^---$/ { c++; next }
+    c == 1 && /^disable-model-invocation:[[:space:]]*true[[:space:]]*$/ { print "true"; exit }
+  ' "$f")
+
+  if printf '%s' "$desc" | grep -qE '(^| )[Uu]se (this skill |this |the )?(when|after|only)'; then
+    has_trigger=1
+  else
+    has_trigger=0
+  fi
+
+  if [ "$dmi" = "true" ]; then
+    if [ "$has_trigger" -eq 1 ]; then
+      echo "FAIL: $f is user-invoked (disable-model-invocation: true) but its description carries a 'Use when…' trigger list — make it human-facing (the model never sees it)"
+      fail=1
+    fi
+  else
+    if [ "$has_trigger" -eq 0 ]; then
+      echo "FAIL: $f is model-invoked but its description has no 'Use when…' trigger phrasing — auto-invocation needs it (or set disable-model-invocation: true)"
+      fail=1
+    fi
   fi
 done
 

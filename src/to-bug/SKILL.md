@@ -1,6 +1,7 @@
 ---
 name: to-bug
-description: Synthesize the current conversation into a Bug work item and publish it to the project's issue tracker. Use when the conversation has surfaced a defect (regression, broken flow, incident) that needs filing. ADO — creates a first-class Bug work item with native Severity and Repro Steps fields. GitHub — creates an issue with the `bug` label and a severity label. Synthesizes from context — no interviewing.
+description: Synthesize the current conversation into a Bug work item and publish it to the project's issue tracker. ADO — creates a first-class Bug work item with native Severity and Repro Steps fields. GitHub — creates an issue with the `bug` label and a severity label. Synthesizes from context — no interviewing.
+disable-model-invocation: true
 ---
 
 # To Bug
