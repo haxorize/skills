@@ -51,7 +51,7 @@ If the work isn't already grounded in the conversation, explore the touched modu
 
 ### 5. Draft vertical slices
 
-Each slice = one Task = thin vertical cut through every integration layer end-to-end. Prefer many thin Tasks over few thick ones.
+Each slice is one Task. Prefer many thin Tasks over few thick ones.
 
 **Tests belong in the same Task as the behavior they verify.** Never file a test as its own Task — that is a horizontal cut, not a vertical slice. A proxy test for behavior X lives in the same Task as the proxy change for X; a component test for behavior Y lives in the same Task as the component change for Y. Each Task must be independently handable to `/tdd`. If writing a Task's tests would require another Task's implementation to exist first, merge them into one Task.
 
