@@ -33,7 +33,7 @@ Personal collection of repo-agnostic agent skills, hoisted into `~/.claude/skill
 
 ### Architecture
 
-- **`deepen`** — Module-deepening refactor proposals.
+- **`improve-design`** — Read-only design-quality review: surfaces architectural friction and proposes deeper module interfaces as a prioritized, vetted report.
 
 ### Meta
 

@@ -26,6 +26,8 @@ Use these terms exactly — don't substitute "component," "service," "API," or "
 - **The deletion test.** Imagine deleting the module. If complexity vanishes, it was a pass-through. If complexity reappears across N callers, it was earning its keep. "Concentrates complexity" is the signal you want.
 - **The interface is the test surface.** Callers and tests cross the same seam. If you want to test *past* the interface, the module is probably the wrong shape.
 - **One adapter = hypothetical seam. Two adapters = real seam.** Don't introduce a port unless at least two adapters are justified (typically production + test). A single-adapter seam is just indirection.
+- **Inevitable in hindsight.** A good design reads as the obvious one once you see it — a reviewer thinks "of course it's shaped this way," not "why is it shaped this way?" If the shape needs a paragraph of justification to feel right, it probably isn't deep enough yet. Use this as a gut-check on a proposed interface: would the next reader find it inevitable?
+- **Typed dispatcher over condition-chain.** When behaviour forks on a kind/type/status, prefer an exhaustive **typed dispatcher** (a map or match keyed by a closed type, so the compiler flags a missing case) over a growing `if/else`/`switch` chain on stringly values. The dispatcher concentrates the variation behind one interface (depth) and makes the full set of cases legible; the condition-chain leaks the variation across every call site that has to re-check it.
 
 ## Dependency categories
 
@@ -37,6 +39,16 @@ When framing a candidate, classify its dependencies. The category determines how
 4. **True external.** Third-party services you don't control (Stripe, Twilio). Deep module takes the dependency as an injected port; tests provide a mock adapter.
 
 Tests at the deepened interface replace the old shallow-module tests — delete them, don't layer. Tests assert on observable outcomes through the interface, not internal state, so they survive internal refactors.
+
+## Judging a change (diff-relative)
+
+The principles above describe a good design in the absolute. When the subject is a **diff** rather
+than a whole tree — a review, a slice just built — apply them **diff-relatively**: the bar is not
+"is this module perfect?" but **"did this change make the local architecture worse?"** A diff that
+deepens a module or leaves it as-is passes; a diff that adds a condition-chain where a dispatcher
+belonged, splinters a deep module into shallow ones, or threads a new concern across call sites
+**regresses** the local design — that's the finding. Hold the vocabulary here; the orchestrator
+(`review-changes` for a diff, `improve-design` for a tree) supplies the change set and applies this bar.
 
 ## Relationships
 

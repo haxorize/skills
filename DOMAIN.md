@@ -1,6 +1,6 @@
 # Domain — Skills Repo
 
-Ubiquitous-language glossary for the entire skills repo. Covers the four main areas of work the skill suite supports — shaping backlog work (Feature/Story/Task/Bug publishing), refactoring (deepen), recording decisions (ADRs), and implementation (TDD) — plus the meta-vocabulary of the skills themselves. Initial capture from the to-X expansion grilling on 2026-05-01 (see ADRs 0002–0005); hardened by sweeping every skill's `SKILL.md`, the README, and the repo's commit history.
+Ubiquitous-language glossary for the entire skills repo. Covers the four main areas of work the skill suite supports — shaping backlog work (Feature/Story/Task/Bug publishing), design improvement (improve-design), recording decisions (ADRs), and implementation (TDD) — plus the meta-vocabulary of the skills themselves. Initial capture from the to-X expansion grilling on 2026-05-01 (see ADRs 0002–0005); hardened by sweeping every skill's `SKILL.md`, the README, and the repo's commit history.
 
 ## Skill mechanics
 
@@ -106,6 +106,8 @@ Ubiquitous-language glossary for the entire skills repo. Covers the four main ar
 | **Testable slice** | A Vertical slice whose behaviors warrant RED → GREEN → REFACTOR (built via `tdd`) | — |
 | **Non-testable slice** | A Vertical slice built via the direct path because it has no meaningful test seam (documentation, scripts, config) | Untested slice (implies a gap, not a deliberate choice) |
 | **Close the loop** | The **mechanical** finalization pass run **once after the slice's behaviors are built and refactored** (not per behavior) — `feedback-loops` runs lint/format/typecheck, migrations, and doc updates, resolving commands via CLAUDE.md `## Commands` and deferring stack-specifics to Convention skills. Judgment review (`review-changes`) and `/simplify` live elsewhere (see below) | Finalize (overloaded), Wrap-up |
+| **`review-changes`** | The **read-only** judgment review (User-invoked Orchestrator) run before a PR or on a teammate's PR: it fans **Review lenses** out to subagents (findings only) and never mutates code; resolves its input from the local diff or a PR + a work-item pointer | Conformance-review (earlier name) |
+| **Review lens** | One angle `review-changes` applies, chosen by **diff triage** so irrelevant ones don't run — always `/code-review` + DOMAIN + ADR; conditional `/security-review` (security surfaces), AC-conformance (work item loaded), design-depth (`codebase-design`, structural change) | — |
 
 ## Architecture & deepening
 
@@ -267,7 +269,7 @@ Ubiquitous-language glossary for the entire skills repo. Covers the four main ar
 - **"Healthy"** alone is too generic — prefer **Healthy Task** in reconcile contexts to make the bucket sense unambiguous.
 - **"Reference name"** vs **"Reference file"** — **Field reference name** is the immutable ADO field identifier (`System.Description`, ...); **Reference file** is a doc under a Skill's `references/`. **Sibling reference file** is the lint-enforced subclass (ADR-0007). Don't conflate.
 - **"Module"** is severely overloaded: in **Architecture & deepening** it carries the Ousterhout sense (anything with an Interface and Implementation); in Python/JS it's a file or package; in some org charts it's a team's area. When ambiguity is possible, qualify the sense — "Ousterhout Module" or "Python module".
-- **"Boundary"** vs **"Seam"** — `deepen` deliberately avoids **Boundary** for the Seam concept because **Boundary** is reserved for DDD's **Bounded context**. Use **Seam** for the deepening sense, **Bounded context** for the DDD sense, never **Boundary**.
+- **"Boundary"** vs **"Seam"** — `improve-design` (and `codebase-design`) deliberately avoids **Boundary** for the Seam concept because **Boundary** is reserved for DDD's **Bounded context**. Use **Seam** for the deepening sense, **Bounded context** for the DDD sense, never **Boundary**.
 - **"Interface"** is the broader Ousterhout-sense term in this repo (everything a caller must know — types, invariants, error modes, ordering, config); **Port** is the narrower term reserved for Interfaces at Seams that warrant ≥2 Adapters. Don't substitute "API" — that's HTTP-flavored and loses the invariant/error-mode/ordering nuance.
 - **"Skill"** vs **"Convention skill"** vs **"Plugin"** — **Skill** is the unit (a directory with `SKILL.md`); **Convention skill** is a category (project-local, encoding stack conventions); **Plugin** is Claude Code's distribution unit (a different concept — don't conflate).
 - **"Sweep"** appears as a verb (the act of scanning), a noun (**Sweep window**), and a mode (**Sweep mode**). In Skill descriptions, **Sweep mode** is the canonical noun for the deliberate-pass behavior of `harden-domain` and `backfill-adrs`.

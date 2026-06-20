@@ -1,13 +1,20 @@
 ---
-name: deepen
-description: Module-deepening refactors — surface architectural friction and propose deeper interfaces.
+name: improve-design
+description: Read-only design-quality review of a codebase — surface architectural friction and propose deeper, cleaner module interfaces as a prioritized, vetted report.
 disable-model-invocation: true
 requires: codebase-design
 ---
 
-# Deepen
+# Improve Design
 
-Surface architectural friction and propose module-deepening refactors.
+Surface architectural friction across a codebase and propose deeper, cleaner module interfaces.
+
+This is an **advisory, read-only** pass: it explores, ranks findings, and files recommendations — it
+never mutates code (execution is `implement`'s job, and `/simplify` mutates so it lives in the build
+beat, not here). Run it periodically — every few days, or after a burst of feature work — to catch
+design drift before it compounds. The output is a **prioritized, vetted report** a human reads, not a
+pile of speculative refactors. Whole-codebase scope is what distinguishes it from `review-changes`,
+which runs the same vet + finding-format disciplines against a single diff.
 
 ## Design vocabulary
 
@@ -35,7 +42,7 @@ In parallel, read project context and search prior work:
 
 - `DOMAIN.md` — domain vocabulary for candidate descriptions ("the billing rollup module," not "the AggregatorService")
 - `docs/adr/` — recorded decisions you should not re-litigate (proceed silently if absent)
-- Search the tracker for existing refactor work items (Search command above; terms: `deepen`, `refactor`, `extract`, `absorb`). Read open ones fully — intent, not just title.
+- Search the tracker for existing refactor work items (Search command above; terms: `improve-design`, `deepen`, `refactor`, `extract`, `absorb`). Read open ones fully — intent, not just title.
 - `git log --oneline -30` — recent structural changes (extract, move, rename, refactor)
 
 If an area was recently refactored, the bar for proposing another change is much higher. Ask: "Is this friction from an incomplete refactor, or from the refactor itself being wrong?" If incomplete, update the existing work item rather than filing new.
@@ -53,21 +60,35 @@ Use the Agent tool with subagent_type=Explore to navigate the codebase. Don't fo
 
 The friction you encounter IS the signal.
 
-### 3. Consolidate and present candidates
+### 3. Vet, then consolidate and present candidates
 
-Group related findings into coherent candidates — don't present overlapping or sub-issues separately. **Cross-reference against existing work items found in step 1.** If a candidate overlaps with an existing work item, say so explicitly — propose updating that one rather than filing a new one.
+**Vet first.** Exploration over-reports — a friction that looks real from a distance often dissolves
+on a close read. Before presenting anything, **re-read every location you'd cite** and confirm the
+finding holds. Drop three classes: friction that's actually by-design (including a tradeoff an ADR
+already records — settled, not a finding), mis-read evidence (real concern, wrong file/line), and
+duplicates that are the same underlying coupling seen from two angles.
 
-**ADR conflicts:** if a candidate contradicts an existing ADR, only surface it when the friction is real enough to warrant revisiting the ADR. Mark it clearly (e.g., _"contradicts ADR-0007 — but worth reopening because…"_). Don't list every theoretical refactor an ADR forbids.
+Group surviving findings into coherent candidates — don't present overlapping or sub-issues separately. **Cross-reference against existing work items found in step 1.** If a candidate overlaps with an existing work item, say so explicitly — propose updating that one rather than filing a new one.
 
-Present a numbered list of deepening opportunities. For each candidate, show:
+**ADR drift is bidirectional.** A tradeoff an ADR records is **by-design** — suppress it, don't
+re-litigate. But if the code has **drifted** from what an ADR says, the drift is itself a finding
+worth surfacing (the doc or the code is wrong; the team should know). Same for `DOMAIN.md`. When a
+candidate genuinely warrants *reopening* an ADR, mark it clearly (e.g., _"contradicts ADR-0007 — but
+worth reopening because…"_) and only when the friction is real enough to justify it.
 
-- **Cluster**: Which modules/concepts are involved
+Present a numbered list of deepening opportunities, **ordered by leverage** (impact ÷ effort,
+discounted by confidence and fix-risk) so the highest-payoff candidate reads first. For each:
+
+- **Cluster**: Which modules/concepts are involved, with `file:line` **evidence** — no vibes-only findings
 - **Why they're coupled**: Shared types, call patterns, co-ownership of a concept
 - **Prior work**: Any existing work items or recent refactors in this area (from step 1)
 - **Current test coverage**: What exists, what's missing, what's fragile
 - **Deepening direction**: What a deeper module would hide and what it would expose
+- **Impact / effort (S/M/L) / fix-risk / confidence (HIGH/MED/LOW)**: the leverage inputs, stated explicitly
 
-Don't propose interfaces yet — that comes after the user picks a candidate. Ask: "Which of these would you like to explore?"
+Write each candidate self-contained — a reader who hasn't seen the codebase should understand it from
+the report alone. Don't propose interfaces yet — that comes after the user picks a candidate. Ask:
+"Which of these would you like to explore?"
 
 If the user rejects a candidate with a **load-bearing reason** — a reason a future explorer would need in order to avoid re-suggesting the same refactor — offer to invoke the `adr` skill to record it. The test: would the next architectural review re-propose this without the ADR? Skip ephemeral reasons ("not worth it right now") and self-evident ones.
 
