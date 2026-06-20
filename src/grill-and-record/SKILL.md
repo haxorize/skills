@@ -2,17 +2,16 @@
 name: grill-and-record
 description: Doc-aware stress-testing of a plan or design — relentless interview with inline DOMAIN.md updates and opportunistic ADRs, for projects where domain language, codebase agreement, and durable decisions matter.
 disable-model-invocation: true
+requires: grilling
 ---
 
 # Grill and Record
 
-Interview the user relentlessly about every aspect of the plan until reaching a shared understanding. Walk down each branch of the design tree, resolving dependencies between decisions one-by-one. For each question, provide a recommended answer.
-
-Ask the questions one at a time.
-
-If a question can be answered by exploring the codebase, explore the codebase instead.
+Run the `grilling` discipline — a relentless one-question-at-a-time interview that walks the design tree until you reach shared understanding, exploring the codebase to answer questions rather than asking when it can.
 
 This is the doc-aware variant of `grill-me`. Beyond the core grill loop, it captures terminology and durable decisions as side effects of the conversation, so the team's living docs stay in sync with the design. Use the vanilla `grill-me` when no `DOMAIN.md` or ADR log is wanted.
+
+Capture is interleaved *into* the grill loop, not batched at the end, so it stays inline rather than delegating to the `domain-modeling` and `adr` behaviors — handing off mid-interview would break the rhythm the loop depends on.
 
 ## During the session
 

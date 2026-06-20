@@ -14,6 +14,11 @@
 #     skill install means we duplicate `domain-format.md` and `adr-format.md`
 #     across the skills that need them; ADR-0007 records this with mitigation
 #     "editorial discipline." This check turns the discipline into mechanism.
+#   - Declared dependencies (ADR-0016): an orchestrator names the behaviors it
+#     needs in a frontmatter `requires:` line (comma-separated skill names).
+#     Each named dep must exist as a skill AND be model-invoked — prose
+#     invocation can only reach model-invoked skills, so a user-invoked dep
+#     could never be resolved at runtime.
 #
 # Exit code 0 if clean, 1 if any check fails. List all failures, don't bail
 # on first hit.
@@ -96,8 +101,8 @@ for f in src/*/SKILL.md; do
 done
 
 sibling_groups=(
-  "src/grill-and-record/references/domain-format.md|src/harden-domain/references/domain-format.md"
-  "src/grill-and-record/references/adr-format.md|src/backfill-adrs/references/adr-format.md"
+  "src/grill-and-record/references/domain-format.md|src/domain-modeling/references/domain-format.md"
+  "src/grill-and-record/references/adr-format.md|src/backfill-adrs/references/adr-format.md|src/adr/references/adr-format.md"
   "src/to-bug/references/naming-drift-queue.md|src/to-feature/references/naming-drift-queue.md|src/to-story/references/naming-drift-queue.md|src/to-tasks/references/naming-drift-queue.md"
   "src/to-bug/references/tracker-resolution.md|src/to-feature/references/tracker-resolution.md|src/to-story/references/tracker-resolution.md|src/to-tasks/references/tracker-resolution.md"
 )
@@ -116,6 +121,37 @@ for group in "${sibling_groups[@]}"; do
       fail=1
     elif ! cmp -s "$ref" "$other"; then
       echo "FAIL: $other drifted from $ref (per ADR-0007 these must stay byte-identical)"
+      fail=1
+    fi
+  done
+done
+
+# Declared dependencies (ADR-0016): every name in a `requires:` line must
+# resolve to a skill that exists and is model-invoked.
+for f in src/*/SKILL.md; do
+  reqs=$(awk '
+    /^---$/ { c++; next }
+    c == 1 && /^requires:[[:space:]]/ {
+      sub(/^requires:[[:space:]]*/, "")
+      gsub(/,/, " ")
+      print
+      exit
+    }
+  ' "$f")
+  [ -z "$reqs" ] && continue
+  for dep in $reqs; do
+    depfile="src/$dep/SKILL.md"
+    if [ ! -f "$depfile" ]; then
+      echo "FAIL: $f requires '$dep' but src/$dep/SKILL.md does not exist"
+      fail=1
+      continue
+    fi
+    dep_dmi=$(awk '
+      /^---$/ { c++; next }
+      c == 1 && /^disable-model-invocation:[[:space:]]*true[[:space:]]*$/ { print "true"; exit }
+    ' "$depfile")
+    if [ "$dep_dmi" = "true" ]; then
+      echo "FAIL: $f requires '$dep', but '$dep' is user-invoked — prose invocation can only reach model-invoked behaviors"
       fail=1
     fi
   done

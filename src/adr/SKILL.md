@@ -7,17 +7,11 @@ description: Architecture Decision Record — capture why a single non-obvious d
 
 Lightweight Architecture Decision Records — capture *why* a non-obvious design choice was made, in the smallest form that preserves the rationale.
 
-ADRs live in `docs/adr/` with sequential numbering: `0001-slug.md`, `0002-slug.md`, etc. Create the directory lazily — only when the first ADR is written.
+The file location, numbering, default template, optional sections, the three-criteria gate, and a worked example all live in [references/adr-format.md](references/adr-format.md). This skill is the deliberate single-record flow that drives that format; the gate guidance below is the judgment layer on top of it.
 
 ## When to write an ADR
 
-All three criteria must hold. If any one is missing, skip it.
-
-1. **Hard to reverse** — undoing this later carries real cost (schema migration, dependency change, methodology shift).
-2. **Surprising without context** — a future reader (or AFK agent) will look at the code and wonder "why did they do it this way?"
-3. **Result of a real trade-off** — there were genuine alternatives and one was picked for specific reasons.
-
-If the decision is easy to reverse, skip — you'll just reverse it. If it's not surprising, nobody will wonder. If there was no real alternative, there's nothing to record beyond "we did the obvious thing."
+The gate has three criteria (full statement in the reference) — **hard to reverse**, **surprising without context**, **the result of a real trade-off**. All three must hold; if any one is missing, skip it. If the decision is easy to reverse, you'll just reverse it. If it's not surprising, nobody will wonder. If there was no real alternative, there's nothing to record beyond "we did the obvious thing."
 
 ### What qualifies
 
@@ -41,26 +35,10 @@ If the decision is easy to reverse, skip — you'll just reverse it. If it's not
 
 Confirm out loud which of the three criteria the decision meets, and which alternatives were considered. If any one is missing, do not write the ADR — stop and tell the user why.
 
-### 2. Number and slug
+### 2. Draft
 
-Scan `docs/adr/` for the highest existing number; increment by one. Slug is a short kebab-case summary of the decision.
+Number, slug, and draft per [references/adr-format.md](references/adr-format.md): scan `docs/adr/` for the highest existing number and increment; default form is 1-3 sentences; add optional sections only when they earn their place.
 
-### 3. Draft
+### 3. Show and save
 
-Default form is 1-3 sentences. Use this template:
-
-```md
-# <Short title>
-
-<1-3 sentences: what was the context, what did we decide, and why. Mention the rejected alternatives if their rejection wasn't obvious.>
-```
-
-Optional sections — only when they add real value, not for completeness:
-
-- **Status** frontmatter (`proposed | accepted | superseded by ADR-NNNN`) — useful when revisiting
-- **Considered Options** — only when rejected alternatives are worth remembering in detail
-- **Consequences** — only when downstream effects are non-obvious
-
-### 4. Show and save
-
-Show the draft to the user. Save to `docs/adr/<NNNN>-<slug>.md` once approved.
+Show the draft to the user. Save to `docs/adr/<NNNN>-<slug>.md` once approved. Create the `docs/adr/` directory lazily — only when the first ADR is written.
