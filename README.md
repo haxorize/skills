@@ -101,6 +101,8 @@ Symlink each skill directory into `~/.claude/skills/`:
 bash scripts/install.sh
 ```
 
+It resolves declared dependencies (an orchestrator's `requires:` behaviors) and reconciles both directions: it links new skills and prunes **stale** links — symlinks it owns (pointing into this repo's `src/`) whose target no longer exists after a rename or removal. Links pointing at other sources, and real directories, are left untouched. So a rename needs only a re-run: the old name is pruned, the new one linked.
+
 Or link a single skill (run from the repo root):
 
 ```bash
