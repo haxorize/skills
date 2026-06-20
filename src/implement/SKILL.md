@@ -2,7 +2,7 @@
 name: implement
 description: Build one loaded work-item slice end to end — pick the build path, build, refactor, and close the loop.
 disable-model-invocation: true
-requires: tdd, feedback-loops, adr
+requires: tdd, feedback-loops, adr, diagnosing-bugs
 ---
 
 # Implement
@@ -45,8 +45,9 @@ whole diff to catch seams the per-behavior refactors couldn't see. `/simplify` m
 here in the build phase — never in review.
 
 If an **unplanned failure** turns up mid-build that you can't quickly explain — a red that isn't the
-test you just wrote, behavior that contradicts the plan — stop guessing and diagnose it
-deliberately before continuing.
+test you just wrote, behavior that contradicts the plan — stop guessing and run the `diagnosing-bugs`
+discipline before continuing. Don't fold an unexplained red into the slice's normal red/green rhythm;
+it needs its own tight feedback loop first.
 
 ## Close the loop
 
