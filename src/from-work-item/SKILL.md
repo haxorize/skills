@@ -1,6 +1,7 @@
 ---
 name: from-work-item
-description: Cold-start loader that pulls a published work item back into the conversation for implementation. Auto-detects Task / Story / Bug from the tracker and loads the right context for that type. Refuses Feature / Epic IDs (not implementable as a single tracer bullet — decompose first). Use when starting fresh on a tracked item; hands off to `tdd` or freeform implementation.
+description: Cold-start loader that pulls a published work item back into the conversation as implementation context. Auto-detects Task / Story / Bug from the tracker and loads the right context for that type, then hands off for implementation. Refuses Feature / Epic IDs (not implementable as a single tracer bullet — decompose first).
+disable-model-invocation: true
 ---
 
 # From Work Item

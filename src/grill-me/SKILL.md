@@ -1,6 +1,7 @@
 ---
 name: grill-me
-description: Stress-testing a plan or design through relentless interview. Use when user wants to stress-test a plan, get grilled on their design, or mentions "grill me".
+description: Stress-test a plan or design through relentless interview.
+disable-model-invocation: true
 ---
 
 Interview me relentlessly about every aspect of this plan until we reach a shared understanding. Walk down each branch of the design tree, resolving dependencies between decisions one-by-one. For each question, provide your recommended answer.

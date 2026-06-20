@@ -1,6 +1,7 @@
 ---
 name: grill-and-record
-description: Doc-aware stress-testing of a plan or design with inline DOMAIN.md updates and opportunistic ADRs. Use when grilling a plan inside a project that has (or is willing to create) a DOMAIN.md and ADR log — when domain language, codebase agreement, and durable decisions matter.
+description: Doc-aware stress-testing of a plan or design — relentless interview with inline DOMAIN.md updates and opportunistic ADRs, for projects where domain language, codebase agreement, and durable decisions matter.
+disable-model-invocation: true
 ---
 
 # Grill and Record

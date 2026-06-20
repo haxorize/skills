@@ -1,6 +1,7 @@
 ---
 name: backfill-adrs
-description: Sweep recent git history for architectural decisions that should have been recorded as ADRs but weren't. Use when adopting ADR practice retroactively, after a long stretch of un-recorded work, or when a new contributor needs the "why" behind existing shape. NOT for recording a single fresh decision — use the standalone `adr` skill for that.
+description: Sweep recent git history for architectural decisions that should have been recorded as ADRs but weren't, and write up the ones worth keeping. For recording a single fresh decision, reach for the standalone `adr` skill instead.
+disable-model-invocation: true
 ---
 
 # Backfill ADRs

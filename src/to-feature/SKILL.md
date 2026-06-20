@@ -1,6 +1,7 @@
 ---
 name: to-feature
-description: Synthesize the current conversation into a Feature-level (PRD-shaped) artifact and publish it to the project's issue tracker. Use only when scope is large enough to need multiple stories underneath — phrasings like "PRD," "feature-level," "epic-shaped," "multi-story." For single-feature scope, use `to-story` instead. ADO — creates a Feature work item under a parent Epic. GitHub — creates an issue with a feature/PRD template.
+description: Synthesize the current conversation into a Feature-level (PRD-shaped) artifact and publish it to the project's issue tracker — for scope large enough to need multiple stories underneath. For single-feature scope, reach for `to-story` instead. ADO — creates a Feature work item under a parent Epic. GitHub — creates an issue with a feature/PRD template.
+disable-model-invocation: true
 ---
 
 # To Feature

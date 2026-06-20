@@ -1,6 +1,7 @@
 ---
 name: write-skill
-description: Create new agent skills with proper structure and size constraints. Use when user wants to create, write, or build a new skill.
+description: Create new agent skills with proper structure and size constraints.
+disable-model-invocation: true
 ---
 
 # Writing Skills

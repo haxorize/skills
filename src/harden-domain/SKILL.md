@@ -1,6 +1,7 @@
 ---
 name: harden-domain
-description: Sweep the codebase to refresh DOMAIN.md — extract and formalize domain terminology into a consistent glossary. Use when the user wants to harden terminology, define domain terms, surface naming drift, or build/refresh a ubiquitous language. For inline domain capture during a grilling session, use `grill-and-record` instead.
+description: Sweep the codebase to refresh DOMAIN.md — extract and formalize domain terminology into a consistent glossary. For inline domain capture during a grilling session, reach for `grill-and-record` instead.
+disable-model-invocation: true
 ---
 
 # Harden Domain

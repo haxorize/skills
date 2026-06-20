@@ -1,6 +1,7 @@
 ---
 name: glapi-test-pass
-description: Create a passing test result on an ADO User Story to satisfy the GLAPI (Greenlight API) production deployment gate. Use when a prod deployment is blocked because a story linked via commits has no passing test point.
+description: Create a passing test result on an ADO User Story to satisfy the GLAPI (Greenlight API) production deployment gate when a story linked via commits has no passing test point.
+disable-model-invocation: true
 ---
 
 # GLAPI Test Pass

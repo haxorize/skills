@@ -1,6 +1,7 @@
 ---
 name: to-story
-description: Synthesize the current conversation into a Story-level (single-feature spec) artifact and publish it to the project's issue tracker. Use when turning a grilled plan or design discussion into a tracked work item — most workflows start here. Use `to-feature` instead only when scope explicitly needs multiple stories beneath it (PRD-shaped, multi-story, epic-level). ADO — creates a User Story under a parent Feature. GitHub — creates an issue with a story-shaped template.
+description: Synthesize the current conversation into a Story-level (single-feature spec) artifact and publish it to the project's issue tracker — most workflows start here. For scope that needs multiple stories beneath it, reach for `to-feature` instead. ADO — creates a User Story under a parent Feature. GitHub — creates an issue with a story-shaped template.
+disable-model-invocation: true
 ---
 
 # To Story
