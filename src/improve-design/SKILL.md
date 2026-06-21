@@ -68,8 +68,7 @@ and only when the friction justifies it.
 
 Group surviving findings into coherent candidates — don't present overlapping or sub-issues separately. **Cross-reference against existing work items found in step 1.** If a candidate overlaps with an existing work item, say so explicitly — propose updating that one rather than filing a new one.
 
-Present a numbered list of deepening opportunities, **ordered by leverage** (see the reference) so the
-highest-payoff candidate reads first. For each:
+Each candidate, **ordered by leverage** (see the reference) so the highest-payoff reads first, carries:
 
 - **Cluster**: Which modules/concepts are involved, with `file:line` **evidence** — no vibes-only findings
 - **Why they're coupled**: Shared types, call patterns, co-ownership of a concept
@@ -79,7 +78,19 @@ highest-payoff candidate reads first. For each:
 - **Impact / effort (S/M/L) / fix-risk / confidence (HIGH/MED/LOW)**: the leverage inputs, stated explicitly
 
 Write each candidate self-contained — a reader who hasn't seen the codebase should understand it from
-the report alone. Don't propose interfaces yet — that comes after the user picks a candidate. Ask:
+the report alone. Don't propose interfaces yet — that comes after the user picks a candidate.
+
+**Present via the HTML report.** Render the candidates as a self-contained HTML file per
+[references/html-report.md](references/html-report.md) — full per-candidate detail plus the before/after
+deepening visuals (the report's identity is frozen; fill the scaffold, don't redesign it). Write it to
+the OS temp dir (resolve `$TMPDIR`, falling back to `/tmp`, or `%TEMP%` on Windows) as
+`design-review-<timestamp>.html` so each run is fresh and nothing lands in the repo; open it (`open` on
+macOS, `xdg-open` on Linux, `start` on Windows) and tell the user the absolute path. The report is
+**frozen at pick-time** — don't regenerate it as the design evolves later. **Zero surviving
+candidates**: skip the report and say so inline. **One or more**: write the report.
+
+Then, in the conversation, give a **terse ordered list** for the pick and the transcript record — one
+line per candidate: number, title, leverage-tier + confidence chips, and a one-sentence problem. Ask:
 "Which of these would you like to explore?"
 
 If the user rejects a candidate with a **load-bearing reason** — a reason a future explorer would need in order to avoid re-suggesting the same refactor — offer to invoke the `adr` skill to record it. The test: would the next architectural review re-propose this without the ADR? Skip ephemeral reasons ("not worth it right now") and self-evident ones.
