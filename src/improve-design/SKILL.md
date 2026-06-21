@@ -89,6 +89,13 @@ macOS, `xdg-open` on Linux, `start` on Windows) and tell the user the absolute p
 **frozen at pick-time** — don't regenerate it as the design evolves later. **Zero surviving
 candidates**: skip the report and say so inline. **One or more**: write the report.
 
+**Self-check the render before presenting.** The report's failure modes are *silent* — bad CSS still
+parses, it just renders wrong (SVG `background` paints black, unfilled `<text>` vanishes, a `.card` +
+deep-fill cascade collision leaves light text on white). Screenshot the file headless
+(`<chrome> --headless --screenshot=<png> --window-size=1000,2400 file://<path>`) and **read the PNG**;
+fix any black box, invisible label, or illegible card and re-render until it's clean. If no headless
+browser is available, say so and present unverified rather than blocking.
+
 Then, in the conversation, give a **terse ordered list** for the pick and the transcript record — one
 line per candidate: number, title, leverage-tier + confidence chips, and a one-sentence problem. Ask:
 "Which of these would you like to explore?"
