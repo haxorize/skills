@@ -8,8 +8,9 @@
 #     `disable-model-invocation: true` and its description must be human-facing
 #     (a one-line summary, no "Use when…" trigger list — the model never sees
 #     it). A model-invoked skill (no such flag) must keep trigger phrasing so
-#     auto-invocation can fire. This is a heuristic on the "Use when/after/only"
-#     opener, the repo's conventional trigger marker.
+#     auto-invocation can fire. write-skill makes "Use when/after/only" the
+#     normative trigger marker (see "Writing the description"); this check
+#     enforces that stated rule by keying on that opener.
 #   - ADR-0007 sibling reference files must stay byte-identical. Symlink-per-
 #     skill install means we duplicate `domain-format.md` and `adr-format.md`
 #     across the skills that need them; ADR-0007 records this with mitigation
@@ -31,6 +32,16 @@ cd "$repo_root"
 fail=0
 
 shopt -s nullglob
+
+# Print "true" if a skill file is user-invoked — its frontmatter (block 1,
+# between the first two `---` fences) carries `disable-model-invocation: true`.
+# Empty output means model-invoked. Shared by the own-skill and dependency checks.
+is_user_invoked() {
+  awk '
+    /^---$/ { c++; next }
+    c == 1 && /^disable-model-invocation:[[:space:]]*true[[:space:]]*$/ { print "true"; exit }
+  ' "$1"
+}
 
 for f in src/*/SKILL.md src/*/references/*.md; do
   lines=$(wc -l < "$f" | tr -d ' ')
@@ -74,12 +85,10 @@ for f in src/*/SKILL.md; do
 
   # Invocation axis (ADR-0015). A skill is user-invoked iff its frontmatter
   # carries `disable-model-invocation: true`. The trigger marker is the
-  # conventional "Use when/after/only" opener (leading word-start avoids
-  # matching "reuse"); user-invoked must lack it, model-invoked must have it.
-  dmi=$(awk '
-    /^---$/ { c++; next }
-    c == 1 && /^disable-model-invocation:[[:space:]]*true[[:space:]]*$/ { print "true"; exit }
-  ' "$f")
+  # normative "Use when/after/only" opener write-skill mandates (leading
+  # word-start avoids matching "reuse"); user-invoked must lack it,
+  # model-invoked must have it.
+  dmi=$(is_user_invoked "$f")
 
   if printf '%s' "$desc" | grep -qE '(^| )[Uu]se (this skill |this |the )?(when|after|only)'; then
     has_trigger=1
@@ -104,7 +113,7 @@ sibling_groups=(
   "src/grill-and-record/references/domain-format.md|src/domain-modeling/references/domain-format.md"
   "src/grill-and-record/references/adr-format.md|src/backfill-adrs/references/adr-format.md|src/adr/references/adr-format.md"
   "src/to-bug/references/naming-drift-queue.md|src/to-feature/references/naming-drift-queue.md|src/to-story/references/naming-drift-queue.md|src/to-tasks/references/naming-drift-queue.md"
-  "src/to-bug/references/tracker-resolution.md|src/to-feature/references/tracker-resolution.md|src/to-story/references/tracker-resolution.md|src/to-tasks/references/tracker-resolution.md"
+  "src/to-bug/references/tracker-resolution.md|src/to-feature/references/tracker-resolution.md|src/to-story/references/tracker-resolution.md|src/to-tasks/references/tracker-resolution.md|src/improve-design/references/tracker-resolution.md"
 )
 
 for group in "${sibling_groups[@]}"; do
@@ -146,10 +155,7 @@ for f in src/*/SKILL.md; do
       fail=1
       continue
     fi
-    dep_dmi=$(awk '
-      /^---$/ { c++; next }
-      c == 1 && /^disable-model-invocation:[[:space:]]*true[[:space:]]*$/ { print "true"; exit }
-    ' "$depfile")
+    dep_dmi=$(is_user_invoked "$depfile")
     if [ "$dep_dmi" = "true" ]; then
       echo "FAIL: $f requires '$dep', but '$dep' is user-invoked — prose invocation can only reach model-invoked behaviors"
       fail=1
