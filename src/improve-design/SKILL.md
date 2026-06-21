@@ -112,7 +112,7 @@ Then present one recommended interface design:
 - Usage example showing how callers use it
 - What complexity it hides internally
 - Dependency category for each external dependency (per `codebase-design`) and the adapter strategy
-- What existing tests would be replaced by boundary tests
+- What existing tests would be replaced by interface tests
 - Trade-offs
 
 Be opinionated — the user wants a strong recommendation, not a menu.

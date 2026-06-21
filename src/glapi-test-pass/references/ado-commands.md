@@ -1,11 +1,15 @@
 # ADO Commands — GLAPI Test Pass
 
-Exact `az devops invoke` calls for each step. Variables in `<angle brackets>` come from CLAUDE.md or prior step output.
+Exact `az devops invoke` calls for each step. Values in `<angle brackets>` are inputs you substitute — `<org>`, `<project>`, `<area path>`, `<iteration>`, and `<PI label>` from CLAUDE.md, and `<story-id>` is the skill argument. IDs produced by a step are captured into shell variables (`$PLAN_ID`, `$SUITE_ID`, …) and reused by later steps as written, so run the steps in order in one shell. Set the story id once up front:
+
+```bash
+STORY_ID=<story-id>
+```
 
 ## Step 1 — Fetch story title
 
 ```bash
-STORY_TITLE=$(az boards work-item show --id <STORY_ID> \
+STORY_TITLE=$(az boards work-item show --id "$STORY_ID" \
   --org https://dev.azure.com/<org> \
   --query "fields.\"System.Title\"" -o tsv)
 ```
@@ -27,7 +31,7 @@ TEST_CASE_ID=$(az boards work-item create \
 
 ```bash
 az boards work-item relation add \
-  --id <STORY_ID> \
+  --id "$STORY_ID" \
   --relation-type "Tested By" \
   --target-id $TEST_CASE_ID \
   --org https://dev.azure.com/<org>
@@ -44,17 +48,22 @@ az devops invoke \
   --query "value[?contains(iteration,'<PI label>')].{id:id,name:name}"
 ```
 
-→ capture `PLAN_ID` and `PLAN_NAME` from the result.
-
-Then fetch the root suite ID:
+→ from the result, set the matching plan's id and name:
 
 ```bash
-az devops invoke \
+PLAN_ID=<plan id>
+PLAN_NAME=<plan name>
+```
+
+Then capture the root suite ID:
+
+```bash
+ROOT_SUITE_ID=$(az devops invoke \
   --area testplan --resource Suites \
-  --route-parameters project="<project>" planId=$PLAN_ID \
+  --route-parameters project="<project>" planId="$PLAN_ID" \
   --http-method GET --api-version "7.1" \
   --org https://dev.azure.com/<org> \
-  --query "value[?name=='$PLAN_NAME'].id | [0]" -o tsv
+  --query "value[?name=='$PLAN_NAME'].id | [0]" -o tsv)
 ```
 
 ## Step 5 — Create requirement suite
@@ -67,13 +76,13 @@ SUITE_BODY=$(jq -n \
   '{"suiteType":"requirementTestSuite","name":$name,"requirementId":$rid,"parentSuite":{"id":$parent}}')
 TMPFILE=$(mktemp)
 echo "$SUITE_BODY" > "$TMPFILE"
-az devops invoke \
+SUITE_ID=$(az devops invoke \
   --area testplan --resource Suites \
-  --route-parameters project="<project>" planId=$PLAN_ID \
+  --route-parameters project="<project>" planId="$PLAN_ID" \
   --http-method POST --in-file "$TMPFILE" \
   --api-version "7.1" \
   --org https://dev.azure.com/<org> \
-  --query "id"
+  --query "id" -o tsv)
 rm -f "$TMPFILE"
 ```
 
@@ -84,8 +93,8 @@ rm -f "$TMPFILE"
 ```bash
 az devops invoke \
   --area testplan --resource SuiteTestCase \
-  --route-parameters project="<project>" planId=$PLAN_ID \
-  suiteId=$SUITE_ID testCaseId=$TEST_CASE_ID \
+  --route-parameters project="<project>" planId="$PLAN_ID" \
+  suiteId="$SUITE_ID" testCaseId="$TEST_CASE_ID" \
   --http-method POST --api-version "7.1" \
   --org https://dev.azure.com/<org>
 ```
@@ -95,12 +104,12 @@ Returns `value:[]` on success — normal, not an error.
 ## Step 7 — Get test point
 
 ```bash
-az devops invoke \
+TEST_POINT_ID=$(az devops invoke \
   --area testplan --resource TestPoint \
-  --route-parameters project="<project>" planId=<PLAN_ID> suiteId=<SUITE_ID> \
+  --route-parameters project="<project>" planId="$PLAN_ID" suiteId="$SUITE_ID" \
   --http-method GET --api-version "7.1" \
   --org https://dev.azure.com/<org> \
-  --query "value[0].id"
+  --query "value[0].id" -o tsv)
 ```
 
 The freshly created suite has exactly one test case — `value[0]` is always the right point.
@@ -116,13 +125,13 @@ RUN_BODY=$(jq -n \
   '{"name":$name,"plan":{"id":$plan},"pointIds":[$point],"isAutomated":false,"state":"InProgress"}')
 TMPFILE=$(mktemp)
 echo "$RUN_BODY" > "$TMPFILE"
-az devops invoke \
+RUN_ID=$(az devops invoke \
   --area testresults --resource runs \
   --route-parameters project="<project>" \
   --http-method POST --in-file "$TMPFILE" \
   --api-version "7.1-preview" \
   --org https://dev.azure.com/<org> \
-  --query "id"
+  --query "id" -o tsv)
 rm -f "$TMPFILE"
 ```
 
@@ -139,7 +148,7 @@ TMPFILE=$(mktemp)
 echo "$RESULT_BODY" > "$TMPFILE"
 az devops invoke \
   --area testresults --resource results \
-  --route-parameters project="<project>" runId=$RUN_ID \
+  --route-parameters project="<project>" runId="$RUN_ID" \
   --http-method POST --in-file "$TMPFILE" \
   --api-version "7.1-preview" \
   --org https://dev.azure.com/<org>
@@ -153,7 +162,7 @@ TMPFILE=$(mktemp)
 echo '{"state":"Completed"}' > "$TMPFILE"
 az devops invoke \
   --area testresults --resource runs \
-  --route-parameters project="<project>" runId=<RUN_ID> \
+  --route-parameters project="<project>" runId="$RUN_ID" \
   --http-method PATCH --in-file "$TMPFILE" \
   --api-version "7.1-preview" \
   --org https://dev.azure.com/<org> \
@@ -164,7 +173,7 @@ rm -f "$TMPFILE"
 ## Step 11 — Close the test case
 
 ```bash
-az boards work-item update --id $TEST_CASE_ID \
+az boards work-item update --id "$TEST_CASE_ID" \
   --org https://dev.azure.com/<org> \
   --fields "System.State=Closed" \
   --query "fields.\"System.State\""
@@ -177,7 +186,7 @@ az boards work-item update --id $TEST_CASE_ID \
 ```bash
 az devops invoke \
   --area testplan --resource TestPoint \
-  --route-parameters project="<project>" planId=<PLAN_ID> suiteId=<SUITE_ID> \
+  --route-parameters project="<project>" planId="$PLAN_ID" suiteId="$SUITE_ID" \
   --http-method GET --api-version "7.1" \
   --org https://dev.azure.com/<org> \
   --query "value[0].{id:id,outcome:results.outcome}"

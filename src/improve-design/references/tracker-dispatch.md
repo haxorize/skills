@@ -1,4 +1,4 @@
-# Deepen — Tracker dispatch
+# Improve Design — Tracker dispatch
 
 CLI commands for step 7. Use the tracker declared in CLAUDE.md.
 

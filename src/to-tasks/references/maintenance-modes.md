@@ -60,11 +60,11 @@ For each child Task, parse its `## Covers` line. Bucket each Task:
 
 - **Stale Covers** — at least one referenced AC ID is in the parent's removed list. Propose: edit `## Covers` to drop the stale ID (if other refs remain healthy), or close the Task.
 - **Unknown Covers** — at least one referenced AC ID does not exist on the parent (neither active nor removed). Propose: edit `## Covers` to point at the correct AC, drop the reference, or close.
-- **Healthy** — all `## Covers` refs resolve to active ACs.
+- **Healthy Task** — all `## Covers` refs resolve to active ACs.
 
 For each active AC ID on the parent:
 
-- **Covered** — at least one Healthy or Stale Task references it.
+- **Covered** — at least one Healthy Task or Stale Task references it.
 - **Uncovered** — no Task references it. Propose: add a new Task slice, or update an existing Task's `## Covers`.
 
 ### State-aware proposals
@@ -121,7 +121,7 @@ State conflicts (requires decision, N):
   - Task #<id> (In Progress) — Covers: AC2 (removed) — pick: edit Covers / close / leave alone
   - ...
 
-Healthy (N): listed for completeness, no action.
+Healthy Task (N): listed for completeness, no action.
 ```
 
 Iterate per bucket until approved. Apply approved changes — body patches via `az boards work-item update` / `gh issue edit`, state transitions via update / close. Publish new Tasks in dependency order so blockers can be referenced.

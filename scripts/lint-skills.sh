@@ -29,6 +29,15 @@ set -uo pipefail
 repo_root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$repo_root"
 
+# The description caps below are character-based (<=1024 chars, no bare ': ').
+# bash's ${#var} and grep count bytes under LC_ALL=C or an unset locale, which
+# would mis-measure the Unicode-rich (em-dash) descriptions. Force a UTF-8
+# ctype unless one is already active, so the checks match their stated contract.
+case "${LC_ALL:-}${LC_CTYPE:-}" in
+  *UTF-8* | *utf8* | *UTF8*) : ;;
+  *) export LC_ALL=; export LC_CTYPE="UTF-8" ;;
+esac
+
 fail=0
 
 shopt -s nullglob
@@ -44,7 +53,7 @@ is_user_invoked() {
 }
 
 for f in src/*/SKILL.md src/*/references/*.md; do
-  lines=$(wc -l < "$f" | tr -d ' ')
+  lines=$(awk 'END { print NR }' "$f")
   if [ "$lines" -gt 200 ]; then
     echo "FAIL: $f exceeds 200-line cap ($lines lines)"
     fail=1
@@ -73,15 +82,20 @@ for f in src/*/SKILL.md; do
     fail=1
   fi
 
-  # Strip backtick-quoted spans (`like this`) before scanning for `: ` —
-  # colons inside code spans are fine in prose, and the YAML parser already
-  # ate the outer value as a single string by this point. The risk is a
-  # bare `: ` in prose, which earlier versions of GitHub's preview misparsed.
-  stripped=$(printf '%s' "$desc" | sed 's/`[^`]*`//g')
-  if printf '%s' "$stripped" | grep -qE ': '; then
-    echo "FAIL: $f description has unquoted ': ' (use em-dash) — $desc"
-    fail=1
-  fi
+  # Scan for a bare `: ` in the description, which earlier versions of GitHub's
+  # preview misparsed. Two cases are already safe and must not be flagged:
+  #   - the whole value wrapped in matching YAML quotes (the ': ' is quoted), or
+  #   - a colon inside a backtick code-span.
+  case "$desc" in
+    \"*\" | \'*\') : ;;  # quoted YAML scalar — any ': ' inside is safe
+    *)
+      stripped=$(printf '%s' "$desc" | sed 's/`[^`]*`//g')
+      if printf '%s' "$stripped" | grep -qE ': '; then
+        echo "FAIL: $f description has unquoted ': ' (use em-dash) — $desc"
+        fail=1
+      fi
+      ;;
+  esac
 
   # Invocation axis (ADR-0015). A skill is user-invoked iff its frontmatter
   # carries `disable-model-invocation: true`. The trigger marker is the

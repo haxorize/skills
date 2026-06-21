@@ -46,7 +46,7 @@ Which integration layers the Story crosses. Drives `from-work-item` cold-start a
 - **Backend:** endpoints/handlers/services (or `none`)
 - **Client:** generated client / hooks / state (or `none`)
 - **UI:** components / routes / forms (or `none`)
-- **Tests:** boundary / integration coverage expected (or `none`)
+- **Tests:** interface / integration coverage expected (or `none`)
 
 ## Approach
 
@@ -56,7 +56,7 @@ The approach the team agreed on (one of the proposed approaches from the grillin
 
 What gets tested at which seam. Use module names from `DOMAIN.md`, not file paths. Reference any deepening opportunities surfaced during the grill.
 
-- `<module>` — boundary tests for X behavior
+- `<module>` — interface tests for X behavior
 - `<module>` — integration test covering Y end-to-end
 
 ## Out of scope

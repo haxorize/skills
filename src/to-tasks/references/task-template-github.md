@@ -15,7 +15,7 @@ Describe the behavioral change at each layer in one phrase. No file paths, no fu
 - **Backend:** endpoints/handlers/services (or "none")
 - **Client:** generated client / hooks / state (or "none")
 - **UI:** components / routes / forms (or "none")
-- **Tests:** boundary tests / integration tests added (or "none")
+- **Tests:** interface tests / integration tests added (or "none")
 
 ## Covers
 

@@ -44,7 +44,7 @@ Which integration layers the fix is expected to cross. Drives `from-work-item` c
 - **Backend:** endpoints/handlers/services (or `none`)
 - **Client:** generated client / hooks / state (or `none`)
 - **UI:** components / routes / forms (or `none`)
-- **Tests:** boundary / integration coverage to add (or `none`)
+- **Tests:** interface / integration coverage to add (or `none`)
 
 ## Parent
 

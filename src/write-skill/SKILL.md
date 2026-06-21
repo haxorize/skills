@@ -17,7 +17,7 @@ Skills wrangle determinism out of a stochastic system. The goal is **predictabil
 
 ## Invocation axis
 
-Every skill is exactly one of two kinds (ADR-0015), trading two different costs (full framing in the reference):
+Every skill is exactly one of two kinds, trading two different costs (full framing in the reference):
 
 - **Model-invoked** (default — omit the flag): the agent can fire it autonomously *and* other skills can reach it via prose invocation; you can still type its name. Its description sits in the context window every turn — it costs **context load**. Write a model-facing description rich in triggers. This is where reusable **discipline** lives — the *behavior* skills (`grilling`, `domain-modeling`, `codebase-design`, `feedback-loops`, `tdd`, `adr`).
 - **User-invoked** (`disable-model-invocation: true`): reachable *only* by a human typing its name — invisible to the agent and to other skills. Zero context load, but it spends **cognitive load** (the human is the index that must remember it). Its description is **human-facing** — a one-line summary, trigger lists stripped. This is where **orchestration** lives — the skills a person deliberately runs (`grill-me`, `harden-domain`, `improve-design`, the `to-*` publishers).
@@ -28,7 +28,7 @@ Pick model-invocation only when the agent must reach the skill on its own, or an
 
 An **orchestrator** (user-invoked) drives a workflow and delegates reusable discipline to **behaviors** (model-invoked) via prose ("Run the `grilling` discipline"). Cross-skill invocation is soft — it works only if the target is model-invoked *and* installed.
 
-Extract a behavior only where a **real second consumer** exists (the Extraction test, ADR-0016) — reuse is the reason to extract, not a guess that it might be reused. When an orchestrator depends on a behavior, declare it in a frontmatter `requires:` line (comma-separated skill names); `scripts/install.sh` resolves and links those deps, and lint checks each named dep exists and is model-invoked. Inert *format* docs (a glossary format, a template) are not behaviors — they stay sibling reference files (see *Sharing a reference across skills*).
+Extract a behavior only where a **real second consumer** exists (the Extraction test) — reuse is the reason to extract, not a guess that it might be reused. When an orchestrator depends on a behavior, declare it in a frontmatter `requires:` line (comma-separated skill names); `scripts/install.sh` resolves and links those deps, and lint checks each named dep exists and is model-invoked. Inert *format* docs (a glossary format, a template) are not behaviors — they stay sibling reference files (see *Sharing a reference across skills*).
 
 ## Skill structure
 

@@ -1,4 +1,4 @@
-# Deepen — Work item template
+# Improve Design — Work item template
 
 Use this when creating or updating a work item in step 7.
 
@@ -17,7 +17,7 @@ Use this when creating or updating a work item in step 7.
 
 ## Testing Strategy
 
-- New boundary tests to write (behaviors to verify at the interface)
+- New interface tests to write (behaviors to verify at the seam)
 - Tests to update or remove (shallow module tests that become redundant, or tests that need renaming/restructuring)
 
 ## Implementation Decisions

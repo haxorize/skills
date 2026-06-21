@@ -4,7 +4,7 @@ A skill exists to wrangle determinism out of a stochastic system. **Predictabili
 
 ## The two loads
 
-The invocation axis (ADR-0015) is a trade between two costs:
+The invocation axis is a trade between two costs:
 
 - **Context load** — what a **model-invoked** skill costs the *agent*: its description sits in the context window every turn, spending tokens and attention whether or not it fires. The brake on adding more model-invoked skills.
 - **Cognitive load** — what a **user-invoked** skill costs the *human*: they are the index that must remember it exists and when to reach for it. The brake on adding more user-invoked skills.
@@ -35,7 +35,7 @@ A skill's content is ranked by how immediately the agent needs it — a ladder w
 
 Each cut spends one of the two loads, so split only when the cut earns it:
 
-- **By invocation** — split off a model-invoked behavior skill when it has a distinct leading word that should trigger it on its own, or another skill must reach it. You pay context load for the new always-loaded description, so that independent reach has to be worth it. (This is the **Extraction test** of ADR-0016: reuse by a real second consumer is the reason to extract.)
+- **By invocation** — split off a model-invoked behavior skill when it has a distinct leading word that should trigger it on its own, or another skill must reach it. You pay context load for the new always-loaded description, so that independent reach has to be worth it. (This is the **Extraction test**: reuse by a real second consumer is the reason to extract.)
 - **By sequence** — split a run of steps when the steps still ahead tempt the agent to rush the one in front of it. Hiding them across a real context boundary (a user-invoked hand-off or a subagent dispatch) encourages more legwork on the current task; an inline model-invoked call leaves the later steps in context and clears nothing.
 
 ## Pruning

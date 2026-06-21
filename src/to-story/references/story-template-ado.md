@@ -12,7 +12,7 @@ Use this when publishing a User Story to Azure DevOps via `az boards work-item c
 | Area Path | `System.AreaPath` | From CLAUDE.md `Area path:` | `--area` |
 | Iteration Path | `System.IterationPath` | From CLAUDE.md `Iteration:` | `--iteration` |
 | State | `System.State` | From CLAUDE.md `Default state:` (typically `New`) | `--fields "System.State=..."` |
-| Parent (Feature) | (relation) | From `--parent <feature-id>` arg | post-create: `az boards work-item relation add --relation-type Parent --target-id <feature-id>` |
+| Parent (Feature) | (relation) | From `--parent <feature-id>` arg | post-create: `az boards work-item relation add --id <new-story-id> --relation-type Parent --target-id <feature-id>` |
 
 The reference name is `System.Description`; `--description` is the correct CLI flag. To verify against a specific project, run `az boards work-item show --id <existing-story-id> --output json --query 'fields'` and confirm a `System.Description` key is present.
 
@@ -46,7 +46,7 @@ Which integration layers the Story crosses. Drives `from-work-item` cold-start a
 - **Backend:** endpoints/handlers/services (or `none`)
 - **Client:** generated client / hooks / state (or `none`)
 - **UI:** components / routes / forms (or `none`)
-- **Tests:** boundary / integration coverage expected (or `none`)
+- **Tests:** interface / integration coverage expected (or `none`)
 
 ## Approach
 
@@ -56,7 +56,7 @@ The approach the team agreed on. State the design direction and key tradeoffs in
 
 What gets tested at which seam. Use module names from `DOMAIN.md`, not file paths.
 
-- `<module>` — boundary tests for X behavior
+- `<module>` — interface tests for X behavior
 - `<module>` — integration test covering Y end-to-end
 
 ## Out of scope

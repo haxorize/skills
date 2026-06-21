@@ -101,7 +101,7 @@ Re-run the story-map checks from step 8 (every active Feature AC ID covered by a
 
 ### Patch
 
-- **ADO:** The fetched description is already HTML. Convert **only the new story map section** from Markdown to HTML (using the pandoc or Python one-liner from `story-template-ado.md`), splice the result between the `<!-- BEGIN STORY MAP -->` and `<!-- END STORY MAP -->` markers in the existing HTML, write to a temp file, and patch:
+- **ADO:** The fetched description is already HTML. Convert **only the new story map section** from Markdown to HTML (using the pandoc or Python one-liner from `feature-template-ado.md`), splice the result between the `<!-- BEGIN STORY MAP -->` and `<!-- END STORY MAP -->` markers in the existing HTML, write to a temp file, and patch:
   ```bash
   az boards work-item update --id <feature-id> --description "$(cat /tmp/feature_desc.html)"
   ```

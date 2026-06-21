@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # From Work Item
 
-Pull a published work item back into the current Claude Code session as implementation cold-start context. Detects the work-item type and loads the right shape; hands off to `tdd` or freeform implementation. Closes the round-trip loop with the `to-X` publishing skills.
+Pull a published work item back into the current Claude Code session as implementation cold-start context. Detects the work-item type and loads the right shape; hands off to `implement` (which picks the build path) or freeform implementation. Closes the round-trip loop with the `to-X` publishing skills.
 
 ## Workflow
 
