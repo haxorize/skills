@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # To Story
 
-Synthesize the current conversation into a Story-level artifact (single-feature spec) and publish it to the project's issue tracker. No interviewing — this is a synthesis-only skill. Run `grill-and-record` (or `grill-me`) first if context is thin.
+Synthesize the current conversation into a Story-level artifact (single-feature spec) and publish it to the project's issue tracker. No interviewing — this is a synthesis-only skill. Run `/grill-and-record` (or `/grill-me`) first if context is thin.
 
 `to-story` is the default for turning a grilled plan into a tracked work item. Use `to-feature` only when scope explicitly needs multiple stories beneath it.
 
@@ -24,7 +24,7 @@ Title prefix: if the tracker block declares `Title prefix:`, prepend it (with a 
 
 ### 2. Resolve parent
 
-- **`Hierarchy: required`** (default for ADO): if `--parent <feature-id>` is provided, use it; otherwise interactively prompt for the Feature ID. If no Feature exists, suggest running `to-feature` first or (only if team config allows top-level Stories) accepting a parentless Story.
+- **`Hierarchy: required`** (default for ADO): if `--parent <feature-id>` is provided, use it; otherwise interactively prompt for the Feature ID. If no Feature exists, suggest running `/to-feature` first or (only if team config allows top-level Stories) accepting a parentless Story.
 - **`Hierarchy: optional`** (default for GitHub): parent linking is optional; only use `--parent` if provided. Do not prompt.
 
 ### 2a. Snapshot lookup (where `Hierarchy: required`)

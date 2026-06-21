@@ -34,7 +34,7 @@ Re-run all step 7 checks. Two are additionally load-bearing:
 
 ## Re-snapshot prompt for parent
 
-If the update materially changes scope (added/removed ACs, changed module list, layer reshape visible in the parent's story map), prompt the user to also run `to-feature --update <parent-feature-id>`. The skill does not auto-cascade.
+If the update materially changes scope (added/removed ACs, changed module list, layer reshape visible in the parent's story map), prompt the user to also run `/to-feature --update <parent-feature-id>`. The skill does not auto-cascade.
 
 Sibling `Covers:` references on the parent's emergent-Story entries are not validated here; they're validated when `to-feature --update` next runs.
 

@@ -35,7 +35,7 @@ haven't reconstructed.
 
 ## 4. Run the project's checks
 
-Discover and run the project's mechanical checks by invoking the `feedback-loops` discipline — it
+Discover and run the project's mechanical checks by running the `/feedback-loops` skill — it
 resolves the project's format/lint/typecheck/test commands (and any stack finalization) rather than
 re-discovering them here. Fix anything the merge broke; a conflict resolved to compile is not the same
 as a conflict resolved correctly.

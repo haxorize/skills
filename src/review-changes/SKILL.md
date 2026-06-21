@@ -43,9 +43,10 @@ Don't run every lens on every diff — `/security-review` on a docs change is no
   - `/security-review` — only on **security surfaces**: endpoints/external surface, auth/permissions,
     raw SQL, deserialization/input boundaries, file ingest, CORS/secrets/config, new dependencies.
   - **AC conformance** — only when a work item is loaded (does the diff satisfy its acceptance criteria?).
-  - **Design depth** (`codebase-design`) — only on non-trivial **structural** change. Apply
-    `codebase-design`'s **diff-relative bar**: not "is this module perfect?" but "did this change make
-    the local architecture worse?"
+  - **Design depth** — only on non-trivial **structural** change. When this lens fires, run the
+    `/codebase-design` skill and apply its **diff-relative bar** (if you don't see a `Launching skill:
+    codebase-design` line, load it first — the lens *is* that bar): not "is this module perfect?" but
+    "did this change make the local architecture worse?"
 
 ## 3. Fan out (read-only subagents, findings only)
 

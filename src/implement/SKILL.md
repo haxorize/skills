@@ -26,8 +26,9 @@ driver: it picks how to build, runs the build, and closes the loop once at the e
 
 Decide how the slice is built, and say which path you picked and why:
 
-- **Testable slice** → run the `tdd` discipline: Tracer bullet, then RED → GREEN per behavior, then
-  refactor. Use this whenever the slice's behaviors warrant tests (logic, endpoints, data flow).
+- **Testable slice** → run the `/tdd` skill: Tracer bullet, then RED → GREEN per behavior, then
+  refactor (if you don't see a `Launching skill: tdd` line, stop and load it). Use this whenever the
+  slice's behaviors warrant tests (logic, endpoints, data flow).
 - **Non-testable slice** → build directly, no test-first. Use this for docs, scripts, config, and
   glue — work with no meaningful test seam. Forcing RED/GREEN onto it is theatre.
 
@@ -45,13 +46,15 @@ whole diff to catch seams the per-behavior refactors couldn't see. `/simplify` m
 here in the build phase — never in review.
 
 If an **unplanned failure** turns up mid-build that you can't quickly explain — a red that isn't the
-test you just wrote, behavior that contradicts the plan — stop guessing and run the `diagnosing-bugs`
-discipline before continuing. Don't fold an unexplained red into the slice's normal red/green rhythm;
+test you just wrote, behavior that contradicts the plan — stop guessing and run the `/diagnosing-bugs`
+skill before continuing (if you don't see a `Launching skill: diagnosing-bugs` line, load it). Don't
+fold an unexplained red into the slice's normal red/green rhythm;
 it needs its own tight feedback loop first.
 
 ## Close the loop
 
-Run `feedback-loops` **once**, after the slice's behaviors are built and refactored. It is the
+Run the `/feedback-loops` skill **once**, after the slice's behaviors are built and refactored — if
+you don't see a `Launching skill: feedback-loops` line, stop and load it. It is the
 mechanical finalize: format, lint, typecheck, stack finalization (migrations, codegen, lockfiles via
 the project's convention skills), and doc updates. It does not simplify (already done) and does not
 review.

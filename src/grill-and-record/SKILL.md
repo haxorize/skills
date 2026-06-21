@@ -7,7 +7,7 @@ requires: grilling
 
 # Grill and Record
 
-Run the `grilling` discipline — a relentless one-question-at-a-time interview that walks the design tree until you reach shared understanding, exploring the codebase to answer questions rather than asking when it can.
+Run the `/grilling` skill — a relentless one-question-at-a-time interview that walks the design tree until you reach shared understanding, exploring the codebase to answer questions rather than asking when it can. Its body *is* the core discipline this skill builds on: if you don't see a `Launching skill: grilling` line, stop and load it before continuing.
 
 This is the doc-aware variant of `grill-me`. Beyond the core grill loop, it captures terminology and durable decisions as side effects of the conversation, so the team's living docs stay in sync with the design. Use the vanilla `grill-me` when no `DOMAIN.md` or ADR log is wanted.
 

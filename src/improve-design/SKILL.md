@@ -18,7 +18,7 @@ which runs the same vet + finding-format disciplines against a single diff.
 
 ## Design vocabulary
 
-This skill speaks the `codebase-design` vocabulary — **module**, **interface**, **implementation**, **depth** (deep/shallow), **seam**, **adapter**, **leverage**, **locality** — and its principles (the deletion test, "the interface is the test surface," "one adapter = hypothetical seam, two = real," internal-seams-are-private). Run the `codebase-design` behavior for the full definitions and use those terms exactly in every suggestion; don't drift into "component," "service," "API," or "boundary."
+This skill speaks the `codebase-design` vocabulary — **module**, **interface**, **implementation**, **depth** (deep/shallow), **seam**, **adapter**, **leverage**, **locality** — and its principles (the deletion test, "the interface is the test surface," "one adapter = hypothetical seam, two = real," internal-seams-are-private). Run the `/codebase-design` skill for the full definitions — this whole pass *is* the application of its vocabulary and principles, so if you don't see a `Launching skill: codebase-design` line, stop and load it before continuing. Use those terms exactly in every suggestion; don't drift into "component," "service," "API," or "boundary."
 
 When framing a candidate, classify its dependencies using `codebase-design`'s **dependency categories** (in-process / local-substitutable / remote-but-owned / true-external) — the category determines how the deepened module is tested across its seam, and whether a port is justified. Tests at the deepened interface replace the old shallow-module tests; delete them, don't layer.
 
