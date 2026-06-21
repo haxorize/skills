@@ -59,3 +59,15 @@ maintainer every behavior dependency is always present. ADR-0007's strict atomic
 - The four `to-*` publishers cannot collapse their `tracker-resolution.md` / `naming-drift-queue.md`
   groups this way (all four are user-invoked and cannot invoke each other); those stay sibling refs
   unless a separate model-invoked tracker subroutine is later extracted.
+
+## Amendments
+
+- **2026-06-21 (see ADR-0020)** — The consequence above that `grill-and-record` "keeps an inline
+  copy to protect grill rhythm (the same reason it already declines to delegate to `adr`)" is
+  partially reversed. That reasoning conflated a **background-lens behavior** (`domain-modeling`,
+  which runs interleaved inside the grill loop with no control transfer) with a **gated action**
+  (`/adr`'s offer→confirm→write, which does interrupt). `grill-and-record` now delegates the glossary
+  discipline *and* the ADR offer-gate to `domain-modeling` (a second load-bearing declared dependency)
+  and inlines only the ADR **write**. Its `references/domain-format.md` copy is dropped — the
+  `{grill-and-record, domain-modeling}` `domain-format.md` group collapses to a single home and leaves
+  `scripts/lint-skills.sh`. The `adr-format.md` group is unchanged.
