@@ -1,0 +1,16 @@
+# grill-and-record delegates the glossary discipline to domain-modeling; inlines only the ADR write
+
+ADR-0016 kept `grill-and-record`'s domain-modeling discipline inlined "to protect grill rhythm," bundled with its refusal to delegate to `/adr`. That bundle conflated two different things: `domain-modeling` is a **background-lens behavior** (its "During the session" bullets run interleaved inside the grill loop with no control transfer, exactly as `grilling` itself is loaded), whereas `/adr` is a **gated action** (offer → confirm → write transfers control and stops the one-question-at-a-time loop). So we split it: `grill-and-record` now Prose-invokes `domain-modeling` as a second **load-bearing delegation** carrying the glossary discipline *and* the ADR offer-gate, and inlines only the ADR **write** itself — overriding `domain-modeling`'s "recording is the standalone `adr` skill's job." The six near-verbatim "During the session" bullets, the `DOMAIN.md` section, and the multi-context note were pure duplication and are removed; the rhythm exemption now covers exactly the gated action that earns it.
+
+## Considered Options
+
+- **Home for ADR recording** — inline in `grill-and-record` (chosen); fold recording into `domain-modeling` to mirror Matt Pocock's single-skill design (rejected: blurs this suite's deliberate standalone-`adr` role, which Matt's suite lacks); delegate to `/adr` (rejected: real rhythm break — the gated action this exemption exists to avoid).
+- **Home for the ADR offer-gate (the three criteria)** — delegate to `domain-modeling` (chosen: the offer is a background-lens behavior identical in kind to the glossary bullets — noticing, not control transfer); keep inline alongside the write (rejected: re-duplicates the three criteria, relocating the duplication we are removing).
+- **Gate phrasing** — one combined opener loading both `grilling` and `domain-modeling` behind a single two-part load gate (chosen: both must be live before question one); two separately-gated invocations (rejected: more ceremony for the same guarantee).
+
+## Consequences
+
+- **Amends ADR-0016.** `grill-and-record` drops its inline `references/domain-format.md` (now sourced via `domain-modeling`); the `{grill-and-record, domain-modeling}` sibling group for `domain-format.md` collapses to a single home, so its line is removed from `scripts/lint-skills.sh`. `adr-format.md` and its `{grill-and-record, backfill-adrs, adr}` group are untouched — the inline write still needs it.
+- `grill-and-record` gains `domain-modeling` as a second **declared dependency** (`requires: grilling, domain-modeling`); `scripts/install.sh` resolves it. The body collapses from ~42 to ~18 lines: combined opener + two-part load gate, positioning, and the ADR-write override.
+- The two **load-bearing delegations** share one **load gate**, valid because `grill-and-record` is a User-invoked Orchestrator (a human watches both `Launching skill:` lines — ADR-0019).
+- Generalizes: the **background-lens vs gated-action** distinction is the criterion for any future "delegate the behavior or inline it" call, orthogonal to ADR-0019's load-bearing-vs-opportunistic (which governs load reliability, not whether delegation is possible at all).
