@@ -102,3 +102,18 @@ cross-refs).
 - `deepen` becomes `improve-design`; its `requires: codebase-design` dep is unchanged. Stray
   `deepen` references across the suite update to the new name. DOMAIN.md gains `review-changes` and
   `Review lens` terms and renames the `deepen` Boundary/Seam note to `improve-design`.
+
+## Amendments
+
+- **2026-06-20** — The Decision noted that `review-changes` and `improve-design` "share the vet
+  phase, finding format, and bidirectional-stale-ADR disciplines," but left those as **unguarded
+  inline copies** in both `SKILL.md` bodies — the same latent drift that hit `improve-design`'s
+  inline tracker-resolution paraphrase (ADR-0007). Extracted that shared kernel (vet pass, finding
+  format + leverage ranking, bidirectional intent drift) into a byte-identical
+  `references/finding-discipline.md` sibling in each skill, registered in `scripts/lint-skills.sh`'s
+  `sibling_groups` so drift now fails lint. Each skill keeps its own finding *container* inline —
+  `review-changes`' triaged lenses and blocker/follow-up/escalation tags, `improve-design`'s
+  deepening-candidate template — so only the discipline moves, not the structure. A model-invoked
+  behavior was rejected: nothing reaches this discipline autonomously (only the two user-invoked
+  orchestrators), so it would add permanent context load to dedupe skills that carry zero steady-state
+  load — the sibling-reference mechanism (ADR-0007) fits a consulted-not-invoked discipline better.

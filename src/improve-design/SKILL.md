@@ -58,22 +58,18 @@ The friction you encounter IS the signal.
 
 ### 3. Vet, then consolidate and present candidates
 
-**Vet first.** Exploration over-reports — a friction that looks real from a distance often dissolves
-on a close read. Before presenting anything, **re-read every location you'd cite** and confirm the
-finding holds. Drop three classes: friction that's actually by-design (including a tradeoff an ADR
-already records — settled, not a finding), mis-read evidence (real concern, wrong file/line), and
-duplicates that are the same underlying coupling seen from two angles.
+**Vet first** per [references/finding-discipline.md](references/finding-discipline.md): exploration
+over-reports, so re-read every location you'd cite and drop the three false-positive classes
+(by-design — including a tradeoff an ADR already records — mis-read evidence, and duplicates). The
+reference also covers the **bidirectional** ADR/DOMAIN read: a recorded tradeoff is by-design, but
+code that has drifted *from* an ADR or `DOMAIN.md` is itself a finding. When a candidate warrants
+*reopening* an ADR, mark it clearly (e.g., _"contradicts ADR-0007 — but worth reopening because…"_)
+and only when the friction justifies it.
 
 Group surviving findings into coherent candidates — don't present overlapping or sub-issues separately. **Cross-reference against existing work items found in step 1.** If a candidate overlaps with an existing work item, say so explicitly — propose updating that one rather than filing a new one.
 
-**ADR drift is bidirectional.** A tradeoff an ADR records is **by-design** — suppress it, don't
-re-litigate. But if the code has **drifted** from what an ADR says, the drift is itself a finding
-worth surfacing (the doc or the code is wrong; the team should know). Same for `DOMAIN.md`. When a
-candidate genuinely warrants *reopening* an ADR, mark it clearly (e.g., _"contradicts ADR-0007 — but
-worth reopening because…"_) and only when the friction is real enough to justify it.
-
-Present a numbered list of deepening opportunities, **ordered by leverage** (impact ÷ effort,
-discounted by confidence and fix-risk) so the highest-payoff candidate reads first. For each:
+Present a numbered list of deepening opportunities, **ordered by leverage** (see the reference) so the
+highest-payoff candidate reads first. For each:
 
 - **Cluster**: Which modules/concepts are involved, with `file:line` **evidence** — no vibes-only findings
 - **Why they're coupled**: Shared types, call patterns, co-ownership of a concept

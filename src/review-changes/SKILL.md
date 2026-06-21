@@ -56,27 +56,19 @@ rather than wrapped in a subagent.
 
 ## 4. Vet before presenting
 
-Subagents **over-report**. Before surfacing anything, **re-read every cited location yourself** and
-confirm it. Expect three failure classes and drop/correct/downgrade accordingly:
-
-- **By-design reported as a bug** — including a tradeoff an ADR records (settled, not a finding).
-- **Mis-attributed evidence** — a real finding pinned to the wrong file/line.
-- **Duplicates across lenses** — the same issue surfaced by two lenses.
-
-This vet pass is what stops the fan-out from flooding the report with false positives.
-
-**Intent lenses are bidirectional.** The ADR/DOMAIN lenses aren't only "does the code violate recorded
-intent." A tradeoff an ADR records is **by-design** (suppress it) — but if the code has **drifted**
-from what the ADR or `DOMAIN.md` says, that drift is itself a finding (the doc or the code is wrong;
-the team should know).
+Vet the raw findings per [references/finding-discipline.md](references/finding-discipline.md): the
+fan-out **over-reports**, so re-read every cited location yourself and drop by-design reports
+(including recorded ADR tradeoffs), mis-attributed evidence, and **cross-lens duplicates** (the same
+issue surfaced by two lenses). The reference also covers the **bidirectional** read of the
+ADR/DOMAIN lenses — a recorded tradeoff is by-design, but code that has drifted *from* the doc is
+itself a finding. This vet pass is what stops the fan-out from flooding the report with false positives.
 
 ## 5. Rank and classify each finding
 
-Every finding carries **`file:line` evidence**, impact, **effort (S/M/L)**, fix-risk, and
-**confidence (HIGH/MED/LOW)** — no vibes-only findings. Within a lens, order by **leverage =
-impact ÷ effort, discounted by confidence and fix-risk**.
-
-Tag each finding:
+Format and rank every finding per
+[references/finding-discipline.md](references/finding-discipline.md) — `file:line` evidence, impact,
+effort (S/M/L), fix-risk, confidence (HIGH/MED/LOW); within a lens, order by leverage. Then tag each
+finding:
 
 - **Blocker** — must fix before the PR lands.
 - **Follow-up** — worth doing, doesn't block; file against the backlog.
