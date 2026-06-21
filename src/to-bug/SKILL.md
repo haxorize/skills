@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # To Bug
 
-Synthesize the current conversation into a Bug work item and publish it to the project's issue tracker. No interviewing — this is a synthesis-only skill. Run `grill-and-record` (or `grill-me`) first if repro, scope, or regression context is thin.
+Synthesize the current conversation into a Bug work item and publish it to the project's issue tracker. No interviewing — this is a synthesis-only skill. Run `/grill-and-record` (or `/grill-me`) first if repro, scope, or regression context is thin.
 
 `to-bug` is the default for filing a defect. Bugs are *not* parented under Stories — the fix is the slice. They can be filed parentless or attached to a Feature directly.
 

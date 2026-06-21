@@ -26,7 +26,12 @@ Pick model-invocation only when the agent must reach the skill on its own, or an
 
 ### Behavior vs orchestrator, and declared dependencies
 
-An **orchestrator** (user-invoked) drives a workflow and delegates reusable discipline to **behaviors** (model-invoked) via prose ("Run the `grilling` discipline"). Cross-skill invocation is soft — it works only if the target is model-invoked *and* installed.
+An **orchestrator** (user-invoked) drives a workflow and delegates reusable discipline to **behaviors** (model-invoked) via prose. Cross-skill invocation is soft — there is no hard primitive; the model reads the body and decides to call the `Skill` tool, so a dep can silently fail to load. Phrase every reference with **two independent signals** (ADR-0019):
+
+- **Slash vs backtick — *is this invoked?*** Use the slash form ("Run the `/feedback-loops` skill") whenever a reference actually fires the `Skill` tool or names a command the human will type: a load-bearing delegation (`implement` → `/tdd`), a model-invoked skill's own soft delegation (`tdd` → `/feedback-loops`), or a human suggestion of a user-invoked skill (`to-story` → "run `/grill-me` first"). Keep the light backtick form where nothing fires: borrowed **vocabulary** ("a `codebase-design` problem"), a **boundary** ("recording is `adr`'s job"), or a **gated offer** you must not fire before the user consents (`implement` offers `adr`). Slashing a mere mention trains a spurious load; slashing an offer jumps the gun.
+- **Load gate vs none — *must I verify it loaded?*** Add the gate ("if you don't see a `Launching skill: X` line, stop and load it") **only** to a load-bearing delegation — the behavior carries the caller's whole job (`grill-me` → `grilling`) — **in a user-invoked orchestrator**, where the human who typed the command watches the load line. Never gate inside a model-invoked skill (no watcher — a miss must degrade gracefully, so slash but don't gate), a human suggestion (the model can't invoke a user-invoked skill — its description is hidden, ADR-0015), or a built-in command (`/code-review`, `/simplify` — always installed, no `requires:`).
+
+So slash tracks *invoked*, the gate tracks *verified*. A model-invoked skill's `requires:` deps stay ungated (and usually opportunistic — an auto-reached chain has no watcher).
 
 Extract a behavior only where a **real second consumer** exists (the Extraction test) — reuse is the reason to extract, not a guess that it might be reused. When an orchestrator depends on a behavior, declare it in a frontmatter `requires:` line (comma-separated skill names); `scripts/install.sh` resolves and links those deps, and lint checks each named dep exists and is model-invoked. Inert *format* docs (a glossary format, a template) are not behaviors — they stay sibling reference files (see *Sharing a reference across skills*).
 
@@ -119,6 +124,7 @@ Frontmatter parses as strict YAML. The hazard is an unquoted `: ` (colon **follo
 
 - [ ] Invocation kind chosen deliberately; description matches it (triggers for model-invoked, human-facing one-liner for user-invoked)
 - [ ] Behaviors declared via `requires:`; extraction backed by a real second consumer
+- [ ] Cross-skill references phrased by severity — load-bearing get `/skill` + load gate (user-invoked only); opportunistic stay soft backtick mentions
 - [ ] SKILL.md ≤200 lines; each reference ≤200 lines
 - [ ] No generic best-practices the model already knows (no-op check)
 - [ ] Encodes project-specific decisions, not textbook knowledge

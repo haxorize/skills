@@ -77,7 +77,7 @@ Then run `/simplify` to catch any remaining issues with reuse, quality, or effic
 
 ## Closing the cycle
 
-When the cycle's behaviors are built and refactored, close the loop: run the `feedback-loops` discipline once to finalize mechanically — format, lint, typecheck, stack finalization (migrations, codegen), and any doc updates the change made stale. Finalization lives in `feedback-loops` so every build path shares one mechanical finalize.
+When the cycle's behaviors are built and refactored, close the loop: run the `/feedback-loops` skill once to finalize mechanically — format, lint, typecheck, stack finalization (migrations, codegen), and any doc updates the change made stale. Finalization lives in `feedback-loops` so every build path shares one mechanical finalize.
 
 Tests prove code-correctness, not feature-correctness. If the slice touched behavior you couldn't actually run in a test — a UI flow, an external integration, a real ingest — say so and eyeball it (run the project's dev command, use `verify`) before declaring done.
 

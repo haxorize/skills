@@ -29,9 +29,9 @@ This is the **deliberate sweep mode** — invoked when the user wants a focused 
 
 Be opinionated — pick the best term for each concept and list alternatives as aliases to avoid.
 
-### 4. Write to `DOMAIN.md` via `domain-modeling`
+### 4. Write to `DOMAIN.md` via `/domain-modeling`
 
-Run the `domain-modeling` discipline to write the glossary to `DOMAIN.md` in the working directory. It owns the output format (definition style, table grouping, the first-class `Relationships` section, the example dialogue) and the multi-context rules. Apply its challenge/sharpen/cross-reference checks to the swept terms as you write.
+Run the `/domain-modeling` skill to write the glossary to `DOMAIN.md` in the working directory — if you don't see a `Launching skill: domain-modeling` line, stop and load it before continuing. It owns the output format (definition style, table grouping, the first-class `Relationships` section, the example dialogue) and the multi-context rules. Apply its challenge/sharpen/cross-reference checks to the swept terms as you write.
 
 ### 5. Output a summary
 

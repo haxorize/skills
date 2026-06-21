@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # To Feature
 
-Synthesize the current conversation into a Feature-level artifact (PRD-shaped) and publish it to the project's issue tracker. No interviewing — this is a synthesis-only skill. Run `grill-me` or `grill-and-record` first if context is thin.
+Synthesize the current conversation into a Feature-level artifact (PRD-shaped) and publish it to the project's issue tracker. No interviewing — this is a synthesis-only skill. Run `/grill-me` or `/grill-and-record` first if context is thin.
 
 `to-feature` is for **broad scope** — work that decomposes into multiple stories. The default for single-feature work is `to-story`. Use `to-feature` only when phrasings explicitly invoke PRD-shaped or multi-story scope.
 

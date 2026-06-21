@@ -40,7 +40,7 @@ Surface the inferred type to the user before loading; ambiguous GitHub cases (e.
 
 If the detected type is **Feature** or **Epic**, refuse with a clear redirect:
 
-> "{ID} is a {type}. Features and Epics aren't implementable as a single tracer bullet — they decompose first. Run `to-story --parent {ID}` to draft a Story under it, then `from-work-item <story-id>` once that Story exists."
+> "{ID} is a {type}. Features and Epics aren't implementable as a single tracer bullet — they decompose first. Run `/to-story --parent {ID}` to draft a Story under it, then `/from-work-item <story-id>` once that Story exists."
 
 Do not load any context; do not hand off. The user's next move is decomposition, not implementation.
 

@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # To Tasks
 
-Break a parent User Story into child Task work items on the project's issue tracker. Tracer-bullet style — each Task is a thin vertical slice through every integration layer, end-to-end. Synthesis-only, no interviewing — run `grill-and-record` upstream if context is thin.
+Break a parent User Story into child Task work items on the project's issue tracker. Tracer-bullet style — each Task is a thin vertical slice through every integration layer, end-to-end. Synthesis-only, no interviewing — run `/grill-and-record` upstream if context is thin.
 
 Tasks are always children of a User Story — never directly under a Feature. If the user wants to break a Feature into stories, that's `to-story` (run repeatedly under the same Feature parent).
 
@@ -31,7 +31,7 @@ If the user passed a parent reference (issue number / work-item ID / URL), fetch
 
 Verify the parent is the right type:
 - **ADO:** `az boards work-item show <id>` should return type `User Story`. Refuse and explain if it's a Feature, Epic, Task, or Bug.
-- **GitHub:** parent issue should look story-shaped (labels / template). Refuse if it looks PRD/feature-shaped — suggest running `to-story --parent <feature-id>` first to create a Story under it.
+- **GitHub:** parent issue should look story-shaped (labels / template). Refuse if it looks PRD/feature-shaped — suggest running `/to-story --parent <feature-id>` first to create a Story under it.
 
 ### 3. Read sibling repos
 
