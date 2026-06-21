@@ -25,7 +25,8 @@ three AI-default palettes (cream+serif+terracotta, near-black+acid, broadsheet h
 --depth-d:  #0A3D3B   /* darker base for the deep-module gradient */
 --shallow:  #C8D2D4   /* pale desaturated teal-gray — shallow module fill */
 --leak:     #C0392B   /* brick red — seam leakage only */
---warn:     #9A6B00   /* dark goldenrod — ADR-reopen callouts only */
+--warn:     #9A6B00   /* dark goldenrod — ADR-reopen callout border/text */
+--warn-bg:  #F3E7C8   /* pale amber — ADR-reopen callout fill */
 ```
 
 Type (Google Fonts via CDN): **Archivo** for display/headings (structural, wide grotesque — reads as
@@ -58,19 +59,37 @@ are signals, never decoration.
     </script>
     <style>
       :root{ --paper:#ECEFF1; --ink:#1B2A32; --depth:#0E5A57; --depth-d:#0A3D3B;
-             --shallow:#C8D2D4; --leak:#C0392B; --warn:#9A6B00; }
+             --shallow:#C8D2D4; --leak:#C0392B; --warn:#9A6B00; --warn-bg:#F3E7C8; }
       body{ background:var(--paper); color:var(--ink); }
       .display{ font-family:"Archivo",sans-serif; }
       .mono{ font-family:"IBM Plex Mono",monospace; }
-      .seam{ stroke:var(--ink); stroke-dasharray:5 4; }     /* seam = dashed */
+      .seam{ stroke:var(--ink); stroke-dasharray:5 4; }      /* seam = dashed */
       .leak{ stroke:var(--leak); stroke-width:2; }           /* leakage = brick red */
+      /* HTML legend swatches use background; SVG shapes must use fill (see below). */
       .mod-shallow{ background:var(--shallow); color:var(--ink); }
       .mod-deep{ background:linear-gradient(160deg,var(--depth),var(--depth-d)); color:var(--paper); }
+      /* SVG-safe depth classes — background is a no-op inside SVG, fill is not. */
+      .svg-shallow{ fill:var(--shallow); stroke:var(--ink); }
+      .svg-deep{ fill:url(#deep); }                          /* refs the shared gradient below */
+      .svg-lbl{ fill:var(--ink); font-family:"IBM Plex Mono",monospace; }
+      .svg-lbl-on-deep{ fill:var(--paper); font-family:"IBM Plex Mono",monospace; }
+      .card{ border:1px solid var(--ink); background:#fff; }
+      /* deep-filled card (top recommendation) — self-contained: background AND light text
+         in one rule. Never write `class="card card-deep"` — .card's later background wins
+         the cascade and you get light text on white. Use .card-deep alone. */
+      .card-deep{ border:1px solid var(--depth-d); color:var(--paper);
+                  background:linear-gradient(160deg,var(--depth),var(--depth-d)); }
       @media (prefers-reduced-motion:no-preference){ .reveal{ animation:rise .5s ease both; } }
       @keyframes rise{ from{ opacity:0; transform:translateY(8px);} to{ opacity:1; transform:none;} }
     </style>
   </head>
   <body class="font-sans">
+    <!-- one shared gradient for every deep-module body; .svg-deep / fill="url(#deep)" -->
+    <svg width="0" height="0" aria-hidden="true"><defs>
+      <linearGradient id="deep" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#0E5A57"/><stop offset="1" stop-color="#0A3D3B"/>
+      </linearGradient>
+    </defs></svg>
     <main class="max-w-5xl mx-auto px-6 py-12 space-y-12">
       <header>...</header>
       <section id="candidates" class="space-y-10">...</section>
@@ -103,7 +122,8 @@ prose is sparse and uses the glossary terms (`codebase-design`) without ceremony
 - **Solution** — one sentence. What changes.
 - **Wins** — bullets, ≤6 words, in glossary terms ("locality: bugs concentrate here", "one interface,
   N call sites"). Not "easier to maintain".
-- **ADR callout** (only if the candidate reopens one) — one line in a `--warn`-tinted box.
+- **ADR callout** (only if the candidate reopens one) — one line in a box filled `--warn-bg` with a
+  `--warn` border and `--warn` label (use the tokens, don't hardcode the hex).
 
 If a paragraph is needed to explain a diagram, redraw the diagram.
 
@@ -111,24 +131,34 @@ If a paragraph is needed to explain a diagram, redraw the diagram.
 
 Pick the one that fits; mix them so cards don't all look alike.
 
-- **Depth-rectangle (the signature, default for shallow→deep).** Two `<div>`s side by side. Before:
-  a `.mod-shallow` box, wide-but-thin, with leaked deps as `.leak` arrows crossing a `.seam` to
-  outside boxes. After: a tall `.mod-deep` box with the now-internal deps drawn faded *inside* it and
-  a narrow interface strip on top. Reads as "the interface shrank; the implementation absorbed the
-  wrappers."
+- **Depth-rectangle (the signature, default for shallow→deep).** Draw it in **inline SVG**, not HTML
+  boxes. Before: a wide-but-thin shallow module `<rect class="svg-shallow">`, with leaked deps as
+  `.leak` arrows crossing a `.seam` to outside boxes. After: a tall deep `<rect class="svg-deep">`
+  (the shared `#deep` gradient) with the now-internal deps drawn faded *inside* it and a narrow
+  interface strip on top. **SVG-safe rules — `background` is a no-op inside SVG; only `fill` paints
+  it:** use `class="svg-shallow"` / `class="svg-deep"` (never `mod-shallow`/`mod-deep`, which are
+  HTML-only and render *black* on a `<rect>`), and give **every `<text>` an explicit fill** —
+  `class="svg-lbl"` on paper, `class="svg-lbl-on-deep"` inside the deep body — or it inherits black
+  and vanishes. Keep the `.seam` line at the module's interface edge; don't run it through the deep
+  body. Reads as "the interface shrank; the implementation absorbed the wrappers."
 - **Mermaid graph (only when genuinely graph-shaped** — call/dependency mess). `flowchart` styled by
-  the theme config above; `classDef leak stroke:#C0392B` for leakage edges, the deep node filled with
-  `--depth`. Don't reach for Mermaid when a depth-rectangle would say it better.
+  the theme config above. **Colour the thing your label points at:** `classDef leak stroke:#C0392B` +
+  `class a,b leak` reddens *nodes*; to redden *edges* (e.g. the function-local imports that can't be
+  top-level) use `linkStyle <indices> stroke:#C0392B,stroke-width:2px` instead — a label that says
+  "red edges" over reddened nodes misdirects the eye. Don't reach for Mermaid when a depth-rectangle
+  would say it better.
 - **Cross-section (layered shallowness).** Stacked horizontal bands; before: N thin layers each doing
   nothing; after: one thick `.mod-deep` band labelled with the consolidated responsibility.
 
-Keep diagrams ~320px tall so before/after sits side by side without scrolling. Motion: at most the one
-`reveal` fade, and only when `prefers-reduced-motion` allows.
+Keep diagrams ~320px tall so before/after sits side by side without scrolling, and match the row
+height to the SVG — don't set a grid `min-height` taller than the SVG, or a dead band opens under the
+diagram. Motion: at most the one `reveal` fade, and only when `prefers-reduced-motion` allows.
 
 ## Top recommendation
 
-One larger card after the candidates: the candidate you'd tackle first, one sentence on why, and an
-anchor link to its card. That's it.
+One larger **`.card-deep`** after the candidates — the recommendation literally rendered *as* a deep
+module: the candidate you'd tackle first, one sentence on why, and an anchor link to its card. That's
+it. Use `.card-deep` alone (it carries its own light text); don't stack it with `.card`.
 
 ## Tone
 
