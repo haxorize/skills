@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # Writing Skills
 
-Skills wrangle determinism out of a stochastic system. The goal is **predictability** — the agent taking the same *process* every run. Every choice below serves that. The deep vocabulary, the information-hierarchy ladder, and the failure-mode taxonomy live in [references/great-skills.md](references/great-skills.md); this file is the operational guide.
+Skills wrangle determinism out of a stochastic system. The goal is **predictability** — the agent taking the same *process* every run. The deep vocabulary, the information-hierarchy ladder, and the failure-mode taxonomy live in [references/great-skills.md](references/great-skills.md); this file is the operational guide.
 
 ## Workflow
 

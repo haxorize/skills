@@ -6,13 +6,13 @@ disable-model-invocation: true
 
 # To Tasks
 
-Break a parent User Story into child Task work items on the project's issue tracker. Tracer-bullet style — each Task is a thin vertical slice through every integration layer, end-to-end. Synthesis-only, no interviewing — run `/grill-and-record` upstream if context is thin.
+Synthesis-only, no interviewing — run `/grill-and-record` upstream if context is thin.
 
-Tasks are always children of a User Story — never directly under a Feature. If the user wants to break a Feature into stories, that's `to-story` (run repeatedly under the same Feature parent).
+Tasks are always children of a User Story — never directly under a Feature. To break a Feature into stories, use `to-story` (run repeatedly under the same Feature parent).
 
 ## Publication constraints
 
-No file paths, no code snippets, and no specific field or type names in any published section. Every section — including `## Layers touched` — describes behavior and design intent only. These details drift; the issue must remain accurate after the code is written.
+No file paths, no code snippets, and no specific field or type names in any published section — including `## Layers touched`. These details drift; the issue must remain accurate after the code is written.
 
 ## Workflow
 
@@ -53,7 +53,7 @@ If the work isn't already grounded in the conversation, explore the touched modu
 
 Each slice is one Task. Prefer many thin Tasks over few thick ones.
 
-**Tests belong in the same Task as the behavior they verify.** Never file a test as its own Task — that is a horizontal cut, not a vertical slice. A proxy test for behavior X lives in the same Task as the proxy change for X; a component test for behavior Y lives in the same Task as the component change for Y. Each Task must be independently handable to `/tdd`. If writing a Task's tests would require another Task's implementation to exist first, merge them into one Task.
+**Tests belong in the same Task as the behavior they verify.** Never file a test as its own Task — that is a horizontal cut, not a vertical slice. Each Task must be independently handable to `/tdd`. If writing a Task's tests would require another Task's implementation to exist first, merge them into one Task.
 
 For each Task:
 
@@ -83,7 +83,7 @@ For each Task, use the appropriate template:
 - GitHub: [references/task-template-github.md](references/task-template-github.md)
 - ADO: [references/task-template-ado.md](references/task-template-ado.md)
 
-- **GitHub:** `gh issue create --title "..." --body-file <draft>` with default labels from CLAUDE.md. Reference the parent via template `Parent: #N` line. **Before creating the first Task in a publishing batch,** ensure every label in CLAUDE.md's `Default labels:` exists on the repo: `gh label list --json name --jq '.[].name'` once, then `gh label create <name>` for any missing. Idempotent and cheap; one-time per repo per label.
+- **GitHub:** `gh issue create --title "..." --body-file <draft>` with default labels from CLAUDE.md. Reference the parent via template `Parent: #N` line. **Before creating the first Task in a publishing batch,** ensure every label in CLAUDE.md's `Default labels:` exists on the repo: `gh label list --json name --jq '.[].name'` once, then `gh label create <name>` for any missing.
 - **ADO:** `az boards work-item create --type "Task" --title "..." --description "<html>"` with project / area path / iteration / state from CLAUDE.md. The description field expects HTML — convert the Markdown task draft before passing. Link each Task to the parent Story via `az boards work-item relation add --relation-type Parent --target-id <story-id>`. Tasks have only a `System.Description` field — no Acceptance Criteria.
 
 If a required CLAUDE.md field is missing, fail fast with a clear "add this to CLAUDE.md" message.
@@ -97,7 +97,7 @@ Two flows operate on already-published Tasks:
 - **`--update <task-id>`** — patch a single Task body in place. Skips tracker / parent / sibling-repo / codebase resolution. Body re-draft → self-review → patch.
 - **`--reconcile <story-id>`** — diff all child Tasks under a parent Story against the current Story spec, propose adds / closures / edits, apply approved changes. State-aware: closed Tasks leave alone, in-progress surface for decision, new are safe to revise.
 
-Both modes read and append to the **naming-drift queue** on cold-start and publish when a name diverges from siblings — see [references/naming-drift-queue.md](references/naming-drift-queue.md).
+Both modes read and append to the **naming-drift queue** — see [references/naming-drift-queue.md](references/naming-drift-queue.md).
 
 GitHub reconcile uses an **In-progress signal** declared in CLAUDE.md's `Issue tracker:` block (`In-progress signal: label <name>`, defaults to assignee-presence) to distinguish open-being-worked from open-not-started. ADO reads `System.State` directly.
 

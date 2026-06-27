@@ -1,6 +1,6 @@
 # Bug template — GitHub
 
-Use this body when publishing a Bug-shaped issue to GitHub via `gh issue create`. The title is set on the command line; this is the body. GitHub has no native Bug type — apply the `bug` label and a severity label.
+Use this body when publishing a Bug-shaped issue to GitHub via `gh issue create`. The title is set on the command line. GitHub has no native Bug type — apply the `bug` label and a severity label.
 
 ```markdown
 ## Repro

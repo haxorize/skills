@@ -7,9 +7,7 @@ requires: domain-modeling
 
 # Harden Domain
 
-Sweep the codebase and the conversation for domain terminology, surface drift and ambiguity, and write the result to `DOMAIN.md`.
-
-This is the **deliberate sweep mode** — invoked when the user wants a focused pass to refresh the glossary. The glossary-writing discipline itself (challenging terms, sharpening fuzzy language, the output format, multi-context handling) belongs to the `domain-modeling` behavior; this skill drives a one-shot sweep over it. Inline updates during a grilling session are owned by `grill-and-record`.
+This is the **deliberate sweep mode** — a focused one-shot pass to refresh the glossary. The glossary-writing discipline itself (challenging terms, sharpening fuzzy language, the output format, multi-context handling) belongs to the `domain-modeling` behavior; this skill drives a sweep over it. Inline updates during a grilling session are owned by `grill-and-record`.
 
 ## Workflow
 
@@ -27,7 +25,7 @@ This is the **deliberate sweep mode** — invoked when the user wants a focused 
 
 ### 3. Propose a canonical glossary
 
-Be opinionated — pick the best term for each concept and list alternatives as aliases to avoid.
+Pick the best term for each concept and list alternatives as aliases to avoid.
 
 ### 4. Write to `DOMAIN.md` via `/domain-modeling`
 

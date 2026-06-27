@@ -5,11 +5,11 @@ description: Shared vocabulary and principles for designing deep modules. Use wh
 
 # Codebase Design
 
-Design **deep modules**: a lot of behaviour behind a small interface, placed at a clean seam, testable through that interface. Use this language and these principles wherever code is being designed or restructured. The aim is leverage for callers, locality for maintainers, and testability for everyone.
+Design **deep modules**: a lot of behaviour behind a small interface, placed at a clean seam, testable through that interface. Use this language and these principles wherever code is being designed or restructured.
 
 ## Vocabulary
 
-Use these terms exactly — don't substitute "component," "service," "API," or "boundary." Consistent language is the whole point.
+Use these terms exactly — don't substitute "component," "service," "API," or "boundary."
 
 - **Module** — anything with an interface and an implementation. Deliberately scale-agnostic: a function, class, package, or tier-spanning slice. _Avoid_: unit (implies test isolation), component (implies UI), service (implies a network boundary).
 - **Interface** — everything a caller must know to use the module correctly: the type signature, but also invariants, ordering constraints, error modes, required configuration, and performance characteristics. _Avoid_: API (implies external/versioned), signature (too narrow — type-level only).

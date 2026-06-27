@@ -6,17 +6,14 @@ disable-model-invocation: true
 
 # Which Skill
 
-You don't remember every skill, so ask. This routes over the **user-invoked** skills — the ones you
+This routes over the **user-invoked** skills — the ones you
 type. The **model-invoked behaviors** (`tdd`, `feedback-loops`, `diagnosing-bugs`, `codebase-design`,
 `grilling`, `domain-modeling`, `adr`, `resolving-merge-conflicts`) fire on their own when the work
 calls for them, or get pulled in by the orchestrators below — you rarely reach for them by name.
 
-A **flow** is a path through the skills. Most work runs along one **main flow**; a few detours and
-upkeep loops branch off it.
+A **flow** is a path through the skills.
 
 ## The main flow: idea → ship
-
-The route most work travels — you have an idea and want it built.
 
 1. **Sharpen the idea by interview.**
    - **`/grill-and-record`** when you **have a codebase** — it's doc-aware, updating `DOMAIN.md` as
@@ -71,8 +68,6 @@ before you've decomposed, don't push on degraded — **`/handoff`** and continue
   built-in, which continues *in place*. `handoff` forks; `/compact` continues.)
 
 ## Standalone
-
-Off the main flow entirely.
 
 - **`/grill-me`** — sharpen any plan or design with no repo to back it.
 - **`/to-bug`** — file a defect as a tracked work item from the current conversation.

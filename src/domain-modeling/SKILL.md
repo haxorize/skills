@@ -5,7 +5,7 @@ description: The active discipline for building and sharpening a project's domai
 
 # Domain Modeling
 
-Actively build and sharpen the project's domain model as the design develops. This is the *active* discipline — challenging terms, inventing edge-case scenarios, and writing the glossary down the moment it crystallizes. Merely *reading* `DOMAIN.md` for vocabulary is not this skill — that's a one-line habit any skill can do. Reach for this when you are *changing* the model, not just consuming it.
+This is the *active* discipline — challenging terms, inventing edge-case scenarios, and writing the glossary down the moment it crystallizes. Merely *reading* `DOMAIN.md` for vocabulary is not this skill — that's a one-line habit any skill can do. Reach for this when you are *changing* the model, not just consuming it.
 
 ## During the work
 
@@ -18,9 +18,7 @@ Actively build and sharpen the project's domain model as the design develops. Th
 
 ## DOMAIN.md
 
-Use the format in [references/domain-format.md](references/domain-format.md). Lazily create `DOMAIN.md` at the repo root if missing — only once there is a term to write.
-
-Output-shape rules — definition style, grouping into tables, the first-class `Relationships` section, the example dialogue (speakers **Dev** and **Domain expert**), and `Flagged ambiguities` — all live in that reference.
+Use the format in [references/domain-format.md](references/domain-format.md) — definition style, table grouping, the first-class `Relationships` section, the example dialogue, and `Flagged ambiguities` all live there. Lazily create `DOMAIN.md` at the repo root if missing — only once there is a term to write.
 
 ## Multi-context repos
 

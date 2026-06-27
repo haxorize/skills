@@ -1,6 +1,6 @@
 # Feature template — Azure DevOps
 
-Use this when publishing a Feature work item to Azure DevOps via `az boards work-item create --type Feature`. ADO Features have structured fields beyond a single body — populate them via the corresponding flags.
+Use this when publishing a Feature work item to Azure DevOps via `az boards work-item create --type Feature`. Populate the structured fields via the corresponding flags.
 
 ## Field mapping
 
@@ -126,6 +126,4 @@ HTML=$(python3 -c "import sys, markdown; print(markdown.markdown(sys.stdin.read(
 ## Notes
 
 - ADO enforces Epic → Feature → User Story → Task. A Feature without a parent Epic is allowed but flagged in most team configs; resolve a parent Epic ID before publishing.
-- Inside the `## Story Decomposition` section, the snapshot separator is a `---` rule followed by the line `*Emergent Stories appended below.*` — the snapshot section sits above it, the appended-emergent region below.
-- The Story Decomposition section captures decomposition rationale (titles, scopes, coverage, naming consistency, dependencies); child Stories are linked via the parent-child relation when each Story is created. The map and the relation graph are independent — the map records intent, the graph records what shipped.
-- After create: `az boards work-item relation add --id <new-feature-id> --relation-type Parent --target-id <epic-id>`.
+- The Story Decomposition section captures decomposition rationale; child Stories are linked via the parent-child relation when each Story is created. The map and the relation graph are independent — the map records intent, the graph records what shipped.

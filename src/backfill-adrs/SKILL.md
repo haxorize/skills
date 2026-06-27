@@ -6,15 +6,11 @@ disable-model-invocation: true
 
 # Backfill ADRs
 
-Sweep recent git history for architectural decisions that should have been recorded as ADRs but weren't, and write the qualifying ones.
-
-This is the archaeological mode. Use the standalone `adr` skill for fresh single-record use (a decision you just made).
-
 ## Workflow
 
 ### 1. Confirm scan range
 
-Default suggestion: **last 90 days OR last 200 commits, whichever is shorter**. Confirm with the user before scanning — different teams have different "ADR debt" horizons.
+Default suggestion: **last 90 days OR last 200 commits, whichever is shorter**. Confirm with the user before scanning.
 
 ### 2. Read git log
 
@@ -55,10 +51,10 @@ Use the format in [references/adr-format.md](references/adr-format.md). ADRs liv
 
 ### 7. Stop
 
-Once the candidate list is exhausted, stop. Don't keep mining for more — the goal is to seed the log, not exhaustively document every past choice.
+Once the candidate list is exhausted, stop. Don't keep mining for more.
 
 ## Notes
 
 - **Lazily create `docs/adr/`** if missing.
 - **Dedupe against existing ADRs.** Read the existing log first; skip candidates already covered.
-- **Prefer fewer high-quality ADRs** over many marginal ones. The bar is the gate; if a candidate borderline-qualifies, drop it.
+- **Prefer fewer high-quality ADRs.** If a candidate borderline-qualifies, drop it.

@@ -28,7 +28,7 @@ Resolve the diff as `git diff <base>...HEAD` (three-dot: compare against the mer
 tip) plus the commit list `git log <base>..HEAD --oneline`.
 
 **Validate before spawning anything.** Confirm the ref resolves (`git rev-parse`) and the diff is
-**non-empty**. A bad ref or empty diff fails *here*, cheaply — not inside N parallel subagents.
+**non-empty** — a bad ref or empty diff fails *here*, not inside N parallel subagents.
 
 For the AC lens, resolve a **work-item pointer** (ID or PR#) from the argument, the branch name, or
 the PR body. No pointer → skip the AC lens; don't invent acceptance criteria.
@@ -51,18 +51,14 @@ Don't run every lens on every diff — `/security-review` on a docs change is no
 ## 3. Fan out (read-only subagents, findings only)
 
 Run each **custom lens** (DOMAIN, ADR, AC, design depth) as its own **read-only subagent** that
-returns *findings only* — the caller's context stays clean, which is what keeps the fan-out cheap.
-Built-ins that already self-parallelize (`/code-review`, `/security-review`) may run at top level
-rather than wrapped in a subagent.
+returns *findings only* — keeps the caller's context clean. Built-ins that already self-parallelize
+(`/code-review`, `/security-review`) may run at top level rather than wrapped in a subagent.
 
 ## 4. Vet before presenting
 
-Vet the raw findings per [references/finding-discipline.md](references/finding-discipline.md): the
-fan-out **over-reports**, so re-read every cited location yourself and drop by-design reports
-(including recorded ADR tradeoffs), mis-attributed evidence, and **cross-lens duplicates** (the same
-issue surfaced by two lenses). The reference also covers the **bidirectional** read of the
-ADR/DOMAIN lenses — a recorded tradeoff is by-design, but code that has drifted *from* the doc is
-itself a finding. This vet pass is what stops the fan-out from flooding the report with false positives.
+Vet the raw findings per [references/finding-discipline.md](references/finding-discipline.md), which
+covers the over-report, the drop classes, and the **bidirectional** ADR/DOMAIN read. The one
+addition here: drop **cross-lens duplicates** — the same issue surfaced by two lenses.
 
 ## 5. Rank and classify each finding
 
@@ -80,14 +76,13 @@ fix now; everything else becomes a main-branch follow-up.
 
 ## 6. Report per lens — never rerank across lenses
 
-Present findings **under their own lens heading**; do **not** merge or rerank into one global list. A
-change can pass one lens and fail another (Standards-pass / Spec-fail, and vice-versa) — merging lets
-one lens **mask** another. End with a **per-lens summary**, not a single cross-lens "winner."
+Present findings **under their own lens heading**; do **not** merge or rerank into one global list —
+merging lets a lens-pass **mask** a lens-fail (Standards-pass / Spec-fail, and vice-versa). End with
+a **per-lens summary**, not a single cross-lens "winner."
 
 ## After review
 
 This skill stops at the report — it never fixes. For a **pre-PR self-review**, hand the findings back
 to the user; if they act on blockers, the build re-runs `feedback-loops` and the **convergence guard**
 in `implement` bounds the fix→re-review loop (halt at ~2× the slice's scope; remainder → follow-ups).
-For a **teammate's PR**, posting the review is the user's call — this skill produces the report; the
-human decides what to post.
+For a **teammate's PR**, posting the review is the user's call.

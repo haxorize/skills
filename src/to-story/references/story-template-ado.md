@@ -14,7 +14,7 @@ Use this when publishing a User Story to Azure DevOps via `az boards work-item c
 | State | `System.State` | From CLAUDE.md `Default state:` (typically `New`) | `--fields "System.State=..."` |
 | Parent (Feature) | (relation) | From `--parent <feature-id>` arg | post-create: `az boards work-item relation add --id <new-story-id> --relation-type Parent --target-id <feature-id>` |
 
-The reference name is `System.Description`; `--description` is the correct CLI flag. To verify against a specific project, run `az boards work-item show --id <existing-story-id> --output json --query 'fields'` and confirm a `System.Description` key is present.
+To verify field names against a specific project, run `az boards work-item show --id <existing-story-id> --output json --query 'fields'` and confirm a `System.Description` key is present.
 
 ## Description (markdown body — converted to HTML before publishing)
 
@@ -111,6 +111,5 @@ HTML=$(python3 -c "import sys, markdown; print(markdown.markdown(sys.stdin.read(
 
 ## Notes
 
-- ADO enforces Epic → Feature → User Story → Task. A User Story without a parent Feature is allowed but flagged in most team configs; resolve a parent Feature ID before publishing (or create one via `to-feature` first).
-- After create: `az boards work-item relation add --id <new-story-id> --relation-type Parent --target-id <feature-id>`.
+- ADO enforces Epic → Feature → User Story → Task. A User Story without a parent Feature is allowed but flagged in most team configs.
 - Each acceptance criterion should map to at least one Task in the eventual `to-tasks` breakdown — `to-tasks` self-review checks parent coverage.

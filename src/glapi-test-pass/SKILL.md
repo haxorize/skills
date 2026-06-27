@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # GLAPI Test Pass
 
-GLAPI checks that a User Story (not a Feature) has a passing test point in the team's test plan. The `az boards` and `az repos` CLIs don't reach the `testplan` and `testresults` invoke areas — this skill bridges that gap. No interviewing — runs end-to-end from the required `<story-id>` argument. Pass an optional `<pr-id>` to include it in the test run name for traceability.
+GLAPI checks that a User Story (not a Feature) has a passing test point in the team's test plan. The `az boards` and `az repos` CLIs don't reach the `testplan` and `testresults` invoke areas. Takes a required `<story-id>` argument and an optional `<pr-id>` to include in the test run name.
 
 ## Workflow
 
@@ -31,7 +31,7 @@ Area and iteration: from CLAUDE.md. Project: from CLAUDE.md.
 
 ### 3. Link test case to story via "Tested By"
 
-Link the test case to the story using the `Tested By` relation type. See [references/ado-commands.md](references/ado-commands.md) Step 3.
+Link the test case to the story via the `Tested By` relation type. See [references/ado-commands.md](references/ado-commands.md) Step 3.
 
 ### 4. Find the team's test plan for the current iteration
 
@@ -68,7 +68,7 @@ Patch `testresults/runs` with `state: Completed`.
 
 ### 11. Close the test case
 
-Update the Test Case work item state to `Closed` — the terminal state for ADO Test Cases.
+Update the Test Case work item state to `Closed`.
 
 ### 12. Report
 

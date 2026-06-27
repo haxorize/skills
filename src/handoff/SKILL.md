@@ -7,9 +7,8 @@ argument-hint: "What will the next session be used for?"
 
 # Handoff
 
-Write a handoff document that summarises the current conversation so a **fresh agent in a new
-session** can continue the work. This skill **forks** the conversation — you don't continue in place;
-you write the doc, open a new session, and point it at the doc.
+This skill **forks** the conversation — you don't continue in place; you write the doc, open a new
+session, and point it at the doc.
 
 If the user passed an argument, treat it as a description of what the next session will focus on and
 tailor the doc to that.
@@ -18,7 +17,6 @@ tailor the doc to that.
 
 Default to the **OS temporary directory** (`$TMPDIR` on macOS, `/tmp` on Linux, `%TEMP%` on Windows)
 — a handoff is throwaway, and the durable content already lives in the artifacts the doc points at.
-Don't litter the repo with it.
 
 **Escape hatch:** if the user names a path or asks for a durable target, honor it. Only then does the
 doc land in the workspace.
@@ -34,8 +32,7 @@ doc land in the workspace.
 
 ### Reference, don't duplicate
 
-Point at **durable artifacts** instead of restating them — the same pointer-not-restatement discipline
-`review-changes` uses (the diff is the handoff). Reference:
+Point at **durable artifacts** instead of restating them. Reference:
 
 - `DOMAIN.md` terms by name,
 - `docs/adr/` decisions by number,
@@ -57,8 +54,6 @@ Strip API keys, passwords, tokens, and any personally identifiable information b
 - **`/compact`** (built-in) *continues in place*: it summarises earlier turns but keeps you in the
   **same conversation**. Use it at intentional breaks between phases when you don't mind losing
   verbatim history. Don't compact mid-phase — the agent can lose its way.
-
-`handoff` forks and preserves; `/compact` continues and forgets the details.
 
 ## The prototype bridge
 

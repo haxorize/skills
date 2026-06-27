@@ -16,8 +16,6 @@ confirm the finding holds. Drop, correct, or downgrade three classes:
 - **Duplicates** — the same underlying issue surfaced twice (two angles on one coupling, or two
   lenses on one finding); merge them.
 
-This vet pass is what stops the fan-out from flooding the report with false positives.
-
 ## Intent drift is bidirectional
 
 The ADR and `DOMAIN.md` checks aren't only "does the code violate recorded intent." A tradeoff an ADR

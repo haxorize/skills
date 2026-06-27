@@ -179,7 +179,7 @@ az boards work-item update --id "$TEST_CASE_ID" \
   --query "fields.\"System.State\""
 ```
 
-`Closed` is the terminal state for ADO Test Cases — it means the test has been executed and verified.
+`Closed` is the terminal state for ADO Test Cases.
 
 ## Step 12 — Verify test point outcome
 

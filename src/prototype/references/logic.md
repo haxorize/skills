@@ -15,7 +15,7 @@ If the question is "what should this look like" — wrong branch. Use [ui.md](ui
 
 ### 1. State the question
 
-Before writing code, write down what state model and what question you're prototyping. One paragraph, in the prototype's README or a comment at the top of the file. A logic prototype that answers the wrong question is pure waste — make the question explicit so it can be checked later, whether the user is watching now or returning to it AFK.
+Before writing code, write down what state model and what question you're prototyping. One paragraph, in the prototype's README or a comment at the top of the file, so it can be checked later.
 
 ### 2. Pick the language
 
@@ -35,8 +35,6 @@ The right shape depends on the question:
 - **A class or module with a clear method surface** when the logic genuinely owns ongoing internal state.
 
 Pick whichever shape best fits the question being asked, *not* whichever is easiest to wire to a TUI. Keep it pure: no I/O, no terminal code, no `console.log` for control flow. The TUI imports it and calls into it; nothing flows the other direction.
-
-This is what makes the prototype useful past its own lifetime. When the question's been answered, the validated reducer / machine / function set can be lifted into the real module — the TUI shell gets deleted.
 
 ### 4. Build the smallest TUI that exposes the state
 
@@ -64,11 +62,11 @@ If the host project has no task runner, just put the command at the top of the p
 
 ### 6. Hand it over
 
-Give the user the run command. They'll drive it themselves; the interesting moments are when they say "wait, that shouldn't be possible" or "huh, I assumed X would be different" — those are the bugs in the _idea_, which is the whole point. If they want new actions added, add them. Prototypes evolve.
+Give the user the run command. They'll drive it themselves; the interesting moments are when they say "wait, that shouldn't be possible" or "huh, I assumed X would be different" — those are the bugs in the _idea_. If they want new actions added, add them.
 
 ### 7. Capture the answer
 
-When the prototype has done its job, the answer to the question is the only thing worth keeping. Capture it as `prototype`'s "When done" describes — offer an `adr` for a load-bearing decision, run `domain-modeling` for any new concept. If the user is around, ask what it taught them; if not, leave a `NOTES.md` next to the prototype so the answer can be filled in (by them, or by you if you've watched the session) before the prototype gets deleted.
+Capture the answer as `prototype`'s "When done" describes — offer an `adr` for a load-bearing decision, run `domain-modeling` for any new concept, or leave a `NOTES.md` next to the prototype if running AFK.
 
 ## Anti-patterns
 

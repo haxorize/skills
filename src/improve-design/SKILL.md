@@ -7,8 +7,6 @@ requires: codebase-design
 
 # Improve Design
 
-Surface architectural friction across a codebase and propose deeper, cleaner module interfaces.
-
 This is an **advisory, read-only** pass: it explores, ranks findings, and files recommendations — it
 never mutates code (execution is `implement`'s job, and `/simplify` mutates so it lives in the build
 beat, not here). Run it periodically — every few days, or after a burst of feature work — to catch
@@ -53,8 +51,6 @@ Use the Agent tool with subagent_type=Explore to navigate the codebase. Don't fo
 - Where do tightly-coupled modules create integration risk in the seams between them?
 - Which parts of the codebase are untested or hard to test?
 - Where do domain terms from DOMAIN.md leak across module interfaces?
-
-The friction you encounter IS the signal.
 
 ### 3. Vet, then consolidate and present candidates
 
@@ -118,7 +114,7 @@ If framing surfaces a fuzzy domain term or sharpens an existing one, update `DOM
 
 ### 6. Propose a design
 
-Before committing to a recommendation, briefly state two alternative interface shapes you considered and why you rejected them — one sentence each. First idea is rarely best (Ousterhout: "design it twice"); transparency about rejections gives the user something to challenge without turning the output into a menu.
+Before committing to a recommendation, briefly state two alternative interface shapes you considered and why you rejected them — one sentence each. First idea is rarely best (Ousterhout: "design it twice").
 
 Then present one recommended interface design:
 
