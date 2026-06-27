@@ -25,9 +25,7 @@ Use the title in the test case name and run name.
 
 ### 2. Create a Test Case work item
 
-Title: `GLAPI gate — <story title>` (truncate to ~80 chars if needed).
-Area and iteration: from CLAUDE.md. Project: from CLAUDE.md.
-→ capture `TEST_CASE_ID`.
+Title: `GLAPI gate — <story title>` (truncate to ~80 chars if needed). Area and iteration: from CLAUDE.md. Project: from CLAUDE.md. → capture `TEST_CASE_ID`.
 
 ### 3. Link test case to story via "Tested By"
 
@@ -41,8 +39,7 @@ See [references/ado-commands.md](references/ado-commands.md) Step 4.
 
 ### 5. Create a requirement test suite for the story
 
-Create a `requirementTestSuite` under the root suite for this story.
-→ capture `SUITE_ID`.
+Create a `requirementTestSuite` under the root suite for this story. → capture `SUITE_ID`.
 
 ### 6. Add the test case to the suite
 
@@ -50,13 +47,11 @@ Add the test case to the suite. Returns `value: []` on success — this is norma
 
 ### 7. Get the test point ID
 
-Get `testplan/TestPoint` for the suite. The freshly added test case will have one point with `outcome: unspecified`.
-→ capture `TEST_POINT_ID`.
+Get `testplan/TestPoint` for the suite. The freshly added test case will have one point with `outcome: unspecified`. → capture `TEST_POINT_ID`.
 
 ### 8. Create a test run
 
-Create a test run against the plan. Run name: `GLAPI gate — <story title>` (append `PR <pr-id>` if provided).
-→ capture `RUN_ID`.
+Create a test run against the plan. Run name: `GLAPI gate — <story title>` (append `PR <pr-id>` if provided). → capture `RUN_ID`.
 
 ### 9. Add a Passed result
 

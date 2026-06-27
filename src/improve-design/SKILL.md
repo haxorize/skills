@@ -7,12 +7,7 @@ requires: codebase-design
 
 # Improve Design
 
-This is an **advisory, read-only** pass: it explores, ranks findings, and files recommendations — it
-never mutates code (execution is `implement`'s job, and `/simplify` mutates so it lives in the build
-beat, not here). Run it periodically — every few days, or after a burst of feature work — to catch
-design drift before it compounds. The output is a **prioritized, vetted report** a human reads, not a
-pile of speculative refactors. Whole-codebase scope is what distinguishes it from `review-changes`,
-which runs the same vet + finding-format disciplines against a single diff.
+This is an **advisory, read-only** pass: it explores, ranks findings, and files recommendations — it never mutates code (execution is `implement`'s job, and `/simplify` mutates so it lives in the build beat, not here). Run it periodically — every few days, or after a burst of feature work — to catch design drift before it compounds. The output is a **prioritized, vetted report** a human reads, not a pile of speculative refactors. Whole-codebase scope is what distinguishes it from `review-changes`, which runs the same vet + finding-format disciplines against a single diff.
 
 ## Design vocabulary
 
@@ -54,13 +49,7 @@ Use the Agent tool with subagent_type=Explore to navigate the codebase. Don't fo
 
 ### 3. Vet, then consolidate and present candidates
 
-**Vet first** per [references/finding-discipline.md](references/finding-discipline.md): exploration
-over-reports, so re-read every location you'd cite and drop the three false-positive classes
-(by-design — including a tradeoff an ADR already records — mis-read evidence, and duplicates). The
-reference also covers the **bidirectional** ADR/DOMAIN read: a recorded tradeoff is by-design, but
-code that has drifted *from* an ADR or `DOMAIN.md` is itself a finding. When a candidate warrants
-*reopening* an ADR, mark it clearly (e.g., _"contradicts ADR-0007 — but worth reopening because…"_)
-and only when the friction justifies it.
+**Vet first** per [references/finding-discipline.md](references/finding-discipline.md): exploration over-reports, so re-read every location you'd cite and drop the three false-positive classes (by-design — including a tradeoff an ADR already records — mis-read evidence, and duplicates). The reference also covers the **bidirectional** ADR/DOMAIN read: a recorded tradeoff is by-design, but code that has drifted *from* an ADR or `DOMAIN.md` is itself a finding. When a candidate warrants *reopening* an ADR, mark it clearly (e.g., _"contradicts ADR-0007 — but worth reopening because…"_) and only when the friction justifies it.
 
 Group surviving findings into coherent candidates — don't present overlapping or sub-issues separately. **Cross-reference against existing work items found in step 1.** If a candidate overlaps with an existing work item, say so explicitly — propose updating that one rather than filing a new one.
 
@@ -73,28 +62,13 @@ Each candidate, **ordered by leverage** (see the reference) so the highest-payof
 - **Deepening direction**: What a deeper module would hide and what it would expose
 - **Impact / effort (S/M/L) / fix-risk / confidence (HIGH/MED/LOW)**: the leverage inputs, stated explicitly
 
-Write each candidate self-contained — a reader who hasn't seen the codebase should understand it from
-the report alone. Don't propose interfaces yet — that comes after the user picks a candidate.
+Write each candidate self-contained — a reader who hasn't seen the codebase should understand it from the report alone. Don't propose interfaces yet — that comes after the user picks a candidate.
 
-**Present via the HTML report.** Render the candidates as a self-contained HTML file per
-[references/html-report.md](references/html-report.md) — full per-candidate detail plus the before/after
-deepening visuals (the report's identity is frozen; fill the scaffold, don't redesign it). Write it to
-the OS temp dir (resolve `$TMPDIR`, falling back to `/tmp`, or `%TEMP%` on Windows) as
-`design-review-<timestamp>.html` so each run is fresh and nothing lands in the repo; open it (`open` on
-macOS, `xdg-open` on Linux, `start` on Windows) and tell the user the absolute path. The report is
-**frozen at pick-time** — don't regenerate it as the design evolves later. **Zero surviving
-candidates**: skip the report and say so inline. **One or more**: write the report.
+**Present via the HTML report.** Render the candidates as a self-contained HTML file per [references/html-report.md](references/html-report.md) — full per-candidate detail plus the before/after deepening visuals (the report's identity is frozen; fill the scaffold, don't redesign it). Write it to the OS temp dir (resolve `$TMPDIR`, falling back to `/tmp`, or `%TEMP%` on Windows) as `design-review-<timestamp>.html` so each run is fresh and nothing lands in the repo; open it (`open` on macOS, `xdg-open` on Linux, `start` on Windows) and tell the user the absolute path. The report is **frozen at pick-time** — don't regenerate it as the design evolves later. **Zero surviving candidates**: skip the report and say so inline. **One or more**: write the report.
 
-**Self-check the render before presenting.** The report's failure modes are *silent* — bad CSS still
-parses, it just renders wrong (SVG `background` paints black, unfilled `<text>` vanishes, a `.card` +
-deep-fill cascade collision leaves light text on white). Screenshot the file headless
-(`<chrome> --headless --screenshot=<png> --window-size=1000,2400 file://<path>`) and **read the PNG**;
-fix any black box, invisible label, or illegible card and re-render until it's clean. If no headless
-browser is available, say so and present unverified rather than blocking.
+**Self-check the render before presenting.** The report's failure modes are *silent* — bad CSS still parses, it just renders wrong (SVG `background` paints black, unfilled `<text>` vanishes, a `.card` + deep-fill cascade collision leaves light text on white). Screenshot the file headless (`<chrome> --headless --screenshot=<png> --window-size=1000,2400 file://<path>`) and **read the PNG**; fix any black box, invisible label, or illegible card and re-render until it's clean. If no headless browser is available, say so and present unverified rather than blocking.
 
-Then, in the conversation, give a **terse ordered list** for the pick and the transcript record — one
-line per candidate: number, title, leverage-tier + confidence chips, and a one-sentence problem. Ask:
-"Which of these would you like to explore?"
+Then, in the conversation, give a **terse ordered list** for the pick and the transcript record — one line per candidate: number, title, leverage-tier + confidence chips, and a one-sentence problem. Ask: "Which of these would you like to explore?"
 
 If the user rejects a candidate with a **load-bearing reason** — a reason a future explorer would need in order to avoid re-suggesting the same refactor — offer to invoke the `adr` skill to record it. The test: would the next architectural review re-propose this without the ADR? Skip ephemeral reasons ("not worth it right now") and self-evident ones.
 

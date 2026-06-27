@@ -8,12 +8,9 @@ requires: codebase-design, adr
 
 A discipline for hard bugs. Skip phases only when explicitly justified.
 
-When exploring, read `DOMAIN.md` (if present) for the project's vocabulary and check `docs/adr/` in
-the area you're touching — a behavior an ADR records as deliberate is not a bug.
+When exploring, read `DOMAIN.md` (if present) for the project's vocabulary and check `docs/adr/` in the area you're touching — a behavior an ADR records as deliberate is not a bug.
 
-This is the behavior `implement` reaches for when a build turns up an **unplanned failure** mid-slice:
-a red that isn't the test you just wrote, behavior that contradicts the plan. Stop guessing and run
-this loop before continuing.
+This is the behavior `implement` reaches for when a build turns up an **unplanned failure** mid-slice: a red that isn't the test you just wrote, behavior that contradicts the plan. Stop guessing and run this loop before continuing.
 
 ## Phase 1 — Build a feedback loop
 
@@ -111,15 +108,9 @@ Tool preference:
 
 Write the regression test **before the fix** — but only if there is a **correct seam** for it.
 
-A correct seam (in `codebase-design`'s sense — the place where a module's interface lives, where
-behaviour can be altered without editing in place) is one where the test exercises the **real bug
-pattern** as it occurs at the call site. If the only available seam is too shallow — a single-caller
-test when the bug needs multiple callers, a unit test that can't replicate the chain that triggered
-the bug — a regression test there gives false confidence.
+A correct seam (in `codebase-design`'s sense — the place where a module's interface lives, where behaviour can be altered without editing in place) is one where the test exercises the **real bug pattern** as it occurs at the call site. If the only available seam is too shallow — a single-caller test when the bug needs multiple callers, a unit test that can't replicate the chain that triggered the bug — a regression test there gives false confidence.
 
-**If no correct seam exists, that itself is the finding.** Note it. The module is too shallow, or the
-seam is in the wrong place, to lock this bug down — that's a `codebase-design` problem, not just a
-missing test. Flag it for the next phase.
+**If no correct seam exists, that itself is the finding.** Note it. The module is too shallow, or the seam is in the wrong place, to lock this bug down — that's a `codebase-design` problem, not just a missing test. Flag it for the next phase.
 
 If a correct seam exists:
 

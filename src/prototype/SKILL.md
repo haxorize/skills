@@ -33,19 +33,11 @@ Capture the answer along with the question it was answering, then delete or abso
 
 This is a natural delegation boundary, so delegate rather than inline:
 
-- If the answer settled a **load-bearing decision** — hard to reverse, surprising without context, the
-  result of a real trade-off — offer to record it via `adr`. The prototype *is* the considered-options
-  exploration; synthesize the ADR from what it proved.
-- If the prototype surfaced or sharpened a **domain concept** — a new state, a clearer name for a
-  thing — run `domain-modeling` to capture it in `DOMAIN.md` before the precision is lost.
+- If the answer settled a **load-bearing decision** — hard to reverse, surprising without context, the result of a real trade-off — offer to record it via `adr`. The prototype *is* the considered-options exploration; synthesize the ADR from what it proved.
+- If the prototype surfaced or sharpened a **domain concept** — a new state, a clearer name for a thing — run `domain-modeling` to capture it in `DOMAIN.md` before the precision is lost.
 
-If the user is around, that capture is a quick conversation. If not, leave the answer in a `NOTES.md`
-next to the prototype (with the question it answered) so they — or you, on the next pass — can record
-it and delete the prototype.
+If the user is around, that capture is a quick conversation. If not, leave the answer in a `NOTES.md` next to the prototype (with the question it answered) so they — or you, on the next pass — can record it and delete the prototype.
 
 ## Pairing with handoff
 
-A prototype is often a **detour** out of a main thread: a question came up that needs a runnable
-answer. `handoff` is the bridge in both directions — `handoff` out of the full thread, open a fresh
-session, `/prototype` here to answer the question, then `handoff` the *answer* (not the code) back to
-the original thread. See `handoff` for the fork-vs-`/compact` distinction.
+A prototype is often a **detour** out of a main thread: a question came up that needs a runnable answer. `handoff` is the bridge in both directions — `handoff` out of the full thread, open a fresh session, `/prototype` here to answer the question, then `handoff` the *answer* (not the code) back to the original thread. See `handoff` for the fork-vs-`/compact` distinction.

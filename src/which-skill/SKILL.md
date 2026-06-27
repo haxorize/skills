@@ -6,71 +6,49 @@ disable-model-invocation: true
 
 # Which Skill
 
-This routes over the **user-invoked** skills — the ones you
-type. The **model-invoked behaviors** (`tdd`, `feedback-loops`, `diagnosing-bugs`, `codebase-design`,
-`grilling`, `domain-modeling`, `adr`, `resolving-merge-conflicts`) fire on their own when the work
-calls for them, or get pulled in by the orchestrators below — you rarely reach for them by name.
+This routes over the **user-invoked** skills — the ones you type. The **model-invoked behaviors** (`tdd`, `feedback-loops`, `diagnosing-bugs`, `codebase-design`, `grilling`, `domain-modeling`, `adr`, `resolving-merge-conflicts`) fire on their own when the work calls for them, or get pulled in by the orchestrators below — you rarely reach for them by name.
 
 A **flow** is a path through the skills.
 
 ## The main flow: idea → ship
 
 1. **Sharpen the idea by interview.**
-   - **`/grill-and-record`** when you **have a codebase** — it's doc-aware, updating `DOMAIN.md` as
-     terms resolve and offering ADRs when the gate triggers.
-   - **`/grill-me`** when you **don't** (or the plan doesn't live in a repo) — same relentless
-     interview, stateless, saves nothing.
+   - **`/grill-and-record`** when you **have a codebase** — it's doc-aware, updating `DOMAIN.md` as terms resolve and offering ADRs when the gate triggers.
+   - **`/grill-me`** when you **don't** (or the plan doesn't live in a repo) — same relentless interview, stateless, saves nothing.
 2. **Decompose into tracked work** (three tiers, top-down as scope warrants):
    - **`/to-feature`** — a PRD-shaped Feature, when scope spans multiple stories.
    - **`/to-story`** — a single-feature Story. The usual entry point.
    - **`/to-tasks`** — split a Story into vertical-slice Tasks (one Task = one commit).
-3. **Load a single work item back into a fresh session** — **`/from-work-item <id>`**. It auto-detects
-   Task/Story/Bug and loads the right context (parent, `DOMAIN.md`, matching ADRs).
-4. **Build it** — **`/implement`**. Drives one vertical slice end to end: picks the build path (runs
-   `tdd` for a testable slice, direct otherwise), refactors, and closes the loop once via
-   `feedback-loops`. One Task per session.
+3. **Load a single work item back into a fresh session** — **`/from-work-item <id>`**. It auto-detects Task/Story/Bug and loads the right context (parent, `DOMAIN.md`, matching ADRs).
+4. **Build it** — **`/implement`**. Drives one vertical slice end to end: picks the build path (runs `tdd` for a testable slice, direct otherwise), refactors, and closes the loop once via `feedback-loops`. One Task per session.
 5. **Review before the PR** — **`/review-changes`** (see Review gate).
 6. **Ship.**
 
-Keep steps 1–2 in **one unbroken context window** so the grilling, decomposition, and tasks build on
-the same thinking. Each `/implement` then starts fresh from its work item. If a session fills up
-before you've decomposed, don't push on degraded — **`/handoff`** and continue in a fresh thread.
+Keep steps 1–2 in **one unbroken context window** so the grilling, decomposition, and tasks build on the same thinking. Each `/implement` then starts fresh from its work item. If a session fills up before you've decomposed, don't push on degraded — **`/handoff`** and continue in a fresh thread.
 
 ## Detours off the main flow
 
-- **A question needs a runnable answer** (state, business logic, a UI you have to see) → detour through
-  a prototype, bridged by `/handoff` in both directions: **`/handoff`** out → open a fresh session →
-  **`/prototype`** to answer it with throwaway code → **`/handoff`** the *answer* back, and reference
-  it from the original thread.
-- **A hard bug or unexplained failure mid-build** → the `diagnosing-bugs` behavior takes over (it
-  fires on its own; `implement` reaches for it on an unplanned red). File a found defect with
-  **`/to-bug`**.
+- **A question needs a runnable answer** (state, business logic, a UI you have to see) → detour through a prototype, bridged by `/handoff` in both directions: **`/handoff`** out → open a fresh session → **`/prototype`** to answer it with throwaway code → **`/handoff`** the *answer* back, and reference it from the original thread.
+- **A hard bug or unexplained failure mid-build** → the `diagnosing-bugs` behavior takes over (it fires on its own; `implement` reaches for it on an unplanned red). File a found defect with **`/to-bug`**.
 - **A merge or rebase conflicts** → the `resolving-merge-conflicts` behavior handles it in place.
 
 ## Codebase health (upkeep, not feature work)
 
-- **`/improve-design`** — read-only design-quality review of the whole codebase; surfaces deepening
-  opportunities. Picking one *generates an idea* you take back to the main flow at `/grill-and-record`.
+- **`/improve-design`** — read-only design-quality review of the whole codebase; surfaces deepening opportunities. Picking one *generates an idea* you take back to the main flow at `/grill-and-record`.
 - **`/harden-domain`** — sweep the codebase to refresh `DOMAIN.md` when the vocabulary has drifted.
-- **`/backfill-adrs`** — sweep recent git history for architectural decisions that were made but never
-  recorded.
+- **`/backfill-adrs`** — sweep recent git history for architectural decisions that were made but never recorded.
 
 ## Review gate
 
-- **`/review-changes`** — read-only, project-aware judgment review of a **diff**, around shipping. Use
-  it for a pre-PR self-review, on a teammate's PR, or on an already-landed commit. It never mutates;
-  it produces a ranked, classified report.
+- **`/review-changes`** — read-only, project-aware judgment review of a **diff**, around shipping. Use it for a pre-PR self-review, on a teammate's PR, or on an already-landed commit. It never mutates; it produces a ranked, classified report.
 
 ## Crossing sessions
 
-- **`/handoff`** — fork the conversation into a document and continue in a **fresh session** that
-  references it. Use it when the window is full or you're branching off. (Contrast `/compact`, the
-  built-in, which continues *in place*. `handoff` forks; `/compact` continues.)
+- **`/handoff`** — fork the conversation into a document and continue in a **fresh session** that references it. Use it when the window is full or you're branching off. (Contrast `/compact`, the built-in, which continues *in place*. `handoff` forks; `/compact` continues.)
 
 ## Standalone
 
 - **`/grill-me`** — sharpen any plan or design with no repo to back it.
 - **`/to-bug`** — file a defect as a tracked work item from the current conversation.
 - **`/glapi-test-pass`** — ADO only; satisfy the GLAPI production deployment gate for a Story.
-- **`/write-skill`** — conventions for writing and editing skills (you're reading the suite that
-  follows them).
+- **`/write-skill`** — conventions for writing and editing skills (you're reading the suite that follows them).

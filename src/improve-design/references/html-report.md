@@ -1,20 +1,12 @@
 # The HTML candidate report
 
-How `improve-design` Step 3 renders vetted deepening candidates as a self-contained HTML file.
-This identity is **frozen** — designed once and reused every run (see ADR-0022). Don't redesign it
-per scan; fill the scaffold with this run's candidates. The conversation still carries the terse
-ordered list for the pick; this file is the rich, visual record the user reads.
+How `improve-design` Step 3 renders vetted deepening candidates as a self-contained HTML file. This identity is **frozen** — designed once and reused every run (see ADR-0022). Don't redesign it per scan; fill the scaffold with this run's candidates. The conversation still carries the terse ordered list for the pick; this file is the rich, visual record the user reads.
 
 ## Identity — "structural section drawing"
 
-The report's one job: let an engineer compare deepening candidates and pick one. The signature is the
-**Ousterhout depth-rectangle** — a module drawn as a rectangle whose *top edge is its interface width*
-and whose *body is its implementation*. Depth is encoded twice: by vertical extent **and** by color
-saturation — a shallow module reads pale and flat, a deep module reads dark and dimensional. That dual
-encoding is the one aesthetic risk; spend boldness there and keep everything else quiet.
+The report's one job: let an engineer compare deepening candidates and pick one. The signature is the **Ousterhout depth-rectangle** — a module drawn as a rectangle whose *top edge is its interface width* and whose *body is its implementation*. Depth is encoded twice: by vertical extent **and** by color saturation — a shallow module reads pale and flat, a deep module reads dark and dimensional. That dual encoding is the one aesthetic risk; spend boldness there and keep everything else quiet.
 
-This is deliberately *not* Matt Pocock's stone/emerald/Mermaid-neutral look, and it steers clear of the
-three AI-default palettes (cream+serif+terracotta, near-black+acid, broadsheet hairline).
+This is deliberately *not* Matt Pocock's stone/emerald/Mermaid-neutral look, and it steers clear of the three AI-default palettes (cream+serif+terracotta, near-black+acid, broadsheet hairline).
 
 ### Tokens
 
@@ -29,11 +21,7 @@ three AI-default palettes (cream+serif+terracotta, near-black+acid, broadsheet h
 --warn-bg:  #F3E7C8   /* pale amber — ADR-reopen callout fill */
 ```
 
-Type (Google Fonts via CDN): **Archivo** for display/headings (structural, wide grotesque — reads as
-mass), **IBM Plex Sans** for body, **IBM Plex Mono** for file paths, module labels, and all schematic
-diagram text. Module labels inside diagrams are `Plex Mono, text-xs uppercase tracking-wider` so they
-read as schematic, not as UI. Colour sparingly: `--depth` is the *only* accent; `--leak` and `--warn`
-are signals, never decoration.
+Type (Google Fonts via CDN): **Archivo** for display/headings (structural, wide grotesque — reads as mass), **IBM Plex Sans** for body, **IBM Plex Mono** for file paths, module labels, and all schematic diagram text. Module labels inside diagrams are `Plex Mono, text-xs uppercase tracking-wider` so they read as schematic, not as UI. Colour sparingly: `--depth` is the *only* accent; `--leak` and `--warn` are signals, never decoration.
 
 ## Scaffold
 
@@ -101,29 +89,20 @@ are signals, never decoration.
 
 ## Header
 
-Report title (`Design review — {{repo}}`), date, and a compact **legend** that teaches the visual
-language in one glance — and *is itself* a depth-rectangle key: narrow-top dark box = deep module,
-wide-top pale box = shallow module, dashed line = seam, red arrow = leakage, amber box = ADR warning.
-No intro paragraph; straight into candidates.
+Report title (`Design review — {{repo}}`), date, and a compact **legend** that teaches the visual language in one glance — and *is itself* a depth-rectangle key: narrow-top dark box = deep module, wide-top pale box = shallow module, dashed line = seam, red arrow = leakage, amber box = ADR warning. No intro paragraph; straight into candidates.
 
 ## Candidate card
 
-One `<article class="reveal">` per candidate, ordered by leverage. The diagram carries the weight;
-prose is sparse and uses the glossary terms (`codebase-design`) without ceremony.
+One `<article class="reveal">` per candidate, ordered by leverage. The diagram carries the weight; prose is sparse and uses the glossary terms (`codebase-design`) without ceremony.
 
 - **Title** — names the deepening (e.g. "Collapse the billing rollup pipeline").
-- **Badge row** — a **leverage-tier** badge (High/Medium/Low, `--depth`-filled for High) and a
-  **confidence** chip (HIGH/MED/LOW), plus a dependency-category tag (`in-process`,
-  `local-substitutable`, `remote-but-owned`, `true-external`). Derived from the existing ranking
-  axes — never a `Strong`/`Speculative` scale (ADR-0022).
+- **Badge row** — a **leverage-tier** badge (High/Medium/Low, `--depth`-filled for High) and a **confidence** chip (HIGH/MED/LOW), plus a dependency-category tag (`in-process`, `local-substitutable`, `remote-but-owned`, `true-external`). Derived from the existing ranking axes — never a `Strong`/`Speculative` scale (ADR-0022).
 - **Files** — `mono text-sm` list of involved modules with `file:line` evidence.
 - **Before / After diagram** — the centerpiece (patterns below).
 - **Problem** — one sentence. What hurts.
 - **Solution** — one sentence. What changes.
-- **Wins** — bullets, ≤6 words, in glossary terms ("locality: bugs concentrate here", "one interface,
-  N call sites"). Not "easier to maintain".
-- **ADR callout** (only if the candidate reopens one) — one line in a box filled `--warn-bg` with a
-  `--warn` border and `--warn` label (use the tokens, don't hardcode the hex).
+- **Wins** — bullets, ≤6 words, in glossary terms ("locality: bugs concentrate here", "one interface, N call sites"). Not "easier to maintain".
+- **ADR callout** (only if the candidate reopens one) — one line in a box filled `--warn-bg` with a `--warn` border and `--warn` label (use the tokens, don't hardcode the hex).
 
 If a paragraph is needed to explain a diagram, redraw the diagram.
 
@@ -131,39 +110,16 @@ If a paragraph is needed to explain a diagram, redraw the diagram.
 
 Pick the one that fits; mix them so cards don't all look alike.
 
-- **Depth-rectangle (the signature, default for shallow→deep).** Draw it in **inline SVG**, not HTML
-  boxes. Before: a wide-but-thin shallow module `<rect class="svg-shallow">`, with leaked deps as
-  `.leak` arrows crossing a `.seam` to outside boxes. After: a tall deep `<rect class="svg-deep">`
-  (the shared `#deep` gradient) with the now-internal deps drawn faded *inside* it and a narrow
-  interface strip on top. **SVG-safe rules — `background` is a no-op inside SVG; only `fill` paints
-  it:** use `class="svg-shallow"` / `class="svg-deep"` (never `mod-shallow`/`mod-deep`, which are
-  HTML-only and render *black* on a `<rect>`), and give **every `<text>` an explicit fill** —
-  `class="svg-lbl"` on paper, `class="svg-lbl-on-deep"` inside the deep body — or it inherits black
-  and vanishes. Keep the `.seam` line at the module's interface edge; don't run it through the deep
-  body. Reads as "the interface shrank; the implementation absorbed the wrappers."
-- **Mermaid graph (only when genuinely graph-shaped** — call/dependency mess). `flowchart` styled by
-  the theme config above. **Colour the thing your label points at:** `classDef leak stroke:#C0392B` +
-  `class a,b leak` reddens *nodes*; to redden *edges* (e.g. the function-local imports that can't be
-  top-level) use `linkStyle <indices> stroke:#C0392B,stroke-width:2px` instead — a label that says
-  "red edges" over reddened nodes misdirects the eye. Don't reach for Mermaid when a depth-rectangle
-  would say it better.
-- **Cross-section (layered shallowness).** Stacked horizontal bands; before: N thin layers each doing
-  nothing; after: one thick `.mod-deep` band labelled with the consolidated responsibility.
+- **Depth-rectangle (the signature, default for shallow→deep).** Draw it in **inline SVG**, not HTML boxes. Before: a wide-but-thin shallow module `<rect class="svg-shallow">`, with leaked deps as `.leak` arrows crossing a `.seam` to outside boxes. After: a tall deep `<rect class="svg-deep">` (the shared `#deep` gradient) with the now-internal deps drawn faded *inside* it and a narrow interface strip on top. **SVG-safe rules — `background` is a no-op inside SVG; only `fill` paints it:** use `class="svg-shallow"` / `class="svg-deep"` (never `mod-shallow`/`mod-deep`, which are HTML-only and render *black* on a `<rect>`), and give **every `<text>` an explicit fill** — `class="svg-lbl"` on paper, `class="svg-lbl-on-deep"` inside the deep body — or it inherits black and vanishes. Keep the `.seam` line at the module's interface edge; don't run it through the deep body. Reads as "the interface shrank; the implementation absorbed the wrappers."
+- **Mermaid graph (only when genuinely graph-shaped** — call/dependency mess). `flowchart` styled by the theme config above. **Colour the thing your label points at:** `classDef leak stroke:#C0392B` + `class a,b leak` reddens *nodes*; to redden *edges* (e.g. the function-local imports that can't be top-level) use `linkStyle <indices> stroke:#C0392B,stroke-width:2px` instead — a label that says "red edges" over reddened nodes misdirects the eye. Don't reach for Mermaid when a depth-rectangle would say it better.
+- **Cross-section (layered shallowness).** Stacked horizontal bands; before: N thin layers each doing nothing; after: one thick `.mod-deep` band labelled with the consolidated responsibility.
 
-Keep diagrams ~320px tall so before/after sits side by side without scrolling, and match the row
-height to the SVG — don't set a grid `min-height` taller than the SVG, or a dead band opens under the
-diagram. Motion: at most the one `reveal` fade, and only when `prefers-reduced-motion` allows.
+Keep diagrams ~320px tall so before/after sits side by side without scrolling, and match the row height to the SVG — don't set a grid `min-height` taller than the SVG, or a dead band opens under the diagram. Motion: at most the one `reveal` fade, and only when `prefers-reduced-motion` allows.
 
 ## Top recommendation
 
-One larger **`.card-deep`** after the candidates — the recommendation literally rendered *as* a deep
-module: the candidate you'd tackle first, one sentence on why, and an anchor link to its card. That's
-it. Use `.card-deep` alone (it carries its own light text); don't stack it with `.card`.
+One larger **`.card-deep`** after the candidates — the recommendation literally rendered *as* a deep module: the candidate you'd tackle first, one sentence on why, and an anchor link to its card. That's it. Use `.card-deep` alone (it carries its own light text); don't stack it with `.card`.
 
 ## Tone
 
-Plain English, concise — but the architectural nouns come straight from `codebase-design`: **module,
-interface, implementation, depth, deep, shallow, seam, adapter, leverage, locality**. Never substitute
-component/service (module), API (interface), or boundary (seam). The vet, finding format, and leverage
-ranking are unchanged — see [finding-discipline.md](finding-discipline.md); this file only changes how
-the vetted findings are *rendered*.
+Plain English, concise — but the architectural nouns come straight from `codebase-design`: **module, interface, implementation, depth, deep, shallow, seam, adapter, leverage, locality**. Never substitute component/service (module), API (interface), or boundary (seam). The vet, finding format, and leverage ranking are unchanged — see [finding-discipline.md](finding-discipline.md); this file only changes how the vetted findings are *rendered*.

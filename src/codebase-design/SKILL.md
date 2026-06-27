@@ -42,13 +42,7 @@ Tests at the deepened interface replace the old shallow-module tests — delete 
 
 ## Judging a change (diff-relative)
 
-The principles above describe a good design in the absolute. When the subject is a **diff** rather
-than a whole tree — a review, a slice just built — apply them **diff-relatively**: the bar is not
-"is this module perfect?" but **"did this change make the local architecture worse?"** A diff that
-deepens a module or leaves it as-is passes; a diff that adds a condition-chain where a dispatcher
-belonged, splinters a deep module into shallow ones, or threads a new concern across call sites
-**regresses** the local design — that's the finding. Hold the vocabulary here; the orchestrator
-(`review-changes` for a diff, `improve-design` for a tree) supplies the change set and applies this bar.
+The principles above describe a good design in the absolute. When the subject is a **diff** rather than a whole tree — a review, a slice just built — apply them **diff-relatively**: the bar is not "is this module perfect?" but **"did this change make the local architecture worse?"** A diff that deepens a module or leaves it as-is passes; a diff that adds a condition-chain where a dispatcher belonged, splinters a deep module into shallow ones, or threads a new concern across call sites **regresses** the local design — that's the finding. Hold the vocabulary here; the orchestrator (`review-changes` for a diff, `improve-design` for a tree) supplies the change set and applies this bar.
 
 ## Relationships
 
