@@ -41,7 +41,7 @@ Run each **custom lens** (DOMAIN, ADR, AC, design depth) as its own **read-only 
 
 ## 4. Vet before presenting
 
-Vet the raw findings per [references/finding-discipline.md](references/finding-discipline.md), which covers the over-report, the drop classes, and the **bidirectional** ADR/DOMAIN read. The one addition here: drop **cross-lens duplicates** — the same issue surfaced by two lenses.
+Vet the raw findings per [references/finding-discipline.md](references/finding-discipline.md), which covers the over-report, the drop classes, and the **bidirectional** ADR/DOMAIN read.
 
 ## 5. Rank and classify each finding
 
