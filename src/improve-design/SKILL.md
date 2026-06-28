@@ -47,6 +47,8 @@ Use the Agent tool with subagent_type=Explore to navigate the codebase. Don't fo
 - Which parts of the codebase are untested or hard to test?
 - Where do domain terms from DOMAIN.md leak across module interfaces?
 
+Done when you've swept **every top-level module/area**, not just the first friction you hit; if you deliberately skipped a large subtree, say which and why.
+
 ### 3. Vet, then consolidate and present candidates
 
 **Vet first** per [references/finding-discipline.md](references/finding-discipline.md): exploration over-reports, so re-read every location you'd cite and drop the three false-positive classes (by-design — including a tradeoff an ADR already records — mis-read evidence, and duplicates). The reference also covers the **bidirectional** ADR/DOMAIN read: a recorded tradeoff is by-design, but code that has drifted *from* an ADR or `DOMAIN.md` is itself a finding. When a candidate warrants *reopening* an ADR, mark it clearly (e.g., _"contradicts ADR-0007 — but worth reopening because…"_) and only when the friction justifies it.
