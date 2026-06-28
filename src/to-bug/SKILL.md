@@ -6,9 +6,9 @@ disable-model-invocation: true
 
 # To Bug
 
-Synthesize the current conversation into a Bug work item and publish it to the project's issue tracker. No interviewing — this is a synthesis-only skill. Run `/grill-and-record` (or `/grill-me`) first if repro, scope, or regression context is thin.
+No interviewing — synthesis only. Run `/grill-and-record` (or `/grill-me`) first if repro, scope, or regression context is thin.
 
-`to-bug` is the default for filing a defect. Bugs are *not* parented under Stories — the fix is the slice. They can be filed parentless or attached to a Feature directly.
+Bugs are *not* parented under Stories — the fix is the slice. They can be filed parentless or attached to a Feature directly.
 
 ## Publication constraints
 
@@ -36,7 +36,7 @@ Verify type if a parent is provided:
 
 ### 3. Explore the codebase
 
-Look at the modules implicated by the actual behavior. Use canonical terms from `DOMAIN.md` and respect existing ADRs in `docs/adr/`. The goal is to ground the `## Layers touched` section, not to design the fix.
+Look at the modules implicated by the actual behavior. Use canonical terms from `DOMAIN.md` and respect existing ADRs in `docs/adr/`. Goal: ground the `## Layers touched` section, not design the fix.
 
 ### 4. Resolve severity
 
@@ -61,7 +61,7 @@ ADO splits content across two fields: repro steps go into `Microsoft.VSTS.TCM.Re
 Before showing the user, check:
 
 - **No placeholders.** No TBD/TODO.
-- **Repro is precise.** Numbered steps, concrete inputs, named environment. Vague repro is the highest-cost defect on a Bug filing.
+- **Repro is precise.** Numbered steps, concrete inputs, named environment.
 - **Expected vs. actual is concrete.** Both sides observable; no "works correctly" or "doesn't work" hand-waving.
 - **Scope of impact populated.** Users affected, frequency, workaround status, first-seen marker.
 - **Regression risk populated.** Yes/no/unknown plus adjacent-surface call-out if non-trivial.
@@ -95,7 +95,7 @@ Iterate until approved.
 
 ### 9. Publish via tracker dispatch
 
-- **GitHub:** `gh issue create --title "..." --body-file <draft>` with `--label bug --label <severity-label>` plus any default labels from CLAUDE.md. Parent linking via template `Parent: #N` reference if `--parent` was provided. **Before creating the issue,** ensure every label about to be applied (`bug`, the chosen severity label, and any `Default labels:`) exists on the repo: `gh label list --json name --jq '.[].name'` once, then `gh label create <name>` for any missing. Idempotent and cheap; one-time per repo per label.
+- **GitHub:** `gh issue create --title "..." --body-file <draft>` with `--label bug --label <severity-label>` plus any default labels from CLAUDE.md. Parent linking via template `Parent: #N` reference if `--parent` was provided. **Before creating the issue,** ensure every label about to be applied (`bug`, the chosen severity label, and any `Default labels:`) exists on the repo: `gh label list --json name --jq '.[].name'` once, then `gh label create <name>` for any missing.
 - **ADO:** `az boards work-item create --type "Bug" --title "..." --description "<html>"` with project / area path / iteration / state from CLAUDE.md, plus `--fields "Microsoft.VSTS.TCM.ReproSteps=<html>" "Microsoft.VSTS.Common.Severity=<n - Label>"`. Both rich-text fields expect HTML — convert each Markdown source before passing. If `--parent` was provided, link via `az boards work-item relation add --relation-type Parent --target-id <feature-id>` after the create call.
 
 If a required CLAUDE.md field is missing, fail fast with a clear "add this to CLAUDE.md" message.
@@ -127,7 +127,3 @@ State is never transitioned by `to-bug --update` — that's the team's process o
 ### Naming-drift queue write
 
 If the patch introduces module names, route paths, or query keys that diverge from canonical names already in use elsewhere in the codebase or sibling work items, append an entry per [references/naming-drift-queue.md](references/naming-drift-queue.md). Surface drift as a warning during self-review; never block the patch.
-
-## Naming-drift queue
-
-This skill reads the queue on `--update` cold-start and appends to it on publish when a name diverges from canonical names already in use elsewhere in the codebase or sibling work items. Definition, storage, and entry format: see [references/naming-drift-queue.md](references/naming-drift-queue.md).

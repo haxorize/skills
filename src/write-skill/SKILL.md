@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # Writing Skills
 
-Skills wrangle determinism out of a stochastic system. The goal is **predictability** — the agent taking the same *process* every run. Every choice below serves that. The deep vocabulary, the information-hierarchy ladder, and the failure-mode taxonomy live in [references/great-skills.md](references/great-skills.md); this file is the operational guide.
+Skills wrangle determinism out of a stochastic system. The goal is **predictability** — the agent taking the same *process* every run. The deep vocabulary, the information-hierarchy ladder, and the failure-mode taxonomy live in [references/great-skills.md](references/great-skills.md); this file is the operational guide.
 
 ## Workflow
 
@@ -94,6 +94,7 @@ Hunt for **leading words** — a compact pretrained concept (*tracer bullet*, *s
 - **SKILL.md**: ≤200 lines. Past that, move detail into `references/`.
 - **Reference files**: ≤200 lines each. Split by topic, not arbitrarily.
 - **Description**: ≤1024 chars.
+- **One line per paragraph/bullet** — soft-wrap, no hard newlines mid-paragraph (let the editor wrap). The cap is line-based, so a "line" should be a unit of content, not an artifact of wrapping; hard-wrapping inflates the count and renders identically. Code fences, tables, and YAML frontmatter keep their own line breaks.
 
 ## Pruning
 
@@ -125,7 +126,7 @@ Frontmatter parses as strict YAML. The hazard is an unquoted `: ` (colon **follo
 - [ ] Invocation kind chosen deliberately; description matches it (triggers for model-invoked, human-facing one-liner for user-invoked)
 - [ ] Behaviors declared via `requires:`; extraction backed by a real second consumer
 - [ ] Cross-skill references phrased by severity — load-bearing get `/skill` + load gate (user-invoked only); opportunistic stay soft backtick mentions
-- [ ] SKILL.md ≤200 lines; each reference ≤200 lines
+- [ ] SKILL.md ≤200 lines; each reference ≤200 lines; one line per paragraph/bullet (no mid-paragraph hard wraps)
 - [ ] No generic best-practices the model already knows (no-op check)
 - [ ] Encodes project-specific decisions, not textbook knowledge
 - [ ] Concrete examples from the actual codebase

@@ -47,5 +47,4 @@ Parent: #<issue-number>
 ## Notes
 
 - Default labels are applied via CLI flags from the `Issue tracker:` block in CLAUDE.md.
-- Each Task's `## Covers` lists at least one parent Story AC ID — the `to-tasks` self-review check is a mechanical lookup against the parent's active AC IDs.
 - Naming (routes, query keys, model names, search-param keys) must match across sibling tasks. Drift here is the highest-cost mistake when slicing.

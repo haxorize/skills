@@ -13,8 +13,6 @@ The route most work travels: **`/grill-and-record`** (or `/grill-me` with no cod
 
 ## User-invoked skills
 
-Orchestrators a human runs by name.
-
 ### Routing
 
 - **`which-skill`** — Ask which skill or flow fits your situation. A router over the user-invoked skills.
@@ -57,8 +55,6 @@ Orchestrators a human runs by name.
 - **`write-skill`** — Conventions for writing new skills.
 
 ## Model-invoked skills
-
-Behaviors the model reaches for on its own (or that an orchestrator declares as a dependency).
 
 ### Grilling & domain
 
@@ -114,5 +110,3 @@ ln -s "$(pwd)/src/grill-me" ~/.claude/skills/
 - Several skills reference `DOMAIN.md` (from `harden-domain` / `grill-and-record`) and `docs/adr/` (from `adr` / `backfill-adrs`). They degrade gracefully in projects that don't use those conventions.
 - The `to-feature`, `to-story`, and `to-tasks` skills operate in three modes: declared (CLAUDE.md present with tracker block), bootstrap-on-ask (repo present, asks once and writes the block), and no-repo CLI-only (publish via tracker CLI without touching files; saves tracker config to memory).
 - Bootstrap-on-ask is safe to use alongside Claude Code's built-in `/init` — `/init` preserves existing CLAUDE.md sections rather than overwriting them, so the order of operations doesn't matter.
-- Design decisions about specific skills are recorded as ADRs in [`docs/adr/`](docs/adr/).
-- This repo eats its own dog food — see [`DOMAIN.md`](DOMAIN.md), maintained by `harden-domain`, for the suite's canonical terms.

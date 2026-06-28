@@ -64,6 +64,5 @@ Parent: #<issue-number>
 ## Notes
 
 - Default labels are applied via CLI flags from the `Issue tracker:` block in CLAUDE.md.
-- Keep this body terse — a Feature is a synthesis pointer to its underlying Stories, not a full design doc.
 - Use checkboxes in `Stories underneath` so the parent issue auto-tracks completion as child stories close.
 - For projects with `Hierarchy: required` set in CLAUDE.md, `to-feature` embeds a story-map block at the bottom of the body in place of `Stories underneath`. See `to-feature` SKILL.md step 10 and the ADO template for the block structure.

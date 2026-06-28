@@ -7,11 +7,11 @@ description: The mechanical pass that closes the loop after a slice's behaviors 
 
 Close the loop on a finished change: run the project's mechanical checks, apply mechanical follow-on work, and update the docs the change touched. Run this **once after the slice's behaviors are built and refactored** — not per behavior.
 
-This pass is **mechanical only**. It does not simplify (that lives in the build/refactor beat) and it does not exercise judgment about code quality or conformance (that lives in `review-changes`). Its job is to leave the working tree in a finishable state: checks green, derived artifacts regenerated, docs current.
+This pass is **mechanical only**. It does not simplify (that lives in the build/refactor beat) and it does not exercise judgment about code quality or conformance (that lives in `review-changes`).
 
 ## What "the loop" is
 
-Every project exposes a set of fast feedback signals — the commands that tell you mechanically whether the change is sound. Resolve them from the project's `CLAUDE.md` `## Commands` section. The universal ones:
+Resolve the project's check commands from its `CLAUDE.md` `## Commands` section. The universal ones:
 
 - **Format** — apply the project's formatter.
 - **Lint** — run the linter; fix what it flags.
@@ -34,12 +34,10 @@ This is where silent gaps hide — a model change that ships without its migrati
 
 ### 3. Update docs
 
-Check whether the change affects anything documented in `README.md`, `CLAUDE.md`, or `DOMAIN.md` — new or changed commands, structure, conventions, or domain terms. Update what drifted. (Recording a *decision* is the `adr` skill's job, not this pass; capturing or sharpening a *domain term* is `domain-modeling`'s. This step only fixes docs the change has already made stale.)
+Check whether the change affects anything documented in `README.md`, `CLAUDE.md`, or `DOMAIN.md` — new or changed commands, structure, conventions, or domain terms. Update what drifted. This step only fixes docs the change has already made stale: recording a *decision* is the `adr` skill's job, and capturing or sharpening a *domain term* is `domain-modeling`'s.
 
 ## Boundaries
 
 - **Not `/simplify`** — it mutates toward a cleaner design and belongs in the refactor beat, before this pass.
 - **Not `review-changes`** — judgment review of the diff (quality, DOMAIN/ADR conformance) is a separate, deliberate step.
 - **Not `adr`** — recording rationale is its own gated decision.
-
-Keep this pass mechanical so it's safe to run automatically at the end of every slice.

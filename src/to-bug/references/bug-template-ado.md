@@ -20,7 +20,7 @@ ADO Bugs can be parented to a Feature directly or filed parentless. Bugs are not
 
 ## Description (markdown body — converted to HTML before publishing)
 
-The body holds the bug shape minus the repro steps (which live in the dedicated `Microsoft.VSTS.TCM.ReproSteps` field). Author as Markdown:
+The body holds the bug shape minus the repro steps (which live in the dedicated `Microsoft.VSTS.TCM.ReproSteps` field):
 
 ```markdown
 ## Expected behavior
@@ -69,7 +69,7 @@ Author the repro steps as a Markdown numbered list, converted to HTML before pub
 4. Observe `<actual outcome>` instead of `<expected outcome>`.
 ```
 
-Be precise about inputs, environments, and the observed failure. Reproducibility is the highest-leverage field on a Bug — vague steps cost the most reviewer time.
+Be precise about inputs, environments, and the observed failure.
 
 ## Severity selection
 
@@ -110,12 +110,12 @@ HTML=$(python3 -c "import sys, markdown; print(markdown.markdown(sys.stdin.read(
 
 ## State machine
 
-ADO Bugs ship with a richer state machine than Stories or Tasks. Notable states beyond `New` / `Active` / `Closed`:
+Notable states beyond `New` / `Active` / `Closed`:
 
 - **Resolved** — fix verified by developer; awaiting QA / triage. Set `Microsoft.VSTS.Common.ResolvedReason`: `Fixed` / `Duplicate` / `Won't Fix` / `Deferred` / `As Designed` / `Cannot Reproduce`.
 - **Closed** — resolution accepted. Resolution reason carries forward.
 
-`to-bug` does not transition state — that's the team's process. The state field is set to the team's default at create (typically `New`); subsequent transitions happen on the board.
+`to-bug` does not transition state — that's the team's process. The state field is set to the team's default at create (typically `New`).
 
 ## Notes
 

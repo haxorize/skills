@@ -88,7 +88,7 @@ GitHub has no native work-item state beyond `open` / `closed` — reconcile uses
 
 Single label only — no multi-label OR-match. Closed issues are always Done regardless of the signal — `closed` and `closed --reason not_planned` are bucketed identically.
 
-`to-tasks` only reads the signal — reconcile never adds, removes, or transitions issues against the signal label. State changes remain the team's process on the board.
+`to-tasks` only reads the signal — reconcile never adds, removes, or transitions issues against the signal label.
 
 If the line is malformed (e.g., `In-progress signal: label` with no name), warn and fall back to the assignee-presence default; do not block the reconcile pass.
 
@@ -128,6 +128,4 @@ Iterate per bucket until approved. Apply approved changes — body patches via `
 
 ### Naming-drift queue write
 
-If reconcile surfaces naming drift across sibling Tasks (e.g., one uses `widgetId`, another `widget_id`), append an entry per [naming-drift-queue.md](naming-drift-queue.md). The user resolves drift in subsequent `--update` calls; reconcile doesn't block.
-
-The queue is informational. Surface relevant entries on cold-start; never block a publish on it.
+If reconcile surfaces naming drift across sibling Tasks (e.g., one uses `widgetId`, another `widget_id`), append an entry per [naming-drift-queue.md](naming-drift-queue.md). Surface relevant entries on cold-start; never block a publish on it.

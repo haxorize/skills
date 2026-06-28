@@ -35,9 +35,9 @@ az boards work-item update --id <feature-id> --description "$(cat /tmp/feature_d
 
 **Never pass the fetched description through pandoc or a Markdown converter.** It is already HTML; re-converting will double-encode any `<code>`, `<hr>`, and other HTML tags already present.
 
-**Emergent Story** (no Snapshot match): After publishing, fetch the parent Feature's description. Locate `<!-- BEGIN STORY MAP -->` / `<!-- END STORY MAP -->`; append an entry below the separator with this Story's tracker ID, scope summary, parent Feature AC IDs it covers (`Covers: AC1, AC3`), and shared names. The `Covers:` line keeps coverage queryable uniformly above and below the separator. The Snapshot above the separator is immutable.
+**Emergent Story** (no Snapshot match): After publishing, fetch the parent Feature's description. Locate `<!-- BEGIN STORY MAP -->` / `<!-- END STORY MAP -->`; append an entry below the separator with this Story's tracker ID, scope summary, parent Feature AC IDs it covers (`Covers: AC1, AC3`), and shared names. The Snapshot above the separator is immutable.
 
-**HTML safety for both cases:** Convert **only the newly authored content** from Markdown to HTML (using the pandoc or Python one-liner from `story-template-ado.md`). Append or splice the resulting HTML fragment into the existing description HTML. Never pass the combined content — fetched description plus new entry — through a Markdown → HTML converter. The fetched description is already HTML; re-converting it will double-encode any `<code>`, `<hr>`, and other tags already present.
+**HTML safety for both cases:** Convert **only the newly authored content** from Markdown to HTML (using the pandoc or Python one-liner from `story-template-ado.md`). Append or splice the resulting HTML fragment into the existing description HTML. Never pass the combined content — fetched description plus new entry — through a Markdown → HTML converter (it double-encodes the existing HTML).
 
 Three cases:
 

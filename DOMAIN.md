@@ -1,6 +1,6 @@
 # Domain — Skills Repo
 
-Ubiquitous-language glossary for the entire skills repo. Covers the four main areas of work the skill suite supports — shaping backlog work (Feature/Story/Task/Bug publishing), design improvement (improve-design), recording decisions (ADRs), and implementation (TDD) — plus the meta-vocabulary of the skills themselves. Initial capture from the to-X expansion grilling on 2026-05-01 (see ADRs 0002–0005); hardened by sweeping every skill's `SKILL.md`, the README, and the repo's commit history.
+Ubiquitous-language glossary for the entire skills repo. Covers the four main areas of work the skill suite supports — shaping backlog work (Feature/Story/Task/Bug publishing), design improvement (improve-design), recording decisions (ADRs), and implementation (TDD) — plus the meta-vocabulary of the skills themselves.
 
 ## Skill mechanics
 

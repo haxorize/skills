@@ -7,11 +7,11 @@ description: Architecture Decision Record — capture why a single non-obvious d
 
 Lightweight Architecture Decision Records — capture *why* a non-obvious design choice was made, in the smallest form that preserves the rationale.
 
-The file location, numbering, default template, optional sections, the three-criteria gate, and a worked example all live in [references/adr-format.md](references/adr-format.md). This skill is the deliberate single-record flow that drives that format; the gate guidance below is the judgment layer on top of it.
+The file location, numbering, default template, optional sections, the three-criteria gate, and a worked example all live in [references/adr-format.md](references/adr-format.md).
 
 ## When to write an ADR
 
-The gate has three criteria (full statement in the reference) — **hard to reverse**, **surprising without context**, **the result of a real trade-off**. All three must hold; if any one is missing, skip it. If the decision is easy to reverse, you'll just reverse it. If it's not surprising, nobody will wonder. If there was no real alternative, there's nothing to record beyond "we did the obvious thing."
+The gate has three criteria (full statement in the reference) — **hard to reverse**, **surprising without context**, **the result of a real trade-off**. All three must hold; if any one is missing, skip it.
 
 ### What qualifies
 
@@ -41,4 +41,4 @@ Number, slug, and draft per [references/adr-format.md](references/adr-format.md)
 
 ### 3. Show and save
 
-Show the draft to the user. Save to `docs/adr/<NNNN>-<slug>.md` once approved. Create the `docs/adr/` directory lazily — only when the first ADR is written.
+Show the draft to the user. Save to `docs/adr/<NNNN>-<slug>.md` once approved.

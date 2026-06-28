@@ -5,11 +5,11 @@ description: Shared vocabulary and principles for designing deep modules. Use wh
 
 # Codebase Design
 
-Design **deep modules**: a lot of behaviour behind a small interface, placed at a clean seam, testable through that interface. Use this language and these principles wherever code is being designed or restructured. The aim is leverage for callers, locality for maintainers, and testability for everyone.
+Design **deep modules**: a lot of behaviour behind a small interface, placed at a clean seam, testable through that interface. Use this language and these principles wherever code is being designed or restructured.
 
 ## Vocabulary
 
-Use these terms exactly — don't substitute "component," "service," "API," or "boundary." Consistent language is the whole point.
+Use these terms exactly — don't substitute "component," "service," "API," or "boundary."
 
 - **Module** — anything with an interface and an implementation. Deliberately scale-agnostic: a function, class, package, or tier-spanning slice. _Avoid_: unit (implies test isolation), component (implies UI), service (implies a network boundary).
 - **Interface** — everything a caller must know to use the module correctly: the type signature, but also invariants, ordering constraints, error modes, required configuration, and performance characteristics. _Avoid_: API (implies external/versioned), signature (too narrow — type-level only).
@@ -42,13 +42,7 @@ Tests at the deepened interface replace the old shallow-module tests — delete 
 
 ## Judging a change (diff-relative)
 
-The principles above describe a good design in the absolute. When the subject is a **diff** rather
-than a whole tree — a review, a slice just built — apply them **diff-relatively**: the bar is not
-"is this module perfect?" but **"did this change make the local architecture worse?"** A diff that
-deepens a module or leaves it as-is passes; a diff that adds a condition-chain where a dispatcher
-belonged, splinters a deep module into shallow ones, or threads a new concern across call sites
-**regresses** the local design — that's the finding. Hold the vocabulary here; the orchestrator
-(`review-changes` for a diff, `improve-design` for a tree) supplies the change set and applies this bar.
+The principles above describe a good design in the absolute. When the subject is a **diff** rather than a whole tree — a review, a slice just built — apply them **diff-relatively**: the bar is not "is this module perfect?" but **"did this change make the local architecture worse?"** A diff that deepens a module or leaves it as-is passes; a diff that adds a condition-chain where a dispatcher belonged, splinters a deep module into shallow ones, or threads a new concern across call sites **regresses** the local design — that's the finding. Hold the vocabulary here; the orchestrator (`review-changes` for a diff, `improve-design` for a tree) supplies the change set and applies this bar.
 
 ## Relationships
 

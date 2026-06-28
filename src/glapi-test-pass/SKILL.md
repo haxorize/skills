@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # GLAPI Test Pass
 
-GLAPI checks that a User Story (not a Feature) has a passing test point in the team's test plan. The `az boards` and `az repos` CLIs don't reach the `testplan` and `testresults` invoke areas — this skill bridges that gap. No interviewing — runs end-to-end from the required `<story-id>` argument. Pass an optional `<pr-id>` to include it in the test run name for traceability.
+GLAPI checks that a User Story (not a Feature) has a passing test point in the team's test plan. The `az boards` and `az repos` CLIs don't reach the `testplan` and `testresults` invoke areas. Takes a required `<story-id>` argument and an optional `<pr-id>` to include in the test run name.
 
 ## Workflow
 
@@ -25,13 +25,11 @@ Use the title in the test case name and run name.
 
 ### 2. Create a Test Case work item
 
-Title: `GLAPI gate — <story title>` (truncate to ~80 chars if needed).
-Area and iteration: from CLAUDE.md. Project: from CLAUDE.md.
-→ capture `TEST_CASE_ID`.
+Title: `GLAPI gate — <story title>` (truncate to ~80 chars if needed). Area and iteration: from CLAUDE.md. Project: from CLAUDE.md. → capture `TEST_CASE_ID`.
 
 ### 3. Link test case to story via "Tested By"
 
-Link the test case to the story using the `Tested By` relation type. See [references/ado-commands.md](references/ado-commands.md) Step 3.
+Link the test case to the story via the `Tested By` relation type. See [references/ado-commands.md](references/ado-commands.md) Step 3.
 
 ### 4. Find the team's test plan for the current iteration
 
@@ -41,8 +39,7 @@ See [references/ado-commands.md](references/ado-commands.md) Step 4.
 
 ### 5. Create a requirement test suite for the story
 
-Create a `requirementTestSuite` under the root suite for this story.
-→ capture `SUITE_ID`.
+Create a `requirementTestSuite` under the root suite for this story. → capture `SUITE_ID`.
 
 ### 6. Add the test case to the suite
 
@@ -50,13 +47,11 @@ Add the test case to the suite. Returns `value: []` on success — this is norma
 
 ### 7. Get the test point ID
 
-Get `testplan/TestPoint` for the suite. The freshly added test case will have one point with `outcome: unspecified`.
-→ capture `TEST_POINT_ID`.
+Get `testplan/TestPoint` for the suite. The freshly added test case will have one point with `outcome: unspecified`. → capture `TEST_POINT_ID`.
 
 ### 8. Create a test run
 
-Create a test run against the plan. Run name: `GLAPI gate — <story title>` (append `PR <pr-id>` if provided).
-→ capture `RUN_ID`.
+Create a test run against the plan. Run name: `GLAPI gate — <story title>` (append `PR <pr-id>` if provided). → capture `RUN_ID`.
 
 ### 9. Add a Passed result
 
@@ -68,7 +63,7 @@ Patch `testresults/runs` with `state: Completed`.
 
 ### 11. Close the test case
 
-Update the Test Case work item state to `Closed` — the terminal state for ADO Test Cases.
+Update the Test Case work item state to `Closed`.
 
 ### 12. Report
 

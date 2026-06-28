@@ -36,7 +36,7 @@ History of ACs that were active and have since been retired. Strike-through, rem
 - `<module name>` — what changes here, what the deepening direction is if any
 - `<module name>` — what changes here
 
-Use module names from `DOMAIN.md` where applicable, not file paths (paths drift; concepts don't).
+Use module names from `DOMAIN.md` where applicable, not file paths.
 
 ## Layers touched
 

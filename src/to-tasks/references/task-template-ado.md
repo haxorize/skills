@@ -1,6 +1,6 @@
 # Task template — Azure DevOps
 
-Use this when publishing a Task work item to Azure DevOps via `az boards work-item create --type "Task"`. Tasks are always children of a User Story in this workflow.
+Use this when publishing a Task work item to Azure DevOps via `az boards work-item create --type "Task"`.
 
 ## Field mapping
 
@@ -80,6 +80,5 @@ DESC_HTML=$(python3 -c "import sys, markdown; print(markdown.markdown(sys.stdin.
 
 ## Notes
 
-- Tasks acceptance is verified at the parent Story level — each Task references at least one parent acceptance criterion (the `to-tasks` self-review check).
 - Naming (routes, query keys, model names, search-param keys) must match across sibling Tasks. Drift here is the highest-cost mistake when slicing.
 - ADO Bugs are not produced by this skill — they don't fit the Feature/Story/Task hierarchy. If a defect surfaces during task breakdown, file it with `to-bug`.

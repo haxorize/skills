@@ -6,13 +6,13 @@ disable-model-invocation: true
 
 # From Work Item
 
-Pull a published work item back into the current Claude Code session as implementation cold-start context. Detects the work-item type and loads the right shape; hands off to `implement` (which picks the build path) or freeform implementation. Closes the round-trip loop with the `to-X` publishing skills.
+Detects the work-item type and loads the right shape; hands off to `implement` (which picks the build path) or freeform implementation. Closes the round-trip loop with the `to-X` publishing skills.
 
 ## Workflow
 
 ### 1. Resolve tracker
 
-Read `CLAUDE.md` for an `Issue tracker:` block. The loader needs to know which tracker CLI to call.
+Read `CLAUDE.md` for an `Issue tracker:` block.
 
 - **Declared** — block present. Use the declared tracker.
 - **Bootstrap-on-ask** — repo present, CLAUDE.md missing or no tracker block. Ask the user inline; preview an appended `## Issue tracker` section; write to CLAUDE.md (or create a minimal CLAUDE.md if absent) on confirmation. **Always append, never overwrite.**
@@ -34,7 +34,7 @@ Auto-detect from the ID and tracker:
   4. Body contains `## Story Decomposition` or a story-map fenced region → **Feature**.
   5. None of the above → ask the user to confirm the type.
 
-Surface the inferred type to the user before loading; ambiguous GitHub cases (e.g., a Bug filed without the `bug` label) need explicit confirmation.
+Surface the inferred type before loading; ambiguous GitHub cases (e.g., a Bug filed without the `bug` label) need explicit confirmation.
 
 ### 3. Refuse Feature / Epic
 
@@ -76,7 +76,7 @@ Branch on the detected type. Each branch loads the artifact, its parent context,
 
 ### 5. Load DOMAIN.md
 
-Read the local `DOMAIN.md`. Surface the canonical terms and `Aliases to avoid` so the implementation doesn't reintroduce drift.
+Read the local `DOMAIN.md`. Surface the canonical terms and `Aliases to avoid`.
 
 If the repo declares multiple bounded contexts (root `DOMAIN.md` lists `## Contexts` with links to nested `DOMAIN.md` files), pick the nested context whose path or label matches the work item's module names or ADO area path; load that nested `DOMAIN.md` alongside the root.
 
@@ -85,10 +85,10 @@ If the repo declares multiple bounded contexts (root `DOMAIN.md` lists `## Conte
 Walk `docs/adr/` and surface ADRs whose subject overlaps the loaded work item.
 
 - **Task-entry:** match strictly against the Task's `## Layers touched` — each layer with content (not `none`) maps to ADR keywords (e.g., `Data:` → schema/migration ADRs; `UI:` → component / route ADRs). Present matched ADRs by ID and title.
-- **Story-entry:** fuzzy-match. Walk the AC text and `## Layers touched` together; present a wider candidate set and let the user prune. Stories span layers more loosely than Tasks.
+- **Story-entry:** fuzzy-match. Walk the AC text and `## Layers touched` together; present a wider candidate set and let the user prune.
 - **Bug-entry:** match against `## Layers touched` plus terms in Actual behavior / Repro. Present candidates; user prunes.
 
-ADR traversal stays **local-repo-only**. Do not chase ADRs across sibling repos — the warning in step 7 is the cleanest way to surface "you're in the wrong repo for this item" without trying to be smart across repos.
+ADR traversal stays **local-repo-only**. Do not chase ADRs across sibling repos — the warning in step 7 surfaces "you're in the wrong repo for this item" instead.
 
 ### 7. Multi-repo layer-mismatch warn
 
@@ -105,7 +105,7 @@ Read the naming-drift queue:
 - **Repo mode:** `.claude/queue.md` at the repo root.
 - **No-repo CLI-only mode:** memory entry keyed by tracker context (e.g., `Naming-drift queue — work-backlog`).
 
-Surface entries that mention this work item's tracker ID or its parent. The queue is informational — these are pending sibling refinements; the user may want to address them as part of the implementation slice. Never block on it.
+Surface entries that mention this work item's tracker ID or its parent. The queue is informational — pending sibling refinements the user may want to address as part of the slice. Never block on it.
 
 ### 9. Hand off
 
@@ -124,15 +124,11 @@ Loaded {type} #{ID}: "{title}"
 Ready to implement. Hand off to /implement (recommended), or proceed freeform.
 ```
 
-Then offer the user the choice. The skill itself doesn't build — it loads context and stops. The user runs `/implement`, which picks the build path (TDD for a testable slice, direct otherwise) and drives the slice to done. Both are user-invoked, so `from-work-item` suggests `/implement` rather than invoking it.
+The skill itself doesn't build — it loads context and stops. `/implement` picks the build path (TDD for a testable slice, direct otherwise) and drives the slice to done. Both are user-invoked, so `from-work-item` suggests `/implement` rather than invoking it.
 
 ## Refusal vs warning
 
-The skill has exactly one refusal — Feature / Epic IDs. Everything else is a warning the user can override:
-
-- Ambiguous GitHub type detection → ask, don't refuse.
-- Layer mismatch with the local repo → warn, don't refuse.
-- Bug with no `bug` label or unrecognized state → warn and ask, don't refuse.
+The skill has exactly one refusal — Feature / Epic IDs. Everything else (ambiguous type detection, layer mismatch, missing `bug` label) is a warning the user can override.
 
 Refusing on Feature/Epic is the only case where the user's next move is structurally different (decompose, then re-enter). Every other surface is a judgment call; the loader supplies context and lets the user decide.
 

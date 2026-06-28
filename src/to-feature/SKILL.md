@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # To Feature
 
-Synthesize the current conversation into a Feature-level artifact (PRD-shaped) and publish it to the project's issue tracker. No interviewing — this is a synthesis-only skill. Run `/grill-me` or `/grill-and-record` first if context is thin.
+No interviewing — this is a synthesis-only skill. Run `/grill-me` or `/grill-and-record` first if context is thin.
 
 `to-feature` is for **broad scope** — work that decomposes into multiple stories. The default for single-feature work is `to-story`. Use `to-feature` only when phrasings explicitly invoke PRD-shaped or multi-story scope.
 
@@ -33,15 +33,15 @@ If not already explored in the conversation, look at the touched modules. Use ca
 
 ### 4. Sketch modules and boundaries (feature scope)
 
-Broader than a single story — what areas are touched, what are the major sub-features. Check with the user that the shape matches expectations.
+What areas are touched, what are the major sub-features. Check with the user that the shape matches expectations.
 
 ### 5. Propose 2-3 approaches with trade-offs
 
-Lead with a recommendation. Let the user push back or confirm before drafting. Not interviewing — this is a pre-publication direction check. If the user pushes back, revise the sketch and re-propose; do not interview through it. Skip only when there's genuinely one defensible shape (rare; force yourself to think of two).
+Lead with a recommendation. This is a pre-publication direction check, not interviewing. If the user pushes back, revise the sketch and re-propose; do not interview through it. Skip only when there's genuinely one defensible shape (rare; force yourself to think of two).
 
 ### 6. Decompose into Stories
 
-Decompose the chosen approach into Stories. For each Story capture: title, one-paragraph scope, the parent Feature acceptance criteria it covers, and any shared names (route paths, model names, query keys) it touches. Build a dependency graph between Stories. Quiz the user once — walk through the list, gather corrections, and finalize before drafting. One review pass is the target; resolve scope disputes before moving on.
+Decompose the chosen approach into Stories. For each Story capture: title, one-paragraph scope, the parent Feature acceptance criteria it covers, and any shared names (route paths, model names, query keys) it touches. Build a dependency graph between Stories. Quiz the user once — walk through the list, gather corrections, and finalize before drafting. Resolve scope disputes before moving on.
 
 If the user can't decompose yet, confirm explicitly and skip to step 7. The published Feature will carry `Story Decomposition: deferred at Feature creation.` in place of the map block; fill in later via `--update <feature-id>`.
 
@@ -69,7 +69,7 @@ Iterate until approved.
 
 ### 10. Publish via tracker dispatch
 
-- **GitHub:** `gh issue create --title "..." --body-file <draft>` with default labels from CLAUDE.md. Parent linking via `Tracked-by:` line or template `Parent: #N` reference if `--parent` was provided. **Before creating the issue,** ensure every label in CLAUDE.md's `Default labels:` exists on the repo: `gh label list --json name --jq '.[].name'` once, then `gh label create <name>` for any missing. Idempotent and cheap; one-time per repo per label.
+- **GitHub:** `gh issue create --title "..." --body-file <draft>` with default labels from CLAUDE.md. Parent linking via `Tracked-by:` line or template `Parent: #N` reference if `--parent` was provided. **Before creating the issue,** ensure every label in CLAUDE.md's `Default labels:` exists on the repo: `gh label list --json name --jq '.[].name'` once, then `gh label create <name>` for any missing.
 - **ADO:** `az boards work-item create --type Feature --title "..." --description "<html>"` with project / area path / iteration / state from CLAUDE.md. The description field expects HTML — convert the Markdown feature draft before passing. The body's final section is `## Story Decomposition`; inside it, HTML markers (`<!-- BEGIN STORY MAP -->` / `<!-- END STORY MAP -->`) fence an append-only region with a `---` snapshot separator and an `*Emergent Stories appended below.*` sentinel — see [feature-template-ado.md](references/feature-template-ado.md) for the full structure. If decomposition was deferred, the section body is the single line `Story Decomposition: deferred at Feature creation.` (no markers). Parent linking via `az boards work-item relation add --relation-type Parent --target-id <epic-id>`.
 
 If a required CLAUDE.md field is missing, fail fast with a clear "add this to CLAUDE.md" message.

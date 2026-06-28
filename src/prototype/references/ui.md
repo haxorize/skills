@@ -17,7 +17,7 @@ A UI prototype is much easier to judge when it's **butting up against the rest o
 
 ### Sub-shape A — adjustment to an existing page (preferred)
 
-The route already exists. Variants are rendered **on the same route**, gated by a `?variant=` URL search param. The existing data fetching, params, and auth all stay — only the rendering swaps. This is the default; pick it unless there's a specific reason not to.
+The route already exists. Variants are rendered **on the same route**, gated by a `?variant=` URL search param. The existing data fetching, params, and auth all stay — only the rendering swaps.
 
 If the prototype is for something that doesn't yet have a page but *would naturally live inside one* (a new section of the dashboard, a new card on the settings screen, a new step in an existing flow) — that's still sub-shape A. Mount the variants inside the host page.
 
@@ -40,8 +40,6 @@ Default to **3 variants**. More than 5 stops being radically different and start
 Write down the plan in one line, in the prototype's location or a top-of-file comment:
 
 > "Three variants of the settings page, switchable via `?variant=`, on the existing `/settings` route."
-
-This works whether the user is here to push back or not.
 
 ### 2. Generate radically different variants
 
@@ -93,7 +91,7 @@ Put the switcher in a single shared component so both sub-shapes can reuse it. L
 
 ### 5. Hand it over
 
-Surface the URL (and the `?variant=` keys). The user will flip through whenever they get to it. The interesting feedback is usually **"I want the header from B with the sidebar from C"** — that's the actual design they want.
+Surface the URL (and the `?variant=` keys). The interesting feedback is usually **"I want the header from B with the sidebar from C"** — that's the actual design they want.
 
 ### 6. Capture the answer and clean up
 
@@ -102,7 +100,7 @@ Once a variant has won, write down which one and why — as `prototype`'s "When 
 - **Sub-shape A** — delete the losing variants and the switcher; fold the winner into the existing page.
 - **Sub-shape B** — promote the winning variant to a real route, delete the throwaway route and the switcher.
 
-Don't leave variant components or the switcher lying around. They rot fast and confuse the next reader.
+Don't leave variant components or the switcher lying around.
 
 ## Anti-patterns
 

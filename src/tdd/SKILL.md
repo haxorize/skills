@@ -13,7 +13,7 @@ For test fixtures and patterns, see your project's testing skill(s). For convent
 
 ## Slice vertically, never horizontally
 
-A **Vertical slice** cuts through every layer it touches to deliver one whole behavior, end to end. The **anti-pattern** is the horizontal slice — building a whole layer across many behaviors before any of them works end to end. Horizontal work has nothing to run until the last layer lands, so nothing is proven until the end.
+A **Vertical slice** cuts through every layer it touches to deliver one whole behavior, end to end. The **anti-pattern** is the horizontal slice — building a whole layer across many behaviors before any of them works end to end. Horizontal work has nothing to run until the last layer lands.
 
 ```
 HORIZONTAL (wrong)                 VERTICAL (right)
@@ -25,7 +25,7 @@ build a layer at a time            build a behavior at a time
   └ nothing runs until the end      └ each slice runs end-to-end
 ```
 
-Build the first slice as a **Tracer bullet** — the thinnest path that touches every layer and proves the whole thing connects — then add behavior by behavior, each its own red/green step. Never widen one layer ahead of the others.
+Build the first slice as a **Tracer bullet** — the thinnest path that touches every layer and proves the whole thing connects — then add behavior by behavior, each its own red/green step.
 
 ## Workflow
 
@@ -45,8 +45,6 @@ Confirm the plan with the user before writing any code.
 Write ONE test for the first and most fundamental behavior. Run your project's test command (see CLAUDE.md `## Commands`). If your project has separate inner-loop and outer-loop test commands, pick the loop that matches the behavior the slice is proving.
 
 Confirm the test **fails for the right reason** (behavior is missing, not a typo or import error). Write the minimal code to make it pass. Run again — confirm it **passes**.
-
-This is the tracer bullet — it proves the path works end-to-end.
 
 ### 3. Incremental loop
 
@@ -77,7 +75,7 @@ Then run `/simplify` to catch any remaining issues with reuse, quality, or effic
 
 ## Closing the cycle
 
-When the cycle's behaviors are built and refactored, close the loop: run the `/feedback-loops` skill once to finalize mechanically — format, lint, typecheck, stack finalization (migrations, codegen), and any doc updates the change made stale. Finalization lives in `feedback-loops` so every build path shares one mechanical finalize.
+When the cycle's behaviors are built and refactored, close the loop: run the `/feedback-loops` skill once to finalize mechanically — format, lint, typecheck, stack finalization (migrations, codegen), and any doc updates the change made stale.
 
 Tests prove code-correctness, not feature-correctness. If the slice touched behavior you couldn't actually run in a test — a UI flow, an external integration, a real ingest — say so and eyeball it (run the project's dev command, use `verify`) before declaring done.
 

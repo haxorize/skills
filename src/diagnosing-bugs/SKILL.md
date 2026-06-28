@@ -8,21 +8,15 @@ requires: codebase-design, adr
 
 A discipline for hard bugs. Skip phases only when explicitly justified.
 
-When exploring the codebase, read `DOMAIN.md` (if it exists) to get a clear mental model of the
-relevant modules in the project's own vocabulary, and check `docs/adr/` in the area you're touching —
-a behavior an ADR records as deliberate is not a bug.
+When exploring, read `DOMAIN.md` (if present) for the project's vocabulary and check `docs/adr/` in the area you're touching — a behavior an ADR records as deliberate is not a bug.
 
-This is the behavior `implement` reaches for when a build turns up an **unplanned failure** mid-slice:
-a red that isn't the test you just wrote, behavior that contradicts the plan. Stop guessing and run
-this loop before continuing.
+This is the behavior `implement` reaches for when a build turns up an **unplanned failure** mid-slice: a red that isn't the test you just wrote, behavior that contradicts the plan. Stop guessing and run this loop before continuing.
 
 ## Phase 1 — Build a feedback loop
 
-**This is the skill.** Everything else is mechanical. If you have a **tight** pass/fail signal for the bug — one that goes red on _this_ bug — you will find the cause; bisection, hypothesis-testing, and instrumentation all just consume it. If you don't have one, no amount of staring at code will save you.
+**This is the skill.** Everything else is mechanical. With a **tight** pass/fail signal — one that goes red on _this_ bug — you will find the cause; without one, no amount of staring at code will.
 
-Spend disproportionate effort here. **Be aggressive. Be creative. Refuse to give up.**
-
-Stand up the tightest red-capable loop you can _before changing anything_ — that principle is the whole phase. (No checked-in HITL script: a shell template is inert, can't be reached by the model, and presumes one shell shape fits every stack — drive the human inline instead when one is unavoidable.)
+Spend disproportionate effort here. Stand up the tightest red-capable loop you can _before changing anything_. (No checked-in HITL script: a shell template is inert, can't be reached by the model, and presumes one shell shape fits every stack — drive the human inline instead when one is unavoidable.)
 
 ### Ways to construct one — try them in roughly this order
 
@@ -37,8 +31,6 @@ Stand up the tightest red-capable loop you can _before changing anything_ — th
 9. **Differential loop.** Run the same input through old-version vs new-version (or two configs) and diff outputs.
 10. **Human-in-the-loop, inline.** Last resort. If a human must click, drive _them_ — give one explicit action, capture what they report, feed it back. Keep the loop structured even with a person in it.
 
-Build the right feedback loop, and the bug is 90% fixed.
-
 ### Tighten the loop
 
 Treat the loop as a product. Once you have _a_ loop, **tighten** it:
@@ -47,7 +39,7 @@ Treat the loop as a product. Once you have _a_ loop, **tighten** it:
 - Can I make the signal sharper? (Assert on the specific symptom, not "didn't crash".)
 - Can I make it more deterministic? (Pin time, seed RNG, isolate filesystem, freeze network.)
 
-A 30-second flaky loop is barely better than no loop; a 2-second deterministic one is tight — a debugging superpower.
+A 30-second flaky loop is barely better than no loop; a 2-second deterministic one is tight.
 
 ### Non-deterministic bugs
 
@@ -80,9 +72,7 @@ Confirm:
 
 ### Minimise
 
-Once it's red, shrink the repro to the **smallest scenario that still goes red**. Cut inputs, callers, config, data, and steps **one at a time**, re-running the loop after each cut — keep only what's load-bearing for the failure.
-
-Why bother: a minimal repro shrinks the hypothesis space in Phase 3 (fewer moving parts left to suspect) and becomes the clean regression test in Phase 5.
+Once it's red, shrink the repro to the **smallest scenario that still goes red**. Cut inputs, callers, config, data, and steps **one at a time**, re-running the loop after each cut — keep only what's load-bearing for the failure. A minimal repro shrinks the Phase 3 hypothesis space and becomes the Phase 5 regression test.
 
 Done when **every remaining element is load-bearing** — removing any one of them makes the loop go green.
 
@@ -98,7 +88,7 @@ Each hypothesis must be **falsifiable**: state the prediction it makes.
 
 If you cannot state the prediction, the hypothesis is a vibe — discard or sharpen it.
 
-**Show the ranked list to the user before testing.** They often have domain knowledge that re-ranks instantly ("we just deployed a change to #3"), or know hypotheses they've already ruled out. Cheap checkpoint, big time saver. Don't block on it — proceed with your ranking if the user is AFK.
+**Show the ranked list to the user before testing.** They often have domain knowledge that re-ranks instantly ("we just deployed a change to #3"), or know hypotheses they've already ruled out. Don't block on it — proceed with your ranking if the user is AFK.
 
 ## Phase 4 — Instrument
 
@@ -118,15 +108,9 @@ Tool preference:
 
 Write the regression test **before the fix** — but only if there is a **correct seam** for it.
 
-A correct seam (in `codebase-design`'s sense — the place where a module's interface lives, where
-behaviour can be altered without editing in place) is one where the test exercises the **real bug
-pattern** as it occurs at the call site. If the only available seam is too shallow — a single-caller
-test when the bug needs multiple callers, a unit test that can't replicate the chain that triggered
-the bug — a regression test there gives false confidence.
+A correct seam (in `codebase-design`'s sense — the place where a module's interface lives, where behaviour can be altered without editing in place) is one where the test exercises the **real bug pattern** as it occurs at the call site. If the only available seam is too shallow — a single-caller test when the bug needs multiple callers, a unit test that can't replicate the chain that triggered the bug — a regression test there gives false confidence.
 
-**If no correct seam exists, that itself is the finding.** Note it. The module is too shallow, or the
-seam is in the wrong place, to lock this bug down — that's a `codebase-design` problem, not just a
-missing test. Flag it for the next phase.
+**If no correct seam exists, that itself is the finding.** Note it. The module is too shallow, or the seam is in the wrong place, to lock this bug down — that's a `codebase-design` problem, not just a missing test. Flag it for the next phase.
 
 If a correct seam exists:
 

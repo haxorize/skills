@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 Synthesize the current conversation into a Story-level artifact (single-feature spec) and publish it to the project's issue tracker. No interviewing — this is a synthesis-only skill. Run `/grill-and-record` (or `/grill-me`) first if context is thin.
 
-`to-story` is the default for turning a grilled plan into a tracked work item. Use `to-feature` only when scope explicitly needs multiple stories beneath it.
+Use `to-feature` only when scope explicitly needs multiple stories beneath it.
 
 ## Publication constraints
 
@@ -41,7 +41,7 @@ Modules to build or modify. Look for opportunities to extract deep modules. Chec
 
 ### 5. Propose 2-3 approaches with trade-offs
 
-Lead with a recommendation. Let the user push back or confirm before drafting. Not interviewing — this is a pre-publication direction check. Present the recommendation once; if the user pushes back, revise and re-present once. Do not loop — exhaustive trade-off exploration belongs in `grill-me`. Skip only when there's genuinely one defensible shape (rare; force yourself to think of two).
+Lead with a recommendation. Present it once; if the user pushes back, revise and re-present once. Do not loop — exhaustive trade-off exploration belongs in `grill-me`. Skip only when there's genuinely one defensible shape (rare; force yourself to think of two).
 
 ### 6. Draft the story
 
@@ -71,7 +71,7 @@ Iterate until approved.
 
 ### 9. Publish via tracker dispatch
 
-- **GitHub:** `gh issue create --title "..." --body-file <draft>` with default labels from CLAUDE.md. Parent linking via template `Parent: #N` reference if `--parent` was provided. **Before creating the issue,** ensure every label in CLAUDE.md's `Default labels:` exists on the repo: `gh label list --json name --jq '.[].name'` once, then `gh label create <name>` for any missing. Idempotent and cheap; one-time per repo per label.
+- **GitHub:** `gh issue create --title "..." --body-file <draft>` with default labels from CLAUDE.md. Parent linking via template `Parent: #N` reference if `--parent` was provided. **Before creating the issue,** ensure every label in CLAUDE.md's `Default labels:` exists on the repo: `gh label list --json name --jq '.[].name'` once, then `gh label create <name>` for any missing.
 - **ADO:** The description field expects HTML. Write to a temp file and pass via command substitution to prevent shell newline mangling (embedded `\n` in a shell string becomes a literal two-character sequence in the stored HTML). See [references/story-template-ado.md](references/story-template-ado.md) for the conversion command. Parent linking via `az boards work-item relation add --id <new-story-id> --relation-type Parent --target-id <feature-id>`.
 
 If a required CLAUDE.md field is missing, fail fast with a clear "add this to CLAUDE.md" message.
