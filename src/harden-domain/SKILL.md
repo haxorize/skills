@@ -16,6 +16,8 @@ This is the **deliberate sweep mode** — a focused one-shot pass to refresh the
 - Scan the **conversation** for domain-relevant nouns, verbs, and concepts
 - Scan the **codebase** — models, schemas, endpoint names, database columns, and variable names — for domain terms already in use
 
+Cover **every** such source, not a sample — list the surfaces you scanned so a gap is visible.
+
 ### 2. Identify problems
 
 - Same word used for different concepts (ambiguity)

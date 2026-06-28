@@ -17,7 +17,7 @@ The gate has three criteria (full statement in the reference) — **hard to reve
 
 - **Architectural shape** — "transactional rollback for test isolation," "append-only audit log model"
 - **Technology choices that carry lock-in** — toolchain, framework, database, deployment target
-- **Boundary and scope decisions** — what each module owns, what it doesn't
+- **Module ownership and scope decisions** — what each module owns, what it doesn't
 - **Deliberate deviations from the obvious path** — anything where a reasonable reader would assume the opposite (e.g., BIGINT PKs instead of UUIDs, deferred JSONB by access pattern)
 - **Constraints not visible in the code** — compliance, partner contracts, organizational requirements
 - **Rejected alternatives when the rejection is non-obvious** — record what you considered and why you didn't pick it, otherwise someone will suggest it again later
