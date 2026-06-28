@@ -31,7 +31,7 @@ Title prefix: if the tracker block declares `Feature title prefix:`, use it; oth
 
 If not already explored in the conversation, look at the touched modules. Use canonical terms from `DOMAIN.md` and respect existing ADRs in `docs/adr/`.
 
-### 4. Sketch modules and boundaries (feature scope)
+### 4. Sketch modules and feature scope
 
 What areas are touched, what are the major sub-features. Check with the user that the shape matches expectations.
 
