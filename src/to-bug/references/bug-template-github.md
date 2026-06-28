@@ -60,7 +60,7 @@ Two label categories apply:
 - **Type:** `bug` — applied unconditionally by `to-bug` on GitHub.
 - **Severity:** one of the labels declared in CLAUDE.md's `Severity labels:` block (e.g., `sev:critical`, `sev:high`, `sev:medium`, `sev:low`). The skill prompts to pick one if the conversation hasn't already pinned severity.
 
-If a `Severity labels:` block is missing, `to-bug` runs the bootstrap-on-ask flow: ask the user for the team's severity scale, preview an appended `## Severity labels` section, write to CLAUDE.md on confirmation. Default scale offered: `critical, high, medium, low`.
+If a `Severity labels:` block is missing, `to-bug` bootstraps it on ask — see SKILL step 4 (Resolve severity) for the procedure.
 
 ## Severity definitions (default)
 
