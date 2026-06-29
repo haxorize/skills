@@ -1,6 +1,6 @@
 # The HTML candidate report
 
-How `improve-design` Step 3 renders vetted deepening candidates as a self-contained HTML file. This identity is **frozen** — designed once and reused every run (see ADR-0022). Don't redesign it per scan; fill the scaffold with this run's candidates. The conversation still carries the terse ordered list for the pick; this file is the rich, visual record the user reads.
+How `improve-design` Step 3 renders vetted deepening candidates as a self-contained HTML file. This identity is **frozen** — designed once and reused every run. Don't redesign it per scan; fill the scaffold with this run's candidates. The conversation still carries the terse ordered list for the pick; this file is the rich, visual record the user reads.
 
 ## Identity — "structural section drawing"
 
@@ -96,7 +96,7 @@ Report title (`Design review — {{repo}}`), date, and a compact **legend** that
 One `<article class="reveal">` per candidate, ordered by leverage. The diagram carries the weight; prose is sparse and uses the glossary terms (`codebase-design`) without ceremony.
 
 - **Title** — names the deepening (e.g. "Collapse the billing rollup pipeline").
-- **Badge row** — a **leverage-tier** badge (High/Medium/Low, `--depth`-filled for High) and a **confidence** chip (HIGH/MED/LOW), plus a dependency-category tag (`in-process`, `local-substitutable`, `remote-but-owned`, `true-external`). Derived from the existing ranking axes — never a `Strong`/`Speculative` scale (ADR-0022).
+- **Badge row** — a **leverage-tier** badge (High/Medium/Low, `--depth`-filled for High) and a **confidence** chip (HIGH/MED/LOW), plus a dependency-category tag (`in-process`, `local-substitutable`, `remote-but-owned`, `true-external`). Derived from the existing ranking axes — never a `Strong`/`Speculative` scale.
 - **Files** — `mono text-sm` list of involved modules with `file:line` evidence.
 - **Before / After diagram** — the centerpiece (patterns below).
 - **Problem** — one sentence. What hurts.

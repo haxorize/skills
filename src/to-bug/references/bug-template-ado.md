@@ -14,7 +14,7 @@ Use this when publishing a Bug work item to Azure DevOps via `az boards work-ite
 | Area Path | `System.AreaPath` | From CLAUDE.md `Area path:` | `--area` |
 | Iteration Path | `System.IterationPath` | From CLAUDE.md `Iteration:` | `--iteration` |
 | State | `System.State` | From CLAUDE.md `Default state:` (typically `New`) | `--fields "System.State=..."` |
-| Parent (Feature, optional) | (relation) | From `--parent <feature-id>` arg | post-create: `az boards work-item relation add --relation-type Parent --target-id <feature-id>` |
+| Parent (Feature, optional) | (relation) | From `--parent <feature-id>` arg | post-create: `az boards work-item relation add --id <bug-id> --relation-type Parent --target-id <feature-id>` |
 
 ADO Bugs can be parented to a Feature directly or filed parentless. Bugs are not parented under User Stories — the fix *is* the slice.
 

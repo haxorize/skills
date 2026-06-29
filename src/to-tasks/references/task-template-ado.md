@@ -11,7 +11,8 @@ Use this when publishing a Task work item to Azure DevOps via `az boards work-it
 | Area Path | `System.AreaPath` | From CLAUDE.md `Area path:` | `--area` |
 | Iteration Path | `System.IterationPath` | From CLAUDE.md `Iteration:` | `--iteration` |
 | State | `System.State` | From CLAUDE.md `Default state:` (typically `New`) | `--fields "System.State=..."` |
-| Parent (User Story) | (relation) | From `--parent <story-id>` arg or resolved upstream | post-create: `az boards work-item relation add --relation-type Parent --target-id <story-id>` |
+| Parent (User Story) | (relation) | From `--parent <story-id>` arg or resolved upstream | post-create: `az boards work-item relation add --id <task-id> --relation-type Parent --target-id <story-id>` |
+| Blocked-by (Predecessor) | (relation) | In-project blockers identified during drafting (SKILL step 5) | post-create: `az boards work-item relation add --id <task-id> --relation-type Predecessor --target-id <blocker-id>` |
 
 ADO Tasks have only `System.Description` for body content — **no Acceptance Criteria field**. Acceptance criteria belong on the parent User Story.
 
@@ -49,12 +50,13 @@ Covers: AC1, AC3
 
 ## Blocked by
 
-If this Task depends on another Task or a sibling-repo change, list it here. Use real work-item IDs if blockers were filed first (`to-tasks` publishes in dependency order so real IDs are available).
+Dependence on **another work item in this project** is recorded as a built-in **Predecessor** relation, not body text — see the field mapping above. `to-tasks` publishes in dependency order so the blocker's real work-item ID is available when linking.
 
-- Blocked by: #<work-item-id> — what specifically must land first
+Only **sibling-repo** blockers go here, as a text annotation — there is no in-project work item to link:
+
 - Blocked by: ../<sibling-repo> — contract change required (file there first)
 
-If unblocked, omit this section.
+If there are no sibling-repo blockers, omit this section (in-project blockers live in the relation graph, not the body).
 ```
 
 ## Markdown → HTML conversion

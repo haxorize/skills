@@ -46,3 +46,29 @@ Three cases:
 - **No markers and no headed decomposition section (or no parent):** skip silently.
 
 On failure: revision conflict → retry once with fresh fetch; permission denied → surface immediately (no retry); other error → surface with the published Story ID for manual update. The Story always publishes regardless.
+
+## Step 11 — Materialize dependency relations
+
+After Step 10 stamps this Story's ID into the map, project any Snapshot `### Dependencies` edge whose **both** endpoints are now published onto a built-in `Predecessor` relation. The relation graph is an additive, partial projection of the map — never delete a relation here. Reuse the description HTML already fetched and stamped in Step 10 to read the map; do not re-fetch the Feature.
+
+Read the `### Dependencies` subsection. Each edge reads `Story B depends on Story A` — A is the **predecessor** (blocker), B the **successor** (dependent). Resolve each named Story to its Snapshot heading and read its stamped ID from that HTML. Step 10 appends the stamp as an HTML anchor (` — <a href="…">#<id></a>`), not a Markdown `[#<id>]` link — the ADO description is already HTML. An unstamped heading means that Story is not published yet — skip the edge.
+
+Collect every edge that involves the Story just published, **in both directions** — the new Story as successor (its blockers) and as predecessor (the siblings that depend on it) — keeping only edges whose other endpoint is stamped. The relation always lands on the **successor**, so group the pending edges by successor ID.
+
+For each distinct successor, fetch its existing relations once and build the set of `Predecessor` target IDs it already links:
+
+```bash
+az boards work-item show <successor-id> --output json --expand relations
+```
+
+Then add only the edges whose predecessor is not already in that set:
+
+```bash
+az boards work-item relation add --id <successor-id> --relation-type Predecessor --target-id <predecessor-id>
+```
+
+One fetch per successor, not one per edge, keeps republish idempotent without N redundant reads. `--update` never reaches this step — it skips the map-stamp and does not expand relations (see [update-mode.md](update-mode.md)) — so only create-mode republish is covered.
+
+Both directions matter because Stories can publish out of map order — each edge then links the instant its second endpoint is stamped, with no separate reconcile pass. Emergent Stories (below the separator) carry no Dependencies edges and are skipped.
+
+On failure: permission denied → surface immediately; other error → surface with both work-item IDs for manual linking. The Story always publishes regardless.

@@ -12,7 +12,7 @@ Use this when publishing a Feature work item to Azure DevOps via `az boards work
 | Area Path | `System.AreaPath` | From CLAUDE.md `Area path:` | `--area` |
 | Iteration Path | `System.IterationPath` | From CLAUDE.md `Iteration:` | `--iteration` |
 | State | `System.State` | From CLAUDE.md `Default state:` (typically `New`) | `--fields "System.State=..."` |
-| Parent (Epic) | (relation) | From `--parent <epic-id>` arg | post-create: `az boards work-item relation add --relation-type Parent --target-id <epic-id>` |
+| Parent (Epic) | (relation) | From `--parent <epic-id>` arg | post-create: `az boards work-item relation add --id <feature-id> --relation-type Parent --target-id <epic-id>` |
 
 ## Description (markdown body — converted to HTML before publishing)
 
@@ -126,4 +126,4 @@ HTML=$(python3 -c "import sys, markdown; print(markdown.markdown(sys.stdin.read(
 ## Notes
 
 - ADO enforces Epic → Feature → User Story → Task. A Feature without a parent Epic is allowed but flagged in most team configs; resolve a parent Epic ID before publishing.
-- The Story Decomposition section captures decomposition rationale; child Stories are linked via the parent-child relation when each Story is created. The map and the relation graph are independent — the map records intent, the graph records what shipped.
+- The Story Decomposition section captures decomposition rationale; child Stories are linked via the parent-child relation when each Story is created, and dependency edges are projected onto built-in `Predecessor`/`Successor` relations by `to-story` once both endpoint Stories are published. The map is the source of truth — it records the full intent graph; the relation graph is an additive, partial projection that lags the map until forward-referenced Stories exist.

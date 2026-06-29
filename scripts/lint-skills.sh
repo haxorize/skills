@@ -20,6 +20,15 @@
 #     Each named dep must exist as a skill AND be model-invoked — prose
 #     invocation can only reach model-invoked skills, so a user-invoked dep
 #     could never be resolved at runtime.
+#   - Skill bodies must not cite repo ADRs by number (write-skill: "Skill
+#     bodies don't cite repo ADRs"). Skills symlink into ~/.claude/skills/ and
+#     run in the user's project, where this repo's docs/adr/ does not exist, so
+#     a bare "ADR-0007" points at nothing. Lineage runs ADR -> skill (each ADR
+#     names the skills it shapes); the reverse pointer is banned. Match is
+#     case-insensitive on a word-boundaried `ADR-<digit>` token (`\bADR-[0-9]`),
+#     so `adr-0023` and `Adr-7` are caught too. `docs/adr/` paths put a slash
+#     after `adr` (not a hyphen) so they stay legal, as do digitless
+#     placeholders ("ADR-N" — `N` isn't a digit).
 #
 # Exit code 0 if clean, 1 if any check fails. List all failures, don't bail
 # on first hit.
@@ -52,13 +61,23 @@ is_user_invoked() {
   ' "$1"
 }
 
-for f in src/*/SKILL.md src/*/references/*.md; do
+# Per-body checks over every shipped skill file: the 200-line cap and the ban
+# on citing repo ADRs by number (see header for both). A find sweep (rather than
+# a fixed-depth glob) covers nested reference files (references/sub/*.md) too.
+while IFS= read -r f; do
   lines=$(awk 'END { print NR }' "$f")
   if [ "$lines" -gt 200 ]; then
     echo "FAIL: $f exceeds 200-line cap ($lines lines)"
     fail=1
   fi
-done
+
+  adr_hits=$(grep -niE '\bADR-[0-9]' "$f")
+  if [ -n "$adr_hits" ]; then
+    badlines=$(printf '%s\n' "$adr_hits" | cut -d: -f1 | tr '\n' ' ')
+    echo "FAIL: $f cites a repo ADR by number (line(s) ${badlines}) — skill bodies must not (write-skill: 'Skill bodies don't cite repo ADRs'); lineage is ADR -> skill"
+    fail=1
+  fi
+done < <(find src -type f -name '*.md' | sort)
 
 for f in src/*/SKILL.md; do
   desc=$(awk '

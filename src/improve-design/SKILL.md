@@ -51,7 +51,7 @@ Done when you've swept **every top-level module/area**, not just the first frict
 
 ### 3. Vet, then consolidate and present candidates
 
-**Vet first** per [references/finding-discipline.md](references/finding-discipline.md): exploration over-reports, so re-read every location you'd cite and drop the three false-positive classes (by-design — including a tradeoff an ADR already records — mis-read evidence, and duplicates). The reference also covers the **bidirectional** ADR/DOMAIN read: a recorded tradeoff is by-design, but code that has drifted *from* an ADR or `DOMAIN.md` is itself a finding. When a candidate warrants *reopening* an ADR, mark it clearly (e.g., _"contradicts ADR-0007 — but worth reopening because…"_) and only when the friction justifies it.
+**Vet first** per [references/finding-discipline.md](references/finding-discipline.md): exploration over-reports, so re-read every location you'd cite and drop the three false-positive classes (by-design — including a tradeoff an ADR already records — mis-read evidence, and duplicates). The reference also covers the **bidirectional** ADR/DOMAIN read: a recorded tradeoff is by-design, but code that has drifted *from* an ADR or `DOMAIN.md` is itself a finding. When a candidate warrants *reopening* an ADR, mark it clearly (e.g., _"contradicts a recorded ADR — but worth reopening because…"_) and only when the friction justifies it.
 
 Group surviving findings into coherent candidates — don't present overlapping or sub-issues separately. **Cross-reference against existing work items found in step 1.** If a candidate overlaps with an existing work item, say so explicitly — propose updating that one rather than filing a new one.
 
@@ -114,6 +114,6 @@ Before filing, check whether `DOMAIN.md` contains the recommended module's name.
 Once the user approves, either **update an existing work item** or **create a new one** using the appropriate command from "Work item tracker" above.
 
 - If step 1 found an existing work item that covers this candidate, update it with a comment or revised body rather than filing a duplicate.
-- If the candidate is net-new, create a work item. Don't ask the user to review before creating — just create it and share the URL. On Azure DevOps, use type **User Story**; if the **Hierarchy** rules above resolved a parent Feature, link via `az boards work-item relation add --relation-type Parent --target-id <feature-id>`.
+- If the candidate is net-new, create a work item. Don't ask the user to review before creating — just create it and share the URL. On Azure DevOps, use type **User Story**; if the **Hierarchy** rules above resolved a parent Feature, link via `az boards work-item relation add --id <story-id> --relation-type Parent --target-id <feature-id>`.
 
 Work item template: see [references/work-item-template.md](references/work-item-template.md).

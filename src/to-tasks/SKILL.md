@@ -58,7 +58,7 @@ Each slice is one Task. Prefer many thin Tasks over few thick ones.
 For each Task:
 
 - **Mark HITL or AFK.** HITL = needs human-in-the-loop review (UX, ambiguous behavior, security-sensitive). AFK = safely runnable away-from-keyboard (mechanical, well-tested, single-module).
-- **Flag cross-repo blockers** based on the `Sibling repos` declaration. If a Task needs an API contract change, mark it `Blocked by: ../sibling-repo — contract change required`.
+- **Flag blockers.** For a sibling-repo dependency, read the `Sibling repos` declaration and mark the Task `Blocked by: ../sibling-repo — contract change required`. For a dependency on another Task in this breakdown, note which Task blocks it; step 8 records it on the tracker.
 - **Name consistently across Tasks.** Route paths, query keys, model names, search-param keys must be identical in every Task that touches them.
 
 ### 6. Quiz the user
@@ -77,14 +77,14 @@ Before publishing, check:
 
 ### 8. Publish in dependency order
 
-Publish blockers first so real work-item IDs can be referenced in later Tasks' "Blocked by" fields.
+Publish blockers first so each blocker's real work-item ID is available when the dependent Task links or references it.
 
 For each Task, use the appropriate template:
 - GitHub: [references/task-template-github.md](references/task-template-github.md)
 - ADO: [references/task-template-ado.md](references/task-template-ado.md)
 
 - **GitHub:** `gh issue create --title "..." --body-file <draft>` with default labels from CLAUDE.md. Reference the parent via template `Parent: #N` line. **Before creating the first Task in a publishing batch,** ensure every label in CLAUDE.md's `Default labels:` exists on the repo: `gh label list --json name --jq '.[].name'` once, then `gh label create <name>` for any missing.
-- **ADO:** `az boards work-item create --type "Task" --title "..." --description "<html>"` with project / area path / iteration / state from CLAUDE.md. The description field expects HTML — convert the Markdown task draft before passing. Link each Task to the parent Story via `az boards work-item relation add --relation-type Parent --target-id <story-id>`. Tasks have only a `System.Description` field — no Acceptance Criteria.
+- **ADO:** `az boards work-item create --type "Task" --title "..." --description "<html>"` with project / area path / iteration / state from CLAUDE.md. The description field expects HTML — convert the Markdown task draft before passing. Link each Task to the parent Story via `az boards work-item relation add --id <task-id> --relation-type Parent --target-id <story-id>`. For each in-project blocker, materialize the dependency as a built-in Predecessor relation: `az boards work-item relation add --id <task-id> --relation-type Predecessor --target-id <blocker-id>`. On a first publish the just-created Task has no relations, so add directly; only on a re-run or `--reconcile` over an existing Task fetch `az boards work-item show <task-id> --output json --expand relations` first and skip if a Predecessor to that blocker already exists, so the add doesn't error on a duplicate. On failure: permission denied → surface immediately; other error → surface with both work-item IDs for manual linking. Tasks have only a `System.Description` field — no Acceptance Criteria.
 
 If a required CLAUDE.md field is missing, fail fast with a clear "add this to CLAUDE.md" message.
 
