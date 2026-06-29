@@ -39,6 +39,8 @@ Don't run every lens on every diff — `/security-review` on a docs change is no
 
 Run each **custom lens** (DOMAIN, ADR, AC, design depth) as its own **read-only subagent** that returns *findings only* — keeps the caller's context clean. Built-ins that already self-parallelize (`/code-review`, `/security-review`) may run at top level rather than wrapped in a subagent.
 
+**A blocked built-in degrades; it never aborts the review.** When a built-in lens can't run here — e.g. `/security-review` needs a Bash permission for `git status` that an org-locked machine denies — record it as **unavailable here** with the reason in its section heading and continue with the rest. The user reruns it manually wherever it's permitted.
+
 ## 4. Vet before presenting
 
 Vet the raw findings per [references/finding-discipline.md](references/finding-discipline.md), which covers the over-report, the drop classes, and the **bidirectional** ADR/DOMAIN read.
