@@ -102,8 +102,10 @@ It resolves declared dependencies (an orchestrator's `requires:` behaviors) and 
 Or link a single skill (run from the repo root):
 
 ```bash
-ln -s "$(pwd)/src/grill-me" ~/.claude/skills/
+ln -s "$(pwd)/src/handoff" ~/.claude/skills/
 ```
+
+A bare `ln -s` links only that one directory — it does **not** resolve `requires:`. For a skill that declares dependencies (e.g. `grill-me` → `grilling`), use `install.sh` instead, or the skill will be missing the behavior that carries its job.
 
 ## Notes
 
