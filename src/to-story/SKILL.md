@@ -82,6 +82,10 @@ Gated on the parent tracker enforcing hierarchy — ADO default; GitHub projects
 
 See [references/ado-hierarchy.md](references/ado-hierarchy.md) for full procedures for both Planned Stories (stamp the snapshot) and Emergent Stories (append below the separator). The Story always publishes regardless of map-update outcome.
 
+### 11. Materialize dependency relations (ADO only)
+
+Native dependency relations are an ADO feature, so this step runs only on ADO — not on a GitHub project that opted into `Hierarchy: required` for Step 10, where story dependencies stay map-only. After the map is stamped, project any story-map dependency edge whose both endpoints are now published onto a built-in `Predecessor` relation — checked in both directions so out-of-order publishing still links each edge once its second endpoint lands. Additive and idempotent; never deletes. See [references/ado-hierarchy.md](references/ado-hierarchy.md) Step 11.
+
 ## Update mode
 
 `--update <story-id>` patches an existing Story in place. See [references/update-mode.md](references/update-mode.md) for cold-start commands, AC ID handling rules, self-review checks, re-snapshot prompt, reconcile prompt, and patch commands.

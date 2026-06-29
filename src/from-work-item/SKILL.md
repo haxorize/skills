@@ -51,8 +51,11 @@ Branch on the detected type. Each branch loads the artifact, its parent context,
 #### Task
 
 - **Task body:**
-  - **ADO:** `az boards work-item show <task-id> --output json --expand relations` — `System.Description` and the parent Story relation (`System.LinkTypes.Hierarchy-Reverse`).
+  - **ADO:** `az boards work-item show <task-id> --output json --expand relations` — `System.Description`, the parent Story relation (`System.LinkTypes.Hierarchy-Reverse`), and in-project blocker relations (`System.LinkTypes.Dependency-Reverse` = Predecessor blockers; `System.LinkTypes.Dependency-Forward` = Successor dependents).
   - **GitHub:** body already fetched; resolve parent via the `Parent: #N` line.
+- **Blockers** — surface what must land first, from both sources:
+  - **In-project:** ADO reads the `Predecessor` relations above; GitHub reads the `Blocked by: #N` lines in the Task body (GitHub keeps these as text — it has no native relation to move them to).
+  - **Sibling-repo:** both trackers read the `## Blocked by` body annotation (`Blocked by: ../<repo>`). Only ADO *in-project* deps moved to relations; the sibling-repo annotation still lives in the body on either tracker.
 - **Parent Story:** fetch description + AC field. Filter active ACs to those listed in the Task's `## Covers` line — the rest aren't this Task's concern.
 - **Parent Feature (one level up):** fetch title and Problem / Goals sections only — broader context, not implementation guidance.
 - **`## Layers touched`** from the Task body. Drives ADR match below.
@@ -60,7 +63,7 @@ Branch on the detected type. Each branch loads the artifact, its parent context,
 #### Story
 
 - **Story body:**
-  - **ADO:** `az boards work-item show <story-id> --output json --expand relations` — `System.Description`, `Microsoft.VSTS.Common.AcceptanceCriteria`, and the parent Feature relation.
+  - **ADO:** `az boards work-item show <story-id> --output json --expand relations` — `System.Description`, `Microsoft.VSTS.Common.AcceptanceCriteria`, the parent Feature relation, and dependency relations (blockers as `System.LinkTypes.Dependency-Reverse`, dependents as `System.LinkTypes.Dependency-Forward`). Surface blocker Stories as cold-start context.
   - **GitHub:** body already fetched; resolve parent via the `Parent: #N` line.
 - **All active ACs:** load the full AC list. The Story-level loader does not filter by `## Covers` — there's no per-Task narrowing yet.
 - **Parent Feature:** title and Problem / Goals.
@@ -114,6 +117,7 @@ Present a concise summary of what was loaded:
 ```text
 Loaded {type} #{ID}: "{title}"
   Parent: {parent type} #{parent-id} — "{parent title}" (or: parentless)
+  Blockers: {blocker work-item IDs — must land first, or: none} (Task / Story)
   Acceptance criteria: {N} active ({M} this work item covers, if Task)
   Layers touched: {layer list}
   ADRs in scope: {ADR-IDs} ({count})

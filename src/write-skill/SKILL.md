@@ -26,10 +26,10 @@ Pick model-invocation only when the agent must reach the skill on its own, or an
 
 ### Behavior vs orchestrator, and declared dependencies
 
-An **orchestrator** (user-invoked) drives a workflow and delegates reusable discipline to **behaviors** (model-invoked) via prose. Cross-skill invocation is soft — there is no hard primitive; the model reads the body and decides to call the `Skill` tool, so a dep can silently fail to load. Phrase every reference with **two independent signals** (ADR-0019):
+An **orchestrator** (user-invoked) drives a workflow and delegates reusable discipline to **behaviors** (model-invoked) via prose. Cross-skill invocation is soft — there is no hard primitive; the model reads the body and decides to call the `Skill` tool, so a dep can silently fail to load. Phrase every reference with **two independent signals**:
 
 - **Slash vs backtick — *is this invoked?*** Use the slash form ("Run the `/feedback-loops` skill") whenever a reference actually fires the `Skill` tool or names a command the human will type: a load-bearing delegation (`implement` → `/tdd`), a model-invoked skill's own soft delegation (`tdd` → `/feedback-loops`), or a human suggestion of a user-invoked skill (`to-story` → "run `/grill-me` first"). Keep the light backtick form where nothing fires: borrowed **vocabulary** ("a `codebase-design` problem"), a **boundary** ("recording is `adr`'s job"), or a **gated offer** you must not fire before the user consents (`implement` offers `adr`). Slashing a mere mention trains a spurious load; slashing an offer jumps the gun.
-- **Load gate vs none — *must I verify it loaded?*** Add the gate ("if you don't see a `Launching skill: X` line, stop and load it") **only** to a load-bearing delegation — the behavior carries the caller's whole job (`grill-me` → `grilling`) — **in a user-invoked orchestrator**, where the human who typed the command watches the load line. Never gate inside a model-invoked skill (no watcher — a miss must degrade gracefully, so slash but don't gate), a human suggestion (the model can't invoke a user-invoked skill — its description is hidden, ADR-0015), or a built-in command (`/code-review`, `/simplify` — always installed, no `requires:`).
+- **Load gate vs none — *must I verify it loaded?*** Add the gate ("if you don't see a `Launching skill: X` line, stop and load it") **only** to a load-bearing delegation — the behavior carries the caller's whole job (`grill-me` → `grilling`) — **in a user-invoked orchestrator**, where the human who typed the command watches the load line. Never gate inside a model-invoked skill (no watcher — a miss must degrade gracefully, so slash but don't gate), a human suggestion (the model can't invoke a user-invoked skill — its description is hidden), or a built-in command (`/code-review`, `/simplify` — always installed, no `requires:`).
 
 So slash tracks *invoked*, the gate tracks *verified*. A model-invoked skill's `requires:` deps stay ungated (and usually opportunistic — an auto-reached chain has no watcher).
 
@@ -108,7 +108,7 @@ When two skills need the same *inert* doc (a format, a template), don't reach fo
 
 ## Skill bodies don't cite repo ADRs
 
-Skills are symlinked into `~/.claude/skills/` and run from inside *the user's* project — not this repo. A link to `../../docs/adr/<NNNN>-...` resolves to `~/docs/adr/...` once hoisted (broken), and a bare "See ADR-0001" points at nothing in the user's project. Lineage runs ADR → skill: each ADR names the skills it shapes; that's the durable record. Don't write the reverse pointer.
+Skills are symlinked into `~/.claude/skills/` and run from inside *the user's* project — not this repo. A link to `../../docs/adr/<NNNN>-...` resolves to `~/docs/adr/...` once hoisted (broken), and a bare "See ADR-N" points at nothing in the user's project. Lineage runs ADR → skill: each ADR names the skills it shapes; that's the durable record. Don't write the reverse pointer. (`scripts/lint-skills.sh` enforces this — a skill body matching `ADR-<digit>` fails lint.)
 
 ## Frontmatter pitfalls
 
