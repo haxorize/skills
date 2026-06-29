@@ -11,7 +11,7 @@ Design **deep modules**: a lot of behaviour behind a small interface, placed at 
 
 Use these terms exactly — don't substitute "component," "service," "API," or "boundary."
 
-- **Module** — anything with an interface and an implementation. Deliberately scale-agnostic: a function, class, package, or tier-spanning slice. _Avoid_: unit (implies test isolation), component (implies UI), service (implies a network boundary).
+- **Module** — anything with one **Interface** and an implementation behind it. Deliberately scale-agnostic: a function, class, package, or tier-spanning slice. _Avoid_: unit (implies test isolation), component (implies UI), service (implies a network boundary).
 - **Interface** — everything a caller must know to use the module correctly: the type signature, but also invariants, ordering constraints, error modes, required configuration, and performance characteristics. _Avoid_: API (implies external/versioned), signature (too narrow — type-level only).
 - **Implementation** — the code inside the module. Distinct from **Adapter**: a thing can be a small adapter with a large implementation (a Postgres repo) or a large adapter with a small implementation (an in-memory fake). Reach for "adapter" when the seam is the topic; "implementation" otherwise.
 - **Depth** — leverage at the interface: how much behaviour a caller or test can exercise per unit of interface they have to learn. **Deep** = a lot of behaviour behind a small interface. **Shallow** = the interface is nearly as complex as the implementation.
@@ -43,13 +43,6 @@ Tests at the deepened interface replace the old shallow-module tests — delete 
 ## Judging a change (diff-relative)
 
 The principles above describe a good design in the absolute. When the subject is a **diff** rather than a whole tree — a review, a slice just built — apply them **diff-relatively**: the bar is not "is this module perfect?" but **"did this change make the local architecture worse?"** A diff that deepens a module or leaves it as-is passes; a diff that adds a condition-chain where a dispatcher belonged, splinters a deep module into shallow ones, or threads a new concern across call sites **regresses** the local design — that's the finding. Hold the vocabulary here; the orchestrator (`review-changes` for a diff, `improve-design` for a tree) supplies the change set and applies this bar.
-
-## Relationships
-
-- A **Module** has exactly one **Interface** — the surface it presents to callers and tests.
-- **Depth** is a property of a **Module**, measured against its **Interface**.
-- A **Seam** is where a **Module**'s **Interface** lives; an **Adapter** sits at a **Seam** and satisfies the **Interface**.
-- **Depth** produces **Leverage** for callers and **Locality** for maintainers.
 
 ## Rejected framings
 

@@ -132,9 +132,7 @@ The skill itself doesn't build — it loads context and stops. `/implement` pick
 
 ## Refusal vs warning
 
-The skill has exactly one refusal — Feature / Epic IDs. Everything else (ambiguous type detection, layer mismatch, missing `bug` label) is a warning the user can override.
-
-Refusing on Feature/Epic is the only case where the user's next move is structurally different (decompose, then re-enter). Every other surface is a judgment call; the loader supplies context and lets the user decide.
+The one refusal — Feature / Epic IDs — is the only case where the user's next move is structurally different (decompose, then re-enter). Everything else (ambiguous type detection, layer mismatch, missing `bug` label) is a judgment call the loader surfaces and lets the user override.
 
 ## Notes
 

@@ -22,7 +22,7 @@ Every skill is exactly one of two kinds, trading two different costs (full frami
 - **Model-invoked** (default — omit the flag): the agent can fire it autonomously *and* other skills can reach it via prose invocation; you can still type its name. Its description sits in the context window every turn — it costs **context load**. Write a model-facing description rich in triggers. This is where reusable **discipline** lives — the *behavior* skills (`grilling`, `domain-modeling`, `codebase-design`, `feedback-loops`, `tdd`, `adr`).
 - **User-invoked** (`disable-model-invocation: true`): reachable *only* by a human typing its name — invisible to the agent and to other skills. Zero context load, but it spends **cognitive load** (the human is the index that must remember it). Its description is **human-facing** — a one-line summary, trigger lists stripped. This is where **orchestration** lives — the skills a person deliberately runs (`grill-me`, `harden-domain`, `improve-design`, the `to-*` publishers).
 
-Pick model-invocation only when the agent must reach the skill on its own, or another skill must. If it only ever fires by hand, make it user-invoked and pay no context load. When user-invoked skills multiply past memory, a **router skill** (`which-skill`) names them.
+Pick model-invocation only when the agent must reach the skill on its own, or another skill must. If it only ever fires by hand, make it user-invoked and pay no context load.
 
 ### Behavior vs orchestrator, and declared dependencies
 

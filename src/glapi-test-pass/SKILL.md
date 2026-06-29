@@ -10,7 +10,7 @@ GLAPI checks that a User Story (not a Feature) has a passing test point in the t
 
 ## Workflow
 
-Read `CLAUDE.md` for `Organization:`, `Project:`, `Area path:`, and `Iteration:` before starting.
+Read `CLAUDE.md` for `Organization:`, `Project:`, `Area path:`, and `Iteration:` before starting. The exact `az devops invoke` call for every step lives in [references/ado-commands.md](references/ado-commands.md) — run them in order, capturing each step's output variable for the next.
 
 ### 1. Fetch story title
 
@@ -25,17 +25,15 @@ Use the title in the test case name and run name.
 
 ### 2. Create a Test Case work item
 
-Title: `GLAPI gate — <story title>` (truncate to ~80 chars if needed). Area and iteration: from CLAUDE.md. Project: from CLAUDE.md. → capture `TEST_CASE_ID`.
+Title: `GLAPI gate — <story title>` (truncated if long — the reference's command sets the length). Area and iteration: from CLAUDE.md. Project: from CLAUDE.md. → capture `TEST_CASE_ID`.
 
 ### 3. Link test case to story via "Tested By"
 
-Link the test case to the story via the `Tested By` relation type. See [references/ado-commands.md](references/ado-commands.md) Step 3.
+Link the test case to the story via the `Tested By` relation type.
 
 ### 4. Find the team's test plan for the current iteration
 
 Query `testplan/Plans` and filter by iteration. The team plan name follows the pattern `<team name>_Stories_<PI label>`. Capture `PLAN_ID`, `PLAN_NAME`, and `ROOT_SUITE_ID`.
-
-See [references/ado-commands.md](references/ado-commands.md) Step 4.
 
 ### 5. Create a requirement test suite for the story
 
@@ -43,7 +41,7 @@ Create a `requirementTestSuite` under the root suite for this story. → capture
 
 ### 6. Add the test case to the suite
 
-Add the test case to the suite. Returns `value: []` on success — this is normal.
+Add the test case to the suite.
 
 ### 7. Get the test point ID
 

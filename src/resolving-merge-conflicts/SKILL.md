@@ -32,5 +32,3 @@ Stage everything and complete the operation:
 
 - **Merge:** `git commit` (keep the merge commit message; note any trade-off from step 3).
 - **Rebase:** `git rebase --continue`, and repeat from step 1 for each subsequent commit that conflicts until the rebase finishes.
-
-Never resolve by `git merge --abort` / `git rebase --abort`.

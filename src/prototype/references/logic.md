@@ -66,7 +66,7 @@ Give the user the run command. They'll drive it themselves; the interesting mome
 
 ### 7. Capture the answer
 
-Capture the answer as `prototype`'s "When done" describes — offer an `adr` for a load-bearing decision, run `domain-modeling` for any new concept, or leave a `NOTES.md` next to the prototype if running AFK.
+Capture the answer as `prototype`'s "When done" section describes.
 
 ## Anti-patterns
 

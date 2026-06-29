@@ -11,7 +11,7 @@ The file location, numbering, default template, optional sections, the three-cri
 
 ## When to write an ADR
 
-The gate has three criteria (full statement in the reference) — **hard to reverse**, **surprising without context**, **the result of a real trade-off**. All three must hold; if any one is missing, skip it.
+The gate has three criteria (full statement in the reference) — **hard to reverse**, **surprising without context**, **the result of a real trade-off**. All three must hold.
 
 ### What qualifies
 
