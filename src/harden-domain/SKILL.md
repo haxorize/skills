@@ -39,7 +39,6 @@ Summarize the glossary inline in the conversation. Suggest: "Consider adding a r
 
 ## Rules
 
-- **Flag conflicts explicitly** in the "Flagged ambiguities" section with a clear recommendation.
 - **Only domain terms.** Skip module/class names unless they have domain meaning. Skip generic programming concepts unless they have domain-specific meaning.
 
 ## Re-running
@@ -49,5 +48,4 @@ When invoked again in the same conversation:
 1. Read the existing `DOMAIN.md`
 2. Scan the conversation and codebase for new terms
 3. Update definitions if understanding has evolved
-4. Re-flag any new ambiguities
-5. Update the example dialogue to incorporate new terms
+4. Re-run step 4's `/domain-modeling` write — it re-flags ambiguities and refreshes the example dialogue as it folds in the new terms

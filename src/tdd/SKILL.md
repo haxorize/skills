@@ -1,6 +1,7 @@
 ---
 name: tdd
 description: Test-driven development workflow using vertical slices. Use when implementing a feature, building from a story or task, or user mentions "TDD" or "test first".
+requires: feedback-loops
 ---
 
 # Test-Driven Development
@@ -53,12 +54,7 @@ For each remaining behavior:
 1. **RED**: Write one test for the next behavior. Run the test command — confirm it fails for the right reason.
 2. **GREEN**: Write minimal code to pass. Run the test command — confirm it passes.
 
-Rules:
-
-- One test at a time
-- Only enough code to pass the current test
-- Don't anticipate future tests
-- Tests describe what the system does, not how
+Rule: don't anticipate future tests — write only enough code for the test in front of you. (Philosophy already sets the rest: one test at a time, behavior through the public interface, not implementation.)
 
 ### 4. Refactor
 

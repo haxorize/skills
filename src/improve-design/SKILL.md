@@ -51,7 +51,7 @@ Done when you've swept **every top-level module/area**, not just the first frict
 
 ### 3. Vet, then consolidate and present candidates
 
-**Vet first** per [references/finding-discipline.md](references/finding-discipline.md): exploration over-reports, so re-read every location you'd cite and drop the three false-positive classes (by-design — including a tradeoff an ADR already records — mis-read evidence, and duplicates). The reference also covers the **bidirectional** ADR/DOMAIN read: a recorded tradeoff is by-design, but code that has drifted *from* an ADR or `DOMAIN.md` is itself a finding. When a candidate warrants *reopening* an ADR, mark it clearly (e.g., _"contradicts a recorded ADR — but worth reopening because…"_) and only when the friction justifies it.
+**Vet first** per [references/finding-discipline.md](references/finding-discipline.md) — exploration over-reports, so re-read every location you'd cite, drop the false-positive classes it lists, and surface code that has drifted *from* an ADR or `DOMAIN.md` as its own finding. When a candidate warrants *reopening* an ADR, mark it clearly (e.g., _"contradicts a recorded ADR — but worth reopening because…"_) and only when the friction justifies it.
 
 Group surviving findings into coherent candidates — don't present overlapping or sub-issues separately. **Cross-reference against existing work items found in step 1.** If a candidate overlaps with an existing work item, say so explicitly — propose updating that one rather than filing a new one.
 
@@ -103,7 +103,7 @@ Then present one recommended interface design:
 
 Be opinionated — the user wants a strong recommendation, not a menu.
 
-Then offer to grill the design before filing — `grill-me` for a stress-test, or `grill-and-record` if the project has `DOMAIN.md` or `docs/adr/`. Grilling is the norm, not an aside; expect the design to evolve, and file what comes out the other side.
+Then offer to grill the design before filing — `/grill-me` for a stress-test, or `/grill-and-record` if the project has `DOMAIN.md` or `docs/adr/`. Grilling is the norm, not an aside; expect the design to evolve, and file what comes out the other side.
 
 ### 7. Create or update the work item
 

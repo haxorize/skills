@@ -1,6 +1,6 @@
 ---
 name: to-feature
-description: Synthesize the current conversation into a Feature-level (PRD-shaped) artifact and publish it to the project's issue tracker — for scope large enough to need multiple stories underneath. For single-feature scope, reach for `to-story` instead. ADO — creates a Feature work item under a parent Epic. GitHub — creates an issue with a feature/PRD template.
+description: Synthesize the current conversation into a Feature-level (PRD-shaped) artifact and publish it to the project's tracker — for scope large enough to need multiple stories underneath. For single-feature scope, reach for `to-story` instead. ADO — creates a Feature work item under a parent Epic. GitHub — creates an issue with a feature/PRD template.
 disable-model-invocation: true
 ---
 
@@ -70,7 +70,7 @@ Iterate until approved.
 ### 10. Publish via tracker dispatch
 
 - **GitHub:** `gh issue create --title "..." --body-file <draft>` with default labels from CLAUDE.md. Parent linking via `Tracked-by:` line or template `Parent: #N` reference if `--parent` was provided. **Before creating the issue,** ensure every label in CLAUDE.md's `Default labels:` exists on the repo: `gh label list --json name --jq '.[].name'` once, then `gh label create <name>` for any missing.
-- **ADO:** `az boards work-item create --type Feature --title "..." --description "<html>"` with project / area path / iteration / state from CLAUDE.md. The description field expects HTML — convert the Markdown feature draft before passing. The body's final section is `## Story Decomposition`; inside it, HTML markers (`<!-- BEGIN STORY MAP -->` / `<!-- END STORY MAP -->`) fence an append-only region with a `---` snapshot separator and an `*Emergent Stories appended below.*` sentinel — see [feature-template-ado.md](references/feature-template-ado.md) for the full structure. If decomposition was deferred, the section body is the single line `Story Decomposition: deferred at Feature creation.` (no markers). Parent linking via `az boards work-item relation add --id <feature-id> --relation-type Parent --target-id <epic-id>`.
+- **ADO:** `az boards work-item create --type Feature --title "..." --description "<html>"` with project / area path / iteration / state from CLAUDE.md. The description field expects HTML — convert the Markdown feature draft before passing. The body's final section is `## Story Decomposition`; inside it, HTML markers (`<!-- BEGIN STORY MAP -->` / `<!-- END STORY MAP -->`) fence an append-only region — see [feature-template-ado.md](references/feature-template-ado.md) for the snapshot separator and emergent-Story sentinel inside it. If decomposition was deferred, the section body is the single line `Story Decomposition: deferred at Feature creation.` (no markers). Parent linking via `az boards work-item relation add --id <feature-id> --relation-type Parent --target-id <epic-id>`.
 
 If a required CLAUDE.md field is missing, fail fast with a clear "add this to CLAUDE.md" message.
 

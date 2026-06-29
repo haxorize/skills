@@ -71,7 +71,7 @@ Before publishing, check:
 
 - **Parent coverage** — every active parent Story AC ID appears in at least one Task's `## Covers` line
 - **Covers references resolve** — every AC ID in any Task's `## Covers` exists on the parent Story and is active (not in `## Removed acceptance criteria`); surface stale references for user decision before publishing
-- **Naming consistency** — route paths, query keys, model names, search-param keys identical across Tasks
+- **Naming consistency** — identical across Tasks (the names enumerated in step 5)
 - **Domain language matches `DOMAIN.md`**
 - **No placeholders** (no TBD/TODO)
 
@@ -99,6 +99,6 @@ Two flows operate on already-published Tasks:
 
 Both modes read and append to the **naming-drift queue** — see [references/naming-drift-queue.md](references/naming-drift-queue.md).
 
-GitHub reconcile uses an **In-progress signal** declared in CLAUDE.md's `Issue tracker:` block (`In-progress signal: label <name>`, defaults to assignee-presence) to distinguish open-being-worked from open-not-started. ADO reads `System.State` directly.
+GitHub reconcile distinguishes open-being-worked from open-not-started via an **In-progress signal** declared in CLAUDE.md's `Issue tracker:` block; ADO reads `System.State` directly. The declaration syntax and assignee-presence default live in the reference below.
 
 Full mode mechanics — cold-start fetch commands, bucket definitions, and state-transition tables — live in [references/maintenance-modes.md](references/maintenance-modes.md).

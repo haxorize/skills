@@ -35,9 +35,3 @@ This is where silent gaps hide — a model change that ships without its migrati
 ### 3. Update docs
 
 Check whether the change affects anything documented in `README.md`, `CLAUDE.md`, or `DOMAIN.md` — new or changed commands, structure, conventions, or domain terms. Update what drifted. This step only fixes docs the change has already made stale: recording a *decision* is the `adr` skill's job, and capturing or sharpening a *domain term* is `domain-modeling`'s.
-
-## Boundaries
-
-- **Not `/simplify`** — it mutates toward a cleaner design and belongs in the refactor beat, before this pass.
-- **Not `review-changes`** — judgment review of the diff (quality, DOMAIN/ADR conformance) is a separate, deliberate step.
-- **Not `adr`** — recording rationale is its own gated decision.

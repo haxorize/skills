@@ -24,8 +24,6 @@ Title prefix: if the tracker block declares `Title prefix:`, prepend it (with a 
 
 ### 2. Resolve parent (optional)
 
-Bugs may attach to a Feature or be parentless.
-
 - If `--parent <feature-id>` is provided, link the Bug to that Feature post-create.
 - If absent, file parentless. Do not prompt — even under `Hierarchy: required`, ADO permits parentless Bugs.
 

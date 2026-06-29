@@ -17,8 +17,8 @@ Every skill is exactly one of **user-invoked** (carries `disable-model-invocatio
 
 ## Commit order
 
-When changes touch both an ADR and the skill that references it, commit the ADR first so reviewers see the rationale before the implementation.
+When changes touch both an ADR and the skill it shapes (lineage runs ADR → skill — the ADR names the skill, never the reverse), commit the ADR first so reviewers see the rationale before the implementation.
 
 ## Linting
 
-`bash scripts/lint-skills.sh` checks SKILL.md and reference files against the size caps and frontmatter conventions in [`src/write-skill/SKILL.md`](src/write-skill/SKILL.md). Run before committing skill changes.
+`bash scripts/lint-skills.sh` checks SKILL.md and reference files against the conventions in [`src/write-skill/SKILL.md`](src/write-skill/SKILL.md) — size caps, frontmatter (description length/colon, the invocation-axis flag, `requires:` resolution), sibling-file byte-identity, and the ban on skill bodies citing repo ADRs by number. Run before committing skill changes.

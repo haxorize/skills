@@ -47,7 +47,7 @@ Vet the raw findings per [references/finding-discipline.md](references/finding-d
 
 ## 5. Rank and classify each finding
 
-Format and rank every finding per [references/finding-discipline.md](references/finding-discipline.md) — `file:line` evidence, impact, effort (S/M/L), fix-risk, confidence (HIGH/MED/LOW); within a lens, order by leverage. Then tag each finding:
+Format and rank every finding per [references/finding-discipline.md](references/finding-discipline.md); within a lens, order by leverage. Then tag each finding:
 
 - **Blocker** — must fix before the PR lands.
 - **Follow-up** — worth doing, doesn't block; file against the backlog.

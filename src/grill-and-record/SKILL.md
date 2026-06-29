@@ -11,7 +11,7 @@ Run the `/grilling` and `/domain-modeling` skills now — this session needs bot
 
 This is the doc-aware variant of `grill-me`. Use the vanilla `grill-me` when no `DOMAIN.md` or ADR log is wanted.
 
-## ADR recording: inline, never `/adr`
+## ADR recording: inline, never via the `adr` skill
 
 `domain-modeling` offers ADRs at its gate but treats recording as the standalone `adr` skill's job. **Override that here:** when the gate fires and the user agrees, write the ADR file *inline* — do not delegate to the `adr` skill. Its offer→confirm→write flow is a gated action that would interrupt the one-question-at-a-time rhythm the grill loop depends on.
 

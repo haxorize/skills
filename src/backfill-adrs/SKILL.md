@@ -47,7 +47,7 @@ Ask the user to confirm or refine each. Drop rejected candidates without arguing
 
 ### 6. Write approved ADRs
 
-Use the format in [references/adr-format.md](references/adr-format.md). ADRs live in `docs/adr/<NNNN>-<slug>.md` — scan for the highest existing number, increment by one for each new ADR, in chronological order of the underlying decisions.
+Number and save each approved ADR per [references/adr-format.md](references/adr-format.md), in chronological order of the underlying decisions.
 
 ### 7. Stop
 
@@ -55,6 +55,5 @@ Once the candidate list is exhausted, stop. Don't keep mining for more.
 
 ## Notes
 
-- **Lazily create `docs/adr/`** if missing.
 - **Dedupe against existing ADRs.** Read the existing log first; skip candidates already covered.
 - **Prefer fewer high-quality ADRs.** If a candidate borderline-qualifies, drop it.

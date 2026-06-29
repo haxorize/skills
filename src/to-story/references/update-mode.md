@@ -55,4 +55,4 @@ If the update adds or removes ACs, changes the module list, or reshapes layers, 
 
 ## Naming-drift queue
 
-If the patch introduces names differing from siblings (other Stories under the same parent Feature, or Tasks under this Story), append an entry per [naming-drift-queue.md](naming-drift-queue.md). Surface drift as a warning during self-review; never block the patch — sometimes the new name is correct and the sibling needs renaming.
+If the patch introduces names differing from siblings (other Stories under the same parent Feature, or Tasks under this Story), append an entry per [naming-drift-queue.md](naming-drift-queue.md), which also covers surfacing the drift as a self-review warning and the never-block rule.
