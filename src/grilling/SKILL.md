@@ -5,13 +5,13 @@ description: The relentless-interview discipline for stress-testing a plan or de
 
 # Grilling
 
-Walk down each branch of the design tree, resolving dependencies between decisions one-by-one. For each question, provide your recommended answer.
+Walk down each branch of the design tree, resolving dependencies between decisions one-by-one. **For each question, provide your recommended answer.**
 
 Ask the questions **one at a time**, waiting for the answer before moving on. Asking several at once lets weak spots slip past.
 
 If a question can be answered by exploring the codebase, explore the codebase instead of asking.
 
-The loop is done when the design tree has no unresolved branches — every decision has an answer, every dependency between decisions is settled, and nothing the user said contradicts the code.
+The loop is done when the design tree has no unresolved branches — every decision has an answer, every dependency between decisions is settled, and nothing the user said contradicts the code. Even then, do not start enacting the plan until the user confirms shared understanding has been reached.
 
 ## Notes
 
