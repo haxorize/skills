@@ -8,7 +8,7 @@ requires: feedback-loops
 
 ## Philosophy
 
-Tests verify behavior through public interfaces, not implementation details. One test at a time, one implementation at a time. Never write all tests first then all code — that's horizontal slicing.
+Tests verify behavior through public interfaces, not implementation details. Never write a **tautological test** — one whose assertion recomputes the expected value the way the code does (`expect(add(a, b)).toBe(a + b)`), so it passes by construction; expected values come from an independent source of truth (a known-good literal, a worked example, the spec). One test at a time, one implementation at a time. Never write all tests first then all code — that's horizontal slicing.
 
 For test fixtures and patterns, see your project's testing skill(s). For conventions on the layer you're touching (endpoint shape, component composition, schema design, etc.), consult the matching convention skill.
 
@@ -35,7 +35,7 @@ Build the first slice as a **Tracer bullet** — the thinnest path that touches 
 If a Story or Task issue exists, pull acceptance criteria from it. If not, briefly identify:
 
 - What interface changes are needed (route, endpoint, component, hook, query, model)
-- Which behaviors to test (prioritize with the user)
+- Which behaviors to test, and the seam each is tested at — naming seams up front aims testing effort at critical paths instead of every edge case (prioritize with the user)
 - Whether the slice is inner-loop testable, outer-loop testable, or both
 - Opportunities for deep modules
 
