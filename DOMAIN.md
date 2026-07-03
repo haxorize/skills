@@ -112,7 +112,7 @@ Ubiquitous-language glossary for the entire skills repo. Covers the four main ar
 | **Non-testable slice** | A Vertical slice built via the direct path because it has no meaningful test seam (documentation, scripts, config) | Untested slice (implies a gap, not a deliberate choice) |
 | **Close the loop** | The **mechanical** finalization pass run **once after the slice's behaviors are built and refactored** (not per behavior) — `feedback-loops` runs lint/format/typecheck, migrations, and doc updates, resolving commands via CLAUDE.md `## Commands` and deferring stack-specifics to Convention skills. Judgment review (`review-changes`) and `/simplify` live elsewhere (see below) | Finalize (overloaded), Wrap-up |
 | **`review-changes`** | The **read-only** judgment review (User-invoked Orchestrator) run before a PR or on a teammate's PR: it fans **Review lenses** out to subagents (findings only) and never mutates code; resolves its input from the local diff or a PR + a work-item pointer | Conformance-review (earlier name) |
-| **Review lens** | One angle `review-changes` applies, chosen by **diff triage** so irrelevant ones don't run — always `/code-review` + DOMAIN + ADR; conditional `/security-review` (security surfaces), AC-conformance (work item loaded), design-depth (`codebase-design`, structural change) | — |
+| **Review lens** | One angle `review-changes` applies, chosen by **diff triage** so irrelevant ones don't run — always `/code-review` + DOMAIN + ADR + smell baseline (the Fowler-smell catalog); conditional `/security-review` (security surfaces), AC-conformance (work item loaded), design-depth (`codebase-design`, structural change) | — |
 
 ## Architecture & deepening
 

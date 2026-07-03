@@ -9,7 +9,7 @@ requires: codebase-design
 
 Judgment review of a **diff** — never the conversation, never the working tree's intent as you remember it. The diff *is* the handoff. This skill is **read-only**: it fans review lenses out to subagents, vets what comes back, and presents a ranked, classified report. It never mutates code — `/simplify` mutates, so it lives in the build/refactor beat (`implement`/`tdd`), not here.
 
-Its value over the raw built-ins is **project awareness**: generic quality is delegated to `/code-review`, generic security to `/security-review`; this skill adds the recorded-intent lenses they can't supply — `DOMAIN.md`, `docs/adr/`, the work item's acceptance criteria, and design depth.
+Its value over the raw built-ins is **project awareness**: generic quality is delegated to `/code-review`, generic security to `/security-review`; this skill adds the lenses they can't supply — recorded intent (`DOMAIN.md`, `docs/adr/`, the work item's acceptance criteria), design depth, and a named design-smell baseline.
 
 ## 1. Resolve the target, fail fast
 
@@ -29,7 +29,7 @@ For the AC lens, resolve a **work-item pointer** (ID or PR#) from the argument, 
 
 Don't run every lens on every diff — `/security-review` on a docs change is noise. Triage from the diff:
 
-- **Always:** `/code-review` (generic quality) · **DOMAIN conformance** (against `DOMAIN.md`) · **ADR conformance** (against `docs/adr/`).
+- **Always:** `/code-review` (generic quality) · **DOMAIN conformance** (against `DOMAIN.md`) · **ADR conformance** (against `docs/adr/`) · **Smell baseline** (against [references/smell-baseline.md](references/smell-baseline.md)).
 - **Conditional:**
   - `/security-review` — only on **security surfaces**: endpoints/external surface, auth/permissions, raw SQL, deserialization/input boundaries, file ingest, CORS/secrets/config, new dependencies.
   - **AC conformance** — only when a work item is loaded (does the diff satisfy its acceptance criteria?).
@@ -37,7 +37,7 @@ Don't run every lens on every diff — `/security-review` on a docs change is no
 
 ## 3. Fan out (read-only subagents, findings only)
 
-Run each **custom lens** (DOMAIN, ADR, AC, design depth) as its own **read-only subagent** that returns *findings only* — keeps the caller's context clean. Built-ins that already self-parallelize (`/code-review`, `/security-review`) may run at top level rather than wrapped in a subagent.
+Run each **custom lens** (DOMAIN, ADR, AC, design depth, smell baseline) as its own **read-only subagent** that returns *findings only* — keeps the caller's context clean. The smell-baseline subagent's prompt must carry the catalog (paste [references/smell-baseline.md](references/smell-baseline.md) or its path) — it won't discover it on its own. Built-ins that already self-parallelize (`/code-review`, `/security-review`) may run at top level rather than wrapped in a subagent.
 
 **A blocked built-in degrades; it never aborts the review.** When a built-in lens can't run here — e.g. `/security-review` needs a Bash permission for `git status` that an org-locked machine denies — record it as **unavailable here** with the reason in its section heading and continue with the rest. The user reruns it manually wherever it's permitted.
 
