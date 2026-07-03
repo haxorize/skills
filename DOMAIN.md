@@ -88,6 +88,7 @@ Ubiquitous-language glossary for the entire skills repo. Covers the four main ar
 | **Snapshot separator** | The `---` divider between the Snapshot and the Append region | Separator (when used alone) |
 | **Planned Story** | A User Story whose scope is listed in the parent Feature's Snapshot, identified by a matching `### Story N` heading; `to-story` stamps the tracker ID inline on that heading and skips the Append-region append | Decomposed Story |
 | **Emergent Story** | A User Story that arises after Feature publication with no corresponding Snapshot entry; `to-story` appends it to the Append region below the Snapshot separator | — |
+| **Admission test** | The publish gate `to-feature` and `to-tasks` apply during decomposition: an item is published only when its scope can be stated precisely *now* — blocked-but-sharp is admissible, unsharpened scope stays as prose in the parent until it graduates (for Stories, as an **Emergent Story**), never a placeholder item | — |
 | **Append region** | The mutable Story-map region below the Snapshot separator, receiving entries only for Emergent Stories | — |
 | **Coverage matrix** | The Story-map sub-artifact mapping each child Story to the parent Feature ACs it covers | AC matrix |
 | **Naming table** | The Story-map sub-artifact listing names shared across Stories (route paths, query keys, model names) | Shared-names table |
@@ -112,7 +113,7 @@ Ubiquitous-language glossary for the entire skills repo. Covers the four main ar
 | **Non-testable slice** | A Vertical slice built via the direct path because it has no meaningful test seam (documentation, scripts, config) | Untested slice (implies a gap, not a deliberate choice) |
 | **Close the loop** | The **mechanical** finalization pass run **once after the slice's behaviors are built and refactored** (not per behavior) — `feedback-loops` runs lint/format/typecheck, migrations, and doc updates, resolving commands via CLAUDE.md `## Commands` and deferring stack-specifics to Convention skills. Judgment review (`review-changes`) and `/simplify` live elsewhere (see below) | Finalize (overloaded), Wrap-up |
 | **`review-changes`** | The **read-only** judgment review (User-invoked Orchestrator) run before a PR or on a teammate's PR: it fans **Review lenses** out to subagents (findings only) and never mutates code; resolves its input from the local diff or a PR + a work-item pointer | Conformance-review (earlier name) |
-| **Review lens** | One angle `review-changes` applies, chosen by **diff triage** so irrelevant ones don't run — always `/code-review` + DOMAIN + ADR + smell baseline (the Fowler-smell catalog); conditional `/security-review` (security surfaces), AC-conformance (work item loaded), design-depth (`codebase-design`, structural change) | — |
+| **Review lens** | One angle `review-changes` applies, chosen by **diff triage** so irrelevant ones don't run, each returning findings only; the roster (which lenses are always-on vs conditional) lives in `review-changes` §2, the single source of truth | — |
 
 ## Architecture & deepening
 
