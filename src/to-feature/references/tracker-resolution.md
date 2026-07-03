@@ -7,3 +7,7 @@ Read `CLAUDE.md` for an `Issue tracker:` block. Three modes:
 - **No-repo CLI-only** — no git repo at all. Ask for tracker info. Publish via CLI. No file writes. Save to memory keyed by tracker context (e.g., `Tracker default — work-backlog`) so subsequent invocations don't re-ask.
 
 Required fields: GitHub needs only the tracker name; ADO requires `Project:` minimum.
+
+## Referring to work items
+
+In anything the human reads — narration, publish confirmations, reports — refer to a work item by its **title**, with the ID and link riding inside (e.g. `[Rate-limit login](url) (#42)`), never by a bare ID. A wall of `#42, #43, #44` is illegible; names read at a glance.
