@@ -44,6 +44,17 @@ Each cut spends one of the two loads, so split only when the cut earns it:
 - **Relevance.** Check every line: does it still bear on what the skill does? Shorter skills are cheaper to keep relevant.
 - **No-ops.** Hunt sentence by sentence: does this line change behavior versus the model's default? If not, delete the whole sentence — don't trim words. Be aggressive; most prose that fails the test should go.
 
+## Wording forms — match the form to the failure
+
+Diagnose the *baseline* failure — how the agent behaves without the guidance — then pick the form. The wrong form is worse than none: prohibitions aimed at output-shape problems measurably *increase* the unwanted output (A/B-tested; the prohibition arm produced more of it than the no-guidance control).
+
+| Observed baseline failure | Form that fixes it |
+| --- | --- |
+| Agent skips the rule under pressure (deadline, sunk cost, "just this once") | Hard prohibition + rationalization table + red-flags list |
+| Agent complies but the output is wrong-shaped (bloated, buried verdict, restated spec) | Positive recipe — state what the output IS, in order |
+| Agent omits a required element | A REQUIRED slot in the template, not prose asking for it |
+| Behavior should apply only sometimes | Conditional keyed to an observable predicate ("if the brief exists, reference it") |
+
 ## Failure modes
 
 Use these to diagnose a skill that isn't behaving:

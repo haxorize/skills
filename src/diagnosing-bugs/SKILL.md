@@ -120,6 +120,8 @@ If a correct seam exists:
 4. Watch it pass.
 5. Re-run the Phase 1 feedback loop against the original (un-minimised) scenario.
 
+**Three strikes.** A failed fix is a falsified hypothesis — return to Phase 3. But after **three** failed fixes, stop treating it as hypothesis-testing: each fix revealing a new problem in a different place is the signature of a wrong architecture, not a wrong guess. Don't attempt fix #4 — step back to the architectural question (is the fix fighting the module's shape?) and raise it with the user before continuing.
+
 ## Phase 6 — Cleanup + post-mortem
 
 Required before declaring done:
@@ -128,6 +130,7 @@ Required before declaring done:
 - [ ] Regression test passes (or absence of seam is documented)
 - [ ] All `[DEBUG-...]` instrumentation removed (`grep` the prefix)
 - [ ] Throwaway prototypes deleted (or moved to a clearly-marked debug location)
+- [ ] Sibling instances of the fixed bug's **class** swept within the change's scope — grep the pattern, check the other call sites; the second occurrence ships otherwise
 - [ ] The hypothesis that turned out correct is stated in the commit / PR message — so the next debugger learns
 
 **Then ask: what would have prevented this bug?** Make the call **after** the fix is in, not before — you have more information now than when you started.

@@ -17,3 +17,5 @@ A fixed set of Fowler code smells (*Refactoring*, ch. 3) the smell-baseline lens
 - **Message Chains** — long `a.b().c().d()` navigation the caller shouldn't depend on. → hide the walk behind one method on the first object.
 - **Middle Man** — a class or function that mostly just delegates onward. → cut it, call the real target direct.
 - **Refused Bequest** — a subclass or implementer that ignores or overrides most of what it inherits. → drop the inheritance, use composition.
+- **Long Function** — the diff grows an already-long function instead of decomposing it; the body outgrows what one reading can hold. → extract steps into named helpers; each name documents intent.
+- **Large Class** — a class or module accreting fields and methods for several jobs (a file ballooning under this diff is the file-level tell). → split by responsibility; extract the cluster that changes together.

@@ -6,14 +6,15 @@ disable-model-invocation: true
 
 # Writing Skills
 
-Skills wrangle determinism out of a stochastic system. The goal is **predictability** — the agent taking the same *process* every run. The deep vocabulary, the information-hierarchy ladder, and the failure-mode taxonomy live in [references/great-skills.md](references/great-skills.md); this file is the operational guide.
+Skills wrangle determinism out of a stochastic system. The goal is **predictability** — the agent taking the same *process* every run. The deep vocabulary, the information-hierarchy ladder, the failure-mode taxonomy, and the form-to-failure wording table live in [references/great-skills.md](references/great-skills.md); this file is the operational guide.
 
 ## Workflow
 
 1. **Gather requirements** — what domain, what use cases, any reference material?
 2. **Classify the skill** — behavior or orchestrator? Model-invoked or user-invoked? (See *Invocation axis* — decide this first; it shapes the description and the body.)
 3. **Draft the skill** — `SKILL.md` with references if needed
-4. **Review with user** — present draft, iterate
+4. **Pressure-test if it carries a discipline** — when the skill encodes a rule the agent might rationalize around under pressure (an iron law, a gate, a prohibition — not a format doc, template, or router), run the micro-test loop in [references/testing-skills.md](references/testing-skills.md) before shipping
+5. **Review with user** — present draft, iterate
 
 ## Invocation axis
 
@@ -118,7 +119,8 @@ Frontmatter parses as strict YAML. The hazard is an unquoted `: ` (colon **follo
 
 - **Imperative voice** ("Write one test"; not "You should write one test").
 - **Explain the why** — an agent that understands the reason generalizes to edge cases.
-- **Avoid stacked `ALWAYS` / `NEVER` / `MUST` in caps** — reframe and let the model apply judgment. Reserve hard prohibitions for genuine safety/correctness rules.
+- **Escalate wording by failure, not taste** — judgment-framing is the default; escalate only for a rule the agent demonstrably skips under pressure, picking the form from the form-to-failure table in the reference (the wrong form is worse than none). Authority wording ("YOU MUST") belongs only on those escalated rules; never borrow warmth (gratitude, flattery) as a compliance device — it trains sycophancy.
+- **No nuance clauses, no exemption clauses** — "don't X unless it matters" reopens the negotiation; "this limit doesn't apply to code blocks" still suppresses code blocks. Scope a rule by where it *lives* (the caller exempts; the rule stays absolute), not by carve-outs inside it.
 - **One concrete example from this codebase** beats several generic ones.
 
 ## Review checklist
@@ -127,6 +129,7 @@ Frontmatter parses as strict YAML. The hazard is an unquoted `: ` (colon **follo
 - [ ] Behaviors declared via `requires:`; extraction backed by a real second consumer
 - [ ] Cross-skill references phrased by severity — load-bearing get `/skill` + load gate (user-invoked only); opportunistic stay soft backtick mentions
 - [ ] SKILL.md ≤200 lines; each reference ≤200 lines; one line per paragraph/bullet (no mid-paragraph hard wraps)
+- [ ] Escalated wording (hard prohibitions) justified by an observed pressure-failure; no nuance or exemption clauses anywhere
 - [ ] No generic best-practices the model already knows (no-op check)
 - [ ] Encodes project-specific decisions, not textbook knowledge
 - [ ] Concrete examples from the actual codebase

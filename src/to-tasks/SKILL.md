@@ -75,7 +75,7 @@ Before publishing, check:
 - **Covers references resolve** — every AC ID in any Task's `## Covers` exists on the parent Story and is active (not in `## Removed acceptance criteria`); surface stale references for user decision before publishing
 - **Naming consistency** — identical across Tasks (the names enumerated in step 5)
 - **Domain language matches `DOMAIN.md`**
-- **No placeholders** (no TBD/TODO)
+- **No placeholders** — none of the literal kind (TBD/TODO) and none of the disguised kind: "add appropriate error handling", "write tests for the above", "similar to Task N" are placeholders wearing prose; each hides a decision the implementer will have to invent
 
 ### 8. Publish in dependency order
 

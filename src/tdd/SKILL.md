@@ -10,7 +10,22 @@ requires: feedback-loops
 
 Tests verify behavior through public interfaces, not implementation details. Never write a **tautological test** — one whose assertion recomputes the expected value the way the code does (`expect(add(a, b)).toBe(a + b)`), so it passes by construction; expected values come from an independent source of truth (a known-good literal, a worked example, the spec). One test at a time, one implementation at a time. Never write all tests first then all code — that's horizontal slicing.
 
+Before mocking a dependency, run the behavior against the real implementation once to observe what actually crosses the seam — then mock minimally, at that seam, reproducing the complete structure that crossed it. A method only tests use belongs in test utilities, never on the production class.
+
 For test fixtures and patterns, see your project's testing skill(s). For conventions on the layer you're touching (endpoint shape, component composition, schema design, etc.), consult the matching convention skill.
+
+## Code written before its test
+
+Production code that got ahead of its failing test gets **deleted** — not kept as reference, not adapted, not glanced at while rewriting. Delete it, write the test, watch it fail, re-implement.
+
+| Rationalization | Reality |
+| --- | --- |
+| "Deleting X hours of work is wasteful" | Sunk cost — untested code isn't an asset, it's an unverified liability |
+| "Keep it as reference" | You'll adapt it, which is test-after with extra steps |
+| "I'll write the tests right after" | Test-after verifies what you built, not what was needed |
+| "It's simple, it obviously works" | Simple code that obviously works is the fastest to rewrite test-first |
+
+Catching yourself in any row of this table is the tell that the rule is being negotiated.
 
 ## Slice vertically, never horizontally
 

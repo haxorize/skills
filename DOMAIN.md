@@ -14,6 +14,9 @@ Ubiquitous-language glossary for the entire skills repo. Covers the four main ar
 | **Repo-agnostic skill** | A Skill that works in any project without per-repo config | Universal skill, Generic skill |
 | **Convention skill** | A project-local, **Model-invoked** Skill encoding the conventions of a specific stack (e.g., a `database` Skill for Alembic patterns); global skills discover and invoke it **by role**, named in CLAUDE.md `## Convention skills` | Stack skill, Project skill |
 | **Hoist** | The act of making a Repo-agnostic skill globally available by symlinking it into `~/.claude/skills/` | Promote (different stage), Install |
+| **Failure-driven escalation** | The `write-skill` wording rule: judgment-framing is the default; a hard prohibition (paired with a rationalization table and red-flags list) is reserved for a rule the agent demonstrably skips under pressure | Blanket caps ban (the prior rule), Authority-by-default |
+| **Form-to-failure table** | The authoring decision table mapping a skill's observed failure type to the wording form that fixes it — pressure-skip → prohibition, wrong-shaped output → positive recipe, omitted element → REQUIRED template slot, conditional behavior → observable-predicate conditional | — |
+| **Micro-test** | The cheap wording check run while authoring a discipline skill: execute the pressure scenario *without* the skill as a control (no control failure → nothing to fix), then 5+ fresh-context reps with the wording; high variance across reps is itself the failure signal | A/B test (broader), Eval (overloaded) |
 
 ## Skill modes & verbs
 
@@ -114,6 +117,9 @@ Ubiquitous-language glossary for the entire skills repo. Covers the four main ar
 | **Close the loop** | The **mechanical** finalization pass run **once after the slice's behaviors are built and refactored** (not per behavior) — `feedback-loops` runs lint/format/typecheck, migrations, and doc updates, resolving commands via CLAUDE.md `## Commands` and deferring stack-specifics to Convention skills. Judgment review (`review-changes`) and `/simplify` live elsewhere (see below) | Finalize (overloaded), Wrap-up |
 | **`review-changes`** | The **read-only** judgment review (User-invoked Orchestrator) run before a PR or on a teammate's PR: it fans **Review lenses** out to subagents (findings only) and never mutates code; resolves its input from the local diff or a PR + a work-item pointer | Conformance-review (earlier name) |
 | **Review lens** | One angle `review-changes` applies, chosen by **diff triage** so irrelevant ones don't run, each returning findings only; the roster (which lenses are always-on vs conditional) lives in `review-changes` §2, the single source of truth | — |
+| **Anchored confidence** | The finding-discipline confidence scale — HIGH/MED/LOW each tied to a behavioral criterion the model can honestly self-apply rather than a free-floating gradient; the criteria live in `finding-discipline.md`, the single source of truth | Confidence score (implies a continuous scale) |
+| **Quote gate** | The finding-discipline rule that a HIGH-confidence finding must carry the verbatim motivating line with `file:line`; a finding whose triggering line cannot be quoted steps down to MED | — |
+| **Cross-lens promotion** | Merging duplicate findings surfaced independently by two lenses promotes the merged finding one confidence step — but two unquoted findings never combine into a quote-free HIGH | Corroboration boost |
 
 ## Architecture & deepening
 
