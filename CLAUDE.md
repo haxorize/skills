@@ -15,6 +15,10 @@ Every skill is exactly one of **user-invoked** (carries `disable-model-invocatio
 
 `to-feature`, `to-story`, `to-tasks`, `to-bug` are the artifact under development — don't invoke them against this repo's own work.
 
+## Keep the router honest
+
+[`src/which-skill/SKILL.md`](src/which-skill/SKILL.md) is the router that maps every skill and how they relate. Whenever you add, rename, or remove a skill, or change how one fits the flows, update the router in the same change — a new skill it never mentions, or a stale one it still routes to, is a router that lies. `scripts/lint-skills.sh` catches missing mentions mechanically; routing accuracy stays editorial.
+
 ## Commit order
 
 When changes touch both an ADR and the skill it shapes (lineage runs ADR → skill — the ADR names the skill, never the reverse), commit the ADR first so reviewers see the rationale before the implementation.
