@@ -25,7 +25,7 @@ When the user wants the work **continued unattended** rather than picked up in a
 claude --bg --name "<descriptive name>" "<handoff content>"
 ```
 
-Always pass a descriptive `--name` (e.g. `"Fix login bug"`) — it labels the agent in the job list and session picker. The agent starts in the current working directory; the user manages it with `claude agents`. The redaction rule matters doubly here — the handoff becomes the agent's prompt verbatim.
+`--name` labels the agent in the job list and session picker. The agent starts in the current working directory; the user manages it with `claude agents`. The redaction rule matters doubly here — the handoff becomes the agent's prompt verbatim.
 
 ## What goes in it
 

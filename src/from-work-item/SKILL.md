@@ -117,7 +117,7 @@ Present a concise summary of what was loaded:
 ```text
 Loaded {type} #{ID}: "{title}"
   Parent: {parent type} #{parent-id} — "{parent title}" (or: parentless)
-  Blockers: {blocker work-item IDs — must land first, or: none} (Task / Story)
+  Blockers: {blocker titles, IDs attached — must land first, or: none} (Task / Story)
   Acceptance criteria: {N} active ({M} this work item covers, if Task)
   Layers touched: {layer list}
   ADRs in scope: {ADR-IDs} ({count})

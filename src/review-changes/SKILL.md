@@ -37,7 +37,7 @@ Don't run every lens on every diff — `/security-review` on a docs change is no
 
 ## 3. Fan out (read-only subagents, findings only)
 
-Run each **custom lens** (DOMAIN, ADR, AC, design depth, smell baseline) as its own **read-only subagent** that returns *findings only* — keeps the caller's context clean. The smell-baseline subagent's prompt must carry the catalog (paste [references/smell-baseline.md](references/smell-baseline.md) or its path) — it won't discover it on its own. Built-ins that already self-parallelize (`/code-review`, `/security-review`) may run at top level rather than wrapped in a subagent.
+Run each **custom lens** (DOMAIN, ADR, AC, design depth, smell baseline) as its own **read-only subagent** that returns *findings only* — keeps the caller's context clean. The smell-baseline subagent's prompt must carry the catalog file (contents or path) — it won't discover it on its own. Built-ins that already self-parallelize (`/code-review`, `/security-review`) may run at top level rather than wrapped in a subagent.
 
 **A blocked built-in degrades; it never aborts the review.** When a built-in lens can't run here — e.g. `/security-review` needs a Bash permission for `git status` that an org-locked machine denies — record it as **unavailable here** with the reason in its section heading and continue with the rest. The user reruns it manually wherever it's permitted.
 

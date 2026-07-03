@@ -10,4 +10,4 @@ Required fields: GitHub needs only the tracker name; ADO requires `Project:` min
 
 ## Referring to work items
 
-In anything the human reads — narration, publish confirmations, reports — refer to a work item by its **title**, with the ID and link riding inside (e.g. `[Rate-limit login](url) (#42)`), never by a bare ID. A wall of `#42, #43, #44` is illegible; names read at a glance.
+In anything the human reads — narration, publish confirmations, reports — refer to a work item by its **title**, with the ID and link riding inside (e.g. `[Rate-limit login](url) (#42)`), never by a bare ID. A wall of `#42, #43, #44` is illegible.

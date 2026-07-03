@@ -199,14 +199,12 @@ for f in src/*/SKILL.md; do
   done
 done
 
-# Router coverage (CLAUDE.md "Keep the router honest"): every skill must be
-# mentioned by name in the which-skill router. The boundary classes keep a
-# name from matching inside a longer slug (`adr` never matches `backfill-adrs`).
+# Router coverage (see header). The boundary classes keep a name from
+# matching inside a longer slug (`adr` never matches `backfill-adrs`).
 router="src/which-skill/SKILL.md"
-for d in src/*/; do
-  name=$(basename "$d")
+for f in src/*/SKILL.md; do
+  name=${f#src/}; name=${name%/SKILL.md}
   [ "$name" = "which-skill" ] && continue
-  [ -f "src/$name/SKILL.md" ] || continue
   if ! grep -qE "(^|[^a-z0-9-])${name}([^a-z0-9-]|$)" "$router"; then
     echo "FAIL: $router never mentions skill '$name' — route it or list it as standalone (CLAUDE.md: 'Keep the router honest')"
     fail=1
