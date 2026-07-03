@@ -25,7 +25,7 @@ Production code that got ahead of its failing test gets **deleted** — not kept
 | "I'll write the tests right after" | Test-after verifies what you built, not what was needed |
 | "It's simple, it obviously works" | Simple code that obviously works is the fastest to rewrite test-first |
 
-Catching yourself in any row of this table is the tell that the rule is being negotiated.
+**Red flags** — the negotiation has already started: an implementation file open before its failing test exists; "let me just sketch the shape first"; a stash or branch kept "for reference"; running the app instead of a test to see if it works. Any of these, or catching yourself in a table row, means stop and delete.
 
 ## Slice vertically, never horizontally
 
