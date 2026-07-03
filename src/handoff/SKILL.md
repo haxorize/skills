@@ -1,13 +1,13 @@
 ---
 name: handoff
-description: Fork the current conversation into a handoff document so a fresh session can pick the work up.
+description: Fork the current conversation into a handoff document so a fresh session can pick the work up, or hand it straight to a background agent.
 disable-model-invocation: true
 argument-hint: "What will the next session be used for?"
 ---
 
 # Handoff
 
-This skill **forks** the conversation — you don't continue in place; you write the doc, open a new session, and point it at the doc.
+This skill **forks** the conversation — you don't continue in place. It has two exits: write the doc for a fresh interactive session (the default), or hand straight off to a background agent (on request).
 
 If the user passed an argument, treat it as a description of what the next session will focus on and tailor the doc to that.
 
@@ -16,6 +16,16 @@ If the user passed an argument, treat it as a description of what the next sessi
 Default to the **OS temporary directory** (`$TMPDIR` on macOS, `/tmp` on Linux, `%TEMP%` on Windows) — a handoff is throwaway, and the durable content already lives in the artifacts the doc points at.
 
 **Escape hatch:** if the user names a path or asks for a durable target, honor it. Only then does the doc land in the workspace.
+
+## Handing off to a background agent
+
+When the user wants the work **continued unattended** rather than picked up in a fresh interactive session, don't save a doc — launch a background agent seeded with the handoff as its prompt:
+
+```sh
+claude --bg --name "<descriptive name>" "<handoff content>"
+```
+
+Always pass a descriptive `--name` (e.g. `"Fix login bug"`) — it labels the agent in the job list and session picker. The agent starts in the current working directory; the user manages it with `claude agents`. The redaction rule matters doubly here — the handoff becomes the agent's prompt verbatim.
 
 ## What goes in it
 
