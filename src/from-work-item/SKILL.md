@@ -54,7 +54,7 @@ Branch on the detected type. Each branch loads the artifact, its parent context,
   - **ADO:** `az boards work-item show <task-id> --output json --expand relations` — `System.Description`, the parent Story relation (`System.LinkTypes.Hierarchy-Reverse`), and in-project blocker relations (`System.LinkTypes.Dependency-Reverse` = Predecessor blockers; `System.LinkTypes.Dependency-Forward` = Successor dependents).
   - **GitHub:** body already fetched; resolve parent via the `Parent: #N` line.
 - **Blockers** — surface what must land first, from both sources:
-  - **In-project:** ADO reads the `Predecessor` relations above; GitHub reads the `Blocked by: #N` lines in the Task body (GitHub keeps these as text — it has no native relation to move them to).
+  - **In-project:** ADO reads the `Predecessor` relations above; GitHub reads the `Blocked by: #N` lines in the Task body (GitHub keeps these as text — it has no native relation to move them to). Resolve each blocker ID to its title (one `gh issue view <n> --json title` / `az boards work-item show <id>` per blocker) — the summary reports blockers by name.
   - **Sibling-repo:** both trackers read the `## Blocked by` body annotation (`Blocked by: ../<repo>`). Only ADO *in-project* deps moved to relations; the sibling-repo annotation still lives in the body on either tracker.
 - **Parent Story:** fetch description + AC field. Filter active ACs to those listed in the Task's `## Covers` line — the rest aren't this Task's concern.
 - **Parent Feature (one level up):** fetch title and Problem / Goals sections only — broader context, not implementation guidance.

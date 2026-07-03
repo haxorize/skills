@@ -44,7 +44,7 @@ Keep steps 1–2 in **one unbroken context window** so the grilling, decompositi
 
 ## Crossing sessions
 
-- **`/handoff`** — fork the conversation into a document and continue in a **fresh session** that references it. Use it when the window is full or you're branching off. (Contrast `/compact`, the built-in, which continues *in place*. `handoff` forks; `/compact` continues.)
+- **`/handoff`** — fork the conversation: into a document a **fresh session** picks up, or straight to a **background agent** when the work should continue unattended. Use it when the window is full or you're branching off. (Contrast `/compact`, the built-in, which continues *in place*. `handoff` forks; `/compact` continues.)
 
 ## Standalone
 
