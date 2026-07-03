@@ -7,6 +7,10 @@ description: The relentless-interview discipline for stress-testing a plan or de
 
 Walk down each branch of the design tree, resolving dependencies between decisions one-by-one. **For each question, provide your recommended answer.**
 
+Before descending, assess scope: if the topic spans multiple independent subsystems, don't spend questions refining details of a piece that needs decomposition first — grill the split itself (what are the pieces, how do they relate, which goes first), then descend into the first piece.
+
+No plan is too simple to grill — "simple" is where unexamined assumptions hide. Scale the loop to the plan (a short grill can be two questions); never skip it on perceived simplicity.
+
 Ask the questions **one at a time**, waiting for the answer before moving on. Asking several at once lets weak spots slip past.
 
 If a question can be answered by exploring the codebase, explore the codebase instead of asking.

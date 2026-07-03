@@ -1,14 +1,14 @@
 ---
 name: diagnosing-bugs
 description: Diagnosis loop for hard bugs and performance regressions. Use when the user says "diagnose"/"debug this", reports something broken or a performance regression, or when a build turns up an unplanned failure you can't quickly explain.
-requires: codebase-design, adr
+requires: codebase-design, adr, capturing-learnings
 ---
 
 # Diagnosing Bugs
 
 A discipline for hard bugs. Skip phases only when explicitly justified.
 
-When exploring, read `DOMAIN.md` (if present) for the project's vocabulary and check `docs/adr/` in the area you're touching — a behavior an ADR records as deliberate is not a bug.
+When exploring, read `DOMAIN.md` (if present) for the project's vocabulary and check `docs/adr/` in the area you're touching — a behavior an ADR records as deliberate is not a bug. If `docs/solutions/` exists, run `capturing-learnings`' retrieval protocol on the reported symptom — a matched Learning doc becomes a pre-ranked Phase 3 hypothesis (date-flagged), never a reason to skip Phases 1–2.
 
 This is the behavior `implement` reaches for when a build turns up an **unplanned failure** mid-slice: a red that isn't the test you just wrote, behavior that contradicts the plan. Stop guessing and run this loop before continuing.
 
@@ -88,6 +88,8 @@ Each hypothesis must be **falsifiable**: state the prediction it makes.
 
 If you cannot state the prediction, the hypothesis is a vibe — discard or sharpen it.
 
+Seed the list with any Learning-doc match from the exploration preamble — it competes on the same falsifiable terms as fresh hypotheses, ranked by how exactly its symptoms match and how recent its date is.
+
 **Show the ranked list to the user before testing.** They often have domain knowledge that re-ranks instantly ("we just deployed a change to #3"), or know hypotheses they've already ruled out. Don't block on it — proceed with your ranking if the user is AFK.
 
 ## Phase 4 — Instrument
@@ -137,3 +139,4 @@ Required before declaring done:
 
 - If the answer involves **architectural change** — no good test seam, a too-shallow module, tangled callers, hidden coupling — suggest the user run `/improve-design` with the specifics (it's user-invoked, so suggest it; don't try to invoke it). The deepening it surfaces is the durable fix.
 - If the root cause was a **load-bearing decision gap** — the bug existed because a real trade-off was made implicitly and never recorded — offer to capture it via `adr` (the gate still applies: hard to reverse, surprising without context, a genuine trade-off). A recorded decision stops the same class of bug recurring for the next person.
+- If the **diagnosis itself was the expensive part** — and `capturing-learnings`' capture gate holds (verified, expensive, recurrence-plausible) — offer to capture the solved problem as a Learning doc, so the next diagnosis of this symptom starts where this one ended.
