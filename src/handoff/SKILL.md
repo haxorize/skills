@@ -40,7 +40,7 @@ Point at **durable artifacts** instead of restating them. Reference:
 
 - `DOMAIN.md` terms by name,
 - `docs/adr/` decisions by number,
-- tracker **work-item IDs** (Task/Story/Bug/PR numbers),
+- tracker **work items** by name, ID attached — never a bare ID,
 - commits, diffs, and PRDs by path or URL.
 
 Do **not** duplicate their content, and do **not** invent a scratch location to hold it — there is no standing design-doc directory; the tracked artifacts above are the durable record.

@@ -43,6 +43,8 @@ Lead with a recommendation. This is a pre-publication direction check, not inter
 
 Decompose the chosen approach into Stories. For each Story capture: title, one-paragraph scope, the parent Feature acceptance criteria it covers, and any shared names (route paths, model names, query keys) it touches. Build a dependency graph between Stories. Quiz the user once — walk through the list, gather corrections, and finalize before drafting. Resolve scope disputes before moving on.
 
+**Admission test:** a Story earns a map slot only when its scope can be stated precisely *now* — not when it can be built now (a blocked Story with sharp scope is fine). Scope you can only gesture at stays as prose in the Feature body; don't pre-slice it into placeholder Stories — it enters the map as an emergent Story when it sharpens.
+
 If the user can't decompose yet, confirm explicitly and skip to step 7. The published Feature will carry `Story Decomposition: deferred at Feature creation.` in place of the map block; fill in later via `--update <feature-id>`.
 
 ### 7. Draft the feature
