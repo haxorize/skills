@@ -29,6 +29,9 @@
 #     so `adr-0023` and `Adr-7` are caught too. `docs/adr/` paths put a slash
 #     after `adr` (not a hyphen) so they stay legal, as do digitless
 #     placeholders ("ADR-N" — `N` isn't a digit).
+#   - Router coverage (CLAUDE.md "Keep the router honest"): every skill under
+#     src/ must be mentioned by name in src/which-skill/SKILL.md, so the router
+#     never silently omits a skill. Stale-routing accuracy stays editorial.
 #
 # Exit code 0 if clean, 1 if any check fails. List all failures, don't bail
 # on first hit.
@@ -194,6 +197,20 @@ for f in src/*/SKILL.md; do
       fail=1
     fi
   done
+done
+
+# Router coverage (CLAUDE.md "Keep the router honest"): every skill must be
+# mentioned by name in the which-skill router. The boundary classes keep a
+# name from matching inside a longer slug (`adr` never matches `backfill-adrs`).
+router="src/which-skill/SKILL.md"
+for d in src/*/; do
+  name=$(basename "$d")
+  [ "$name" = "which-skill" ] && continue
+  [ -f "src/$name/SKILL.md" ] || continue
+  if ! grep -qE "(^|[^a-z0-9-])${name}([^a-z0-9-]|$)" "$router"; then
+    echo "FAIL: $router never mentions skill '$name' — route it or list it as standalone (CLAUDE.md: 'Keep the router honest')"
+    fail=1
+  fi
 done
 
 if [ "$fail" -eq 0 ]; then
