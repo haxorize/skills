@@ -30,8 +30,10 @@
 #     after `adr` (not a hyphen) so they stay legal, as do digitless
 #     placeholders ("ADR-N" — `N` isn't a digit).
 #   - Router coverage (CLAUDE.md "Keep the router honest"): every skill under
-#     src/ must be mentioned by name in src/which-skill/SKILL.md, so the router
-#     never silently omits a skill. Stale-routing accuracy stays editorial.
+#     src/ must appear as a backticked code-span (`name` or `/name`) in
+#     src/which-skill/SKILL.md. Requiring the backtick keeps incidental prose
+#     (the gerund "grilling") from satisfying the check, so the router can't
+#     silently omit a skill. Stale-routing accuracy stays editorial.
 #
 # Exit code 0 if clean, 1 if any check fails. List all failures, don't bail
 # on first hit.
@@ -199,14 +201,15 @@ for f in src/*/SKILL.md; do
   done
 done
 
-# Router coverage (see header). The boundary classes keep a name from
-# matching inside a longer slug (`adr` never matches `backfill-adrs`).
+# Router coverage (see header): the opening backtick keeps prose words from
+# counting; the trailing class keeps a name from matching inside a longer
+# slug (`adr` never matches `backfill-adrs`).
 router="src/which-skill/SKILL.md"
 for f in src/*/SKILL.md; do
   name=${f#src/}; name=${name%/SKILL.md}
   [ "$name" = "which-skill" ] && continue
-  if ! grep -qE "(^|[^a-z0-9-])${name}([^a-z0-9-]|$)" "$router"; then
-    echo "FAIL: $router never mentions skill '$name' — route it or list it as standalone (CLAUDE.md: 'Keep the router honest')"
+  if ! grep -qE "\`/?${name}([^a-z0-9-]|$)" "$router"; then
+    echo "FAIL: $router has no backticked mention of skill '$name' — route it or list it as standalone (CLAUDE.md: 'Keep the router honest')"
     fail=1
   fi
 done

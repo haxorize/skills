@@ -133,7 +133,8 @@ Ubiquitous-language glossary for the entire skills repo. Covers the four main ar
 | **Deletion test** | The thought experiment of deleting a Module to judge whether complexity vanishes (Pass-through) or reappears across callers (earns its keep) | — |
 | **Pass-through** | A Module that adds no value beyond delegating to its dependency | Wrapper, Delegate |
 | **Module-deepening refactor** | A refactor that increases a Module's Depth | Deepening (acceptable shorthand) |
-| **Architectural friction** | The signal that deepening might help — bouncing between many small files, shallow interfaces, untestable seams, cross-module domain leaks | Smell, Pain point |
+| **Architectural friction** | The signal that deepening might help — bouncing between many small files, shallow interfaces, untestable seams, cross-module domain leaks | Smell (distinct from **Code smell (Fowler)**), Pain point |
+| **Code smell (Fowler)** | An entry in the fixed *Refactoring* ch. 3 catalog that `review-changes`' smell-baseline lens matches against a diff — code-level cleanup heuristics keeping Fowler's names (his Middle Man is this glossary's **Pass-through**); distinct from **Architectural friction**, the design-level deepening signal | Smell (bare — ambiguous) |
 | **In-process dependency** | A Module's dependency that is pure computation or in-memory state | — |
 | **Local-substitutable dependency** | A dependency with a local test stand-in (PGLite for Postgres, in-memory filesystem) | — |
 | **Remote-but-owned dependency** | A dependency on your own service across a network | Internal API (overloaded) |

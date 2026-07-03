@@ -9,7 +9,7 @@ requires: codebase-design
 
 Judgment review of a **diff** — never the conversation, never the working tree's intent as you remember it. The diff *is* the handoff. This skill is **read-only**: it fans review lenses out to subagents, vets what comes back, and presents a ranked, classified report. It never mutates code — `/simplify` mutates, so it lives in the build/refactor beat (`implement`/`tdd`), not here.
 
-Its value over the raw built-ins is **project awareness**: generic quality is delegated to `/code-review`, generic security to `/security-review`; this skill adds the lenses they can't supply — recorded intent (`DOMAIN.md`, `docs/adr/`, the work item's acceptance criteria), design depth, and a named design-smell baseline.
+Its value over the raw built-ins is **project awareness**: generic quality is delegated to `/code-review`, generic security to `/security-review`; this skill adds the lenses they can't supply — §2 holds the roster.
 
 ## 1. Resolve the target, fail fast
 
