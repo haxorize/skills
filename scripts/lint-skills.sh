@@ -201,9 +201,8 @@ for f in src/*/SKILL.md; do
   done
 done
 
-# Router coverage (see header): the opening backtick keeps prose words from
-# counting; the trailing class keeps a name from matching inside a longer
-# slug (`adr` never matches `backfill-adrs`).
+# Router coverage (see header); the trailing class keeps a name from
+# matching inside a longer slug (`adr` never matches `backfill-adrs`).
 router="src/which-skill/SKILL.md"
 for f in src/*/SKILL.md; do
   name=${f#src/}; name=${name%/SKILL.md}
