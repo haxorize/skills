@@ -61,9 +61,10 @@ The route most work travels: **`/grill-and-record`** (or `/grill-me` with no cod
 - **`grilling`** — The relentless-interview discipline at the core of `grill-me` and `grill-and-record`.
 - **`domain-modeling`** — The discipline for capturing and sharpening ubiquitous language in `DOMAIN.md`.
 
-### Decisions
+### Decisions & learnings
 
 - **`adr`** — Capture a single fresh Architecture Decision Record after a deliberate decision.
+- **`capturing-learnings`** — Owns the per-repo `docs/solutions/` solved-problems store on both sides: captures a Learning doc when the gate holds (verified, expensive, recurrence-plausible) and serves the symptom-keyed retrieval protocol any skill can read the store with.
 
 ### Design
 
@@ -73,13 +74,18 @@ The route most work travels: **`/grill-and-record`** (or `/grill-me` with no cod
 
 - **`tdd`** — Test-driven development using vertical slices. Universal RED/GREEN/refactor core; project commands resolved via CLAUDE.md `## Commands`; stack-specific finalization deferred to convention skills and `feedback-loops`.
 - **`feedback-loops`** — The mechanical pass that closes the loop after a slice's behaviors are built and refactored: format, lint, typecheck, stack finalization, and doc updates.
-- **`diagnosing-bugs`** — Diagnosis loop for hard bugs and performance regressions, centered on standing up a tight red-capable feedback loop first. A declared dependency of `implement`.
+- **`diagnosing-bugs`** — Diagnosis loop for hard bugs and performance regressions, centered on standing up a tight red-capable feedback loop first. A declared dependency of `implement`. Retrieves past Learning docs on the way in and offers `capturing-learnings` a capture when an expensive diagnosis closes.
 - **`resolving-merge-conflicts`** — Conflict-resolution loop for an in-progress merge or rebase that preserves both intents; delegates the project's checks to `feedback-loops`.
+
+### Review (receiving side)
+
+- **`receiving-review`** — Discipline for applying review feedback to your changes: feedback is claims to verify against the codebase, not orders to follow or occasions for performative agreement.
 
 ## Conventions
 
 - **`DOMAIN.md`** at the repo root holds the project's ubiquitous language. For multi-context monorepos, the root is an index linking to nested `DOMAIN.md` files. Cross-repo siblings cross-reference each other in prose.
 - **ADRs** live in `docs/adr/<NNNN>-<slug>.md` per repo. Numbering: scan highest, increment by one.
+- **Learning docs** live in `docs/solutions/<slug>.md` per repo — solved problems with symptom-keyed frontmatter, written by `capturing-learnings` when its capture gate holds. The store is created lazily at first capture; new captures land flat at the root, and subdirectories from other tooling are tolerated.
 - **Tracker dispatch** is declared per-repo in `CLAUDE.md` under an `Issue tracker:` block. Supports GitHub (`gh`) and Azure DevOps (`az boards`). Hierarchy (`Hierarchy: required|optional`) controls whether the publishing skills enforce a `--parent` argument. ADO defaults to `required` (Epic → Feature → User Story → Task); GitHub defaults to `optional`.
 - **Sibling repos** declared in `CLAUDE.md` under `## Sibling repos` so `to-tasks` can flag cross-repo blockers.
 - **Title prefixes** are declared in the `Issue tracker:` block. `Title prefix:` applies to Stories, Tasks, and Bugs. Features use `Feature title prefix:` if declared, falling back to `Title prefix:` if absent — allowing teams to give features a distinct prefix from work items below them.
@@ -109,6 +115,6 @@ A bare `ln -s` links only that one directory — it does **not** resolve `requir
 
 ## Notes
 
-- Several skills reference `DOMAIN.md` (from `harden-domain` / `grill-and-record`) and `docs/adr/` (from `adr` / `backfill-adrs`). They degrade gracefully in projects that don't use those conventions.
+- Several skills reference `DOMAIN.md` (from `harden-domain` / `grill-and-record`), `docs/adr/` (from `adr` / `backfill-adrs`), and `docs/solutions/` (from `capturing-learnings`). They degrade gracefully in projects that don't use those conventions.
 - The `to-feature`, `to-story`, and `to-tasks` skills operate in three modes: declared (CLAUDE.md present with tracker block), bootstrap-on-ask (repo present, asks once and writes the block), and no-repo CLI-only (publish via tracker CLI without touching files; saves tracker config to memory).
 - Bootstrap-on-ask is safe to use alongside Claude Code's built-in `/init` — `/init` preserves existing CLAUDE.md sections rather than overwriting them, so the order of operations doesn't matter.
