@@ -166,8 +166,8 @@ Ubiquitous-language glossary for the entire skills repo. Covers the four main ar
 | **Bounded context** | (DDD) A subdomain with its own ubiquitous language | Context (when used alone — too generic) |
 | **Ubiquitous language** | (DDD) The shared vocabulary between developers and domain experts within a Bounded context | Domain language (acceptable casual usage) |
 | **Sibling reference file** | A `references/<name>.md` file duplicated byte-identically across multiple skills (`domain-format.md`, `adr-format.md`); ADR-0007 records the duplication, `scripts/lint-skills.sh` enforces equality | Shared reference (no source-of-truth — they are siblings, not a copy-of) |
-| **Learning doc** | A solved-problem record under `docs/solutions/<slug>.md` — symptom-keyed frontmatter plus a Problem / What didn't work / Fix / Prevention body | Solution doc (CE's two-track sense), Postmortem (different scope) |
-| **Solved-problems store** | The flat `docs/solutions/` directory of Learning docs in a target repo | Knowledge base (too broad), Learnings folder |
+| **Learning doc** | A solved-problem record under `docs/solutions/<slug>.md` — symptom-keyed frontmatter plus a Problem / What didn't work / Fix / Prevention body | Solution doc (compound-engineering's — CE's — two-track sense), Postmortem (different scope) |
+| **Solved-problems store** | The `docs/solutions/` directory of Learning docs in a target repo — new captures land flat at its root; category subdirectories from other tooling are tolerated | Knowledge base (too broad), Learnings folder |
 | **Capture gate** | The three criteria a solved problem must meet to warrant a Learning doc — verified fix, expensive diagnosis, recurrence-plausible | Preconditions (CE's advisory form) |
 | **Retrieval protocol** | The grep-first search over Learning-doc frontmatter; its steps live in `capturing-learnings`, the single source of truth | Learnings research (CE's subagent form) |
 | **Overlap rule** | The update-vs-create decision at capture — same root cause and same fix approach → update the existing Learning doc; otherwise create | Dedup score (CE's 5-dimension rubric) |

@@ -11,5 +11,5 @@ A new `capturing-learnings` behavior skill owns a per-repo `docs/solutions/` sto
 
 ## Consequences
 
-- The store schema (trimmed CE frontmatter: `title`, `problem_type`, `tags`, `symptoms`, `root_cause`, `module?`, `date`) propagates into target repos; changing it later orphans accumulated docs — the effective reversal cost that fired this ADR.
+- The store schema (trimmed CE frontmatter: `title`, `problem_type`, `tags`, `symptoms`, `root_cause`, `module?`, `date`, `last_updated?`) propagates into target repos; changing it later orphans accumulated docs — the effective reversal cost that fired this ADR.
 - `docs/solutions/` keeps CE's path, so repos already seeded by CE tooling remain retrievable (recursive grep tolerates their category subdirectories); this repo's own captures stay flat and slug-only.
