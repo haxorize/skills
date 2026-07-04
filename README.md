@@ -64,7 +64,7 @@ The route most work travels: **`/grill-and-record`** (or `/grill-me` with no cod
 ### Decisions & learnings
 
 - **`adr`** — Capture a single fresh Architecture Decision Record after a deliberate decision.
-- **`capturing-learnings`** — Owns the per-repo `docs/solutions/` solved-problems store on both sides: captures a Learning doc when the gate holds (verified, expensive, recurrence-plausible) and serves the symptom-keyed retrieval protocol any skill can read the store with.
+- **`capturing-learnings`** — Owns the per-repo `docs/solutions/` solved-problems store on both sides: captures a Learning doc when its gate holds, and serves the symptom-keyed retrieval protocol any skill reads the store with.
 
 ### Design
 
@@ -85,7 +85,7 @@ The route most work travels: **`/grill-and-record`** (or `/grill-me` with no cod
 
 - **`DOMAIN.md`** at the repo root holds the project's ubiquitous language. For multi-context monorepos, the root is an index linking to nested `DOMAIN.md` files. Cross-repo siblings cross-reference each other in prose.
 - **ADRs** live in `docs/adr/<NNNN>-<slug>.md` per repo. Numbering: scan highest, increment by one.
-- **Learning docs** live in `docs/solutions/<slug>.md` per repo — solved problems with symptom-keyed frontmatter, written by `capturing-learnings` when its capture gate holds. The store is created lazily at first capture; new captures land flat at the root, and subdirectories from other tooling are tolerated.
+- **Learning docs** live in `docs/solutions/<slug>.md` per repo — solved problems with symptom-keyed frontmatter, captured by `capturing-learnings`. The store is created lazily; new captures land flat at the root, and subdirectories from other tooling are tolerated.
 - **Tracker dispatch** is declared per-repo in `CLAUDE.md` under an `Issue tracker:` block. Supports GitHub (`gh`) and Azure DevOps (`az boards`). Hierarchy (`Hierarchy: required|optional`) controls whether the publishing skills enforce a `--parent` argument. ADO defaults to `required` (Epic → Feature → User Story → Task); GitHub defaults to `optional`.
 - **Sibling repos** declared in `CLAUDE.md` under `## Sibling repos` so `to-tasks` can flag cross-repo blockers.
 - **Title prefixes** are declared in the `Issue tracker:` block. `Title prefix:` applies to Stories, Tasks, and Bugs. Features use `Feature title prefix:` if declared, falling back to `Title prefix:` if absent — allowing teams to give features a distinct prefix from work items below them.
