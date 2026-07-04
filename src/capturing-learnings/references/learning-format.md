@@ -1,6 +1,6 @@
 # Learning doc format
 
-Learning docs live in `docs/solutions/<slug>.md` at the target repo's root. Create the directory lazily — only when the first learning is written.
+Learning docs live in `docs/solutions/<slug>.md` at the target repo's root.
 
 ## Filename
 
@@ -57,4 +57,4 @@ date: 2026-07-03
 
 ## Updating an existing doc
 
-Same root cause and same fix approach as an existing doc → update it instead of creating: merge the new occurrence's symptoms into `symptoms:`, refresh the Fix if the new context is fresher, add `last_updated:`. Keep the path and title unless the problem framing has materially shifted.
+When the overlap rule says update rather than create: merge the new occurrence's symptoms into `symptoms:`, refresh the Fix if the new context is fresher, add `last_updated:`. Keep the path and title unless the problem framing has materially shifted.

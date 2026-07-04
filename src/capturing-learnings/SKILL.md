@@ -7,7 +7,7 @@ description: Capture a solved problem as a retrievable Learning doc in docs/solu
 
 A solved problem dies with the session unless it lands where the next agent can grep it. This skill owns the **solved-problems store** — `docs/solutions/` at the target repo's root, one Learning doc per problem — on both sides: capturing a new learning and retrieving past ones.
 
-The store is flat (`docs/solutions/<slug>.md` — no date, no number) and lazily created at first capture. Doc format, frontmatter fields, and update mechanics live in [references/learning-format.md](references/learning-format.md).
+The store is flat and lazily created at first capture. Doc format, filename, frontmatter fields, and update mechanics live in [references/learning-format.md](references/learning-format.md).
 
 ## The capture gate
 
@@ -20,8 +20,8 @@ All three must hold — confirm out loud which are met before drafting; if any i
 ## Capture workflow
 
 1. **Apply the gate** (above).
-2. **Search before writing.** Run the retrieval protocol (below) against the new problem. The **overlap rule**: same root cause *and* same fix approach as an existing doc → **update it** (merge the new symptoms into its frontmatter, refresh the fix, add `last_updated:`; keep its path and title). Different root cause or fix → new doc. Never write a duplicate — two docs describing one problem drift apart, so the fresher context folds into the older doc.
-3. **Draft** per [references/learning-format.md](references/learning-format.md). The `symptoms:` list carries verbatim error strings and observable behavior — it is what the next stuck agent will grep with. A thin "What didn't work" is itself signal (the fix was near-first-try), not a section to pad.
+2. **Search before writing.** Run the retrieval protocol (below) against the new problem — or reuse this session's retrieval results if the store was already searched. The **overlap rule**: same root cause *and* same fix approach as an existing doc → **update it** per [references/learning-format.md](references/learning-format.md); otherwise a new doc. Never write a duplicate — two docs describing one problem drift apart.
+3. **Draft** per [references/learning-format.md](references/learning-format.md).
 4. **First capture in a repo — discoverability check.** If this doc creates the store, check whether the repo's `CLAUDE.md` (or `AGENTS.md`) would lead a fresh agent to it. If not, draft a one-line descriptive addition in the closest existing section — e.g. `docs/solutions/ — solved problems keyed by symptom frontmatter` — descriptive, never imperative ("always search before…" causes redundant reads). Skip this check on later captures.
 5. **Show the draft** (plus the instruction-file line when step 4 produced one) and save on approval.
 
@@ -30,7 +30,7 @@ All three must hold — confirm out loud which are met before drafting; if any i
 How any skill reads the store — grep-first, cheapest signal first:
 
 1. If `docs/solutions/` doesn't exist, say so and stop — absence is a valid result, not an error.
-2. Grep recursively (the store may carry category subdirectories from other tooling), case-insensitive, frontmatter fields first: the observed error strings against `symptoms:` lines, then `tags:`, `root_cause:`, and `title:`, with synonyms OR-ed (`(timeout|hang|stall)`).
+2. Grep recursively (the store may carry category subdirectories from other tooling), case-insensitive, one pass over the frontmatter: the observed error strings with synonyms OR-ed (`(timeout|hang|stall)`); rank hits by matched field — `symptoms:` strongest, then `tags:`, `root_cause:`, `title:`.
 3. Read only the frontmatter (first ~15 lines) of candidate files; full-read only the strong matches.
 4. Return at most 5 distilled matches — each as root cause + fix + what didn't work, with the doc's `date:` flagged — never raw doc dumps.
-5. A match **informs** the present investigation; it never overrides present evidence — a stale learning can be confidently wrong. In a diagnosis, a matched doc seeds a ranked hypothesis; it never substitutes for reproducing the bug.
+5. A match **informs** the present investigation; it never overrides present evidence — a stale learning can be confidently wrong.

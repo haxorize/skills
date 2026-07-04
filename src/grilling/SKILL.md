@@ -1,6 +1,6 @@
 ---
 name: grilling
-description: The relentless-interview discipline for stress-testing a plan or design. Use when a plan, design, or decision needs to be pressure-tested before building, when the user says "grill me" or "grill this", or when another skill needs the core grill loop.
+description: The relentless-interview discipline for stress-testing a plan or design. Use when a plan, design, or decision needs to be pressure-tested before building (however simple it looks), when the user says "grill me" or "grill this", or when another skill needs the core grill loop.
 ---
 
 # Grilling
@@ -9,7 +9,7 @@ Walk down each branch of the design tree, resolving dependencies between decisio
 
 Before descending, assess scope: if the topic spans multiple independent subsystems, don't spend questions refining details of a piece that needs decomposition first — grill the split itself (what are the pieces, how do they relate, which goes first), then descend into the first piece.
 
-No plan is too simple to grill — "simple" is where unexamined assumptions hide. Scale the loop to the plan (a short grill can be two questions); never skip it on perceived simplicity.
+No plan is too simple to grill — "simple" is where unexamined assumptions hide; scale the loop to the plan (a short grill can be two questions).
 
 Ask the questions **one at a time**, waiting for the answer before moving on. Asking several at once lets weak spots slip past.
 

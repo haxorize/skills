@@ -29,7 +29,7 @@ Keep steps 1–2 in **one unbroken context window** so the grilling, decompositi
 ## Detours off the main flow
 
 - **A question needs a runnable answer** (state, business logic, a UI you have to see) → detour through a prototype, bridged by `/handoff` in both directions: **`/handoff`** out → open a fresh session → **`/prototype`** to answer it with throwaway code → **`/handoff`** the *answer* back, and reference it from the original thread.
-- **A hard bug or unexplained failure mid-build** → the `diagnosing-bugs` behavior takes over (it fires on its own; `implement` reaches for it on an unplanned red). It greps the repo's `docs/solutions/` store for past matches on the way in, and when an expensive diagnosis closes, `capturing-learnings` offers to write the solved problem there so the next session starts where this one ended. File a found defect with **`/to-bug`**.
+- **A hard bug or unexplained failure mid-build** → the `diagnosing-bugs` behavior takes over (it fires on its own; `implement` reaches for it on an unplanned red). It greps the repo's `docs/solutions/` store for past matches on the way in; when an expensive diagnosis closes, `capturing-learnings` offers to capture the solved problem there. File a found defect with **`/to-bug`**.
 - **A merge or rebase conflicts** → the `resolving-merge-conflicts` behavior handles it in place.
 
 ## Codebase health (upkeep, not feature work)
@@ -41,7 +41,7 @@ Keep steps 1–2 in **one unbroken context window** so the grilling, decompositi
 ## Review gate
 
 - **`/review-changes`** — read-only, project-aware judgment review of a **diff**, around shipping. Use it for a pre-PR self-review, on a teammate's PR, or on an already-landed commit. It never mutates; it produces a ranked, classified report.
-- When review feedback flows the other way — a reviewer's comments land on *your* changes — the `receiving-review` behavior governs applying them: verify each claim against the codebase, clarify every unclear item before implementing any, no performative agreement.
+- When review feedback flows the other way — a reviewer's comments land on *your* changes — the `receiving-review` behavior governs applying them.
 
 ## Crossing sessions
 

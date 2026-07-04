@@ -8,7 +8,7 @@ requires: codebase-design, adr, capturing-learnings
 
 A discipline for hard bugs. Skip phases only when explicitly justified.
 
-When exploring, read `DOMAIN.md` (if present) for the project's vocabulary and check `docs/adr/` in the area you're touching — a behavior an ADR records as deliberate is not a bug. If `docs/solutions/` exists, run `capturing-learnings`' retrieval protocol on the reported symptom — a matched Learning doc becomes a pre-ranked Phase 3 hypothesis (date-flagged), never a reason to skip Phases 1–2.
+When exploring, read `DOMAIN.md` (if present) for the project's vocabulary and check `docs/adr/` in the area you're touching — a behavior an ADR records as deliberate is not a bug. Run the `/capturing-learnings` skill's retrieval protocol on the reported symptom — a match seeds a Phase 3 hypothesis, never a reason to skip Phases 1–2.
 
 This is the behavior `implement` reaches for when a build turns up an **unplanned failure** mid-slice: a red that isn't the test you just wrote, behavior that contradicts the plan. Stop guessing and run this loop before continuing.
 

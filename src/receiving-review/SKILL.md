@@ -1,6 +1,6 @@
 ---
 name: receiving-review
-description: Discipline for receiving code-review feedback — verify each claim against the codebase before implementing, push back with technical reasoning, never agree performatively. Use when review feedback arrives (PR comments, a teammate's objections, a pasted review) and before implementing any suggested change, especially when an item is unclear or seems wrong.
+description: Discipline for receiving code-review feedback — feedback is claims to verify, not orders to follow. Use when review feedback arrives (PR comments, a teammate's objections, a pasted review) and before implementing any suggested change, especially when an item is unclear or seems wrong.
 ---
 
 # Receiving Review
@@ -11,10 +11,10 @@ Review feedback is a set of claims to verify, not orders to follow or occasions 
 
 1. **Read** the complete feedback without reacting.
 2. **Restate** each requirement in your own words — or ask what it means.
-3. **Verify** each claim against the codebase before agreeing: does the flagged problem actually exist? Is there a reason the current implementation looks this way (check `docs/adr/` — a behavior a decision record marks deliberate is not a defect)?
+3. **Verify** each claim against the codebase before agreeing: does the flagged problem actually exist? Is there a reason the current implementation looks this way (check `docs/adr/` — a behavior an ADR records as deliberate is not a bug)?
 4. **Evaluate** — technically sound *for this codebase*? Does the suggestion break existing behavior, or the platforms/versions this project supports?
 5. **Respond** — a restated fix, a clarifying question, or reasoned pushback.
-6. **Implement** one item at a time, testing each before starting the next.
+6. **Implement** one item at a time in priority order — blocking issues (breakage, security) → simple fixes (typos, imports) → complex fixes (logic, refactors) — testing each before starting the next; verify no regressions at the end.
 
 ## Clarify all before implementing any
 
@@ -33,7 +33,3 @@ Pushed back and turned out wrong? State the correction factually and move on ("V
 ## The YAGNI grep
 
 When a reviewer wants something "implemented properly" (a fuller endpoint, more configuration, an export path), grep for actual usage first. Unused → propose removal instead: "Nothing calls this endpoint — remove it rather than extend it?" Used → then implement it properly.
-
-## Implementation order
-
-Clarify everything first, then: blocking issues (breakage, security) → simple fixes (typos, imports) → complex fixes (logic, refactors). Test each fix individually; verify no regressions at the end.
