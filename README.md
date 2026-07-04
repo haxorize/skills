@@ -77,7 +77,7 @@ The route most work travels: **`/grill-and-record`** (or `/grill-me` with no cod
 - **`diagnosing-bugs`** — Diagnosis loop for hard bugs and performance regressions, centered on standing up a tight red-capable feedback loop first. A declared dependency of `implement`. Retrieves past Learning docs on the way in and offers `capturing-learnings` a capture when an expensive diagnosis closes.
 - **`resolving-merge-conflicts`** — Conflict-resolution loop for an in-progress merge or rebase that preserves both intents; delegates the project's checks to `feedback-loops`.
 
-### Review (receiving side)
+### Review
 
 - **`receiving-review`** — Discipline for applying review feedback to your changes: feedback is claims to verify against the codebase, not orders to follow or occasions for performative agreement.
 
