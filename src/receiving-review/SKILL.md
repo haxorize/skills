@@ -1,6 +1,6 @@
 ---
 name: receiving-review
-description: Discipline for receiving code-review feedback — feedback is claims to verify, not orders to follow. Use when review feedback arrives (PR comments, a teammate's objections, a pasted review) and before implementing any suggested change, especially when an item is unclear or seems wrong.
+description: Discipline for receiving code-review feedback — feedback is claims to verify, not orders to follow or occasions for performative agreement. Use when review feedback arrives (PR comments, a teammate's objections, a pasted review) and before implementing any suggested change, especially when an item is unclear or seems wrong.
 ---
 
 # Receiving Review
