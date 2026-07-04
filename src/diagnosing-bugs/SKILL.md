@@ -134,6 +134,7 @@ Required before declaring done:
 - [ ] Throwaway prototypes deleted (or moved to a clearly-marked debug location)
 - [ ] Sibling instances of the fixed bug's **class** swept within the change's scope — grep the pattern, check the other call sites; the second occurrence ships otherwise
 - [ ] The hypothesis that turned out correct is stated in the commit / PR message — so the next debugger learns
+- [ ] The fix is described by **behavior and contract**, not file paths and line numbers — "best-practice violations affect the score the same as WCAG violations" stays valid through refactors; "fixed `services/score.py:142`" doesn't
 
 **Then ask: what would have prevented this bug?** Make the call **after** the fix is in, not before — you have more information now than when you started.
 
