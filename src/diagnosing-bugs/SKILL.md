@@ -8,7 +8,7 @@ requires: codebase-design, adr, capturing-learnings
 
 A discipline for hard bugs. Skip phases only when explicitly justified.
 
-When exploring, read `DOMAIN.md` (if present) for the project's vocabulary and check `docs/adr/` in the area you're touching — a behavior an ADR records as deliberate is not a bug. Run the `/capturing-learnings` skill's retrieval protocol on the reported symptom — a match seeds a Phase 3 hypothesis, never a reason to skip Phases 1–2.
+When exploring, read `DOMAIN.md` (if present) for the project's vocabulary and check `docs/adr/` in the area you're touching — a behavior an ADR records as deliberate is not a bug. If `docs/solutions/` exists, run the `/capturing-learnings` skill's retrieval protocol on the reported symptom — a match seeds a Phase 3 hypothesis, never a reason to skip Phases 1–2.
 
 This is the behavior `implement` reaches for when a build turns up an **unplanned failure** mid-slice: a red that isn't the test you just wrote, behavior that contradicts the plan. Stop guessing and run this loop before continuing.
 
@@ -88,7 +88,7 @@ Each hypothesis must be **falsifiable**: state the prediction it makes.
 
 If you cannot state the prediction, the hypothesis is a vibe — discard or sharpen it.
 
-Seed the list with any Learning-doc match from the exploration preamble — it competes on the same falsifiable terms as fresh hypotheses, ranked by how exactly its symptoms match and how recent its date is.
+Seed the list with any Learning-doc match from the exploration preamble — it competes on the same falsifiable terms as fresh hypotheses, ranked by how exactly its symptoms match and how fresh it is.
 
 **Show the ranked list to the user before testing.** They often have domain knowledge that re-ranks instantly ("we just deployed a change to #3"), or know hypotheses they've already ruled out. Don't block on it — proceed with your ranking if the user is AFK.
 

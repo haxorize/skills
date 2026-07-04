@@ -20,7 +20,7 @@ All three must hold — confirm out loud which are met before drafting; if any i
 ## Capture workflow
 
 1. **Apply the gate** (above).
-2. **Search before writing.** Run the retrieval protocol (below) against the new problem — or reuse this session's retrieval results if the store was already searched. The **overlap rule**: same root cause *and* same fix approach as an existing doc → **update it** per [references/learning-format.md](references/learning-format.md); otherwise a new doc. Never write a duplicate — two docs describing one problem drift apart.
+2. **Search before writing.** Run the retrieval protocol (below) against the new problem, extending the grep with the now-known root cause (`root_cause:`, `tags:`) — an existing doc can share the root cause under different symptoms, and this session's earlier symptom search wouldn't have found it. The **overlap rule**: same root cause *and* same fix approach as an existing doc → **update it** per [references/learning-format.md](references/learning-format.md); otherwise a new doc. Never write a duplicate — two docs describing one problem drift apart.
 3. **Draft** per [references/learning-format.md](references/learning-format.md).
 4. **First capture in a repo — discoverability check.** If this doc creates the store, check whether the repo's `CLAUDE.md` (or `AGENTS.md`) would lead a fresh agent to it. If not, draft a one-line descriptive addition in the closest existing section — e.g. `docs/solutions/ — solved problems keyed by symptom frontmatter` — descriptive, never imperative ("always search before…" causes redundant reads). Skip this check on later captures.
 5. **Show the draft** (plus the instruction-file line when step 4 produced one) and save on approval.
@@ -29,8 +29,8 @@ All three must hold — confirm out loud which are met before drafting; if any i
 
 How any skill reads the store — grep-first, cheapest signal first:
 
-1. If `docs/solutions/` doesn't exist, say so and stop — absence is a valid result, not an error.
+1. If `docs/solutions/` doesn't exist, report that and end the search — absence is a valid result, not an error (a capture continues: this is the store's first doc).
 2. Grep recursively (the store may carry category subdirectories from other tooling), case-insensitive, one pass over the frontmatter: the observed error strings with synonyms OR-ed (`(timeout|hang|stall)`); rank hits by matched field — `symptoms:` strongest, then `tags:`, `root_cause:`, `title:`.
 3. Read only the frontmatter (first ~15 lines) of candidate files; full-read only the strong matches.
-4. Return at most 5 distilled matches — each as root cause + fix + what didn't work, with the doc's `date:` flagged — never raw doc dumps.
+4. Return at most 5 distilled matches — each as root cause + fix + what didn't work, with its freshness flagged (`last_updated:` if present, else `date:`) — never raw doc dumps.
 5. A match **informs** the present investigation; it never overrides present evidence — a stale learning can be confidently wrong.
