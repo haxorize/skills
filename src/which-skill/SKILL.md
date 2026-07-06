@@ -34,7 +34,7 @@ Keep steps 1–2 in **one unbroken context window** so the grilling, decompositi
 
 ## Codebase health (upkeep, not feature work)
 
-- **`/improve-design`** — read-only design-quality review of the whole codebase; surfaces deepening opportunities. Picking one *generates an idea* you take back to the main flow at `/grill-and-record`.
+- **`/improve-design`** — read-only design-quality review of the whole codebase; surfaces deepening opportunities. Picking one frames a design, offers a grill (`/grill-me` or `/grill-and-record`), then hands you to `/to-story` to file the result.
 - **`/harden-domain`** — sweep the codebase to refresh `DOMAIN.md` when the vocabulary has drifted.
 - **`/backfill-adrs`** — sweep recent git history for architectural decisions that were made but never recorded.
 

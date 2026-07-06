@@ -2,7 +2,7 @@
 name: improve-design
 description: Read-only design-quality review of a codebase — surface architectural friction and propose deeper, cleaner module interfaces as a prioritized, vetted report.
 disable-model-invocation: true
-requires: codebase-design
+requires: codebase-design, grilling
 ---
 
 # Improve Design
@@ -19,9 +19,7 @@ When framing a candidate, classify its dependencies using `codebase-design`'s **
 
 Resolve the tracker before Step 1 in one of three modes — **Declared**, **Bootstrap-on-ask**, or **No-repo CLI-only**. See [references/tracker-resolution.md](references/tracker-resolution.md) for each mode's behavior and the required fields.
 
-**Hierarchy.** Refactor work items belong under a parent Feature (`Hierarchy: required`, ADO default). If `--parent <feature-id>` is not provided, prompt for it. GitHub defaults to `Hierarchy: optional` — don't prompt.
-
-CLI dispatch commands (search, create, update, comment) and auth-failure fallback: see [references/tracker-dispatch.md](references/tracker-dispatch.md).
+CLI dispatch commands (search, comment) and auth-failure fallback: see [references/tracker-dispatch.md](references/tracker-dispatch.md).
 
 ## Workflow
 
@@ -105,15 +103,16 @@ Be opinionated — the user wants a strong recommendation, not a menu.
 
 Then offer to grill the design before filing — `/grill-me` for a stress-test, or `/grill-and-record` if the project has `DOMAIN.md` or `docs/adr/`. Grilling is the norm, not an aside; expect the design to evolve, and file what comes out the other side.
 
-### 7. Create or update the work item
+### 7. File via `to-story`
 
 If grilling in Step 6 disqualified the candidate (e.g., revealed it isn't actually deepenable, or the friction is a bug rather than architecture), don't file — return to Step 3 with the new understanding.
 
 Before filing, check whether `DOMAIN.md` contains the recommended module's name. If not, add it now (create the file lazily if absent).
 
-Once the user approves, either **update an existing work item** or **create a new one** using the appropriate command from "Work item tracker" above.
+Once the user approves, suggest running **`/to-story`** to synthesize and publish the Story — it owns the single issue template, tracker dispatch, and hierarchy handling. If the design was never grilled — the step 6 offer was skipped rather than declined — run a short grill via the `/grilling` skill first.
 
-- If step 1 found an existing work item that covers this candidate, update it with a comment or revised body rather than filing a duplicate.
-- If the candidate is net-new, create a work item. Don't ask the user to review before creating — just create it and share the URL. On Azure DevOps, use type **User Story**; if the **Hierarchy** rules above resolved a parent Feature, link via `az boards work-item relation add --id <story-id> --relation-type Parent --target-id <feature-id>`.
+Improve-design context to carry into the synthesis:
 
-Work item template: see [references/work-item-template.md](references/work-item-template.md).
+- to-story's publication constraints bar interface signatures and rejected alternatives from the story body. Give them a durable home before filing: if the grill produced no ADR, offer to record one via the `adr` skill, or — failing that — attach the interface sketch as a comment on the filed story. Have `## Approach` reference the ADR, including one written this session.
+- Name, at module level, which existing shallow-module tests the new interface tests replace (step 6 lists them), so the story's `## Tests` section captures the cleanup as well as the new coverage.
+- If step 1 found an existing work item covering this candidate, suggest `/to-story --update <id>` (or add a comment via [references/tracker-dispatch.md](references/tracker-dispatch.md)) rather than filing a duplicate.

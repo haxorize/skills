@@ -64,6 +64,7 @@ Before showing the user, check:
 - `## Layers touched` populated for each layer (`none` is a valid value; missing layers are not)
 - Naming consistency vs. parent's story map (where `Hierarchy: required`) — surface conflicts before publish
 - User-story line matches step 6 classification (Connextra for user-facing, absent otherwise)
+- Documentation obligations, for stories that alter architecture or domain terms: ADR to write or amend, architecture-doc sections that go stale, glossary entries — each pinned as its own AC so a reviewer can't merge without them
 
 ### 8. Present draft to user
 
@@ -74,7 +75,7 @@ Iterate until approved.
 - **GitHub:** `gh issue create --title "..." --body-file <draft>` with default labels from CLAUDE.md. Parent linking via template `Parent: #N` reference if `--parent` was provided. **Before creating the issue,** ensure every label in CLAUDE.md's `Default labels:` exists on the repo: `gh label list --json name --jq '.[].name'` once, then `gh label create <name>` for any missing.
 - **ADO:** The description field expects HTML. Write to a temp file and pass via command substitution to prevent shell newline mangling (embedded `\n` in a shell string becomes a literal two-character sequence in the stored HTML). See [references/story-template-ado.md](references/story-template-ado.md) for the conversion command. Parent linking via `az boards work-item relation add --id <new-story-id> --relation-type Parent --target-id <feature-id>`.
 
-If a required CLAUDE.md field is missing, fail fast with a clear "add this to CLAUDE.md" message.
+If a required CLAUDE.md field is missing, fail fast with a clear "add this to CLAUDE.md" message. If the create call fails with an auth/permission error, fall back to giving the user the drafted body to paste manually — don't loop on auth.
 
 ### 10. Update parent's story map (where `Hierarchy: required`)
 

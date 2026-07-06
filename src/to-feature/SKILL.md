@@ -74,7 +74,7 @@ Iterate until approved.
 - **GitHub:** `gh issue create --title "..." --body-file <draft>` with default labels from CLAUDE.md. Parent linking via `Tracked-by:` line or template `Parent: #N` reference if `--parent` was provided. **Before creating the issue,** ensure every label in CLAUDE.md's `Default labels:` exists on the repo: `gh label list --json name --jq '.[].name'` once, then `gh label create <name>` for any missing.
 - **ADO:** `az boards work-item create --type Feature --title "..." --description "<html>"` with project / area path / iteration / state from CLAUDE.md. The description field expects HTML — convert the Markdown feature draft before passing. The body's final section is `## Story Decomposition`; inside it, HTML markers (`<!-- BEGIN STORY MAP -->` / `<!-- END STORY MAP -->`) fence an append-only region — see [feature-template-ado.md](references/feature-template-ado.md) for the snapshot separator and emergent-Story sentinel inside it. If decomposition was deferred, the section body is the single line `Story Decomposition: deferred at Feature creation.` (no markers). Parent linking via `az boards work-item relation add --id <feature-id> --relation-type Parent --target-id <epic-id>`.
 
-If a required CLAUDE.md field is missing, fail fast with a clear "add this to CLAUDE.md" message.
+If a required CLAUDE.md field is missing, fail fast with a clear "add this to CLAUDE.md" message. If the create call fails with an auth/permission error, fall back to giving the user the drafted body to paste manually — don't loop on auth.
 
 The story-map embed (and the corresponding append-on-publish in `to-story` step 10) is gated on `Hierarchy: required` — ADO default. GitHub projects can opt in via CLAUDE.md.
 
