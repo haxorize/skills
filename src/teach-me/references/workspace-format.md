@@ -1,0 +1,47 @@
+# Workspace formats
+
+Formats for the four root files of a learning workspace.
+
+## MISSION.md
+
+```md
+# Mission — <topic>
+
+**Mission:** <1–2 sentences: what the learner is trying to become able to do, and why — grilled, not transcribed.>
+**Professional domain:** <the learner's world>
+**Grounding:** external | repo-grounded — <path>
+**Done looks like:** <observable capabilities that would satisfy the mission>
+**Out of scope:** <named exclusions that keep lessons from drifting>
+```
+
+## RESOURCES.md
+
+High-trust sources, grown continuously — the list every lesson's citations draw from.
+
+```md
+| Resource | Type | Trust | Status |
+| --- | --- | --- | --- |
+| <linked title> | docs / paper / talk / community | <why it's trustworthy> | unread / mined / cited in NNNN |
+```
+
+## PROGRESS.md
+
+Per-concept review state — the input to every session, updated after every lesson.
+
+```md
+| Concept | Introduced | Last reviewed | Streak | Next due | Flags |
+| --- | --- | --- | --- | --- | --- |
+| <name> | 0003 | 2026-07-10 | 2 | 2026-07-17 | confident-wrong; misconception: <name> |
+
+## Open threads
+
+- <concept> — <last question asked> — <where it got stuck>
+```
+
+- Review intervals expand 1d → 3d → 7d → 21d on success; a miss shrinks one step and resets the streak.
+- Flags worth tracking: `confident-wrong` (high confidence, wrong answer), `hint-bottomed` (the ladder reached bottom-out), `misconception: <name>` (from a mapped distractor).
+- Open threads are concepts parked by the frustration rule or left unresolved at session end.
+
+## NOTES.md
+
+Scratchpad: the user's expressed teaching preferences ("less theory", "more diagrams", "shorter sessions") and your own working notes.

@@ -1,6 +1,6 @@
 # Domain — Skills Repo
 
-Ubiquitous-language glossary for the entire skills repo. Covers the four main areas of work the skill suite supports — shaping backlog work (Feature/Story/Task/Bug publishing), design improvement (improve-design), recording decisions (ADRs), and implementation (TDD) — plus the meta-vocabulary of the skills themselves.
+Ubiquitous-language glossary for the entire skills repo. Covers the five main areas of work the skill suite supports — shaping backlog work (Feature/Story/Task/Bug publishing), design improvement (improve-design), recording decisions (ADRs), implementation (TDD), and tutored learning (teach-me) — plus the meta-vocabulary of the skills themselves.
 
 ## Skill mechanics
 
@@ -172,6 +172,21 @@ Ubiquitous-language glossary for the entire skills repo. Covers the four main ar
 | **Retrieval protocol** | The grep-first search over Learning-doc frontmatter; its steps live in `capturing-learnings`, the single source of truth | Learnings research (CE's subagent form) |
 | **Overlap rule** | The update-vs-create decision at capture — same root cause and same fix approach → update the existing Learning doc; otherwise create | Dedup score (CE's 5-dimension rubric) |
 
+## Teaching & learning
+
+| Term | Definition | Aliases to avoid |
+| --- | --- | --- |
+| **Learning workspace** | The per-topic directory `<Learning root>/<slug>/` holding all of one topic's teaching state (mission, lessons, records, progress) — always outside any work repo | Teaching workspace (Matt Pocock's cwd-based model), Study folder |
+| **Learning root** | The configurable parent of all Learning workspaces (default `~/learning/`) | — |
+| **Mission** | The grilled "why" behind a topic, captured in the workspace `MISSION.md`; every Lesson is judged against it | Goal (unsharpened), Objective |
+| **Lesson** | One self-contained, date-stamped HTML teaching unit in `lessons/` — a point-in-time consumable, never maintained after the fact | Course, Module (clashes with the Ousterhout sense) |
+| **Learning record** | A dated, numbered insight record in `learning-records/` — what the learner now believes, the evidence, and the misconception it replaced; the Learning-workspace analogue of an ADR, written inline by `teach-me` | Journal entry, TIL |
+| **Retrieval warm-up** | The default opening of every resumed teaching session — due-for-review free recall bracketed by confidence ratings, before any new material | Review session (implies re-reading, the weaker move) |
+| **Topic glossary** | The Learning workspace's own `DOMAIN.md`, maintained by the `domain-modeling` lens; Repo-grounded topics read the repo's glossary instead | — |
+| **Cheat sheet** | A compressed, printable reference sheet in `cheatsheets/` — the revisited artifact, lazily re-verified when a new Lesson touches it | Reference doc (collides with Reference file), Reference material |
+| **Practice** | The middle leg of `teach-me`'s knowledge/practice/wisdom triad — retention-building effortful retrieval | Skills (collides with Skill, the unit) |
+| **Grounding** | The `MISSION.md` declaration of a topic's source of truth — External (resources) or Repo-grounded (a named codebase as textbook) | Mode (overloaded) |
+
 ## Tracker integration
 
 | Term | Definition | Aliases to avoid |
@@ -263,6 +278,9 @@ Ubiquitous-language glossary for the entire skills repo. Covers the four main ar
 - A `DOMAIN.md` file lives at the root of a **Bounded context**; multi-context repos have nested `DOMAIN.md` files per context with the root acting as an index.
 - `capturing-learnings` (Behavior skill) owns the **Solved-problems store**: the **Capture gate** admits a **Learning doc** (mirroring the **ADR gate**), the **Overlap rule** decides update-vs-create, and the **Retrieval protocol** is how any skill reads the store; `diagnosing-bugs` declares it — retrieval on the way in, a capture offer on the way out.
 - A matched **Learning doc** informs an investigation, never overrides it — past learnings seed hypotheses, present evidence wins.
+- A **Learning workspace** belongs to the **Learning root**, never to a work repo (see ADR-0026); `teach-me` (User-invoked Orchestrator) owns it, delegating **Mission** intake to `grilling` (Load-bearing delegation) and the **Topic glossary** to `domain-modeling` (Background-lens behavior, scoped to the workspace as its root), while writing **Learning records** inline — the same Gated-action inlining as `grill-and-record`'s ADR write.
+- A Repo-grounded topic reads its repo's `DOMAIN.md` and ADR log as teaching material but never writes into the repo.
+- A **Learning record** is admitted by `teach-me`'s own gate, not the **ADR gate**, and lives in the **Learning workspace**, never `docs/adr/`.
 
 ## Example dialogue
 
@@ -302,3 +320,6 @@ Ubiquitous-language glossary for the entire skills repo. Covers the four main ar
 - **"Skill"** vs **"Convention skill"** vs **"Plugin"** — **Skill** is the unit (a directory with `SKILL.md`); **Convention skill** is a category (project-local, encoding stack conventions); **Plugin** is Claude Code's distribution unit (a different concept — don't conflate).
 - **"Sweep"** appears as a verb (the act of scanning), a noun (**Sweep window**), and a mode (**Sweep mode**). In Skill descriptions, **Sweep mode** is the canonical noun for the deliberate-pass behavior of `harden-domain` and `backfill-adrs`.
 - **"Description"** is overloaded: in Skill **Frontmatter** it's the ≤1024-char field used for Skill loading; in ADO it's the rich-text body field on a work item; in GitHub it's the body of an issue. Context usually disambiguates.
+- **"Skill"** vs **"Practice"** — `teach-me`'s pedagogy triad deliberately renames Matt Pocock's knowledge/*skills*/wisdom middle leg to **Practice**: a `SKILL.md` that used "skill" for learner abilities while *being* a **Skill** would collide constantly. Use **Practice** for the pedagogy leg, **Skill** only for the unit.
+- **"Cheat sheet"** vs **"Reference file"** vs **"Learning doc"** — a **Cheat sheet** is a learner-facing doc in a **Learning workspace**'s `cheatsheets/`; a **Reference file** is a doc under a Skill's `references/`; a **Learning doc** is a solved-problem record in a repo's `docs/solutions/`. Three different artifacts — don't conflate.
+- **"`DOMAIN.md`"** now names two artifacts: the repo-root glossary and a **Learning workspace**'s **Topic glossary** (same format, different home). Qualify as **Topic glossary** when the teaching sense is meant.
