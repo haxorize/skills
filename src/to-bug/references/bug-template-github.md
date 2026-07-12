@@ -73,6 +73,5 @@ Teams override these by declaring `## Severity definitions` in CLAUDE.md alongsi
 
 ## Notes
 
-- Each severity label must exist on the repo before `gh issue create` runs. `to-bug` reconciles missing labels via `gh label create` once per repo per label, identical to the default-label flow in `to-story` / `to-tasks`.
-- Bugs do not produce child Task issues. The fix is the slice; if more structure is needed, that's a Story.
+- Each severity label must exist on the repo before `gh issue create` runs. `to-bug` reconciles missing labels via `gh label create` once per repo per label, identical to the default-label flow in `to-story` / `to-tasks`.- Bugs do not produce child Task issues. The fix is the slice; if more structure is needed, that's a Story.
 - `from-work-item <issue-number>` recognizes a `bug`-labeled issue as a Bug and loads the Bug-shaped context.

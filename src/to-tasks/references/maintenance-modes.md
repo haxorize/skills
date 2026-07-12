@@ -124,7 +124,7 @@ State conflicts (requires decision, N):
 Healthy Task (N): listed for completeness, no action.
 ```
 
-Iterate per bucket until approved. Apply approved changes — body patches via `az boards work-item update` / `gh issue edit`, state transitions via update / close. Publish new Tasks in dependency order so each blocker's real ID is available; on ADO, materialize each in-project blocker as a built-in Predecessor relation exactly as the create path does — see [../SKILL.md](../SKILL.md) step 8. Reconcile operates on an existing set, so always apply the skip-if-exists guard there. A blocker may be an existing Task in the set, not just a newly published one.
+Iterate per bucket until approved. Apply approved changes — body patches via `az boards work-item update` / `gh issue edit`, state transitions via update / close. Publish new Tasks in dependency order so each blocker's real ID is available; on ADO, materialize each in-project blocker as a built-in Predecessor relation, and on GitHub, add each new Task as a native sub-issue of the parent Story, exactly as the create path does — see [../SKILL.md](../SKILL.md) step 8. Reconcile operates on an existing set, so always apply the skip-if-exists guard there. A blocker may be an existing Task in the set, not just a newly published one.
 
 ### Naming-drift queue write
 
