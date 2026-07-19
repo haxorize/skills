@@ -24,6 +24,8 @@ Ubiquitous-language glossary for the entire skills repo. Covers the six main are
 | --- | --- | --- |
 | **Synthesis-only** | A Skill mode that drafts from existing conversation context without interviewing | — |
 | **Grilling session** | An interactive interview that stress-tests a plan | Interview, Q&A |
+| **False yes** | A non-answer confirmation closing a Grilling session — "sounds good", "whatever you think", "I guess" — that hands the decision back to the agent; recovered by re-asking with two concrete options | Soft approval, Hedged yes |
+| **Pre-mortem** | The grilling closing question — "it's a year from now and this flopped; what went wrong?" — asked before declaring the decision tree resolved, to surface branches the tree missed | Retrospective (backward-looking, different artifact) |
 | **Sweep mode** | A non-interactive Skill mode that refreshes a derived artifact by scanning its source corpus | Bulk pass |
 | **Update mode** | Single-artifact maintenance mode invoked via `--update <work-item-id>` (see ADR-0003) | Patch, Edit, Revise |
 | **Reconcile mode** | Multi-artifact diff mode invoked via `--reconcile <story-id>`, proposing adds/closures/edits across child Tasks (see ADR-0003) | Sync, Realign |

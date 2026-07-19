@@ -5,7 +5,7 @@ description: The relentless-interview discipline for stress-testing a plan, deci
 
 # Grilling
 
-Walk down each branch of the decision tree, resolving dependencies between decisions one-by-one. **For each question, provide your recommended answer.**
+Walk down each branch of the decision tree, resolving dependencies between decisions one-by-one. **For each question, provide your recommended answer.** Grill the load-bearing branches first: an assumption that sinks the plan if it's false gets questioned before any nice-to-have refinement.
 
 Before descending, assess scope: if the topic spans multiple independent subsystems, don't spend questions refining details of a piece that needs decomposition first — grill the split itself (what are the pieces, how do they relate, which goes first), then descend into the first piece.
 
@@ -15,7 +15,11 @@ Ask the questions **one at a time** by default, waiting for the answer before mo
 
 If a *fact* can be found by exploring the environment (filesystem, tools, etc.), look it up rather than asking. The *decisions*, though, are the user's — put each one to them and wait for their answer.
 
-The loop is done when the decision tree has no unresolved branches — every decision has an answer, every dependency between decisions is settled, and nothing the user said contradicts the facts you looked up. Even then, do not act on it until the user confirms shared understanding has been reached.
+When a goal arrives as a justification-shaped buzzword — "scalable", "clean", "modern" — probe past the performance: "if you didn't have to justify this to anyone, what would you actually want?" Then grill the real want.
+
+The loop is done when the decision tree has no unresolved branches — every decision has an answer, every dependency between decisions is settled, and nothing the user said contradicts the facts you looked up. Before calling it resolved, ask one **pre-mortem** question — "it's a year from now and this flopped; what went wrong?" — and grill any branch the answer surfaces that the tree missed.
+
+Even then, do not act on it until the user confirms shared understanding has been reached. A **false yes** — "sounds good", "whatever you think", "I guess" — is not that confirmation; it hands the decision back to you. Re-ask with two concrete options: picking one is an answer, blessing both is not.
 
 ## Batch cadence
 
