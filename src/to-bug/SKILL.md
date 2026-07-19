@@ -67,6 +67,8 @@ Before showing the user, check:
 - **Severity matches scope.** Critical is reserved for outage / data loss / security; cosmetic isn't High.
 - **Domain language matches `DOMAIN.md`.**
 
+Then run a **Cold-reader pass** — self-review can't catch author blindness (after drafting, you see what you meant, not what you wrote): spawn one fresh-context subagent that gets only the drafted body and answers "what's broken, and how do I reproduce it?", naming ambiguities and context it had to assume. Fold real gaps back into the draft; one pass, not a loop.
+
 ### 7. Public-repo warning (GitHub only)
 
 Before publishing on GitHub, check repo visibility:

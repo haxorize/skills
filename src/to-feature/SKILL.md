@@ -65,6 +65,8 @@ Before showing the user, check:
 - AC IDs: append-only — no reused IDs across active and `## Removed acceptance criteria`; gaps from removals preserved (no renumbering)
 - Story map: every active Feature AC ID appears in at least one Story's `Covers:` line; no `Covers:` line references a removed AC ID; naming-table dedup; dependency acyclicity (skip if no story map — flat mode or deferred decomposition)
 
+Then run a **Cold-reader pass** — self-review can't catch author blindness (after drafting, you see what you meant, not what you wrote): spawn one fresh-context subagent that gets only the drafted body and answers "what would you build?", naming ambiguities and context it had to assume. Fold real gaps back into the draft; one pass, not a loop.
+
 ### 9. Present draft to user
 
 Iterate until approved.

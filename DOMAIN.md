@@ -30,6 +30,7 @@ Ubiquitous-language glossary for the entire skills repo. Covers the six main are
 | **Update mode** | Single-artifact maintenance mode invoked via `--update <work-item-id>` (see ADR-0003) | Patch, Edit, Revise |
 | **Reconcile mode** | Multi-artifact diff mode invoked via `--reconcile <story-id>`, proposing adds/closures/edits across child Tasks (see ADR-0003) | Sync, Realign |
 | **Cold-start** | A fresh Claude Code session entering a work item with no prior conversation context | Fresh session |
+| **Cold-reader pass** | The pre-publish verification a `to-*` publisher runs against author blindness (after drafting, you see what you meant, not what you wrote): a fresh-context subagent sees only the drafted work item and answers "what would you build?", naming ambiguities and assumed context; gaps loop back into the draft | Skeptical reader (`handoff`'s different move — the next session re-verifies *facts*, not comprehensibility), Reader test, Peer review (human act) |
 | **Cold-start loader** | A Skill that fetches a published Work item back into the conversation as implementation context — embodied by `from-work-item` | Loader (when used alone) |
 | **Archaeological mode** | `backfill-adrs`'s mode for recovering un-recorded decisions from git history | — |
 
