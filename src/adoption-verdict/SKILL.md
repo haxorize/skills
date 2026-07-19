@@ -1,0 +1,65 @@
+---
+name: adoption-verdict
+description: Render a graded, project-grounded verdict on an external-adoption question — a library, tool, service, or practice this project might take on. Use when asked "should we adopt/use/switch to X?", "is X worth it for us?", "should we migrate off Y?", "give me a verdict on X", when a CVE or deprecation raises "does this reach us?", or when a plan hinges on an unexamined adopt-or-not call. Not for casual technology curiosity ("what is X?" — answer normally), generating alternatives (`diverging`), or stress-testing the user's own thinking (`grilling`) — this skill forms and defends its own position.
+requires: capturing-learnings, adr, diverging
+---
+
+# Adoption Verdict
+
+Answer an external-adoption question with one graded, project-grounded verdict — never a neutral survey of pros and cons. The differentiator is the refusal to answer in the abstract: generic knowledge already covers "tell me about X"; a verdict is earned against *this* project or not issued at all.
+
+**An adoption question is the trigger, not any mention of a technology.** "What is X?" or "how does X work?" gets a normal answer; this fires when someone must decide whether this project takes X on.
+
+## Reversibility tiers
+
+Classify first — the tier sizes everything downstream. State it in the verdict; the user can override it.
+
+1. **Two-way door** — a dependency, lint rule, config; trivially reversible. One-screen verdict: 1–2 project facts, 1–2 external facts, no reversal trigger, no adversary offer.
+2. **One-way but bounded** — a data store, an internal contract, a migration whose blast radius stays inside this codebase. Full workup: alternatives pass, reversal trigger, adversary offer.
+3. **One-way and high-stakes** — a security/legal/privacy surface, a public contract, an irreversible migration. Tier 2 plus two-source corroboration on every load-bearing external claim.
+
+A shallow Tier-1 verdict is defensible *because* the tier is stated — don't run a Tier-3 workup on a trivially reversible `npm i`, or hand a security surface the Tier-1 treatment.
+
+## The two-floor gate
+
+A verdict must clear both floors. They are independent pass/fail checks — strong external evidence never compensates for a thin project leg, and vice versa.
+
+- **Project floor** — one concrete, verified project fact relevant to the decision: a named incumbent plus one touchpoint (a `file:line`, dependency, issue, or doc passage) for a replace/migrate; the verified absence of an incumbent plus one concrete integration point for a net-new adoption; or a prior recorded decision on the question. One touchpoint passes — the floor demands a look, not a dossier.
+- **External floor** — at least one external source, actually read this session, whose text supports the claim it backs.
+
+A failed floor forbids Adopt and Reject alike. Return the matching Hold — "Hold — insufficient project grounding" or "Hold — external evidence unavailable" — with a numbered list of exactly what to inspect to make the floor passable. Never a graded verdict at lowered confidence.
+
+**Conversation claims are hypotheses, not grounding.** What the user or the session asserted about the project or the candidate sits in its own schema field until independently verified; it never satisfies a floor.
+
+## Workflow
+
+1. **Frame.** Pin the subject, the intent (adopt / migrate / compare / does-this-reach-us), the incumbent, and the tier. If the input is a selection over an unbounded field ("what should we use for auth?"), stop and bound the field first — this skill judges named candidates, it doesn't enumerate them; `diverging` generates when the field needs widening.
+2. **Precedent.** Check for a prior stance before grading: `docs/adr/`, `docs/solutions/` (run the `/capturing-learnings` retrieval protocol on the candidate and problem), `DOMAIN.md`, memory. A prior decision is consumed, not ignored — overturning it is part of the verdict; silently re-deciding is not.
+3. **Ground.** Read the project directly — the incumbent and its call sites, the constraints that decide compatibility, licensing where the tier warrants — and the external evidence (docs, issue trackers, release history) with whatever web tools are reachable.
+4. **Gate.** Apply the two floors.
+5. **Verdict.** Emit the schema below, leading with the grade in plain words.
+
+## Grades and schema
+
+Exactly one grade. Reject and Not-our-problem are first-class outcomes, not failures — don't let the asker's enthusiasm or the conversation's momentum pull the grade upward.
+
+- **Adopt** — proven fit for us; use it.
+- **Trial** — promising; pilot it on a low-risk slice first.
+- **Hold** — a complete decision to *wait* (promising but unstable, migration cost exceeds current pain, category moving too fast) — plus the two gate-failure subtypes above.
+- **Reject** — judged not worth it for us.
+- **Not-our-problem** — an exposure question (CVE, deprecation) that doesn't reach us.
+
+Lead with the call in plain words and attach the label — "Hold — wait, don't switch now", never a bare "Grade: Trial". The fixed vocabulary tags the verdict for the durable record and the next precedent search; it doesn't replace the sentence.
+
+Schema: **Grade** (label + plain meaning) · **Incumbent** · **Verified facts** (project and external, kept distinct, cited — `file:line`, issue, URL — never pasted) · **Conversation hypotheses** (unverified) · **Conditions** ("yes, if …") · **Reversal trigger** (Tier 2/3 — what would flip this).
+
+The verdict is a tight chat block sized by its tier, not by how much was found; running past the tier's budget means evidence is being pasted that belongs in a citation.
+
+## The adversary pass (Tier 2/3)
+
+After emitting a Tier 2/3 verdict, offer one fresh-context adversary: a subagent seeded with only the verdict and its cited facts, instructed to refute it. Fresh context beats self-critique — the author of a verdict cannot unsee their own reasoning. One pass, offered once; Tier 1 never offers. Fold a surviving refutation into the verdict before anyone acts on it.
+
+## Boundaries
+
+- `grilling` stress-tests the *user's* thinking by asking; this skill forms and defends its *own* graded position. A verdict can feed a grill; a grill can end by requesting a verdict.
+- An Adopt or Trial on consequential work may deserve a durable record — that's `adr`'s territory; offer, don't write.
