@@ -15,6 +15,10 @@ Only for discipline-bearing skills — a rule the agent might rationalize around
 5. **Read every response.** Don't grep for compliance keywords — template echoes masquerade as hits.
 6. **Variance is a metric.** Five reps producing five interpretations means the wording isn't binding, even when no single rep clearly violates.
 
+## Revising an existing skill
+
+When the micro-test runs against a skill that already ships, two extra rules keep the revision honest: the rep set **must include the failure that prompted the revision** and stay fixed across it — swapping scenarios mid-revision makes before/after incomparable — and **cap the edits per revision** (a handful of distinct changes, fewer as the skill matures): a sprawling rewrite that regresses leaves you unable to attribute the regression to a cause.
+
 ## Building pressure scenarios
 
 Combine **3+ pressures** — a single pressure rarely reproduces real-session failure:
