@@ -16,7 +16,7 @@ Resolve the project's check commands from its `CLAUDE.md` `## Commands` section.
 - **Format** — apply the project's formatter.
 - **Lint** — run the linter; fix what it flags.
 - **Typecheck** — run the type checker; fix what it flags.
-- **Test** — re-run the test command after any fix above, to confirm nothing broke.
+- **Test** — re-run the test command after any fix above, to confirm nothing broke. A green run is spent the moment it completes — never re-run for reassurance without an intervening change.
 
 If `## Commands` is missing or incomplete, infer the commands from the project's config (package scripts, Makefile, tool config) and note what you ran.
 
