@@ -18,7 +18,7 @@ Turn something the user can't answer alone into a **questionnaire** — a Markdo
 
 ## Writing the questions
 
-Frame the document as a **discovery questionnaire**: the user lacks context, the recipient holds it. Order questions most-important-first — async means you may only get one pass — and group them under `##` headings by theme once there are more than a handful. Every question is one idea, never compound, with an answer stub directly beneath, and a one-line *why this matters* only where the question could be misread or invite a throwaway answer.
+Frame the document as a **discovery questionnaire**: the user lacks context, the recipient holds it. The per-question mechanics — ordering, theme grouping, answer stubs, *why this matters* lines — live in the template; follow it.
 
 ## Pairing with chart-course
 
