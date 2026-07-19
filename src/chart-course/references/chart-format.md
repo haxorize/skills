@@ -1,7 +1,5 @@
 # Chart formats
 
-The `Chart-type:` body line is the source of truth for typing on both trackers. GitHub additionally projects it as a `chart:map` / `chart:<type>` label — additive only; a failed label application is surfaced for manual repair and never blocks the publish.
-
 ## Map body
 
 ADO: the map Feature's description. GitHub: the map issue's body.
