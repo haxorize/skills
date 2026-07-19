@@ -23,7 +23,7 @@ Even then, do not act on it until the user confirms shared understanding has bee
 
 ## Batch cadence
 
-When the user asks for it ("batch grill me", "ask them all at once") or a calling skill declares it, work the tree in **rounds** instead. The **frontier** is every decision whose prerequisites are already settled — the questions you can ask *now* without guessing at answers you haven't heard yet. Ask the whole frontier in one round, numbered, each with your recommended answer, then wait. Answers reshape the tree — settled decisions push the frontier outward — so recompute it and ask the next round. A question whose answer depends on another question still open in this round belongs to a *later* round, not this one.
+When the user asks for it ("batch grill me", "ask them all at once") or a calling skill declares it, work the tree in **rounds** instead. The **frontier** is every decision whose prerequisites are already settled — the questions you can ask *now* without guessing at answers you haven't heard yet. Ask the whole frontier in one round, numbered, each with your recommended answer, then wait. Invite shorthand answers keyed to the numbering — "1: yes, 2: see #channel, 3: no, back-compat" — so a wide frontier stays cheap to answer. Answers reshape the tree — settled decisions push the frontier outward — so recompute it and ask the next round. A question whose answer depends on another question still open in this round belongs to a *later* round, not this one.
 
 Don't block a round on fact-finding: dispatch a subagent for the fact and hold back only the questions downstream of it — ask the rest of the frontier now.
 
