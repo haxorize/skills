@@ -10,7 +10,13 @@ requires: feedback-loops
 
 Tests verify behavior through public interfaces, not implementation details. Never write a **tautological test** — one whose assertion recomputes the expected value the way the code does (`expect(add(a, b)).toBe(a + b)`), so it passes by construction; expected values come from an independent source of truth (a known-good literal, a worked example, the spec). One test at a time, one implementation at a time. Never write all tests first then all code — that's horizontal slicing.
 
-Before mocking a dependency, run the behavior against the real implementation once to observe what actually crosses the seam — then mock minimally, at that seam, reproducing the complete structure that crossed it. A method only tests use belongs in test utilities, never on the production class.
+Before writing a test body, name the break it catches: the production change that would make it fail — and that change must be a bug, not a decision. Can't name one → the code earns no test (trivial forwarding and prose earn none; a test written to satisfy process costs maintenance forever).
+
+Never write a **change detector** — a test only intentional decisions can fail (a constant's value, exact message wording, private structure): it fires on every redesign and sleeps through bugs. Test the behavior that depends on the decision — not `MAX_RETRIES == 5` but "the 6th attempt never happens".
+
+Test the contract your code makes at its boundaries — the route you register, the query you emit — never the framework's own mechanics upstream of it; when upstream behavior genuinely surprised you, write one narrow characterization test naming the assumption. Scripts and configs are tested by running them against controlled inputs and asserting outputs or exit codes — asserting their text contains a line proves only that the source is the source.
+
+Before mocking a dependency, run the behavior against the real implementation once to observe what actually crosses the seam — then mock minimally, at that seam, reproducing the complete structure that crossed it. A method only tests use belongs in test utilities, never on the production class. The mock itself earns no assertions — a mock assertion passes when the mock is present and fails when it's absent, saying nothing about the component. When mock setup outgrows the test logic, unmock: switch to an integration test with real components.
 
 For test fixtures and patterns, see your project's testing skill(s). For conventions on the layer you're touching (endpoint shape, component composition, schema design, etc.), consult the matching convention skill.
 
@@ -85,6 +91,8 @@ Run the test command after each refactor step. Never refactor while red.
 Then run `/simplify` to catch any remaining issues with reuse, quality, or efficiency. Fix anything it finds and re-run tests.
 
 ## Closing the cycle
+
+Before closing, run the **mutation check**: mentally mutate the production code — wrong constant or argument, wrong branch, missing side effect or state change, empty return, missing validation for zero/empty/nil/malformed input — and confirm at least one test fails for each realistic mutation. An uncaught mutation marks the behavior as unprotected, or the test as tautological.
 
 When the cycle's behaviors are built and refactored, close the loop: run the `/feedback-loops` skill once to finalize mechanically — format, lint, typecheck, stack finalization (migrations, codegen), and any doc updates the change made stale.
 
