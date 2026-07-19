@@ -118,6 +118,7 @@ Ubiquitous-language glossary for the entire skills repo. Covers the six main are
 | **Vertical slice** | A thin end-to-end cut through every Layer, shaped to exactly one **Task** — built **Tracer bullet** first, then behavior by behavior (never Layer by Layer) | Slice (when used alone), Cut |
 | **Tracer bullet** | The first behavior built within a Vertical slice — the thinnest end-to-end path that proves the slice works | First test, Initial path |
 | **Layer** | A horizontal stratum of the codebase (Data, Backend, Client, UI, Tests) | Tier, Stack |
+| **Expand–contract** | The slicing pattern for a wide mechanical refactor whose blast radius breaks every call site at once (so no Vertical slice can land green): an *expand* Task adds the new form beside the old, *migrate* Tasks move call sites in blast-radius-sized batches (each blocked by the expand), and a *contract* Task deletes the old form once no caller remains | Parallel change (acceptable synonym), Big-bang refactor (the anti-pattern this replaces) |
 | **`## Layers touched`** | The Story- or Task-body section enumerating affected Layers | Affected modules |
 | **HITL** | "Human-in-the-loop" mode of a Task or Decision ticket — requires a live human (UX-sensitive, ambiguous, security-relevant; a HITL Decision ticket only resolves through exchange with the human — the agent never stands in for their side) | Manual |
 | **AFK** | "Away-from-keyboard" mode of a Task or Decision ticket — safely driven by the agent alone | Auto, Unattended |

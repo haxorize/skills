@@ -55,6 +55,8 @@ Each slice is one Task. Prefer many thin Tasks over few thick ones.
 
 **Admission test:** publish only Tasks whose slice you can state precisely *now* (blocked-but-sharp is fine); scope that hasn't sharpened stays as prose in the parent Story until it graduates — never a placeholder Task.
 
+**Wide refactors slice by expand–contract, not tracer bullets.** Watch for a wide refactor hiding in the Story — one mechanical change whose blast radius fans across the codebase, where a single edit breaks every call site at once so no slice can land green. Sequence it instead: an **expand** Task adds the new form beside the old (nothing breaks); **migrate** Tasks move call sites over in batches sized by blast radius (per package, per directory), each blocked by the expand, CI green throughout because the old form still exists; a final **contract** Task deletes the old form once no caller remains, blocked by every migrate batch. If even the batches can't stay green alone, keep the sequence but let them share an integration branch that all block a final integrate-and-verify Task — green is promised only there.
+
 **Tests belong in the same Task as the behavior they verify.** Never file a test as its own Task — that is a horizontal cut, not a vertical slice. Each Task must be independently handable to `/tdd`. If writing a Task's tests would require another Task's implementation to exist first, merge them into one Task.
 
 For each Task:
