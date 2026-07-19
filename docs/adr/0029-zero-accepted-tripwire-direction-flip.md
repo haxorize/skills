@@ -1,0 +1,3 @@
+# Zero-accepted tripwire ported direction-flipped into receiving-review
+
+Upstream (addyosmani/agent-skills, doubt-driven-development) fires a "doubt theater" alarm when an agent solicits adversarial review across cycles yet classifies zero findings as actionable — performed skepticism. We ported only that self-audit signal, direction-flipped, into `receiving-review`: the suite already guards performative *agreement*, so the uncovered failure was the defensive mirror — verifying inbound findings one by one and rejecting all of them. Adopting the upstream doubt-loop itself was rejected: no reviewer-spawning workflow exists locally to host it, and its parent pattern overlaps the already-rejected per-finding validation subagents.
