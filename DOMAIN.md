@@ -17,6 +17,8 @@ Ubiquitous-language glossary for the entire skills repo. Covers the six main are
 | **Failure-driven escalation** | The `write-skill` wording rule: judgment-framing is the default; a hard prohibition (paired with a rationalization table and red-flags list) is reserved for a rule the agent demonstrably skips under pressure | Blanket caps ban (the prior rule), Authority-by-default |
 | **Form-to-failure table** | The authoring decision table mapping a skill's observed failure type to the wording form that fixes it; the table lives in `write-skill`'s `great-skills.md`, the single source of truth | — |
 | **Micro-test** | The cheap wording check run while authoring a discipline skill: execute the pressure scenario *without* the skill as a control (no control failure → nothing to fix), then 5+ fresh-context reps with the wording; high variance across reps is itself the failure signal | A/B test (broader), Eval (overloaded) |
+| **Trigger test** | The description check for a Model-invoked skill that misfires or fails to fire: a handful of realistic should-trigger prompts plus near-miss should-not-trigger negatives, run in fresh contexts — the near-misses carry the signal; fixed by sharpening triggers, never by enumerating queries | Trigger eval (the official heavyweight form — 20 queries, train/test splits) |
+| **Undertriggering** | The default description failure mode: the model handles a query itself rather than loading the applicable skill — what trigger-rich, front-loaded descriptions fight | — |
 
 ## Skill modes & verbs
 

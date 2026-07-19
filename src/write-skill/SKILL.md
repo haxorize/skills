@@ -48,6 +48,8 @@ skill-name/
     └── helper.py
 ```
 
+Scripts are **black boxes**: they exist to be *run*, not read — don't ingest a large helper into context unless running it first proved a custom variant necessary. The signal to bundle one: repeated runs of the skill independently writing the same helper.
+
 ## SKILL.md template
 
 ```md
@@ -79,7 +81,7 @@ description: <model-facing with triggers, OR human-facing one-liner if user-invo
 
 ## Writing the description
 
-The description is the skill's top-level **context pointer** — its wording decides when and how reliably the skill is reached.
+The description is the skill's top-level **context pointer** — its wording decides when and how reliably the skill is reached. The failure it fights is **undertriggering**: the model skips skills on queries it thinks it can handle alone, and every description competes with all the others in context for attention.
 
 - **Model-invoked:** state what the skill is, then list the **triggers** — one per genuinely distinct branch. Synonyms renaming one branch are duplication; collapse them. Open the trigger list with `Use when` (or `Use after` / `Use only`) — this is the repo's normative trigger marker, and `scripts/lint-skills.sh` keys on it to tell model-invoked from user-invoked descriptions. Front-load the leading words you actually use when you want the skill. Describe scope and triggers, **never the workflow** — if it summarizes the process, the agent follows the description as a shortcut and skips the body. Good: `Project conventions for this FastAPI + async SQLAlchemy API. Use when creating endpoints, models, schemas, or services.` Bad (workflow): `Gather requirements, draft SKILL.md, then iterate.`
 - **User-invoked:** a one-line human-facing summary. No "Use when…" trigger list — the model never sees it.

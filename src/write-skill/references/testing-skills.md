@@ -37,3 +37,7 @@ When an agent violates *despite* the skill, ask that same agent: "How could the 
 ## Done
 
 The wording passes when 5 consecutive fresh-context reps hold the discipline under combined pressure, with variance low enough that the responses read as the same process.
+
+## Trigger test (descriptions)
+
+The micro-test proves a loaded skill *binds*; this proves a model-invoked skill *loads*. When a skill fails to fire (or fires spuriously), test the description, not the body: run a handful of realistic prompts in fresh contexts — a few that should trigger and a few **near-misses** that should not — and watch what loads. Near-misses carry the signal: an obviously irrelevant negative proves nothing, while a boundary-adjacent one shows where the description over- or under-reaches. Fix by sharpening triggers and leading words, never by enumerating the failing queries — a query list overfits and bloats the description's context cost.
