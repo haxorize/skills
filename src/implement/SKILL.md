@@ -30,6 +30,10 @@ When it's genuinely ambiguous (some testable behavior, some glue), ask the user 
 
 If an **unplanned failure** turns up mid-build that you can't quickly explain — a red that isn't the test you just wrote, behavior that contradicts the plan — stop guessing and run the `/diagnosing-bugs` skill before continuing (if you don't see a `Launching skill: diagnosing-bugs` line, load it). Don't fold an unexplained red into the slice's normal red/green rhythm; it needs its own tight feedback loop first.
 
+## Park what you notice
+
+Out-of-scope observations made mid-slice — a smell, a missing test, a refactor itch — get **parked**, never fixed inline: note them in a running list and hold the slice's line. At close, surface the parked list — "noticed but didn't touch" — and offer to file items as backlog follow-ups. The list doubles as the change's scope declaration: what you deliberately left alone.
+
 ## Close the loop
 
 Run the `/feedback-loops` skill **once**, after the slice's behaviors are built and refactored — if you don't see a `Launching skill: feedback-loops` line, stop and load it. It is the mechanical finalize. It does not simplify (already done) and does not review.
