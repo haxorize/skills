@@ -157,7 +157,8 @@ Ubiquitous-language glossary for the entire skills repo. Covers the six main are
 | **Port** | An Interface at a Seam designed for swapping Adapters | — |
 | **Leverage** | The behavior callers obtain from a small Interface | — |
 | **Locality** | The concentration of change, bugs, and knowledge inside a Module | Cohesion (different sense) |
-| **Deletion test** | The thought experiment of deleting a Module to judge whether complexity vanishes (Pass-through) or reappears across callers (earns its keep) | — |
+| **Deletion test** | The thought experiment of deleting a Module to judge whether complexity vanishes (Pass-through) or reappears across callers (earns its keep) — it cuts both ways: before deleting, name why the thing exists (git blame, ADRs); a small helper can earn its keep by naming a concept | — |
+| **Concept-count test** | Judging a claimed simplification by the concepts a reader must hold before and after — an unchanged count is relocation, not reduction | Line-count test (the wrong metric) |
 | **Pass-through** | A Module that adds no value beyond delegating to its dependency | Wrapper, Delegate |
 | **Module-deepening refactor** | A refactor that increases a Module's Depth | Deepening (acceptable shorthand) |
 | **Architectural friction** | The signal that deepening might help — bouncing between many small files, shallow interfaces, untestable seams, cross-module domain leaks | Smell (distinct from **Code smell (Fowler)**), Pain point |
