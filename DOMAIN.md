@@ -1,6 +1,6 @@
 # Domain — Skills Repo
 
-Ubiquitous-language glossary for the entire skills repo. Covers the five main areas of work the skill suite supports — shaping backlog work (Feature/Story/Task/Bug publishing), design improvement (improve-design), recording decisions (ADRs), implementation (TDD), and tutored learning (teach-me) — plus the meta-vocabulary of the skills themselves.
+Ubiquitous-language glossary for the entire skills repo. Covers the six main areas of work the skill suite supports — shaping backlog work (Feature/Story/Task/Bug publishing), charting foggy efforts (chart-course), design improvement (improve-design), recording decisions (ADRs), implementation (TDD), and tutored learning (teach-me) — plus the meta-vocabulary of the skills themselves.
 
 ## Skill mechanics
 
@@ -98,6 +98,19 @@ Ubiquitous-language glossary for the entire skills repo. Covers the five main ar
 | **Dependency edges** | The Story-map sub-artifact recording which Stories depend on which siblings | Dependency graph (acceptable but less specific) |
 | **Deferred decomposition** | A Feature published without a Story map, marked `Story Decomposition: deferred at Feature creation.` | — |
 
+## Charting (chart-course)
+
+| Term | Definition | Aliases to avoid |
+| --- | --- | --- |
+| **Chart** | The map artifact of a `chart-course` effort — one work item (ADO Feature / GitHub issue labeled `chart:map`, both carrying `Chart-type: map` in the body) indexing decisions made, fog, and out-of-scope rulings; its children are Decision tickets. An index, not a store: it gists each decision and links the ticket holding the detail. Discovery work, never the implementation Feature its Destination produces — the two link both ways (`Discovery:` line on the successor) | Map (acceptable shorthand), Enabler exploration (SAFe's nearest concept — acceptable when speaking SAFe), Wayfinder map (upstream name), Plan |
+| **Destination** | What reaching the end of a Chart looks like — the spec, decision, or in-place change the effort is finding its way to. Named first; fixes the effort's scope | Goal (unsharpened), End state |
+| **Decision ticket** | A child work item of a Chart (ADO User Story / GitHub sub-issue) holding one question whose resolution is a decision, sized to one session — never a build slice. Typed by its `Chart-type:` body line — one of grilling, prototype, research, errand | Ticket (when used alone), Spike (accepted team-facing shorthand for the research/prototype types only — grilling and errand tickets aren't spikes), Chart task |
+| **Errand** | The Decision-ticket type for manual work that must happen before a decision can be made — provisioning access, signing up for a service, moving data so its shape can be seen. It *does* rather than decides, and earns its place only by unblocking a decision, never by delivering the Destination | Task (pinned to the work-item sense), Chore |
+| **Fog of war** | The deliberately uncharted part of a Chart: decisions you can tell are coming but can't yet state precisely, written into the map's `Not yet specified` section. The admission test is whether the *question* can be stated precisely now, not whether it can be answered | Backlog (wrong axis), Unknowns |
+| **Frontier** | The set ready to work *now* — in a Chart, the open, unblocked, unclaimed Decision tickets; in `grilling`'s batch cadence, the questions whose prerequisite decisions are already settled | Ready queue, Next up |
+| **Claim** | Assigning a Decision ticket to whoever is driving it, before any work — assignment *is* the claim; an open, unassigned ticket is unclaimed | Lock, Checkout |
+| **`Chart:` title marker** | The literal token baked into an ADO Chart or Decision-ticket title before `Title prefix:` resolution (`[App] Chart: <question>`), guarding against a board reader mistaking a question for build work. GitHub carries the typing in `chart:*` labels instead | `[chart]` (bracket namespace is taken by app/service prefixes) |
+
 ## Slicing & implementation
 
 | Term | Definition | Aliases to avoid |
@@ -106,8 +119,8 @@ Ubiquitous-language glossary for the entire skills repo. Covers the five main ar
 | **Tracer bullet** | The first behavior built within a Vertical slice — the thinnest end-to-end path that proves the slice works | First test, Initial path |
 | **Layer** | A horizontal stratum of the codebase (Data, Backend, Client, UI, Tests) | Tier, Stack |
 | **`## Layers touched`** | The Story- or Task-body section enumerating affected Layers | Affected modules |
-| **HITL** | "Human-in-the-loop" Task mode — requires human review (UX-sensitive, ambiguous, security-relevant) | Manual |
-| **AFK** | "Away-from-keyboard" Task mode — safely runnable without human review | Auto, Unattended |
+| **HITL** | "Human-in-the-loop" mode of a Task or Decision ticket — requires a live human (UX-sensitive, ambiguous, security-relevant; a HITL Decision ticket only resolves through exchange with the human — the agent never stands in for their side) | Manual |
+| **AFK** | "Away-from-keyboard" mode of a Task or Decision ticket — safely driven by the agent alone | Auto, Unattended |
 | **RED / GREEN / REFACTOR** | The TDD cycle: failing test, minimal pass, behavior-preserving improvement | Test-first, BDD cycle |
 | **Inner loop** | The fast test command (unit / type checks) used during RED/GREEN for behaviors testable without I/O | Unit-loop |
 | **Outer loop** | The slower test command (integration / browser / E2E) used when the slice crosses I/O boundaries | E2E-loop, Integration-loop |
