@@ -251,6 +251,7 @@ Ubiquitous-language glossary for the entire skills repo. Covers the six main are
 | **Terminology drift** | `DOMAIN.md` vocabulary changes between sessions that leave Task text using retired terms | Vocabulary drift |
 | **Scope drift** | Feature- or Story-scope shift over refinement cycles | Scope creep (different connotation) |
 | **Stale reference** | A `Covers: ACx` line pointing to a Removed AC | Dangling reference |
+| **Unsupported claim** | A `verify-docs` verdict — a doc claim that matches the current code but has no test backing it, so nothing protects it from future drift; surfaced as a missing test, not just a doc bug | Untested claim |
 | **Cross-repo blocker** | A Task annotation marking dependence on a contract change in a Sibling repo (`Blocked by: ../<sibling-repo> — contract change required`) | Cross-repo dependency |
 | **Naming-drift queue** | A durable list of pending sibling `--update`s, offered when a publish surfaces drift | Update queue, Pending list |
 

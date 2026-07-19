@@ -42,6 +42,7 @@ Keep steps 1–2 in **one unbroken context window** so the grilling, decompositi
 - **`/improve-design`** — read-only design-quality review of the whole codebase; surfaces deepening opportunities. Picking one frames a design, offers a grill (`/grill-me` or `/grill-and-record`), then hands you to `/to-story` to file the result.
 - **`/harden-domain`** — sweep the codebase to refresh `DOMAIN.md` when the vocabulary has drifted.
 - **`/backfill-adrs`** — sweep recent git history for architectural decisions that were made but never recorded.
+- **`/verify-docs`** — check a document's claims against the code and tests, verdict per claim (an Unsupported claim is a missing test, not just a doc bug). The prose-drift sibling of `/harden-domain` (vocabulary) and `/backfill-adrs` (decisions); run it pre-publish, post-refactor, or as a periodic sweep — `feedback-loops` still auto-fixes docs the current change touched.
 
 ## Review gate
 
