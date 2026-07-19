@@ -21,7 +21,7 @@ All three must hold — confirm out loud which are met before drafting; if any i
 
 1. **Apply the gate** (above).
 2. **Search before writing.** Run the retrieval protocol (below) against the new problem, extending the grep with the now-known root cause (`root_cause:`, `tags:`) — an existing doc can share the root cause under different symptoms. No store yet → nothing to overlap; continue. The **overlap rule**: same root cause *and* same fix approach as an existing doc → **update it** per [references/learning-format.md](references/learning-format.md); otherwise a new doc. Never write a duplicate — two docs describing one problem drift apart.
-3. **Draft** per [references/learning-format.md](references/learning-format.md).
+3. **Draft** per [references/learning-format.md](references/learning-format.md). Cite durably: confirm every cited path and line resolves in the current tree (a path cited from memory is how fabrication enters a trusted store), and reference landed work by PR or issue number, not commit SHA — a squash or rebase silently invalidates SHAs.
 4. **First capture in a repo — discoverability check.** If this doc creates the store, check whether the repo's `CLAUDE.md` (or `AGENTS.md`) would lead a fresh agent to it. If not, draft a one-line descriptive addition in the closest existing section — e.g. `docs/solutions/ — solved problems keyed by symptom frontmatter` — descriptive, never imperative ("always search before…" causes redundant reads). Skip this check on later captures.
 5. **Show the draft** (plus the instruction-file line when step 4 produced one) and save on approval.
 
