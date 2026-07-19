@@ -54,6 +54,8 @@ Format and rank every finding per [references/finding-discipline.md](references/
 - **Follow-up** — worth doing, doesn't block; file against the backlog.
 - **Escalation** — needs a human decision (a design call, an ADR reopen, a security judgment).
 
+**Design-lens default:** a finding that trips the defensive bar (the diff actively regresses local architecture) defaults to **Blocker**; one that only trips the offensive bar (a missed simpler shape) defaults to **Follow-up**, with the simpler shape proposed. Taste never silently escalates to Blocker.
+
 **Context-sensitivity:** on a release/hotfix branch, only **blockers / breakage / security** warrant a fix now; everything else becomes a main-branch follow-up.
 
 ## 6. Report per lens — never rerank across lenses
