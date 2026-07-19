@@ -29,6 +29,10 @@
 #     so `adr-0023` and `Adr-7` are caught too. `docs/adr/` paths put a slash
 #     after `adr` (not a hyphen) so they stay legal, as do digitless
 #     placeholders ("ADR-N" — `N` isn't a digit).
+#   - Platform-true spec limits (ADR-0030): `name` <= 64 chars and no angle
+#     brackets in `description` — the two agent-skills-spec caps Claude Code
+#     shares. The rest of the spec (its closed frontmatter key set) deliberately
+#     does not bind this repo; `requires:` and `disable-model-invocation` stay.
 #   - Router coverage (CLAUDE.md "Keep the router honest"): every skill under
 #     src/ must appear as a backticked code-span (`name` or `/name`) in
 #     src/which-skill/SKILL.md. Requiring the backtick keeps incidental prose
@@ -118,6 +122,27 @@ for f in src/*/SKILL.md; do
         echo "FAIL: $f description has unquoted ': ' (use em-dash) — $desc"
         fail=1
       fi
+      ;;
+  esac
+
+  # Platform-true spec limits (ADR-0030): Claude Code truncates/chokes on the
+  # same two caps the packaging spec enforces; the spec's other rules don't apply.
+  name_val=$(awk '
+    /^---$/ { c++; next }
+    c == 1 && /^name:[[:space:]]/ {
+      sub(/^name:[[:space:]]*/, "")
+      print
+      exit
+    }
+  ' "$f")
+  if [ -n "$name_val" ] && [ "${#name_val}" -gt 64 ]; then
+    echo "FAIL: $f name exceeds 64 chars (${#name_val})"
+    fail=1
+  fi
+  case "$desc" in
+    *[\<\>]*)
+      echo "FAIL: $f description contains angle brackets (< or >) — disallowed in the description field"
+      fail=1
       ;;
   esac
 
