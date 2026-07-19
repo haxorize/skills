@@ -55,6 +55,8 @@ The destination fixes the scope; work beyond it is out of scope — not fog — 
 
 Two modes. Either way, **never resolve more than one decision ticket per session** — research tickets excepted. Expect other sessions to be editing the tracker concurrently.
 
+End either mode with a **claims recheck**: before stopping, reread every assertion the session wrote — resolution comments, Decisions-so-far gists, facts later tickets depend on — against the live tracker and the linked assets, and fix what doesn't hold. The frontier the next session acts on is only as sound as those claims.
+
 ### Chart the course
 
 User invokes with a loose idea. Resolve the tracker first ([references/tracker-resolution.md](references/tracker-resolution.md)).
@@ -72,7 +74,7 @@ User invokes with the map (URL or id); a ticket is optional — without one, you
 
 1. **Load the map** — the low-res view, not every ticket body.
 2. **Choose the ticket.** The named one, else the first frontier ticket in order. **Claim it** before any work.
-3. **Resolve it** — zoom as needed: fetch related or closed tickets on demand; invoke the skills the map's Notes name. Default is a grilling ticket: run the `/grilling` and `/domain-modeling` skills (same load gate as charting step 1).
+3. **Resolve it** — zoom as needed: fetch related or closed tickets on demand; invoke the skills the map's Notes name. Default is a grilling ticket: run the `/grilling` and `/domain-modeling` skills (same load gate as charting step 1). A knowledge gap that surfaces mid-resolution gets an inline research subagent, its findings folded into the decision in hand — never a new research ticket, which buys a session boundary nothing needs. Research tickets are for gaps already visible at charting.
 4. **Record the resolution:** post the answer as a resolution comment, close the ticket, and append a one-line gist to the map's Decisions so far.
 5. **Update the map:** graduate newly-specifiable fog into tickets (create, then wire); rule mis-scoped tickets out of scope rather than resolving them; update or delete tickets the decision invalidated.
 

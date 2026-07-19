@@ -117,6 +117,7 @@ Ubiquitous-language glossary for the entire skills repo. Covers the six main are
 | **Fog of war** | The deliberately uncharted part of a Chart: decisions you can tell are coming but can't yet state precisely, written into the map's `Not yet specified` section. The admission test is whether the *question* can be stated precisely now, not whether it can be answered | Backlog (wrong axis), Unknowns |
 | **Frontier** | The set ready to work *now* — in a Chart, the open, unblocked, unclaimed Decision tickets; in `grilling`'s batch cadence, the questions whose prerequisite decisions are already settled | Ready queue, Next up |
 | **Claim** | Assigning a Decision ticket to whoever is driving it, before any work — assignment *is* the claim; an open, unassigned ticket is unclaimed | Lock, Checkout |
+| **Claims recheck** | The end-of-session pass in `chart-course`, either mode: reread every assertion the session wrote — resolution comments, Decisions-so-far gists, facts later tickets depend on — against live tracker state and linked assets, fixing what doesn't hold, before stopping | Handoff review, Sanity check |
 | **`Chart:` title marker** | The literal token baked into an ADO Chart or Decision-ticket title before `Title prefix:` resolution (`[App] Chart: <question>`), guarding against a board reader mistaking a question for build work. GitHub carries the typing in `chart:*` labels instead | `[chart]` (bracket namespace is taken by app/service prefixes) |
 
 ## Slicing & implementation
