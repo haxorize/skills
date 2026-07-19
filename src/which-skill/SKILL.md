@@ -55,6 +55,7 @@ Keep steps 1–2 in **one unbroken context window** so the grilling, decompositi
 
 - **`/grill-me`** — sharpen any plan or design with no repo to back it.
 - **`/teach-me <topic>`** — tutored, multi-session learning of any topic, standalone or grounded in a codebase as its textbook.
+- **`/ask-for-me`** — turn a decision you can't answer alone into a Markdown questionnaire for the person who can; it grills the *send* (recipient, needed answers), not the subject. Pairs with a `chart-course` Errand when the blocker is someone else's knowledge.
 - **`/to-bug`** — file a defect as a tracked work item from the current conversation.
 - **`/glapi-test-pass`** — ADO only; satisfy the GLAPI production deployment gate for a Story.
 - **`/write-skill`** — conventions for writing and editing skills (you're reading the suite that follows them).

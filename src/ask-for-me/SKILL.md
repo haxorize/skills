@@ -1,0 +1,25 @@
+---
+name: ask-for-me
+description: Turn a decision you can't answer alone into a Markdown questionnaire for the person who can — a brief interview about the send (who it goes to, what you need back), then a drafted document aimed at that gap.
+disable-model-invocation: true
+---
+
+# Ask For Me
+
+Turn something the user can't answer alone into a **questionnaire** — a Markdown document they hand to one person to fill in async, or fill out together in a meeting. The recipient holds knowledge the user lacks; the questionnaire pulls it out of them.
+
+**Grill the send, not the subject.** Interview the user only about the *send*, which they can always answer — never about the subject, which by definition they can't. The questions in the document then target the **gap** between what the recipient knows and what the user needs.
+
+1. **Who is it going to?** Ask, in one exchange, the recipient's role, expertise, and relationship to the user. This fixes the questionnaire's tone and how much context it must carry. Done when you know who the recipient is and what they know that the user doesn't.
+
+2. **What do you need back?** Ask, in one exchange, the specific decisions or facts the user can't resolve alone and needs from this person. Done when you have a concrete list of what the user must walk away able to do or decide.
+
+3. **Write the questionnaire.** Draft questions aimed at the gap from steps 1–2, following [references/questionnaire-template.md](references/questionnaire-template.md). Write it to `questionnaire-<slug>.md` in the current directory (slug from the topic) and report the path. Done when the file exists and every item the user named in step 2 is covered by a question.
+
+## Writing the questions
+
+Frame the document as a **discovery questionnaire**: the user lacks context, the recipient holds it. Order questions most-important-first — async means you may only get one pass — and group them under `##` headings by theme once there are more than a handful. Every question is one idea, never compound, with an answer stub directly beneath, and a one-line *why this matters* only where the question could be misread or invite a throwaway answer.
+
+## Pairing with chart-course
+
+When a `chart-course` decision ticket is blocked on knowledge someone outside the effort holds, an **Errand** ticket can resolve through this skill: the questionnaire is the checklist handed to the human, and the filled-in answers become the Errand's resolution, linked as an asset.
