@@ -2,6 +2,10 @@
 
 ADRs live in `docs/adr/<NNNN>-<slug>.md`. Create the directory lazily — only when the first ADR is written.
 
+## Convention preflight
+
+A repo that already records decisions keeps its own scheme. Before writing, look for an existing ADR convention — a populated `docs/adr/`, a `doc/architecture/decisions/` or similar directory, a `.adr-dir` file, an MADR/adr-tools layout — and if one exists, match its path, numbering, and format, continuing the existing sequence. If the evidence conflicts, surface the conflict and ask rather than silently introducing a second scheme. Everything below applies when no convention exists, or the existing one already matches.
+
 ## Numbering and slug
 
 Scan `docs/adr/` for the highest existing number; increment by one. Slug is a short kebab-case summary of the decision (e.g., `0007-transactional-test-isolation.md`).
