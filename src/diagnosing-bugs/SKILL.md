@@ -71,6 +71,7 @@ Confirm:
 - [ ] The loop produces the failure mode the **user** described — not a different failure that happens to be nearby. Wrong bug = wrong fix.
 - [ ] The failure is reproducible across multiple runs (or, for non-deterministic bugs, reproducible at a high enough rate to debug against).
 - [ ] You have captured the exact symptom (error message, wrong output, slow timing) so later phases can verify the fix actually addresses it.
+- [ ] You know whether the failure predates the change under suspicion — run the loop against the pre-change state (stash the diff, check out the prior commit, load the unmodified original). An error you introduced looks exactly like one you inherited: an inherited fault redirects the investigation, and a genuine regression can hide among inherited errors.
 
 ### Minimise
 
