@@ -104,6 +104,7 @@ Hunt for **leading words** — a compact pretrained concept (*tracer bullet*, *s
 - **Single source of truth** — each meaning in exactly one place; a behavior change is a one-place edit.
 - **Relevance** — every line still bears on what the skill does.
 - **No-ops** — delete any sentence the model already obeys by default. Be aggressive.
+- **Persuasion detritus** — sections that exist to persuade rather than instruct (social proof, "Advantages"/"Why this matters" blocks, end-of-file recaps) are dead weight once the rule itself binds; delete the section, keeping any unique rule it smuggled in.
 
 ## Sharing a reference across skills
 
