@@ -51,7 +51,7 @@ If the work isn't already grounded in the conversation, explore the touched modu
 
 ### 5. Draft vertical slices
 
-Each slice is one Task. Prefer many thin Tasks over few thick ones.
+Each slice is one Task. Prefer many thin Tasks over few thick ones. An "and" in a Task title is a split tell — it usually names two slices.
 
 **Admission test:** publish only Tasks whose slice you can state precisely *now* (blocked-but-sharp is fine); scope that hasn't sharpened stays as prose in the parent Story until it graduates — never a placeholder Task.
 
