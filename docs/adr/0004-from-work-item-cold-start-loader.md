@@ -33,3 +33,5 @@ To anchor ADR-match for Story-entry, the Story template gains a `## Layers touch
 - The Story-entry ADR-match is fuzzier than Task-entry's because Stories may legitimately span layers more loosely; the loader presents candidates, the user prunes.
 - Multi-repo work surfaces explicitly: the loader warns when a Task's referenced layers aren't local. This is the cleanest place to detect "you're in the wrong repo for this Task" without trying to be smart across repos.
 - The skill is opinionated about refusing Feature/Epic IDs; teams that want to "implement a Feature directly" must decompose first. This nudges users toward the maintenance loop's grain.
+
+**2026-07-20** — The skill is now `from-ticket`: ADR-0035 introduces the **Ticket** tier and renames the loader to match its actual domain. Behavior unchanged.

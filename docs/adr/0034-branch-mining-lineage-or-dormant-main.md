@@ -5,3 +5,5 @@ The 2026-07-19 branch-coverage audit of the mined repos under `~/code/lib` found
 ## Consequences
 
 CLAUDE.md carries the revisit trigger: materially editing a ported skill starts with an upstream diff — main and branches — since the last-swept point. As of this ADR: wayfinder at main `9603c1c` (branches audited 2026-07-19), ce-pov at main `4927d7a1`.
+
+**2026-07-20** — `chart-course` edited under ADR-0035 (terminology only: its tickets defined as the Charting sub-type of the new **Ticket** term). Upstream diff waived: wayfinder was swept the day before and the edit carries no behavioral delta.
