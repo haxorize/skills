@@ -40,7 +40,7 @@ Use module names from `DOMAIN.md` where applicable, not file paths.
 
 ## Layers touched
 
-Which integration layers the Story crosses. Drives `from-work-item` cold-start and Task slicing. Describe the behavioral change at each layer in one phrase; mark absent layers `none`. No file paths, no function names, no code snippets.
+Which integration layers the Story crosses. Drives `from-ticket` cold-start and Task slicing. Describe the behavioral change at each layer in one phrase; mark absent layers `none`. No file paths, no function names, no code snippets.
 
 - **Data:** schema/migration/seed work expected (or `none`)
 - **Backend:** endpoints/handlers/services (or `none`)

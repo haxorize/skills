@@ -9,7 +9,7 @@ Every skill sits on one axis — **who can reach it** (see [`DOMAIN.md`](DOMAIN.
 - **User-invoked skills** — reachable only by a human typing them (`disable-model-invocation: true`). They **orchestrate** a workflow.
 - **Model-invoked skills** — reachable by the model or a human (the default). They hold a reusable **behavior** the model reaches for on its own, or that an orchestrator pulls in via a declared dependency.
 
-The route most work travels: **`/grill-and-record`** (or `/grill-me` with no codebase) → **`/to-feature` / `/to-story` / `/to-tasks`** to decompose → **`/from-work-item`** to load one slice → **`/implement`** to build it (it runs the `tdd` and `feedback-loops` behaviors) → **`/review-changes`** before the PR → ship. Detours branch off: a runnable question goes **`/handoff` → `/prototype` → `/handoff`**; a hard bug pulls in `diagnosing-bugs`; a conflicted merge pulls in `resolving-merge-conflicts`. Upkeep loops — **`/improve-design`**, **`/harden-domain`**, **`/backfill-adrs`** — run between features. When you don't remember which to reach for, ask **`/which-skill`**.
+The route most work travels: **`/grill-and-record`** (or `/grill-me` with no codebase) → **`/to-feature` / `/to-story` / `/to-tasks`** to decompose → **`/from-ticket`** to load one slice → **`/implement`** to build it (it runs the `tdd` and `feedback-loops` behaviors) → **`/review-changes`** before the PR → ship. Detours branch off: a runnable question goes **`/handoff` → `/prototype` → `/handoff`**; a hard bug pulls in `diagnosing-bugs`; a conflicted merge pulls in `resolving-merge-conflicts`. Upkeep loops — **`/improve-design`**, **`/harden-domain`**, **`/backfill-adrs`** — run between features. When you don't remember which to reach for, ask **`/which-skill`**.
 
 ## User-invoked skills
 
@@ -25,15 +25,15 @@ The route most work travels: **`/grill-and-record`** (or `/grill-me` with no cod
 ### Publishing to a tracker
 
 - **`to-feature`** — Synthesize a Feature-level (PRD-shaped) artifact and publish it. Use only when scope is broad enough to warrant multiple stories underneath. ADO: Feature work item. GitHub: feature/PRD issue.
-- **`to-story`** — Synthesize a Story-level (single-feature spec) artifact and publish it. Default entry point for turning a grilled plan into a tracked work item. ADO: User Story. GitHub: story-shaped issue.
+- **`to-story`** — Synthesize a Story-level (single-feature spec) artifact and publish it. Default entry point for turning a grilled plan into a tracked ticket. ADO: User Story. GitHub: story-shaped issue.
 - **`to-tasks`** — Break a parent User Story into child Tasks. Tracer-bullet style; verifies the parent is a Story before slicing. To split a Feature into Stories, run `to-story --parent <feature-id>` repeatedly instead.
 - **`to-bug`** — Synthesize a Bug from the current conversation and publish it. ADO: native Bug work item with `Microsoft.VSTS.Common.Severity` and `Microsoft.VSTS.TCM.ReproSteps`. GitHub: issue tagged with `bug` plus a severity label declared in CLAUDE.md. `--update <bug-id>` from day one.
 - **`glapi-test-pass`** — ADO only. Creates a passing test result on a User Story to satisfy the GLAPI (Greenlight API) production deployment gate. Use when a prod deployment is blocked because a story linked via commits has no passing test point. Automates the full test-case → suite → run → result sequence against the team's PI test plan via `az devops invoke`.
 
 ### Implementation
 
-- **`from-work-item`** — Cold-start loader. Pulls a published Task / Story / Bug back into the conversation, auto-detects type, and loads the right shape — parent context, `DOMAIN.md`, ADRs matched against `## Layers touched`. Refuses Feature/Epic with a redirect. Hands off to `implement` or freeform.
-- **`implement`** — Build one loaded work-item slice end to end: pick the build path, build, refactor, and close the loop. Picks `tdd` for a testable slice or the direct path otherwise; runs `feedback-loops` once; suggests `review-changes` before the PR.
+- **`from-ticket`** — Cold-start loader. Pulls a published ticket (Task / Story / Bug) back into the conversation, auto-detects type, and loads the right shape — parent context, `DOMAIN.md`, ADRs matched against `## Layers touched`. Refuses Feature/Epic with a redirect. Hands off to `implement` or freeform.
+- **`implement`** — Build one loaded ticket's slice end to end: pick the build path, build, refactor, and close the loop. Picks `tdd` for a testable slice or the direct path otherwise; runs `feedback-loops` once; suggests `review-changes` before the PR.
 
 ### Review
 
@@ -88,7 +88,7 @@ The route most work travels: **`/grill-and-record`** (or `/grill-me` with no cod
 - **Learning docs** live in `docs/solutions/<slug>.md` per repo — solved problems with symptom-keyed frontmatter, captured by `capturing-learnings`. The store is created lazily; new captures land flat at the root, and subdirectories from other tooling are tolerated.
 - **Tracker dispatch** is declared per-repo in `CLAUDE.md` under an `Issue tracker:` block. Supports GitHub (`gh`) and Azure DevOps (`az boards`). Hierarchy (`Hierarchy: required|optional`) controls whether the publishing skills enforce a `--parent` argument. ADO defaults to `required` (Epic → Feature → User Story → Task); GitHub defaults to `optional`.
 - **Sibling repos** declared in `CLAUDE.md` under `## Sibling repos` so `to-tasks` can flag cross-repo blockers.
-- **Title prefixes** are declared in the `Issue tracker:` block. `Title prefix:` applies to Stories, Tasks, and Bugs. Features use `Feature title prefix:` if declared, falling back to `Title prefix:` if absent — allowing teams to give features a distinct prefix from work items below them.
+- **Title prefixes** are declared in the `Issue tracker:` block. `Title prefix:` applies to Stories, Tasks, and Bugs. Features use `Feature title prefix:` if declared, falling back to `Title prefix:` if absent — allowing teams to give features a distinct prefix from the tickets below them.
 - **Severity labels** for GitHub Bug filing are declared in `CLAUDE.md` under a `Severity labels:` block (e.g., `sev:critical`, `sev:high`, `sev:medium`, `sev:low`). `to-bug` bootstraps-on-ask if the block is missing. ADO uses the native `Microsoft.VSTS.Common.Severity` field and ignores the block.
 - **In-progress signal** for GitHub `to-tasks --reconcile` is declared in `CLAUDE.md` under an `In-progress signal:` line inside the `Issue tracker:` block (e.g., `In-progress signal: label in-progress`). Distinguishes open-and-being-worked from open-and-not-yet-started; defaults to assignee-presence when absent. ADO reads `System.State` directly and ignores the line.
 - **AC IDs** are append-only across the suite. New criteria get `max(active ∪ removed) + 1`; removed IDs are never reused. Tasks reference parent ACs by ID via `## Covers` so coverage stays mechanical.

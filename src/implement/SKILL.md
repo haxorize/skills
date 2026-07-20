@@ -1,17 +1,17 @@
 ---
 name: implement
-description: Build one loaded work-item slice end to end — pick the build path, build, refactor, and close the loop.
+description: Build one loaded ticket's slice end to end — pick the build path, build, refactor, and close the loop.
 disable-model-invocation: true
 requires: tdd, feedback-loops, adr, diagnosing-bugs
 ---
 
 # Implement
 
-Drive the build of **one Vertical slice** — the slice `from-work-item` just loaded, or a single-slice Story. One Task = one Vertical slice = one commit; build increments *inside* the slice are **behaviors** (the first is the **Tracer bullet**), never sub-slices.
+Drive the build of **one Vertical slice** — the slice `from-ticket` just loaded, or a single-slice Story. One Task = one Vertical slice = one commit; build increments *inside* the slice are **behaviors** (the first is the **Tracer bullet**), never sub-slices.
 
 ## Before building
 
-1. **Confirm one slice is loaded.** Expect a Task, or a Story small enough to be a single slice. If a **Story with child Tasks** is loaded, stop: a Story is many slices. Say so and tell the user to load each Task with `/from-work-item` (one Task = one commit = one session). Build only when the loaded unit is a single slice.
+1. **Confirm one slice is loaded.** Expect a Task, or a Story small enough to be a single slice. If a **Story with child Tasks** is loaded, stop: a Story is many slices. Say so and tell the user to load each Task with `/from-ticket` (one Task = one commit = one session). Build only when the loaded unit is a single slice.
 2. **Restate the slice as a vertical cut.** Name the end-to-end behavior the slice delivers across the layers it touches — not a horizontal "all the data-layer work" chunk. The full vertical-slicing discipline (and the horizontal anti-pattern) lives in `tdd`; hold the line here.
 
 ## Pick the build path
@@ -54,5 +54,5 @@ If the user runs `review-changes` and acts on findings, re-run `feedback-loops` 
 
 ## Notes
 
-- `implement` is the hand-off target of `from-work-item`: load the slice, then build it here.
+- `implement` is the hand-off target of `from-ticket`: load the slice, then build it here.
 - Convention skills are project-local and named in the project's CLAUDE.md `## Convention skills`. This skill never names a stack (`fastapi`, `database`); `tdd` and `feedback-loops` discover the relevant convention skills by role for the layer the slice touches.

@@ -49,7 +49,7 @@ Whether this bug indicates a regression and what the fix may destabilize.
 
 ## Layers touched
 
-Which integration layers the fix is expected to cross. Drives `from-work-item` cold-start when the Bug is loaded for implementation. Describe the behavioral change at each layer in one phrase; mark absent layers `none`. No file paths, no function names, no code snippets.
+Which integration layers the fix is expected to cross. Drives `from-ticket` cold-start when the Bug is loaded for implementation. Describe the behavioral change at each layer in one phrase; mark absent layers `none`. No file paths, no function names, no code snippets.
 
 - **Data:** schema/migration/seed work expected (or `none`)
 - **Backend:** endpoints/handlers/services (or `none`)
@@ -120,5 +120,5 @@ Notable states beyond `New` / `Active` / `Closed`:
 ## Notes
 
 - Bugs do not produce child Tasks via `to-tasks`. The fix is the slice — `to-tasks --reconcile` ignores Bug parents.
-- `from-work-item <bug-id>` loads the Bug body, repro steps, parent (if any), DOMAIN.md, and ADRs matched against `## Layers touched`.
+- `from-ticket <bug-id>` loads the Bug body, repro steps, parent (if any), DOMAIN.md, and ADRs matched against `## Layers touched`.
 - Severity differs from State. Severity describes impact; state describes lifecycle. A Critical Bug can be New, Active, Resolved, or Closed.

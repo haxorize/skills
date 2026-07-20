@@ -19,12 +19,12 @@ A **flow** is a path through the skills.
    - **`/to-feature`** — a PRD-shaped Feature, when scope spans multiple stories.
    - **`/to-story`** — a single-feature Story. The usual entry point.
    - **`/to-tasks`** — split a Story into vertical-slice Tasks (one Task = one commit).
-3. **Load a single work item back into a fresh session** — **`/from-work-item <id>`**. It auto-detects Task/Story/Bug and loads the right context (parent, `DOMAIN.md`, matching ADRs).
+3. **Load a single ticket back into a fresh session** — **`/from-ticket <id>`**. It auto-detects Task/Story/Bug and loads the right context (parent, `DOMAIN.md`, matching ADRs).
 4. **Build it** — **`/implement`**. Drives one vertical slice end to end: picks the build path (runs `tdd` for a testable slice, direct otherwise), refactors, and closes the loop once via `feedback-loops`. One Task per session.
 5. **Review before the PR** — **`/review-changes`** (see Review gate).
 6. **Ship.**
 
-Keep steps 1–2 in **one unbroken context window** so the grilling, decomposition, and tasks build on the same thinking. Each `/implement` then starts fresh from its work item. If a session fills up before you've decomposed, don't push on degraded — **`/handoff`** and continue in a fresh thread.
+Keep steps 1–2 in **one unbroken context window** so the grilling, decomposition, and tasks build on the same thinking. Each `/implement` then starts fresh from its ticket. If a session fills up before you've decomposed, don't push on degraded — **`/handoff`** and continue in a fresh thread.
 
 ## When the way isn't clear: chart-course
 
@@ -59,6 +59,6 @@ Keep steps 1–2 in **one unbroken context window** so the grilling, decompositi
 - **`/grill-me`** — sharpen any plan or design with no repo to back it.
 - **`/teach-me <topic>`** — tutored, multi-session learning of any topic, standalone or grounded in a codebase as its textbook.
 - **`/ask-for-me`** — turn a decision you can't answer alone into a Markdown questionnaire for the person who can; it grills the *send* (recipient, needed answers), not the subject. Pairs with a `chart-course` Errand when the blocker is someone else's knowledge.
-- **`/to-bug`** — file a defect as a tracked work item from the current conversation.
+- **`/to-bug`** — file a defect as a tracked ticket from the current conversation.
 - **`/glapi-test-pass`** — ADO only; satisfy the GLAPI production deployment gate for a Story.
 - **`/write-skill`** — conventions for writing and editing skills (you're reading the suite that follows them).

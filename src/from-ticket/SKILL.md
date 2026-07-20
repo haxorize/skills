@@ -1,10 +1,10 @@
 ---
-name: from-work-item
-description: Cold-start loader that pulls a published work item back into the conversation as implementation context. Auto-detects Task / Story / Bug from the tracker and loads the right context for that type, then hands off for implementation. Refuses Feature / Epic IDs (not implementable as a single tracer bullet — decompose first).
+name: from-ticket
+description: Cold-start loader that pulls a published ticket back into the conversation as implementation context. Auto-detects Task / Story / Bug from the tracker and loads the right context for that type, then hands off for implementation. Refuses Feature / Epic IDs (containers aren't tickets — decompose first).
 disable-model-invocation: true
 ---
 
-# From Work Item
+# From Ticket
 
 Detects the work-item type and loads the right shape; hands off to `implement` (which picks the build path) or freeform implementation. Closes the round-trip loop with the `to-X` publishing skills.
 
@@ -40,7 +40,7 @@ Surface the inferred type before loading; ambiguous GitHub cases (e.g., a Bug fi
 
 If the detected type is **Feature** or **Epic**, refuse with a clear redirect:
 
-> "{ID} is a {type}. Features and Epics aren't implementable as a single tracer bullet — they decompose first. Run `/to-story --parent {ID}` to draft a Story under it, then `/from-work-item <story-id>` once that Story exists."
+> "{ID} is a {type}. Features and Epics are containers, not tickets — they decompose first. Run `/to-story --parent {ID}` to draft a Story under it, then `/from-ticket <story-id>` once that Story exists."
 
 Do not load any context; do not hand off. The user's next move is decomposition, not implementation.
 
@@ -81,11 +81,11 @@ Branch on the detected type. Each branch loads the artifact, its parent context,
 
 Read the local `DOMAIN.md`. Surface the canonical terms and `Aliases to avoid`.
 
-If the repo declares multiple bounded contexts (root `DOMAIN.md` lists `## Contexts` with links to nested `DOMAIN.md` files), pick the nested context whose path or label matches the work item's module names or ADO area path; load that nested `DOMAIN.md` alongside the root.
+If the repo declares multiple bounded contexts (root `DOMAIN.md` lists `## Contexts` with links to nested `DOMAIN.md` files), pick the nested context whose path or label matches the loaded ticket's module names or ADO area path; load that nested `DOMAIN.md` alongside the root.
 
 ### 6. ADR match against `## Layers touched`
 
-Walk `docs/adr/` and surface ADRs whose subject overlaps the loaded work item.
+Walk `docs/adr/` and surface ADRs whose subject overlaps the loaded ticket.
 
 - **Task-entry:** match strictly against the Task's `## Layers touched` — each layer with content (not `none`) maps to ADR keywords (e.g., `Data:` → schema/migration ADRs; `UI:` → component / route ADRs). Present matched ADRs by ID and title.
 - **Story-entry:** fuzzy-match. Walk the AC text and `## Layers touched` together; present a wider candidate set and let the user prune.
@@ -95,7 +95,7 @@ ADR traversal stays **local-repo-only**. Do not chase ADRs across sibling repos 
 
 ### 7. Multi-repo layer-mismatch warn
 
-If the loaded work item's `## Layers touched` references layers that don't exist in the local repo (e.g., the Task's `Backend` layer is non-empty but this repo is frontend-only, or vice versa), surface a warning:
+If the loaded ticket's `## Layers touched` references layers that don't exist in the local repo (e.g., the Task's `Backend` layer is non-empty but this repo is frontend-only, or vice versa), surface a warning:
 
 > "Task #{ID} touches `{layer}`, but this repo doesn't have a `{layer}` surface. You may be in the wrong repo, or the work spans sibling repos. Check `## Sibling repos` in CLAUDE.md."
 
@@ -108,7 +108,7 @@ Read the naming-drift queue:
 - **Repo mode:** `.claude/queue.md` at the repo root.
 - **No-repo CLI-only mode:** memory entry keyed by tracker context (e.g., `Naming-drift queue — work-backlog`).
 
-Surface entries that mention this work item's tracker ID or its parent. The queue is informational — pending sibling refinements the user may want to address as part of the slice. Never block on it.
+Surface entries that mention this ticket's tracker ID or its parent. The queue is informational — pending sibling refinements the user may want to address as part of the slice. Never block on it.
 
 ### 9. Hand off
 
@@ -118,7 +118,7 @@ Present a concise summary of what was loaded:
 Loaded {type} #{ID}: "{title}"
   Parent: {parent type} #{parent-id} — "{parent title}" (or: parentless)
   Blockers: {blocker titles, IDs attached — must land first, or: none} (Task / Story)
-  Acceptance criteria: {N} active ({M} this work item covers, if Task)
+  Acceptance criteria: {N} active ({M} this ticket covers, if Task)
   Layers touched: {layer list}
   ADRs in scope: {ADR-IDs} ({count})
   Domain context: {DOMAIN.md path; nested context if multi-context}
@@ -128,7 +128,7 @@ Loaded {type} #{ID}: "{title}"
 Ready to implement. Hand off to /implement (recommended), or proceed freeform.
 ```
 
-The skill itself doesn't build — it loads context and stops. `/implement` picks the build path (TDD for a testable slice, direct otherwise) and drives the slice to done. Both are user-invoked, so `from-work-item` suggests `/implement` rather than invoking it.
+The skill itself doesn't build — it loads context and stops. `/implement` picks the build path (TDD for a testable slice, direct otherwise) and drives the slice to done. Both are user-invoked, so `from-ticket` suggests `/implement` rather than invoking it.
 
 ## Refusal vs warning
 
@@ -136,4 +136,4 @@ The one refusal — Feature / Epic IDs — is the only case where the user's nex
 
 ## Notes
 
-- `from-work-item` does not modify the work item or any sibling work item. The only file write is an appended `## Issue tracker` block to `CLAUDE.md` when the Bootstrap-on-ask flow runs. Revisions to work items go through `to-story --update` / `to-tasks --update` / `to-bug --update`.
+- `from-ticket` does not modify the ticket or any sibling work item. The only file write is an appended `## Issue tracker` block to `CLAUDE.md` when the Bootstrap-on-ask flow runs. Revisions to tickets go through `to-story --update` / `to-tasks --update` / `to-bug --update`.
