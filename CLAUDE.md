@@ -15,6 +15,17 @@ Every skill is exactly one of **user-invoked** (carries `disable-model-invocatio
 
 `to-feature`, `to-story`, `to-tasks`, `to-bug` are the artifact under development — don't invoke them against this repo's own work.
 
+## Ported-skill upstreams
+
+Before materially editing any skill below, diff its upstream — main *and* unmerged branches — since the last-swept point recorded in [ADR-0034](docs/adr/0034-branch-mining-lineage-or-dormant-main.md), and fold in or consciously reject what changed there. The upstream skill is named in parentheses where it differs; the rest share names.
+
+- **mattpocock/skills** — `grilling`, `grill-me`, `grill-and-record` (grill-with-docs), `handoff`, `write-skill` (writing-great-skills), `review-changes` (review), `which-skill` (ask-matt), `improve-design` (improve-codebase-architecture), `teach-me` (teach), `chart-course` (wayfinder), `ask-for-me` (to-questionnaire), `codebase-design`, `domain-modeling`, `diagnosing-bugs`, `implement`, `prototype`, `tdd`.
+- **compound-engineering-plugin** — `adoption-verdict` (ce-pov), `capturing-learnings` (the learnings loop).
+- **obra/superpowers** — `receiving-review` (receiving-code-review).
+- **oaustegard/claude-skills** — `diverging` (generative-thinking), `verify-docs` (verifying-claims).
+
+The `to-feature`/`to-story`/`to-tasks`/`to-bug` family is structurally independent of Matt's `to-prd`/`to-issues`/`to-spec`/`to-tickets` — scan those for portable ideas, never diff them as an upstream. Every skill not listed here is a local original.
+
 ## Keep the router honest
 
 [`src/which-skill/SKILL.md`](src/which-skill/SKILL.md) is the router that maps every skill and how they relate. Whenever you add, rename, or remove a skill, or change how one fits the flows, update the router in the same change — a new skill it never mentions, or a stale one it still routes to, is a router that lies. `scripts/lint-skills.sh` catches missing mentions mechanically; routing accuracy stays editorial.
