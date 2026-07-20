@@ -60,14 +60,25 @@ fail=0
 
 shopt -s nullglob
 
-# Print "true" if a skill file is user-invoked — its frontmatter (block 1,
-# between the first two `---` fences) carries `disable-model-invocation: true`.
-# Empty output means model-invoked. Shared by the own-skill and dependency checks.
-is_user_invoked() {
-  awk '
+# Print the value of a `<key>: value` line from frontmatter (block 1, between
+# the first two `---` fences), trailing whitespace trimmed; empty if absent.
+frontmatter_value() {
+  awk -v key="$2" '
     /^---$/ { c++; next }
-    c == 1 && /^disable-model-invocation:[[:space:]]*true[[:space:]]*$/ { print "true"; exit }
+    c == 1 && $0 ~ "^" key ":" {
+      sub("^" key ":[[:space:]]*", "")
+      sub(/[[:space:]]+$/, "")
+      print
+      exit
+    }
   ' "$1"
+}
+
+# Print "true" if a skill file is user-invoked — its frontmatter carries
+# `disable-model-invocation: true`. Empty output means model-invoked. Shared by
+# the own-skill and dependency checks.
+is_user_invoked() {
+  [ "$(frontmatter_value "$1" disable-model-invocation)" = "true" ] && echo true
 }
 
 # Per-body checks over every shipped skill file: the 200-line cap and the ban
@@ -89,14 +100,7 @@ while IFS= read -r f; do
 done < <(find src -type f -name '*.md' | sort)
 
 for f in src/*/SKILL.md; do
-  desc=$(awk '
-    /^---$/ { c++; next }
-    c == 1 && /^description:[[:space:]]/ {
-      sub(/^description:[[:space:]]*/, "")
-      print
-      exit
-    }
-  ' "$f")
+  desc=$(frontmatter_value "$f" description)
 
   if [ -z "$desc" ]; then
     echo "FAIL: $f has no description in frontmatter"
@@ -127,14 +131,7 @@ for f in src/*/SKILL.md; do
 
   # Platform-true spec limits (ADR-0030): Claude Code truncates/chokes on the
   # same two caps the packaging spec enforces; the spec's other rules don't apply.
-  name_val=$(awk '
-    /^---$/ { c++; next }
-    c == 1 && /^name:[[:space:]]/ {
-      sub(/^name:[[:space:]]*/, "")
-      print
-      exit
-    }
-  ' "$f")
+  name_val=$(frontmatter_value "$f" name)
   if [ -n "$name_val" ] && [ "${#name_val}" -gt 64 ]; then
     echo "FAIL: $f name exceeds 64 chars (${#name_val})"
     fail=1
@@ -203,15 +200,7 @@ done
 # Declared dependencies (ADR-0016): every name in a `requires:` line must
 # resolve to a skill that exists and is model-invoked.
 for f in src/*/SKILL.md; do
-  reqs=$(awk '
-    /^---$/ { c++; next }
-    c == 1 && /^requires:[[:space:]]/ {
-      sub(/^requires:[[:space:]]*/, "")
-      gsub(/,/, " ")
-      print
-      exit
-    }
-  ' "$f")
+  reqs=$(frontmatter_value "$f" requires | tr ',' ' ')
   [ -z "$reqs" ] && continue
   for dep in $reqs; do
     depfile="src/$dep/SKILL.md"
