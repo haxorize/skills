@@ -15,10 +15,6 @@ Every skill is exactly one of **user-invoked** (carries `disable-model-invocatio
 
 `to-feature`, `to-story`, `to-tasks`, `to-bug` are the artifact under development — don't invoke them against this repo's own work.
 
-## Ported-skill upstreams
-
-`chart-course` ports wayfinder (mattpocock/skills); `adoption-verdict` ports ce-pov (compound-engineering-plugin). Before materially editing either, diff its upstream — main *and* unmerged branches — since the last-swept point recorded in [ADR-0034](docs/adr/0034-branch-mining-lineage-or-dormant-main.md), and fold in or consciously reject what changed there.
-
 ## Keep the router honest
 
 [`src/which-skill/SKILL.md`](src/which-skill/SKILL.md) is the router that maps every skill and how they relate. Whenever you add, rename, or remove a skill, or change how one fits the flows, update the router in the same change — a new skill it never mentions, or a stale one it still routes to, is a router that lies. `scripts/lint-skills.sh` catches missing mentions mechanically; routing accuracy stays editorial.
