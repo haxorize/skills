@@ -10,9 +10,7 @@ requires: feedback-loops
 
 Tests verify behavior through public interfaces, not implementation details. Never write a **tautological test** — one whose assertion recomputes the expected value the way the code does (`expect(add(a, b)).toBe(a + b)`), so it passes by construction; expected values come from an independent source of truth (a known-good literal, a worked example, the spec). One test at a time, one implementation at a time. Never write all tests first then all code — that's horizontal slicing.
 
-Before writing a test body, name the break it catches: the production change that would make it fail — and that change must be a bug, not a decision. Can't name one → the code earns no test (trivial forwarding and prose earn none; a test written to satisfy process costs maintenance forever).
-
-Never write a **change detector** — a test only intentional decisions can fail (a constant's value, exact message wording, private structure): it fires on every redesign and sleeps through bugs. Test the behavior that depends on the decision — not `MAX_RETRIES == 5` but "the 6th attempt never happens".
+Before writing a test body, name the break it catches: the production change that would make it fail — and that change must be a bug, not a decision. Can't name one → the code earns no test (trivial forwarding and prose earn none; a test written to satisfy process costs maintenance forever). A test only intentional decisions can fail is a **change detector** — a constant's value, exact message wording, private structure — firing on every redesign and sleeping through bugs; test the behavior that depends on the decision: not `MAX_RETRIES == 5` but "the 6th attempt never happens".
 
 Test the contract your code makes at its boundaries — the route you register, the query you emit — never the framework's own mechanics upstream of it; when upstream behavior genuinely surprised you, write one narrow characterization test naming the assumption. Scripts and configs are tested by running them against controlled inputs and asserting outputs or exit codes — asserting their text contains a line proves only that the source is the source.
 
