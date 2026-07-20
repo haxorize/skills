@@ -66,7 +66,7 @@ Before showing the user, check:
 - User-story line matches step 6 classification (Connextra for user-facing, absent otherwise)
 - Documentation obligations, for stories that alter architecture or domain terms: ADR to write or amend, architecture-doc sections that go stale, glossary entries — each pinned as its own AC so a reviewer can't merge without them
 
-Then run a **Cold-reader pass** — self-review can't catch author blindness (after drafting, you see what you meant, not what you wrote): spawn one fresh-context subagent that gets only the drafted body and answers "what would you build?", naming ambiguities and context it had to assume. Fold real gaps back into the draft; one pass, not a loop.
+Then run a **Cold-reader pass** ([references/cold-reader-pass.md](references/cold-reader-pass.md)): the cold reader gets only the drafted body and answers "what would you build?".
 
 ### 8. Present draft to user
 

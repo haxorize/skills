@@ -79,7 +79,7 @@ Before publishing, check:
 - **Domain language matches `DOMAIN.md`**
 - **No placeholders** — none of the literal kind (TBD/TODO) and none of the disguised kind: "add appropriate error handling", "write tests for the above", "similar to Task N" are placeholders wearing prose; each hides a decision the implementer will have to invent
 
-Then run a **Cold-reader pass** — self-review can't catch author blindness (after drafting, you see what you meant, not what you wrote): spawn one fresh-context subagent that gets only what a cold implementer would see (the drafted Tasks plus the parent Story spec, not this conversation) and answers, per Task, "what would you build?", naming ambiguities and context it had to assume. Fold real gaps back into the drafts; one pass, not a loop.
+Then run a **Cold-reader pass** ([references/cold-reader-pass.md](references/cold-reader-pass.md)): the cold reader gets only the drafted Tasks plus the parent Story spec and answers, per Task, "what would you build?".
 
 ### 8. Publish in dependency order
 
