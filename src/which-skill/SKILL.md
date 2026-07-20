@@ -47,7 +47,7 @@ Keep steps 1–2 in **one unbroken context window** so the grilling, decompositi
 
 ## Review gate
 
-- **`/review-changes`** — read-only, project-aware judgment review of a **diff**, around shipping. Use it for a pre-PR self-review, on a teammate's PR, or on an already-landed commit. It never mutates; it produces a ranked, classified report.
+- **`/review-changes`** — read-only, project-aware judgment review of a **diff**, around shipping. Use it for a pre-PR self-review, on a teammate's PR, or on an already-landed commit. It produces a ranked, classified report.
 - When review feedback flows the other way — a reviewer's comments land on *your* changes — the `receiving-review` behavior governs applying them.
 
 ## Crossing sessions

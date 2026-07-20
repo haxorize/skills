@@ -9,7 +9,7 @@ Every skill sits on one axis — **who can reach it** (see [`DOMAIN.md`](DOMAIN.
 - **User-invoked skills** — reachable only by a human typing them (`disable-model-invocation: true`). They **orchestrate** a workflow.
 - **Model-invoked skills** — reachable by the model or a human (the default). They hold a reusable **behavior** the model reaches for on its own, or that an orchestrator pulls in via a declared dependency.
 
-The route most work travels: **`/grill-and-record`** (or `/grill-me` with no codebase) → **`/to-feature` / `/to-story` / `/to-tasks`** to decompose → **`/from-ticket`** to load one slice → **`/implement`** to build it (it runs the `tdd` and `feedback-loops` behaviors) → **`/review-changes`** before the PR → ship. Detours branch off: a runnable question goes **`/handoff` → `/prototype` → `/handoff`**; a hard bug pulls in `diagnosing-bugs`; a conflicted merge pulls in `resolving-merge-conflicts`. Upkeep loops — **`/improve-design`**, **`/harden-domain`**, **`/backfill-adrs`** — run between features. When you don't remember which to reach for, ask **`/which-skill`**.
+The route most work travels: **`/grill-and-record`** (or `/grill-me` with no codebase) → **`/to-feature` / `/to-story` / `/to-tasks`** to decompose → **`/from-ticket`** to load one slice → **`/implement`** to build it → **`/review-changes`** before the PR → ship. Detours branch off: a runnable question goes **`/handoff` → `/prototype` → `/handoff`**; a hard bug pulls in `diagnosing-bugs`; a conflicted merge pulls in `resolving-merge-conflicts`. An effort too big for one session and still wrapped in fog goes through **`/chart-course`** first. Upkeep loops — **`/improve-design`**, **`/harden-domain`**, **`/backfill-adrs`**, **`/verify-docs`** — run between features. When you don't remember which to reach for, ask **`/which-skill`**.
 
 ## User-invoked skills
 
@@ -21,6 +21,11 @@ The route most work travels: **`/grill-and-record`** (or `/grill-me` with no cod
 
 - **`grill-me`** — Vanilla stress-testing through relentless interview. Zero setup, runs anywhere.
 - **`grill-and-record`** — Doc-aware grilling. Updates `DOMAIN.md` inline as terms resolve and offers ADRs when the gate triggers. Use in projects that have (or will have) a `DOMAIN.md` and an ADR log.
+
+### Charting
+
+- **`chart-course`** — Chart a foggy, multi-session effort as a shared map of decision tickets on the project's tracker, then work them one per session until the way is clear. The map ends where `to-feature` / `to-story` picks up. ADO: a map Feature with User Story tickets. GitHub: a map issue with sub-issue tickets.
+- **`ask-for-me`** — Turn a decision you can't answer alone into a Markdown questionnaire for the person who can — a brief interview about the send (who it goes to, what you need back), then a drafted document aimed at that gap. Pairs with a `chart-course` Errand when the blocker is someone else's knowledge.
 
 ### Publishing to a tracker
 
@@ -37,18 +42,23 @@ The route most work travels: **`/grill-and-record`** (or `/grill-me` with no cod
 
 ### Review
 
-- **`review-changes`** — Read-only, project-aware judgment review of a diff before a PR, on a teammate's PR, or on a landed commit. Fans review lenses out to subagents, vets the findings, and presents a ranked, classified report. Never mutates.
+- **`review-changes`** — Read-only, project-aware judgment review of a diff before a PR, on a teammate's PR, or on a landed commit. Fans review lenses out to subagents, vets the findings, and presents a ranked, classified report.
 
 ### Codebase health
 
 - **`improve-design`** — Read-only design-quality review of the whole codebase: surfaces architectural friction and proposes deeper module interfaces as a prioritized, vetted report.
 - **`harden-domain`** — Sweep the codebase to refresh `DOMAIN.md`. Deliberate sweep mode (inline domain capture during grilling lives in `grill-and-record`).
 - **`backfill-adrs`** — Sweep recent git history for un-recorded architectural decisions and write the ones that pass the gate.
+- **`verify-docs`** — Check that a document's claims about the code are still true — prose vs code vs tests, with per-claim verdicts and fixes. The prose-drift sibling of `harden-domain` (vocabulary) and `backfill-adrs` (decisions).
 
 ### Crossing sessions & prototyping
 
 - **`handoff`** — Fork the current conversation into a handoff document so a fresh session can pick the work up. Defaults to the OS temp dir; references durable artifacts rather than duplicating them.
 - **`prototype`** — Build a throwaway prototype to answer a design question — a runnable terminal app for state/logic questions, or several radically different UI variations toggleable from one route.
+
+### Learning
+
+- **`teach-me`** — Tutored, multi-session learning over a persistent per-topic workspace — grilled mission intake, one HTML lesson at a time, spaced retrieval, and durable learning records. Standalone or grounded in a codebase as its textbook.
 
 ### Meta
 
@@ -59,11 +69,13 @@ The route most work travels: **`/grill-and-record`** (or `/grill-me` with no cod
 ### Grilling & domain
 
 - **`grilling`** — The relentless-interview discipline at the core of `grill-me` and `grill-and-record`.
+- **`diverging`** — Break out of a locked problem frame with one committed lateral move. Fires on fixation signals (iterations circling one idea, a binary with two bad options); generates framings that `grilling`, its convergent complement, then stress-tests.
 - **`domain-modeling`** — The discipline for capturing and sharpening ubiquitous language in `DOMAIN.md`.
 
 ### Decisions & learnings
 
 - **`adr`** — Capture a single fresh Architecture Decision Record after a deliberate decision.
+- **`adoption-verdict`** — Render a project-grounded verdict on an external-adoption question ("should we use X?", "does this CVE reach us?") — exactly one grade (Adopt / Trial / Hold / Reject / Not-our-problem), gated on verified project and external facts. It forms its own position, where `grilling` extracts yours.
 - **`capturing-learnings`** — Owns the per-repo `docs/solutions/` solved-problems store on both sides: captures a Learning doc when its gate holds, and serves the symptom-keyed retrieval protocol any skill reads the store with.
 
 ### Design
@@ -115,6 +127,6 @@ A bare `ln -s` links only that one directory — it does **not** resolve `requir
 
 ## Notes
 
-- Several skills reference `DOMAIN.md` (from `harden-domain` / `grill-and-record`), `docs/adr/` (from `adr` / `backfill-adrs`), and `docs/solutions/` (from `capturing-learnings`). They degrade gracefully in projects that don't use those conventions.
+- Skills that reference `DOMAIN.md`, `docs/adr/`, or `docs/solutions/` degrade gracefully in projects that don't use those conventions.
 - The `to-feature`, `to-story`, and `to-tasks` skills operate in three modes: declared (CLAUDE.md present with tracker block), bootstrap-on-ask (repo present, asks once and writes the block), and no-repo CLI-only (publish via tracker CLI without touching files; saves tracker config to memory).
 - Bootstrap-on-ask is safe to use alongside Claude Code's built-in `/init` — `/init` preserves existing CLAUDE.md sections rather than overwriting them, so the order of operations doesn't matter.
