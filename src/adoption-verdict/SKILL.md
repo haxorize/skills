@@ -6,7 +6,7 @@ requires: capturing-learnings, adr, diverging
 
 # Adoption Verdict
 
-Answer an external-adoption question with one graded, project-grounded verdict — never a neutral survey of pros and cons. The differentiator is the refusal to answer in the abstract: generic knowledge already covers "tell me about X"; a verdict is earned against *this* project or not issued at all.
+Answer an external-adoption question with one graded, project-grounded verdict — never a neutral survey of pros and cons.
 
 **An adoption question is the trigger, not any mention of a technology.** "What is X?" or "how does X work?" gets a normal answer; this fires when someone must decide whether this project takes X on.
 

@@ -27,10 +27,10 @@ The test suite owns the behavioral contract — deterministic, cheap, gated. Thi
 | Verdict | Meaning |
 | --- | --- |
 | **PASS** | Matches the code and is exercised by a test |
-| **FAIL** | The code contradicts the claim — the doc is wrong, or the code regressed and the doc caught it |
-| **UNSUPPORTED** | Matches the current code but no test backs it; nothing protects it from future drift — surface as a missing test |
+| **FAIL** | The code contradicts the claim |
+| **UNSUPPORTED** | Matches the current code but no test backs it — nothing protects it from future drift |
 | **STALE** | Refers to something removed or renamed |
 
 ## Honest limits
 
-This is a careful review, not a proof: it can miss drift or misjudge a claim. It does not verify the tests themselves — garbage tests produce a confident-but-wrong PASS; upstream `tdd` discipline still matters. Prose with no factual claims about code has nothing to check — say so and stop.
+This skill does not verify the tests themselves — garbage tests produce a confident-but-wrong PASS; upstream `tdd` discipline still matters. Prose with no factual claims about code has nothing to check — say so and stop.

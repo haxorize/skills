@@ -7,7 +7,7 @@ description: Break out of a locked problem frame with one committed lateral move
 
 Fixation is the default state — attention concentrates on the current framing, and new ideas become local variations of it. This skill is the interrupt: spend one move stepping sideways, then resume.
 
-**Fixation is the trigger, not stakes.** Don't run this before every consequential task; if the current frame is working, let it work. And this skill only generates — evaluation belongs to `grilling` and the review skills, after the move has produced its framings.
+**Fixation is the trigger, not stakes.** Don't run this before every consequential task; if the current frame is working, let it work.
 
 ## Core discipline
 
@@ -15,7 +15,7 @@ Fixation is the default state — attention concentrates on the current framing,
 2. **One move, committed.** Pick the move that matches the diagnosis, run it fully, surface what shook loose, stop. Rotating through techniques as a menu produces noise; commitment produces distance.
 3. **Output framings, not ideas.** The deliverable is a new statement of the problem or a new entry angle — not more solution candidates inside the old frame.
 
-**Stop condition:** 3+ non-trivial framings, or one framing that reorganizes the problem — one sharp surprise beats five adjacent. Don't keep generating because the list looks short; volume is not the product.
+**Stop condition:** 3+ non-trivial framings, or one framing that reorganizes the problem — one sharp surprise beats five adjacent.
 
 **Fire test.** After the move, ask: could this output have been produced without the move? If yes, the move didn't fire — commit harder (push the provocation further, re-roll the stimulus, invert on a different axis), or re-diagnose the stuck-pattern and pick the better-matched move. Re-diagnosis after a miss is not menu-rotation; menu-rotation is cycling techniques without commitment.
 

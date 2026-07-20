@@ -36,14 +36,14 @@ Keep steps 1–2 in **one unbroken context window** so the grilling, decompositi
 - **A hard bug or unexplained failure mid-build** → the `diagnosing-bugs` behavior takes over (it fires on its own; `implement` reaches for it on an unplanned red). It greps the repo's `docs/solutions/` store for past matches on the way in; when an expensive diagnosis closes, `capturing-learnings` offers to capture the solved problem there. File a found defect with **`/to-bug`**.
 - **A merge or rebase conflicts** → the `resolving-merge-conflicts` behavior handles it in place.
 - **Thinking is circling — iterations that are variations of one idea, or a binary where both options are bad** → the `diverging` behavior fires: one committed lateral move that outputs new framings, which the grill then stress-tests. Fixation is its trigger, never stakes.
-- **An adopt-or-not question — "should we use X?", "does this CVE reach us?"** → the `adoption-verdict` behavior renders one graded, project-grounded verdict (Adopt/Trial/Hold/Reject/Not-our-problem) gated on verified project and external facts. It forms its *own* position, where the grill extracts *yours*; a verdict can feed a grill, and a grill can end by requesting one.
+- **An adopt-or-not question — "should we use X?", "does this CVE reach us?"** → the `adoption-verdict` behavior renders one graded, project-grounded verdict (Adopt/Trial/Hold/Reject/Not-our-problem) gated on verified project and external facts. It forms its *own* position, where the grill extracts *yours*.
 
 ## Codebase health (upkeep, not feature work)
 
 - **`/improve-design`** — read-only design-quality review of the whole codebase; surfaces deepening opportunities. Picking one frames a design, offers a grill (`/grill-me` or `/grill-and-record`), then hands you to `/to-story` to file the result.
 - **`/harden-domain`** — sweep the codebase to refresh `DOMAIN.md` when the vocabulary has drifted.
 - **`/backfill-adrs`** — sweep recent git history for architectural decisions that were made but never recorded.
-- **`/verify-docs`** — check a document's claims against the code and tests, verdict per claim (an Unsupported claim is a missing test, not just a doc bug). The prose-drift sibling of `/harden-domain` (vocabulary) and `/backfill-adrs` (decisions); run it pre-publish, post-refactor, or as a periodic sweep — `feedback-loops` still auto-fixes docs the current change touched.
+- **`/verify-docs`** — check a document's claims against the code and tests, verdict per claim. The prose-drift sibling of `/harden-domain` (vocabulary) and `/backfill-adrs` (decisions); run it pre-publish, post-refactor, or as a periodic sweep — `feedback-loops` still auto-fixes docs the current change touched.
 
 ## Review gate
 

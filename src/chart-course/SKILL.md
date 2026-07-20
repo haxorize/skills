@@ -17,9 +17,9 @@ Each ticket resolves a decision; the Chart is done when nothing is left to decid
 
 ## The Chart
 
-One work item is the map — ADO: a Feature; GitHub: an issue labeled `chart:map`. The Chart is a **discovery** Feature — in SAFe terms, enabler exploration — and is never the implementation Feature it drives: the Chart records the route walked (decisions, dead ends, out-of-scope rulings); the implementation work its destination produces is a separate artifact (see Closing the chart). Both map forms carry `Chart-type: map` in the body. **The body line is the source of truth for typing everywhere**; GitHub `chart:*` labels are an additive projection — apply them, surface a failed application for manual repair, never block on it. ADO uses no tags at all.
+One work item is the map — ADO: a Feature; GitHub: an issue labeled `chart:map`. The Chart is a **discovery** Feature — in SAFe terms, enabler exploration — and is never the implementation Feature it drives: the Chart records the route walked (decisions, dead ends, out-of-scope rulings); the implementation work its destination produces is a separate artifact (see Closing the chart). Both map forms carry `Chart-type: map` in the body. **The body line is the source of truth for typing everywhere**; GitHub `chart:*` labels are an additive projection, applied best-effort (failure handling: [references/chart-tracker-ops.md](references/chart-tracker-ops.md)). ADO uses no tags at all.
 
-The map is an **index**, not a store: a decision lives in exactly one place — its ticket — so the map never restates it, only gists it and links. Open tickets are not listed in the map body; they are open children, found by query. Body templates: [references/chart-format.md](references/chart-format.md).
+The map is an **index**, not a store: a decision lives in exactly one place — its ticket — so the map never restates it, only gists it and links. Body templates: [references/chart-format.md](references/chart-format.md).
 
 ## Decision tickets
 
@@ -28,7 +28,6 @@ Each ticket is a child of the map — ADO: a User Story under the map Feature; G
 - **Title marker (ADO):** bake `Chart: ` into the drafted title *before* applying the tracker block's `Title prefix:` — yielding `[App] Chart: <question>` — so nobody scanning a board mistakes a question for a build-ready Story. On GitHub the labels carry this; skip the marker.
 - **Claim by assignment.** Before any work, assign the ticket to whoever is driving it. Assignment *is* the claim: an open, unassigned ticket is unclaimed, and concurrent sessions skip claimed ones.
 - **Blocking** uses the tracker's native dependency relations, so the frontier renders in the tracker's own UI. The **frontier** is the open, unblocked, unclaimed tickets — the edge of the known.
-- The answer is never in the body — it's recorded on resolution. Assets created along the way are linked from the ticket, never pasted in.
 
 In everything the human reads, refer to the map and its tickets by **name**, never bare id — see [references/tracker-resolution.md](references/tracker-resolution.md).
 

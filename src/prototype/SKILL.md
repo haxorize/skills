@@ -25,7 +25,7 @@ If the question is genuinely ambiguous and the user isn't reachable, default to 
 3. **No persistence by default.** State lives in memory. Persistence is the thing the prototype is _checking_, not something it should depend on. If the question explicitly involves a database, hit a scratch DB or a local file with a clear "PROTOTYPE — wipe me" name.
 4. **Skip the polish.** No tests, no error handling beyond what makes the prototype _runnable_, no abstractions.
 5. **Surface the state.** After every action (logic) or on every variant switch (UI), print or render the full relevant state so the user can see what changed.
-6. **Capture when done.** When the prototype has answered its question, fold the validated decision into the real code — and keep the prototype itself as a primary source (see When done). Never leave it rotting where it sits, and never merge it.
+6. **Capture when done.** When the prototype has answered its question, fold the validated decision into the real code and keep the prototype itself as evidence — see When done.
 
 ## When done
 
@@ -33,9 +33,7 @@ Two things come out of a finished prototype: the **answer** (the verdict plus th
 
 For the prototype: with no tests and no maintenance story it doesn't belong on the main branch, but that's not a reason to delete it. Commit it to a throwaway branch (`prototype/<name>`), push, and leave a context pointer to the branch wherever the question came from — the work item that prompted it, or the handoff answer. Absorbing a validated reducer or UI direction into the real module keeps the *decision*; the branch keeps the *evidence*, one click away for anyone who wants to re-run it.
 
-For the answer:
-
-This is a natural delegation boundary, so delegate rather than inline:
+For the answer, this is a natural delegation boundary — delegate rather than inline:
 
 - If the answer settled a **load-bearing decision** — hard to reverse, surprising without context, the result of a real trade-off — offer to record it via `adr`. The prototype *is* the considered-options exploration; synthesize the ADR from what it proved.
 - If the prototype surfaced or sharpened a **domain concept** — a new state, a clearer name for a thing — run `/domain-modeling` to capture it in `DOMAIN.md` before the precision is lost.
