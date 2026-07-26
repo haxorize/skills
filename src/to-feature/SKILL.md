@@ -53,6 +53,8 @@ Use the appropriate template:
 - GitHub: [references/feature-template-github.md](references/feature-template-github.md)
 - ADO: [references/feature-template-ado.md](references/feature-template-ado.md)
 
+**On ADO, draft the body and the acceptance criteria as two separate artifacts — the two-field split.** ADO stores them in two fields, so carve them apart here, while you're thinking about content, rather than at publish time. The outcome bullets are never a section of the body.
+
 ### 8. Self-review
 
 Before showing the user, check:
@@ -63,6 +65,7 @@ Before showing the user, check:
 - Ambiguity (any requirement readable two ways)
 - Domain language matches `DOMAIN.md`
 - AC IDs: append-only — no reused IDs across active and `## Removed acceptance criteria`; gaps from removals preserved (no renumbering)
+- On ADO: the **two-field split** holds (step 7) — outcome bullets are their own artifact
 - Story map: every active Feature AC ID appears in at least one Story's `Covers:` line; no `Covers:` line references a removed AC ID; naming-table dedup; dependency acyclicity (skip if no story map — flat mode or deferred decomposition)
 
 Then run a **Cold-reader pass** ([references/cold-reader-pass.md](references/cold-reader-pass.md)): the cold reader gets only the drafted body and answers "what would you build?".
@@ -74,9 +77,11 @@ Iterate until approved.
 ### 10. Publish via tracker dispatch
 
 - **GitHub:** `gh issue create --title "..." --body-file <draft>` with default labels from CLAUDE.md. Parent linking via `Tracked-by:` line or template `Parent: #N` reference if `--parent` was provided. **Before creating the issue,** ensure every label in CLAUDE.md's `Default labels:` exists on the repo: `gh label list --json name --jq '.[].name'` once, then `gh label create <name>` for any missing.
-- **ADO:** `az boards work-item create --type Feature --title "..." --description "<html>"` with project / area path / iteration / state from CLAUDE.md. The description field expects HTML — convert the Markdown feature draft before passing. The body's final section is `## Story Decomposition`; inside it, HTML markers (`<!-- BEGIN STORY MAP -->` / `<!-- END STORY MAP -->`) fence an append-only region — see [feature-template-ado.md](references/feature-template-ado.md) for the snapshot separator and emergent-Story sentinel inside it. If decomposition was deferred, the section body is the single line `Story Decomposition: deferred at Feature creation.` (no markers). Parent linking via `az boards work-item relation add --id <feature-id> --relation-type Parent --target-id <epic-id>`.
+- **ADO:** `az boards work-item create --type Feature --title "..." --description "<html>" --fields "Microsoft.VSTS.Common.AcceptanceCriteria=<html>"` with project / area path / iteration / state from CLAUDE.md — the **two-field split**, body into `--description` and outcome bullets into `--fields`. Both expect HTML: convert each artifact on its own. The body's final section is `## Story Decomposition`; inside it, HTML markers (`<!-- BEGIN STORY MAP -->` / `<!-- END STORY MAP -->`) fence an append-only region — see [feature-template-ado.md](references/feature-template-ado.md) for the snapshot separator and emergent-Story sentinel inside it. If decomposition was deferred, the section body is the single line `Story Decomposition: deferred at Feature creation.` (no markers). Parent linking via `az boards work-item relation add --id <feature-id> --relation-type Parent --target-id <epic-id>`.
 
 If a required CLAUDE.md field is missing, fail fast with a clear "add this to CLAUDE.md" message. If the create call fails with an auth/permission error, fall back to giving the user the drafted body to paste manually — don't loop on auth.
+
+**Read the AC field back before reporting the Feature published (ADO).** `az boards work-item show <feature-id> --output json --query 'fields."Microsoft.VSTS.Common.AcceptanceCriteria"'` returns the stored value. Empty or null means the criteria landed in the body instead of the field — patch it with `az boards work-item update --id <feature-id> --fields "Microsoft.VSTS.Common.AcceptanceCriteria=$(cat acceptance.html)"` and strip them from the description. Buried criteria aren't queryable, and child Stories' `Covers:` lines then point at IDs no field holds.
 
 The story-map embed (and the corresponding append-on-publish in `to-story` step 10) is gated on `Hierarchy: required` — ADO default. GitHub projects can opt in via CLAUDE.md.
 

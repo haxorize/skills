@@ -51,6 +51,8 @@ Use the appropriate template:
 - GitHub: [references/story-template-github.md](references/story-template-github.md)
 - ADO: [references/story-template-ado.md](references/story-template-ado.md)
 
+**On ADO, draft the body and the acceptance criteria as two separate artifacts — the two-field split.** ADO stores them in two fields, so carve them apart here, while you're thinking about content, rather than at publish time. The acceptance bullets are never a section of the body.
+
 ### 7. Self-review
 
 Before showing the user, check:
@@ -61,6 +63,7 @@ Before showing the user, check:
 - Ambiguity (any requirement readable two ways)
 - Domain language matches `DOMAIN.md`
 - AC IDs: append-only — no reused IDs across active and `## Removed acceptance criteria`; gaps from removals preserved (no renumbering)
+- On ADO: the **two-field split** holds (step 6) — acceptance bullets are their own artifact
 - `## Layers touched` populated for each layer (`none` is a valid value; missing layers are not)
 - Naming consistency vs. parent's story map (where `Hierarchy: required`) — surface conflicts before publish
 - User-story line matches step 6 classification (Connextra for user-facing, absent otherwise)
@@ -75,9 +78,11 @@ Iterate until approved.
 ### 9. Publish via tracker dispatch
 
 - **GitHub:** `gh issue create --title "..." --body-file <draft>` with default labels from CLAUDE.md. Parent linking via template `Parent: #N` reference if `--parent` was provided. **Before creating the issue,** ensure every label in CLAUDE.md's `Default labels:` exists on the repo: `gh label list --json name --jq '.[].name'` once, then `gh label create <name>` for any missing. If a parent Feature was resolved, add the new issue as a native sub-issue of it after create — see [references/github-sub-issues.md](references/github-sub-issues.md).
-- **ADO:** The description field expects HTML. Write to a temp file and pass via command substitution to prevent shell newline mangling (embedded `\n` in a shell string becomes a literal two-character sequence in the stored HTML). See [references/story-template-ado.md](references/story-template-ado.md) for the conversion command. Parent linking via `az boards work-item relation add --id <new-story-id> --relation-type Parent --target-id <feature-id>`.
+- **ADO:** The **two-field split** lands as two flags on one `az boards work-item create` call — the body into `System.Description` via `--description`, the acceptance bullets into `Microsoft.VSTS.Common.AcceptanceCriteria` via `--fields`. Both expect HTML: convert each artifact on its own. Write each to a temp file and pass via command substitution to prevent shell newline mangling (embedded `\n` in a shell string becomes a literal two-character sequence in the stored HTML). See [references/story-template-ado.md](references/story-template-ado.md) for the conversion command. Parent linking via `az boards work-item relation add --id <new-story-id> --relation-type Parent --target-id <feature-id>`.
 
 If a required CLAUDE.md field is missing, fail fast with a clear "add this to CLAUDE.md" message. If the create call fails with an auth/permission error, fall back to giving the user the drafted body to paste manually — don't loop on auth.
+
+**Read the AC field back before reporting the Story written (ADO)** — on any create or patch carrying acceptance criteria, update mode included. `az boards work-item show <story-id> --output json --query 'fields."Microsoft.VSTS.Common.AcceptanceCriteria"'` returns the stored value. Empty or null means the criteria landed in the body instead of the field — patch it with `az boards work-item update --id <story-id> --fields "Microsoft.VSTS.Common.AcceptanceCriteria=$(cat acceptance.html)"` and strip them from the description. A Story whose criteria are buried in the description looks written and isn't queryable.
 
 ### 10. Update parent's story map (where `Hierarchy: required`)
 

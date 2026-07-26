@@ -53,6 +53,8 @@ If the update adds or removes ACs, changes the module list, or reshapes layers, 
   ```
 - **GitHub:** `gh issue edit <story-number> --title "<updated-title>" --body-file <draft>`.
 
+On ADO, read the AC field back after patching, per step 9 — a patch can bury criteria in the description just as a create can.
+
 ## Naming-drift queue
 
 If the patch introduces names differing from siblings (other Stories under the same parent Feature, or Tasks under this Story), append an entry per [naming-drift-queue.md](naming-drift-queue.md), which also covers surfacing the drift as a self-review warning and the never-block rule.
