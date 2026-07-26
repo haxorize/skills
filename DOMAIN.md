@@ -188,11 +188,13 @@ Ubiquitous-language glossary for the entire skills repo. Covers the six main are
 | Term | Definition | Aliases to avoid |
 | --- | --- | --- |
 | **ADR (Architecture Decision Record)** | A short markdown record of a single non-obvious design choice, kept under `docs/adr/<NNNN>-<slug>.md` | Decision doc (vague), RFC (different scope) |
-| **ADR gate** | The three criteria a decision must meet to warrant an ADR — hard to reverse, surprising without context, result of a real trade-off | Decision filter, ADR criteria |
+| **ADR gate** | The three criteria a decision must meet to warrant an ADR — hard to reverse, surprising without context, result of a real trade-off. Does two jobs: whether a decision earns a record at all, and — applied to new content against an owning record — which **Amendment** form it takes | Decision filter, ADR criteria |
 | **Slug** | The short kebab-case summary in an ADR filename | Title, Name |
 | **`## Considered Options`** | The optional ADR section listing rejected alternatives | Alternatives |
 | **`## Consequences`** | The optional ADR section noting non-obvious downstream effects | Implications |
 | **Status frontmatter** | The optional ADR field (`proposed | accepted | superseded by ADR-NNNN`) | — |
+| **Amendment** | A change to an ADR whose decision **still stands** but whose premise moved. Takes one of two forms, chosen by whether the new content clears the **ADR gate** on its own: *in-place* (dated, appended to the existing ADR's `## Amendments` log, ticket-referenced where the repo has a tracker, no new number) when it doesn't, or *amending ADR* (a new record stating `This amends ADR-NNNN`, with a forward pointer added to the amended one) when it does | Supersession (the decision is dead, not refined), Update (unscoped), Revision |
+| **Supersession** | The retirement of an ADR whose decision is **no longer in force**, recorded in **Status frontmatter** as `superseded by ADR-NNNN` | Amendment (the decision survives), Deprecation |
 | **Sweep window** | The git-history range scanned by `backfill-adrs` (default: last 90 days OR last 200 commits, whichever is shorter) | Lookback window |
 | **ADR debt** | The accumulated un-recorded architectural decisions in a repo before ADR practice begins | Decision debt |
 | **`DOMAIN.md`** | The repo-root glossary of ubiquitous language | ULang.md (deprecated; renamed during the skills restructure) |
@@ -313,7 +315,7 @@ Ubiquitous-language glossary for the entire skills repo. Covers the six main are
 - A **Port** is an **Interface** at a **Seam** with ≥2 **Adapters**; a single-Adapter Seam is just indirection, not a Port.
 - A **Module-deepening refactor** typically merges or absorbs **Pass-through** Modules into a **Deep module**; the **Deletion test** decides which is which.
 - An **ADR** belongs to exactly one repo's `docs/adr/` directory and is identified by a sequential number; the **Slug** is independent of the number.
-- An **ADR** passes the **ADR gate** if and only if all three criteria hold; failing one drops the candidate.
+- An **ADR** passes the **ADR gate** if and only if all three criteria hold. Failing one drops the candidate *when no record owns the ground*; where one does, gate-failing content becomes an in-place **Amendment** to it instead.
 - The **Sweep window** governs how far back `backfill-adrs` scans; **ADR debt** is the un-recorded surplus inside that window.
 - A `DOMAIN.md` file lives at the root of a **Bounded context**; multi-context repos have nested `DOMAIN.md` files per context with the root acting as an index.
 - `capturing-learnings` (Behavior skill) owns the **Solved-problems store**: the **Capture gate** admits a **Learning doc** (mirroring the **ADR gate**), the **Overlap rule** decides update-vs-create, and the **Retrieval protocol** is how any skill reads the store; `diagnosing-bugs` declares it — retrieval on the way in, a capture offer on the way out.

@@ -6,9 +6,29 @@ ADRs live in `docs/adr/<NNNN>-<slug>.md`. Create the directory lazily — only w
 
 A repo that already records decisions keeps its own scheme. Before writing, look for an existing ADR convention — a populated `docs/adr/`, a `doc/architecture/decisions/` or similar directory, a `.adr-dir` file, an MADR/adr-tools layout — and if one exists, match its path, numbering, and format, continuing the existing sequence. If the evidence conflicts, surface the conflict and ask rather than silently introducing a second scheme. Everything below applies when no convention exists, or the existing one already matches.
 
+One variant worth recognizing on sight: a **single-file decision log** — one document holding numbered entries — rather than a file per ADR. There, append at the tail with the next number, and expect a *textual* merge conflict when two branches both append. Resolve it by renumbering the later entry and fixing its inbound links; the loud conflict is the same collision the per-file scheme hides.
+
 ## Numbering and slug
 
-Scan `docs/adr/` for the highest existing number; increment by one. Slug is a short kebab-case summary of the decision (e.g., `0007-transactional-test-isolation.md`).
+Increment past the highest number claimed in **either** place, taking whichever is higher:
+
+- **The working tree** — list the ADR directory. This catches a record written earlier this session and not yet committed.
+- **Git history** — `git log --all --diff-filter=A --name-only -- <adr-dir>`, using the directory the preflight resolved. This catches numbers already claimed on branches you haven't merged.
+
+Neither scan alone is enough, and each misses what the other catches. Checking both is the only moment a duplicate can be prevented: git merges two differently-named files without complaint, so the collision lands silently and leaves every `[ADR N](N-slug.md)` link ambiguous. Where there's no git repo, or the log comes back empty because the repo predates it, the working-tree scan stands alone. Numbers burned by abandoned branches leave gaps in the sequence — a gap is cosmetic, a duplicate is not.
+
+Slug is a short kebab-case summary of the decision (e.g., `0007-transactional-test-isolation.md`).
+
+## Amend or write new
+
+Before drafting, search for a record that already owns this ground — one whose *premise this decision changes*, not merely one sharing keywords. If you find one, apply **the gate below to the new content alone**:
+
+- **It doesn't clear the gate** — a refinement, a landed detail, a narrowed premise → **amend in place**. Append to the owning ADR's `## Amendments` section, dated (`- **<date>** — …`), adding a ticket reference where the repo has a tracker. No new number.
+- **It clears the gate on its own** → **new record, linked both ways**. The new ADR states `This amends [ADR N](N-slug.md)` and says what moved; the amended one gets a forward pointer at its top (`> **Amended by [ADR N](N-slug.md):** …`).
+
+**Amendment is not supersession.** An amended decision still stands on a changed premise; a superseded one is no longer in force and is marked in Status frontmatter. Reaching for supersession while the old decision survives loses that distinction.
+
+The search is a judgment call, so the expensive error runs the other way — amending a record that should have been left alone. Amendments are additive and dated; never rewrite the original text.
 
 ## Default form
 
@@ -27,6 +47,7 @@ Only when they add real value, not for completeness:
 - **Status** frontmatter (`proposed | accepted | superseded by ADR-NNNN`) — useful when revisiting
 - **Considered Options** — only when rejected alternatives are worth remembering in detail
 - **Consequences** — only when downstream effects are non-obvious
+- **Amendments** — the dated log an in-place amendment appends to; created on the first amendment, never up front
 
 ## The gate
 

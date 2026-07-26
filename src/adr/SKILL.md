@@ -7,7 +7,7 @@ description: Architecture Decision Record — capture why a single non-obvious d
 
 Lightweight Architecture Decision Records — capture *why* a non-obvious design choice was made, in the smallest form that preserves the rationale.
 
-The file location, numbering, default template, optional sections, the three-criteria gate, and a worked example all live in [references/adr-format.md](references/adr-format.md).
+The file location, numbering, amend-or-write-new rule, default template, optional sections, the three-criteria gate, and a worked example all live in [references/adr-format.md](references/adr-format.md).
 
 ## When to write an ADR
 
@@ -31,14 +31,18 @@ The gate has three criteria (full statement in the reference) — **hard to reve
 
 ## Workflow
 
-### 1. Apply the gate
+### 1. Check for an owning record
 
-Confirm out loud which of the three criteria the decision meets, and which alternatives were considered. If any one is missing, do not write the ADR — stop and tell the user why.
+Search the ADR directory for a record that already owns this ground, per the amend-or-write-new rule in [references/adr-format.md](references/adr-format.md). This runs **before** the gate, because the gate's outcome means different things depending on what you find.
 
-### 2. Draft
+### 2. Apply the gate
 
-Number, slug, and draft per [references/adr-format.md](references/adr-format.md): scan `docs/adr/` for the highest existing number and increment; default form is 1-3 sentences; add optional sections only when they earn their place.
+Confirm out loud which of the three criteria the decision meets, and which alternatives were considered. With an owning record in hand, the gate picks the amendment form per the reference. With none, a failing gate means stop — don't write the ADR, and tell the user why. Say which case you're in before writing anything.
 
-### 3. Show and save
+### 3. Draft
+
+Number, slug, and draft per [references/adr-format.md](references/adr-format.md); default form is 1-3 sentences, and optional sections are added only when they earn their place.
+
+### 4. Show and save
 
 Show the draft to the user. Save to `docs/adr/<NNNN>-<slug>.md` once approved.
