@@ -1,11 +1,13 @@
 ---
 name: receiving-review
-description: Discipline for receiving code-review feedback — feedback is claims to verify, not orders to follow or occasions for performative agreement. Use when review feedback arrives (PR comments, a teammate's objections, a pasted review) and before implementing any suggested change, especially when an item is unclear or seems wrong.
+description: Discipline for receiving code-review feedback — feedback is claims to verify, not orders to follow or occasions for performative agreement. Use when review feedback arrives and before implementing any suggested change — PR comments, a teammate's objections, a pasted review, or the findings a `review-changes` report on your own diff just produced — especially when an item is unclear, seems wrong, or the fix work is outgrowing the change it serves.
 ---
 
 # Receiving Review
 
 Review feedback is a set of claims to verify, not orders to follow or occasions for gratitude. Technical correctness over social comfort.
+
+This holds whoever produced the findings. A report from your own self-review is not pre-verified because it came from your side of the desk — subagent findings are claims like any other.
 
 ## The response loop
 
@@ -29,6 +31,12 @@ Never open with "You're absolutely right!", "Great point!", or any gratitude —
 Push back when a suggestion breaks existing behavior, contradicts a recorded decision, is wrong for this stack, or the reviewer lacks context the code shows. Push back with technical reasoning: cite the test or the code line, ask the specific question. Escalate to the user when the disagreement is architectural rather than local.
 
 Pushed back and turned out wrong? State the correction factually and move on ("Verified — you're correct, the API needs 13+; fixing"). No apology spiral, no defending the original pushback.
+
+## The convergence guard
+
+Fixing findings is bounded work. Halt when the fix work would exceed roughly **2× the original change's scope**, or after a couple of cycles that aren't converging — a review that becomes a rewrite has stopped being a review, and the change it was reviewing has stopped being reviewable.
+
+Findings past that bound are **follow-ups** filed against the backlog, not this change's work. Say which ones you're deferring and why, explicitly — an unstated deferral reads as a finding silently dropped.
 
 ## The zero-accepted tripwire
 

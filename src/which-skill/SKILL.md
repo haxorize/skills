@@ -21,8 +21,8 @@ A **flow** is a path through the skills.
    - **`/to-tasks`** — split a Story into vertical-slice Tasks (one Task = one commit).
 3. **Load a single ticket back into a fresh session** — **`/from-ticket <id>`**. It auto-detects Task/Story/Bug and loads the right context (parent, `DOMAIN.md`, matching ADRs).
 4. **Build it** — **`/implement`**. Drives one vertical slice end to end: picks the build path (runs `tdd` for a testable slice, direct otherwise), refactors, and closes the loop once via `feedback-loops`. One Task per session.
-5. **Review before the PR** — **`/review-changes`** (see Review gate).
-6. **Ship.**
+5. **Review before it lands** — **`/review-changes`** (see Review gate).
+6. **Ship it** — **`/ship`** (see Review gate). Work that never went through `/implement` (docs, skills, config, a synced library) enters the flow here.
 
 Keep steps 1–2 in **one unbroken context window** so the grilling, decomposition, and tasks build on the same thinking. Each `/implement` then starts fresh from its ticket. If a session fills up before you've decomposed, don't push on degraded — **`/handoff`** and continue in a fresh thread.
 
@@ -47,8 +47,9 @@ Keep steps 1–2 in **one unbroken context window** so the grilling, decompositi
 
 ## Review gate
 
-- **`/review-changes`** — read-only, project-aware judgment review of a **diff**, around shipping. Use it for a pre-PR self-review, on a teammate's PR, or on an already-landed commit. It produces a ranked, classified report.
-- When review feedback flows the other way — a reviewer's comments land on *your* changes — the `receiving-review` behavior governs applying them.
+- **`/review-changes`** — read-only, project-aware judgment review of a **diff**, around shipping. Use it for a self-review before the change lands, on a teammate's PR, or on an already-landed commit. It produces a ranked, classified report.
+- Acting on findings — whether a reviewer's comments landed on *your* changes or `/review-changes` just handed you its own report — is the `receiving-review` behavior's loop: verify each claim before implementing it, and let its **convergence guard** stop a review from becoming a rewrite.
+- Once findings are addressed, **`/ship`** takes it the rest of the way. It never reviews and never builds: it proposes the commit split in lineage order, then drafts the commit messages, the closing comment, and a PR body where a PR is warranted — checking each claim it writes against the diff and the log. Whether a PR exists at all turns on whether someone else must approve — which the host may decide for you, but never decides on its own. When the environment blocks an outward act (a sandboxed push, a permission classifier), it stops and hands you the exact command rather than routing around it.
 
 ## Crossing sessions
 

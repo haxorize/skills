@@ -1,8 +1,8 @@
 ---
 name: review-changes
-description: Read-only, project-aware judgment review of a diff before a PR, on a teammate's PR, or on a landed commit.
+description: Read-only, project-aware judgment review of a diff before it lands, on a teammate's PR, or on a landed commit.
 disable-model-invocation: true
-requires: codebase-design
+requires: codebase-design, receiving-review
 ---
 
 # Review Changes
@@ -15,11 +15,11 @@ Its value over the raw built-ins is **project awareness**: generic quality is de
 
 Three target modes — same three-dot, merge-base diff machinery against a different ref:
 
-- **Pre-PR self-review** — the local/staged change. Base = the branch's merge-base with the trunk.
+- **Self-review before it lands** — the local change. On a branch, base = its merge-base with the trunk. **On the trunk itself** — the no-approver path, where there is no branch — base = `origin/<trunk>`; and when the change is still uncommitted, review the working tree against `HEAD`. A change that never gets a branch is the common case, not the exception.
 - **Teammate's PR** — fetch the PR diff (`gh pr diff <n>`, or the tracker's equivalent).
 - **Already-landed commit** — audit a merged change; base = the commit's parent (or merge-base).
 
-Resolve the diff as `git diff <base>...HEAD` (three-dot: compare against the merge-base, not the raw tip) plus the commit list `git log <base>..HEAD --oneline`.
+Resolve the diff as `git diff <base>...HEAD` (three-dot: compare against the merge-base, not the raw tip) plus the commit list `git log <base>..HEAD --oneline` — except for uncommitted work, which is `git diff HEAD` with no commit list to gather.
 
 **Validate before spawning anything.** Confirm the ref resolves (`git rev-parse`) and the diff is **non-empty** — a bad ref or empty diff fails *here*, not inside N parallel subagents.
 
@@ -50,7 +50,7 @@ Vet the raw findings per [references/finding-discipline.md](references/finding-d
 
 Format and rank every finding per [references/finding-discipline.md](references/finding-discipline.md); within a lens, order by leverage. Then tag each finding:
 
-- **Blocker** — must fix before the PR lands.
+- **Blocker** — must fix before the change lands.
 - **Follow-up** — worth doing, doesn't block; file against the backlog.
 - **Escalation** — needs a human decision (a design call, an ADR reopen, a security judgment).
 
@@ -64,4 +64,4 @@ Present findings **under their own lens heading**; do **not** merge or rerank in
 
 ## After review
 
-This skill stops at the report — it never fixes. For a **pre-PR self-review**, hand the findings back to the user; if they act on blockers, the build re-runs `feedback-loops` and the **convergence guard** in `implement` bounds the fix→re-review loop (halt at ~2× the slice's scope; remainder → follow-ups). For a **teammate's PR**, posting the review is the user's call.
+This skill stops at the report — it never fixes. Acting on what it found is `receiving-review`'s loop: the report is a set of claims to verify, and findings your own subagents produced are no more pre-verified than a stranger's. For a **self-review**, hand the findings back to the user; if they act on blockers, the build re-runs `feedback-loops`, and `receiving-review`'s **convergence guard** bounds the fix→re-review loop. Once findings are addressed, `/ship` carries the change the rest of the way — user-invoked, so suggest it rather than invoking it. For a **teammate's PR**, posting the review is the user's call.

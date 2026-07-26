@@ -2,7 +2,7 @@
 name: implement
 description: Build one loaded ticket's slice end to end — pick the build path, build, refactor, and close the loop.
 disable-model-invocation: true
-requires: tdd, feedback-loops, adr, diagnosing-bugs
+requires: tdd, feedback-loops, adr, diagnosing-bugs, receiving-review
 ---
 
 # Implement
@@ -46,11 +46,13 @@ If this slice turned on a choice that is **hard to reverse**, **surprising witho
 
 Keep this gated: the three criteria are strict and most slices won't clear them. Don't manufacture an ADR for an obvious or easily-reversed choice. `feedback-loops`' mechanical doc-sync does **not** cover this — recording rationale is judgment, which is why it delegates to `adr`.
 
-## Suggest review
+## Suggest review, then ship
 
-`review-changes` is user-invoked, like this skill, so nothing here can invoke it. **Suggest** it to the user before they open the PR: "Slice built and green — consider `/review-changes` before pushing."
+`review-changes` is user-invoked, like this skill, so nothing here can invoke it. **Suggest** it to the user before the change lands: "Slice built and green — consider `/review-changes` before it lands."
 
-If the user runs `review-changes` and acts on findings, re-run `feedback-loops` after the fixes. Bound that loop: stop when the fix work would exceed roughly **2× the original slice scope**, or after a couple of non-converging cycles. Remaining findings become **follow-ups** filed against the backlog, not this slice's work — say so explicitly rather than expanding the slice without end.
+If the user runs `review-changes` and acts on findings, re-run `feedback-loops` after the fixes. `receiving-review`'s **convergence guard** bounds that fix→re-review loop; what falls past the bound is a backlog follow-up, not this slice's work.
+
+Once the slice is reviewed and findings are addressed, the same applies to `ship` — suggest it, don't invoke it: "Green and reviewed — `/ship` from here." It owns the commit split, the closing comment, and a PR where one is warranted.
 
 ## Notes
 
