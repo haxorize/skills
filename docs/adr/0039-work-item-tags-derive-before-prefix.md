@@ -10,3 +10,7 @@ This amends [ADR-0028](0028-chart-course-decision-ticket-maps.md): its rejection
 - **Hardcode org-specific exclusions in the skill** (a named project's bracket never tags) — rejected: org strings don't belong in repo-agnostic skills; exclusions are per-repo config (`Never tag:` in the tracker block), like every other per-repo value in the suite.
 - **A second `--fields` flag for tags** — rejected: a repeated `--fields` replaces the earlier one, silently dropping AcceptanceCriteria / ReproSteps / Severity from the created item.
 - **Reconcile tags on title rename** — rejected: accepted drift keeps the mechanism a create-time stamp instead of a sync obligation.
+
+## Amendments
+
+- **2026-08-08** — The carve-out lifts: its named follow-up condition fired the day the record landed — boards are filtered by tag to see everything app-related, charts and decision tickets included. `chart-course` joins the `work-item-tags.md` sibling group (fifth copy) and merges `System.Tags` into its map and ticket creates. Typing is untouched: `Chart-type:` stays the source of truth and `chart:*` never becomes an ADO tag. Since a chart title's bracket arrives via `Title prefix:` rather than the drafted title, the primary tag is empty for virtually every chart — `Additional tags:` is the contributor that matters here.
