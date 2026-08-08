@@ -10,7 +10,7 @@ Only for discipline-bearing skills — a rule the agent might rationalize around
 
 1. **Control first.** Run the pressure scenario with a fresh-context subagent *without* the skill. If the control doesn't exhibit the failure, there is nothing to fix — stop; any wording added anyway is a no-op.
 2. **Capture rationalizations verbatim.** The control's excuses become the rationalization table's rows — real ones bind better than invented ones.
-3. **Write the minimal wording**, picking the form from the form-to-failure table in `writing-for-agents`' [predictability.md](../../writing-for-agents/references/predictability.md) (a `requires:` dep, so it installs alongside this skill).
+3. **Write the minimal wording**, picking the form from the form-to-failure table in `writing-for-agents`' `predictability.md` reference — that skill is a `requires:` dep this skill's intro already loaded.
 4. **Re-run with the skill, 5+ fresh-context reps.** One rep proves nothing.
 5. **Read every response.** Don't grep for compliance keywords — template echoes masquerade as hits.
 6. **Variance is a metric.** Five reps producing five interpretations means the wording isn't binding, even when no single rep clearly violates.
