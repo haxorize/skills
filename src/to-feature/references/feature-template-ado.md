@@ -113,9 +113,12 @@ az boards work-item create \
   --fields \
     "Microsoft.VSTS.Common.AcceptanceCriteria=$(cat acceptance.html)" \
     "System.State=New" \
+    "System.Tags=$TAGS" \
   --area "$AREA_PATH" \
   --iteration "$ITERATION"
 ```
+
+`$TAGS` is the derived tag set — see [work-item-tags.md](work-item-tags.md); omit the `System.Tags` pair when no tags derive.
 
 Or, if `pandoc` is not available, a Python one-liner:
 

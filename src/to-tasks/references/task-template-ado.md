@@ -71,8 +71,10 @@ az boards work-item create \
   --description "$(cat <draft>.html)" \
   --area "$AREA_PATH" \
   --iteration "$ITERATION" \
-  --fields "System.State=New"
+  --fields "System.State=New" "System.Tags=$TAGS"
 ```
+
+`$TAGS` is the derived tag set — see [work-item-tags.md](work-item-tags.md); omit the `System.Tags` pair when no tags derive.
 
 Or, if `pandoc` is not available, use a Python one-liner:
 
