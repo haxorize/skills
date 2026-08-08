@@ -16,7 +16,7 @@ The ADR and `DOMAIN.md` checks aren't only "does the code violate recorded inten
 
 ## Finding format and leverage ranking
 
-Every finding carries **`file:line` evidence**, impact, **effort (S/M/L)**, fix-risk, and **confidence (HIGH/MED/LOW)** — no vibes-only findings. Rank by **leverage = impact ÷ effort, discounted by confidence and fix-risk**, so the highest-payoff finding reads first.
+Every finding carries **`file:line` evidence**, impact, **effort (S/M/L)**, fix-risk, and **confidence (HIGH/MED/LOW)** — no vibes-only findings. When a finding references an identifier the subject defines rather than the reader — an option label, a requirement or unit ID — pair it with a short distinguishing gloss at first mention (`R8 (elevated-call read access)`, not bare `R8`), so the finding stands alone for a reader without the source open; relayed content inherits the same contract — a source that wrote a bare label doesn't license relaying one. Rank by **leverage = impact ÷ effort, discounted by confidence and fix-risk**, so the highest-payoff finding reads first.
 
 ## Anchored confidence
 
