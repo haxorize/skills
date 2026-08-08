@@ -1,6 +1,6 @@
 ---
 name: prototype
-description: Build a throwaway prototype to answer a design question — a runnable terminal app for state/logic questions, or several radically different UI variations toggleable from one route.
+description: Build a throwaway prototype to answer a design question — a shareable single-file HTML demo for state/logic questions, or several radically different UI variations toggleable from one route.
 disable-model-invocation: true
 requires: adr, domain-modeling
 ---
@@ -13,7 +13,7 @@ A prototype is **throwaway code that answers a question**. The question decides 
 
 Identify which question is being answered — from the user's prompt, the surrounding code, or by asking if the user is around:
 
-- **"Does this logic / state model feel right?"** → [references/logic.md](references/logic.md). Build a tiny interactive terminal app that pushes the state machine through cases that are hard to reason about on paper.
+- **"Does this logic / state model feel right?"** → [references/logic.md](references/logic.md). Build a single-file HTML demo — clickable, shareable with non-developers — that pushes the state machine through cases that are hard to reason about on paper.
 - **"What should this look like?"** → [references/ui.md](references/ui.md). Generate several radically different UI variations on a single route, switchable via a URL search param and a floating bottom bar.
 
 If the question is genuinely ambiguous and the user isn't reachable, default to whichever branch better matches the surrounding code (a backend module → logic; a page or component → UI) and state the assumption at the top of the prototype.
@@ -21,7 +21,7 @@ If the question is genuinely ambiguous and the user isn't reachable, default to 
 ## Rules that apply to both
 
 1. **Throwaway from day one, and clearly marked as such.** Locate the prototype code next to the module or page it's prototyping for, but name it so a casual reader can see it's a prototype, not production. For throwaway UI routes, obey whatever routing convention the project already uses; don't invent a new top-level structure.
-2. **One command to run.** Whatever the project's existing task runner supports — `pnpm <name>`, `python <path>`, `bun <path>`, etc.
+2. **One step to run.** The logic demo is a file you double-click; a UI prototype runs on whatever the project's existing task runner supports — `pnpm <name>`, `python <path>`, `bun <path>`, etc.
 3. **No persistence by default.** State lives in memory. Persistence is the thing the prototype is _checking_, not something it should depend on. If the question explicitly involves a database, hit a scratch DB or a local file with a clear "PROTOTYPE — wipe me" name.
 4. **Skip the polish.** No tests, no error handling beyond what makes the prototype _runnable_, no abstractions.
 5. **Surface the state.** After every action (logic) or on every variant switch (UI), print or render the full relevant state so the user can see what changed.

@@ -1,6 +1,8 @@
 # Logic Prototype
 
-A tiny interactive terminal app that lets the user drive a state model by hand. Use this when the question is about **business logic, state transitions, or data shape** — the kind of thing that looks reasonable on paper but only feels wrong once you push it through real cases.
+A single, self-contained HTML file — a **shareable demo** — that lets anyone drive a state model by clicking buttons. Use this when the question is about **business logic, state transitions, or data shape** — the kind of thing that looks reasonable on paper but only feels wrong once you push it through real cases.
+
+Because it's one file with nothing to install, you can hand it to a non-developer — a designer, a PM, a domain expert — and let them feel the model for themselves. So it speaks their language, not the code's.
 
 ## When this is the right shape
 
@@ -15,63 +17,41 @@ If the question is "what should this look like" — wrong branch. Use [ui.md](ui
 
 ### 1. State the question
 
-Before writing code, write down what state model and what question you're prototyping. One paragraph, in the prototype's README or a comment at the top of the file, so it can be checked later.
+Before writing code, write down what state model and what question you're prototyping — one paragraph in a comment at the top of the file, so it can be checked later.
 
-### 2. Pick the language
+### 2. Isolate the logic in a portable module
 
-Use whatever the host project uses. If the project has no obvious runtime (e.g. a docs repo), ask.
-
-Match the project's existing conventions for tooling — don't add a new package manager or runtime just for the prototype.
-
-### 3. Isolate the logic in a portable module
-
-Put the actual logic — the bit that's answering the question — behind a small, pure interface that could be lifted out and dropped into the real codebase later. The TUI around it is throwaway; the logic module shouldn't be.
-
-The right shape depends on the question:
+Put the actual logic — the bit that's answering the question — in its own clearly-marked `<script>` section above the shell code, behind a small, pure interface. The right shape depends on the question:
 
 - **A pure reducer** — `(state, action) => state`. Good when actions are discrete events and state is a single value.
 - **A state machine** — explicit states and transitions. Good when "which actions are even legal right now" is part of the question.
 - **A small set of pure functions** over a plain data type. Good when there's no implicit current state — just transformations.
-- **A class or module with a clear method surface** when the logic genuinely owns ongoing internal state.
 
-Pick whichever shape best fits the question being asked, *not* whichever is easiest to wire to a TUI. Keep it pure: no I/O, no terminal code, no `console.log` for control flow. The TUI imports it and calls into it; nothing flows the other direction.
+Keep it pure: no DOM access, no rendering. The shell reads it and calls into it; nothing flows the other direction. When the host project is JS/TS, write the module so it lifts into the real codebase verbatim; in any other stack the module is a faithful sketch — the *answer* transfers even where the code doesn't.
 
-### 4. Build the smallest TUI that exposes the state
+### 3. Build the shell for a non-developer
 
-Build it as a **lightweight TUI** — on every tick, clear the screen (`console.clear()` / `print("\033[2J\033[H")` / equivalent) and re-render the whole frame. The user should always see one stable view, not an ever-growing scrollback.
+Every label in **domain language**, not code — buttons and state read like the business, not the reducer. Two parts:
 
-Each frame has two parts, in this order:
+- **Free play** — every legal action as a button; illegal actions visible but disabled (that they're disabled is often the answer). After every click, render the full relevant state so the user sees what changed.
+- **Guided walkthroughs** — a set of **scenarios, one per tab**. Each step is a real button: clicking it performs that action and advances the walkthrough. Starting a walkthrough resets to a known initial state so the scenario runs the same way every time. Choose scenarios that demonstrate the awkward cases — the happy path, a tricky edge case, an attempt at something that should be illegal.
 
-1. **Current state**, pretty-printed and diff-friendly (one field per line, or formatted JSON). Use **bold** for field names or section headers and **dim** for less important context (timestamps, IDs, derived values). Native ANSI escape codes are fine — `\x1b[1m` bold, `\x1b[2m` dim, `\x1b[0m` reset. No need to pull in a styling library unless one is already in the project.
-2. **Keyboard shortcuts**, listed at the bottom: `[a] add user  [d] delete user  [t] tick clock  [q] quit`. Bold the key, dim the description, or vice-versa — whatever reads cleanly.
+### 4. Keep it one double-clickable file
 
-Behaviour:
+**Don't reach for a framework, bundler, or server.** One file the recipient double-clicks; a React app or a dev server defeats "shareable." Inline all CSS and JS.
 
-1. **Initialise state** — a single in-memory object/struct. Render the first frame on start.
-2. **Read one keystroke (or one line)** at a time, dispatch to a handler that mutates state.
-3. **Re-render** the full frame after every action — don't append, replace.
-4. **Loop until quit.**
+### 5. Hand it over
 
-The whole frame should fit on one screen.
+Give the user the file path (and offer to send it to whoever else should feel the model). The interesting moments are when someone says "wait, that shouldn't be possible" or "huh, I assumed X would be different" — those are the bugs in the _idea_. If they want new actions or scenarios, add them.
 
-### 5. Make it runnable in one command
-
-Add a script to the project's existing task runner (`package.json` scripts, `Makefile`, `justfile`, `pyproject.toml`). The user should run `pnpm run <prototype-name>` or equivalent — never need to remember a path.
-
-If the host project has no task runner, just put the command at the top of the prototype's README.
-
-### 6. Hand it over
-
-Give the user the run command. They'll drive it themselves; the interesting moments are when they say "wait, that shouldn't be possible" or "huh, I assumed X would be different" — those are the bugs in the _idea_. If they want new actions added, add them.
-
-### 7. Capture the answer
+### 6. Capture the answer
 
 Capture the answer as `prototype`'s "When done" section describes.
 
 ## Anti-patterns
 
 - **Don't add tests.** A prototype that needs tests is no longer a prototype.
-- **Don't wire it to the real database.** Use an in-memory store unless the question is specifically about persistence.
+- **Don't wire it to a real database.** State lives in memory; reload resets the world.
 - **Don't generalise.** No "what if we wanted to support X later." The prototype answers one question.
-- **Don't blur the logic and the TUI together.** If the reducer / state machine references `console.log`, prompts, or terminal escape codes, it's no longer portable. Keep the TUI as a thin shell over a pure module.
-- **Don't ship the TUI shell into production.** The shell is optimised for being driven by hand from a terminal. The logic module behind it is the bit worth keeping.
+- **Don't blur the logic and the shell together.** If the reducer references the DOM, it's no longer portable — keep the shell a thin skin over a pure module.
+- **Don't let the labels drift into code-speak.** `"Cancel subscription"`, not `"dispatch(CANCEL_SUB)"` — the moment a domain expert needs a translator, the demo stopped doing its job.
