@@ -41,7 +41,7 @@ A failed floor forbids Adopt and Reject alike. Return the matching Hold — "Hol
 
 ## Grades and schema
 
-Exactly one grade. Reject and Not-our-problem are first-class outcomes, not failures — don't let the asker's enthusiasm or the conversation's momentum pull the grade upward.
+Exactly one grade. Reject and Not-our-problem are first-class outcomes, not failures — don't let the asker's enthusiasm or the conversation's momentum pull the grade upward. Unanimity is a tell, not a comfort: a workup where every fact lines up behind the grade suggests motivated evidence-gathering — name the strongest fact pulling the other way, or flag in the verdict that none was found.
 
 - **Adopt** — proven fit for us; use it.
 - **Trial** — promising; pilot it on a low-risk slice first.

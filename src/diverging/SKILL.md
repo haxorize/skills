@@ -14,6 +14,7 @@ Fixation is the default state — attention concentrates on the current framing,
 1. **Generation before evaluation.** A lateral move cares about movement value, not truth value. A provocation is not a proposal; judge nothing until the move completes.
 2. **One move, committed.** Pick the move that matches the diagnosis, run it fully, surface what shook loose, stop. Rotating through techniques as a menu produces noise; commitment produces distance.
 3. **Output framings, not ideas.** The deliverable is a new statement of the problem or a new entry angle — not more solution candidates inside the old frame.
+4. **Expect duds.** A move run over a batch — stimuli, transforms, family points — has an expected failure rate; a batch where every item produced a viable framing is evidence of retrofitting, not skill. Report the duds alongside the hits.
 
 **Stop condition:** 3+ non-trivial framings, or one framing that reorganizes the problem — one sharp surprise beats five adjacent.
 
