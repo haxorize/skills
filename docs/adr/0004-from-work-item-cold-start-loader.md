@@ -35,3 +35,5 @@ To anchor ADR-match for Story-entry, the Story template gains a `## Layers touch
 - The skill is opinionated about refusing Feature/Epic IDs; teams that want to "implement a Feature directly" must decompose first. This nudges users toward the maintenance loop's grain.
 
 **2026-07-20** — The skill is now `from-ticket`: ADR-0035 introduces the **Ticket** tier and renames the loader to match its actual domain. Behavior unchanged.
+
+**2026-08-08** — The load now includes ticket comments for every accepted type. Published bodies deliberately omit design specifics, so when no ADR records an interface sketch or a rejected alternative, a comment is often its only durable home (`improve-design` files its sketch as a comment when the user declines an ADR; humans leave them too). The loader fetches comments — free with the GitHub fetch, a separate `az devops invoke` on ADO — surfaces design-record comments in full, and summarizes the rest one line each.
