@@ -2,11 +2,12 @@
 name: write-skill
 description: Create new agent skills with proper structure and size constraints.
 disable-model-invocation: true
+requires: writing-for-agents
 ---
 
 # Writing Skills
 
-Skills wrangle determinism out of a stochastic system. The goal is **predictability** — the agent taking the same *process* every run. The deep vocabulary, the information-hierarchy ladder, the failure-mode taxonomy, and the form-to-failure wording table live in [references/great-skills.md](references/great-skills.md); this file is the operational guide.
+Skills wrangle determinism out of a stochastic system. The goal is **predictability** — the agent taking the same *process* every run. The prose conventions serving it — information hierarchy, pruning, style, the deep vocabulary and form-to-failure table — govern every agent-consumed document, and live in the `writing-for-agents` behavior: run the `/writing-for-agents` skill now; if you don't see a `Launching skill: writing-for-agents` line, stop and load it before drafting. This file is the operational guide for the skill *package* — classification, structure, description, testing.
 
 ## Workflow
 
@@ -85,12 +86,7 @@ The description is the skill's top-level **context pointer** — its wording dec
 
 - **Model-invoked:** state what the skill is, then list the **triggers** — one per genuinely distinct branch. Synonyms renaming one branch are duplication; collapse them. Open the trigger list with `Use when` (or `Use after` / `Use only`) — this is the repo's normative trigger marker, and `scripts/lint-skills.sh` keys on it to tell model-invoked from user-invoked descriptions. Front-load the leading words you actually use when you want the skill. Describe scope and triggers, **never the workflow** — if it summarizes the process, the agent follows the description as a shortcut and skips the body. Good: `Project conventions for this FastAPI + async SQLAlchemy API. Use when creating endpoints, models, schemas, or services.` Bad (workflow): `Gather requirements, draft SKILL.md, then iterate.`
 - **User-invoked:** a one-line human-facing summary. No "Use when…" trigger list — the model never sees it.
-
-## Information hierarchy & leading words
-
-Rank content by how immediately the agent needs it: **in-skill step** → **in-skill reference** → **external reference** (the ladder in the reference). **Progressive disclosure** moves reference down into a linked file so the top of `SKILL.md` stays legible; let **branching** decide what to disclose (inline what every branch needs). End each step on a **completion criterion** that's checkable and, where it matters, exhaustive — a vague bound invites premature completion.
-
-Hunt for **leading words** — a compact pretrained concept (*tracer bullet*, *seam*, *sweep*) repeated as a token anchors a region of behavior in the fewest tokens. A triad spelled out at three sites is begging to collapse into one.
+- **Anti-triggers:** when a model-invoked skill borders territory the model should handle without it, name the exclusion in the description ("Don't invoke this for steps the agent can perform itself") — one negative trigger is cheap; an over-firing skill is not.
 
 ## Size constraints
 
@@ -98,13 +94,6 @@ Hunt for **leading words** — a compact pretrained concept (*tracer bullet*, *s
 - **Reference files**: ≤200 lines each. Split by topic, not arbitrarily.
 - **Description**: ≤1024 chars.
 - **One line per paragraph/bullet** — soft-wrap, no hard newlines mid-paragraph (let the editor wrap). The cap is line-based, so a "line" should be a unit of content, not an artifact of wrapping; hard-wrapping inflates the count and renders identically. Code fences, tables, and YAML frontmatter keep their own line breaks.
-
-## Pruning
-
-- **Single source of truth** — each meaning in exactly one place; a behavior change is a one-place edit.
-- **Relevance** — every line still bears on what the skill does.
-- **No-ops** — delete any sentence the model already obeys by default. Be aggressive.
-- **Persuasion detritus** — sections that exist to persuade rather than instruct (social proof, "Advantages"/"Why this matters" blocks, end-of-file recaps) are dead weight once the rule itself binds; delete the section, keeping any unique rule it smuggled in.
 
 ## Sharing a reference across skills
 
@@ -117,14 +106,6 @@ Skills are symlinked into `~/.claude/skills/` and run from inside *the user's* p
 ## Frontmatter pitfalls
 
 Frontmatter parses as strict YAML. The hazard is an unquoted `: ` (colon **followed by a space**) in `description:` — YAML reads it as a nested mapping and GitHub's preview renders "Error in user YAML." A colon with no trailing space (`http://`, `3:1`) is harmless, and colons inside backtick code-spans are fine (`scripts/lint-skills.sh` strips code-spans before scanning). Separate clauses with em-dashes. Bad: `ADO: creates Tasks.` Good: `ADO — creates Tasks.`
-
-## Writing style
-
-- **Imperative voice** ("Write one test"; not "You should write one test").
-- **Explain the why** — an agent that understands the reason generalizes to edge cases.
-- **Escalate wording by failure, not taste** — judgment-framing is the default; escalate only for a rule the agent demonstrably skips under pressure, picking the form from the form-to-failure table in the reference (the wrong form is worse than none). Authority wording ("YOU MUST") belongs only on those escalated rules; never borrow warmth (gratitude, flattery) as a compliance device — it trains sycophancy.
-- **No nuance clauses, no exemption clauses** — "don't X unless it matters" reopens the negotiation; "this limit doesn't apply to code blocks" still suppresses code blocks. Scope a rule by where it *lives* (the caller exempts; the rule stays absolute), not by carve-outs inside it.
-- **One concrete example from this codebase** beats several generic ones.
 
 ## Review checklist
 

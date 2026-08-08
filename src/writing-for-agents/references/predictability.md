@@ -1,6 +1,6 @@
-# What makes a skill great
+# Predictability
 
-A skill exists to wrangle determinism out of a stochastic system. **Predictability** — the agent taking the same *process* every run, not producing the same *output* — is the root virtue; every lever in `SKILL.md` serves it. (A brainstorming skill should predictably *diverge*: its tokens vary, its behavior doesn't.) This is the disclosed reference for `write-skill` — the full vocabulary and the failure-mode taxonomy the main skill points at.
+A document an agent consumes exists to wrangle determinism out of a stochastic system. **Predictability** — the agent taking the same *process* every run, not producing the same *output* — is the root virtue; every lever in the document serves it. (A brainstorming skill should predictably *diverge*: its tokens vary, its behavior doesn't.) This is the disclosed reference for `writing-for-agents` — the full vocabulary and the failure-mode taxonomy the main skill points at; skills, the richest packaging, get their own sections (the two loads, granularity).
 
 ## The two loads
 
@@ -21,13 +21,13 @@ Model-invocation buys agent-discoverability (and reach by other skills) at a per
 
 ## Information hierarchy
 
-A skill's content is ranked by how immediately the agent needs it — a ladder with three rungs:
+A document's content is ranked by how immediately the agent needs it — a ladder with three rungs:
 
-1. **In-skill step** — an ordered action in `SKILL.md`: what the agent does, in order. The primary tier. Each step ends on a completion criterion.
-2. **In-skill reference** — a definition, rule, or fact in `SKILL.md`, consulted on demand. Often a legitimately flat peer-set (every rule of a review on one rung) — a fine arrangement, not a smell.
-3. **External reference** — reference pushed out of `SKILL.md` into a linked file (this file is one), reached by a context pointer and loaded only when the pointer fires. Spans a disclosed sibling (still part of the skill) through fully external docs any skill can point at.
+1. **In-file step** — an ordered action in the main document: what the agent does, in order. The primary tier. Each step ends on a completion criterion.
+2. **In-file reference** — a definition, rule, or fact in the main document, consulted on demand. Often a legitimately flat peer-set (every rule of a review on one rung) — a fine arrangement, not a smell.
+3. **External reference** — reference pushed out of the main document into a linked file (this file is one), reached by a context pointer and loaded only when the pointer fires. Spans a disclosed sibling (still part of the skill) through fully external docs any skill can point at.
 
-**Progressive disclosure** is the move down the ladder — out of `SKILL.md` into a linked file — so the top stays legible. Push too little down and the top bloats; push too much and you hide what the agent needs. Branching licenses the call: disclose what only some branches reach.
+**Progressive disclosure** is the move down the ladder — out of the main document into a linked file — so the top stays legible. Push too little down and the top bloats; push too much and you hide what the agent needs. Branching licenses the call: disclose what only some branches reach.
 
 **Co-location** is the within-file companion: keep a concept's definition, rules, and caveats under one heading rather than scattered, so reading one part brings its neighbours along.
 
@@ -37,12 +37,6 @@ Each cut spends one of the two loads, so split only when the cut earns it:
 
 - **By invocation** — split off a model-invoked behavior skill when it has a distinct leading word that should trigger it on its own, or another skill must reach it. You pay context load for the new always-loaded description, so that independent reach has to be worth it. (This is the **Extraction test**: reuse by a real second consumer is the reason to extract.)
 - **By sequence** — split a run of steps when the steps still ahead tempt the agent to rush the one in front of it. Hiding them across a real context boundary (a user-invoked hand-off or a subagent dispatch) encourages more legwork on the current task; an inline model-invoked call leaves the later steps in context and clears nothing.
-
-## Pruning
-
-- **Single source of truth.** Each meaning lives in exactly one authoritative place, so changing the behavior is a one-place edit. Duplication is its violation.
-- **Relevance.** Check every line: does it still bear on what the skill does? Shorter skills are cheaper to keep relevant.
-- **No-ops.** Hunt sentence by sentence: does this line change behavior versus the model's default? If not, delete the whole sentence — don't trim words. Be aggressive; most prose that fails the test should go.
 
 ## The form-to-failure table
 
