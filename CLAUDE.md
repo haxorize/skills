@@ -23,6 +23,7 @@ Before materially editing any skill below, diff its upstream — main *and* unme
 - **compound-engineering-plugin** — `adoption-verdict` (ce-pov), `capturing-learnings` (the learnings loop).
 - **obra/superpowers** — `receiving-review` (receiving-code-review).
 - **oaustegard/claude-skills** — `diverging` (generative-thinking), `verify-docs` (verifying-claims).
+- **openclaw/agent-skills** — `black-box-check` (behavior-validator).
 
 The `to-feature`/`to-story`/`to-tasks`/`to-bug` family is structurally independent of Matt's `to-prd`/`to-issues`/`to-spec`/`to-tickets` — scan those for portable ideas, never diff them as an upstream. Every skill not listed here is a local original.
 
