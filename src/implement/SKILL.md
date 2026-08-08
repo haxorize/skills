@@ -42,7 +42,9 @@ Run the `/feedback-loops` skill **once**, after the slice's behaviors are built 
 
 ## Record a load-bearing decision
 
-If this slice turned on a choice that is **hard to reverse**, **surprising without context**, and **the result of a real trade-off** (genuine alternatives, one picked for reasons), offer to record it via `adr` — synthesize the decision from what you just built and let the user approve or discard, rather than asking a blank yes/no.
+First surface the slice's **unsure decisions**: the choices you made silently mid-build and are genuinely not confident about — never a list of everything decided, and never padded with choices you'd defend as clearly right. Each one is a review prompt the user can act on now, while the context is live; nothing else in the flow makes these visible.
+
+If any decision — surfaced above or not — turned on a choice that is **hard to reverse**, **surprising without context**, and **the result of a real trade-off** (genuine alternatives, one picked for reasons), offer to record it via `adr` — synthesize the decision from what you just built and let the user approve or discard, rather than asking a blank yes/no.
 
 Keep this gated: the three criteria are strict and most slices won't clear them. Don't manufacture an ADR for an obvious or easily-reversed choice. `feedback-loops`' mechanical doc-sync does **not** cover this — recording rationale is judgment, which is why it delegates to `adr`.
 
