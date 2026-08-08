@@ -9,6 +9,9 @@ Exploration and subagent fan-out **over-report** — a friction that looks real 
 - **By-design reported as a bug** — including a tradeoff an ADR records (settled, not a finding).
 - **Mis-attributed evidence** — a real concern pinned to the wrong file/line.
 - **Duplicates** — the same underlying issue surfaced twice (two angles on one coupling, or two independent reports of one finding); merge them — confidence follows the rules below, never the number of reporters.
+- **Noise shapes** — findings wrong by shape rather than provenance: overengineering suggestions, speculative what-ifs nothing calls, defensive paranoia against states that can't occur, unreachable edges, concerns the change already handles elsewhere, and findings built on a wrong premise about what the code does.
+
+When you dispose of a finding on a line — fix, defer, or dismiss — spend one beat asking whether anything *else* is wrong with that same line before moving on: attention that arrived for one axis tends to leave without checking the others.
 
 ## Intent drift is bidirectional
 
