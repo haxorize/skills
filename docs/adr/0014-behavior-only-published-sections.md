@@ -21,3 +21,7 @@ Exception: `to-bug`'s evidence sections (`## Repro`, `## Expected behavior`, `##
 - Behavioral descriptions age with the domain, not the implementation — they drift only when the feature's purpose changes.
 - Self-review is the sole enforcement point; the constraint is only as strong as the synthesis and self-review quality.
 - `to-bug`'s evidence sections are a deliberate, named exception — the exception applies only to those three sections, not to `## Layers touched` or `## Approach`.
+
+## Amendments
+
+- **2026-08-08** — ADR-0044 softens the blanket rule: a stable invocation surface (a script name, CLI command, or endpoint) may be named in a verification clause — a contract, not an internal. The rule and its exception now live in the `work-item-shape` behavior, which the publishers require; `to-bug`'s evidence-section exception is unchanged.

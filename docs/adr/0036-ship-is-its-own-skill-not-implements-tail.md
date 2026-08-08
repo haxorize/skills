@@ -8,3 +8,7 @@ The main flow ended at a step nothing owned — `which-skill` listed "6. Ship." 
 - Ship owns the **claims** discipline; per-repo commit-message and PR-body *style* stays in each repo's CLAUDE.md. A consuming repo that documents neither (a11y-health today) has its own gap, not this suite's.
 - The suite gains a skill whose payload is mostly verification and plumbing. If it stays thin after real use, the fallback is folding it back into per-repo convention — a deletion, not a redesign.
 - The related "claimed a step ran that never ran" failure is *not* covered here: `write-skill`'s Load-gate carve-out exempts built-ins because they cannot fail to load, which reasons from availability rather than execution. Repairing that carve-out is its own change.
+
+## Amendments
+
+- **2026-08-08** — ADR-0045 amends the second consequence: commit-message and PR-body style no longer stays per-repo. `ship` now applies a house style by default, overridden only by a convention the consuming repo *explicitly declares*; the "say so once" gap-naming behavior retires with it. The claims discipline recorded here is unchanged.
