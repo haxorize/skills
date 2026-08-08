@@ -14,6 +14,8 @@ No interviewing — this is a synthesis-only skill. Run `/grill-me` or `/grill-a
 
 No file paths, no code snippets, and no specific field or type names in any published section. Every section — including `## Approach` — describes behavior and design intent only. These details drift; the issue must remain accurate after the code is written.
 
+The artifact reads as a plan for the work, never as a changelog of the conversation that produced it — no "as discussed above", "unlike the prior version", "preserving the earlier approach". A cold reader sees only current intent.
+
 ## Workflow
 
 ### 1. Resolve tracker
@@ -79,7 +81,7 @@ Iterate until approved.
 - **GitHub:** `gh issue create --title "..." --body-file <draft>` with default labels from CLAUDE.md. Parent linking via `Tracked-by:` line or template `Parent: #N` reference if `--parent` was provided. **Before creating the issue,** ensure every label in CLAUDE.md's `Default labels:` exists on the repo: `gh label list --json name --jq '.[].name'` once, then `gh label create <name>` for any missing.
 - **ADO:** `az boards work-item create --type Feature --title "..." --description "<html>" --fields "Microsoft.VSTS.Common.AcceptanceCriteria=<html>"` with project / area path / iteration / state from CLAUDE.md — the **two-field split**, body into `--description` and outcome bullets into `--fields`. Both expect HTML: convert each artifact on its own. The body's final section is `## Story Decomposition`; inside it, HTML markers (`<!-- BEGIN STORY MAP -->` / `<!-- END STORY MAP -->`) fence an append-only region — see [feature-template-ado.md](references/feature-template-ado.md) for the snapshot separator and emergent-Story sentinel inside it. If decomposition was deferred, the section body is the single line `Story Decomposition: deferred at Feature creation.` (no markers). Parent linking via `az boards work-item relation add --id <feature-id> --relation-type Parent --target-id <epic-id>`. Merge `System.Tags` into the create call's `--fields` — see [references/work-item-tags.md](references/work-item-tags.md).
 
-If a required CLAUDE.md field is missing, fail fast with a clear "add this to CLAUDE.md" message. If the create call fails with an auth/permission error, fall back to giving the user the drafted body to paste manually — don't loop on auth.
+If a required CLAUDE.md field is missing, fail fast with a clear "add this to CLAUDE.md" message. If the create call fails with an auth/permission error, fall back to giving the user the drafted body to paste manually — don't loop on auth. A create call is not idempotent: on a timeout or transport error after the call went out, list the tracker for the item before retrying — the error may have arrived after the write committed, and a blind retry double-files. And never attach a link, query, or command output you haven't actually executed this session.
 
 **Read the AC field back before reporting the Feature published (ADO).** `az boards work-item show <feature-id> --output json --query 'fields."Microsoft.VSTS.Common.AcceptanceCriteria"'` returns the stored value. Empty or null means the criteria landed in the body instead of the field — patch it with `az boards work-item update --id <feature-id> --fields "Microsoft.VSTS.Common.AcceptanceCriteria=$(cat acceptance.html)"` and strip them from the description. Buried criteria aren't queryable, and child Stories' `Covers:` lines then point at IDs no field holds.
 

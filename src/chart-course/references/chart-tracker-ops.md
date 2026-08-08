@@ -1,6 +1,6 @@
 # Chart tracker operations
 
-Resolve project, area path, iteration, default labels, and title prefixes from the CLAUDE.md tracker block (see [tracker-resolution.md](tracker-resolution.md)). If a required field is missing, fail fast with a clear "add this to CLAUDE.md" message. If a create call fails with an auth/permission error, hand the user the drafted body to paste manually — don't loop on auth.
+Resolve project, area path, iteration, default labels, and title prefixes from the CLAUDE.md tracker block (see [tracker-resolution.md](tracker-resolution.md)). If a required field is missing, fail fast with a clear "add this to CLAUDE.md" message. If a create call fails with an auth/permission error, hand the user the drafted body to paste manually — don't loop on auth. A create call is not idempotent: on a timeout or transport error after a call went out, list the tracker for the item before retrying — the error may have arrived after the write committed, and a blind retry double-files. Never attach a link, query, or command output you haven't actually executed this session. And on a ticket you didn't author, prefer an additive comment over editing its body — the body is the author's record.
 
 ## ADO
 

@@ -14,6 +14,8 @@ Bugs are *not* parented under Stories — the fix is the slice. They can be file
 
 No file paths, no code snippets, and no specific field or type names in any published section. Exception: `## Repro`, `## Expected behavior`, and `## Actual behavior` are evidence sections — exact error messages, stack traces, environment URLs, and observable route names belong there.
 
+The artifact reads as a report of the defect, never as a changelog of the conversation that produced it — no "as discussed above", "unlike the prior version". A cold reader sees only current findings.
+
 ## Workflow
 
 ### 1. Resolve tracker
@@ -98,7 +100,7 @@ Iterate until approved.
 - **GitHub:** `gh issue create --title "..." --body-file <draft>` with `--label bug --label <severity-label>` plus any default labels from CLAUDE.md. Parent linking via template `Parent: #N` reference if `--parent` was provided. **Before creating the issue,** ensure every label about to be applied (`bug`, the chosen severity label, and any `Default labels:`) exists on the repo: `gh label list --json name --jq '.[].name'` once, then `gh label create <name>` for any missing. If `--parent` was provided, add the new issue as a native sub-issue of the parent Feature after create — see [references/github-sub-issues.md](references/github-sub-issues.md).
 - **ADO:** `az boards work-item create --type "Bug" --title "..." --description "<html>"` with project / area path / iteration / state from CLAUDE.md, plus `--fields "Microsoft.VSTS.TCM.ReproSteps=<html>" "Microsoft.VSTS.Common.Severity=<n - Label>"`. Both rich-text fields expect HTML — convert each Markdown source before passing. If `--parent` was provided, link via `az boards work-item relation add --id <bug-id> --relation-type Parent --target-id <feature-id>` after the create call. Merge `System.Tags` into the create call's `--fields` — see [references/work-item-tags.md](references/work-item-tags.md).
 
-If a required CLAUDE.md field is missing, fail fast with a clear "add this to CLAUDE.md" message. If the create call fails with an auth/permission error, fall back to giving the user the drafted body to paste manually — don't loop on auth.
+If a required CLAUDE.md field is missing, fail fast with a clear "add this to CLAUDE.md" message. If the create call fails with an auth/permission error, fall back to giving the user the drafted body to paste manually — don't loop on auth. A create call is not idempotent: on a timeout or transport error after the call went out, list the tracker for the item before retrying — the error may have arrived after the write committed, and a blind retry double-files. And never attach a link, query, or command output you haven't actually executed this session.
 
 ## Update mode
 
