@@ -30,6 +30,8 @@ Covers: AC1, AC3
 - HITL — UX shape needs human eye, security-sensitive logic, ambiguous behavior
 - AFK — mechanical, single-module, well-tested seam, no judgment calls
 
+An AFK Task adds one more line — its stop condition: the result or obstacle that means stop unattended work and ask.
+
 ## Blocked by
 
 If this slice depends on another slice or a sibling-repo change, list it here. Use real issue numbers if blockers were filed first (`to-tasks` publishes in dependency order so real IDs are available).

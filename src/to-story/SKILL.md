@@ -2,7 +2,7 @@
 name: to-story
 description: Synthesize the current conversation into a Story-level (single-feature spec) artifact and publish it to the project's issue tracker — most workflows start here. For scope that needs multiple stories beneath it, reach for `to-feature` instead. ADO — creates a User Story under a parent Feature. GitHub — creates an issue with a story-shaped template.
 disable-model-invocation: true
-requires: writing-for-humans
+requires: writing-for-humans, work-item-shape
 ---
 
 # To Story
@@ -15,7 +15,9 @@ Use `to-feature` only when scope explicitly needs multiple stories beneath it.
 
 Every published sentence follows the `/writing-for-humans` behavior — run it before drafting: classify each section procedural or descriptive, pick the ticket register, and sweep the draft against its tell catalog.
 
-No file paths, no code snippets, and no specific field or type names in any published section. Every section — `## Approach`, `## Layers touched`, `## Tests`, and all others — describes behavior and design intent only. These details drift; the issue must remain accurate after the code is written.
+The body's shape — goal, acceptance criteria, sizing, ambiguity handling — follows the `/work-item-shape` behavior.
+
+No file paths, no code snippets, and no specific field or type names in any published section. Every section — `## Approach`, `## Layers touched`, `## Tests`, and all others — describes behavior and design intent only. These details drift; the issue must remain accurate after the code is written. One exception: a stable invocation surface — a script name, CLI command, or endpoint — may be named in an acceptance criterion's verification clause; those are contracts, not internals.
 
 The artifact reads as a plan for the work, never as a changelog of the conversation that produced it — no "as discussed above", "unlike the prior version", "preserving the earlier approach". A cold reader sees only current intent.
 
@@ -74,7 +76,7 @@ Before showing the user, check:
 - User-story line matches step 6 classification (Connextra for user-facing, absent otherwise)
 - Documentation obligations, for stories that alter architecture or domain terms: ADR to write or amend, architecture-doc sections that go stale, glossary entries — each pinned as its own AC so a reviewer can't merge without them
 
-Then run a **Cold-reader pass** ([references/cold-reader-pass.md](references/cold-reader-pass.md)): the cold reader gets only the drafted body and answers "what would you build?".
+Then run the **Cold-reader pass** from the `/work-item-shape` behavior: the cold reader gets only the drafted body and answers "what would you build?".
 
 ### 8. Present draft to user
 

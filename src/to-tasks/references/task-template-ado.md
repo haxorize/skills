@@ -48,6 +48,8 @@ Covers: AC1, AC3
 - HITL — UX shape needs human eye, security-sensitive logic, ambiguous behavior
 - AFK — mechanical, single-module, well-tested seam, no judgment calls
 
+An AFK Task adds one more line — its stop condition: the result or obstacle that means stop unattended work and ask.
+
 ## Blocked by
 
 Dependence on **another work item in this project** is recorded as a built-in **Predecessor** relation, not body text — see the field mapping above. `to-tasks` publishes in dependency order so the blocker's real work-item ID is available when linking.

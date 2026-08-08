@@ -2,7 +2,7 @@
 name: to-bug
 description: Synthesize the current conversation into a Bug work item and publish it to the project's issue tracker. ADO — creates a first-class Bug work item with native Severity and Repro Steps fields. GitHub — creates an issue with the `bug` label and a severity label. Synthesizes from context — no interviewing.
 disable-model-invocation: true
-requires: writing-for-humans
+requires: writing-for-humans, work-item-shape
 ---
 
 # To Bug
@@ -15,7 +15,9 @@ Bugs are *not* parented under Stories — the fix is the slice. They can be file
 
 Every published sentence follows the `/writing-for-humans` behavior — run it before drafting: classify each section procedural or descriptive, pick the ticket register, and sweep the draft against its tell catalog.
 
-No file paths, no code snippets, and no specific field or type names in any published section. Exception: `## Repro`, `## Expected behavior`, and `## Actual behavior` are evidence sections — exact error messages, stack traces, environment URLs, and observable route names belong there.
+The body's shape — goal, acceptance criteria, sizing, ambiguity handling — follows the `/work-item-shape` behavior.
+
+No file paths, no code snippets, and no specific field or type names in any published section. Two exceptions: `## Repro`, `## Expected behavior`, and `## Actual behavior` are evidence sections — exact error messages, stack traces, environment URLs, and observable route names belong there; and a stable invocation surface (a script name, CLI command, or endpoint) may be named in an acceptance criterion's verification clause — those are contracts, not internals.
 
 The artifact reads as a report of the defect, never as a changelog of the conversation that produced it — no "as discussed above", "unlike the prior version". A cold reader sees only current findings.
 
@@ -72,7 +74,7 @@ Before showing the user, check:
 - **Severity matches scope.** Critical is reserved for outage / data loss / security; cosmetic isn't High.
 - **Domain language matches `DOMAIN.md`.**
 
-Then run a **Cold-reader pass** ([references/cold-reader-pass.md](references/cold-reader-pass.md)): the cold reader gets only the drafted body and answers "what's broken, and how do I reproduce it?".
+Then run the **Cold-reader pass** from the `/work-item-shape` behavior: the cold reader gets only the drafted body and answers "what's broken, and how do I reproduce it?".
 
 ### 7. Public-repo warning (GitHub only)
 

@@ -2,7 +2,7 @@
 name: to-tasks
 description: Break a parent User Story into child Task work items on the project's issue tracker. Tracer-bullet style — each Task is a thin vertical slice through every integration layer. ADO — creates Tasks under a User Story. GitHub — creates task-shaped issues under a story-shaped parent issue.
 disable-model-invocation: true
-requires: writing-for-humans
+requires: writing-for-humans, work-item-shape
 ---
 
 # To Tasks
@@ -15,7 +15,9 @@ Tasks are always children of a User Story — never directly under a Feature. To
 
 Every published sentence follows the `/writing-for-humans` behavior — run it before drafting: classify each section procedural or descriptive, pick the ticket register, and sweep the draft against its tell catalog.
 
-No file paths, no code snippets, and no specific field or type names in any published section — including `## Layers touched`. These details drift; the issue must remain accurate after the code is written.
+The body's shape — goal, acceptance criteria, readiness, sizing, ambiguity handling — follows the `/work-item-shape` behavior.
+
+No file paths, no code snippets, and no specific field or type names in any published section — including `## Layers touched`. These details drift; the issue must remain accurate after the code is written. One exception: a stable invocation surface — a script name, CLI command, or endpoint — may be named in an acceptance criterion's verification clause; those are contracts, not internals.
 
 The artifact reads as a plan for the work, never as a changelog of the conversation that produced it — no "as discussed above", "unlike the prior version", "preserving the earlier approach". A cold reader sees only current intent.
 
@@ -66,7 +68,7 @@ Each slice is one Task. Prefer many thin Tasks over few thick ones. An "and" in 
 
 For each Task:
 
-- **Mark HITL or AFK.** HITL = needs human-in-the-loop review (UX, ambiguous behavior, security-sensitive). AFK = safely runnable away-from-keyboard (mechanical, well-tested, single-module).
+- **Mark HITL or AFK** per the `/work-item-shape` readiness gate — AFK only when all four predicates hold, and an AFK Task also carries its stop condition; HITL names what remains (UX judgment, ambiguous behavior, security-sensitive review).
 - **Flag blockers.** For a sibling-repo dependency, read the `Sibling repos` declaration and mark the Task `Blocked by: ../sibling-repo — contract change required`. For a dependency on another Task in this breakdown, note which Task blocks it; step 8 records it on the tracker.
 - **Name consistently across Tasks.** Route paths, query keys, model names, search-param keys must be identical in every Task that touches them.
 
@@ -84,7 +86,7 @@ Before publishing, check:
 - **Domain language matches `DOMAIN.md`**
 - **No placeholders** — none of the literal kind (TBD/TODO) and none of the disguised kind: "add appropriate error handling", "write tests for the above", "similar to Task N" are placeholders wearing prose; each hides a decision the implementer will have to invent
 
-Then run a **Cold-reader pass** ([references/cold-reader-pass.md](references/cold-reader-pass.md)): the cold reader gets only the drafted Tasks plus the parent Story spec and answers, per Task, "what would you build?".
+Then run the **Cold-reader pass** from the `/work-item-shape` behavior: the cold reader gets only the drafted Tasks plus the parent Story spec and answers, per Task, "what would you build?".
 
 ### 8. Publish in dependency order
 

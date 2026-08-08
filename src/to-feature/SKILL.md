@@ -2,7 +2,7 @@
 name: to-feature
 description: Synthesize the current conversation into a Feature-level (PRD-shaped) artifact and publish it to the project's tracker — for scope large enough to need multiple stories underneath. For single-feature scope, reach for `to-story` instead. ADO — creates a Feature work item under a parent Epic. GitHub — creates an issue with a feature/PRD template.
 disable-model-invocation: true
-requires: writing-for-humans
+requires: writing-for-humans, work-item-shape
 ---
 
 # To Feature
@@ -15,7 +15,9 @@ No interviewing — this is a synthesis-only skill. Run `/grill-me` or `/grill-a
 
 Every published sentence follows the `/writing-for-humans` behavior — run it before drafting: classify each section procedural or descriptive, pick the ticket register, and sweep the draft against its tell catalog.
 
-No file paths, no code snippets, and no specific field or type names in any published section. Every section — including `## Approach` — describes behavior and design intent only. These details drift; the issue must remain accurate after the code is written.
+The body's shape — goal, acceptance criteria, sizing, ambiguity handling — follows the `/work-item-shape` behavior.
+
+No file paths, no code snippets, and no specific field or type names in any published section. Every section — including `## Approach` — describes behavior and design intent only. These details drift; the issue must remain accurate after the code is written. One exception: a stable invocation surface — a script name, CLI command, or endpoint — may be named in an acceptance criterion's verification clause; those are contracts, not internals.
 
 The artifact reads as a plan for the work, never as a changelog of the conversation that produced it — no "as discussed above", "unlike the prior version", "preserving the earlier approach". A cold reader sees only current intent.
 
@@ -73,7 +75,7 @@ Before showing the user, check:
 - On ADO: the **two-field split** holds (step 7) — outcome bullets are their own artifact
 - Story map: every active Feature AC ID appears in at least one Story's `Covers:` line; no `Covers:` line references a removed AC ID; naming-table dedup; dependency acyclicity (skip if no story map — flat mode or deferred decomposition)
 
-Then run a **Cold-reader pass** ([references/cold-reader-pass.md](references/cold-reader-pass.md)): the cold reader gets only the drafted body and answers "what would you build?".
+Then run the **Cold-reader pass** from the `/work-item-shape` behavior: the cold reader gets only the drafted body and answers "what would you build?".
 
 ### 9. Present draft to user
 
