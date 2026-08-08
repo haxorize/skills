@@ -57,9 +57,10 @@ The verdict is a tight chat block sized by its tier, not by how much was found; 
 
 ## The adversary pass (Tier 2/3)
 
-After emitting a Tier 2/3 verdict, offer one fresh-context adversary: a subagent seeded with only the verdict and its cited facts, instructed to refute it. Fresh context beats self-critique — the author of a verdict cannot unsee their own reasoning. One pass, offered once; Tier 1 never offers. Fold a surviving refutation into the verdict before anyone acts on it.
+After emitting a Tier 2/3 verdict, offer one fresh-context adversary: a subagent seeded with the verdict, the framed question, and the cited facts as source-located evidence — never your argument for the grade; advocacy in the payload turns refutation into ratification. Tell it that rejecting the framing itself — wrong tier, wrong incumbent, wrong question — is a valid refutation. Fresh context beats self-critique — the author of a verdict cannot unsee their own reasoning. One pass, offered once; Tier 1 never offers. Fold a surviving refutation into the verdict before anyone acts on it. If an accepted pass then fails to run, deliver the verdict saying so — a requested pass never degrades silently into a bare verdict.
 
 ## Boundaries
 
 - `grilling` stress-tests the *user's* thinking by asking; this skill forms and defends its *own* graded position. A verdict can feed a grill; a grill can end by requesting a verdict.
 - An Adopt or Trial on consequential work may deserve a durable record — that's `adr`'s territory; offer, don't write.
+- The user's own stated position can be the subject: ship it as the subject and grade it on the same floors — never capitulate to it. Pushback after the verdict ("are you sure?") re-enters the workflow with fresh evidence; it never flips the grade by itself.
