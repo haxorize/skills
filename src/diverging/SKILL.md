@@ -1,6 +1,6 @@
 ---
 name: diverging
-description: Break out of a locked problem frame with one committed lateral move. Use when the last 2+ iterations are variations of one idea, when a problem arrives as a binary with two bad options, when every solution hits the same constraint, when the same class of option keeps getting rejected for the same reason, or when the user says "widen this", "what am I missing", "think differently", "I'm stuck", "feels too obvious". Generates framings, not judgment — `grilling` is the convergent complement that stress-tests what this frees up.
+description: Break out of a locked problem frame with one committed lateral move. Use when the last 2+ iterations are variations of one idea, when a problem arrives as a binary with two bad options, when every solution hits the same constraint, when the same class of option keeps getting rejected for the same reason, when two related examples are in hand and the question is what lies between or beyond them, or when the user says "widen this", "what am I missing", "think differently", "I'm stuck", "feels too obvious". Generates framings, not judgment — `grilling` is the convergent complement that stress-tests what this frees up.
 ---
 
 # Diverging
@@ -32,6 +32,7 @@ Match the stuck-pattern to the move. When unsure, default to **Reframe**.
 | Stuck on "how do we make X succeed?" | **Inversion** |
 | Problem defined entirely in one domain's vocabulary | **Perspective shift** |
 | Every solution is blocked by a constraint | **Constraint play** |
+| Two known examples, no theory of the space between/beyond them | **Family traversal** |
 
 ## The moves
 
@@ -48,6 +49,8 @@ Match the stuck-pattern to the move. When unsure, default to **Reframe**.
 **Perspective shift.** Move the problem into a distant domain's vocabulary — how does ecology solve this coordination problem, how does ER triage handle this spike, what would a CFO or a child notice first, how is this solved at 100× or 1/100× scale? *Fired if* the borrowed vocabulary made a previously-invisible option visible or renamed a core object in a way that changes the next step; one-to-one term mapping means the domain was too close — pick a more distant one.
 
 **Constraint play.** Move the constraints deliberately: **remove** ("assume infinite budget/permission" — what opens up?), **add absurd** ("must fit in a tweet", "no code"), or **invert** (the constraint becomes the feature — small budget → tiny team as the pitch). *Fired if* the relaxed solution reveals what you actually value, or the added-constraint solution is sharper than the unconstrained one; if both feel like the same answer at different budgets, the binding constraint is elsewhere — find it.
+
+**Family traversal.** For when two (or more) related instances are in hand and generation keeps orbiting them — **the pair is not the object; the parametrized family containing both is.** Sub-moves in descending yield: **Name the face** — state the family both instances lie on, and its parameter; if you cannot name the parameter, you have not found the family yet. **Walk to the limits** — continue past both anchors to the family's extreme points; limits are where members change character (two retry policies — fixed delay, exponential backoff — lie on the family of backoff curves parametrized by growth rate: the zero limit is hammering the service, the runaway limit is never retrying at all, which reveals the circuit breaker as a limit member rather than a separate idea). **Swap the bound object** — name the constraint that walls the family; crossing it is impossible within the model, so change what the constraint binds. **Probe the chord** — mixtures of the anchors, run last and never first: blends average rather than extrapolate, but they're cheap. Then **sharpen**: the traversal's real product is questions precise enough to have derivable answers — without that step the move outputs taxonomy, not generation. *Fired if* a limit point or constraint-swap landed outside the prior search space **and** at least one output is a checkable claim; a tidy classification of the anchors means the move stalled — push further along the edge or swap the constraint.
 
 ## On your own reasoning
 
