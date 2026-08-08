@@ -34,7 +34,7 @@ The pressure is predictable: you are at the end of the work, the change is green
 - **Host and tracker** — read `CLAUDE.md` for an `Issue tracker:` block. GitHub uses `gh`; Azure DevOps uses `az repos` for PRs and `az boards` for work items, and needs `Organization:` and `Project:` from the same file. A repo with no tracker (some tooling and docs repos) ships commits and a PR, and closes nothing — that's a normal path, not a missing configuration.
 - **Approver** — does another person have to sign off? This one answer decides the shape of everything below. Azure DevOps enforces it (a PR needs an approving reviewer); a GitHub repo may enforce it through branch protection or team convention; a solo repo often requires nobody. Read the host and `CLAUDE.md`, and ask when neither settles it — **an approver means a branch and a PR, no approver means the change lands on the trunk directly.**
 - **Base** — the merge-base with the trunk on a branch; `origin/<trunk>..HEAD` when you're working on the trunk itself. Resolve the diff as `git diff <base>...HEAD` (three-dot) plus `git log <base>..HEAD --oneline`.
-- **Ticket** — from the argument, the branch name, or the PR body. No pointer means no closing comment; don't invent one.
+- **Ticket** — from the argument, the branch name, or the PR body. No pointer means no closing comment; don't invent one. And an ID is used exactly as provided — never invented, normalized, or guessed — wherever it appears: commit message, branch name, closing comment.
 - **Branch** — only when a PR is coming. Name it `<ticket-number>-<slug>` (`128-latest-scores-brand-scope`), created before anything is staged; a repo declaring its own pattern in `CLAUDE.md` overrides that. With no approver there is no branch — manufacturing one to merge your own PR is ceremony, not review.
 - **Working tree** — `git status`. Untracked or unstaged files that belong to this change get surfaced now, not discovered mid-commit.
 
@@ -42,13 +42,20 @@ The pressure is predictable: you are at the end of the work, the change is green
 
 Commits land in **lineage order — rationale before implementation**, so a reviewer meets the *why* before the *what*. The project states its own order in `CLAUDE.md` where it has one (a decision record before the code it shapes; a schema before its consumers). One Task = one commit is the common case, not the ceiling — a change touching a decision record, a skill, and a glossary is three commits in that order.
 
+Two more principles shape the split:
+
+- **One attributable claim per commit.** A commit that changes a check and the code that check validates proves nothing — when the numbers move, nothing says which half moved them. The check change and the code change are separate commits.
+- **Every commit leaves the tree consistent.** Don't strand a rename from its references or a schema from its consumers mid-split; someone landing on any single commit should find a coherent tree. This shapes where the lines are drawn — it is not a mandate to run the suite once per commit.
+
 Show the proposed split — which files, which message, in which order — and let the human adjust before anything is staged.
 
 ### 3. Draft the prose
 
 Write the commit messages, the PR body, and the closing comment, applying the claims rule to each sentence as you write it. Match the repo's existing shape rather than importing one: take the style `CLAUDE.md` documents where it documents one, and otherwise infer it — read the last several commit subjects and the last few merged PR bodies, and follow what you find. Style is the project's; verification is yours. The prose itself — register, wording, tells — follows the `/writing-for-humans` behavior: run it before drafting, and let the project's documented style win wherever the two disagree.
 
-Where the project documents no convention, say so once — an undocumented house style is a real gap for the *project* to close, and worth naming rather than silently inventing a shape for.
+Where the project documents no convention and the history shows no consistent shape, fall back to the house style in [references/commit-style.md](references/commit-style.md) — subject form, the body decision rule, and the PR-body shape. The fallback is evidence-gated: quote two or three recent subjects as the proof the history settles nothing before applying it, and say so once — an undocumented house style is a real gap for the *project* to close, and worth naming rather than silently inventing a shape for.
+
+**The closing comment follows a contract.** It states: what landed, with the commit SHAs or the PR link; the change's status, every claim checked per the claims rule; and the remainder — anything deliberately not done or descoped, named plainly rather than left to be discovered. A closing comment that only says "done" fails the contract twice.
 
 ### 4. Execute, one step at a time
 
@@ -63,7 +70,7 @@ Stage, commit, push, close the ticket — pausing where the human's judgment is 
 
 This is why the skill is **re-enterable**: run it again once approval lands and it completes the merge and closure from the state it finds. That approval routinely arrives in a different session than the one that opened the PR.
 
-**Verify the closure you claim.** After the change lands, read the ticket's actual state before reporting it closed. A closing keyword can close an issue on push to the default branch, and some projects transition a work item automatically on PR completion — but both are configuration, not physics, and neither fires at all when the keyword never made it into the message. "Closed" is a claim like any other.
+**Verify the closure you claim.** After the change lands, read the ticket's actual state before reporting it closed. A closing keyword can close an issue on push to the default branch, and some projects transition a work item automatically on PR completion — but both are configuration, not physics, and neither fires at all when the keyword never made it into the message. "Closed" is a claim like any other, and the closing-comment contract's final element.
 
 ## When an action is blocked
 
