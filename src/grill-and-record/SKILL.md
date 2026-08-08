@@ -13,6 +13,6 @@ This is the doc-aware variant of `grill-me`. Use the vanilla `grill-me` when no 
 
 ## ADR recording: inline, never via the `adr` skill
 
-`domain-modeling` offers ADRs at its gate but treats recording as the standalone `adr` skill's job. **Override that here:** when the gate fires and the user agrees, write the ADR file *inline* — do not delegate to the `adr` skill. Its offer→confirm→write flow is a gated action that would interrupt the one-question-at-a-time rhythm the grill loop depends on.
+`domain-modeling` offers ADRs at its gate but treats recording as the standalone `adr` skill's job. **Override that here:** when the gate fires and the user agrees, write the ADR file *inline* — do not delegate to the `adr` skill. Its offer→confirm→write flow is a gated action that would interrupt the grill loop's rhythm.
 
 Use [references/adr-format.md](references/adr-format.md) as the single source of truth for path, format, and numbering. The standalone `adr` skill stays reserved for outside-grill use — a deliberate single record after a code review, mid-implementation, and the like; both write to the same path, format, and numbering rule.
