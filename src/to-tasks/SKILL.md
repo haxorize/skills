@@ -13,13 +13,9 @@ Tasks are always children of a User Story — never directly under a Feature. To
 
 ## Publication constraints
 
-Every published sentence follows the `/writing-for-humans` behavior — run it before drafting: classify each section procedural or descriptive, pick the ticket register, and sweep the draft against its tell catalog.
+Every published sentence follows the `/writing-for-humans` behavior — run it before drafting.
 
-The body's shape — goal, acceptance criteria, readiness, sizing, ambiguity handling — follows the `/work-item-shape` behavior.
-
-No file paths, no code snippets, and no specific field or type names in any published section — including `## Layers touched`. These details drift; the issue must remain accurate after the code is written. One exception: a stable invocation surface — a script name, CLI command, or endpoint — may be named in an acceptance criterion's verification clause; those are contracts, not internals.
-
-The artifact reads as a plan for the work, never as a changelog of the conversation that produced it — no "as discussed above", "unlike the prior version", "preserving the earlier approach". A cold reader sees only current intent.
+The body's shape — the goal, readiness, sizing, ambiguity, internals, and plan-not-changelog rules — follows the `/work-item-shape` behavior. Its internals rule covers every section here, `## Layers touched` included. A Task's acceptance criteria live on the parent Story (`## Covers` points at them), so the checkable-criteria rules bind through the parent, not a body section.
 
 ## Workflow
 
@@ -99,7 +95,7 @@ For each Task, use the appropriate template:
 - **GitHub:** `gh issue create --title "..." --body-file <draft>` with default labels from CLAUDE.md. Reference the parent via template `Parent: #N` line. **Before creating the first Task in a publishing batch,** ensure every label in CLAUDE.md's `Default labels:` exists on the repo: `gh label list --json name --jq '.[].name'` once, then `gh label create <name>` for any missing. When a parent Story was resolved, add each new issue as a native sub-issue of it after create — see [references/github-sub-issues.md](references/github-sub-issues.md).
 - **ADO:** `az boards work-item create --type "Task" --title "..." --description "<html>"` with project / area path / iteration / state from CLAUDE.md. The description field expects HTML — convert the Markdown task draft before passing. Link each Task to the parent Story via `az boards work-item relation add --id <task-id> --relation-type Parent --target-id <story-id>`. Merge `System.Tags` into the create call's `--fields` — see [references/work-item-tags.md](references/work-item-tags.md). For each in-project blocker, materialize the dependency as a built-in Predecessor relation: `az boards work-item relation add --id <task-id> --relation-type Predecessor --target-id <blocker-id>`. On a first publish the just-created Task has no relations, so add directly; only on a re-run or `--reconcile` over an existing Task fetch `az boards work-item show <task-id> --output json --expand relations` first and skip if a Predecessor to that blocker already exists, so the add doesn't error on a duplicate. On failure: permission denied → surface immediately; other error → surface with both work-item IDs for manual linking. Tasks have only a `System.Description` field — no Acceptance Criteria.
 
-If a required CLAUDE.md field is missing, fail fast with a clear "add this to CLAUDE.md" message. If a create call fails with an auth/permission error, fall back to giving the user the drafted Task bodies to paste manually — don't loop on auth. A create call is not idempotent: on a timeout or transport error after a call went out, list the tracker for the item before retrying — the error may have arrived after the write committed, and a blind retry double-files. And never attach a link, query, or command output you haven't actually executed this session.
+If a required CLAUDE.md field is missing, fail fast with a clear "add this to CLAUDE.md" message. If a create call fails with an auth/permission error, fall back to giving the user the drafted Task bodies to paste manually — don't loop on auth. Apply the **transport safety** rules in [references/tracker-resolution.md](references/tracker-resolution.md) to every create and retry.
 
 If publish surfaces a name diverging from sibling Tasks under the same parent, append an entry to the naming-drift queue per [references/naming-drift-queue.md](references/naming-drift-queue.md). Surface as a warning; don't block.
 

@@ -13,13 +13,9 @@ Use `to-feature` only when scope explicitly needs multiple stories beneath it.
 
 ## Publication constraints
 
-Every published sentence follows the `/writing-for-humans` behavior — run it before drafting: classify each section procedural or descriptive, pick the ticket register, and sweep the draft against its tell catalog.
+Every published sentence follows the `/writing-for-humans` behavior — run it before drafting.
 
-The body's shape — goal, acceptance criteria, sizing, ambiguity handling — follows the `/work-item-shape` behavior.
-
-No file paths, no code snippets, and no specific field or type names in any published section. Every section — `## Approach`, `## Layers touched`, `## Tests`, and all others — describes behavior and design intent only. These details drift; the issue must remain accurate after the code is written. One exception: a stable invocation surface — a script name, CLI command, or endpoint — may be named in an acceptance criterion's verification clause; those are contracts, not internals.
-
-The artifact reads as a plan for the work, never as a changelog of the conversation that produced it — no "as discussed above", "unlike the prior version", "preserving the earlier approach". A cold reader sees only current intent.
+The body's shape — the goal, criteria, sizing, ambiguity, internals, and plan-not-changelog rules — follows the `/work-item-shape` behavior. Its internals rule covers every section here: `## Approach`, `## Layers touched`, `## Tests`, and all others describe behavior and design intent only.
 
 ## Workflow
 
@@ -87,7 +83,7 @@ Iterate until approved.
 - **GitHub:** `gh issue create --title "..." --body-file <draft>` with default labels from CLAUDE.md. Parent linking via template `Parent: #N` reference if `--parent` was provided. **Before creating the issue,** ensure every label in CLAUDE.md's `Default labels:` exists on the repo: `gh label list --json name --jq '.[].name'` once, then `gh label create <name>` for any missing. If a parent Feature was resolved, add the new issue as a native sub-issue of it after create — see [references/github-sub-issues.md](references/github-sub-issues.md).
 - **ADO:** The **two-field split** lands as two flags on one `az boards work-item create` call — the body into `System.Description` via `--description`, the acceptance bullets into `Microsoft.VSTS.Common.AcceptanceCriteria` via `--fields`. Both expect HTML: convert each artifact on its own. Write each to a temp file and pass via command substitution to prevent shell newline mangling (embedded `\n` in a shell string becomes a literal two-character sequence in the stored HTML). See [references/story-template-ado.md](references/story-template-ado.md) for the conversion command. Parent linking via `az boards work-item relation add --id <new-story-id> --relation-type Parent --target-id <feature-id>`. Merge `System.Tags` into the create call's `--fields` — see [references/work-item-tags.md](references/work-item-tags.md).
 
-If a required CLAUDE.md field is missing, fail fast with a clear "add this to CLAUDE.md" message. If the create call fails with an auth/permission error, fall back to giving the user the drafted body to paste manually — don't loop on auth. A create call is not idempotent: on a timeout or transport error after the call went out, list the tracker for the item before retrying — the error may have arrived after the write committed, and a blind retry double-files. And never attach a link, query, or command output you haven't actually executed this session.
+If a required CLAUDE.md field is missing, fail fast with a clear "add this to CLAUDE.md" message. If the create call fails with an auth/permission error, fall back to giving the user the drafted body to paste manually — don't loop on auth. Apply the **transport safety** rules in [references/tracker-resolution.md](references/tracker-resolution.md) to every create and retry.
 
 **Read the AC field back before reporting the Story written (ADO)** — on any create or patch carrying acceptance criteria, update mode included. `az boards work-item show <story-id> --output json --query 'fields."Microsoft.VSTS.Common.AcceptanceCriteria"'` returns the stored value. Empty or null means the criteria landed in the body instead of the field — patch it with `az boards work-item update --id <story-id> --fields "Microsoft.VSTS.Common.AcceptanceCriteria=$(cat acceptance.html)"` and strip them from the description. A Story whose criteria are buried in the description looks written and isn't queryable.
 

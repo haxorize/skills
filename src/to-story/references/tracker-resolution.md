@@ -11,3 +11,7 @@ Required fields: GitHub needs only the tracker name; ADO requires `Project:` min
 ## Referring to work items
 
 In anything the human reads — narration, publish confirmations, reports — refer to a work item by its **title**, with the ID and link riding inside (e.g. `[Rate-limit login](url) (#42)`), never by a bare ID. A wall of `#42, #43, #44` is illegible.
+
+## Transport safety
+
+A create call is not idempotent: on a timeout or transport error after the call went out, list the tracker for the item before retrying — the error may have arrived after the write committed, and a blind retry double-files. Never cite a query result or command output you didn't actually run this session, and never attach a link you haven't resolved.
