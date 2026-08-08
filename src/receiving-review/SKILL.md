@@ -32,6 +32,16 @@ Push back when a suggestion breaks existing behavior, contradicts a recorded dec
 
 Pushed back and turned out wrong? State the correction factually and move on ("Verified — you're correct, the API needs 13+; fixing"). No apology spiral, no defending the original pushback.
 
+## Replying on the review's own threads
+
+When the findings arrived as PR review comments, every comment gets an outcome reply — no silent ignores; an unanswered thread reads as a finding dropped, to humans and to the bots that re-raise it.
+
+- **A fix** replies "Fixed in `<hash>` — <what changed>", citing the commit that actually contains the fix — which means the reply comes *after* the commit exists, never before. Leave the thread open: verifying the fix is the reviewer's move, not yours.
+- **A won't-fix** replies with the technical reason (the pushback, written down), and may resolve the thread — the reply itself closes the question.
+- **Already addressed** replies with when and how, and may resolve.
+
+Resolve a thread only when your reply legitimately closes it. Resolving a thread whose fix nobody has verified is the performative agreement of buttons.
+
 ## The convergence guard
 
 Fixing findings is bounded work. Halt when the fix work would exceed roughly **2× the original change's scope**, or after a couple of cycles that aren't converging — a review that becomes a rewrite has stopped being a review, and the change it was reviewing has stopped being reviewable.
