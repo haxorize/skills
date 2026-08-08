@@ -8,7 +8,7 @@ Exploration and subagent fan-out **over-report** — a friction that looks real 
 
 - **By-design reported as a bug** — including a tradeoff an ADR records (settled, not a finding).
 - **Mis-attributed evidence** — a real concern pinned to the wrong file/line.
-- **Duplicates** — the same underlying issue surfaced twice (two angles on one coupling, or two lenses on one finding); merge them. Independent surfacing is corroboration: merging duplicates found separately by two lenses **promotes the merged finding one confidence step** — but two unquoted findings never combine into a quote-free HIGH.
+- **Duplicates** — the same underlying issue surfaced twice (two angles on one coupling, or two independent reports of one finding); merge them — confidence follows the rules below, never the number of reporters.
 
 ## Intent drift is bidirectional
 
@@ -26,4 +26,8 @@ Confidence is a **behavioral anchor** the reporter can honestly self-apply, neve
 - **MED** — confirmed real on a close read, but impact is judgment-dependent (maintainability, a risk needing particular conditions).
 - **HIGH** — will bite in practice, verifiable from the cited code itself: a definitive logic error, a type mismatch, a broken invariant.
 
-**The quote gate:** a HIGH finding's evidence must open with the **verbatim motivating line** plus its `file:line`. A finding whose triggering line cannot be quoted steps down to MED — no exceptions the reporter grants itself.
+**The quote gate:** a HIGH finding's evidence must open with the **verbatim motivating line** plus its `file:line` — the line where the defect shows, not a premise reasoned from (a defect spanning lines, like a type mismatch between declaration and use, quotes the line where it breaks). A finding whose triggering line cannot be quoted steps down to MED — no exceptions the reporter grants itself.
+
+**Reading is not running.** The quote proves what the code says, never what it does: a claim about how a framework, runtime, or library behaves on the cited line is an inference, however careful, and caps at MED until something executes it — a test, a repro, an observed render.
+
+**Agreement is not evidence.** Independent readings of the same code share its framing and the model's priors, so they fail together — N reports of a claim are one correlated guess counted N times, and the wrong ones quote as fluently as the right ones. Confidence rises only on evidence a finding *produced* rather than read: an executed repro, a test run, an observed runtime.
