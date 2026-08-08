@@ -1,6 +1,7 @@
 ---
 name: receiving-review
 description: Discipline for receiving code-review feedback — feedback is claims to verify, not orders to follow or occasions for performative agreement. Use when review feedback arrives and before implementing any suggested change — PR comments, a teammate's objections, a pasted review, or the findings a `review-changes` report on your own diff just produced — especially when an item is unclear, seems wrong, or the fix work is outgrowing the change it serves.
+requires: writing-for-humans
 ---
 
 # Receiving Review
@@ -34,7 +35,7 @@ Pushed back and turned out wrong? State the correction factually and move on ("V
 
 ## Replying on the review's own threads
 
-When the findings arrived as PR review comments, every comment gets an outcome reply — no silent ignores; an unanswered thread reads as a finding dropped, to humans and to the bots that re-raise it.
+When the findings arrived as PR review comments, every comment gets an outcome reply — no silent ignores; an unanswered thread reads as a finding dropped, to humans and to the bots that re-raise it. Replies are outbound tracker prose: the `/writing-for-humans` behavior's commit-and-PR register applies.
 
 - **A fix** replies "Fixed in `<hash>` — <what changed>", citing the commit that actually contains the fix — which means the reply comes *after* the commit exists, never before. Leave the thread open: verifying the fix is the reviewer's move, not yours.
 - **A won't-fix** replies with the technical reason (the pushback, written down), and may resolve the thread — the reply itself closes the question.
