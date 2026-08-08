@@ -46,3 +46,7 @@ The secret/variable helpers speak `gh`. On a non-GitHub tracker or a machine whe
 - `chmod +x <script>`.
 - Don't run it end-to-end yourself — it opens browsers and blocks on human input. Trace it statically instead: every value from step 1 is captured and lands where step 1 said, and every `set_secret` name exactly matches a secret reference in CI.
 - Tell the user how to run it. If it's a repeatable setup path, commit it and link it from the README so the next person runs the script instead of asking an agent.
+
+## The chat fallback
+
+When a script is the wrong medium — no machine to run it where the human is, a procedure only a few steps long, or steps that will be discovered as you go — run the same discipline in chat instead. Keep the canonical checklist internally; present **one atomic human step per message** with its full detail; after each completed step, show the remaining items as a headline-only list — a few glanceable words each, no commands, URLs, or values (detail appears only when an item becomes the current step). Re-audit the visible list against the internal checklist before every reply, and cap it at 8 by merging far-off steps into phase-level headlines.
