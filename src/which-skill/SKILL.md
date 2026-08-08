@@ -19,7 +19,7 @@ A **flow** is a path through the skills.
    - **`/to-feature`** — a PRD-shaped Feature, when scope spans multiple stories.
    - **`/to-story`** — a single-feature Story. The usual entry point.
    - **`/to-tasks`** — split a Story into vertical-slice Tasks (one Task = one commit).
-   - A casual ask ("file a story for this") is caught by the `work-item-shape` behavior, which shapes the body and routes tier-named asks back to these publishers — it never replaces them.
+   - A creation ask ("file a story for this") is caught by the `work-item-shape` behavior: in a wired repo it routes the ask to the owning publisher, and it drafts the body itself only where ad-hoc drafting is licensed (no pipeline, someone else's repo, an explicit decline) — it never replaces the publishers.
 3. **Load a single ticket back into a fresh session** — **`/from-ticket <id>`**. It auto-detects Task/Story/Bug and loads the right context (parent, `DOMAIN.md`, matching ADRs).
 4. **Build it** — **`/implement`**. Drives one vertical slice end to end: picks the build path (runs `tdd` for a testable slice, direct otherwise), refactors, and closes the loop once via `feedback-loops`. One Task per session.
 5. **Review before it lands** — **`/review-changes`** (see Review gate).

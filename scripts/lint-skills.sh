@@ -12,8 +12,9 @@
 #     normative trigger marker (see "Writing the description"); this check
 #     enforces that stated rule by keying on that opener.
 #   - ADR-0007 sibling reference files must stay byte-identical. Symlink-per-
-#     skill install means we duplicate `domain-format.md` and `adr-format.md`
-#     across the skills that need them; ADR-0007 records this with mitigation
+#     skill install means we duplicate shared reference files (`adr-format.md`,
+#     `tracker-resolution.md`, and the other sibling groups below) across the
+#     skills that need them; ADR-0007 records this with mitigation
 #     "editorial discipline." This check turns the discipline into mechanism.
 #   - Declared dependencies (ADR-0016): an orchestrator names the behaviors it
 #     needs in a frontmatter `requires:` line (comma-separated skill names).
