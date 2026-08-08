@@ -27,7 +27,7 @@ Keep it to one or two short paragraphs, wrapped at 72 columns. No code fences, n
 
 ## The PR body: the commit body plus links
 
-A routine PR description is the commit body, then the ticket and issue references at the bottom — no headings, no restated file list, no generic "tests pass" line. Structure (a short list of behaviors, a design note) is earned only by a change genuinely too complex to review without it.
+A routine PR description is the commit body, then the ticket and issue references at the bottom. Structure (a short list of behaviors, a design note) is earned only by a change genuinely too complex to review without it — the tell catalog's commit-and-PR family names the padding shapes to leave out.
 
 - **The repo's PR template always wins over this shape.** Adapt the final body to the template: keep its headings, checklists, and prompts, answer `N/A` where a section does not apply, and never delete a section because this default is shorter.
 - **Describe the net diff.** Work attempted and undone along the way does not appear — the description is of the change, not the session that produced it.
@@ -36,4 +36,4 @@ A routine PR description is the commit body, then the ticket and issue reference
 
 ## Register
 
-The prose register — a maintainer recording a decision for another maintainer — and the shipping-specific tells are the `/writing-for-humans` behavior's commit-and-PR territory: its register table carries the row, its tell catalog the family. It is already loaded when this skill runs.
+The prose register — a maintainer recording a decision for another maintainer — and the shipping-specific tells belong to the `/writing-for-humans` behavior: its register table carries the row, its tell catalog the commit-and-PR family. Run it before drafting if it isn't already live.
