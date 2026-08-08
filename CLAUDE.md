@@ -19,7 +19,7 @@ Every skill is exactly one of **user-invoked** (carries `disable-model-invocatio
 
 Before materially editing any skill below, diff its upstream — main *and* unmerged branches — since the last-swept point recorded in [ADR-0034](docs/adr/0034-branch-mining-lineage-or-dormant-main.md), and fold in or consciously reject what changed there. The upstream skill is named in parentheses where it differs; the rest share names.
 
-- **mattpocock/skills** — `grilling`, `grill-me`, `grill-and-record` (grill-with-docs), `handoff`, `write-skill` (writing-great-skills), `review-changes` (review), `which-skill` (ask-matt), `improve-design` (improve-codebase-architecture), `teach-me` (teach), `chart-course` (wayfinder), `ask-for-me` (to-questionnaire), `codebase-design`, `domain-modeling`, `diagnosing-bugs`, `implement`, `prototype`, `tdd`.
+- **mattpocock/skills** — `grilling`, `grill-me`, `grill-and-record` (grill-with-docs), `handoff`, `write-skill` (writing-great-skills), `review-changes` (review), `which-skill` (ask-matt), `improve-design` (improve-codebase-architecture), `teach-me` (teach), `chart-course` (wayfinder), `ask-for-me` (to-questionnaire), `codebase-design`, `domain-modeling`, `diagnosing-bugs`, `implement`, `prototype`, `tdd`, `wizard`, `writing-for-agents`.
 - **compound-engineering-plugin** — `adoption-verdict` (ce-pov), `capturing-learnings` (the learnings loop).
 - **obra/superpowers** — `receiving-review` (receiving-code-review).
 - **oaustegard/claude-skills** — `diverging` (generative-thinking), `verify-docs` (verifying-claims).
