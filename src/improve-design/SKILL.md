@@ -2,7 +2,7 @@
 name: improve-design
 description: Read-only design-quality review of a codebase — surface architectural friction and propose deeper, cleaner module interfaces as a prioritized, vetted report.
 disable-model-invocation: true
-requires: codebase-design, grilling
+requires: codebase-design, grilling, writing-for-humans
 ---
 
 # Improve Design
@@ -115,7 +115,7 @@ Once the user approves, suggest running **`/to-story`** to synthesize and publis
 
 Improve-design context to carry into the synthesis:
 
-- to-story's publication constraints bar interface signatures and rejected alternatives from the story body. Give them a durable home before filing: if the grill produced no ADR, offer to record one via the `adr` skill, or — failing that — attach the interface sketch as a comment on the filed story. Have `## Approach` reference the ADR, including one written this session.
+- to-story's publication constraints bar interface signatures and rejected alternatives from the story body. Give them a durable home before filing: if the grill produced no ADR, offer to record one via the `adr` skill, or — failing that — attach the interface sketch as a comment on the filed story, its prose following the `/writing-for-humans` behavior (the chat report keeps finding-discipline as its only governor). Have `## Approach` reference the ADR, including one written this session.
 - Name, at module level, which existing shallow-module tests the new interface tests replace (step 6 lists them), so the story's `## Tests` section captures the cleanup as well as the new coverage.
 - If step 1 found an existing work item covering this candidate, suggest `/to-story --update <id>` (or add a comment via [references/tracker-dispatch.md](references/tracker-dispatch.md)) rather than filing a duplicate.
 - State the candidate's **success bar** in the story — the future change this deepening makes easier, and how you'd tell — and the keep-or-revert rule beside it: an executed refactor that doesn't clear its stated bar is a revert, not a keep. **Neutral is a revert** — sunk cost never argues for keeping, and kept complexity that bought nothing is paid for forever.
