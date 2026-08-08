@@ -31,6 +31,7 @@ Every passage is **procedural** (instructions — the reader will *do* something
 | ADR rationale | Descriptive, and it takes a position — "strike a balance" and "it depends" prose is the decision dodging itself; name who decided and why |
 | Session summary, incident report | Outcome first; simple past with times ("Between 14:02 and 14:31 UTC, 12% of requests failed"); state the unknown as "unknown" — a hedge reads less honest, not more careful |
 | Error message, UX microcopy | Calm, zero playfulness; the five-question shape below |
+| Commit message, PR body, closing comment | A maintainer recording a decision for another maintainer: impersonal, matter-of-fact ("Previously, …", "This caused …"); imperative only in the subject line; first person only for an actual decision or open question. The catalog's commit-and-PR family fires here |
 | Outbound as the user — email, Teams message, memo, proposal | The user's own voice and register. **No em dashes, none.** Sweep the full tell catalog at maximum strictness — the stake is authorship perception, not just clarity |
 
 This discipline deletes persuasion by design. Marketing, brand, and campaign copy are out of scope — say so and offer to apply it to the factual parts only.

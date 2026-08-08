@@ -57,6 +57,19 @@ Named patterns that read as AI-generated because they are clarity failures: each
 - **Heading title case** — "Everything You Need To Know". Sentence case, everywhere, including titles.
 - **Inline-header list** — "- **User experience:** significantly improved." — a bullet whose bold label repeats the pattern of its siblings. Either a real table or real prose.
 
+## Commit and PR register
+
+These fire in shipping prose — commit messages, PR bodies, review replies, closing comments — where the diff and the log sit right next to the words and expose them.
+
+- **Commit self-narration** — "This commit adds…", "This PR fixes…", "In this change…". The message *is* the commit's; drop the frame and state the change. "This commit moves the check to `finalize()`" survives only when a concrete verb follows — "addresses the issue by implementing a solution that…" is the same tell twice.
+- **Trailing justification** — "…ensuring consistency", "improving maintainability", "for better readability" tacked onto a change description. Cut it; if the reason matters, state the concrete why as its own sentence — what broke, what it cost.
+- **Landed-change hedging** — "This should fix…", "This may help…" about a change already made. The change exists; say what was verified, or state the untested part as untested.
+- **File-listing narration** — a body that is one bullet per changed file, or a walk through the diff hunk by hunk. The diff already shows *what*; the body's only job is the *why* the diff cannot show.
+- **Test enumeration** — "all 47 tests pass", "coverage: 92%". A commit body names what coverage changed, if anything; counts and percentages belong where they can carry the command and its verbatim output.
+- **Changelog headings** — "### Added" / "### Fixed" sections inside a commit or PR body. That is a changelog's format; a commit explains one change in prose.
+- **Shipping marketing** — "production-ready", "battle-tested", "enterprise-grade", "rock-solid", "carefully crafted". The slop-vocabulary list's shipping-flavored cousins; state what changed and what it now does.
+- **Copy-pasted issue text** — the body is the ticket's text verbatim instead of the author's own account of the problem. Restate the cause and the fix in your words; link the ticket for the rest.
+
 ## Rate tells — judgment, not tokens
 
 Per-instance rules can't see these; they live in the run of the text, and *occasional* instances are ordinary English — the sustained pattern is the tell.
