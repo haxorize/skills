@@ -27,7 +27,7 @@ If the user passed a tracker URL instead of a bare ID, infer the tracker from th
 Auto-detect from the ID and tracker:
 
 - **ADO:** `az boards work-item show <id> --output json --query 'fields."System.WorkItemType"'`. Read the type directly.
-- **GitHub:** `gh issue view <id> --json labels,body,title,state`. Detection ladder:
+- **GitHub:** `gh issue view <id> --json labels,body,title,state,comments`. Detection ladder:
   1. `bug` label present → **Bug**.
   2. Body contains a `## Covers` section → **Task**.
   3. Body contains `## Acceptance criteria` or `**User story:**` → **Story**.
@@ -77,6 +77,13 @@ Branch on the detected type. Each branch loads the artifact, its parent context,
 - **Parent Feature** (if linked): title and Problem / Goals. Bugs may be parentless — skip silently.
 - **`## Layers touched`** from the Bug body. Drives ADR match.
 
+**Comments (all types).** Published bodies deliberately omit design specifics, so when no ADR records an interface sketch or a rejected alternative, a comment on the ticket is often its only durable home (`improve-design` files its sketch as a comment when the user declines an ADR; humans leave them too). A cold start that skips comments loads the behavioral spec but misses the concrete design record it's meant to implement against.
+
+- **GitHub:** comments arrived with the step 2 fetch (`comments` field). No extra call.
+- **ADO:** comments need their own call, since `az boards work-item show` never returns them at any `--expand` level: `az devops invoke --area wit --resource comments --route-parameters project="{Project}" workItemId={id} --api-version 7.1-preview` (comment text is HTML; if the org rejects the bare version, append the preview revision the error names, and follow `continuationToken` paging if present). If the call still errors, report comments as unavailable and continue — never fail the load over them.
+
+Triage what came back: surface **design-record comments** (interface sketches, rejected shapes, grill/design decisions — typically fenced code plus rationale) in full as implementation context, alongside the body's ACs. List other comments one line each (author, date, gist) — status chatter and review back-and-forth are context the user can pull on, not part of the load. A ticket with no comments skips this silently.
+
 ### 5. Load DOMAIN.md
 
 Read the local `DOMAIN.md`. Surface the canonical terms and `Aliases to avoid`.
@@ -122,6 +129,7 @@ Loaded {type} #{ID}: "{title}"
   Layers touched: {layer list}
   ADRs in scope: {ADR-IDs} ({count})
   Domain context: {DOMAIN.md path; nested context if multi-context}
+  Design records: {count} comment(s) surfaced — {interface sketch / rejected alternatives} (omit when the ticket has no comments)
   Queue entries: {count} pending — {brief if any}
   Warnings: {layer-mismatch / type-confirm flags, if any}
 

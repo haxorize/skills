@@ -36,7 +36,8 @@ Ubiquitous-language glossary for the entire skills repo. Covers the six main are
 | **Reconcile mode** | Multi-artifact diff mode invoked via `--reconcile <story-id>`, proposing adds/closures/edits across child Tasks (see ADR-0003) | Sync, Realign |
 | **Cold-start** | A fresh Claude Code session entering a Ticket with no prior conversation context | Fresh session |
 | **Cold-reader pass** | The pre-publish verification a `to-*` publisher runs against author blindness (after drafting, you see what you meant, not what you wrote): a fresh-context subagent sees only the drafted work item and answers "what would you build?", naming ambiguities and assumed context; gaps loop back into the draft | Skeptical reader (`handoff`'s different move — the next session re-verifies *facts*, not comprehensibility), Reader test, Peer review (human act) |
-| **Cold-start loader** | A Skill that fetches a published Ticket back into the conversation as implementation context — embodied by `from-ticket` | Loader (when used alone), from-work-item (earlier name) |
+| **Cold-start loader** | A Skill that fetches a published Ticket — body, relations, and comments — back into the conversation as implementation context; embodied by `from-ticket` | Loader (when used alone), from-work-item (earlier name) |
+| **Design-record comment** | A ticket comment carrying design context the published body deliberately omits — an interface sketch, rejected shapes, a grill decision, typically fenced code plus rationale; written as a fallback when no ADR records the design, surfaced in full by the Cold-start loader | Design comment (unscoped), Comment (bare — most comments are status chatter, not design records) |
 | **Archaeological mode** | `backfill-adrs`'s mode for recovering un-recorded decisions from git history | — |
 
 ## Skill invocation
