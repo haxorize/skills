@@ -76,7 +76,7 @@ Lessons are point-in-time consumables — date-stamped, never edited after the f
 
 ## Learning records
 
-A **learning record** is a dated, numbered insight record in `learning-records/`; format and admission gate: [references/learning-record-format.md](references/learning-record-format.md). Offer one at natural pauses (lesson close, a mission shift, a hard-won "oh!") and write it inline. The loaded `domain-modeling` lens offers ADRs at its own gate and treats recording as the `adr` skill's job — **override that here:** an insight worth recording becomes a learning record, judged by the learning-record gate, never an ADR in any repo. Learning records and cheatsheets are durable human-read prose — draft them per the `/writing-for-humans` behavior; the dialogic lesson flow keeps its own pedagogic register.
+A **learning record** is a dated, numbered insight record in `learning-records/`; format and admission gate: [references/learning-record-format.md](references/learning-record-format.md). Offer one at natural pauses (lesson close, a mission shift, a hard-won "oh!") and write it inline. The loaded `domain-modeling` lens offers ADRs at its own gate and treats recording as the `adr` skill's job — **override that here:** an insight worth recording becomes a learning record, judged by the learning-record gate, never an ADR in any repo. Learning records and cheat sheets are durable human-read prose — draft them per the `/writing-for-humans` behavior; the dialogic lesson flow keeps its own pedagogic register.
 
 ## After every lesson
 

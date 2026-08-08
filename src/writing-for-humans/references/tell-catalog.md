@@ -57,7 +57,7 @@ Named patterns that read as AI-generated because they are clarity failures: each
 - **Heading title case** — "Everything You Need To Know". Sentence case, everywhere, including titles.
 - **Inline-header list** — "- **User experience:** significantly improved." — a bullet whose bold label repeats the pattern of its siblings. Either a real table or real prose.
 
-## Commit and PR register
+## Commit and PR family
 
 These fire in shipping prose — commit messages, PR bodies, review replies, closing comments — where the diff and the log sit right next to the words and expose them.
 
@@ -70,7 +70,7 @@ These fire in shipping prose — commit messages, PR bodies, review replies, clo
 - **Shipping marketing** — "production-ready", "battle-tested", "enterprise-grade", "rock-solid", "carefully crafted". The slop-vocabulary list's shipping-flavored cousins; state what changed and what it now does.
 - **Copy-pasted issue text** — the body is the ticket's text verbatim instead of the author's own account of the problem. Restate the cause and the fix in your words; link the ticket for the rest.
 
-## Rate tells — judgment, not tokens
+## Rate tells
 
 Per-instance rules can't see these; they live in the run of the text, and *occasional* instances are ordinary English — the sustained pattern is the tell.
 

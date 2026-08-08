@@ -9,7 +9,7 @@ Human-facing prose exists to be **understood** — that is the boundary with `wr
 
 Serve the reader, never the detector. Don't try to make text score as human-written, and don't guess whether a text was AI-written — detectors guess; a named pattern with a quoted line is evidence the reader can check. The AI tells this skill hunts are banned because they are *clarity* failures, not because of who tends to produce them.
 
-Write for the reader who arrives with no history. Prose that only makes sense to someone who watched the conversation happen is **overfitted** — rewrite it against the project's own vocabulary until it stands alone. Readers scan rather than read (eye-tracking shows an F-pattern covering 20–28% of the text), and plain wording is preferred *more* by expert readers, not less, with the preference growing as the topic gets harder — so front-loading and plain words are a service to every audience, never dumbing down.
+Write for the reader who arrives with no history. Prose that only makes sense to someone who watched the conversation happen is **overfitted** — rewrite it against the project's own vocabulary until it stands alone. Readers scan rather than read (Nielsen Norman Group's eye-tracking shows an F-pattern covering 20–28% of the text), and GOV.UK's user research finds plain wording preferred *more* by expert readers, not less, with the preference growing as the topic gets harder — so front-loading and plain words are a service to every audience, never dumbing down.
 
 ## Classify, then write
 
@@ -31,7 +31,7 @@ Every passage is **procedural** (instructions — the reader will *do* something
 | ADR rationale | Descriptive, and it takes a position — "strike a balance" and "it depends" prose is the decision dodging itself; name who decided and why |
 | Session summary, incident report | Outcome first; simple past with times ("Between 14:02 and 14:31 UTC, 12% of requests failed"); state the unknown as "unknown" — a hedge reads less honest, not more careful |
 | Error message, UX microcopy | Calm, zero playfulness; the five-question shape below |
-| Commit message, PR body, closing comment | A maintainer recording a decision for another maintainer: impersonal, matter-of-fact ("Previously, …", "This caused …"); imperative only in the subject line; first person only for an actual decision or open question. The catalog's commit-and-PR family fires here |
+| Commit message, PR body, review reply, closing comment | A maintainer recording a decision for another maintainer: impersonal, matter-of-fact ("Previously, …", "This caused …"); imperative only in the subject line; first person only for an actual decision or open question. The catalog's commit-and-PR family fires here |
 | Outbound as the user — email, Teams message, memo, proposal | The user's own voice and register. **No em dashes, none.** Sweep the full tell catalog at maximum strictness — the stake is authorship perception, not just clarity |
 
 This discipline deletes persuasion by design. Marketing, brand, and campaign copy are out of scope — say so and offer to apply it to the factual parts only.
@@ -46,7 +46,7 @@ This discipline deletes persuasion by design. Marketing, brand, and campaign cop
 - **Verbs, not nominalizations.** "Validates", not "performs a validation of"; the nominalized verb is where long sentences come from.
 - **Everyday word over formal word.** "Use" not "utilize", "help" not "facilitate", "about" not "approximately". The test: would you say it to a colleague out loud?
 - **Paragraphs hold one topic, at most 5 sentences**, and the topic sentences alone must read as an outline of the document — check by reading only them.
-- **Numerals for 2 through 9 and up** — "3 retries", not "three retries" — except at a sentence start.
+- **Numerals for every number from 2 up** — "3 retries", not "three retries" — except at a sentence start.
 
 ## Two modes
 
