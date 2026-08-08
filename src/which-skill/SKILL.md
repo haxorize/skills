@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # Which Skill
 
-This routes over the **user-invoked** skills — the ones you type. The **model-invoked behaviors** (`tdd`, `feedback-loops`, `diagnosing-bugs`, `codebase-design`, `grilling`, `diverging`, `adoption-verdict`, `domain-modeling`, `adr`, `resolving-merge-conflicts`, `capturing-learnings`, `receiving-review`) fire on their own when the work calls for them, or get pulled in by the orchestrators below — you rarely reach for them by name.
+This routes over the **user-invoked** skills — the ones you type. The **model-invoked behaviors** (`tdd`, `feedback-loops`, `diagnosing-bugs`, `codebase-design`, `grilling`, `diverging`, `adoption-verdict`, `domain-modeling`, `adr`, `resolving-merge-conflicts`, `capturing-learnings`, `receiving-review`, `writing-for-agents`, `wizard`) fire on their own when the work calls for them, or get pulled in by the orchestrators below — you rarely reach for them by name.
 
 A **flow** is a path through the skills.
 
@@ -28,13 +28,14 @@ Keep steps 1–2 in **one unbroken context window** so the grilling, decompositi
 
 ## When the way isn't clear: chart-course
 
-- **`/chart-course`** — a situational on-ramp, not the main entry. For an effort too big for one session and still wrapped in fog (usually multi-person): it charts a shared map of **decision tickets** on the tracker — questions, not build slices — then each later session works exactly one (`/chart-course <map-url>`). It plans rather than does, delegating its interviews to `grilling` (batch cadence for the breadth-first charting) and `domain-modeling`, its runnable questions to `/prototype`, and it ends where the main flow's step 2 begins: way clear, handed to `/to-feature` or `/to-story`. Ordinary ideas skip it — step 1's grill covers them.
+- **`/chart-course`** — a situational on-ramp, not the main entry. For an effort too big for one session and still wrapped in fog (usually multi-person): it charts a shared map of **decision tickets** on the tracker — questions, not build slices — then each later session works exactly one (`/chart-course <map-url>`). It plans rather than does, delegating its interviews to `grilling` and `domain-modeling`, its runnable questions to `/prototype`, and it ends where the main flow's step 2 begins: way clear, handed to `/to-feature` or `/to-story`. Ordinary ideas skip it — step 1's grill covers them.
 
 ## Detours off the main flow
 
 - **A question needs a runnable answer** (state, business logic, a UI you have to see) → detour through a prototype, bridged by `/handoff` in both directions: **`/handoff`** out → open a fresh session → **`/prototype`** to answer it with throwaway code → **`/handoff`** the *answer* back, and reference it from the original thread.
 - **A hard bug or unexplained failure mid-build** → the `diagnosing-bugs` behavior takes over (it fires on its own; `implement` reaches for it on an unplanned red). It greps the repo's `docs/solutions/` store for past matches on the way in; when an expensive diagnosis closes, `capturing-learnings` offers to capture the solved problem there. File a found defect with **`/to-bug`**.
 - **A merge or rebase conflicts** → the `resolving-merge-conflicts` behavior handles it in place.
+- **A procedure only a human can perform** (credentials, third-party dashboards, a cutover) → the `wizard` behavior generates a stage-by-stage bash wizard that drives them through it, capturing what they copy back.
 - **Thinking is circling — iterations that are variations of one idea, or a binary where both options are bad** → the `diverging` behavior fires: one committed lateral move that outputs new framings, which the grill then stress-tests. Fixation is its trigger, never stakes.
 - **An adopt-or-not question — "should we use X?", "does this CVE reach us?"** → the `adoption-verdict` behavior renders one graded, project-grounded verdict (Adopt/Trial/Hold/Reject/Not-our-problem) gated on verified project and external facts. It forms its *own* position, where the grill extracts *yours*.
 
@@ -44,6 +45,7 @@ Keep steps 1–2 in **one unbroken context window** so the grilling, decompositi
 - **`/harden-domain`** — sweep the codebase to refresh `DOMAIN.md` when the vocabulary has drifted.
 - **`/backfill-adrs`** — sweep recent git history for architectural decisions that were made but never recorded.
 - **`/verify-docs`** — check a document's claims against the code and tests, verdict per claim. The prose-drift sibling of `/harden-domain` (vocabulary) and `/backfill-adrs` (decisions); run it pre-publish, post-refactor, or as a periodic sweep — `feedback-loops` still auto-fixes docs the current change touched.
+- **`/audit-tests`** — sweep an existing test suite asking "can these checks fail?", grading each load-bearing assertion (CONFIRMED / PLAUSIBLE / CANNOT FAIL / BLIND) and naming the suite's blind spots. The test-suite member of this family; `tdd`'s mutation check guards new tests at writing time.
 
 ## Review gate
 
@@ -54,6 +56,7 @@ Keep steps 1–2 in **one unbroken context window** so the grilling, decompositi
 ## Crossing sessions
 
 - **`/handoff`** — fork the conversation: into a document a **fresh session** picks up, or straight to a **background agent** when the work should continue unattended. Use it when the window is full or you're branching off. (Contrast `/compact`, the built-in, which continues *in place*. `handoff` forks; `/compact` continues.)
+- **At any phase boundary**, the ordered five-question tree in [references/phase-boundaries.md](references/phase-boundaries.md) picks the move — Continue / `/clear` / `/handoff` / unattended / `/compact`, first yes wins. `/compact` is the default, never the first reach, and the decision belongs at the boundary, not mid-phase.
 
 ## Standalone
 
