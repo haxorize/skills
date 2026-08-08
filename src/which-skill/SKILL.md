@@ -52,7 +52,7 @@ Keep steps 1–2 in **one unbroken context window** so the grilling, decompositi
 ## Review gate
 
 - **`/review-changes`** — read-only, project-aware judgment review of a **diff**, around shipping. Use it for a self-review before the change lands, on a teammate's PR, or on an already-landed commit. It produces a ranked, classified report.
-- Acting on findings — whether a reviewer's comments landed on *your* changes or `/review-changes` just handed you its own report — is the `receiving-review` behavior's loop: verify each claim before implementing it, and let its **convergence guard** stop a review from becoming a rewrite.
+- Acting on findings — whether a reviewer's comments landed on *your* changes or `/review-changes` just handed you its own report — is the `receiving-review` behavior's loop: verify each claim before implementing it, reply to each PR thread with its outcome, and let its **convergence guard** stop a review from becoming a rewrite.
 - Once findings are addressed, **`/ship`** takes it the rest of the way. It never reviews and never builds: it proposes the commit split in lineage order, then drafts the commit messages, the closing comment, and a PR body where a PR is warranted — checking each claim it writes against the diff and the log. Whether a PR exists at all turns on whether someone else must approve — which the host may decide for you, but never decides on its own. When the environment blocks an outward act (a sandboxed push, a permission classifier), it stops and hands you the exact command rather than routing around it.
 
 ## Crossing sessions
