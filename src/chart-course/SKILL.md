@@ -2,7 +2,7 @@
 name: chart-course
 description: Chart a foggy, multi-session effort as a shared map of decision tickets on the project's tracker, then work them one per session until the way to the destination is clear. For efforts too big for one grill — the map ends where `to-feature`/`to-story` picks up. ADO — a map Feature with User Story tickets. GitHub — a map issue with sub-issue tickets.
 disable-model-invocation: true
-requires: grilling, domain-modeling
+requires: grilling, domain-modeling, writing-for-humans
 ---
 
 # Chart Course
@@ -29,7 +29,7 @@ Each ticket is a **Decision ticket** — the Charting sub-type, a child of the m
 - **Claim by assignment.** Before any work, assign the ticket to whoever is driving it. Assignment *is* the claim: an open, unassigned ticket is unclaimed, and concurrent sessions skip claimed ones.
 - **Blocking** uses the tracker's native dependency relations, so the frontier renders in the tracker's own UI. The **frontier** is the open, unblocked, unclaimed tickets — the edge of the known.
 
-In everything the human reads, refer to the map and its tickets by **name**, never bare id — see [references/tracker-resolution.md](references/tracker-resolution.md).
+In everything the human reads, refer to the map and its tickets by **name**, never bare id — see [references/tracker-resolution.md](references/tracker-resolution.md). Map bodies, ticket bodies, and resolution comments are human-facing prose — draft them per the `/writing-for-humans` behavior.
 
 ## Ticket types
 

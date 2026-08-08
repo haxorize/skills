@@ -2,6 +2,7 @@
 name: to-bug
 description: Synthesize the current conversation into a Bug work item and publish it to the project's issue tracker. ADO — creates a first-class Bug work item with native Severity and Repro Steps fields. GitHub — creates an issue with the `bug` label and a severity label. Synthesizes from context — no interviewing.
 disable-model-invocation: true
+requires: writing-for-humans
 ---
 
 # To Bug
@@ -11,6 +12,8 @@ No interviewing — synthesis only. Run `/grill-and-record` (or `/grill-me`) fir
 Bugs are *not* parented under Stories — the fix is the slice. They can be filed parentless or attached to a Feature directly.
 
 ## Publication constraints
+
+Every published sentence follows the `/writing-for-humans` behavior — run it before drafting: classify each section procedural or descriptive, pick the ticket register, and sweep the draft against its tell catalog.
 
 No file paths, no code snippets, and no specific field or type names in any published section. Exception: `## Repro`, `## Expected behavior`, and `## Actual behavior` are evidence sections — exact error messages, stack traces, environment URLs, and observable route names belong there.
 

@@ -2,6 +2,7 @@
 name: ship
 description: Carry a green, reviewed change to a closed ticket — proposes the commit split, then drafts the commit messages, PR body, and closing comment, verifying every claim it writes against the diff and the log.
 disable-model-invocation: true
+requires: writing-for-humans
 ---
 
 # Ship
@@ -45,7 +46,7 @@ Show the proposed split — which files, which message, in which order — and l
 
 ### 3. Draft the prose
 
-Write the commit messages, the PR body, and the closing comment, applying the claims rule to each sentence as you write it. Match the repo's existing shape rather than importing one: take the style `CLAUDE.md` documents where it documents one, and otherwise infer it — read the last several commit subjects and the last few merged PR bodies, and follow what you find. Style is the project's; verification is yours.
+Write the commit messages, the PR body, and the closing comment, applying the claims rule to each sentence as you write it. Match the repo's existing shape rather than importing one: take the style `CLAUDE.md` documents where it documents one, and otherwise infer it — read the last several commit subjects and the last few merged PR bodies, and follow what you find. Style is the project's; verification is yours. The prose itself — register, wording, tells — follows the `/writing-for-humans` behavior: run it before drafting, and let the project's documented style win wherever the two disagree.
 
 Where the project documents no convention, say so once — an undocumented house style is a real gap for the *project* to close, and worth naming rather than silently inventing a shape for.
 

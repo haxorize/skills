@@ -1,6 +1,7 @@
 ---
 name: adr
 description: Architecture Decision Record — capture why a single non-obvious design choice was made. Use when the user has just made a decision and wants to record it (post code-review, mid-implementation, after a grill), or wants to capture rationale for a fresh non-obvious choice. For sweeping git history to recover un-recorded decisions, use `backfill-adrs` instead.
+requires: writing-for-humans
 ---
 
 # ADR
@@ -41,7 +42,7 @@ Confirm out loud which of the three criteria the decision meets, and which alter
 
 ### 3. Draft
 
-Number, slug, and draft per [references/adr-format.md](references/adr-format.md); default form is 1-3 sentences, and optional sections are added only when they earn their place.
+Number, slug, and draft per [references/adr-format.md](references/adr-format.md); default form is 1-3 sentences, and optional sections are added only when they earn their place. Rationale prose follows the `/writing-for-humans` behavior — descriptive register, a position taken, no false-balance hedging.
 
 ### 4. Show and save
 

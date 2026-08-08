@@ -2,6 +2,7 @@
 name: to-story
 description: Synthesize the current conversation into a Story-level (single-feature spec) artifact and publish it to the project's issue tracker — most workflows start here. For scope that needs multiple stories beneath it, reach for `to-feature` instead. ADO — creates a User Story under a parent Feature. GitHub — creates an issue with a story-shaped template.
 disable-model-invocation: true
+requires: writing-for-humans
 ---
 
 # To Story
@@ -11,6 +12,8 @@ Synthesize the current conversation into a Story-level artifact (single-feature 
 Use `to-feature` only when scope explicitly needs multiple stories beneath it.
 
 ## Publication constraints
+
+Every published sentence follows the `/writing-for-humans` behavior — run it before drafting: classify each section procedural or descriptive, pick the ticket register, and sweep the draft against its tell catalog.
 
 No file paths, no code snippets, and no specific field or type names in any published section. Every section — `## Approach`, `## Layers touched`, `## Tests`, and all others — describes behavior and design intent only. These details drift; the issue must remain accurate after the code is written.
 

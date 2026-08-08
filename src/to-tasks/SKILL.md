@@ -2,6 +2,7 @@
 name: to-tasks
 description: Break a parent User Story into child Task work items on the project's issue tracker. Tracer-bullet style — each Task is a thin vertical slice through every integration layer. ADO — creates Tasks under a User Story. GitHub — creates task-shaped issues under a story-shaped parent issue.
 disable-model-invocation: true
+requires: writing-for-humans
 ---
 
 # To Tasks
@@ -11,6 +12,8 @@ Synthesis-only, no interviewing — run `/grill-and-record` upstream if context 
 Tasks are always children of a User Story — never directly under a Feature. To break a Feature into stories, use `to-story` (run repeatedly under the same Feature parent).
 
 ## Publication constraints
+
+Every published sentence follows the `/writing-for-humans` behavior — run it before drafting: classify each section procedural or descriptive, pick the ticket register, and sweep the draft against its tell catalog.
 
 No file paths, no code snippets, and no specific field or type names in any published section — including `## Layers touched`. These details drift; the issue must remain accurate after the code is written.
 

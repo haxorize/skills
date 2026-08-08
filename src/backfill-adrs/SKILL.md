@@ -2,6 +2,7 @@
 name: backfill-adrs
 description: Sweep recent git history for architectural decisions that should have been recorded as ADRs but weren't, and write up the ones worth keeping. For recording a single fresh decision, reach for the standalone `adr` skill instead.
 disable-model-invocation: true
+requires: writing-for-humans
 ---
 
 # Backfill ADRs
@@ -47,7 +48,7 @@ Ask the user to confirm or refine each. Drop rejected candidates without arguing
 
 ### 6. Write approved ADRs
 
-Number and save each approved ADR per [references/adr-format.md](references/adr-format.md), in chronological order of the underlying decisions.
+Number and save each approved ADR per [references/adr-format.md](references/adr-format.md), in chronological order of the underlying decisions. Rationale prose follows the `/writing-for-humans` behavior — descriptive register, a position taken, no false-balance hedging.
 
 ### 7. Stop
 
