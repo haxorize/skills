@@ -14,16 +14,16 @@ The check's whole value is that it cannot be fooled by the code's story about it
 
 - **The contract precedes the run.** Read the behavior contract first; if none exists, write a short one from the user's request *before touching the target* ([references/contract-template.md](references/contract-template.md)). A contract written after observing the target describes what the target does, not what it should do.
 - **Never read the implementation.** No source files, diffs, tests, git history, implementation notes, or build internals. Interact only through user- or operator-visible surfaces: browser, CLI, API, generated files, public logs, screenshots, accessibility trees, documented runtime output.
-- **Implementation-looking evidence is contamination.** If continuing seems to require source access, stop and report the check as **blocked on source-blindness** — name what you needed and why. A contaminated run is not a lower-confidence check; it is not this check at all.
+- **Implementation-looking evidence is contamination.** If continuing seems to require source access, stop and report the check as **BLOCKED on source-blindness** — name what you needed and why. A contaminated run is not a lower-confidence check; it is not this check at all.
 
-If the target must be started from the source checkout, have the user (or a separate step) start it — then validate without reading the checkout.
+If the target must be started from the source checkout, have the user start it — or a separate agent session that shares none of your context — then validate without reading the checkout.
 
 ## Workflow
 
-1. **Parse the contract** into user tasks, expected observable behavior, anti-cheat probes, and required evidence. Don't start until every task has an expected observable result.
+1. **Parse the contract** into user tasks, expected observable behavior, anti-cheat probes, and required evidence. Don't start until every user task and every anti-cheat probe has an expected observable result and an evidence type — the contract template's completion criterion; a user-supplied contract missing these gets them added before the run.
 2. **Prepare runtime access** — target URL, CLI command, API endpoint, fixture data, artifact path. Credentials come through the environment or the user's secret tooling; never copy a credential value into notes, output, or evidence.
 3. **Exercise each user task** as a real user or operator would — through the front door, in the order a person would take.
-4. **Run the Anti-cheat probes**: vary fixture or input data and confirm the output follows it; refresh, retry, or reopen and confirm the promised persistence or reset; feed empty, invalid, and boundary inputs and confirm the promised handling; confirm buttons and commands perform real work rather than only displaying success text.
+4. **Run the anti-cheat probes**: vary fixture or input data and confirm the output follows it; refresh, retry, or reopen and confirm the promised persistence or reset; feed empty, invalid, and boundary inputs and confirm the promised handling; confirm buttons and commands perform real work rather than only displaying success text.
 5. **Capture evidence per clause** — compact redacted notes, screenshots, terminal excerpts, response summaries. Strip credentials, tokens, private user data, and unrelated log content.
 6. **Report** (shape below).
 7. **On a fix**, rerun only the affected contract clauses plus nearby regression probes — not the whole contract.
@@ -32,10 +32,10 @@ If the target must be started from the source checkout, have the user (or a sepa
 
 Every contract clause ends in exactly one state — the check isn't done while any clause has none:
 
-- **Pass** — the observable behavior matches the clause, with evidence.
-- **Fail** — observable behavior violates the clause, the task can't be completed, expected state is fake or static, or the evidence is insufficient for a claimed pass.
-- **Blocked** — required runtime access, credentials, fixtures, or tools are missing (including blocked on source-blindness).
-- **Out of scope** — only when the contract explicitly excludes the behavior, or the clause turns on a product decision the user owns.
+- **PASS** — the observable behavior matches the clause, with evidence.
+- **FAIL** — observable behavior violates the clause, the task can't be completed, expected state is fake or static, or the target claims success the evidence doesn't corroborate.
+- **BLOCKED** — required runtime access, credentials, fixtures, or tools are missing (including blocked on source-blindness) — nothing could be observed either way.
+- **OUT OF SCOPE** — only when the contract explicitly excludes the behavior, or the clause turns on a product decision the user owns.
 
 Reject aesthetic, code-quality, and implementation-style concerns — those belong to the code-aware review family, and this skill can't see the code anyway.
 

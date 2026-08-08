@@ -28,7 +28,7 @@ CLI dispatch commands (search, comment) and auth-failure fallback: see [referenc
 In parallel, read project context and search prior work:
 
 - `DOMAIN.md` — domain vocabulary for candidate descriptions ("the billing rollup module," not "the AggregatorService")
-- `docs/adr/` — recorded decisions you should not re-litigate (proceed silently if absent)
+- `docs/adr/` — recorded decisions you should not re-litigate; match candidates against them by concept, never by wording (proceed silently if absent)
 - Search the tracker for existing refactor work items (Search command above; terms: `improve-design`, `deepen`, `refactor`, `extract`, `absorb`). Read open ones fully — intent, not just title.
 - `git log --oneline -30` — recent structural changes (extract, move, rename, refactor)
 
@@ -115,7 +115,7 @@ Once the user approves, suggest running **`/to-story`** to synthesize and publis
 
 Improve-design context to carry into the synthesis:
 
-- to-story's publication constraints bar interface signatures and rejected alternatives from the story body. Give them a durable home before filing: if the grill produced no ADR, offer to record one via the `adr` skill, or — failing that — attach the interface sketch as a comment on the filed story, its prose following the `/writing-for-humans` behavior (the chat report keeps finding-discipline as its only governor). Have `## Approach` reference the ADR, including one written this session.
+- to-story's publication constraints bar interface signatures and rejected alternatives from the story body. Give them a durable home before filing: if the grill produced no ADR, offer to record one via the `adr` skill, or — failing that — attach the interface sketch as a comment on the filed story, its prose following the `/writing-for-humans` behavior. Have `## Approach` reference the ADR, including one written this session.
 - Name, at module level, which existing shallow-module tests the new interface tests replace (step 6 lists them), so the story's `## Tests` section captures the cleanup as well as the new coverage.
 - If step 1 found an existing work item covering this candidate, suggest `/to-story --update <id>` (or add a comment via [references/tracker-dispatch.md](references/tracker-dispatch.md)) rather than filing a duplicate.
 - State the candidate's **success bar** in the story — the future change this deepening makes easier, and how you'd tell — and the keep-or-revert rule beside it: an executed refactor that doesn't clear its stated bar is a revert, not a keep. **Neutral is a revert** — sunk cost never argues for keeping, and kept complexity that bought nothing is paid for forever.

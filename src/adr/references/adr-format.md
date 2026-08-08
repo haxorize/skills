@@ -61,7 +61,7 @@ If any one is missing, do not write the ADR — stop and tell the user why.
 
 ## Rejections are decisions
 
-A considered rejection — a library not adopted, a capability deliberately not built, an approach turned down — is recordable on the same gate: the decision is "no", and the rejected thing is the alternative. Record the reason at the level that generalizes (why the *concept* was rejected, not just this instance), and match future proposals against it by concept, never by wording — the record's job is to stop a settled "no" from being re-litigated by someone who wasn't there.
+A considered rejection — a library not adopted, a capability deliberately not built, an approach turned down — is recordable on the same gate: the decision is "no", and the rejected thing is the alternative. Record the reason at the level that generalizes (why the *concept* was rejected, not just this instance) — the record's job is to stop a settled "no" from being re-litigated by someone who wasn't there.
 
 ## Example
 

@@ -3,7 +3,7 @@
 Use this shape when the user hasn't provided a contract. Keep it short enough that a source-blind checker can execute it without any implementation knowledge — every clause states something observable.
 
 ```md
-# Behavior Contract
+# Behavior contract
 
 ## User-visible goal
 <What must be true from the user's point of view.>

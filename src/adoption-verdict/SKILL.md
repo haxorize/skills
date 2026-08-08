@@ -34,7 +34,7 @@ A failed floor forbids Adopt and Reject alike. Return the matching Hold — "Hol
 ## Workflow
 
 1. **Frame.** Pin the subject, the intent (adopt / migrate / compare / does-this-reach-us), the incumbent, and the tier. If the input is a selection over an unbounded field ("what should we use for auth?"), stop and bound the field first — this skill judges named candidates, it doesn't enumerate them; `diverging` generates when the field needs widening.
-2. **Precedent.** Check for a prior stance before grading: `docs/adr/`, `docs/solutions/` (run the `/capturing-learnings` retrieval protocol on the candidate and problem), `DOMAIN.md`, memory. A prior decision is consumed, not ignored — overturning it is part of the verdict; silently re-deciding is not.
+2. **Precedent.** Check for a prior stance before grading: `docs/adr/`, `docs/solutions/` (run the `/capturing-learnings` retrieval protocol on the candidate and problem), `DOMAIN.md`, memory. Match the candidate against recorded rejections by concept, never by wording. A prior decision is consumed, not ignored — overturning it is part of the verdict; silently re-deciding is not.
 3. **Ground.** Read the project directly — the incumbent and its call sites, the constraints that decide compatibility, licensing where the tier warrants — and the external evidence (docs, issue trackers, release history) with whatever web tools are reachable.
 4. **Gate.** Apply the two floors.
 5. **Verdict.** Emit the schema below, leading with the grade in plain words.
@@ -62,5 +62,5 @@ After emitting a Tier 2/3 verdict, offer one fresh-context adversary: a subagent
 ## Boundaries
 
 - `grilling` stress-tests the *user's* thinking by asking; this skill forms and defends its *own* graded position. A verdict can feed a grill; a grill can end by requesting a verdict.
-- An Adopt or Trial on consequential work may deserve a durable record — that's `adr`'s territory; offer, don't write.
+- An Adopt, Trial, or Reject on consequential work may deserve a durable record — a considered rejection is a decision too, and the one most often re-litigated. That's `adr`'s territory; offer, don't write.
 - The user's own stated position can be the subject: ship it as the subject and grade it on the same floors — never capitulate to it. Pushback after the verdict ("are you sure?") re-enters the workflow with fresh evidence; it never flips the grade by itself.
