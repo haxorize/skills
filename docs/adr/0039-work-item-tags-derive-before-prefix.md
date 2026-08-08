@@ -1,0 +1,12 @@
+# Publishers stamp ADO work-item tags derived before prefixing
+
+The four `to-*` publishers now set `System.Tags` on the ADO create call: the drafted title's leading-bracket contents (the **primary tag**), unioned with an optional CLAUDE.md `Additional tags:` line and filtered by an optional `Never tag:` line. Derivation reads the **drafted** title, before `Title prefix:` resolution — prefix text is tracker plumbing and may itself carry a bracket, so parsing after prepending would tag items with the prefix's bracket, or with nothing at all. The tag set rides the create call's existing `--fields` flag as one more `key=value` pair, and tagging is **best-effort**: an org that denies tag creation (the constraint ADR-0028 recorded) gets the create retried untagged plus the manual command to apply tags by hand; a later title rename is never reconciled — the same one-time-stamp, additive-projection posture the suite applies to its label and relation mirrors.
+
+This amends [ADR-0028](0028-chart-course-decision-ticket-maps.md): its rejection of tags stands, scoped to chart *typing* (`Chart-type:` stays the source of truth, and the no-tag-creation constraint still holds wherever it holds — hence best-effort). `chart-course` deliberately keeps publishing untagged; that carve-out is declared here, with inclusion a follow-up if boards come to rely on tag-scoped filters.
+
+## Considered options
+
+- **Parse the bracket after prepending the prefix** — rejected: with a bracketed prefix (`[App] `) the prefix becomes the tag; with any other prefix the title no longer leads with a bracket and the item silently loses its tag. Either way the mis-tag is permanent, since tagging is a one-time stamp.
+- **Hardcode org-specific exclusions in the skill** (a named project's bracket never tags) — rejected: org strings don't belong in repo-agnostic skills; exclusions are per-repo config (`Never tag:` in the tracker block), like every other per-repo value in the suite.
+- **A second `--fields` flag for tags** — rejected: a repeated `--fields` replaces the earlier one, silently dropping AcceptanceCriteria / ReproSteps / Severity from the created item.
+- **Reconcile tags on title rename** — rejected: accepted drift keeps the mechanism a create-time stamp instead of a sync obligation.
