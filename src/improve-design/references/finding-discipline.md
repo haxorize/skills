@@ -16,7 +16,7 @@ Exploration and subagent fan-out **over-report** — a friction that looks real 
 
 When you dispose of a finding on a line — fix, defer, or dismiss — check that same line once for defects on the other axes before moving on: attention that arrived for one axis tends to leave without checking the others.
 
-The vet's default under uncertainty follows the **context asymmetry**. This vet reads with more context than any finder had, so a finding that does not survive the re-read dies. A vetter with *less* context than the finder — a filter judging from the diff alone, a verify stage briefed with only the claim — earns only a veto on direct counter-evidence: there, "cannot confirm" is not "wrong", because the finder may have seen context the vetter cannot.
+The vet's default under uncertainty follows the **context asymmetry**. This vet reads with more context than any finder had, so a claim the cited text does not support dies — while a claim that holds on re-read but whose *impact* stays unconfirmable survives at LOW, exactly as the Anchored-confidence scale below defines it. A vetter with *less* context than the finder — a filter judging from the diff alone, a verify stage briefed with only the claim — earns only a veto on direct counter-evidence: there, "cannot confirm" is not "wrong", because the finder may have seen context the vetter cannot.
 
 ## Intent drift is bidirectional
 

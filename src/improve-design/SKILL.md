@@ -51,7 +51,7 @@ Done when you've swept **every top-level module/area**, not just the first frict
 
 ### 3. Vet, then consolidate and present candidates
 
-**Vet first** per [references/finding-discipline.md](references/finding-discipline.md), which covers the over-report, the drop classes, and the **bidirectional** ADR/`DOMAIN.md` read. When a candidate warrants *reopening* an ADR, mark it clearly (e.g., _"contradicts a recorded ADR — but worth reopening because…"_) and only when the friction justifies it.
+**Vet first** per [references/finding-discipline.md](references/finding-discipline.md), which covers the over-report, the drop classes, the vet's context-asymmetry default, and the **bidirectional** ADR/`DOMAIN.md` read. When a candidate warrants *reopening* an ADR, mark it clearly (e.g., _"contradicts a recorded ADR — but worth reopening because…"_) and only when the friction justifies it.
 
 Group surviving findings into coherent candidates — don't present overlapping or sub-issues separately. **Cross-reference against existing work items found in step 1.** If a candidate overlaps with an existing work item, say so explicitly — propose updating that one rather than filing a new one.
 
