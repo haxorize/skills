@@ -32,3 +32,12 @@ Use this shape when the user hasn't provided a contract. Keep it short enough th
 ## Out of scope
 - <Anything the check must not judge.>
 ```
+
+## Deriving a contract for existing behavior
+
+When the target is legacy or already-shipped behavior with no request text to write from, the contract can be derived from the code — but only by someone who is not the checker (the user, or a session that will not run the check), since reading the implementation contaminates a checker. The move is a mechanical translation from code pattern to behavior statement:
+
+- `if (user.role === 'admin')` → "the action is restricted to administrator users"
+- `password.length >= 8` → "passwords must be at least 8 characters"
+
+Mark genuinely ambiguous code `[NEEDS CLARIFICATION]` rather than guessing intent, and have someone who knows the feature validate the derived contract before it is used — derived clauses describe what the code does, and only a human can confirm that is also what it should do.

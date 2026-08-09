@@ -27,7 +27,15 @@ claude --bg --name "<descriptive name>" "<handoff content>"
 
 `--name` labels the agent in the job list and session picker. The agent starts in the current working directory; the user manages it with `claude agents`. The redaction rule matters doubly here — the handoff becomes the agent's prompt verbatim.
 
-Seed the prompt with explicit boundaries: don't push, merge, close work items, or post to external services unless the handoff says to. An unattended agent inherits none of the conversation's implicit ones.
+Seed the prompt with explicit boundaries: don't push, merge, close work items, or post to external services unless the handoff says to. An unattended agent inherits none of the conversation's implicit ones. When a boundary or rule quotes a canonical doc, quote the doc's line **verbatim** — a paraphrased brief drifts, and every agent downstream inherits the drift.
+
+Seed three disciplines for the unattended stretch:
+
+- **The completion audit.** Before declaring the objective done, treat completion as unproven: derive the concrete requirements from the objective, and for each one name the authoritative evidence that would prove it and inspect the current state. Match the check's scope to the requirement's scope — a narrow check never supports a broad claim — and count a green test or clean search as evidence only after confirming it covers the requirement. The audit must *prove* completion, not merely fail to find obvious remaining work.
+- **The blocked threshold.** "Blocked" is earned only when the same blocking condition has survived roughly three consecutive attempts to move it — never merely because the work is hard, slow, uncertain, or would benefit from clarification. Once earned, declare it and stop; grinding past a real block is the mirror failure.
+- **No success-substitution.** An edit is aligned only if it makes the requested final state more true — never swap in a narrower, safer, easier-to-verify goal because it is more likely to pass.
+
+Immediately after launching, give the user the exact copy-paste command to observe the agent (`claude agents`, or the specific attach/tail command) — and repeat it at wrap-up. A background process whose owner cannot watch it is a trap you set for them.
 
 ## What goes in it
 
