@@ -130,6 +130,13 @@ If a correct seam exists:
 3. Apply the fix.
 4. Watch it pass.
 5. Re-run the Phase 1 feedback loop against the original (un-minimised) scenario.
+6. **Revert-and-reconfirm**: revert the fix, re-run the loop, confirm the bug returns; reapply, confirm it is gone. If the bug does not return on revert, something else changed and the fix is unproven ("if you didn't fix it, it ain't fixed").
+
+Probe the fix's own boundary: the fix draws a predicate — a condition, a range, a match — so test the neighbor inputs just outside it. The bug that slips past a fix lives at the edge the fix drew, not at generic extremes.
+
+Scrutinize the fix's shape before accepting it. A diff that only deletes behavior is rejected unless the root-cause analysis justifies the deletion — making a test green by removing what it tested is the classic no-op fix. A fix spread across many hunks and files is itself a finding: the fix is not minimal, or the diagnosis is incomplete. Any acceptance signal you skip (no time to revert-and-reconfirm, mutation check impractical) is named in the wrap-up, never silently passed.
+
+A bug you diagnose but cannot fix now still earns a test: record the expected value and the current buggy value, and **assert the buggy one** — the test passes today and breaks loudly the moment a real fix changes the behavior. Honest characterization beats a skipped TODO.
 
 **Three strikes.** A failed fix is a falsified hypothesis — return to Phase 3. But after **three** failed fixes, stop treating it as hypothesis-testing: each fix revealing a new problem in a different place is the signature of a wrong architecture, not a wrong guess. Don't attempt fix #4 — step back to the architectural question (is the fix fighting the module's shape?) and raise it with the user before continuing. A loop that survives three same-context attempts usually means the diagnoser can't see its own problem — offer **fresh eyes** as the recovery move: a subagent or fresh session that reads the evidence trail (loop command, minimised repro, falsified hypotheses) without inheriting your assumptions. The cap bounds automatic spend, not the investigation: continuing past it is earned by naming the unresolved question and the probe that could move it — never by just trying again.
 
