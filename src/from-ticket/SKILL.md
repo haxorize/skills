@@ -110,16 +110,7 @@ If the loaded ticket's `## Layers touched` references layers that don't exist in
 
 Do not block. The user decides whether the layer mismatch is intentional (cross-repo work) or a wrong-directory mistake.
 
-### 8. Surface naming-drift queue entries
-
-Read the naming-drift queue:
-
-- **Repo mode:** `.claude/queue.md` at the repo root.
-- **No-repo CLI-only mode:** memory entry keyed by tracker context (e.g., `Naming-drift queue — work-backlog`).
-
-Surface entries that mention this ticket's tracker ID or its parent. The queue is informational — pending sibling refinements the user may want to address as part of the slice. Never block on it.
-
-### 9. Hand off
+### 8. Hand off
 
 Present a concise summary of what was loaded:
 
@@ -132,7 +123,6 @@ Loaded {type} #{ID}: "{title}"
   ADRs in scope: {ADR-IDs} ({count})
   Domain context: {DOMAIN.md path; nested context if multi-context}
   Design records: {count} comment(s) surfaced — {interface sketch / rejected alternatives} (omit when the ticket has no comments)
-  Queue entries: {count} pending — {brief if any}
   Warnings: {layer-mismatch / type-confirm flags, if any}
 
 Ready to implement. Hand off to /implement (recommended), or proceed freeform.

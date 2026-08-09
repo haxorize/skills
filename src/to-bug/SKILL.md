@@ -114,8 +114,6 @@ Fetch the current Bug body, repro steps, severity, and parent (if any):
 - **ADO:** `az boards work-item show <bug-id> --output json --expand relations` — pull `System.Description`, `Microsoft.VSTS.TCM.ReproSteps`, `Microsoft.VSTS.Common.Severity`, `System.State`, and the parent relation (`System.LinkTypes.Hierarchy-Reverse`).
 - **GitHub:** `gh issue view <issue-number> --json body,title,labels,state`. Severity is read from the `sev:*` label; type confirmed by the `bug` label.
 
-Read the naming-drift queue (see [references/naming-drift-queue.md](references/naming-drift-queue.md)) for entries mentioning this Bug; surface them as cold-start context.
-
 ### Self-review (in `--update` mode)
 
 Re-run all step 6 checks. The public-repo warning (step 7) re-runs if the body or repro changed and the tracker is GitHub.
@@ -127,6 +125,6 @@ Re-run all step 6 checks. The public-repo warning (step 7) re-runs if the body o
 
 State is never transitioned by `to-bug --update` — that's the team's process on the board.
 
-### Naming-drift queue write
+### Naming-drift check
 
-If the patch introduces module names, route paths, or query keys that diverge from canonical names already in use elsewhere in the codebase or sibling work items, append an entry per [references/naming-drift-queue.md](references/naming-drift-queue.md). Surface drift as a warning during self-review; never block the patch.
+If the patch introduces module names, route paths, or query keys that diverge from canonical names already in use elsewhere in the codebase or sibling work items, surface the drift as a warning during self-review and offer to run the affected sibling's `--update` now — sometimes the new name is correct and the sibling needs renaming. Never block the patch.

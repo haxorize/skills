@@ -14,7 +14,6 @@ Parse:
 - **Active Story AC IDs** from the AC field (ADO) or `## Acceptance criteria` section (GitHub).
 - **Removed Story AC IDs** from `## Removed acceptance criteria` in the Story description body (not the AC field on ADO — ADO's AC field is overwritten on each update, making the description body the stable home for removed history).
 - **Active parent Feature AC IDs** — validates that `Covers:` references in the parent's story map resolve cleanly.
-- `.claude/queue.md` entries (or memory equivalent) that mention this Story's tracker ID — surface as cold-start context.
 
 ## AC ID handling on revision
 
@@ -55,6 +54,6 @@ If the update adds or removes ACs, changes the module list, or reshapes layers, 
 
 On ADO, read the AC field back after patching, per step 9 — a patch can bury criteria in the description just as a create can.
 
-## Naming-drift queue
+## Naming-drift check
 
-If the patch introduces names differing from siblings (other Stories under the same parent Feature, or Tasks under this Story), append an entry per [naming-drift-queue.md](naming-drift-queue.md), which also covers surfacing the drift as a self-review warning and the never-block rule.
+If the patch introduces names differing from siblings (other Stories under the same parent Feature, or Tasks under this Story), surface the drift as a self-review warning and offer to run the affected sibling's `--update` now — sometimes the new name is correct and the sibling needs renaming. Never block the patch.

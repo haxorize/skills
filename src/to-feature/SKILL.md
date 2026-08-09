@@ -99,8 +99,6 @@ Fetch the current Feature description in full so the patch can preserve everythi
 - **ADO:** `az boards work-item show <feature-id> --output json` — pull `System.Description`. The AC field (`Microsoft.VSTS.Common.AcceptanceCriteria`) is not touched in this mode but read it to display active and removed AC IDs as cold-start context.
 - **GitHub:** `gh issue view <feature-number> --json body,title`.
 
-Read the naming-drift queue (see [references/naming-drift-queue.md](references/naming-drift-queue.md)) for entries mentioning this Feature; surface them as cold-start context.
-
 ### Patch scope (invariant)
 
 Only the text between `<!-- BEGIN STORY MAP -->` and `<!-- END STORY MAP -->` is replaced. A deferred Feature has no markers — there, replace the single sentinel line `Story Decomposition: deferred at Feature creation.` with a full marker-fenced story map; everything outside the sentinel is preserved the same way. The AC field and every other description body section (Problem, Goals, Non-goals, Approach, Constraints, Removed acceptance criteria) are preserved verbatim. AC IDs and the `## Removed acceptance criteria` history are therefore unaffected by `--update`.

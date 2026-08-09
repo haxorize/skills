@@ -101,6 +101,6 @@ Native dependency relations are an ADO feature, so this step runs only on ADO â€
 
 `--update <story-id>` patches an existing Story in place. See [references/update-mode.md](references/update-mode.md) for cold-start commands, AC ID handling rules, self-review checks, re-snapshot prompt, reconcile prompt, and patch commands.
 
-## Naming-drift queue
+## Naming-drift check
 
-This skill reads the queue on `--update` cold-start and appends to it on publish when a name diverges from a sibling. Definition, storage, and entry format: see [references/naming-drift-queue.md](references/naming-drift-queue.md).
+If publish surfaces a name diverging from a sibling (another Story under the same parent Feature, or a Task under this Story), surface the drift as a self-review warning and offer to run the sibling's `--update` now â€” sometimes the new name is correct and the sibling needs renaming. Never block the publish. The story-map naming table is the durable record of sibling names.

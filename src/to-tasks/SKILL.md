@@ -102,7 +102,7 @@ For each Task, use the appropriate template:
 
 If a required CLAUDE.md field is missing, fail fast with a clear "add this to CLAUDE.md" message. If a create call fails with an auth/permission error, fall back to giving the user the drafted Task bodies to paste manually — don't loop on auth. Apply the **transport safety** rules in [references/tracker-resolution.md](references/tracker-resolution.md) to every create and retry.
 
-If publish surfaces a name diverging from sibling Tasks under the same parent, append an entry to the naming-drift queue per [references/naming-drift-queue.md](references/naming-drift-queue.md). Surface as a warning; don't block.
+If publish surfaces a name diverging from sibling Tasks under the same parent, surface the drift as a warning and offer to run the sibling's `--update` now — sometimes the new name is correct and the sibling needs renaming. Don't block.
 
 ## Maintenance modes
 
@@ -111,7 +111,7 @@ Two flows operate on already-published Tasks:
 - **`--update <task-id>`** — patch a single Task body in place. Skips tracker / parent / sibling-repo / codebase resolution. Body re-draft → self-review → patch.
 - **`--reconcile <story-id>`** — diff all child Tasks under a parent Story against the current Story spec, propose adds / closures / edits, apply approved changes. State-aware: closed Tasks leave alone, in-progress surface for decision, new are safe to revise.
 
-Both modes read and append to the **naming-drift queue** — see [references/naming-drift-queue.md](references/naming-drift-queue.md).
+Both modes run the same naming-drift check as publish: warn on a divergence, offer the affected sibling's `--update`, never block.
 
 GitHub reconcile distinguishes open-being-worked from open-not-started via an **In-progress signal** declared in CLAUDE.md's `Issue tracker:` block; ADO reads `System.State` directly. The declaration syntax and assignee-presence default live in the reference below.
 

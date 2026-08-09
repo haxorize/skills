@@ -306,7 +306,6 @@ Ubiquitous-language glossary for the entire skills repo. Covers the areas of wor
 | **Stale reference** | A `Covers: ACx` line pointing to a Removed AC | Dangling reference |
 | **Unsupported claim** | A `verify-docs` verdict — a doc claim that matches the current code but has no test backing it, so nothing protects it from future drift; surfaced as a missing test, not just a doc bug | Untested claim |
 | **Cross-repo blocker** | A Task annotation marking dependence on a contract change in a Sibling repo (`Blocked by: ../<sibling-repo> — contract change required`) | Cross-repo dependency |
-| **Naming-drift queue** | A durable list of pending sibling `--update`s, offered when a publish surfaces drift | Update queue, Pending list |
 
 ## Reconcile mechanics
 
@@ -368,7 +367,7 @@ Ubiquitous-language glossary for the entire skills repo. Covers the areas of wor
 
 > **Dev:** "I just finished grilling Story 2 and noticed Story 1 used the wrong route name. Do I block the publish?"
 >
-> **Domain expert:** "No — that's **naming drift**, not a blocker. Publish Story 2 with the correct name. The skill warns and adds Story 1 to the **naming-drift queue** so you can re-grill its rename via `to-story --update` later. Both Stories are **user-facing**, right? They lead with a **Connextra user-story line**?"
+> **Domain expert:** "No — that's **naming drift**, not a blocker. Publish Story 2 with the correct name. The skill warns and offers to re-grill Story 1's rename via `to-story --update` right then; the story-map naming table keeps the divergence visible if you defer. Both Stories are **user-facing**, right? They lead with a **Connextra user-story line**?"
 >
 > **Dev:** "Yes. What about Story 1's child Tasks? They reference `**AC2:**`, and Story 2's grilling reworded that AC."
 >

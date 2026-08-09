@@ -18,7 +18,6 @@ Parse:
 - The Task's current `## Covers` line.
 - **Active parent AC IDs** from the parent Story's AC field (ADO) or `## Acceptance criteria` section (GitHub).
 - **Removed parent AC IDs** from `## Removed acceptance criteria` in the parent Story's description body (not the AC field on ADO).
-- `.claude/queue.md` entries mentioning this Task or its parent Story — see `## Naming-drift queue`.
 
 ### Self-review (in `--update` mode)
 
@@ -33,9 +32,9 @@ Parse:
 - **ADO:** convert Markdown → HTML, then `az boards work-item update --id <task-id> --description "<html>"`. Tasks have no AC field; do not pass `Microsoft.VSTS.Common.AcceptanceCriteria`.
 - **GitHub:** `gh issue edit <task-number> --body-file <draft>`.
 
-### Naming-drift queue write
+### Naming-drift check
 
-If the patch introduces names that differ from sibling Tasks, append an entry per [naming-drift-queue.md](naming-drift-queue.md). Surface drift as a warning during self-review; don't block.
+If the patch introduces names that differ from sibling Tasks, surface the drift as a warning during self-review and offer to run the affected sibling's `--update` now — sometimes the new name is correct and the sibling needs renaming. Don't block.
 
 ## Reconcile mode
 
@@ -48,7 +47,6 @@ If the patch introduces names that differ from sibling Tasks, append an entry pe
   - **GitHub:** `gh issue view <story-number> --json body,title`. Children are issues whose body contains `Parent: #<story-number>` — find via `gh search issues "in:body Parent: #<story-number>" --json number,title,body,state,assignees,labels`.
 - Parse **active AC IDs** from the AC field (ADO) or `## Acceptance criteria` section (GitHub), and **removed AC IDs** from `## Removed acceptance criteria` in the description body (not the AC field on ADO).
 - Pull DOMAIN.md and surface terms changed since the Story's last revision — terminology drift is a leading indicator that Tasks are stale.
-- Read `.claude/queue.md` entries referencing the Story or any of its child Tasks.
 - On GitHub, read the **In-progress signal** from CLAUDE.md's `Issue tracker:` block — see `### In-progress signal (GitHub)` below. ADO ignores the signal; state is read directly from `System.State`.
 - For each child Task, fetch body and state:
   - **ADO:** `az boards work-item show <task-id>` — `System.Description` and `System.State`.
@@ -126,6 +124,6 @@ Healthy Task (N): listed for completeness, no action.
 
 Iterate per bucket until approved. Apply approved changes — body patches via `az boards work-item update` / `gh issue edit`, state transitions via update / close. Publish new Tasks in dependency order so each blocker's real ID is available; on ADO, materialize each in-project blocker as a built-in Predecessor relation, and on GitHub, add each new Task as a native sub-issue of the parent Story, exactly as the create path does — see [../SKILL.md](../SKILL.md) step 8. Reconcile operates on an existing set, so always apply the skip-if-exists guard there. A blocker may be an existing Task in the set, not just a newly published one.
 
-### Naming-drift queue write
+### Naming-drift check
 
-If reconcile surfaces naming drift across sibling Tasks (e.g., one uses `widgetId`, another `widget_id`), append an entry per [naming-drift-queue.md](naming-drift-queue.md). Surface relevant entries on cold-start; never block a publish on it.
+If reconcile surfaces naming drift across sibling Tasks (e.g., one uses `widgetId`, another `widget_id`), surface it in the affected bucket's proposal and offer to fold the rename into that Task's edit — sometimes the newer name is correct and the older sibling needs renaming. Never block a publish on it.
