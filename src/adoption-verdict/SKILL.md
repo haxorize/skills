@@ -35,7 +35,7 @@ A failed floor forbids Adopt and Reject alike. Return the matching Hold — "Hol
 
 1. **Frame.** Pin the subject, the intent (adopt / migrate / compare / does-this-reach-us), the incumbent, and the tier. If the input is a selection over an unbounded field ("what should we use for auth?"), stop and bound the field first — this skill judges named candidates, it doesn't enumerate them; `diverging` generates when the field needs widening.
 2. **Precedent.** Check for a prior stance before grading: `docs/adr/`, `docs/solutions/` (run the `/capturing-learnings` skill's retrieval protocol on the candidate and problem), `DOMAIN.md`, memory. Match the candidate against recorded rejections by concept, never by wording. A prior decision is consumed, not ignored — overturning it is part of the verdict; silently re-deciding is not.
-3. **Ground.** Read the project directly — the incumbent and its call sites, the constraints that decide compatibility, licensing where the tier warrants — and the external evidence (docs, issue trackers, release history) with whatever web tools are reachable.
+3. **Ground.** Read the project directly — the incumbent and its call sites, the constraints that decide compatibility, licensing where the tier warrants — and the external evidence (docs, issue trackers, release history) with whatever web tools are reachable. Two external sources are independent only when a different publisher stands on different underlying data — a syndication, a quote, or the same vendor's marketing in two places is one source counted twice. When sources dispute a figure, report both values, both cited — never average them.
 4. **Gate.** Apply the two floors.
 5. **Verdict.** Emit the schema below, leading with the grade in plain words.
 
@@ -57,7 +57,7 @@ The verdict is a tight chat block sized by its tier — one screen for Tier 1, t
 
 ## The adversary pass (Tier 2/3)
 
-After emitting a Tier 2/3 verdict, offer one fresh-context adversary: a subagent seeded with the verdict, the framed question, and the cited facts as source-located evidence — never your argument for the grade; advocacy in the payload turns refutation into ratification. Tell it that rejecting the framing itself — wrong tier, wrong incumbent, wrong question — is a valid refutation. Fresh context beats self-critique — the author of a verdict cannot unsee their own reasoning. One pass, offered once; Tier 1 never offers. Fold a surviving refutation into the verdict before anyone acts on it. If an accepted pass then fails to run, deliver the verdict saying so — a requested pass never degrades silently into a bare verdict.
+After emitting a Tier 2/3 verdict, offer one fresh-context adversary: a subagent seeded with the verdict, the framed question, and the cited facts as source-located evidence — never your argument for the grade; advocacy in the payload turns refutation into ratification. Tell it that rejecting the framing itself — wrong tier, wrong incumbent, wrong question — is a valid refutation. Fresh context beats self-critique — the author of a verdict cannot unsee their own reasoning. One pass, offered once; Tier 1 never offers. An adversary that finds nothing reports what it searched for and did not find — a bare "no refutation" is not a result. Fold a surviving refutation into the verdict before anyone acts on it. If an accepted pass then fails to run, deliver the verdict saying so — a requested pass never degrades silently into a bare verdict.
 
 ## Boundaries
 

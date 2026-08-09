@@ -47,7 +47,7 @@ Diagnose the *baseline* failure — how the agent behaves without the guidance �
 | Agent skips the rule under pressure (deadline, sunk cost, "just this once") | Hard prohibition + rationalization table + red-flags list |
 | Agent complies but the output is wrong-shaped (bloated, buried verdict, restated spec) | Positive recipe — state what the output IS, in order |
 | Agent omits a required element | A REQUIRED slot in the template, not prose asking for it |
-| Behavior should apply only sometimes | Conditional keyed to an observable predicate ("if the brief exists, reference it") |
+| Behavior should apply only sometimes | Conditional keyed to an observable predicate ("if the brief exists, reference it") — observable means a path, file type, or named task, never the agent's own state ("before your first edit", "when the task is complex") |
 
 ## Failure modes
 

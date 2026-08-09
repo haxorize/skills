@@ -88,10 +88,13 @@ The description is the skill's top-level **context pointer** — its wording dec
 - **User-invoked:** a one-line human-facing summary. No "Use when…" trigger list — the model never sees it.
 - **Anti-triggers:** when a model-invoked skill borders territory the model should handle without it, name the exclusion in the description ("Don't invoke this for steps the agent can perform itself") — one negative trigger is cheap; an over-firing skill is not.
 
+A user-invoked skill also handles the ask it *didn't* get: when the invocation bundles a second intent outside the skill's job ("...and also fix the flaky test"), the skill does its own job, then **parks the rest visibly** — name the deferred intent and the skill or route that handles it, without executing it. Silently doing it is scope creep; silently dropping it loses the user's ask.
+
 ## Size constraints
 
 - **SKILL.md**: ≤200 lines. Past that, move detail into `references/`.
 - **Reference files**: ≤200 lines each. Split by topic, not arbitrarily.
+- **The caps measure loaded context, not file bytes.** Extracting prose into a reference the body then tells the agent to always read shrinks the file without shrinking what loads — that games the cap, it doesn't satisfy it. Extraction is honest only when the reference loads lazily (a branch most runs never take). And a cap is never raised because content is approaching it — past the cap, cut or restructure.
 - **Description**: ≤1024 chars, and no angle brackets (`<` or `>`) — the platform chokes on them, so replace placeholder text like `<topic>` before shipping.
 - **Name**: ≤64 chars.
 - **One line per paragraph/bullet** — soft-wrap, no hard newlines mid-paragraph (let the editor wrap). The cap is line-based, so a "line" should be a unit of content, not an artifact of wrapping; hard-wrapping inflates the count and renders identically. Code fences, tables, and YAML frontmatter keep their own line breaks.
@@ -118,3 +121,4 @@ Frontmatter parses as strict YAML. The hazard is an unquoted `: ` (colon **follo
 - [ ] No generic best-practices the model already knows (no-op check)
 - [ ] Encodes project-specific decisions, not textbook knowledge
 - [ ] Concrete examples from the actual codebase
+- [ ] Any lint rule added with the skill states its fix in the failure message — a gate that withholds the remedy is a maintainer round-trip — and a false positive gets treated as a rule bug, not a nuisance

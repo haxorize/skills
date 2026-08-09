@@ -36,6 +36,8 @@ If no tracker block is declared, fall back to commit message and code-only infer
 
 Apply the three-criteria gate per [references/adr-format.md](references/adr-format.md). Reject any candidate that fails.
 
+Then verify the **decision**, not just the history: before recording a decision as standing, confirm its mechanism still exists in the tree (the files, symbols, or checks it names resolve), the work that carried it closed as *completed* (closed-as-not-planned means the decision was dropped, not decided), no material part stayed unshipped, and no later decision superseded it. A decision that fails this check is recorded as history with its outcome named, or not at all — never as a standing decision.
+
 ### 5. Quiz the user on the candidate list
 
 Walk through each candidate one at a time:
