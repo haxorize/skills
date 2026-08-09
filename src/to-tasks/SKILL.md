@@ -78,6 +78,7 @@ Before publishing, check:
 
 - **Parent coverage** — every active parent Story AC ID appears in at least one Task's `## Covers` line
 - **Covers references resolve** — every AC ID in any Task's `## Covers` exists on the parent Story and is active (not in `## Removed acceptance criteria`); surface stale references for user decision before publishing
+- **No orphan Tasks** — every Task's `## Covers` names at least one AC ID; a Task covering nothing is unmapped work — tie it to a parent criterion or question why it exists
 - **Naming consistency** — identical across Tasks (the names enumerated in step 5)
 - **Domain language matches `DOMAIN.md`**
 - **No placeholders** — none of the literal kind (TBD/TODO) and none of the disguised kind: "add appropriate error handling", "write tests for the above", "similar to Task N" are placeholders wearing prose; each hides a decision the implementer will have to invent

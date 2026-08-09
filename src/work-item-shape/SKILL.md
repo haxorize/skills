@@ -34,6 +34,8 @@ Every stated limit implies its negative path — a cap implies a defined at-and-
 
 When no clean check exists, propose the most honest binary validator you can state rather than leaving a TBD — a placeholder defers the decision to whoever is least equipped to make it.
 
+A criterion carrying a **temporal quantifier** — "after N attempts", "over time", "converges", "adapts" — claims a trajectory, so its evidence must be a closed-loop check over that trajectory; step-wise checks cannot settle it.
+
 Done conditions by work type:
 
 | Work type | The criteria must pin |
@@ -49,6 +51,10 @@ Behavior and design intent, never internals: no file paths, no code snippets, no
 
 A verification clause may name a stable invocation surface — a script name, CLI command, or endpoint. Those are contracts, not internals. A tier's template may likewise declare evidence sections — a bug's repro and observed-behavior sections — where verbatim error text, stack traces, and URLs belong: evidence quoted from reality is not internals either.
 
+A template section with nothing true to say is deleted, never kept as "N/A" scaffolding. (An external repo's required PR or issue template is the exception — there the template wins, per `ship`'s rule.)
+
+Every section must earn its place by driving a decision. A persona that shapes no requirement, a non-functional bullet of copied boilerplate ("must be scalable and secure") with no product-specific threshold, a vision sentence that could open any item in the category — that is **theater**: cut it, or sharpen it to bounds instead of adjectives. Flag furniture even when it is well-written furniture.
+
 ## Plan, not changelog
 
 The body reads as a plan for the work — for a bug, a report of the defect — never as a changelog of the conversation that produced it: no "as discussed above", "unlike the prior version", "preserving the earlier approach". A cold reader sees only current intent.
@@ -56,6 +62,8 @@ The body reads as a plan for the work — for a bug, a report of the defect — 
 ## Readiness
 
 An item one agent or session will pick up and drive gets a readiness call — **AFK** (safely driven by the agent alone) or **HITL** (a human stays in the loop) — one word plus the reason, in the slot the tier's template provides, or a `Readiness:` line ad-hoc.
+
+The umbrella form of the test, which also judges a decomposed suite as a whole: **could a developer implement this without inventing decisions nothing records?**
 
 The **readiness gate**: AFK is denied unless all four hold:
 
@@ -66,7 +74,9 @@ The **readiness gate**: AFK is denied unless all four hold:
 
 HITL whenever product judgment, credentials, stakeholder negotiation, design review, or release authority remain in the work — the reason names which.
 
-An AFK item also carries a **stop condition**: the trip-wire that ends unattended grinding — the result, obstacle, or spent effort that means stop and ask instead of pressing on.
+An AFK item also carries a **stop condition**: the trip-wire that ends unattended grinding — the result, obstacle, or spent effort that means stop and ask instead of pressing on. Where specific mid-work decisions are foreseeable, list them as **Ask-first triggers** — the decisions that halt unattended work for approval the moment they arise (a schema change, a new dependency, a contract choice): the stop condition bounds effort, ask-first triggers bound authority.
+
+Reversibility feeds the AFK/HITL call, rated on the decision, not the task's difficulty: a genuine one-way door is falsifiable — you can name the migration, the destructive operation, or the broken contract that makes undo expensive — and when you can't, rate it reversible. Gating everything "just in case" produces the checkpoint fatigue that gets all gates skipped. Better than gating a one-way door: remove the irreversibility (a seam, a versioned contract) and let the item run AFK.
 
 ## Sizing
 
@@ -74,9 +84,13 @@ Size by structure, never hours: one item is one deliverable, independently verif
 
 Too big announces itself as an "and" in the title or criteria that can't be checked independently — split it. Too small to demo alone — merge it upward into its parent rather than filing it.
 
+Watch the **scope-reduction vocabulary** in a draft — "v1", "for now", "hardcoded", "placeholder", "will be wired later". Each either names deferred work that lands explicitly in out-of-scope or a follow-up item, or it quietly under-delivers the decision the item claims to implement. The only resolutions are deliver fully or split; a body can cite its parent decision and still deliver a fraction of it.
+
 ## Surfacing ambiguity
 
 Never resolve source ambiguity silently. Emit each find as an **Ambiguity block** of one of three types — **Unclear** (present but readable two ways), **Missing** (required but absent), **Conflicting** (two statements disagree) — each carrying the source text quoted verbatim, the question a human must answer, the impact if guessed wrong, and what you assumed for now.
+
+When the finds outnumber what a human will actually read, triage which ones escalate by impact: **scope > security and privacy > user experience > technical detail**. Below the bar, record an informed industry default in the assumed-for-now slot instead of asking — retention windows, error-message tone, and standard performance targets have defaults; scope never does.
 
 ## The Cold-reader pass
 
@@ -85,3 +99,5 @@ Self-review can't catch author blindness — after drafting, you see what you me
 - Spawn one fresh-context subagent — the cold reader. It gets only what a cold reader of the published artifact would see — the calling skill names the exact input; ad-hoc, it is the drafted body alone — never this conversation.
 - It answers the calling skill's question — "what would you build?", or for a bug, "what's broken, and how do I reproduce it?"; ad-hoc, the question matching the inferred tier. Alongside the answer it names ambiguities in Ambiguity-block shape and any context it had to assume.
 - Fold real gaps back into the draft. One pass, not a loop.
+
+When the pass (or any self-review) works from checklist items, the items are **unit tests for the English**: each interrogates the requirements text itself — "is 'prominent display' quantified with a size or position?" — and tags what it probes (a gap, an ambiguity, a conflict, an assumption, or the section it checks). An item that starts "Verify/Test/Confirm" plus implementation behavior is testing the future code, not the body.

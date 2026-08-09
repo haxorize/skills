@@ -60,6 +60,8 @@ Use the appropriate template:
 
 **On ADO, draft the body and the acceptance criteria as two separate artifacts — the two-field split.** ADO stores them in two fields, so carve them apart here, while you're thinking about content, rather than at publish time. The outcome bullets are never a section of the body.
 
+Acceptance criteria admit only outcomes that buildable work can satisfy. A post-launch outcome metric or business KPI ("adoption doubles in Q3") is a goal for the Problem section, never a criterion — no implementer can close it.
+
 ### 8. Self-review
 
 Before showing the user, check:
