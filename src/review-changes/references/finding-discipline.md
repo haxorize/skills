@@ -16,6 +16,8 @@ Exploration and subagent fan-out **over-report** — a friction that looks real 
 
 When you dispose of a finding on a line — fix, defer, or dismiss — check that same line once for defects on the other axes before moving on: attention that arrived for one axis tends to leave without checking the others.
 
+The vet's default under uncertainty follows the **context asymmetry**. This vet reads with more context than any finder had, so a finding that does not survive the re-read dies. A vetter with *less* context than the finder — a filter judging from the diff alone, a verify stage briefed with only the claim — earns only a veto on direct counter-evidence: there, "cannot confirm" is not "wrong", because the finder may have seen context the vetter cannot.
+
 ## Intent drift is bidirectional
 
 The ADR and `DOMAIN.md` checks aren't only "does the code violate recorded intent." A tradeoff an ADR records is **by-design** — suppress it, don't re-litigate. But if the code has **drifted** from what the ADR or `DOMAIN.md` says, that drift is itself a finding worth surfacing — the doc or the code is wrong, and the team should know.
