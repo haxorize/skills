@@ -59,8 +59,8 @@ The route most work travels: **`/grill-and-record`** (or `/grill-me` with no cod
 
 ### Crossing sessions & prototyping
 
-- **`handoff`** — Fork the current conversation into a handoff document so a fresh session can pick the work up. Defaults to the OS temp dir; references durable artifacts rather than duplicating them.
-- **`prototype`** — Build a throwaway prototype to answer a design question — a runnable terminal app for state/logic questions, or several radically different UI variations toggleable from one route.
+- **`handoff`** — Fork the current conversation: into a handoff document a fresh session picks up, or straight to a background agent when the work should continue unattended. The doc defaults to the OS temp dir and references durable artifacts rather than duplicating them.
+- **`prototype`** — Build a throwaway prototype to answer a design question — a shareable single-file HTML demo for state/logic questions, or several radically different UI variations toggleable from one route.
 
 ### Learning
 
@@ -122,6 +122,7 @@ The route most work travels: **`/grill-and-record`** (or `/grill-me` with no cod
 - **Sibling repos** declared in `CLAUDE.md` under `## Sibling repos` so `to-tasks` can flag cross-repo blockers.
 - **Title prefixes** are declared in the `Issue tracker:` block. `Title prefix:` applies to Stories, Tasks, and Bugs. Features use `Feature title prefix:` if declared, falling back to `Title prefix:` if absent — allowing teams to give features a distinct prefix from the tickets below them.
 - **Work-item tags (ADO)** — the `to-*` publishers derive `System.Tags` from the drafted title's leading bracket (parsed before prefixing), unioned with an optional `Additional tags:` line and filtered by an optional `Never tag:` line in the `Issue tracker:` block; applied best-effort at creation inside the create call's existing `--fields`. `chart-course` applies the same derivation to maps and chart tickets. GitHub uses labels instead and ignores these lines.
+- **Default labels (GitHub)** — labels applied to every issue the `to-*` publishers and `chart-course` create, declared as a `Default labels:` line in the `Issue tracker:` block. Before a batch's first `gh issue create`, the label precheck in the shared `tracker-resolution.md` ensures every label about to be applied exists on the repo. ADO derives tags instead and ignores the line.
 - **Severity labels** for GitHub Bug filing are declared in `CLAUDE.md` under a `Severity labels:` block (e.g., `sev:critical`, `sev:high`, `sev:medium`, `sev:low`). `to-bug` bootstraps-on-ask if the block is missing. ADO uses the native `Microsoft.VSTS.Common.Severity` field and ignores the block.
 - **In-progress signal** for GitHub `to-tasks --reconcile` is declared in `CLAUDE.md` under an `In-progress signal:` line inside the `Issue tracker:` block (e.g., `In-progress signal: label in-progress`). Distinguishes open-and-being-worked from open-and-not-yet-started; defaults to assignee-presence when absent. ADO reads `System.State` directly and ignores the line.
 - **AC IDs** are append-only across the suite. New criteria get `max(active ∪ removed) + 1`; removed IDs are never reused. Tasks reference parent ACs by ID via `## Covers` so coverage stays mechanical.
