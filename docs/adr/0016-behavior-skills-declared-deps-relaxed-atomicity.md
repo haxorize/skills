@@ -8,7 +8,7 @@ This collides with ADR-0007, which made each skill a self-contained atomic unit 
 
 Mechanics confirmed from the Claude Code docs: there is **no hard "invoke another skill" primitive** — an orchestrator reaching a behavior ("Run the `/grilling` skill") is soft, Claude-mediated, and works only if the target is a model-invoked skill **and** installed. The symlink-per-skill model carries only a skill's own directory; a within-repo `shared/` folder does not travel. (A full plugin model *would* let a within-root shared dir resolve, since plugins cache the whole tree — but that abandons per-skill install, Matt himself duplicates rather than sharing, and prose invocation stays soft regardless. Rejected.)
 
-Crucially, this repo's own `scripts/install.sh` already links **all** of `src/*`, so for the maintainer every behavior dependency is always present. ADR-0007's strict atomicity is really a *portability promise to outside cherry-pickers*.
+This repo's own `scripts/install.sh` already links **all** of `src/*`, so for the maintainer every behavior dependency is always present. ADR-0007's strict atomicity is really a *portability promise to outside cherry-pickers*.
 
 ## Decision
 

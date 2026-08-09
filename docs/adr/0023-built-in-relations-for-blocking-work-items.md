@@ -1,6 +1,6 @@
 # Built-in relations for blocking work items
 
-Blocking dependencies between work items are recorded as ADO's built-in `Predecessor`/`Successor` link type, not as prose in the description body. `to-tasks` always materializes them — it publishes a batch in dependency order, so a blocker always exists when its dependent is created — whereas `to-story` materializes a story-map dependency edge only when **both** endpoints are already published, reading the map's stamped work-item IDs (ADR-0013) in both directions on every publish so each edge is created the instant its second endpoint lands. A cross-repo blocker stays a text annotation because no in-project work item exists to link.
+Blocking dependencies between work items are recorded as ADO's built-in `Predecessor`/`Successor` link type, not as prose in the description body. `to-tasks` always materializes them — it publishes a batch in dependency order, so a blocker always exists when its dependent is created. `to-story` materializes a story-map dependency edge only when **both** endpoints are already published: it reads the map's stamped work-item IDs (ADR-0013) in both directions on every publish, so each edge is created the instant its second endpoint lands. A cross-repo blocker stays a text annotation because no in-project work item exists to link.
 
 ## Considered options
 
