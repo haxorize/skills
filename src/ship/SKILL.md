@@ -64,7 +64,8 @@ Stage, commit, push, close the ticket — pausing where the human's judgment is 
 **With an approver, a PR carries it.** Never merge a PR the human hasn't seen.
 
 - **Link the work item.** On Azure DevOps this is an explicit relation and it is *required*, not decoration: pass `--work-items` when creating the PR. A PR that completes without it strands the work item, and no later comment repairs the link. On GitHub the link is textual — a closing keyword in the PR body.
-- **Approval is someone else's act.** Open the PR, set the reviewers (from `CLAUDE.md` where the project declares them; ask when it doesn't, and never guess a name), and **stop there**. Don't wait, poll, or nudge. Report the PR as open and awaiting approval, because that's what it is.
+- **Approval is someone else's act.** Open the PR, set the reviewers (from `CLAUDE.md` where the project declares them; ask when it doesn't, and never guess a name — on ADO, marking them *required* is a second call, below), and **stop there**. Don't wait, poll, or nudge. Report the PR as open and awaiting approval, because that's what it is.
+- **Required vs. optional reviewers (ADO).** `az repos pr create --reviewers` adds reviewers as *optional*. Promote declared reviewers to required immediately after create, before reporting the PR open: `az repos pr reviewer add --id <pr-id> --reviewers "<team>" --required` (the flag is `--required`, not `--required true` or `--is-required`). Verify with `az repos pr reviewer list` that `isRequired` is `true`.
 
 This is why the skill is **re-enterable**: run it again once approval lands and it completes the merge and closure from the state it finds. That approval routinely arrives in a different session than the one that opened the PR.
 
