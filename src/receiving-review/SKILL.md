@@ -14,10 +14,14 @@ This holds whoever produced the findings. A report from your own self-review is 
 
 1. **Read** the complete feedback without reacting.
 2. **Restate** each requirement in your own words — or ask what it means.
-3. **Verify** each claim against the codebase before agreeing: does the flagged problem actually exist? Is there a reason the current implementation looks this way (check `docs/adr/` — a behavior an ADR records as deliberate is not a bug)?
+3. **Verify** each claim against the codebase before agreeing: does the flagged problem actually exist? Is there a reason the current implementation looks this way (check `docs/adr/` — a behavior an ADR records as deliberate is not a bug)? A multi-claim comment is verified claim by claim — one false sub-claim never dismisses the thread, and a finding is never rejected because a related finding was rejected.
 4. **Evaluate** — technically sound *for this codebase*? Does the suggestion break existing behavior, or the platforms/versions this project supports?
 5. **Respond** — a restated fix, a clarifying question, or reasoned pushback.
-6. **Implement** one item at a time in priority order — blocking issues (breakage, security) → simple fixes (typos, imports) → complex fixes (logic, refactors) — testing each before starting the next; verify no regressions at the end.
+6. **Implement** one item at a time in priority order — blocking issues (breakage, security) → simple fixes (typos, imports) → complex fixes (logic, refactors) — testing each before starting the next; verify no regressions at the end. Each finding gets two separate calls: what happens to this instance (fix now, defer, or accept as-is — stated, never implied), and, for a shape you have seen before, what would prevent the next one — a recurring finding is a process change waiting to be named (if that diagnosis was itself expensive, `capturing-learnings`' capture gate may apply).
+
+## Route by what the finding indicts
+
+A verified finding is not always a code defect. Before fixing, ask which artifact it indicts: the **code** (fix it here), the **spec or work item** the code was built from (raise it against that item — patching code to satisfy a wrong spec buries the defect), or an **intent gap** only the human can resolve (escalate; no local fix is legitimate). When a spec-level defect is confirmed, code-level findings in its shadow are moot until the spec is corrected — re-verify them after; don't fix them first.
 
 ## Clarify all before implementing any
 
@@ -32,6 +36,8 @@ Never open with "You're absolutely right!", "Great point!", or any gratitude —
 Push back when a suggestion breaks existing behavior, contradicts a recorded decision, is wrong for this stack, or the reviewer lacks context the code shows. Push back with technical reasoning: cite the test or the code line, ask the specific question. Escalate to the user when the disagreement is architectural rather than local.
 
 Pushed back and turned out wrong? State the correction factually and move on ("Verified — you're correct, the API needs 13+; fixing"). No apology spiral, no defending the original pushback.
+
+The mirror rule for when you wear the reviewer's hat in a re-review round: a blocking finding is withdrawn only when the revision contains a concrete fix for the exact deficiency, or the original application of the criteria was mistaken. The author's disagreement alone is never grounds to downgrade — self-correction is allowed, capitulation is not.
 
 ## Replying on the review's own threads
 
