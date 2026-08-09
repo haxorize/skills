@@ -13,7 +13,7 @@ mkdir -p "$TARGET_DIR"
 read_requires() {
   awk '
     /^---$/ { c++; next }
-    c == 1 && /^requires:[[:space:]]/ {
+    c == 1 && /^requires:/ {
       sub(/^requires:[[:space:]]*/, "")
       gsub(/,/, " ")
       print

@@ -46,7 +46,8 @@
 #     src/ must appear as a backticked code-span (`name` or `/name`) in
 #     src/which-skill/SKILL.md. Requiring the backtick keeps incidental prose
 #     (the gerund "grilling") from satisfying the check, so the router can't
-#     silently omit a skill. Stale-routing accuracy stays editorial.
+#     silently omit a skill. Stale-routing accuracy stays editorial. README.md
+#     is held to the same coverage rule — its skill map is a second router.
 #
 # Exit code 0 if clean, 1 if any check fails. List all failures, don't bail
 # on first hit.
@@ -60,9 +61,19 @@ cd "$repo_root"
 # bash's ${#var} and grep count bytes under LC_ALL=C or an unset locale, which
 # would mis-measure the Unicode-rich (em-dash) descriptions. Force a UTF-8
 # ctype unless one is already active, so the checks match their stated contract.
+# Locale names differ per OS (bare "UTF-8" is Darwin-only; glibc wants
+# "C.UTF-8"), so probe candidates and keep the first whose charmap is UTF-8.
 case "${LC_ALL:-}${LC_CTYPE:-}" in
   *UTF-8* | *utf8* | *UTF8*) : ;;
-  *) export LC_ALL=; export LC_CTYPE="UTF-8" ;;
+  *)
+    export LC_ALL=
+    for ctype in C.UTF-8 en_US.UTF-8 UTF-8; do
+      if [ "$(LC_CTYPE=$ctype locale charmap 2>/dev/null)" = "UTF-8" ]; then
+        export LC_CTYPE="$ctype"
+        break
+      fi
+    done
+    ;;
 esac
 
 fail=0
@@ -232,6 +243,19 @@ for group in "${sibling_groups[@]}"; do
   done
 done
 
+# Sibling-group membership: any reference basename that exists under two or
+# more skills must be governed by a group above — an unlisted copy sits outside
+# the byte-identity check and drifts silently, the exact failure that check
+# exists to prevent. A deliberate variant needs a distinct name (or its own
+# group entry).
+grouped_basenames=$(printf '%s|' "${sibling_groups[@]}" | tr '|' '\n' | awk -F/ 'NF { print $NF }' | sort -u)
+while IFS= read -r base; do
+  if ! printf '%s\n' "$grouped_basenames" | grep -qxF "$base"; then
+    echo "FAIL: reference file '$base' exists in multiple skills but no sibling group covers it — add it to sibling_groups in scripts/lint-skills.sh, or rename the deliberate variant"
+    fail=1
+  fi
+done < <(find src -path '*/references/*' -type f -name '*.md' | awk -F/ '{ print $NF }' | sort | uniq -d)
+
 # Declared dependencies (ADR-0016): every name in a `requires:` line must
 # resolve to a skill that exists and is model-invoked.
 for f in src/*/SKILL.md; do
@@ -260,6 +284,19 @@ for f in src/*/SKILL.md; do
   [ "$name" = "which-skill" ] && continue
   if ! grep -qE "\`/?${name}([^a-z0-9-]|$)" "$router"; then
     echo "FAIL: $router has no backticked mention of skill '$name' — route it or list it as standalone (CLAUDE.md: 'Keep the router honest')"
+    fail=1
+  fi
+done
+
+# README roster coverage: README.md's skill map is a second router — every
+# skill must appear there as a backticked code-span, same rule as above, so an
+# added, renamed, or removed skill can't leave the README lying. Blurb accuracy
+# stays editorial.
+readme="README.md"
+for f in src/*/SKILL.md; do
+  name=${f#src/}; name=${name%/SKILL.md}
+  if ! grep -qE "\`/?${name}([^a-z0-9-]|$)" "$readme"; then
+    echo "FAIL: $readme has no backticked mention of skill '$name' — list it in the README skill map (CLAUDE.md: 'Keep the router honest')"
     fail=1
   fi
 done

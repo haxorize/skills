@@ -29,7 +29,7 @@ The `to-feature`/`to-story`/`to-tasks`/`to-bug` family is structurally independe
 
 ## Keep the router honest
 
-[`src/which-skill/SKILL.md`](src/which-skill/SKILL.md) is the router that maps every skill and how they relate. Whenever you add, rename, or remove a skill, or change how one fits the flows, update the router in the same change — a new skill it never mentions, or a stale one it still routes to, is a router that lies. `scripts/lint-skills.sh` catches missing mentions mechanically; routing accuracy stays editorial.
+[`src/which-skill/SKILL.md`](src/which-skill/SKILL.md) is the router that maps every skill and how they relate. Whenever you add, rename, or remove a skill, or change how one fits the flows, update the router in the same change — a new skill it never mentions, or a stale one it still routes to, is a router that lies. `README.md`'s skill map is a second router under the same rule. `scripts/lint-skills.sh` catches missing mentions mechanically in both; routing and blurb accuracy stay editorial.
 
 ## Commit order
 
