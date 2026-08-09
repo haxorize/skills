@@ -18,3 +18,7 @@ This is the doc-aware variant of `grill-me`. Use the vanilla `grill-me` when no 
 Use [references/adr-format.md](references/adr-format.md) as the single source of truth for the inline write — path, numbering, the amend-or-write-new search, and the template all live there. The standalone `adr` skill stays reserved for outside-grill use — a deliberate single record after a code review, mid-implementation, and the like — and follows the same format doc, so inline and standalone records land in one shared sequence.
 
 The standalone path's other rules bind inline as well. Before writing, check for an **owning record** — the amend-or-write-new rule in the format doc decides whether this is a new file or a dated amendment; run the search before the write, not after a duplicate exists. Write the rationale prose per the `/writing-for-humans` behavior — load it at the first write if it isn't already live.
+
+## Answers overwrite, they don't accumulate
+
+When a round's answer invalidates something an artifact under revision already says — a plan paragraph, a `DOMAIN.md` definition, a draft body — **replace** the invalidated statement where it stands; never append the correction beside it and leave the contradiction for a later reader. The one deliberate exception is the ADR amendment log, which appends dated corrections without rewriting the original — that append-only shape is the format doc's rule, not a license elsewhere.

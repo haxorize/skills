@@ -22,3 +22,5 @@ Turn something the user can't answer alone into a **discovery questionnaire** â€
 ## Pairing with chart-course
 
 When a `chart-course` decision ticket is blocked on knowledge someone outside the effort holds, an **Errand** ticket can resolve through this skill: the questionnaire is the checklist handed to the human, and the filled-in answers become the Errand's resolution, linked as an asset.
+
+When a filled-in questionnaire comes back, check every question got an answer before treating the send as resolved â€” follow up on just the missed ones, never silently default them.
