@@ -11,3 +11,7 @@ On GitHub, `to-story`, `to-tasks`, and `to-bug` add each newly published issue a
 ## Consequences
 
 The two parent representations are deliberately redundant — do not "clean up" the `Parent: #N` line in favor of the native link, and do not tighten link failure into a publish failure. The linking mechanics (database-ID lookup, failure handling) live once in the `github-sub-issues.md` sibling reference shared byte-identically by the three publishing skills.
+
+## Amendments
+
+- **2026-08-09** — The sibling group has a fourth member: `chart-course` carries its own byte-identical `github-sub-issues.md` copy, adopted when [ADR-0028](0028-chart-course-decision-ticket-maps.md) made GitHub Decision tickets native sub-issues of their map. "The three publishing skills" above reads as the group's membership at authoring time; `scripts/lint-skills.sh` guards all four copies.

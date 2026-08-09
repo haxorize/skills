@@ -7,25 +7,25 @@ requires: tdd, feedback-loops, adr, diagnosing-bugs, receiving-review
 
 # Implement
 
-Drive the build of **one Vertical slice** — the slice `from-ticket` just loaded, or a single-slice Story. One Task = one Vertical slice = one commit; build increments *inside* the slice are **behaviors** (the first is the **Tracer bullet**), never sub-slices.
+Drive the build of **one Vertical slice** — the slice `from-ticket` just loaded, or a single-slice Story. One Task = one Vertical slice = one commit = one session; build increments *inside* the slice are **behaviors** (the first is the **Tracer bullet**), never sub-slices.
 
 ## Before building
 
-1. **Confirm one slice is loaded.** Expect a Task, or a Story small enough to be a single slice. If a **Story with child Tasks** is loaded, stop: a Story is many slices. Say so and tell the user to load each Task with `/from-ticket` (one Task = one commit = one session). Build only when the loaded unit is a single slice.
+1. **Confirm one slice is loaded.** Expect a Task, or a Story small enough to be a single slice. If a **Story with child Tasks** is loaded, stop: a Story is many slices. Say so and tell the user to load each Task with `/from-ticket`. Build only when the loaded unit is a single slice.
 2. **Restate the slice as a vertical cut.** Name the end-to-end behavior the slice delivers across the layers it touches — not a horizontal "all the data-layer work" chunk. The full vertical-slicing discipline (and the horizontal anti-pattern) lives in `tdd`; hold the line here.
 
 ## Pick the build path
 
 Decide how the slice is built, and say which path you picked and why:
 
-- **Testable slice** → run the `/tdd` skill: Tracer bullet, then RED → GREEN per behavior, then refactor (if you don't see a `Launching skill: tdd` line, stop and load it). Use this whenever the slice's behaviors warrant tests (logic, endpoints, data flow).
+- **Testable slice** → run the `/tdd` skill (if you don't see a `Launching skill: tdd` line, stop and load it). Use this whenever the slice's behaviors warrant tests (logic, endpoints, data flow).
 - **Non-testable slice** → build directly, no test-first. Use this for docs, scripts, config, and glue — work with no meaningful test seam.
 
 When it's genuinely ambiguous (some testable behavior, some glue), ask the user rather than guessing.
 
 ## Build
 
-- **Testable:** hand the slice to `tdd` and let it run its cycle. `tdd` runs `/simplify` in its refactor step.
+- **Testable:** hand the slice to `tdd` and let it run its cycle — the refactor beat is `tdd`'s job there.
 - **Non-testable:** build the change directly, then do a cleanup pass — `/simplify` over what you wrote, applying what it finds. This is the direct path's refactor beat.
 
 If an **unplanned failure** turns up mid-build that you can't quickly explain — a red that isn't the test you just wrote, behavior that contradicts the plan — stop guessing and run the `/diagnosing-bugs` skill before continuing (if you don't see a `Launching skill: diagnosing-bugs` line, load it). Don't fold an unexplained red into the slice's normal red/green rhythm; it needs its own tight feedback loop first.
@@ -36,9 +36,7 @@ Out-of-scope observations made mid-slice — a smell, a missing test, a refactor
 
 ## Close the loop
 
-Run the `/feedback-loops` skill **once**, after the slice's behaviors are built and refactored — if you don't see a `Launching skill: feedback-loops` line, stop and load it. It is the mechanical finalize. It does not simplify (already done) and does not review.
-
-`tdd` also nudges `feedback-loops` at the end of its own cycle, so a testable slice may have run it; running it once more here is cheap and idempotent.
+Run the `/feedback-loops` skill when the slice's behaviors are built and refactored — if you don't see a `Launching skill: feedback-loops` line, stop and load it. It is the mechanical finalize, and this is the slice's one run: when `tdd` runs under `implement`, it defers the close-the-loop pass here.
 
 ## Record a load-bearing decision
 

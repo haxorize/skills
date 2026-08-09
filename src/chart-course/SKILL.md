@@ -17,15 +17,17 @@ Each ticket resolves a decision; the Chart is done when nothing is left to decid
 
 ## The Chart
 
-One work item is the map — ADO: a Feature; GitHub: an issue labeled `chart:map`. The Chart is a **discovery** Feature — in SAFe terms, enabler exploration — and is never the implementation Feature it drives: the Chart records the route walked (decisions, dead ends, out-of-scope rulings); the implementation work its destination produces is a separate artifact (see Closing the chart). Both map forms carry `Chart-type: map` in the body. **The body line is the source of truth for typing everywhere**; GitHub `chart:*` labels are an additive projection, applied best-effort (failure handling: [references/chart-tracker-ops.md](references/chart-tracker-ops.md)). ADO carries no typing projection — the domain `System.Tags` its work items get at create ([references/work-item-tags.md](references/work-item-tags.md)) are unrelated to typing.
+One work item is the map — ADO: a Feature; GitHub: an issue labeled `chart:map`. The Chart is a **discovery** Feature — in SAFe terms, enabler exploration — and is never the implementation Feature it drives: the Chart records the route walked (decisions, dead ends, out-of-scope rulings); the implementation work its destination produces is a separate artifact (see Closing the chart).
+
+Both map forms carry `Chart-type: map` in the body, and **the body line is the source of truth for typing everywhere**. GitHub `chart:*` labels are an additive projection, applied best-effort (failure handling: [references/chart-tracker-ops.md](references/chart-tracker-ops.md)). ADO carries no typing projection — the domain `System.Tags` its work items get at create ([references/work-item-tags.md](references/work-item-tags.md)) are unrelated to typing.
 
 The map is an **index**, not a store: a decision lives in exactly one place — its ticket — so the map never restates it, only gists it and links. Body templates: [references/chart-format.md](references/chart-format.md).
 
 ## Decision tickets
 
-Each ticket is a **Decision ticket** — the Charting sub-type, a child of the map. ADO: a User Story under the map Feature; GitHub: a native sub-issue (see [references/github-sub-issues.md](references/github-sub-issues.md)). The body leads with `## Question`, carries its `Chart-type:` line, and is sized to one agent session.
+Each ticket is a **Decision ticket** — the Charting sub-type, a child of the map. ADO: a User Story under the map Feature; GitHub: a native sub-issue (see [references/github-sub-issues.md](references/github-sub-issues.md)). The body leads with `## Question`, carries its `Chart-type:` line, and is sized to one agent session. Decision-ticket bodies follow chart-format, not the `work-item-shape` behavior's goal/AC rules — a Chart ticket is a question, not a deliverable.
 
-- **Title marker (ADO):** bake `Chart: ` into the drafted title *before* applying the tracker block's `Title prefix:` — yielding `[App] Chart: <question>` — so nobody scanning a board mistakes a question for a build-ready Story. On GitHub the labels carry this; skip the marker.
+- **Title marker (ADO):** every drafted title bakes in `Chart: ` so nobody scanning a board mistakes a question for a build-ready Story — mechanics in [references/chart-format.md](references/chart-format.md). On GitHub the labels carry this; skip the marker.
 - **Claim by assignment.** Before any work, assign the ticket to whoever is driving it. Assignment *is* the claim: an open, unassigned ticket is unclaimed, and concurrent sessions skip claimed ones.
 - **Blocking** uses the tracker's native dependency relations, so the frontier renders in the tracker's own UI. The **frontier** is the open, unblocked, unclaimed tickets — the edge of the known.
 
@@ -37,7 +39,7 @@ Every ticket is either **HITL** — worked *with* a human who speaks for themsel
 
 - **Grilling** (HITL, the default): conversation via the `grilling` and `domain-modeling` skills — facts looked up, every decision put to the human.
 - **Prototype** (HITL): raise the discussion's fidelity with a cheap, rough, concrete artifact to react to, via `/prototype`; link it from the ticket as an asset.
-- **Research** (AFK): surface a fact a decision waits on — a subagent sweep over local resources, or `deep-research` for external questions. Findings land as the ticket's resolution comment; anything long-form is linked as an asset. The one type that resolves in parallel with other work.
+- **Research** (AFK): surface a fact a decision waits on — a subagent sweep over local resources, or a web-research subagent for external questions. Findings land as the ticket's resolution comment; anything long-form is linked as an asset. The one type that resolves in parallel with other work.
 - **Errand** (HITL or AFK): manual work that must happen *before* a decision can be made — provisioning access, signing up for a service, moving data so its shape can be seen. It *does* rather than decides, and earns its place only by unblocking a decision — never by delivering the destination. The agent drives what it can (AFK); otherwise it hands the human a precise checklist (HITL). The resolution records what was done and the facts later tickets depend on.
 
 If the team speaks agile, **research and prototype tickets are spikes** — use the word freely in team-facing conversation; it is not the canonical term (grilling and errand tickets aren't spikes).
@@ -77,7 +79,7 @@ User invokes with the map (URL or id); a ticket is optional — without one, you
 2. **Choose the ticket.** The named one, else the first frontier ticket in order. **Claim it** before any work.
 3. **Resolve it** — zoom as needed: fetch related or closed tickets on demand; invoke the skills the map's Notes name. Default is a grilling ticket: run the `/grilling` and `/domain-modeling` skills (same load gate as charting step 1). A knowledge gap that surfaces mid-resolution gets an inline research subagent, its findings folded into the decision in hand — never a new research ticket, which buys a session boundary nothing needs. Research tickets are for gaps already visible at charting.
 4. **Record the resolution:** post the answer as a resolution comment, close the ticket, and append a one-line gist to the map's Decisions so far.
-5. **Update the map:** graduate newly-specifiable fog into tickets (create, then wire); rule mis-scoped tickets out of scope rather than resolving them; update or delete tickets the decision invalidated.
+5. **Update the map:** graduate newly-specifiable fog into tickets (create, then wire); rule mis-scoped tickets out of scope rather than resolving them; update or close (with a one-line invalidation comment) tickets the decision invalidated.
 
 ## Closing the chart
 

@@ -20,7 +20,7 @@ If the target must be started from the source checkout, have the user start it �
 
 ## Workflow
 
-1. **Parse the contract** into user tasks, expected observable behavior, anti-cheat probes, and required evidence. Don't start until every user task and every anti-cheat probe has an expected observable result and an evidence type — the contract template's completion criterion; a user-supplied contract missing these gets them added before the run.
+1. **Parse the contract** into user tasks, expected observable behavior, anti-cheat probes, and required evidence. Don't start until every user task and every anti-cheat probe has an expected observable result and an evidence type; when a user-supplied contract is missing any, add them yourself before the run.
 2. **Prepare runtime access** — target URL, CLI command, API endpoint, fixture data, artifact path. Credentials come through the environment or the user's secret tooling; never copy a credential value into notes, output, or evidence.
 3. **Exercise each user task** as a real user or operator would — through the front door, in the order a person would take.
 4. **Run the anti-cheat probes**: vary fixture or input data and confirm the output follows it; refresh, retry, or reopen and confirm the promised persistence or reset; feed empty, invalid, and boundary inputs and confirm the promised handling; confirm buttons and commands perform real work rather than only displaying success text.

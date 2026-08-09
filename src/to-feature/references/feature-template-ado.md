@@ -1,6 +1,6 @@
 # Feature template — Azure DevOps
 
-Use this when publishing a Feature work item to Azure DevOps via `az boards work-item create --type Feature`. Populate the structured fields via the corresponding flags.
+Use this when publishing a Feature work item to Azure DevOps via `az boards work-item create --type Feature`.
 
 ## Field mapping
 
@@ -118,7 +118,7 @@ az boards work-item create \
   --iteration "$ITERATION"
 ```
 
-`$TAGS` is the derived tag set — see [work-item-tags.md](work-item-tags.md); omit the `System.Tags` pair when no tags derive.
+`$TAGS` is the derived tag set — see [work-item-tags.md](work-item-tags.md).
 
 Or, if `pandoc` is not available, a Python one-liner:
 

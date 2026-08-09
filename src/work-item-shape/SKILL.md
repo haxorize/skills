@@ -6,7 +6,7 @@ requires: writing-for-humans
 
 # Work-Item Shape
 
-This behavior owns what a good work-item body *is* — any tier (Feature, Story, Task, Bug, plain issue), any tracker. The `to-*` publishers own how one enters a tracker: templates, parent reconciliation, tags, update modes. When both apply, shape here, publish there.
+This behavior owns what a good work-item body *is* — any tier (Feature, Story, Task, Bug, plain issue), any tracker. The `to-*` publishers own how one enters a tracker: templates, parent reconciliation, tags, update modes. When both apply, shape here, publish there. One carve-out: a body carrying a `Chart-type:` line is a `chart-course` decision ticket — a question, not a deliverable — and follows chart-format, not this behavior's goal/AC rules.
 
 ## Routing gate — before drafting anything
 
@@ -83,5 +83,5 @@ Never resolve source ambiguity silently. Emit each find as an **Ambiguity block*
 Self-review can't catch author blindness — after drafting, you see what you meant, not what you wrote. Before an item publishes, send it through a reader with none:
 
 - Spawn one fresh-context subagent — the cold reader. It gets only what a cold reader of the published artifact would see — the calling skill names the exact input; ad-hoc, it is the drafted body alone — never this conversation.
-- It answers the calling skill's question — "what would you build?", or for a bug, "what's broken, and how do I reproduce it?"; ad-hoc, the question matching the inferred tier — naming ambiguities in Ambiguity-block shape and context it had to assume.
+- It answers the calling skill's question — "what would you build?", or for a bug, "what's broken, and how do I reproduce it?"; ad-hoc, the question matching the inferred tier. Alongside the answer it names ambiguities in Ambiguity-block shape and any context it had to assume.
 - Fold real gaps back into the draft. One pass, not a loop.

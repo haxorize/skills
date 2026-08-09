@@ -9,7 +9,7 @@ requires: writing-for-humans, work-item-shape
 
 No interviewing — this is a synthesis-only skill. Run `/grill-me` or `/grill-and-record` first if context is thin.
 
-`to-feature` is for **broad scope** — work that decomposes into multiple stories. The default for single-feature work is `to-story`. Use `to-feature` only when phrasings explicitly invoke PRD-shaped or multi-story scope.
+`to-feature` is for **broad scope** — work that decomposes into multiple stories. The default for single-feature work is `to-story`: if the scope in front of you fits one story, say so and offer `/to-story` instead of publishing a thin Feature.
 
 ## Publication constraints
 
@@ -29,6 +29,8 @@ Title prefix: if the tracker block declares `Feature title prefix:`, use it; oth
 
 - **`Hierarchy: required`** (default for ADO): if `--parent <epic-id>` is provided, use it; otherwise interactively prompt for the Epic ID. Do not silently default or skip — fail clearly if the user has no parent to provide.
 - **`Hierarchy: optional`** (default for GitHub): parent linking is optional; only use `--parent` if provided. Do not prompt.
+
+Hierarchy also gates the story map: the embed (and `to-story`'s append-on-publish) happens only under `Hierarchy: required` — ADO default; GitHub projects can opt in via CLAUDE.md. Without it, the GitHub template's `Stories underneath` checklist stands in for the map.
 
 ### 3. Explore the codebase
 
@@ -69,7 +71,7 @@ Before showing the user, check:
 - Domain language matches `DOMAIN.md`
 - AC IDs: append-only — no reused IDs across active and `## Removed acceptance criteria`; gaps from removals preserved (no renumbering)
 - On ADO: the **two-field split** holds (step 7) — outcome bullets are their own artifact
-- Story map: every active Feature AC ID appears in at least one Story's `Covers:` line; no `Covers:` line references a removed AC ID; naming-table dedup; dependency acyclicity (skip if no story map — flat mode or deferred decomposition)
+- Story map: every active Feature AC ID appears in at least one Story's `Covers:` line; no `Covers:` line references a removed AC ID; naming-table dedup; dependency acyclicity (skip if no story map — `Hierarchy: optional` without the story-map opt-in, or deferred decomposition)
 
 Then run the **Cold-reader pass** from the `/work-item-shape` behavior: the cold reader gets only the drafted body and answers "what would you build?".
 
@@ -80,13 +82,11 @@ Iterate until approved.
 ### 10. Publish via tracker dispatch
 
 - **GitHub:** `gh issue create --title "..." --body-file <draft>` with default labels from CLAUDE.md. Parent linking via `Tracked-by:` line or template `Parent: #N` reference if `--parent` was provided. **Before creating the issue,** ensure every label in CLAUDE.md's `Default labels:` exists on the repo: `gh label list --json name --jq '.[].name'` once, then `gh label create <name>` for any missing.
-- **ADO:** `az boards work-item create --type Feature --title "..." --description "<html>" --fields "Microsoft.VSTS.Common.AcceptanceCriteria=<html>"` with project / area path / iteration / state from CLAUDE.md — the **two-field split**, body into `--description` and outcome bullets into `--fields`. Both expect HTML: convert each artifact on its own. The body's final section is `## Story Decomposition`; inside it, HTML markers (`<!-- BEGIN STORY MAP -->` / `<!-- END STORY MAP -->`) fence an append-only region — see [feature-template-ado.md](references/feature-template-ado.md) for the snapshot separator and emergent-Story sentinel inside it. If decomposition was deferred, the section body is the single line `Story Decomposition: deferred at Feature creation.` (no markers). Parent linking via `az boards work-item relation add --id <feature-id> --relation-type Parent --target-id <epic-id>`. Merge `System.Tags` into the create call's `--fields` — see [references/work-item-tags.md](references/work-item-tags.md).
+- **ADO:** publish with the create call in [feature-template-ado.md](references/feature-template-ado.md)'s "Markdown → HTML conversion" section — the **two-field split**, body into the description and outcome bullets into the AC field. Both fields expect HTML: convert each artifact on its own. The body's final section is `## Story Decomposition`; inside it, HTML markers (`<!-- BEGIN STORY MAP -->` / `<!-- END STORY MAP -->`) fence an append-only region — see the template for the snapshot separator and emergent-Story sentinel inside it. If decomposition was deferred, the section body is the single line `Story Decomposition: deferred at Feature creation.` (no markers). Link the parent per the template's field-mapping row. Tag derivation (`$TAGS` in the create call): see [references/work-item-tags.md](references/work-item-tags.md).
 
 If a required CLAUDE.md field is missing, fail fast with a clear "add this to CLAUDE.md" message. If the create call fails with an auth/permission error, fall back to giving the user the drafted body to paste manually — don't loop on auth. Apply the **transport safety** rules in [references/tracker-resolution.md](references/tracker-resolution.md) to every create and retry.
 
 **Read the AC field back before reporting the Feature published (ADO).** `az boards work-item show <feature-id> --output json --query 'fields."Microsoft.VSTS.Common.AcceptanceCriteria"'` returns the stored value. Empty or null means the criteria landed in the body instead of the field — patch it with `az boards work-item update --id <feature-id> --fields "Microsoft.VSTS.Common.AcceptanceCriteria=$(cat acceptance.html)"` and strip them from the description. Buried criteria aren't queryable, and child Stories' `Covers:` lines then point at IDs no field holds.
-
-The story-map embed (and the corresponding append-on-publish in `to-story` step 10) is gated on `Hierarchy: required` — ADO default. GitHub projects can opt in via CLAUDE.md.
 
 ## Update mode
 
@@ -103,7 +103,7 @@ Read the naming-drift queue (see [references/naming-drift-queue.md](references/n
 
 ### Patch scope (invariant)
 
-Only the text between `<!-- BEGIN STORY MAP -->` and `<!-- END STORY MAP -->` is replaced. The AC field and every other description body section (Problem, Goals, Non-goals, Approach, Constraints, Removed acceptance criteria) are preserved verbatim. AC IDs and the `## Removed acceptance criteria` history are therefore unaffected by `--update`.
+Only the text between `<!-- BEGIN STORY MAP -->` and `<!-- END STORY MAP -->` is replaced. A deferred Feature has no markers — there, replace the single sentinel line `Story Decomposition: deferred at Feature creation.` with a full marker-fenced story map; everything outside the sentinel is preserved the same way. The AC field and every other description body section (Problem, Goals, Non-goals, Approach, Constraints, Removed acceptance criteria) are preserved verbatim. AC IDs and the `## Removed acceptance criteria` history are therefore unaffected by `--update`.
 
 The snapshot section above the `---` separator is one-shot replaced. Emergent-Story entries that `to-story` appended below the separator are carried forward into the new snapshot text — `--update` re-snapshots the plan without losing the record of what shipped.
 
@@ -119,7 +119,3 @@ Re-run the story-map checks from step 8 (every active Feature AC ID covered by a
   ```
   (description-only; do not pass `Microsoft.VSTS.Common.AcceptanceCriteria`). **Never pass the full fetched description through a Markdown → HTML converter** — it is already HTML and re-converting will double-encode any `<code>`, `<hr>`, and other HTML tags already present.
 - **GitHub:** `gh issue edit <feature-number> --body-file <draft>`.
-
-## Naming-drift queue
-
-Read on `--update` cold-start; this skill does not write to the queue (drift surfaces during Story or Task publishes, not Feature re-snapshots). Definition, storage, and entry format: see [references/naming-drift-queue.md](references/naming-drift-queue.md).

@@ -5,13 +5,13 @@ description: Writing conventions for any document that steers agent process — 
 
 # Writing for Agents
 
-A document an agent consumes exists to wrangle determinism out of a stochastic system. The goal is **predictability** — the agent taking the same *process* every run, not producing the same output. The packaging differs — a skill, a `CLAUDE.md`, a reference reached by a pointer — the writing does not. The boundary with `writing-for-humans` is the document's *function*, not its reader: documents obeyed as process live here; prose a reader understands (ADR rationale, tickets, summaries) lives there — and leading words are this side's device. The deep vocabulary (leading words, context pointers, completion criteria, branches), the failure-mode taxonomy, and the form-to-failure wording table live in [references/predictability.md](references/predictability.md).
+A document an agent consumes exists to wrangle determinism out of a stochastic system. The goal is **predictability** — the agent taking the same *process* every run, not producing the same output. The packaging differs — a skill, a `CLAUDE.md`, a reference reached by a pointer — the writing does not. The boundary with `writing-for-humans` is the document's *function*, not its reader: documents obeyed as process live here; prose a reader understands (ADR rationale, tickets, summaries) lives there. The deep vocabulary (leading words, context pointers, completion criteria, branches), the failure-mode taxonomy, and the form-to-failure wording table live in [references/predictability.md](references/predictability.md).
 
 ## Information hierarchy & leading words
 
 Rank content by how immediately the agent needs it: **in-file step** → **in-file reference** → **external reference** (the ladder in the reference). **Progressive disclosure** moves reference down into a linked file so the top of the document stays legible; let **branching** decide what to disclose (inline what every branch needs). End each step on a **completion criterion** that's checkable and, where it matters, exhaustive — a vague bound invites premature completion.
 
-Hunt for **leading words** — a compact pretrained concept (*tracer bullet*, *seam*, *sweep*) repeated as a token anchors a region of behavior in the fewest tokens. A triad spelled out at three sites is begging to collapse into one.
+Hunt for **leading words** — a compact pretrained concept (*tracer bullet*, *seam*, *sweep*) repeated as a token anchors a region of behavior in the fewest tokens. A triad spelled out at three sites is begging to collapse into one. Leading words are an agent-side device — `writing-for-humans` prose does without them.
 
 ## Rule placement
 

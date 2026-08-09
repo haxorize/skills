@@ -4,7 +4,7 @@ The shared discipline for read-only review skills — `review-changes` (a diff) 
 
 ## Vet before presenting
 
-Exploration and subagent fan-out **over-report** — a friction that looks real from a distance often dissolves on a close read. Before surfacing anything, **re-read every location you'd cite** and confirm the finding holds. Drop, correct, or downgrade three classes:
+Exploration and subagent fan-out **over-report** — a friction that looks real from a distance often dissolves on a close read. Before surfacing anything, **re-read every location you'd cite** and confirm the finding holds. Drop, correct, or downgrade these classes:
 
 - **By-design reported as a bug** — including a tradeoff an ADR records (settled, not a finding).
 - **Mis-attributed evidence** — a real concern pinned to the wrong file/line.

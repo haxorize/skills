@@ -2,14 +2,14 @@
 name: to-tasks
 description: Break a parent User Story into child Task work items on the project's issue tracker. Tracer-bullet style — each Task is a thin vertical slice through every integration layer. ADO — creates Tasks under a User Story. GitHub — creates task-shaped issues under a story-shaped parent issue.
 disable-model-invocation: true
-requires: writing-for-humans, work-item-shape
+requires: writing-for-humans, work-item-shape, adr
 ---
 
 # To Tasks
 
 Synthesis-only, no interviewing — run `/grill-and-record` upstream if context is thin.
 
-Tasks are always children of a User Story — never directly under a Feature. To break a Feature into stories, use `to-story` (run repeatedly under the same Feature parent).
+Tasks are always children of a User Story — never directly under a Feature. To break a Feature into stories, run `/to-story` repeatedly under the same Feature parent.
 
 ## Publication constraints
 
@@ -50,21 +50,21 @@ Solo repos (no declaration) get vanilla behavior — no cross-repo annotations. 
 
 ### 4. Explore codebase and apply ADR gate
 
-If the work isn't already grounded in the conversation, explore the touched modules. Identify durable architectural decisions — for any meeting the ADR gate (hard to reverse + surprising + real trade-off), record via the standalone `adr` skill before slicing.
+If the work isn't already grounded in the conversation, explore the touched modules. Identify durable architectural decisions — for any meeting the ADR gate (hard to reverse + surprising + real trade-off), record via the standalone `/adr` skill before slicing.
 
 ### 5. Draft vertical slices
 
-Each slice is one Task. Prefer many thin Tasks over few thick ones. An "and" in a Task title is a split tell — it usually names two slices.
+Each slice is one Task. Prefer many thin Tasks over few thick ones.
 
 **Admission test:** publish only Tasks whose slice you can state precisely *now* (blocked-but-sharp is fine); scope that hasn't sharpened stays as prose in the parent Story until it graduates — never a placeholder Task.
 
 **Wide refactors slice by expand–contract, not tracer bullets.** Watch for a wide refactor hiding in the Story — one mechanical change whose blast radius fans across the codebase, where a single edit breaks every call site at once so no slice can land green. Sequence it instead: an **expand** Task adds the new form beside the old (nothing breaks); **migrate** Tasks move call sites over in batches sized by blast radius (per package, per directory), each blocked by the expand, CI green throughout because the old form still exists; a final **contract** Task deletes the old form once no caller remains, blocked by every migrate batch. If even the batches can't stay green alone, keep the sequence but let them share an integration branch that all block a final integrate-and-verify Task — green is promised only there.
 
-**Tests belong in the same Task as the behavior they verify.** Never file a test as its own Task — that is a horizontal cut, not a vertical slice. Each Task must be independently handable to `/tdd`. If writing a Task's tests would require another Task's implementation to exist first, merge them into one Task.
+**Tests belong in the same Task as the behavior they verify.** Never file a test as its own Task — that is a horizontal cut, not a vertical slice. Each Task must be independently handable to `tdd`. If writing a Task's tests would require another Task's implementation to exist first, merge them into one Task.
 
 For each Task:
 
-- **Mark HITL or AFK** per the `/work-item-shape` readiness gate — AFK only when all four predicates hold, and an AFK Task also carries its stop condition; HITL names what remains (UX judgment, ambiguous behavior, security-sensitive review).
+- **Mark HITL or AFK** per the `/work-item-shape` readiness gate — the template's `## Mode` section carries the format and the AFK stop-condition line.
 - **Flag blockers.** For a sibling-repo dependency, read the `Sibling repos` declaration and mark the Task `Blocked by: ../sibling-repo — contract change required`. For a dependency on another Task in this breakdown, note which Task blocks it; step 8 records it on the tracker.
 - **Name consistently across Tasks.** Route paths, query keys, model names, search-param keys must be identical in every Task that touches them.
 
@@ -93,7 +93,11 @@ For each Task, use the appropriate template:
 - ADO: [references/task-template-ado.md](references/task-template-ado.md)
 
 - **GitHub:** `gh issue create --title "..." --body-file <draft>` with default labels from CLAUDE.md. Reference the parent via template `Parent: #N` line. **Before creating the first Task in a publishing batch,** ensure every label in CLAUDE.md's `Default labels:` exists on the repo: `gh label list --json name --jq '.[].name'` once, then `gh label create <name>` for any missing. When a parent Story was resolved, add each new issue as a native sub-issue of it after create — see [references/github-sub-issues.md](references/github-sub-issues.md).
-- **ADO:** `az boards work-item create --type "Task" --title "..." --description "<html>"` with project / area path / iteration / state from CLAUDE.md. The description field expects HTML — convert the Markdown task draft before passing. Link each Task to the parent Story via `az boards work-item relation add --id <task-id> --relation-type Parent --target-id <story-id>`. Merge `System.Tags` into the create call's `--fields` — see [references/work-item-tags.md](references/work-item-tags.md). For each in-project blocker, materialize the dependency as a built-in Predecessor relation: `az boards work-item relation add --id <task-id> --relation-type Predecessor --target-id <blocker-id>`. On a first publish the just-created Task has no relations, so add directly; only on a re-run or `--reconcile` over an existing Task fetch `az boards work-item show <task-id> --output json --expand relations` first and skip if a Predecessor to that blocker already exists, so the add doesn't error on a duplicate. On failure: permission denied → surface immediately; other error → surface with both work-item IDs for manual linking. Tasks have only a `System.Description` field — no Acceptance Criteria.
+- **ADO:** `az boards work-item create --type "Task" --title "..." --description "<html>"` with project / area path / iteration / state from CLAUDE.md — the description field expects HTML, so convert the Markdown draft before passing. Then, per created Task:
+  - **Parent:** `az boards work-item relation add --id <task-id> --relation-type Parent --target-id <story-id>`.
+  - **Tags:** merge `System.Tags` into the create call's `--fields` — see [references/work-item-tags.md](references/work-item-tags.md).
+  - **Blockers:** materialize each in-project blocker as a built-in Predecessor relation: `az boards work-item relation add --id <task-id> --relation-type Predecessor --target-id <blocker-id>`. A just-created Task has no relations — add directly. Only when the Task already existed (a re-run or `--reconcile`) fetch `az boards work-item show <task-id> --output json --expand relations` first and skip the add if a Predecessor to that blocker is already present.
+  - **On relation failure:** permission denied — surface immediately; any other error — surface with both work-item IDs for manual linking.
 
 If a required CLAUDE.md field is missing, fail fast with a clear "add this to CLAUDE.md" message. If a create call fails with an auth/permission error, fall back to giving the user the drafted Task bodies to paste manually — don't loop on auth. Apply the **transport safety** rules in [references/tracker-resolution.md](references/tracker-resolution.md) to every create and retry.
 

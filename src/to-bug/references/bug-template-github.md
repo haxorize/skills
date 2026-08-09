@@ -58,7 +58,7 @@ Parent: #<issue-number>
 Two label categories apply:
 
 - **Type:** `bug` — applied unconditionally by `to-bug` on GitHub.
-- **Severity:** one of the labels declared in CLAUDE.md's `Severity labels:` block (e.g., `sev:critical`, `sev:high`, `sev:medium`, `sev:low`). The skill prompts to pick one if the conversation hasn't already pinned severity.
+- **Severity:** one of the labels declared in CLAUDE.md's `Severity labels:` block (e.g., `sev:critical`, `sev:high`, `sev:medium`, `sev:low`).
 
 If a `Severity labels:` block is missing, `to-bug` bootstraps it on ask — see SKILL step 4 (Resolve severity) for the procedure.
 
@@ -73,5 +73,6 @@ Teams override these by declaring `## Severity definitions` in CLAUDE.md alongsi
 
 ## Notes
 
-- Each severity label must exist on the repo before `gh issue create` runs. `to-bug` reconciles missing labels via `gh label create` once per repo per label, identical to the default-label flow in `to-story` / `to-tasks`.- Bugs do not produce child Task issues. The fix is the slice; if more structure is needed, that's a Story.
+- Every label applied must already exist on the repo — SKILL step 9 reconciles missing ones before `gh issue create`.
+- Bugs do not produce child Task issues. The fix is the slice; if more structure is needed, that's a Story.
 - `from-ticket <issue-number>` recognizes a `bug`-labeled issue as a Bug and loads the Bug-shaped context.

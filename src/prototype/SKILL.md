@@ -20,8 +20,8 @@ If the question is genuinely ambiguous and the user isn't reachable, default to 
 
 ## Rules that apply to both
 
-1. **Throwaway from day one, and clearly marked as such.** Locate the prototype code next to the module or page it's prototyping for, but name it so a casual reader can see it's a prototype, not production. For throwaway UI routes, obey whatever routing convention the project already uses; don't invent a new top-level structure.
-2. **One step to run.** The logic demo is a file you double-click; a UI prototype runs on whatever the project's existing task runner supports — `pnpm <name>`, `python <path>`, `bun <path>`, etc.
+1. **Throwaway from day one, and clearly marked as such.** Locate the prototype code next to the module or page it's prototyping for, but name it so a casual reader can see it's a prototype, not production.
+2. **One step to run.** The logic demo is a file you double-click. A UI prototype adds no run step of its own — it appears under the command the project already uses to run the app (`pnpm dev`, `python manage.py runserver`, whatever the project's convention is), with no extra server, install, or build step.
 3. **No persistence by default.** State lives in memory. Persistence is the thing the prototype is _checking_, not something it should depend on. If the question explicitly involves a database, hit a scratch DB or a local file with a clear "PROTOTYPE — wipe me" name.
 4. **Skip the polish.** No tests, no error handling beyond what makes the prototype _runnable_, no abstractions.
 5. **Surface the state.** After every action (logic) or on every variant switch (UI), print or render the full relevant state so the user can see what changed.
@@ -36,7 +36,7 @@ For the prototype: with no tests and no maintenance story it doesn't belong on t
 For the answer, this is a natural delegation boundary — delegate rather than inline:
 
 - If the answer settled a **load-bearing decision** — hard to reverse, surprising without context, the result of a real trade-off — offer to record it via `adr`. The prototype *is* the considered-options exploration; synthesize the ADR from what it proved.
-- If the prototype surfaced or sharpened a **domain concept** — a new state, a clearer name for a thing — run `/domain-modeling` to capture it in `DOMAIN.md` before the precision is lost.
+- If the prototype surfaced or sharpened a **domain concept** — a new state, a clearer name for a thing — run the `/domain-modeling` skill to capture it in `DOMAIN.md` before the precision is lost.
 
 If the user is around, that capture is a quick conversation. If not, leave the answer in a `NOTES.md` next to the prototype (with the question it answered) so they — or you, on the next pass — can record it before the code moves to its branch.
 

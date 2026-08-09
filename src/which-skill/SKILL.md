@@ -19,7 +19,7 @@ A **flow** is a path through the skills.
    - **`/to-feature`** — a PRD-shaped Feature, when scope spans multiple stories.
    - **`/to-story`** — a single-feature Story. The usual entry point.
    - **`/to-tasks`** — split a Story into vertical-slice Tasks (one Task = one commit).
-   - A creation ask ("file a story for this") is caught by the `work-item-shape` behavior: in a wired repo it routes the ask to the owning publisher, and it drafts the body itself only where ad-hoc drafting is licensed (no pipeline, someone else's repo, an explicit decline) — it never replaces the publishers.
+   - A creation ask ("file a story for this") is caught by the `work-item-shape` behavior: it routes the ask to the owning publisher in a wired repo, drafting the body itself only where its rules license ad-hoc drafting — it never replaces the publishers.
 3. **Load a single ticket back into a fresh session** — **`/from-ticket <id>`**. It auto-detects Task/Story/Bug and loads the right context (parent, `DOMAIN.md`, matching ADRs).
 4. **Build it** — **`/implement`**. Drives one vertical slice end to end: picks the build path (runs `tdd` for a testable slice, direct otherwise), refactors, and closes the loop once via `feedback-loops`. One Task per session.
 5. **Review before it lands** — **`/review-changes`** (see Review gate).
@@ -36,7 +36,7 @@ Keep steps 1–2 in **one unbroken context window** so the grilling, decompositi
 - **A question needs a runnable answer** (state, business logic, a UI you have to see) → detour through a prototype, bridged by `/handoff` in both directions: **`/handoff`** out → open a fresh session → **`/prototype`** to answer it with throwaway code → **`/handoff`** the *answer* back, and reference it from the original thread.
 - **A hard bug or unexplained failure mid-build** → the `diagnosing-bugs` behavior takes over (it fires on its own; `implement` reaches for it on an unplanned red). It greps the repo's `docs/solutions/` store for past matches on the way in; when an expensive diagnosis closes, `capturing-learnings` offers to capture the solved problem there. File a found defect with **`/to-bug`**.
 - **A merge or rebase conflicts** → the `resolving-merge-conflicts` behavior handles it in place.
-- **A procedure only a human can perform** (credentials, third-party dashboards, a cutover) → the `wizard` behavior generates a stage-by-stage bash wizard that drives them through it, capturing what they copy back.
+- **A procedure only a human can perform** (credentials, third-party dashboards, a cutover) → the `wizard` behavior generates a stage-by-stage bash wizard that drives them through it — or runs the same interview step-by-step in chat when a script isn't wanted — capturing what they copy back.
 - **Thinking is circling — iterations that are variations of one idea, or a binary where both options are bad** → the `diverging` behavior fires: one committed lateral move that outputs new framings, which the grill then stress-tests. Fixation is its trigger, never stakes.
 - **An adopt-or-not question — "should we use X?", "does this CVE reach us?"** → the `adoption-verdict` behavior renders one graded, project-grounded verdict (Adopt/Trial/Hold/Reject/Not-our-problem) gated on verified project and external facts. It forms its *own* position, where the grill extracts *yours*.
 
@@ -53,7 +53,7 @@ Keep steps 1–2 in **one unbroken context window** so the grilling, decompositi
 
 - **`/review-changes`** — read-only, project-aware judgment review of a **diff**, around shipping. Use it for a self-review before the change lands, on a teammate's PR, or on an already-landed commit. It produces a ranked, classified report.
 - Acting on findings — whether a reviewer's comments landed on *your* changes or `/review-changes` just handed you its own report — is the `receiving-review` behavior's loop: verify each claim before implementing it, reply to each PR thread with its outcome, and let its **convergence guard** stop a review from becoming a rewrite.
-- Once findings are addressed, **`/ship`** takes it the rest of the way. It never reviews and never builds: it proposes the commit split in lineage order, then drafts the commit messages, the closing comment, and a PR body where a PR is warranted — checking each claim it writes against the diff and the log. Whether a PR exists at all turns on whether someone else must approve — which the host may decide for you, but never decides on its own. When the environment blocks an outward act (a sandboxed push, a permission classifier), it stops and hands you the exact command rather than routing around it.
+- Once findings are addressed, **`/ship`** takes it the rest of the way. It never reviews and never builds: it proposes the commit split in lineage order, then drafts the commit messages, the closing comment, and a PR body where a PR is warranted — checking each claim it writes against the diff and the log. Whether a PR exists at all turns on whether someone else must approve — the host or `CLAUDE.md` may settle that for you; when neither does, `/ship` asks rather than deciding on its own. When the environment blocks an outward act (a sandboxed push, a permission classifier), it stops and hands you the exact command rather than routing around it.
 
 ## Crossing sessions
 

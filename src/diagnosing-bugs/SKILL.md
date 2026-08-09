@@ -1,12 +1,12 @@
 ---
 name: diagnosing-bugs
-description: Diagnosis loop for hard bugs and performance regressions. Use when the user says "diagnose"/"debug this", reports something broken or a performance regression, or when a build turns up an unplanned failure you can't quickly explain.
+description: Diagnosis loop for hard bugs and performance regressions. Use when the user says "diagnose"/"debug this", reports something broken, a flaky test, or a performance regression, when a CI failure needs triage (one branch red, many branches red, or a sporadic flake), or when a build turns up an unplanned failure you can't quickly explain.
 requires: codebase-design, adr, capturing-learnings
 ---
 
 # Diagnosing Bugs
 
-A discipline for hard bugs. Skip phases only when explicitly justified.
+A discipline for hard bugs.
 
 When exploring, read `DOMAIN.md` (if present) for the project's vocabulary and check `docs/adr/` in the area you're touching — a behavior an ADR records as deliberate is not a bug. If `docs/solutions/` exists, run the `/capturing-learnings` skill's retrieval protocol on the reported symptom — a match seeds a Phase 3 hypothesis, never a reason to skip Phases 1–2.
 
@@ -24,7 +24,7 @@ This is the behavior `implement` reaches for when a build turns up an **unplanne
 
 **This is the skill.** Everything else is mechanical. With a **tight** pass/fail signal — one that goes red on _this_ bug — you will find the cause; without one, no amount of staring at code will.
 
-Spend disproportionate effort here. Stand up the tightest red-capable loop you can _before changing anything_. (No checked-in HITL script: a shell template is inert, can't be reached by the model, and presumes one shell shape fits every stack — drive the human inline instead when one is unavoidable.)
+Spend disproportionate effort here. Stand up the tightest red-capable loop you can _before changing anything_.
 
 ### Ways to construct one — try them in roughly this order
 

@@ -1,6 +1,11 @@
 # Prose invocation is two-tier; load-bearing delegation is User-invoked only
 
-Cross-skill **Prose invocation** (ADR-0016) has no hard primitive — the model reads the invoking skill's body and decides to call the `Skill` tool, so a required skill can silently fail to load and leave the caller running a half-remembered discipline. We split prose invocation into two tiers by the severity of that miss, and phrase each tier to match: a **load-bearing delegation** (the target carries the caller's whole job, e.g. `grill-and-record` → `grilling`, `implement` → `tdd`) gets an explicit imperative plus a **load gate** ("Run the `/grilling` skill now; if you did not just see it load, stop and load it"), and may live **only in a User-invoked Orchestrator**, where the human who typed the command watches the `Launching skill:` line and catches a non-load; an **opportunistic reference** (borrowed vocabulary or a gated end-of-run offer, e.g. `diagnosing-bugs` → `adr`) stays a light backtick mention with no imperative and no gate, because a miss there degrades gracefully. The corollary invariant: a **Model-invoked** skill's `requires:` must be opportunistic-only — an auto-reached chain has no human watching, so a high-severity load-bearing delegation must never sit there.
+Cross-skill **Prose invocation** (ADR-0016) has no hard primitive — the model reads the invoking skill's body and decides to call the `Skill` tool, so a required skill can silently fail to load and leave the caller running a half-remembered discipline. We split prose invocation into two tiers by the severity of that miss, and phrase each tier to match:
+
+- **Load-bearing delegation** — the target carries the caller's whole job (e.g. `grill-and-record` → `grilling`, `implement` → `tdd`). It gets an explicit imperative plus a **load gate** ("Run the `/grilling` skill now; if you did not just see it load, stop and load it"). It may live **only in a User-invoked Orchestrator**, where the human who typed the command watches the `Launching skill:` line and catches a non-load.
+- **Opportunistic reference** — borrowed vocabulary or a gated end-of-run offer (e.g. `diagnosing-bugs` → `adr`). It stays a light backtick mention with no imperative and no gate, because a miss there degrades gracefully.
+
+The corollary invariant: a **Model-invoked** skill's `requires:` must be opportunistic-only — an auto-reached chain has no human watching, so a high-severity load-bearing delegation must never sit there.
 
 ## Considered Options
 

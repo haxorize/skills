@@ -34,7 +34,7 @@ A failed floor forbids Adopt and Reject alike. Return the matching Hold — "Hol
 ## Workflow
 
 1. **Frame.** Pin the subject, the intent (adopt / migrate / compare / does-this-reach-us), the incumbent, and the tier. If the input is a selection over an unbounded field ("what should we use for auth?"), stop and bound the field first — this skill judges named candidates, it doesn't enumerate them; `diverging` generates when the field needs widening.
-2. **Precedent.** Check for a prior stance before grading: `docs/adr/`, `docs/solutions/` (run the `/capturing-learnings` retrieval protocol on the candidate and problem), `DOMAIN.md`, memory. Match the candidate against recorded rejections by concept, never by wording. A prior decision is consumed, not ignored — overturning it is part of the verdict; silently re-deciding is not.
+2. **Precedent.** Check for a prior stance before grading: `docs/adr/`, `docs/solutions/` (run the `/capturing-learnings` skill's retrieval protocol on the candidate and problem), `DOMAIN.md`, memory. Match the candidate against recorded rejections by concept, never by wording. A prior decision is consumed, not ignored — overturning it is part of the verdict; silently re-deciding is not.
 3. **Ground.** Read the project directly — the incumbent and its call sites, the constraints that decide compatibility, licensing where the tier warrants — and the external evidence (docs, issue trackers, release history) with whatever web tools are reachable.
 4. **Gate.** Apply the two floors.
 5. **Verdict.** Emit the schema below, leading with the grade in plain words.
@@ -53,7 +53,7 @@ Lead with the call in plain words and attach the label — "Hold — wait, don't
 
 Schema: **Grade** (label + plain meaning) · **Incumbent** · **Verified facts** (project and external, kept distinct, cited — `file:line`, issue, URL — never pasted) · **Conversation hypotheses** (unverified) · **Conditions** ("yes, if …") · **Reversal trigger** (Tier 2/3 — what would flip this).
 
-The verdict is a tight chat block sized by its tier, not by how much was found; running past the tier's budget means evidence is being pasted that belongs in a citation.
+The verdict is a tight chat block sized by its tier — one screen for Tier 1, two to three for Tier 2/3 — never by how much was found; running past that budget means evidence is being pasted that belongs in a citation.
 
 ## The adversary pass (Tier 2/3)
 
@@ -63,4 +63,4 @@ After emitting a Tier 2/3 verdict, offer one fresh-context adversary: a subagent
 
 - `grilling` stress-tests the *user's* thinking by asking; this skill forms and defends its *own* graded position. A verdict can feed a grill; a grill can end by requesting a verdict.
 - An Adopt, Trial, or Reject on consequential work may deserve a durable record — a considered rejection is a decision too, and the one most often re-litigated. That's `adr`'s territory; offer, don't write.
-- The user's own stated position can be the subject: ship it as the subject and grade it on the same floors — never capitulate to it. Pushback after the verdict ("are you sure?") re-enters the workflow with fresh evidence; it never flips the grade by itself.
+- The user's own stated position can be the subject: treat it as the candidate and grade it on the same floors — never capitulate to it. Pushback after the verdict ("are you sure?") re-enters the workflow with fresh evidence; it never flips the grade by itself.

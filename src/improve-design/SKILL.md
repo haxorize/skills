@@ -51,13 +51,13 @@ Done when you've swept **every top-level module/area**, not just the first frict
 
 ### 3. Vet, then consolidate and present candidates
 
-**Vet first** per [references/finding-discipline.md](references/finding-discipline.md) — exploration over-reports, so re-read every location you'd cite, drop the false-positive classes it lists, and surface code that has drifted *from* an ADR or `DOMAIN.md` as its own finding. When a candidate warrants *reopening* an ADR, mark it clearly (e.g., _"contradicts a recorded ADR — but worth reopening because…"_) and only when the friction justifies it.
+**Vet first** per [references/finding-discipline.md](references/finding-discipline.md), which covers the over-report, the drop classes, and the **bidirectional** ADR/`DOMAIN.md` read. When a candidate warrants *reopening* an ADR, mark it clearly (e.g., _"contradicts a recorded ADR — but worth reopening because…"_) and only when the friction justifies it.
 
 Group surviving findings into coherent candidates — don't present overlapping or sub-issues separately. **Cross-reference against existing work items found in step 1.** If a candidate overlaps with an existing work item, say so explicitly — propose updating that one rather than filing a new one.
 
-Each candidate, **ordered by leverage** (see the reference) so the highest-payoff reads first, carries:
+Each candidate, **ordered by leverage** (see the reference), carries:
 
-- **Cluster**: Which modules/concepts are involved, with `file:line` **evidence** — no vibes-only findings
+- **Cluster**: Which modules/concepts are involved, with `file:line` **evidence**
 - **Why they're coupled**: Shared types, call patterns, co-ownership of a concept
 - **Prior work**: Any existing work items or recent refactors in this area (from step 1)
 - **Current test coverage**: What exists, what's missing, what's fragile
@@ -66,7 +66,7 @@ Each candidate, **ordered by leverage** (see the reference) so the highest-payof
 
 Write each candidate self-contained — a reader who hasn't seen the codebase should understand it from the report alone. Don't propose interfaces yet — that comes after the user picks a candidate.
 
-**Present via the HTML report.** Render the candidates as a self-contained HTML file per [references/html-report.md](references/html-report.md) — full per-candidate detail plus the before/after deepening visuals (the report's identity is frozen; fill the scaffold, don't redesign it). Write it to the OS temp dir (resolve `$TMPDIR`, falling back to `/tmp`, or `%TEMP%` on Windows) as `design-review-<timestamp>.html` so each run is fresh and nothing lands in the repo; open it (`open` on macOS, `xdg-open` on Linux, `start` on Windows) and tell the user the absolute path. The report is **frozen at pick-time** — don't regenerate it as the design evolves later. **Zero surviving candidates**: skip the report and say so inline. **One or more**: write the report.
+**Present via the HTML report.** Render the candidates as a self-contained HTML file per [references/html-report.md](references/html-report.md) — full per-candidate detail plus the before/after deepening visuals. Write it to the OS temp dir (resolve `$TMPDIR`, falling back to `/tmp`, or `%TEMP%` on Windows) as `design-review-<timestamp>.html` so each run is fresh and nothing lands in the repo; open it (`open` on macOS, `xdg-open` on Linux, `start` on Windows) and tell the user the absolute path. The report is **frozen at pick-time** — don't regenerate it as the design evolves later. **Zero surviving candidates**: skip the report and say so inline. **One or more**: write the report.
 
 **Self-check the render before presenting.** The report's failure modes are *silent* — bad CSS still parses, it just renders wrong (SVG `background` paints black, unfilled `<text>` vanishes, a `.card` + deep-fill cascade collision leaves light text on white). Screenshot the file headless (`<chrome> --headless --screenshot=<png> --window-size=1000,2400 file://<path>`) and **read the PNG**; fix any black box, invisible label, or illegible card and re-render until it's clean. If no headless browser is available, say so and present unverified rather than blocking.
 
@@ -115,7 +115,7 @@ Once the user approves, suggest running **`/to-story`** to synthesize and publis
 
 Improve-design context to carry into the synthesis:
 
-- to-story's publication constraints bar interface signatures and rejected alternatives from the story body. Give them a durable home before filing: if the grill produced no ADR, offer to record one via the `adr` skill, or — failing that — attach the interface sketch as a comment on the filed story, its prose following the `/writing-for-humans` behavior. Have `## Approach` reference the ADR, including one written this session.
+- to-story's publication constraints bar interface signatures and rejected alternatives from the story body, so give them a durable home: if the grill produced no ADR, offer to record one via the `adr` skill before filing; failing that, attach the interface sketch as a comment on the filed story afterward, its prose following the `/writing-for-humans` behavior. Have `## Approach` reference that ADR — even one recorded just now in this session.
 - Name, at module level, which existing shallow-module tests the new interface tests replace (step 6 lists them), so the story's `## Tests` section captures the cleanup as well as the new coverage.
 - If step 1 found an existing work item covering this candidate, suggest `/to-story --update <id>` (or add a comment via [references/tracker-dispatch.md](references/tracker-dispatch.md)) rather than filing a duplicate.
 - State the candidate's **success bar** in the story — the future change this deepening makes easier, and how you'd tell — and the keep-or-revert rule beside it: an executed refactor that doesn't clear its stated bar is a revert, not a keep. **Neutral is a revert** — sunk cost never argues for keeping, and kept complexity that bought nothing is paid for forever.

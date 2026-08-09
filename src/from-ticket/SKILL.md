@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # From Ticket
 
-Detects the work-item type and loads the right shape; hands off to `implement` (which picks the build path) or freeform implementation. Closes the round-trip loop with the `to-X` publishing skills.
+Detects the work-item type and loads the right shape; hands off to `implement` or freeform implementation. Closes the round-trip loop with the `to-X` publishing skills.
 
 ## Workflow
 
@@ -42,7 +42,7 @@ If the detected type is **Feature** or **Epic**, refuse with a clear redirect:
 
 > "{ID} is a {type}. Features and Epics are containers, not tickets — they decompose first. Run `/to-story --parent {ID}` to draft a Story under it, then `/from-ticket <story-id>` once that Story exists."
 
-Do not load any context; do not hand off. The user's next move is decomposition, not implementation.
+Do not load any context; do not hand off. This is the loader's only refusal — the sole case where the user's next move is structurally different (decompose, then re-enter) rather than an override they can wave through.
 
 ### 4. Load by type
 
@@ -54,8 +54,8 @@ Branch on the detected type. Each branch loads the artifact, its parent context,
   - **ADO:** `az boards work-item show <task-id> --output json --expand relations` — `System.Description`, the parent Story relation (`System.LinkTypes.Hierarchy-Reverse`), and in-project blocker relations (`System.LinkTypes.Dependency-Reverse` = Predecessor blockers; `System.LinkTypes.Dependency-Forward` = Successor dependents).
   - **GitHub:** body already fetched; resolve parent via the `Parent: #N` line.
 - **Blockers** — surface what must land first, from both sources:
-  - **In-project:** ADO reads the `Predecessor` relations above; GitHub reads the `Blocked by: #N` lines in the Task body (GitHub keeps these as text — it has no native relation to move them to). Resolve each blocker ID to its title (one `gh issue view <n> --json title` / `az boards work-item show <id>` per blocker) — the summary reports blockers by name.
-  - **Sibling-repo:** both trackers read the `## Blocked by` body annotation (`Blocked by: ../<repo>`). Only ADO *in-project* deps moved to relations; the sibling-repo annotation still lives in the body on either tracker.
+  - **In-project:** ADO reads the `Predecessor` relations above; GitHub reads the `Blocked by: #N` lines in the Task body (GitHub has no native blocker relation — these stay as body text). Resolve each blocker ID to its title (one `gh issue view <n> --json title` / `az boards work-item show <id>` per blocker) — the summary reports blockers by name.
+  - **Sibling-repo:** both trackers read the `## Blocked by` body annotation (`Blocked by: ../<repo>`). ADO relations carry only in-project deps — sibling-repo blockers live in the body annotation on either tracker.
 - **Parent Story:** fetch description + AC field. Filter active ACs to those listed in the Task's `## Covers` line — the rest aren't this Task's concern.
 - **Parent Feature (one level up):** fetch title and Problem / Goals sections only — broader context, not implementation guidance.
 - **`## Layers touched`** from the Task body. Drives ADR match below.
@@ -138,11 +138,7 @@ Loaded {type} #{ID}: "{title}"
 Ready to implement. Hand off to /implement (recommended), or proceed freeform.
 ```
 
-The skill itself doesn't build — it loads context and stops. `/implement` picks the build path (TDD for a testable slice, direct otherwise) and drives the slice to done. Both are user-invoked, so `from-ticket` suggests `/implement` rather than invoking it.
-
-## Refusal vs warning
-
-The one refusal — Feature / Epic IDs — is the only case where the user's next move is structurally different (decompose, then re-enter). Everything else (ambiguous type detection, layer mismatch, missing `bug` label) is a judgment call the loader surfaces and lets the user override.
+The skill itself doesn't build — it loads context and stops. Both are user-invoked, so `from-ticket` suggests `/implement` rather than invoking it.
 
 ## Notes
 

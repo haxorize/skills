@@ -1,6 +1,6 @@
 ---
 name: domain-modeling
-description: The active discipline for building and sharpening a project's domain model. Use when terminology needs to be pinned down, when a vague or overloaded term surfaces, when conversation and code disagree about what a concept means, or when another skill needs to maintain DOMAIN.md.
+description: The active discipline for building and sharpening a project's domain model. Use when terminology needs to be pinned down, when a vague or overloaded term surfaces, when conversation and code disagree about what a concept means, or when another skill needs to maintain DOMAIN.md. Don't invoke this just to read DOMAIN.md for vocabulary — consult the file directly; reach for this only when the model itself is changing.
 requires: writing-for-humans
 ---
 

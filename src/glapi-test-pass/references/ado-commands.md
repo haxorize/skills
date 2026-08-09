@@ -118,6 +118,7 @@ The freshly created suite has exactly one test case — `value[0]` is always the
 
 ```bash
 RUN_NAME="GLAPI gate — ${STORY_TITLE:0:60}"
+# If a <pr-id> argument was given, append it: RUN_NAME="$RUN_NAME PR <pr-id>"
 RUN_BODY=$(jq -n \
   --arg name "$RUN_NAME" \
   --argjson plan "$PLAN_ID" \

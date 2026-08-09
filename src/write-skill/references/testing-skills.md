@@ -2,10 +2,6 @@
 
 RED → GREEN applied to documentation: prove the failure exists before writing the cure, then prove the cure binds. A subagent plays the agent-under-test; each run starts from a fresh context so nothing leaks between reps.
 
-## When this runs
-
-Only for discipline-bearing skills — a rule the agent might rationalize around under pressure (an iron law, a gate, a prohibition). Format docs, templates, and routers have no compliance failure mode; don't pressure-test them.
-
 ## The micro-test loop
 
 1. **Control first.** Run the pressure scenario with a fresh-context subagent *without* the skill. If the control doesn't exhibit the failure, there is nothing to fix — stop; any wording added anyway is a no-op.

@@ -38,7 +38,7 @@ Search the ADR directory for a record that already owns this ground, per the ame
 
 ### 2. Apply the gate
 
-Confirm out loud which of the three criteria the decision meets, and which alternatives were considered. With an owning record in hand, the gate picks the amendment form per the reference. With none, a failing gate means stop — don't write the ADR, and tell the user why. Say which case you're in before writing anything.
+Apply the gate per [references/adr-format.md](references/adr-format.md). With an owning record in hand, the gate picks the amendment form per the reference. With none, a failing gate means stop — don't write the ADR, and tell the user why. Say which case you're in before writing anything.
 
 ### 3. Draft
 
@@ -46,4 +46,4 @@ Number, slug, and draft per [references/adr-format.md](references/adr-format.md)
 
 ### 4. Show and save
 
-Show the draft to the user. Save to `docs/adr/<NNNN>-<slug>.md` once approved.
+Show the draft to the user. Once approved, save it into the scheme the preflight resolved — `docs/adr/<NNNN>-<slug>.md` by default.

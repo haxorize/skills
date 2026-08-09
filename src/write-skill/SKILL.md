@@ -1,6 +1,6 @@
 ---
 name: write-skill
-description: Create new agent skills with proper structure and size constraints.
+description: Create or revise agent skills — classification, structure, descriptions, and pressure-testing their wording.
 disable-model-invocation: true
 requires: writing-for-agents
 ---
@@ -92,7 +92,8 @@ The description is the skill's top-level **context pointer** — its wording dec
 
 - **SKILL.md**: ≤200 lines. Past that, move detail into `references/`.
 - **Reference files**: ≤200 lines each. Split by topic, not arbitrarily.
-- **Description**: ≤1024 chars.
+- **Description**: ≤1024 chars, and no angle brackets (`<` or `>`) — the platform chokes on them, so replace placeholder text like `<topic>` before shipping.
+- **Name**: ≤64 chars.
 - **One line per paragraph/bullet** — soft-wrap, no hard newlines mid-paragraph (let the editor wrap). The cap is line-based, so a "line" should be a unit of content, not an artifact of wrapping; hard-wrapping inflates the count and renders identically. Code fences, tables, and YAML frontmatter keep their own line breaks.
 
 ## Sharing a reference across skills
@@ -111,7 +112,7 @@ Frontmatter parses as strict YAML. The hazard is an unquoted `: ` (colon **follo
 
 - [ ] Invocation kind chosen deliberately; description matches it (triggers for model-invoked, human-facing one-liner for user-invoked)
 - [ ] Behaviors declared via `requires:`; extraction backed by a real second consumer
-- [ ] Cross-skill references phrased by severity — load-bearing get `/skill` + load gate (user-invoked only); opportunistic stay soft backtick mentions
+- [ ] Cross-skill references carry both signals — slash form on anything that actually fires (load-bearing delegations and a model-invoked skill's soft `requires:` delegations alike); load gate only on load-bearing delegations inside user-invoked orchestrators; bare backticks for vocabulary, boundaries, and gated offers
 - [ ] SKILL.md ≤200 lines; each reference ≤200 lines; one line per paragraph/bullet (no mid-paragraph hard wraps)
 - [ ] Escalated wording (hard prohibitions) justified by an observed pressure-failure; no nuance or exemption clauses anywhere
 - [ ] No generic best-practices the model already knows (no-op check)

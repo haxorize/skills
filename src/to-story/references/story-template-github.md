@@ -50,11 +50,11 @@ Which integration layers the Story crosses. Drives `from-ticket` cold-start and 
 
 ## Approach
 
-The approach the team agreed on (one of the proposed approaches from the grilling session). State the design direction and key tradeoffs in plain language. Reference existing ADRs the approach respects. No code snippets, no file paths, no specific field or type names.
+The approach the team agreed on. State the design direction and key tradeoffs in plain language. Reference existing ADRs the approach respects. No code snippets, no file paths, no specific field or type names.
 
 ## Tests
 
-What gets tested at which seam. Use module names from `DOMAIN.md`, not file paths. Reference any deepening opportunities surfaced during the grill.
+What gets tested at which seam. Use module names from `DOMAIN.md`, not file paths.
 
 - `<module>` — interface tests for X behavior
 - `<module>` — integration test covering Y end-to-end

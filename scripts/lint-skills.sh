@@ -34,6 +34,14 @@
 #     brackets in `description` — the two agent-skills-spec caps Claude Code
 #     shares. The rest of the spec (its closed frontmatter key set) deliberately
 #     does not bind this repo; `requires:` and `disable-model-invocation` stay.
+#   - Required `name` (write-skill template): every SKILL.md carries a `name:`
+#     line whose value matches the enclosing src/<dir> slug.
+#   - Load-gate placement (write-skill "Load gate vs none"): the gate's marker
+#     phrase — a "Launching skill:" line — may appear only in user-invoked
+#     orchestrators, where the human who typed the command watches the load
+#     line. A model-invoked skill has no watcher, so a miss must degrade
+#     gracefully ("Never gate inside a model-invoked skill"); its body and
+#     references must not carry the phrase.
 #   - Router coverage (CLAUDE.md "Keep the router honest"): every skill under
 #     src/ must appear as a backticked code-span (`name` or `/name`) in
 #     src/which-skill/SKILL.md. Requiring the backtick keeps incidental prose
@@ -130,12 +138,24 @@ for f in src/*/SKILL.md; do
       ;;
   esac
 
-  # Platform-true spec limits (ADR-0030): Claude Code truncates/chokes on the
-  # same two caps the packaging spec enforces; the spec's other rules don't apply.
+  # Required name (write-skill template): `name:` must exist and mirror the
+  # skill's directory. Platform-true spec limits (ADR-0030): Claude Code
+  # truncates/chokes on the same two caps the packaging spec enforces; the
+  # spec's other rules don't apply.
   name_val=$(frontmatter_value "$f" name)
-  if [ -n "$name_val" ] && [ "${#name_val}" -gt 64 ]; then
-    echo "FAIL: $f name exceeds 64 chars (${#name_val})"
+  dir_slug=${f#src/}; dir_slug=${dir_slug%/SKILL.md}
+  if [ -z "$name_val" ]; then
+    echo "FAIL: $f has no name in frontmatter (write-skill template requires name: $dir_slug)"
     fail=1
+  else
+    if [ "${#name_val}" -gt 64 ]; then
+      echo "FAIL: $f name exceeds 64 chars (${#name_val})"
+      fail=1
+    fi
+    if [ "$name_val" != "$dir_slug" ]; then
+      echo "FAIL: $f name '$name_val' does not match its directory '$dir_slug' (write-skill template: name mirrors the skill-name/ directory)"
+      fail=1
+    fi
   fi
   case "$desc" in
     *[\<\>]*)
@@ -168,6 +188,20 @@ for f in src/*/SKILL.md; do
       fail=1
     fi
   fi
+done
+
+# Load-gate placement (see header): the "Launching skill" marker phrase must
+# not appear anywhere in a model-invoked skill — body or references.
+for f in src/*/SKILL.md; do
+  [ "$(is_user_invoked "$f")" = "true" ] && continue
+  while IFS= read -r body; do
+    gate_hits=$(grep -n 'Launching skill' "$body")
+    if [ -n "$gate_hits" ]; then
+      badlines=$(printf '%s\n' "$gate_hits" | cut -d: -f1 | tr '\n' ' ')
+      echo "FAIL: $body carries a load gate ('Launching skill', line(s) ${badlines}) inside a model-invoked skill — no watcher, a miss must degrade gracefully (write-skill: 'Never gate inside a model-invoked skill')"
+      fail=1
+    fi
+  done < <(find "${f%/SKILL.md}" -type f -name '*.md' | sort)
 done
 
 sibling_groups=(

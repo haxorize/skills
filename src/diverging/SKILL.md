@@ -1,13 +1,11 @@
 ---
 name: diverging
-description: Break out of a locked problem frame with one committed lateral move. Use when the last 2+ iterations are variations of one idea, when a problem arrives as a binary with two bad options, when every solution hits the same constraint, when the same class of option keeps getting rejected for the same reason, when two related examples are in hand and the question is what lies between or beyond them, or when the user says "widen this", "what am I missing", "think differently", "I'm stuck", "feels too obvious". Generates framings, not judgment — `grilling` is the convergent complement that stress-tests what this frees up.
+description: Break out of a locked problem frame with one committed lateral move. Use when the last 2+ iterations are variations of one idea, when a problem arrives as a binary with two bad options, when every solution hits the same constraint, when the same class of option keeps getting rejected for the same reason, when two related examples are in hand and the question is what lies between or beyond them, or when the user says "widen this", "what am I missing", "think differently", "I'm stuck", "feels too obvious". Generates framings, not judgment — `grilling` is the convergent complement that stress-tests what this frees up. Don't invoke this as a routine pre-task step — fixation, not stakes, is the trigger; if the current frame is working, let it work.
 ---
 
 # Diverging
 
 Fixation is the default state — attention concentrates on the current framing, and new ideas become local variations of it. This skill is the interrupt: spend one move stepping sideways, then resume.
-
-**Fixation is the trigger, not stakes.** Don't run this before every consequential task; if the current frame is working, let it work.
 
 ## Core discipline
 
@@ -37,7 +35,7 @@ Match the stuck-pattern to the move. When unsure, default to **Reframe**.
 
 ## The moves
 
-**Reframe.** The problem-as-stated is rarely the problem-to-solve. Mutate the sentence — change the **verb** ("reduce X" → "redistribute X", "prevent X from mattering"), the **subject** ("we can't ship faster" → "the artifact is too reviewable"), the **scope** (zoom out — whose problem is this upstream? — or in — which one user, which one minute?), or the **frame** ("problem to fix" → "signal to interpret"). Produce three reframings. *Fired if* at least one makes the original statement sound naive, or shifts who owns the problem.
+**Reframe.** The problem-as-stated is rarely the problem-to-solve. Mutate the sentence — change the **verb** ("reduce X" → "redistribute X", "prevent X from mattering"), the **subject** ("we can't ship faster" → "the artifact is too expensive to review"), the **scope** (zoom out — whose problem is this upstream? — or in — which one user, which one minute?), or the **frame** ("problem to fix" → "signal to interpret"). Produce three reframings. *Fired if* at least one makes the original statement sound naive, or shifts who owns the problem.
 
 **Provocation (Po).** State something deliberately impossible — prefix it `Po:` to mark it a stimulus, not a proposal — then extract movement: what principle or adjacent idea does it surface? Four recipes: **escape** (remove an essential feature — "Po: the database has no writes"), **reversal** (flip causality), **exaggeration** (push a quantity to the absurd), **wishful** (assume impossible capability). The canonical example: a factory pollutes a river; "Po: the factory is downstream of itself" — impossible, but it yields intake-below-discharge, closed-loop water. The provocation is discarded; the movement stays. *Fired if* the Po is genuinely impossible (a thing you could actually do is a proposal — push further) and the movement survives translation back to real constraints.
 

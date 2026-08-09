@@ -45,7 +45,7 @@ Resolve a thread only when your reply legitimately closes it. Resolving a thread
 
 ## The convergence guard
 
-Fixing findings is bounded work. Halt when the fix work would exceed roughly **2× the original change's scope**, or after a couple of cycles that aren't converging — a review that becomes a rewrite has stopped being a review, and the change it was reviewing has stopped being reviewable.
+Fixing findings is bounded work. Halt when the fix work would exceed roughly **2× the original change's scope**, or after two fix-and-re-review rounds that haven't shrunk the count of open findings — a review that becomes a rewrite has stopped being a review, and the change it was reviewing has stopped being reviewable.
 
 Findings past that bound are **follow-ups** filed against the backlog, not this change's work. Say which ones you're deferring and why, explicitly — an unstated deferral reads as a finding silently dropped.
 

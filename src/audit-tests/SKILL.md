@@ -1,6 +1,6 @@
 ---
 name: audit-tests
-description: Audit an existing test suite by asking "can these checks fail?" — grade load-bearing assertions CONFIRMED, PLAUSIBLE, CANNOT FAIL, or BLIND, and report the suite's stated blind spots.
+description: Audit an existing test suite by asking "can these checks fail?" — grade load-bearing assertions CONFIRMED, PLAUSIBLE, CANNOT FAIL, or BLIND, and name what the suite cannot catch even when green.
 disable-model-invocation: true
 ---
 
@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 The characteristic failure of a check is not being wrong — a wrong check gets noticed. It is a check that **cannot fail**: it reports PASS forever and is indistinguishable from a working one from the outside. So this pass inverts the usual question — not "do these tests pass" but "**can these tests fail?**" The object under suspicion is the check itself.
 
-This is the test-suite member of the upkeep family: `verify-docs` sweeps prose claims, `harden-domain` the glossary, `backfill-adrs` the decision record — this pass sweeps the checks. It audits what already exists; `tdd`'s closing mutation check guards tests at writing time.
+This pass audits checks that already exist; `tdd`'s closing mutation check guards tests at writing time.
 
 ## Scope
 
@@ -25,16 +25,16 @@ For each load-bearing assertion:
 
 ## Verdicts
 
-- **CONFIRMED** — a named realistic break fails it, demonstrated: the break was reproduced this session (run it when cheap) or the assertion visibly encodes one (a literal from an outside anchor).
+- **CONFIRMED** — a named realistic break demonstrably fails it: either the break was reproduced this session (reproduce it when a run is cheap), or the assertion pins a literal from an outside anchor, so inspection alone shows the break would trip it.
 - **PLAUSIBLE** — a realistic break is namable but wasn't demonstrated.
 - **CANNOT FAIL** — no subject-dependent change alters the outcome. Decoration: recommend delete or fix.
-- **BLIND** — behavior the file claims to guard has no assertion looking at it. The suite is silent about what it doesn't look at, in exactly the same tone it uses for what it approved — only the audit can assert the hole.
+- **BLIND** — behavior the file claims to guard has no assertion looking at it. A missing check produces no signal at all, so only the audit can name the hole.
 
 ## Report
 
 One finding per defective check: `file:line`, verdict, the named break (or the demonstration that none exists), and the fix direction — anchor the expected value, tighten the matcher, add the missing known-bad, or delete. Order CANNOT FAIL → BLIND → PLAUSIBLE; CONFIRMED needs no listing beyond a count.
 
-Close with the suite's **stated blind spots** — what it cannot catch even when fully green (the seam with no test, the behavior only eyeballed, the config never exercised) — because a green run implies total coverage unless someone says otherwise.
+Close by **stating the suite's blind spots outright** — what it cannot catch even when fully green (the seam with no test, the behavior only eyeballed, the config never exercised) — because a green run implies total coverage unless someone says otherwise.
 
 Read-only: fixes are follow-up work (`tdd` for new or rewritten tests), never applied here.
 

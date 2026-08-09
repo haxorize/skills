@@ -61,7 +61,7 @@ Named patterns that read as AI-generated because they are clarity failures: each
 
 These fire in shipping prose — commit messages, PR bodies, review replies, closing comments — where the diff and the log sit right next to the words and expose them.
 
-- **Commit self-narration** — "This commit adds…", "This PR fixes…", "In this change…". The message *is* the commit's; drop the frame and state the change. "This commit moves the check to `finalize()`" survives only when a concrete verb follows — "addresses the issue by implementing a solution that…" is the same tell twice.
+- **Commit self-narration** — "This commit adds…", "This PR fixes…", "In this change…". The message *is* the commit's; drop the frame and state the change: "Move the check to `finalize()`". The frame paired with a vague verb is the tell twice over — "addresses the issue by implementing a solution that…".
 - **Trailing justification** — "…ensuring consistency", "improving maintainability", "for better readability" tacked onto a change description. Cut it; if the reason matters, state the concrete why as its own sentence — what broke, what it cost.
 - **Landed-change hedging** — "This should fix…", "This may help…" about a change already made. The change exists; say what was verified, or state the untested part as untested.
 - **File-listing narration** — a body that is one bullet per changed file, or a walk through the diff hunk by hunk. The diff already shows *what*; the body's only job is the *why* the diff cannot show.

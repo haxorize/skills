@@ -21,13 +21,13 @@ If the parent has no story-map markers but has a headed decomposition section (l
 
 ## Step 10 — Update parent's story map
 
-**Planned Story** (Snapshot match in step 2a): Fetch the parent Feature's current description. Locate the matched `### Story N — <title>` heading. Append the new tracker ID:
+**Planned Story** (Snapshot match in step 2a): Fetch the parent Feature's current description. **It is already HTML** — locate the matched Story heading in the raw HTML and append the new tracker ID as an HTML anchor, a targeted string replacement that modifies no other Snapshot content:
 
-```
-### Story 2 — short title — [#<id>](https://dev.azure.com/...)
+```html
+<h3>Story 2 — short title — <a href="https://dev.azure.com/...">#<id></a></h3>
 ```
 
-Do not modify any other Snapshot content. **The description returned by the ADO API is already HTML** — make the stamp as a targeted string replacement on the raw HTML. In the fetched HTML, locate the heading text and append ` — <a href="https://dev.azure.com/...">#{id}</a>` directly. Write the modified HTML to a temp file and patch:
+Write the modified HTML to a temp file and patch:
 
 ```bash
 az boards work-item update --id <feature-id> --description "$(cat /tmp/feature_desc.html)"

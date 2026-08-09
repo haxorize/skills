@@ -39,15 +39,15 @@ Copy `template.sh` to the target path. Replace the example stage with one `stage
 
 Hold the bar the template sets: open the URL before asking for its value, use `ask_secret` for anything secret, `write_env` every persisted value, `set_secret` only the values CI actually needs, and `confirm` before any irreversible action. Each `stage` clears the screen so only the current step is visible — keep a stage to one focused task so nothing the human needs scrolls away.
 
-The secret/variable helpers speak `gh`. On a non-GitHub tracker or a machine where the CLI can't act outward, don't fake the write: have the stage capture the value, then print the exact manual command (or portal path) the human runs to store it, and record it in the closing summary as waiting on them.
+The secret/variable helpers speak `gh`, and when `gh` is missing or unauthenticated at run time they already degrade honestly — they warn, print the exact manual command, and list it in the closing summary — so on a GitHub repo, call them and let them handle it. On a non-GitHub tracker, don't fake the write: have the stage capture the value, then print the exact manual command (or portal path) the human runs to store it, and record it in the closing summary as waiting on them.
 
 ### 4. Verify and hand off
 
 - `bash -n <script>`; run `shellcheck` if available.
 - `chmod +x <script>`.
 - Don't run it end-to-end yourself — it opens browsers and blocks on human input. Trace it statically instead: every value from step 1 is captured and lands where step 1 said, and every `set_secret` name exactly matches a secret reference in CI.
-- Tell the user how to run it. If it's a repeatable setup path, commit it and link it from the README so the next person runs the script instead of asking an agent.
+- If it's a repeatable setup path, commit it and link it from the README so the next person runs the script instead of asking an agent.
 
 ## The chat fallback
 
-When a script is the wrong medium — no machine to run it where the human is, a procedure only a few steps long, or steps that will be discovered as you go — run the same discipline in chat instead. Keep the canonical checklist internally; present **one atomic human step per message** with its full detail; after each completed step, show the remaining items as a headline-only list — a few glanceable words each, no commands, URLs, or values (detail appears only when an item becomes the current step). Re-audit the visible list against the internal checklist before every reply, and cap it at 8 by merging far-off steps into phase-level headlines.
+When a script is the wrong medium — no machine to run it where the human is, a procedure only a few steps long, or steps that will be discovered as you go — run the same discipline in chat instead. Keep the canonical checklist internally, complete and uncapped. Present **one atomic human step per message** with its full detail; after each completed step, show the remaining items as a headline-only list — a few glanceable words each, no commands, URLs, or values (detail appears only when an item becomes the current step). Before every reply, re-audit the visible list against the internal checklist, and cap the visible list at 8 items by merging far-off steps into phase-level headlines.

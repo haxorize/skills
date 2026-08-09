@@ -70,7 +70,7 @@ return (
 
 For sub-shape A (existing page): keep all the existing data fetching above the switcher; only the rendered subtree changes per variant.
 
-For sub-shape B (new page): the throwaway route under `/prototype/<name>` mounts the same switcher.
+For sub-shape B (new page): the throwaway route created above (per the project's routing convention) mounts the same switcher.
 
 ### 4. Build the floating switcher
 
@@ -87,7 +87,7 @@ Behaviour:
 - Visually distinct from the page (e.g. high-contrast pill, subtle shadow) so it's obviously not part of the design being evaluated.
 - Hidden in production builds — gate on `process.env.NODE_ENV !== 'production'` or an equivalent check, so a stray prototype merge can't ship the bar to users.
 
-Put the switcher in a single shared component so both sub-shapes can reuse it. Locate it wherever shared UI lives in the project.
+Build the switcher as its own clearly-named throwaway component (e.g. `PrototypeSwitcher.tsx`) next to the variants it switches — not in the project's shared-UI folder, where prototype code can outlive cleanup.
 
 ### 5. Hand it over
 

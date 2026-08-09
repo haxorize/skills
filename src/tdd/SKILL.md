@@ -79,9 +79,8 @@ Rule: don't anticipate future tests — write only enough code for the test in f
 
 After all tests pass, review the implementation before calling the cycle done:
 
-- Extract duplication
+- Extract duplication — lifting it to existing project primitives or shared modules rather than re-rolling (consult the active layer skill for where they live), extracting fresh only when no primitive fits
 - Deepen modules (move complexity behind simple interfaces)
-- Lift duplication to existing project primitives or shared modules rather than re-rolling — consult the active layer skill for where they live
 - Simplify where the accumulated implementation reveals a cleaner design
 
 Run the test command after each refactor step. Never refactor while red.
@@ -92,10 +91,8 @@ Then run `/simplify` to catch any remaining issues with reuse, quality, or effic
 
 Before closing, run the **mutation check**: mentally mutate the production code — wrong constant or argument, wrong branch, missing side effect or state change, empty return, missing validation for zero/empty/nil/malformed input — and confirm at least one test fails for each realistic mutation. An uncaught mutation marks the behavior as unprotected, or the test as tautological.
 
-The check itself is a suspect: a test that cannot fail reports green forever and is indistinguishable from a working one. So expected values anchor **outside the code under test** (a published constant, a worked example, an independent implementation — never the code's own output); for a load-bearing check, break the code for real once and watch it go red — until then you've shown the check runs, not that it works; and name what the suite cannot catch (the seam with no test, the behavior only eyeballed) rather than letting green imply total coverage.
+The check itself is a suspect: a test that cannot fail reports green forever and is indistinguishable from a working one. For a load-bearing check, break the code for real once and watch it go red — until then you've shown the check runs, not that it works; and name what the suite cannot catch (the seam with no test, the behavior only eyeballed) rather than letting green imply total coverage.
 
-When the cycle's behaviors are built and refactored, close the loop: run the `/feedback-loops` skill once to finalize mechanically — format, lint, typecheck, stack finalization (migrations, codegen), and any doc updates the change made stale.
+When the cycle's behaviors are built and refactored, close the loop: run the `/feedback-loops` skill once to finalize mechanically. (Under `implement`, `implement` drives review and this close-the-loop pass; the nudge here keeps standalone `tdd` finishing cleanly on its own.)
 
-Tests prove code-correctness, not feature-correctness. If the slice touched behavior you couldn't actually run in a test — a UI flow, an external integration, a real ingest — say so and eyeball it (run the project's dev command, use `verify`) before declaring done.
-
-When `tdd` runs under `implement`, `implement` drives review and the explicit close-the-loop pass; this nudge keeps standalone `tdd` finishing cleanly on its own.
+Tests prove code-correctness, not feature-correctness. If the slice touched behavior you couldn't actually run in a test — a UI flow, an external integration, a real ingest — say so and eyeball it (run the project's dev command) before declaring done, or suggest the user run `/black-box-check` for a contract-driven check of the running product.

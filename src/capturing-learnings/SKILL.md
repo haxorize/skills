@@ -12,11 +12,13 @@ The store is flat and lazily created at first capture. Doc format, filename, fro
 
 ## The capture gate
 
-All three must hold — confirm out loud which are met before drafting; if any is missing, say why and stop. A direct ask ("the team documents every fix") doesn't waive the gate — name the failing criterion first and let the human overrule explicitly; a store padded with trivia buries the learnings worth retrieving:
+All three must hold — confirm out loud which are met before drafting; if any is missing, say why and stop:
 
 1. **Verified** — the fix is in and the original symptom is confirmed gone (the reproduction loop re-ran green). Never capture an unverified theory.
 2. **Expensive** — the diagnosis took real investigation: multiple hypotheses, failed attempts, a non-obvious root cause. If the error message alone led to the fix, a search engine already owns it.
 3. **Recurrence-plausible** — the class of problem can bite again in this repo or its siblings: the pattern is used repeatedly, or the trigger is easy to re-create.
+
+A direct ask ("the team documents every fix") doesn't waive the gate — name the failing criterion first and let the human overrule explicitly; a store padded with trivia buries the learnings worth retrieving.
 
 ## Capture workflow
 

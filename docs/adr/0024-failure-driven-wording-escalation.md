@@ -17,3 +17,7 @@ Skill wording escalates by observed failure mode. Judgment-framing stays the def
 
 - A hard prohibition in a skill body is now a *claim* that the rule is pressure-skipped; reviewers of skill changes can demand that justification.
 - Exemptions to an escalated rule live in the *caller* (e.g. `implement`'s direct path exempts non-testable slices), never as a nuance clause inside the escalated rule itself.
+
+## Amendments
+
+- **2026-08-08** — With the [ADR-0040](0040-writing-for-agents-extracted-from-write-skill.md) extraction, the form-to-failure table moved from `write-skill`'s reference to `writing-for-agents`' `predictability.md` reference. The escalation policy itself is unchanged.

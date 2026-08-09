@@ -9,6 +9,6 @@ requires: writing-for-humans
 
 Run the `/writing-for-humans` skill now — if you did not just see a `Launching skill: writing-for-humans` line, stop and load it before re-pitching.
 
-Wait — the human stopped following. Re-pitch what you were explaining: give the little context they were missing, write in `writing-for-humans`' plain descriptive register, and use the ubiquitous language from `DOMAIN.md`. With no `DOMAIN.md`, the re-pitch still works — you lose only the vocabulary half.
+Wait — the human stopped following. Re-pitch what you were explaining: supply the piece of context they were missing, write in `writing-for-humans`' plain descriptive register, and use the ubiquitous language from `DOMAIN.md`. With no `DOMAIN.md`, the re-pitch still works — you drop only the vocabulary instruction.
 
 How far back to re-pitch is your judgment — what lost them is usually bigger than the last message. The target is clearer, and usually shorter — never blunter: add the missing premise instead of only deleting words. A second `/wait-what` in a row re-pitches at full depth from the newly missing premise, not by trimming the last pitch.

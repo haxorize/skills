@@ -1,6 +1,6 @@
 ---
 name: ask-for-me
-description: Turn a decision you can't answer alone into a Markdown questionnaire for the person who can — a brief interview about the send (who it goes to, what you need back), then a drafted document aimed at that gap.
+description: Turn a decision you can't answer alone into a Markdown questionnaire for the person who can — a brief interview about the send (who it goes to, what you need back), then a drafted document that pulls out what they know and you don't.
 disable-model-invocation: true
 requires: writing-for-humans
 ---
@@ -17,7 +17,7 @@ Turn something the user can't answer alone into a **discovery questionnaire** �
 
 2. **What do you need back?** Ask, in one exchange, the specific decisions or facts the user can't resolve alone and needs from this person. Done when you have a concrete list of what the user must walk away able to do or decide.
 
-3. **Write the questionnaire.** Draft questions aimed at the gap from steps 1–2, following [references/questionnaire-template.md](references/questionnaire-template.md); the document is human-facing prose, drafted per the `/writing-for-humans` behavior. Write it to `questionnaire-<slug>.md` in the current directory (slug from the topic) and report the path. Done when the file exists and every item the user named in step 2 is covered by a question.
+3. **Write the questionnaire.** Draft questions aimed at the gap from steps 1–2, following [references/questionnaire-template.md](references/questionnaire-template.md); the document is human-facing prose, drafted per the `/writing-for-humans` behavior. Write it to `questionnaire-<slug>.md` in the current directory (slug from the topic). Done when the file exists and every item the user named in step 2 is covered by a question.
 
 ## Pairing with chart-course
 

@@ -46,4 +46,3 @@ Parent: #<issue-number>
 ## Notes
 
 - Default labels are applied via CLI flags from the `Issue tracker:` block in CLAUDE.md.
-- Naming (routes, query keys, model names, search-param keys) must match across sibling tasks. Drift here is the highest-cost mistake when slicing.

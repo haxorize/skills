@@ -50,7 +50,7 @@ Every topic is grounded one of two ways, declared in `MISSION.md`:
 
 ## The topic glossary
 
-`domain-modeling` runs as a background lens throughout. Scoping override: **the workspace is the repo root for `DOMAIN.md` purposes** — for an External topic the glossary lives at `<workspace>/DOMAIN.md`, which is where the lens's "update inline / lazily create at repo root" writes land. Repo-grounded topics read the grounding repo's glossary as source material; **override the lens's write here** — never write to the repo, and don't mirror it into the workspace. A term gap found while learning is surfaced to the user, not recorded.
+`domain-modeling` runs as a background lens throughout. Scoping override: **the workspace is the repo root for `DOMAIN.md` purposes** — an External topic's glossary lives at `<workspace>/DOMAIN.md`, and the lens's inline updates and lazy creation land there. Repo-grounded topics are read-only: the grounding repo's glossary is source material — never write to that repo, never mirror its glossary into the workspace, and surface a term gap to the user instead of recording it.
 
 ## Session flow
 
@@ -63,7 +63,7 @@ Every topic is grounded one of two ways, declared in `MISSION.md`:
 A **lesson** is one self-contained HTML file in `lessons/`, teaching exactly one tightly-scoped thing tied to the mission.
 
 - Read [references/pedagogy.md](references/pedagogy.md) (teaching moves, quizzes, warm-up) and [references/lesson-design.md](references/lesson-design.md) (visual system, anatomy, `assets/` components) before authoring any lesson.
-- The graded quiz — confidence capture, hint ladder, mistake review — is conducted by you in conversation, not embedded in the lesson; only you can run the dialogic moves and log outcomes to `PROGRESS.md`.
+- The graded quiz is conducted by you in conversation, not embedded in the lesson; only you can run the dialogic moves and log outcomes to `PROGRESS.md`.
 - Open the finished lesson for the user (`open <root>/<slug>/lessons/NNNN-<slug>.html` — the workspace, not the session's cwd).
 
 Lessons are point-in-time consumables — date-stamped, never edited after the fact, never maintained as code or sources move on. Cheat sheets are the revisited artifact, re-verified only when a new lesson touches them.

@@ -10,26 +10,17 @@ GLAPI checks that a User Story (not a Feature) has a passing test point in the t
 
 ## Workflow
 
-Read `CLAUDE.md` for `Organization:`, `Project:`, `Area path:`, and `Iteration:` before starting. The exact `az devops invoke` call for every step lives in [references/ado-commands.md](references/ado-commands.md) — run them in order, capturing each step's output variable for the next.
+Read `CLAUDE.md` for `Organization:`, `Project:`, `Area path:`, and `Iteration:` before starting. The exact `az devops invoke` call for every step lives in [references/ado-commands.md](references/ado-commands.md) — follow its execution notes.
 
 ### 1. Fetch story title
 
-```bash
-az boards work-item show --id <story-id> --org <org> \
-  --query "fields.\"System.Title\"" -o tsv
-```
-
-Use the title in the test case name and run name.
-
-> Steps 2 and 4 are independent — start both after step 1.
+Fetch the story title (capture `STORY_TITLE`).
 
 ### 2. Create a Test Case work item
 
 Title: `GLAPI gate — <story title>` (truncated if long — the reference's command sets the length). Area and iteration: from CLAUDE.md. Project: from CLAUDE.md. → capture `TEST_CASE_ID`.
 
 ### 3. Link test case to story via "Tested By"
-
-Link the test case to the story via the `Tested By` relation type.
 
 ### 4. Find the team's test plan for the current iteration
 
@@ -41,8 +32,6 @@ Create a `requirementTestSuite` under the root suite for this story. → capture
 
 ### 6. Add the test case to the suite
 
-Add the test case to the suite.
-
 ### 7. Get the test point ID
 
 Get `testplan/TestPoint` for the suite. The freshly added test case will have one point with `outcome: unspecified`. → capture `TEST_POINT_ID`.
@@ -52,8 +41,6 @@ Get `testplan/TestPoint` for the suite. The freshly added test case will have on
 Create a test run against the plan. Run name: `GLAPI gate — <story title>` (append `PR <pr-id>` if provided). → capture `RUN_ID`.
 
 ### 9. Add a Passed result
-
-Add a `Passed` result to the run.
 
 ### 10. Complete the run
 
@@ -72,4 +59,4 @@ Print the created IDs: test case, suite, run, test point. Confirm the test point
 - Always use `testresults` and `testplan` areas — `--area test` routes to a 404.
 - `testresults` resources require `api-version 7.1-preview`, not `7.1`.
 - The "Tested By" relation type name is exact — `az boards work-item relation list-type` lists it.
-- If the story already has a suite in the plan, skip steps 5–6 and query for the existing test point directly (ado-commands.md Step 7).
+- If the story already has a requirement suite in the plan (a re-run of the gate), skip steps 2–3, 5–6, and 11: reuse the suite's existing test case, and run the Step 7 query with the existing suite's ID, selecting the point by its `testCaseReference.id` rather than `value[0]`.

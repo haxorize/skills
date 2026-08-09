@@ -32,5 +32,3 @@ Use this shape when the user hasn't provided a contract. Keep it short enough th
 ## Out of scope
 - <Anything the check must not judge.>
 ```
-
-Completion criterion: every user task and every anti-cheat probe has an expected observable result and an evidence type.

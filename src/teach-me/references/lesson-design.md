@@ -27,6 +27,6 @@ The visual and structural system for lessons and cheat sheets. A lesson should b
 
 - Reuse is the default: read `assets/` before authoring; anything new and reusable becomes a component, not an inline block.
 - The shared stylesheet is the first component every workspace earns; every lesson links it.
-- Build ungraded interactive elements as small vanilla-JS components — segment gate (a restate/apply check that unlocks the next section), reveal blocks, click-to-check self-tests. These aid the learner reading alone; the graded quiz is not among them (the agent runs it in conversation and logs it — see [pedagogy.md](pedagogy.md)).
+- Build ungraded interactive elements as small vanilla-JS components — segment gate (a restate/apply check that unlocks the next section), reveal blocks, click-to-check self-tests. These aid the learner reading alone.
 - Lessons are self-contained offline artifacts: no network requests, no CDN fonts or scripts — everything ships from `assets/` or inline.
 - Motion is purposeful and rare — at most a restrained flourish on the signature element. Extra animation reads as generated, not designed.

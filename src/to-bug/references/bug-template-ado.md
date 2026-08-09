@@ -16,8 +16,6 @@ Use this when publishing a Bug work item to Azure DevOps via `az boards work-ite
 | State | `System.State` | From CLAUDE.md `Default state:` (typically `New`) | `--fields "System.State=..."` |
 | Parent (Feature, optional) | (relation) | From `--parent <feature-id>` arg | post-create: `az boards work-item relation add --id <bug-id> --relation-type Parent --target-id <feature-id>` |
 
-ADO Bugs can be parented to a Feature directly or filed parentless. Bugs are not parented under User Stories — the fix *is* the slice.
-
 ## Description (markdown body — converted to HTML before publishing)
 
 The body holds the bug shape minus the repro steps (which live in the dedicated `Microsoft.VSTS.TCM.ReproSteps` field):
@@ -71,16 +69,14 @@ Author the repro steps as a Markdown numbered list, converted to HTML before pub
 
 Be precise about inputs, environments, and the observed failure.
 
-## Severity selection
+## Severity defaults
 
-Severity is required. Use the team's `Severity definitions:` block in CLAUDE.md if present; otherwise the ADO defaults:
+Used when CLAUDE.md declares no `Severity definitions:` block:
 
 - **1 - Critical** — production outage, data loss, security incident; needs immediate response.
 - **2 - High** — broken core flow with no workaround; blocks a release or significant user segment.
 - **3 - Medium** — broken non-core flow, or core flow with a workaround.
 - **4 - Low** — cosmetic, edge-case, or minor inconvenience.
-
-Prompt during draft if the conversation hasn't already pinned the severity.
 
 ## Markdown → HTML conversion
 
@@ -111,17 +107,7 @@ Or, if `pandoc` is not available, a Python one-liner:
 HTML=$(python3 -c "import sys, markdown; print(markdown.markdown(sys.stdin.read()))" < description.md)
 ```
 
-## State machine
-
-Notable states beyond `New` / `Active` / `Closed`:
-
-- **Resolved** — fix verified by developer; awaiting QA / triage. Set `Microsoft.VSTS.Common.ResolvedReason`: `Fixed` / `Duplicate` / `Won't Fix` / `Deferred` / `As Designed` / `Cannot Reproduce`.
-- **Closed** — resolution accepted. Resolution reason carries forward.
-
-`to-bug` does not transition state — that's the team's process. The state field is set to the team's default at create (typically `New`).
-
 ## Notes
 
 - Bugs do not produce child Tasks via `to-tasks`. The fix is the slice — `to-tasks --reconcile` ignores Bug parents.
 - `from-ticket <bug-id>` loads the Bug body, repro steps, parent (if any), DOMAIN.md, and ADRs matched against `## Layers touched`.
-- Severity differs from State. Severity describes impact; state describes lifecycle. A Critical Bug can be New, Active, Resolved, or Closed.

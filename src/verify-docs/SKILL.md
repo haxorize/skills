@@ -10,7 +10,7 @@ Check what a document *says* about the code against what the code does and what 
 
 ## Division of labor
 
-The test suite owns the behavioral contract — deterministic, cheap, gated. This skill owns the prose layer, and its judgment is fallible — so it runs as a triggered review (pre-publish, post-refactor, on a docs PR, or as a periodic sweep), never as a CI merge gate. Tests are the anchor: a doc is correct when it agrees with what the tests assert about the code.
+The test suite owns the behavioral contract — deterministic, cheap, gated. This skill owns the prose layer, and its judgment is fallible — so it runs as a triggered review (pre-publish, post-refactor, on a docs PR, or as a periodic sweep), never as a CI merge gate.
 
 `feedback-loops` owns the mechanical case — updating docs the current change just made stale, at every close. This skill is the judgment case: is this whole document still true, regardless of which change made it drift.
 
@@ -20,7 +20,7 @@ The test suite owns the behavioral contract — deterministic, cheap, gated. Thi
 2. **Extract the claims** by reading the prose: every checkable assertion about the code — signatures, behavior, return shapes, defaults, guarantees, examples.
 3. **Judge each claim** against the code and the tests: does the code do what the prose says? Is the claim backed by a test, or merely asserted? Does it reference something that no longer exists?
 4. **Report** drift ranked by severity, each finding citing the prose claim and the contradicting reality (`file:function`), with a per-claim verdict from the table below.
-5. **Offer fixes**: rewrite the prose to match reality, and flag every **Unsupported claim** as a missing test — a candidate task, not just a doc bug. A FAIL can also mean the code regressed and the doc caught it — check before "fixing" the doc.
+5. **Offer fixes**: rewrite the prose to match reality, and flag every **UNSUPPORTED** claim as a missing test — a candidate task, not just a doc bug. A FAIL can also mean the code regressed and the doc caught it — check before "fixing" the doc.
 
 ## Verdicts
 

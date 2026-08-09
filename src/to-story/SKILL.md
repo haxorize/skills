@@ -32,7 +32,7 @@ Title prefix: if the tracker block declares a generic `Title prefix:`, prepend i
 
 ### 2a. Snapshot lookup (where `Hierarchy: required`)
 
-See [references/ado-hierarchy.md](references/ado-hierarchy.md) for the full snapshot-lookup procedure. In brief: fetch the parent Feature's description, extract the story map between the `<!-- BEGIN STORY MAP -->` markers, and check for a Planned Story match against the story reference argument (if any).
+See [references/ado-hierarchy.md](references/ado-hierarchy.md) for the snapshot-lookup procedure; its outcome classifies the story as **Planned** (Snapshot match) or **Emergent**, which steps 10-11 key on.
 
 ### 3. Explore the codebase
 
@@ -95,7 +95,7 @@ See [references/ado-hierarchy.md](references/ado-hierarchy.md) for full procedur
 
 ### 11. Materialize dependency relations (ADO only)
 
-Native dependency relations are an ADO feature, so this step runs only on ADO — not on a GitHub project that opted into `Hierarchy: required` for Step 10, where story dependencies stay map-only. After the map is stamped, project any story-map dependency edge whose both endpoints are now published onto a built-in `Predecessor` relation — checked in both directions so out-of-order publishing still links each edge once its second endpoint lands. Additive and idempotent; never deletes. See [references/ado-hierarchy.md](references/ado-hierarchy.md) Step 11.
+Native dependency relations are an ADO feature, so this step runs only on ADO — not on a GitHub project that opted into `Hierarchy: required` for Step 10, where story dependencies stay map-only. See [references/ado-hierarchy.md](references/ado-hierarchy.md) Step 11 for the projection procedure. The Story always publishes regardless.
 
 ## Update mode
 

@@ -1,6 +1,6 @@
 # Predictability
 
-A document an agent consumes exists to wrangle determinism out of a stochastic system. **Predictability** — the agent taking the same *process* every run, not producing the same *output* — is the root virtue; every lever in the document serves it. (A brainstorming skill should predictably *diverge*: its tokens vary, its behavior doesn't.) This is the disclosed reference for `writing-for-agents` — the full vocabulary and the failure-mode taxonomy the main skill points at; skills, the richest packaging, get their own sections (the two loads, granularity).
+The disclosed reference for `writing-for-agents` — the full vocabulary and failure-mode taxonomy the main skill points at; skills, the richest packaging, get their own sections (the two loads, granularity). Every lever here serves predictability. (A brainstorming skill should predictably *diverge*: its tokens vary, its behavior doesn't.)
 
 ## The two loads
 
@@ -27,7 +27,7 @@ A document's content is ranked by how immediately the agent needs it — a ladde
 2. **In-file reference** — a definition, rule, or fact in the main document, consulted on demand. Often a legitimately flat peer-set (every rule of a review on one rung) — a fine arrangement, not a smell.
 3. **External reference** — reference pushed out of the main document into a linked file (this file is one), reached by a context pointer and loaded only when the pointer fires. Spans a disclosed sibling (still part of the skill) through fully external docs any skill can point at.
 
-**Progressive disclosure** is the move down the ladder — out of the main document into a linked file — so the top stays legible. Push too little down and the top bloats; push too much and you hide what the agent needs. Branching licenses the call: disclose what only some branches reach.
+**Progressive disclosure** is the move down the ladder — out of the main document into a linked file — so the top stays legible. Push too little down and the top bloats; push too much and you hide what the agent needs. Branching licenses the call (see *Branch*).
 
 **Co-location** is the within-file companion: keep a concept's definition, rules, and caveats under one heading rather than scattered, so reading one part brings its neighbours along.
 

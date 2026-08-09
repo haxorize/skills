@@ -33,7 +33,7 @@ Keep it pure: no DOM access, no rendering. The shell reads it and calls into it;
 
 Every label in **domain language**, not code — buttons and state read like the business, not the reducer. Two parts:
 
-- **Free play** — every legal action as a button; illegal actions visible but disabled (that they're disabled is often the answer). After every click, render the full relevant state so the user sees what changed.
+- **Free play** — every legal action as a button; illegal actions visible but disabled (that they're disabled is often the answer).
 - **Guided walkthroughs** — a set of **scenarios, one per tab**. Each step is a real button: clicking it performs that action and advances the walkthrough. Starting a walkthrough resets to a known initial state so the scenario runs the same way every time. Choose scenarios that demonstrate the awkward cases — the happy path, a tricky edge case, an attempt at something that should be illegal.
 
 ### 4. Keep it one double-clickable file

@@ -6,7 +6,7 @@ How `improve-design` Step 3 renders vetted deepening candidates as a self-contai
 
 The report's one job: let an engineer compare deepening candidates and pick one. The signature is the **Ousterhout depth-rectangle** — a module drawn as a rectangle whose *top edge is its interface width* and whose *body is its implementation*. Depth is encoded twice: by vertical extent **and** by color saturation — a shallow module reads pale and flat, a deep module reads dark and dimensional. That dual encoding is the one aesthetic risk; spend boldness there and keep everything else quiet.
 
-This is deliberately *not* Matt Pocock's stone/emerald/Mermaid-neutral look, and it steers clear of the three AI-default palettes (cream+serif+terracotta, near-black+acid, broadsheet hairline).
+This deliberately steers clear of the stone/emerald Mermaid-default look and the three AI-default palettes (cream+serif+terracotta, near-black+acid, broadsheet hairline).
 
 ### Tokens
 

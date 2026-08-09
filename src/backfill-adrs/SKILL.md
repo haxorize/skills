@@ -34,13 +34,13 @@ If no tracker block is declared, fall back to commit message and code-only infer
 
 ### 4. Apply the ADR gate
 
-Apply the three-criteria gate per [references/adr-format.md](references/adr-format.md). Reject any candidate that fails. Bug fixes, reversible style choices, and routine feature additions don't qualify.
+Apply the three-criteria gate per [references/adr-format.md](references/adr-format.md). Reject any candidate that fails.
 
 ### 5. Quiz the user on the candidate list
 
 Walk through each candidate one at a time:
 
-- **Title** — short kebab-case slug
+- **Title** — the proposed slug (format per the reference)
 - **Why it qualifies** — which of the three criteria it meets
 - **Rationale source** — commit / PR / work item / file
 
@@ -56,5 +56,5 @@ Once the candidate list is exhausted, stop. Don't keep mining for more.
 
 ## Notes
 
-- **Dedupe against existing ADRs.** Read the existing log first; skip candidates already covered.
+- **Dedupe against existing ADRs.** Read the existing log first. A candidate the log already records is done — skip it; one that only refines an existing record follows the amend-or-write-new rule in the shared format doc instead of getting a new number.
 - **Prefer fewer high-quality ADRs.** If a candidate borderline-qualifies, drop it.

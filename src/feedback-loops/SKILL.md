@@ -33,7 +33,7 @@ If `## Commands` is missing or incomplete, infer the commands from the project's
 
 ### 1. Format, lint, typecheck
 
-Run the formatter, linter, and type checker. Fix anything they surface, then re-run the test command to confirm the fixes didn't break behavior. Never declare done while any of these is red.
+Run the loop's format, lint, and typecheck commands, then the test re-run the loop prescribes. Never declare done while an in-scope check is red — an out-of-scope red follows the triage rule: named and left, never fixed here or committed over.
 
 ### 2. Stack-specific finalization
 

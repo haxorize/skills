@@ -15,7 +15,7 @@ Increment past the highest number claimed in **either** place, taking whichever 
 - **The working tree** — list the ADR directory. This catches a record written earlier this session and not yet committed.
 - **Git history** — `git log --all --diff-filter=A --name-only -- <adr-dir>`, using the directory the preflight resolved. This catches numbers already claimed on branches you haven't merged.
 
-Neither scan alone is enough, and each misses what the other catches. Checking both is the only moment a duplicate can be prevented: git merges two differently-named files without complaint, so the collision lands silently and leaves every `[ADR N](N-slug.md)` link ambiguous. Where there's no git repo, or the log comes back empty because the repo predates it, the working-tree scan stands alone. Numbers burned by abandoned branches leave gaps in the sequence — a gap is cosmetic, a duplicate is not.
+Numbering time is the only moment a duplicate can be prevented: git merges two differently-named files without complaint, so the collision lands silently and leaves every `[ADR N](N-slug.md)` link ambiguous. Where there's no git repo, or the log comes back empty because the repo predates it, the working-tree scan stands alone. Numbers burned by abandoned branches leave gaps in the sequence — a gap is cosmetic, a duplicate is not.
 
 Slug is a short kebab-case summary of the decision (e.g., `0007-transactional-test-isolation.md`).
 
@@ -28,7 +28,7 @@ Before drafting, search for a record that already owns this ground — one whose
 
 **Amendment is not supersession.** An amended decision still stands on a changed premise; a superseded one is no longer in force and is marked in Status frontmatter. Reaching for supersession while the old decision survives loses that distinction.
 
-The search is a judgment call, so the expensive error runs the other way — amending a record that should have been left alone. Amendments are additive and dated; never rewrite the original text.
+The search is a judgment call; when unsure, prefer a new record — the expensive error is amending one that should have been left alone. Amendments are additive and dated; never rewrite the original text.
 
 ## Default form
 

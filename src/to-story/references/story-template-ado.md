@@ -82,7 +82,7 @@ Use typed prefixes (`**AC1:**`, `**AC2:**`) so child Tasks can reference them by
 - **AC4:** Specific, testable outcome 4
 ```
 
-The example skips `AC3` to show the gap preserved on removal. Each criterion is a single concrete check. Avoid "works correctly" — say what "correct" looks like.
+The example skips `AC3` to show the gap preserved on removal.
 
 ## Markdown → HTML conversion
 
