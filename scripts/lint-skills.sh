@@ -107,7 +107,7 @@ is_user_invoked() {
 while IFS= read -r f; do
   lines=$(awk 'END { print NR }' "$f")
   if [ "$lines" -gt 200 ]; then
-    echo "FAIL: $f exceeds 200-line cap ($lines lines)"
+    echo "FAIL: $f exceeds 200-line cap ($lines lines) — cut or move detail into references/; never raise the cap"
     fail=1
   fi
 
@@ -123,14 +123,14 @@ for f in src/*/SKILL.md; do
   desc=$(frontmatter_value "$f" description)
 
   if [ -z "$desc" ]; then
-    echo "FAIL: $f has no description in frontmatter"
+    echo "FAIL: $f has no description in frontmatter — add 'description:' to the YAML block"
     fail=1
     continue
   fi
 
   len=${#desc}
   if [ "$len" -gt 1024 ]; then
-    echo "FAIL: $f description exceeds 1024 chars ($len)"
+    echo "FAIL: $f description exceeds 1024 chars ($len) — trim triggers; collapse synonym branches"
     fail=1
   fi
 

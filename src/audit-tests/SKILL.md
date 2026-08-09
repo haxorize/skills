@@ -34,9 +34,9 @@ For each load-bearing assertion:
 
 ## Report
 
-One finding per defective check: `file:line`, verdict, the named break (or the demonstration that none exists), and the fix direction — anchor the expected value, tighten the matcher, add the missing known-bad, or delete. Order CANNOT FAIL → BLIND → PLAUSIBLE; CONFIRMED needs no listing beyond a count.
+One finding per defective check: `file:line`, verdict, the named break (or the demonstration that none exists), and the fix direction — anchor the expected value, tighten the matcher, add the missing known-bad, declare the precondition, or delete. A coincidental-reliance or fixture-provenance finding earns the verdict its evidence supports: CONFIRMED when the hidden state or fixture gap was demonstrated (the test run in isolation or reordered goes red), PLAUSIBLE otherwise. Order CANNOT FAIL → BLIND → PLAUSIBLE; CONFIRMED needs no listing beyond a count.
 
-Close by **stating the suite's blind spots outright** — what it cannot catch even when fully green (the seam with no test, the behavior only eyeballed, the config never exercised, the temporal claim — "converges", "adapts", "recovers over time" — that only step-wise tests guard) — because a green run implies total coverage unless someone says otherwise. Keep "checked and clean" distinguishable from "never checked" throughout: a skipped subtree or an assertion you could not evaluate is reported as unchecked, never left to read as clean.
+Close by **stating the suite's blind spots outright** — what it cannot catch even when fully green (the seam with no test, the behavior only eyeballed, the config never exercised, the **temporal quantifier** — "converges", "adapts", "over time" — that a step-wise suite cannot guard) — because a green run implies total coverage unless someone says otherwise. Keep "checked and clean" distinguishable from "never checked" throughout: an assertion you could not evaluate is reported as unchecked, never left to read as clean.
 
 Read-only: fixes are follow-up work (`tdd` for new or rewritten tests), never applied here.
 

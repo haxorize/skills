@@ -30,7 +30,7 @@ All four, in order; short beats padded:
 - **Problem** — 1–2 sentences on what was broken.
 - **What didn't work** — each failed approach and *why* it failed; this is what no commit message preserves. Near-empty is honest signal of a first-try fix — say so rather than pad.
 - **Fix** — the actual change (before/after when useful) and why it addresses the root cause.
-- **Prevention** — how the recurrence gets caught or avoided: a test, a lint rule, a config guard.
+- **Prevention** — how the recurrence gets caught or avoided: a test, a lint rule, a config guard. Name the regression test that pins the fix where one exists, so a future reader can tell a still-guarded fix from an unguarded one.
 
 ## Example
 

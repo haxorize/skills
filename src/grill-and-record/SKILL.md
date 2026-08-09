@@ -21,4 +21,4 @@ The standalone path's other rules bind inline as well. Before writing, check for
 
 ## Answers overwrite, they don't accumulate
 
-When a round's answer invalidates something an artifact under revision already says — a plan paragraph, a `DOMAIN.md` definition, a draft body — **replace** the invalidated statement where it stands; never append the correction beside it and leave the contradiction for a later reader. The one deliberate exception is the ADR amendment log, which appends dated corrections without rewriting the original — that append-only shape is the format doc's rule, not a license elsewhere.
+When a round's answer invalidates something an artifact under revision already says — a plan paragraph or a draft body — **replace** the invalidated statement where it stands; never append the correction beside it and leave the contradiction for a later reader.

@@ -47,7 +47,7 @@ Keep steps 1–2 in **one unbroken context window** so the grilling, decompositi
 - **`/backfill-adrs`** — sweep recent git history for architectural decisions that were made but never recorded.
 - **`/verify-docs`** — check a document's claims against the code and tests, verdict per claim. The prose-drift sibling of `/harden-domain` (vocabulary) and `/backfill-adrs` (decisions); run it pre-publish, post-refactor, or as a periodic sweep — `feedback-loops` still auto-fixes docs the current change touched.
 - **`/audit-tests`** — sweep an existing test suite asking "can these checks fail?", grading each load-bearing assertion (CONFIRMED / PLAUSIBLE / CANNOT FAIL / BLIND) and naming the suite's blind spots. The test-suite member of this family; `tdd`'s mutation check guards new tests at writing time.
-- **`/black-box-check`** — validate the *running* app, CLI, API, or generated artifact against a behavior contract written before testing: source-blind (reading the implementation contaminates the run), with anti-cheat probes that catch UI which only displays success. The runtime member of this family — `audit-tests` judges the suite, `verify-docs` the prose, this the product itself.
+- **`/black-box-check`** — validate the *running* app, CLI, API, or generated artifact against a behavior contract written before testing: source-blind (reading the implementation contaminates the checker; a non-checker may derive the contract from legacy code), with anti-cheat probes that catch UI which only displays success. The runtime member of this family — `audit-tests` judges the suite, `verify-docs` the prose, this the product itself.
 
 ## Review gate
 

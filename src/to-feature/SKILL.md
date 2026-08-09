@@ -60,8 +60,6 @@ Use the appropriate template:
 
 **On ADO, draft the body and the acceptance criteria as two separate artifacts — the two-field split.** ADO stores them in two fields, so carve them apart here, while you're thinking about content, rather than at publish time. The outcome bullets are never a section of the body.
 
-Acceptance criteria admit only outcomes that buildable work can satisfy. A post-launch outcome metric or business KPI ("adoption doubles in Q3") is a goal for the Problem section, never a criterion — no implementer can close it.
-
 ### 8. Self-review
 
 Before showing the user, check:
@@ -73,7 +71,7 @@ Before showing the user, check:
 - Domain language matches `DOMAIN.md`
 - AC IDs: append-only — no reused IDs across active and `## Removed acceptance criteria`; gaps from removals preserved (no renumbering)
 - On ADO: the **two-field split** holds (step 7) — outcome bullets are their own artifact
-- Story map: every active Feature AC ID appears in at least one Story's `Covers:` line; no `Covers:` line references a removed AC ID; naming-table dedup; dependency acyclicity (skip if no story map — `Hierarchy: optional` without the story-map opt-in, or deferred decomposition)
+- Story map: every active Feature AC ID appears in at least one Story's `Covers:` line; every Story's `Covers:` names at least one active AC ID (a Story covering nothing is unmapped work); no `Covers:` line references a removed AC ID; naming-table dedup; dependency acyclicity (skip if no story map — `Hierarchy: optional` without the story-map opt-in, or deferred decomposition)
 
 Then run the **Cold-reader pass** from the `/work-item-shape` behavior: the cold reader gets only the drafted body and answers "what would you build?".
 

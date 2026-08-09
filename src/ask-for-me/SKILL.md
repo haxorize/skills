@@ -1,6 +1,6 @@
 ---
 name: ask-for-me
-description: Turn a decision you can't answer alone into a Markdown questionnaire for the person who can — a brief interview about the send (who it goes to, what you need back), then a drafted document that pulls out what they know and you don't.
+description: Turn a decision you can't answer alone into a Markdown questionnaire for the person who can — a brief interview about the send (who it goes to, what you need back), then a drafted document that pulls out what they know and you don't. Invoke it again with the filled-in answers to check nothing was missed.
 disable-model-invocation: true
 requires: writing-for-humans
 ---
@@ -19,8 +19,8 @@ Turn something the user can't answer alone into a **discovery questionnaire** �
 
 3. **Write the questionnaire.** Draft questions aimed at the gap from steps 1–2, following [references/questionnaire-template.md](references/questionnaire-template.md); the document is human-facing prose, drafted per the `/writing-for-humans` behavior. Write it to `questionnaire-<slug>.md` in the current directory (slug from the topic). Done when the file exists and every item the user named in step 2 is covered by a question.
 
+4. **Check the returns.** When the user brings the filled-in questionnaire back, check every question got an answer before treating the send as resolved — follow up on just the missed ones, never silently default them. Done when every question has an answer or a named follow-up.
+
 ## Pairing with chart-course
 
 When a `chart-course` decision ticket is blocked on knowledge someone outside the effort holds, an **Errand** ticket can resolve through this skill: the questionnaire is the checklist handed to the human, and the filled-in answers become the Errand's resolution, linked as an asset.
-
-When a filled-in questionnaire comes back, check every question got an answer before treating the send as resolved — follow up on just the missed ones, never silently default them.

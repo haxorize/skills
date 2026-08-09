@@ -38,7 +38,7 @@ Out-of-scope observations made mid-slice — a smell, a missing test, a refactor
 
 Run the `/feedback-loops` skill when the slice's behaviors are built and refactored — if you don't see a `Launching skill: feedback-loops` line, stop and load it. It is the mechanical finalize, and this is the slice's one run: when `tdd` runs under `implement`, it defers the close-the-loop pass here.
 
-Then run the **completion audit** against the loaded ticket: treat done as unproven. For each acceptance criterion the slice covers, name the authoritative evidence that proves it and inspect it at matching scope — a narrow check never supports a broad claim, and a green suite counts only after confirming it exercises that criterion. The audit proves completion; "found no remaining work" is not a proof.
+Then run the **completion audit** against the loaded ticket: treat done as unproven, derive the requirements from the acceptance criteria the slice covers, name the authoritative evidence per requirement, and inspect it at matching scope — a narrow check never supports a broad claim, and a green suite counts only after confirming it exercises that criterion. The audit proves completion rather than failing to find remaining work.
 
 ## Record a load-bearing decision
 

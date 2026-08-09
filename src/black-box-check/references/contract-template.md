@@ -1,6 +1,6 @@
 # Behavior contract template
 
-Use this shape when the user hasn't provided a contract. Keep it short enough that a source-blind checker can execute it without any implementation knowledge — every clause states something observable.
+Use this shape when the user hasn't provided a contract. Keep it short enough that a source-blind checker can execute it without any implementation knowledge — every clause states something observable. The final section is not for the checker: it is handed to the user or a non-checking session when a contract must be derived from legacy code.
 
 ```md
 # Behavior contract
@@ -33,9 +33,9 @@ Use this shape when the user hasn't provided a contract. Keep it short enough th
 - <Anything the check must not judge.>
 ```
 
-## Deriving a contract for existing behavior
+## Deriving a contract for existing behavior (not the checker's job)
 
-When the target is legacy or already-shipped behavior with no request text to write from, the contract can be derived from the code — but only by someone who is not the checker (the user, or a session that will not run the check), since reading the implementation contaminates a checker. The move is a mechanical translation from code pattern to behavior statement:
+When the target is legacy or already-shipped behavior with no request text to write from, the user or a session that will not run the check derives the contract from the code. The move is a mechanical translation from code pattern to behavior statement:
 
 - `if (user.role === 'admin')` → "the action is restricted to administrator users"
 - `password.length >= 8` → "passwords must be at least 8 characters"

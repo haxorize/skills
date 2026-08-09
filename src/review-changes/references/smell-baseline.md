@@ -1,9 +1,9 @@
 # Smell baseline
 
-A fixed set of Fowler code smells (*Refactoring*, ch. 3) the smell-baseline lens matches against the diff. Two rules bind it:
+The catalog the smell-baseline lens matches against the diff: the fixed Fowler set (*Refactoring*, ch. 3) plus a fail-fast error-handling family. Two rules bind it:
 
 - **The repo overrides.** A documented repo standard always wins; where it endorses something the baseline would flag, suppress the smell.
-- **Always a judgment call.** Each smell is a labeled heuristic ("possible Feature Envy"), never a hard violation — and skip anything tooling already enforces.
+- **Always a judgment call.** Each smell is a labeled heuristic ("possible Feature Envy"), never a hard violation.
 
 - **Mysterious Name** — a function, variable, or type whose name doesn't reveal what it does or holds. → rename it; if no honest name comes, the design's murky.
 - **Duplicated Code** — the same logic shape appears in more than one hunk or file in the change. → extract the shared shape, call it from both.
@@ -23,5 +23,5 @@ A fixed set of Fowler code smells (*Refactoring*, ch. 3) the smell-baseline lens
 Beyond the Fowler set, the lens carries a **fail-fast error-handling family** (high-signal on any diff that adds or changes a `try`/`catch` or fallback):
 
 - **Swallowed failure** — a catch that hides the failure signal: returning `null`/`[]`/`false`, absorbing a parse failure, logging-and-continuing, "best effort" silent recovery. → propagate; handle only where the handling is correct *at that layer*. A boundary handler may translate an error — it must never pretend success or silently degrade.
-- **Ceremonial catch** — a catch that exists to satisfy lint or style without real handling. → treat as a bug, not a style nit: delete it or make it handle.
+- **Ceremonial catch** — a catch that exists to satisfy lint or style without real handling. → delete it or make it handle; its cost is real-failure camouflage, not style.
 - **Message-matched error** — control flow keyed on an error's message text rather than its code or stable identifier; wording, i18n, and library upgrades all break it silently. → match on the code/type, never the prose.

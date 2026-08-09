@@ -26,7 +26,7 @@ Before drafting, search for a record that already owns this ground — one whose
 - **It doesn't clear the gate** — a refinement, a landed detail, a narrowed premise → **amend in place**. Append to the owning ADR's `## Amendments` section, dated (`- **<date>** — …`), adding a ticket reference where the repo has a tracker. No new number.
 - **It clears the gate on its own** → **new record, linked both ways**. The new ADR states `This amends [ADR N](N-slug.md)` and says what moved; the amended one gets a forward pointer at its top (`> **Amended by [ADR N](N-slug.md):** …`).
 
-**Amendment is not supersession.** An amended decision still stands on a changed premise; a superseded one is no longer in force and is marked in Status frontmatter. Reaching for supersession while the old decision survives loses that distinction. When superseding, link both ways as **file links**, never bare numbers — the superseded record's Status names its successor's file, and the successor links back to what it replaces; a bare "ADR 12" is a pointer that breaks the moment numbering shifts or files move.
+**Amendment is not supersession.** An amended decision still stands on a changed premise; a superseded one is no longer in force and is marked in Status frontmatter. Reaching for supersession while the old decision survives loses that distinction. When superseding, the superseded record's Status names its successor as a file link (`superseded by [ADR N](N-slug.md)`) and the successor links back to what it replaces — a bare number breaks the moment numbering shifts or files move.
 
 The search is a judgment call; when unsure, prefer a new record — the expensive error is amending one that should have been left alone. Amendments are additive and dated; never rewrite the original text.
 
@@ -44,7 +44,7 @@ The search is a judgment call; when unsure, prefer a new record — the expensiv
 
 Only when they add real value, not for completeness:
 
-- **Status** frontmatter (`proposed | accepted | superseded by ADR-NNNN`) — useful when revisiting
+- **Status** frontmatter (`proposed | accepted | superseded by [ADR N](N-slug.md)`) — useful when revisiting
 - **Considered Options** — only when rejected alternatives are worth remembering in detail
 - **Consequences** — only when downstream effects are non-obvious
 - **Amendments** — the dated log an in-place amendment appends to; created on the first amendment, never up front
@@ -53,7 +53,7 @@ Only when they add real value, not for completeness:
 
 Before writing, confirm out loud which of the three criteria the decision meets, and which alternatives were considered:
 
-1. **Hard to reverse** — undoing this later carries real cost (schema migration, dependency change, methodology shift). Falsifiable: name the concrete cost; when you can't, the decision is reversible and fails this criterion — rating everything hard-to-reverse produces records nobody reads.
+1. **Hard to reverse** — undoing this later carries real cost (schema migration, dependency change, methodology shift); name that cost, or the decision is reversible and fails this criterion — rating everything hard-to-reverse produces records nobody reads.
 2. **Surprising without context** — a future reader (or AFK agent) will look at the code and wonder "why did they do it this way?"
 3. **Result of a real trade-off** — there were genuine alternatives and one was picked for specific reasons.
 

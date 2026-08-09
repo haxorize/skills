@@ -17,7 +17,7 @@ Within a round, order questions load-bearing-first — an assumption that sinks 
 
 💡 [your recommended answer]
 
-Three guards on the question line itself: a topic label is not a question ("Acceptance device matrix (FR-023)" is a label — write the full interrogative, ending in `?`); the line must be answerable on its own by a reader who skipped the surrounding prose; and when the stake is not obvious, one plain why-it-matters sentence sits between the question and its options. Never letter a "let Claude decide" option — that is a false yes with a checkbox. Keep the interviewer voice matter-of-fact: praise and agreement lower the pressure the grill exists to apply.
+Three guards on the question line itself: a topic label is not a question ("Acceptance device matrix (FR-023)" is a label — write the full interrogative, ending in `?`); the line must be answerable on its own by a reader who skipped the surrounding prose; and when the stake is not obvious, one plain why-it-matters sentence sits between the question and its options. Never letter a "let Claude decide" option — it invites the false yes by checkbox. Keep the interviewer voice matter-of-fact: praise and agreement lower the pressure the grill exists to apply.
 
 Invite shorthand answers keyed to the numbering — "1: yes, 2b, 3: no, back-compat" — so a wide round stays cheap to answer. When answers come back, check every question got one — an ignored question is re-asked alone, never silently defaulted; and when the user starts explaining instead of picking, drop the letters and follow the explanation — options serve answers, not the reverse.
 

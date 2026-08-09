@@ -18,7 +18,7 @@ The test suite owns the behavioral contract — deterministic, cheap, gated. Thi
 
 1. **Identify** the document(s) to check and the code + tests they describe — from the argument, or ask.
 2. **Extract the claims** by reading the prose: every checkable assertion about the code — signatures, behavior, return shapes, defaults, guarantees, examples.
-3. **Judge each claim** against the code and the tests: does the code do what the prose says? Is the claim backed by a test, or merely asserted? Does it reference something that no longer exists? Authority differs by claim kind: a doc is authoritative for *decisions* (what was chosen and why), never for *counts and versions* (how many rules, which dependency version) — measure those live, and when the measurement disagrees, report the discrepancy with both values rather than silently taking either side.
+3. **Judge each claim** against the code and the tests: does the code do what the prose says? Is the claim backed by a test, or merely asserted? Does it reference something that no longer exists? Authority differs by claim kind: a doc is authoritative for *decisions* (what was chosen and why), never for *counts and versions* (how many rules, which dependency version) — measure those live.
 4. **Report** drift ranked by severity, each finding citing the prose claim and the contradicting reality (`file:function`), with a per-claim verdict from the table below.
 5. **Offer fixes**: rewrite the prose to match reality, and flag every **UNSUPPORTED** claim as a missing test — a candidate task, not just a doc bug. A FAIL can also mean the code regressed and the doc caught it — check before "fixing" the doc.
 
