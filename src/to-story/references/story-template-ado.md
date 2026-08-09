@@ -14,7 +14,7 @@ Use this when publishing a User Story to Azure DevOps via `az boards work-item c
 | State | `System.State` | From CLAUDE.md `Default state:` (typically `New`) | `--fields "System.State=..."` |
 | Parent (Feature) | (relation) | From `--parent <feature-id>` arg | post-create: `az boards work-item relation add --id <new-story-id> --relation-type Parent --target-id <feature-id>` |
 
-To verify field names against a specific project, run `az boards work-item show --id <existing-story-id> --output json --query 'fields'` and confirm a `System.Description` key is present.
+Before first publish against a new ADO project, verify the field shape once: run `az boards work-item show --id <existing-story-id> --output json --query 'fields'` and confirm the reference names above are present.
 
 ## Description (markdown body — converted to HTML before publishing)
 
@@ -111,6 +111,8 @@ Or, if `pandoc` is not available, a Python one-liner:
 ```bash
 HTML=$(python3 -c "import sys, markdown; print(markdown.markdown(sys.stdin.read()))" < description.md)
 ```
+
+If neither `pandoc` nor the Python `markdown` module is present, stop and ask for one to be installed — never publish raw Markdown into an HTML-rendering field.
 
 ## Notes
 

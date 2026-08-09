@@ -9,7 +9,7 @@ requires: writing-for-humans
 
 ## Workflow
 
-### 1. Confirm scan range
+### 1. Confirm the sweep window
 
 Default suggestion: **last 90 days OR last 200 commits, whichever is shorter**. Confirm with the user before scanning.
 

@@ -1,13 +1,13 @@
 ---
 name: to-story
-description: Synthesize the current conversation into a Story-level (single-feature spec) artifact and publish it to the project's issue tracker — most workflows start here. For scope that needs multiple stories beneath it, reach for `to-feature` instead. ADO — creates a User Story under a parent Feature. GitHub — creates an issue with a story-shaped template.
+description: Synthesize the current conversation into a Story-level (single-feature spec) artifact and publish it to the project's tracker — most workflows start here. For scope that needs multiple stories beneath it, reach for `to-feature` instead. ADO — creates a User Story under a parent Feature. GitHub — creates an issue with a story-shaped template.
 disable-model-invocation: true
 requires: writing-for-humans, work-item-shape
 ---
 
 # To Story
 
-Synthesize the current conversation into a Story-level artifact (single-feature spec) and publish it to the project's issue tracker. No interviewing — this is a synthesis-only skill. Run `/grill-and-record` (or `/grill-me`) first if context is thin.
+Synthesize the current conversation into a Story-level artifact (single-feature spec) and publish it to the project's tracker. No interviewing — this is a synthesis-only skill. Run `/grill-and-record` (or `/grill-me`) first if context is thin.
 
 Use `to-feature` only when scope explicitly needs multiple stories beneath it.
 
@@ -80,7 +80,7 @@ Iterate until approved.
 
 ### 9. Publish via tracker dispatch
 
-- **GitHub:** `gh issue create --title "..." --body-file <draft>` with default labels from CLAUDE.md. Parent linking via template `Parent: #N` reference if `--parent` was provided. **Before creating the issue,** ensure every label in CLAUDE.md's `Default labels:` exists on the repo: `gh label list --json name --jq '.[].name'` once, then `gh label create <name>` for any missing. If a parent Feature was resolved, add the new issue as a native sub-issue of it after create — see [references/github-sub-issues.md](references/github-sub-issues.md).
+- **GitHub:** `gh issue create --title "..." --body-file <draft>` with default labels from CLAUDE.md. Parent linking via template `Parent: #N` reference if `--parent` was provided. **Before creating the issue,** run the label precheck in [references/tracker-resolution.md](references/tracker-resolution.md). If a parent Feature was resolved, add the new issue as a native sub-issue of it after create — see [references/github-sub-issues.md](references/github-sub-issues.md).
 - **ADO:** The **two-field split** lands as two flags on one `az boards work-item create` call — the body into `System.Description` via `--description`, the acceptance bullets into `Microsoft.VSTS.Common.AcceptanceCriteria` via `--fields`. Both expect HTML: convert each artifact on its own. Write each to a temp file and pass via command substitution to prevent shell newline mangling (embedded `\n` in a shell string becomes a literal two-character sequence in the stored HTML). See [references/story-template-ado.md](references/story-template-ado.md) for the conversion command. Parent linking via `az boards work-item relation add --id <new-story-id> --relation-type Parent --target-id <feature-id>`. Merge `System.Tags` into the create call's `--fields` — see [references/work-item-tags.md](references/work-item-tags.md).
 
 If a required CLAUDE.md field is missing, fail fast with a clear "add this to CLAUDE.md" message. If the create call fails with an auth/permission error, fall back to giving the user the drafted body to paste manually — don't loop on auth. Apply the **transport safety** rules in [references/tracker-resolution.md](references/tracker-resolution.md) to every create and retry.

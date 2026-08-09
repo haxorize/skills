@@ -14,6 +14,8 @@ Use this when publishing a Feature work item to Azure DevOps via `az boards work
 | State | `System.State` | From CLAUDE.md `Default state:` (typically `New`) | `--fields "System.State=..."` |
 | Parent (Epic) | (relation) | From `--parent <epic-id>` arg | post-create: `az boards work-item relation add --id <feature-id> --relation-type Parent --target-id <epic-id>` |
 
+Before first publish against a new ADO project, verify the field shape once: run `az boards work-item show --id <existing-feature-id> --output json --query 'fields'` and confirm the reference names above are present.
+
 ## Description (markdown body — converted to HTML before publishing)
 
 Author the body as Markdown. The `## Story Decomposition` section at the bottom is the story map (see `to-feature` SKILL.md step 6); inside it, HTML markers fence an append-only region so `to-story` can locate and append to it.
@@ -125,6 +127,8 @@ Or, if `pandoc` is not available, a Python one-liner:
 ```bash
 HTML=$(python3 -c "import sys, markdown; print(markdown.markdown(sys.stdin.read()))" < description.md)
 ```
+
+If neither `pandoc` nor the Python `markdown` module is present, stop and ask for one to be installed — never publish raw Markdown into an HTML-rendering field.
 
 ## Notes
 

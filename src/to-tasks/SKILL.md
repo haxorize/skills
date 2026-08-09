@@ -1,6 +1,6 @@
 ---
 name: to-tasks
-description: Break a parent User Story into child Task work items on the project's issue tracker. Tracer-bullet style — each Task is a thin vertical slice through every integration layer. ADO — creates Tasks under a User Story. GitHub — creates task-shaped issues under a story-shaped parent issue.
+description: Break a parent User Story into child Task work items on the project's tracker. Tracer-bullet style — each Task is a thin vertical slice through every integration layer. ADO — creates Tasks under a User Story. GitHub — creates task-shaped issues under a story-shaped parent issue.
 disable-model-invocation: true
 requires: writing-for-humans, work-item-shape, adr
 ---
@@ -92,7 +92,7 @@ For each Task, use the appropriate template:
 - GitHub: [references/task-template-github.md](references/task-template-github.md)
 - ADO: [references/task-template-ado.md](references/task-template-ado.md)
 
-- **GitHub:** `gh issue create --title "..." --body-file <draft>` with default labels from CLAUDE.md. Reference the parent via template `Parent: #N` line. **Before creating the first Task in a publishing batch,** ensure every label in CLAUDE.md's `Default labels:` exists on the repo: `gh label list --json name --jq '.[].name'` once, then `gh label create <name>` for any missing. When a parent Story was resolved, add each new issue as a native sub-issue of it after create — see [references/github-sub-issues.md](references/github-sub-issues.md).
+- **GitHub:** `gh issue create --title "..." --body-file <draft>` with default labels from CLAUDE.md. Reference the parent via template `Parent: #N` line. **Before creating the first Task in a publishing batch,** run the label precheck in [references/tracker-resolution.md](references/tracker-resolution.md). When a parent Story was resolved, add each new issue as a native sub-issue of it after create — see [references/github-sub-issues.md](references/github-sub-issues.md).
 - **ADO:** `az boards work-item create --type "Task" --title "..." --description "<html>"` with project / area path / iteration / state from CLAUDE.md — the description field expects HTML, so convert the Markdown draft before passing. Then, per created Task:
   - **Parent:** `az boards work-item relation add --id <task-id> --relation-type Parent --target-id <story-id>`.
   - **Tags:** merge `System.Tags` into the create call's `--fields` — see [references/work-item-tags.md](references/work-item-tags.md).

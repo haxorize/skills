@@ -16,6 +16,8 @@ Use this when publishing a Task work item to Azure DevOps via `az boards work-it
 
 ADO Tasks have only `System.Description` for body content — **no Acceptance Criteria field**. Acceptance criteria belong on the parent User Story.
 
+Before first publish against a new ADO project, verify the field shape once: run `az boards work-item show --id <existing-task-id> --output json --query 'fields'` and confirm the reference names above are present.
+
 ## Description (markdown body — converted to HTML before publishing)
 
 Author the body as Markdown:
@@ -80,6 +82,8 @@ Or, if `pandoc` is not available, use a Python one-liner:
 ```bash
 DESC_HTML=$(python3 -c "import sys, markdown; print(markdown.markdown(sys.stdin.read()))" < <draft>.md)
 ```
+
+If neither `pandoc` nor the Python `markdown` module is present, stop and ask for one to be installed — never publish raw Markdown into an HTML-rendering field.
 
 ## Notes
 

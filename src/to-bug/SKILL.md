@@ -1,6 +1,6 @@
 ---
 name: to-bug
-description: Synthesize the current conversation into a Bug work item and publish it to the project's issue tracker. ADO — creates a first-class Bug work item with native Severity and Repro Steps fields. GitHub — creates an issue with the `bug` label and a severity label. Synthesizes from context — no interviewing.
+description: Synthesize the current conversation into a Bug work item and publish it to the project's tracker. ADO — creates a first-class Bug work item with native Severity and Repro Steps fields. GitHub — creates an issue with the `bug` label and a severity label. Synthesizes from context — no interviewing.
 disable-model-invocation: true
 requires: writing-for-humans, work-item-shape
 ---
@@ -98,7 +98,7 @@ Iterate until approved.
 
 ### 9. Publish via tracker dispatch
 
-- **GitHub:** `gh issue create --title "..." --body-file <draft>` with `--label bug --label <severity-label>` plus any default labels from CLAUDE.md. Parent linking via template `Parent: #N` reference if `--parent` was provided. **Before creating the issue,** ensure every label about to be applied (`bug`, the chosen severity label, and any `Default labels:`) exists on the repo: `gh label list --json name --jq '.[].name'` once, then `gh label create <name>` for any missing. If `--parent` was provided, add the new issue as a native sub-issue of the parent Feature after create — see [references/github-sub-issues.md](references/github-sub-issues.md).
+- **GitHub:** `gh issue create --title "..." --body-file <draft>` with `--label bug --label <severity-label>` plus any default labels from CLAUDE.md. Parent linking via template `Parent: #N` reference if `--parent` was provided. **Before creating the issue,** run the label precheck in [references/tracker-resolution.md](references/tracker-resolution.md) — the labels about to be applied here are `bug`, the chosen severity label, and any `Default labels:`. If `--parent` was provided, add the new issue as a native sub-issue of the parent Feature after create — see [references/github-sub-issues.md](references/github-sub-issues.md).
 - **ADO:** `az boards work-item create --type "Bug" --title "..." --description "<html>"` with project / area path / iteration / state from CLAUDE.md, plus `--fields "Microsoft.VSTS.TCM.ReproSteps=<html>" "Microsoft.VSTS.Common.Severity=<n - Label>"`. Both rich-text fields expect HTML — convert each Markdown source before passing. If `--parent` was provided, link via `az boards work-item relation add --id <bug-id> --relation-type Parent --target-id <feature-id>` after the create call. Merge `System.Tags` into the create call's `--fields` — see [references/work-item-tags.md](references/work-item-tags.md).
 
 If a required CLAUDE.md field is missing, fail fast with a clear "add this to CLAUDE.md" message. If the create call fails with an auth/permission error, fall back to giving the user the drafted body to paste manually — don't loop on auth. Apply the **transport safety** rules in [references/tracker-resolution.md](references/tracker-resolution.md) to every create and retry.

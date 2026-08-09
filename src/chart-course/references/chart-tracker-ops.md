@@ -15,7 +15,7 @@ Merge domain `System.Tags` into each create call's `--fields` per [work-item-tag
 
 ## GitHub
 
-- **Labels first:** before the first create, ensure `chart:map`, `chart:grilling`, `chart:prototype`, `chart:research`, `chart:errand` exist: `gh label list --json name --jq '.[].name'` once, then `gh label create <name>` for any missing. If a label application fails, surface it and continue — never block on it.
+- **Labels first:** before the first create, run the label precheck in [tracker-resolution.md](tracker-resolution.md) for the five type labels (`chart:map`, `chart:grilling`, `chart:prototype`, `chart:research`, `chart:errand`). If a label application fails, surface it and continue — never block on it.
 - **Create map:** `gh issue create --title "..." --body-file <draft> --label chart:map` plus any `Default labels:` from CLAUDE.md.
 - **Create ticket:** `gh issue create --label chart:<type> ...`, then add it as a native sub-issue of the map — see [github-sub-issues.md](github-sub-issues.md).
 - **Wire blocking:** native issue dependencies: `gh api repos/{owner}/{repo}/issues/<blocked>/dependencies/blocked_by -F issue_id=<blocker-database-id>`. If the API is unavailable on this repo or plan, fall back to a `Blocked-by: #N` body line — the same body-truth posture as `Chart-type:`.

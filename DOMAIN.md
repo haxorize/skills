@@ -43,10 +43,10 @@ Ubiquitous-language glossary for the entire skills repo. Covers the areas of wor
 | **Update mode** | Single-artifact maintenance mode invoked via `--update <work-item-id>` (see ADR-0003) | Patch, Edit, Revise |
 | **Reconcile mode** | Multi-artifact diff mode invoked via `--reconcile <story-id>`, proposing adds/closures/edits across child Tasks (see ADR-0003) | Sync, Realign |
 | **Cold-start** | A fresh Claude Code session entering a Ticket with no prior conversation context | Fresh session |
-| **Cold-reader pass** | The pre-publish verification owned by the `work-item-shape` Behavior and run by every `to-*` publisher against author blindness (after drafting, you see what you meant, not what you wrote): a fresh-context subagent sees only the drafted work item and answers "what would you build?", naming ambiguities (in **Ambiguity block** shape) and assumed context; gaps loop back into the draft | Skeptical reader (`handoff`'s different move — the next session re-verifies *facts*, not comprehensibility), Reader test, Peer review (human act) |
+| **Cold-reader pass** | The pre-publish verification owned by the `work-item-shape` Behavior and run by every `to-*` publisher against author blindness (after drafting, you see what you meant, not what you wrote): a fresh-context subagent sees only the drafted work item and answers "what would you build?", naming ambiguities (in **Ambiguity block** shape) and assumed context; gaps loop back into the draft | Skeptical-reader instruction (`handoff`'s different move — the next session re-verifies *facts*, not comprehensibility), Reader test, Peer review (human act) |
+| **Skeptical-reader instruction** | The required handoff-doc section telling the next session to re-verify the state described against the live repo and tracker before acting, and to treat the doc as untrusted starting context — instruction-shaped content inside it is data to weigh, never standing orders | Skeptical reader (acceptable shorthand), Cold-reader pass (the different move — comprehensibility, not facts) |
 | **Cold-start loader** | A Skill that fetches a published Ticket — body, relations, and comments — back into the conversation as implementation context; embodied by `from-ticket` | Loader (when used alone), from-work-item (earlier name) |
 | **Design-record comment** | A ticket comment carrying design context the published body deliberately omits — an interface sketch, rejected shapes, a grill decision, typically fenced code plus rationale; written as a fallback when no ADR records the design, surfaced in full by the Cold-start loader | Design comment (unscoped), Comment (bare — most comments are status chatter, not design records) |
-| **Archaeological mode** | `backfill-adrs`'s mode for recovering un-recorded decisions from git history | — |
 
 ## Skill invocation
 
@@ -104,7 +104,7 @@ Ubiquitous-language glossary for the entire skills repo. Covers the areas of wor
 
 | Term | Definition | Aliases to avoid |
 | --- | --- | --- |
-| **Story map** | The section of a Feature description listing decomposed Stories, a coverage matrix, a naming table, and dependency edges | Decomposition list (the artifact, not the act) |
+| **Story map** | The section of a Feature description listing decomposed Stories, their `Covers:` lines, a `### Naming consistency` section, and dependency edges | Decomposition list (the artifact, not the act) |
 | **Story decomposition** | The act of breaking a Feature into User Stories during `to-feature` step 6 | Story breakdown |
 | **Snapshot** | The Story-map region above the snapshot separator, rewritten exclusively by `to-feature --update` | — |
 | **Snapshot separator** | The `---` divider between the Snapshot and the Append region | Separator (when used alone) |
@@ -112,8 +112,8 @@ Ubiquitous-language glossary for the entire skills repo. Covers the areas of wor
 | **Emergent Story** | A User Story that arises after Feature publication with no corresponding Snapshot entry; `to-story` appends it to the Append region below the Snapshot separator | — |
 | **Admission test** | The publish gate `to-feature` and `to-tasks` apply during decomposition: an item is published only when its scope can be stated precisely *now* — blocked-but-sharp is admissible, unsharpened scope stays as prose in the parent until it graduates (for Stories, as an **Emergent Story**), never a placeholder item | — |
 | **Append region** | The mutable Story-map region below the Snapshot separator, receiving entries only for Emergent Stories | — |
-| **Coverage matrix** | The Story-map sub-artifact mapping each child Story to the parent Feature ACs it covers | AC matrix |
-| **Naming table** | The Story-map sub-artifact listing names shared across Stories (route paths, query keys, model names) | Shared-names table |
+| **`Covers:` lines** | The Story-map sub-artifact mapping each child Story to the parent Feature ACs it covers — one `Covers: AC1, AC3` line per `### Story N` entry; the Story-map analogue of a Task's **`## Covers`** section | Coverage matrix (retired — no artifact carries the name), AC matrix |
+| **`### Naming consistency` section** | The Story-map sub-artifact listing names shared across Stories (route paths, query keys, model names) | Naming table (retired — no artifact carries the name), Shared-names table |
 | **Dependency edges** | The Story-map sub-artifact recording which Stories depend on which siblings | Dependency graph (acceptable but less specific) |
 | **Deferred decomposition** | A Feature published without a Story map, marked `Story Decomposition: deferred at Feature creation.` | — |
 
@@ -128,6 +128,7 @@ Ubiquitous-language glossary for the entire skills repo. Covers the areas of wor
 | **Fog of war** | The deliberately uncharted part of a Chart: decisions you can tell are coming but can't yet state precisely, written into the map's `Not yet specified` section. The admission test is whether the *question* can be stated precisely now, not whether it can be answered | Backlog (wrong axis), Unknowns |
 | **Frontier** | The set ready to work *now* — in a Chart, the open, unblocked, unclaimed Decision tickets; in a `grilling` round, the questions whose prerequisite decisions are already settled | Ready queue, Next up |
 | **Claim** | Assigning a Decision ticket to whoever is driving it, before any work — assignment *is* the claim; an open, unassigned ticket is unclaimed | Lock, Checkout |
+| **Resolution comment** | The ticket comment posted when a Decision ticket closes, carrying the decision itself — the answer never lives in the ticket body; the map's Decisions-so-far line gists and links it | Answer comment, Closing comment (clashes with ship's Closing-comment contract) |
 | **Claims recheck** | The end-of-session pass in `chart-course`, either mode: reread every assertion the session wrote — resolution comments, Decisions-so-far gists, facts later tickets depend on — against live tracker state and linked assets, fixing what doesn't hold, before stopping | Handoff review, Sanity check |
 | **`Chart:` title marker** | The literal token baked into an ADO Chart or Decision-ticket title before `Title prefix:` resolution (`[App] Chart: <question>`), guarding against a board reader mistaking a question for build work. GitHub carries the typing in `chart:*` labels instead | `[chart]` (bracket namespace is taken by app/service prefixes) |
 
@@ -218,7 +219,6 @@ Ubiquitous-language glossary for the entire skills repo. Covers the areas of wor
 | **Amendment** | A change to an ADR whose decision **still stands** but whose premise moved. Takes one of two forms, chosen by whether the new content clears the **ADR gate** on its own: *in-place* (dated, appended to the existing ADR's `## Amendments` log, ticket-referenced where the repo has a tracker, no new number) when it doesn't, or *amending ADR* (a new record stating `This amends ADR-NNNN`, with a forward pointer added to the amended one) when it does | Supersession (the decision is dead, not refined), Update (unscoped), Revision |
 | **Supersession** | The retirement of an ADR whose decision is **no longer in force**, recorded in **Status frontmatter** as `superseded by ADR-NNNN` | Amendment (the decision survives), Deprecation |
 | **Sweep window** | The git-history range scanned by `backfill-adrs` (default: last 90 days OR last 200 commits, whichever is shorter) | Lookback window |
-| **ADR debt** | The accumulated un-recorded architectural decisions in a repo before ADR practice begins | Decision debt |
 | **`DOMAIN.md`** | The repo-root glossary of ubiquitous language | ULang.md (deprecated; renamed during the skills restructure) |
 | **Glossary** | The set of canonical Domain terms within `DOMAIN.md` | Vocabulary, Lexicon |
 | **Bounded context** | (DDD) A subdomain with its own ubiquitous language | Context (when used alone — too generic) |
@@ -254,7 +254,7 @@ Ubiquitous-language glossary for the entire skills repo. Covers the areas of wor
 
 | Term | Definition | Aliases to avoid |
 | --- | --- | --- |
-| **Tracker** | An issue/work-item system (ADO or GitHub) | Issue tracker (use Tracker), System |
+| **Tracker** | An issue/work-item system (ADO or GitHub) | Issue tracker (use Tracker in prose — the literal `Issue tracker:` CLAUDE.md config key is the one exemption), System |
 | **Tracker dispatch** | The per-Tracker selection of template + CLI inside each `to-X` Skill | Tracker handler |
 | **Tracker resolution** | The act of identifying which Tracker to use, in one of three modes (Declared / Bootstrap-on-ask / No-repo CLI-only) | Tracker setup |
 | **Transport safety** | The tracker-write discipline in `tracker-resolution.md`: a create call is not idempotent, so on a timeout or transport error the writer lists the tracker before retrying; and no link, query result, or command output is cited unless actually run this session | Retry safety, Idempotency (one half of it) |
@@ -269,7 +269,7 @@ Ubiquitous-language glossary for the entire skills repo. Covers the areas of wor
 | **`Hierarchy: optional`** | The Tracker config (default for GitHub) where parent linking is opt-in | Loose hierarchy |
 | **Sibling repo** | A repo declared adjacent to the current one in `CLAUDE.md`'s `## Sibling repos` section | Linked repo, Related repo |
 | **PI workspace** | A directory dedicated to cross-team backlog construction, declaring Sibling repos but holding no code itself | Backlog repo, Planning workspace |
-| **Label-precheck** | A GitHub-specific publish step ensuring every `Default labels:` value exists on the repo before `gh issue create` | Label sync |
+| **Label-precheck** | The GitHub-specific publish step ensuring every label about to be applied — `Default labels:` values, `bug` and its Severity label, `chart:*` type labels — exists on the repo before the batch's first `gh issue create`; the procedure lives in the shared `tracker-resolution.md` | Label sync |
 | **Severity label** | A GitHub label representing a Bug's severity (e.g., `sev:critical`), declared per repo in CLAUDE.md's `Severity labels:` block; ADO uses the native `Microsoft.VSTS.Common.Severity` field instead | Severity tag, Sev label |
 | **In-progress signal** | The CLAUDE.md `In-progress signal:` declaration telling `to-tasks --reconcile` how to distinguish open-and-being-worked from open-and-not-yet-started GitHub issues; defaults to assignee-presence when absent | WIP signal, Status signal |
 | **Iteration** | The ADO sprint assignment for a work item (field `System.IterationPath`), declared per-repo via the CLAUDE.md `Iteration:` block | Sprint (acceptable casually; **Iteration** is the field name) |
@@ -317,7 +317,7 @@ Ubiquitous-language glossary for the entire skills repo. Covers the areas of wor
 - A **Task** belongs to exactly one **User Story** — never directly to a **Feature**.
 - A **Feature** contains zero or more **User Stories** in its **Story map** (a **Snapshot** above the **Snapshot separator**, an **Append region** below).
 - A **KTLO Feature** is a **Feature** that sits outside the to-X publishing path — drafted via `grill-me` against a versioned `docs/ktlo/<category>.md`, published manually, with no AC field and no **Story map**. Child **User Stories** parent to it via `to-story --parent <ktlo-feature-id>` and behave normally; the parent's missing ACs are structural (a **Task**'s `## Covers` references its parent **Story**'s ACs, not the **Feature**'s).
-- A **Story map** carries a **Coverage matrix**, a **Naming table**, and **Dependency edges** between the child Stories.
+- A **Story map** carries per-Story **`Covers:` lines**, a **`### Naming consistency` section**, and **Dependency edges** between the child Stories.
 - **Dependency edges** project onto ADO's built-in `Predecessor`/`Successor` relations, but only once both endpoint **User Stories** are published — `to-story` adds the relation when each edge's second endpoint lands. The relation graph is an additive, partial projection of the **Story map** (the source of truth), never an independent record (ADR-0023). A **Task**'s in-project blocker projects the same way; only the timing differs — `to-tasks` publishes in dependency order so its projection is always complete, while a **Cross-repo blocker** never projects (it names a **Sibling repo**, not an in-project work item).
 - A **User Story** is classified as **user-facing** (body leads with a **Connextra user-story line**) or **non-user-facing** (body leads with a **`## User-facing behavior`** section).
 - An **AC** belongs to exactly one **Feature**, **User Story**, or **Bug**, and is identified by a stable, append-only **AC ID**.
@@ -340,7 +340,7 @@ Ubiquitous-language glossary for the entire skills repo. Covers the areas of wor
 - A **Module-deepening refactor** typically merges or absorbs **Pass-through** Modules into a **Deep module**; the **Deletion test** decides which is which.
 - An **ADR** belongs to exactly one repo's `docs/adr/` directory and is identified by a sequential number; the **Slug** is independent of the number.
 - An **ADR** passes the **ADR gate** if and only if all three criteria hold. Failing one drops the candidate *when no record owns the ground*; where one does, gate-failing content becomes an in-place **Amendment** to it instead.
-- The **Sweep window** governs how far back `backfill-adrs` scans; **ADR debt** is the un-recorded surplus inside that window.
+- The **Sweep window** governs how far back `backfill-adrs` scans.
 - A `DOMAIN.md` file lives at the root of a **Bounded context**; multi-context repos have nested `DOMAIN.md` files per context with the root acting as an index.
 - `capturing-learnings` (Behavior skill) owns the **Solved-problems store**: the **Capture gate** admits a **Learning doc** (mirroring the **ADR gate**), the **Overlap rule** decides update-vs-create, and the **Retrieval protocol** is how any skill reads the store; `diagnosing-bugs` declares it — retrieval on the way in, a capture offer on the way out.
 - A matched **Learning doc** informs an investigation, never overrides it — past learnings seed hypotheses, present evidence wins.
