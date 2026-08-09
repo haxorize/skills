@@ -19,3 +19,9 @@ A fixed set of Fowler code smells (*Refactoring*, ch. 3) the smell-baseline lens
 - **Refused Bequest** — a subclass or implementer that ignores or overrides most of what it inherits. → drop the inheritance, use composition.
 - **Long Function** — the diff grows an already-long function instead of decomposing it; the body outgrows what one reading can hold. → extract steps into named helpers; each name documents intent.
 - **Large Class** — a class or module accreting fields and methods for several jobs (a file ballooning under this diff is the file-level tell). → split by responsibility; extract the cluster that changes together.
+
+Beyond the Fowler set, the lens carries a **fail-fast error-handling family** (high-signal on any diff that adds or changes a `try`/`catch` or fallback):
+
+- **Swallowed failure** — a catch that hides the failure signal: returning `null`/`[]`/`false`, absorbing a parse failure, logging-and-continuing, "best effort" silent recovery. → propagate; handle only where the handling is correct *at that layer*. A boundary handler may translate an error — it must never pretend success or silently degrade.
+- **Ceremonial catch** — a catch that exists to satisfy lint or style without real handling. → treat as a bug, not a style nit: delete it or make it handle.
+- **Message-matched error** — control flow keyed on an error's message text rather than its code or stable identifier; wording, i18n, and library upgrades all break it silently. → match on the code/type, never the prose.
