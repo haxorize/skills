@@ -1,5 +1,7 @@
 # Maintenance loop: separate `--update` and `--reconcile` verbs
 
+> **Amended by [ADR-0048](0048-naming-drift-queue-trimmed-to-check-only.md):** the durable naming-drift queue is removed; the publish-time drift check and its never-block warning stay.
+
 ## Context
 
 Before this decision, the only mode that could revise a published ADO work item through the skill loop was `to-feature --update <feature-id>` (re-snapshots the story map). Stories, Tasks, and Bugs had no skill-loop maintenance — once published, edits had to happen directly in ADO, bypassing synthesis and self-review. Across a PI, refinement is continuous: ACs shift, Tasks go stale against reworded Story specs, names drift between siblings. The suite needs a way to revise published items while preserving the maintenance loop's value (synthesis, self-review, cold-start context loading).
