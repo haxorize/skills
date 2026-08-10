@@ -111,7 +111,7 @@ Two flows operate on already-published Tasks:
 - **`--update <task-id>`** — patch a single Task body in place. Skips tracker / parent / sibling-repo / codebase resolution. Body re-draft → self-review → patch.
 - **`--reconcile <story-id>`** — diff all child Tasks under a parent Story against the current Story spec, propose adds / closures / edits, apply approved changes. State-aware: closed Tasks leave alone, in-progress surface for decision, new are safe to revise.
 
-Both modes run the same naming-drift check as publish: warn on a divergence, offer the affected sibling's `--update`, never block.
+Both modes run the naming-drift check: `--update` warns on a divergence and offers the affected sibling's `--update`, while `--reconcile` folds the proposed rename into the affected Task's edit. Never block on it.
 
 GitHub reconcile distinguishes open-being-worked from open-not-started via an **In-progress signal** declared in CLAUDE.md's `Issue tracker:` block; ADO reads `System.State` directly. The declaration syntax and assignee-presence default live in the reference below.
 

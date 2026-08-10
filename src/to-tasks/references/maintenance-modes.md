@@ -10,7 +10,7 @@ Patch and diff flows for already-published Tasks. The create flow lives in [../S
 
 Fetch the current Task body and the parent Story:
 
-- **ADO:** `az boards work-item show <task-id> --output json --expand relations` — pull `System.Description` and the parent Story relation (`System.LinkTypes.Hierarchy-Reverse`). Then `az boards work-item show <parent-story-id> --output json` — pull `System.Description` and `Microsoft.VSTS.Common.AcceptanceCriteria`.
+- **ADO:** `az boards work-item show <task-id> --output json --expand relations` — pull `System.Description` and the parent Story relation (`System.LinkTypes.Hierarchy-Reverse`). Then `az boards work-item show <parent-story-id> --output json --expand relations` — pull `System.Description`, `Microsoft.VSTS.Common.AcceptanceCriteria`, and the child Task relations.
 - **GitHub:** `gh issue view <task-number> --json body,title`. Resolve parent via the `Parent: #N` line; fetch parent the same way.
 
 Parse:
@@ -18,6 +18,7 @@ Parse:
 - The Task's current `## Covers` line.
 - **Active parent AC IDs** from the parent Story's AC field (ADO) or `## Acceptance criteria` section (GitHub).
 - **Removed parent AC IDs** from `## Removed acceptance criteria` in the parent Story's description body (not the AC field on ADO).
+- **Sibling Task titles** under the same parent Story — ADO: resolve the parent's child relations to titles; GitHub: `gh search issues "in:body Parent: #<story-number>" --json number,title`. The naming-consistency self-review compares against these.
 
 ### Self-review (in `--update` mode)
 
@@ -32,9 +33,7 @@ Parse:
 - **ADO:** convert Markdown → HTML, then `az boards work-item update --id <task-id> --description "<html>"`. Tasks have no AC field; do not pass `Microsoft.VSTS.Common.AcceptanceCriteria`.
 - **GitHub:** `gh issue edit <task-number> --body-file <draft>`.
 
-### Naming-drift check
-
-If the patch introduces names that differ from sibling Tasks, surface the drift as a warning during self-review and offer to run the affected sibling's `--update` now — sometimes the new name is correct and the sibling needs renaming. Don't block.
+The naming-drift check in SKILL.md runs against the sibling Task titles fetched at cold-start.
 
 ## Reconcile mode
 

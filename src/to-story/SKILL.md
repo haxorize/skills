@@ -103,4 +103,4 @@ Native dependency relations are an ADO feature, so this step runs only on ADO �
 
 ## Naming-drift check
 
-If publish surfaces a name diverging from a sibling (another Story under the same parent Feature, or a Task under this Story), surface the drift as a self-review warning and offer to run the sibling's `--update` now — sometimes the new name is correct and the sibling needs renaming. Never block the publish. The story-map naming table is the durable record of sibling names.
+If publish or an `--update` patch surfaces a name diverging from a sibling (another Story under the same parent Feature, or a Task under this Story), surface the drift as a self-review warning and offer to run the affected sibling's `--update` now — sometimes the new name is correct and the sibling needs renaming. Never block the publish or the patch. The story map's `### Naming consistency` section durably records names shared across sibling Stories; a deferred Task-level rename leaves no record, so prefer the immediate fix there.

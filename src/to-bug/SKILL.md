@@ -127,4 +127,4 @@ State is never transitioned by `to-bug --update` — that's the team's process o
 
 ### Naming-drift check
 
-If the patch introduces module names, route paths, or query keys that diverge from canonical names already in use elsewhere in the codebase or sibling work items, surface the drift as a warning during self-review and offer to run the affected sibling's `--update` now — sometimes the new name is correct and the sibling needs renaming. Never block the patch.
+If the patch introduces module names, route paths, query keys, or model names that diverge from canonical names already in use elsewhere in the codebase or sibling work items, surface the drift as a warning during self-review and offer to run the affected sibling's `--update` now — sometimes the new name is correct and the sibling needs renaming. Never block the patch.

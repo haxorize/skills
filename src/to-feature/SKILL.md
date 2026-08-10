@@ -71,7 +71,7 @@ Before showing the user, check:
 - Domain language matches `DOMAIN.md`
 - AC IDs: append-only — no reused IDs across active and `## Removed acceptance criteria`; gaps from removals preserved (no renumbering)
 - On ADO: the **two-field split** holds (step 7) — outcome bullets are their own artifact
-- Story map: every active Feature AC ID appears in at least one Story's `Covers:` line; every Story's `Covers:` names at least one active AC ID (a Story covering nothing is unmapped work); no `Covers:` line references a removed AC ID; naming-table dedup; dependency acyclicity (skip if no story map — `Hierarchy: optional` without the story-map opt-in, or deferred decomposition)
+- Story map: every active Feature AC ID appears in at least one Story's `Covers:` line; every Story's `Covers:` names at least one active AC ID (a Story covering nothing is unmapped work); no `Covers:` line references a removed AC ID; `### Naming consistency` dedup; dependency acyclicity (skip if no story map — `Hierarchy: optional` without the story-map opt-in, or deferred decomposition)
 
 Then run the **Cold-reader pass** from the `/work-item-shape` behavior: the cold reader gets only the drafted body and answers "what would you build?".
 
@@ -107,7 +107,7 @@ The snapshot section above the `---` separator is one-shot replaced. Emergent-St
 
 ### Self-review (in `--update` mode)
 
-Re-run the story-map checks from step 8 (every active Feature AC ID covered by at least one Story; no `Covers:` line references a removed AC ID; naming-table dedup; dependency acyclicity). Skip the placeholder/contradiction/scope/ambiguity/domain checks — the rest of the body is untouched.
+Re-run the story-map checks from step 8 (every active Feature AC ID covered by at least one Story; no `Covers:` line references a removed AC ID; `### Naming consistency` dedup; dependency acyclicity). Skip the placeholder/contradiction/scope/ambiguity/domain checks — the rest of the body is untouched.
 
 ### Patch
 

@@ -57,7 +57,7 @@ Branch on the detected type. Each branch loads the artifact, its parent context,
   - **In-project:** ADO reads the `Predecessor` relations above; GitHub reads the `Blocked by: #N` lines in the Task body (GitHub has no native blocker relation — these stay as body text). Resolve each blocker ID to its title (one `gh issue view <n> --json title` / `az boards work-item show <id>` per blocker) — the summary reports blockers by name.
   - **Sibling-repo:** both trackers read the `## Blocked by` body annotation (`Blocked by: ../<repo>`). ADO relations carry only in-project deps — sibling-repo blockers live in the body annotation on either tracker.
 - **Parent Story:** fetch description + AC field. Filter active ACs to those listed in the Task's `## Covers` line — the rest aren't this Task's concern.
-- **Parent Feature (one level up):** fetch title and Problem / Goals sections only — broader context, not implementation guidance.
+- **Parent Feature (one level up):** fetch title, Problem / Goals, and the story map's `### Naming consistency` section — broader context plus the canonical shared names (a deferred sibling rename surfaces here), not implementation guidance.
 - **`## Layers touched`** from the Task body. Drives ADR match below.
 
 #### Story
@@ -66,7 +66,7 @@ Branch on the detected type. Each branch loads the artifact, its parent context,
   - **ADO:** `az boards work-item show <story-id> --output json --expand relations` — `System.Description`, `Microsoft.VSTS.Common.AcceptanceCriteria`, the parent Feature relation, and dependency relations (blockers as `System.LinkTypes.Dependency-Reverse`, dependents as `System.LinkTypes.Dependency-Forward`). Surface blocker Stories as cold-start context.
   - **GitHub:** body already fetched; resolve parent via the `Parent: #N` line.
 - **All active ACs:** load the full AC list. The Story-level loader does not filter by `## Covers` — there's no per-Task narrowing yet.
-- **Parent Feature:** title and Problem / Goals.
+- **Parent Feature:** title, Problem / Goals, and the story map's `### Naming consistency` section — the canonical shared names; a deferred sibling rename surfaces here.
 - **`## Layers touched`** from the Story body. Drives ADR match.
 
 #### Bug
