@@ -1,6 +1,6 @@
 # Maintenance loop: separate `--update` and `--reconcile` verbs
 
-> **Amended by [ADR-0048](0048-naming-drift-queue-trimmed-to-check-only.md):** the durable naming-drift queue is removed; the publish-time drift check and its never-block warning stay.
+> **Amended by [ADR-0048](0048-naming-drift-queue-trimmed-to-check-only.md):** the durable naming-drift queue is removed; the publish-time naming-drift check and its never-block warning stay.
 
 ## Context
 
