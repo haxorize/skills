@@ -11,6 +11,8 @@ Before descending, assess scope: if the topic spans multiple independent subsyst
 
 No plan is too simple to grill — "simple" is where unexamined assumptions hide; scale the loop to the plan (a short grill can be two questions).
 
+Two grills are worth refusing. When the user wants the plan blessed rather than tested, name that out loud and offer to proceed only on adversarial terms — their call, but made in the open. And when the decision is already locked — announced, contracted, half-shipped — and the grill exists so the plan can be seen to have been challenged, say so mid-stream and ask whether they are willing to change anything. If they are not, stop: a grill that cannot move the plan produces nothing but a record of having been run.
+
 Within a round, order questions load-bearing-first — an assumption that sinks the plan if it's false is read before any nice-to-have refinement — and the same ordering picks which branches to expand first. Format every question:
 
 ❓ **Q1 — [short title]**: [the question; letter the alternatives (a/b/c) when it offers any]
@@ -21,7 +23,11 @@ Three guards on the question line itself: a topic label is not a question ("Acce
 
 Invite shorthand answers keyed to the numbering — "1: yes, 2b, 3: no, back-compat" — so a wide round stays cheap to answer. When answers come back, check every question got one — an ignored question is re-asked alone, never silently defaulted; and when the user starts explaining instead of picking, drop the letters and follow the explanation — options serve answers, not the reverse.
 
+When an answer comes back fuzzy — "should be fine", "probably", "we'll figure that out later" — **dwell**, and say that you are dwelling: name that you are staying on this point because the answer isn't sharp yet. Never leave the user facing a blank prompt; offer one or two candidate answers to pick, revise, or reject. Three rounds on one decision is not a reason to lower the bar, and neither is five — the point moves when the answer earns it. A grill that exits on approximately-fine has failed, whatever else it settled.
+
 If a *fact* can be found by exploring the environment (filesystem, tools, etc.), look it up rather than asking — the *decisions* are the user's; put each one to them and wait. Don't block a round on fact-finding: dispatch a subagent for the fact and hold back only the questions downstream of it — ask the rest of the frontier now.
+
+That split also settles who wins a disagreement. **The decisions are the user's**: press hard, put the strongest counter-case, then record their answer even where you would have chosen otherwise. Craft is **gated**, not owned. Where a thing has objective quality criteria — a question that leads the witness, an acceptance criterion no check can settle, a name the glossary already gives to something else — those criteria don't bend however the user insists, and the broken item isn't recorded, not even beside a compliant one. What gets refused is always the item, never the intent behind it; the intent always has a version that passes.
 
 When a goal arrives as a justification-shaped buzzword — "scalable", "clean", "modern" — probe past the performance: "if you didn't have to justify this to anyone, what would you actually want?" Then grill the real want. And once the wants are mapped, run the **must-NOT probe** at least once: "what could this plan silently become that you would *not* want, but nothing said so far forbids?" — over-generate, then keep only the violations of values or intent; routine engineering risk is the pre-mortem's job.
 

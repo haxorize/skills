@@ -31,6 +31,12 @@ The test suite owns the behavioral contract — deterministic, cheap, gated. Thi
 | **UNSUPPORTED** | Matches the current code but no test backs it — nothing protects it from future drift |
 | **STALE** | Refers to something removed or renamed |
 
+## Derived documents
+
+Where the document is derived from something other than the code — a guide distilled from a longer one, a summary of a spec, a local rewrite of an upstream — run the same pass with the sources in place of the code, and build a **source map** first: one row per section, and per distinct claim inside it, grounded as exactly one of a **source passage** (name the file plus a few identifying words of the passage), a **recorded decision** (a deliberate departure someone signed off on), or **UNGROUNDED**. Ground against the sources reopened now, never from memory of them — memory of a corpus is where drift hides.
+
+Three failure classes come out of the map. **Ungrounded** means the writer invented it: cut it, or get it signed off so it becomes a recorded decision. **Contradiction** means the derived doc asserts what the source denies — show both, side by side. **Drift** means a paraphrase moved the meaning, scope, or strength, and drift runs in both directions: a rule that came out *stricter* than its source is invented doctrine exactly as much as one that came out looser. "Usually" promoted to "always", a two-condition rule that lost a condition, a narrow ban widened into a general one — each is a finding.
+
 ## Honest limits
 
 This skill does not verify the tests themselves — garbage tests produce a confident-but-wrong PASS; upstream `tdd` discipline still matters. Prose with no factual claims about code has nothing to check — say so and stop.
