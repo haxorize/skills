@@ -1,6 +1,6 @@
 ---
 name: write-skill
-description: Create or revise agent skills — classification, structure, descriptions, and pressure-testing their wording.
+description: Create or revise agent skills — classification, structure, descriptions, cross-session state, and testing them from wording through simulated use.
 disable-model-invocation: true
 requires: writing-for-agents
 ---

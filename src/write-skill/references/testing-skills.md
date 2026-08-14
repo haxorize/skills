@@ -1,6 +1,6 @@
-# Testing a skill's wording
+# Testing a skill
 
-RED → GREEN applied to documentation: prove the failure exists before writing the cure, then prove the cure binds. A subagent plays the agent-under-test; each run starts from a fresh context so nothing leaks between reps. Three checks answer three different questions — the micro-test asks whether a rule *binds*, the trigger test whether the description *loads*, the wind tunnel what the skill is like to *wield*.
+Three checks answer three different questions: the micro-test asks whether a rule *binds*, the trigger test whether the description *loads*, and the wind tunnel what the skill is like to *wield*. A subagent plays the agent-under-test in all three, each run starting from a fresh context so nothing leaks between reps. The micro-test is RED → GREEN applied to documentation — prove the failure exists before writing the cure, then prove the cure binds.
 
 ## The micro-test loop
 
