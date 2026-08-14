@@ -91,6 +91,7 @@ The route most work travels: **`/grill-and-record`** (or `/grill-me` with no cod
 ### Design
 
 - **`codebase-design`** — Shared vocabulary and principles for designing deep modules (module / interface / depth / seam / adapter); consumed by `improve-design`, `review-changes`, and `diagnosing-bugs`.
+- **`discoverable-code`** — Naming and placing code so a plain-text search finds it: identifiers as search queries, one definition site, whole string literals, unique error prefixes, a doc line the natural-language grep lands on. Findability where `codebase-design` covers depth; declared by `tdd`, `implement`, and `review-changes`.
 
 ### Build & finalize
 
