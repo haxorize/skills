@@ -1,6 +1,6 @@
 # Testing a skill's wording
 
-RED → GREEN applied to documentation: prove the failure exists before writing the cure, then prove the cure binds. A subagent plays the agent-under-test; each run starts from a fresh context so nothing leaks between reps.
+RED → GREEN applied to documentation: prove the failure exists before writing the cure, then prove the cure binds. A subagent plays the agent-under-test; each run starts from a fresh context so nothing leaks between reps. Three checks answer three different questions — the micro-test asks whether a rule *binds*, the trigger test whether the description *loads*, the wind tunnel what the skill is like to *wield*.
 
 ## The micro-test loop
 
@@ -37,6 +37,20 @@ When an agent violates *despite* the skill, ask that same agent: "How could the 
 ## Done
 
 The wording passes when 5 consecutive fresh-context reps hold the discipline under combined pressure, with variance low enough that the responses read as the same process.
+
+## The wind tunnel (simulated use)
+
+A skill can pass both other checks and still wield badly — reciting its framework instead of applying it, nodding along with weak answers, or producing what any model would have produced without it. The wind tunnel simulates the use and judges the transcript. It stays an offer at every stage: a skill ships without one.
+
+**Quarantine the wielder.** The wielder side of every role-play may use only what is in the `SKILL.md` — no memory of the conversation that produced it, no knowledge of the repo it came from. Dispatch each scenario to a subagent whose prompt names only the file path and the scenario, so the quarantine is structural rather than a matter of discipline. Anything the wielder needed and the file didn't supply is itself a finding; that gap list usually yields more patches than the verdicts do.
+
+**Scenario mix — 3 to 5, covering different failures.** A *canonical* user squarely inside the skill's sweet spot. A *terse* user with most context missing, which tests whether the intake fires or the wielder fills the blanks in and barrels ahead. A *boundary* case at the edge of where the skill applies, testing whether it handles the edge honestly or misapplies confidently. A *refusal* case the skill's own conditions say it should turn away. Optionally a *lazy answerer* whose answers stay weak across many rounds, testing whether the bar drops. A skill that keeps state across sessions adds *die-and-resume*: the session ends mid-process and a fresh wielder holding only the `SKILL.md` and what it reads from disk finishes the run.
+
+**Judge the transcript, not the prose.** A rule that reads beautifully and didn't fire is a FAIL. Every non-PASS verdict quotes the transcript line that earned it — no quote, no finding. Two criteria are standing: *applied vs recited* (did the wielder run the framework on this user's specifics, or lecture it back at them?) and *could a model with no skill loaded have produced this conversation?* — a stretch of generic advice answers it. Check a FAIL against the skill's intended design before accepting it: a criterion stricter than the design produces a false FAIL, which is still a finding, but the patch is usually to make the body state its intended behavior unambiguously. One systemic cause reported once beats five cosmetic findings.
+
+**A clean run is the expected result**, not a suspicious one. Everything passing means the skill is sound — say so and stop rather than inventing findings to justify the exercise.
+
+**A live failure becomes a standing scenario.** When the skill misbehaves in real use, the wind tunnel missed it — the fix is the scenario or rubric criterion that would have caught it, not just the patch to that one skill. Keep the scenario and re-run it after any substantial redesign: an earlier pass certifies the old text, not the new one.
 
 ## Trigger test (descriptions)
 

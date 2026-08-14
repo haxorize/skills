@@ -14,7 +14,7 @@ Skills wrangle determinism out of a stochastic system. The goal is **predictabil
 1. **Gather requirements** — what domain, what use cases, any reference material?
 2. **Classify the skill** — behavior or orchestrator? Model-invoked or user-invoked? (See *Invocation axis* — decide this first; it shapes the description and the body.)
 3. **Draft the skill** — `SKILL.md` with references if needed
-4. **Pressure-test if it carries a discipline** — when the skill encodes a rule the agent might rationalize around under pressure (an iron law, a gate, a prohibition — not a format doc, template, or router), run the micro-test loop in [references/testing-skills.md](references/testing-skills.md) before shipping
+4. **Pressure-test if it carries a discipline** — when the skill encodes a rule the agent might rationalize around under pressure (an iron law, a gate, a prohibition — not a format doc, template, or router), run the micro-test loop in [references/testing-skills.md](references/testing-skills.md) before shipping — and offer that reference's wind tunnel when the skill runs a conversation with a person or keeps an artifact across turns
 5. **Review with user** — present draft, iterate
 
 ## Invocation axis
@@ -52,6 +52,10 @@ skill-name/
 ```
 
 Scripts are **black boxes**: they exist to be *run*, not read — don't ingest a large helper into context unless running it first proved a custom variant necessary. The signal to bundle one: repeated runs of the skill independently writing the same helper.
+
+## Skills that keep state across sessions
+
+When a skill's process spans sessions or builds an artifact item by item, the file is the memory and the chat is not — long sessions forget, and a compacted context loses the middle. Have the skill create its working file as soon as the **first** item settles and append after each one, never write it all at the end. The file opens with an explicit in-progress marker recording where the walk stopped, plus any plan a resumed session must inherit (a grouping, an ordering); finalizing removes the marker. Two sibling shapes carry the same requirement for other work styles: a whole-draft artifact keeps a reviewed-through pointer in that header, and a skill that edits standing files writes a dated log line per applied change plus one closing line at the end of the walk — log lines with no closing line tell the next session a walk died mid-run. Whatever the shape, resumable-from-disk-alone is the bar, and die-and-resume is the wind-tunnel scenario that proves it.
 
 ## SKILL.md template
 
