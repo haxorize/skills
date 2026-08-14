@@ -53,6 +53,8 @@ A 30-second flaky loop is barely better than no loop; a 2-second deterministic o
 
 The goal is not a clean repro but a **higher reproduction rate**. Loop the trigger 100×, parallelise, add stress, narrow timing windows, inject sleeps. A 50%-flake bug is debuggable; 1% is not — keep raising the rate until it's debuggable. When a flake tracks test *order* rather than timing, suspect leaked state: run the failing case in isolation and again after the full suite, and check singletons, shared caches, and leftover fixtures.
 
+Five moves look like flake fixes and are not: raising a timeout, adding a retry, serialising the suite, skipping the test, and weakening the assertion until it stops disagreeing. Each buys a green run by deleting the signal, and the non-determinism stays in the product, where a user meets it instead. Reproduce it smallest, fix the source, then **soak** the repaired test — re-run it many times under the conditions that used to break it (same parallelism, same ordering, same clock pressure), because one green run says nothing about a failure that appeared once in twenty.
+
 ### When you genuinely cannot build a loop
 
 Stop and say so explicitly. List what you tried. Ask the user for: (a) access to whatever environment reproduces it, (b) a captured artifact (HAR file, log dump, core dump, screen recording with timestamps), or (c) permission to add temporary production instrumentation. Do **not** proceed to hypothesise without a loop.

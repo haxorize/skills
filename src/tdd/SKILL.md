@@ -1,7 +1,7 @@
 ---
 name: tdd
 description: Test-driven development workflow using vertical slices. Use when implementing a feature, building a story or task already loaded in context, or the user mentions "TDD" or "test first". A ticket still sitting on the tracker gets loaded by `/from-ticket` first — suggest it rather than cold-starting from the ticket ID.
-requires: feedback-loops
+requires: feedback-loops, discoverable-code
 ---
 
 # Test-Driven Development
@@ -16,7 +16,7 @@ Test the contract your code makes at its boundaries — the route you register, 
 
 When the behavior's own acceptance criterion carries a **temporal quantifier** — "after N attempts", "subsequent", "over time", "converges", "adapts" — the defect lives in the trajectory, and step-wise given-X-return-Y tests cannot see it. Write a closed-loop test over the real surface for at least twice the subject's feedback period, asserting the claimed convergence, the fixed point (correct history produces no correction), and boundedness under an oscillating history.
 
-Before mocking a dependency, run the behavior against the real implementation once to observe what actually crosses the seam — then mock minimally, at that seam, reproducing the complete structure that crossed it — a partial mock fails silently when downstream code reads an omitted field: the test passes while integration breaks. When arguments, call counts, or ordering are part of the contract, assert them — a fake that accepts anything verifies nothing; give each branch (success, error, malformed) its own fixture, so the wrong branch cannot satisfy the expectation. A method only tests use belongs in test utilities, never on the production class. The mock itself earns no assertions — a mock assertion passes when the mock is present and fails when it's absent, saying nothing about the component. When mock setup outgrows the test logic, unmock: switch to an integration test with real components.
+Shape the seam so a double can be specific: a dependency exposed as named operations (`fetchInvoice(id)`, `cancelSubscription(id)`) is doubled per operation with a per-case fixture, while one exposed as a generic transport (`request(url, options)`) forces every test to stub a URL matcher, and every double in the suite ends up the same undifferentiated shape. Where the seam is yours to choose, choose the named one. Before mocking a dependency, run the behavior against the real implementation once to observe what actually crosses the seam — then mock minimally, at that seam, reproducing the complete structure that crossed it — a partial mock fails silently when downstream code reads an omitted field: the test passes while integration breaks. When arguments, call counts, or ordering are part of the contract, assert them — a fake that accepts anything verifies nothing; give each branch (success, error, malformed) its own fixture, so the wrong branch cannot satisfy the expectation. A method only tests use belongs in test utilities, never on the production class. The mock itself earns no assertions — a mock assertion passes when the mock is present and fails when it's absent, saying nothing about the component. When mock setup outgrows the test logic, unmock: switch to an integration test with real components.
 
 For test fixtures and patterns, see your project's testing skill(s). For conventions on the layer you're touching (endpoint shape, component composition, schema design, etc.), consult the matching convention skill.
 
@@ -58,6 +58,7 @@ If a Story or Task issue exists, pull acceptance criteria from it. If not, brief
 - What interface changes are needed (route, endpoint, component, hook, query, model)
 - Which behaviors to test, and the seam each is tested at — naming seams up front aims testing effort at critical paths instead of every edge case (prioritize with the user)
 - Whether the slice is inner-loop testable, outer-loop testable, or both
+- Whether any behavior here carries a law a property test states better than examples do — a roundtrip (`decode(encode(x))` returns `x`), an ordering or idempotence rule, a bound that must hold for every input. Answer it either way rather than leaving it unasked; most slices don't have one, and the ones that do are exactly where examples miss
 - Opportunities for deep modules
 
 Confirm the plan with the user before writing any code.
@@ -84,6 +85,7 @@ After all tests pass, review the implementation before calling the cycle done:
 - Extract duplication — lifting it to existing project primitives or shared modules rather than re-rolling (consult the active layer skill for where they live), extracting fresh only when no primitive fits
 - Deepen modules (move complexity behind simple interfaces)
 - Simplify where the accumulated implementation reveals a cleaner design
+- Fix the names the change made wrong — follow the `/discoverable-code` behavior over what the slice exported, renamed, or moved, since a name that stops matching its behavior misleads every later search
 
 Run the test command after each refactor step. Never refactor while red.
 
