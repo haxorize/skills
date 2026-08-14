@@ -30,6 +30,15 @@
 #     so `adr-0023` and `Adr-7` are caught too. `docs/adr/` paths put a slash
 #     after `adr` (not a hyphen) so they stay legal, as do digitless
 #     placeholders ("ADR-N" — `N` isn't a digit).
+#   - Reference-link resolution: every relative `.md` link in a shipped skill
+#     file must resolve to a real file, relative to the linking file's own
+#     directory. A `SKILL.md` promising `references/foo.md` that isn't there
+#     degrades silently — the agent follows the pointer, finds nothing, and
+#     proceeds on whatever it already had. Fenced code blocks and backtick
+#     code spans are exempt because they hold deliberate placeholders (the
+#     template's `references/topic.md`, adr-format's `[ADR N](N-slug.md)`).
+#     The sibling-group check below covers the same ground for the paths
+#     registered there.
 #   - Platform-true spec limits (ADR-0030): `name` <= 64 chars and no angle
 #     brackets in `description` — the two agent-skills-spec caps Claude Code
 #     shares. The rest of the spec (its closed frontmatter key set) deliberately
@@ -117,6 +126,34 @@ while IFS= read -r f; do
     echo "FAIL: $f cites a repo ADR by number (line(s) ${badlines}) — skill bodies must not (write-skill: 'Skill bodies don't cite repo ADRs'); lineage is ADR -> skill"
     fail=1
   fi
+
+  # Reference-link resolution (see header). Fenced blocks and backtick code
+  # spans are stripped first: both hold illustrative paths (the SKILL.md
+  # template's `references/topic.md`, adr-format's `[ADR N](N-slug.md)`) that
+  # name no real file by design.
+  dir=$(dirname "$f")
+  while IFS= read -r target; do
+    [ -z "$target" ] && continue
+    case "$target" in
+      *://* | /* | \#*) continue ;;
+    esac
+    if [ ! -f "$dir/${target%%#*}" ]; then
+      echo "FAIL: $f links to '$target', which resolves to no file — create $dir/${target%%#*}, fix the path, or drop the link; a pointer to a missing reference silently loads nothing at runtime"
+      fail=1
+    fi
+  done < <(awk '
+    /^[[:space:]]*```/ { fence = !fence; next }
+    fence { next }
+    {
+      line = $0
+      gsub(/`[^`]*`/, "", line)
+      while (match(line, /\]\([^)]+\)/)) {
+        t = substr(line, RSTART + 2, RLENGTH - 3)
+        if (t ~ /\.md$/ || t ~ /\.md#/) print t
+        line = substr(line, RSTART + RLENGTH)
+      }
+    }
+  ' "$f")
 done < <(find src -type f -name '*.md' | sort)
 
 for f in src/*/SKILL.md; do
