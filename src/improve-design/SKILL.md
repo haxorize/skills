@@ -66,6 +66,8 @@ Each candidate, **ordered by leverage** (see the reference), carries:
 
 Write each candidate self-contained — a reader who hasn't seen the codebase should understand it from the report alone. Don't propose interfaces yet — that comes after the user picks a candidate.
 
+Close the list with what was **vetted and not proposed**: one line each for the frictions you looked at and dropped, naming the gate that killed each one (dissolved on a close read, by-design per a recorded decision, rigor the codebase doesn't practice, already owned by an existing work item). Without that section the report reads as a wishlist rather than a survey, and the next run re-proposes what this one already dismissed.
+
 **Present via the HTML report.** Render the candidates as a self-contained HTML file per [references/html-report.md](references/html-report.md) — full per-candidate detail plus the before/after deepening visuals. Write it to the OS temp dir (resolve `$TMPDIR`, falling back to `/tmp`, or `%TEMP%` on Windows) as `design-review-<timestamp>.html` so each run is fresh and nothing lands in the repo; open it (`open` on macOS, `xdg-open` on Linux, `start` on Windows) and tell the user the absolute path. The report is **frozen at pick-time** — don't regenerate it as the design evolves later. **Zero surviving candidates**: skip the report and say so inline. **One or more**: write the report.
 
 **Self-check the render before presenting.** The report's failure modes are *silent* — bad CSS still parses, it just renders wrong (SVG `background` paints black, unfilled `<text>` vanishes, a `.card` + deep-fill cascade collision leaves light text on white). Screenshot the file headless (`<chrome> --headless --screenshot=<png> --window-size=1000,2400 file://<path>`) and **read the PNG**; fix any black box, invisible label, or illegible card and re-render until it's clean. If no headless browser is available, say so and present unverified rather than blocking.
@@ -102,6 +104,8 @@ Then present one recommended interface design:
 - Trade-offs
 
 Be opinionated — the user wants a strong recommendation, not a menu.
+
+Where the recommendation is **incremental** — call sites migrated over weeks rather than in one cut — pair it with a baseline check that stops the situation getting worse while the migration runs: a lint rule against the old shape, or a count of remaining old-shape call sites pinned at today's number and failing on any increase. Incremental cleanup with no such pin loses to new code arriving in the old form, and the effort then reads as failed when it was only outpaced.
 
 Then offer to grill the design before filing — `/grill-me` for a stress-test, or `/grill-and-record` if the project has `DOMAIN.md` or `docs/adr/`. Grilling is the norm, not an aside; expect the design to evolve, and file what comes out the other side.
 

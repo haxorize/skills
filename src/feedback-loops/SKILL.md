@@ -33,13 +33,15 @@ If `## Commands` is missing or incomplete, infer the commands from the project's
 
 ### 1. Format, lint, typecheck
 
-Run the loop's format, lint, and typecheck commands, then the test re-run the loop prescribes. Never declare done while an in-scope check is red — an out-of-scope red follows the triage rule: named and left, never fixed here or committed over.
+Run the loop's format, lint, and typecheck commands, then the test re-run the loop prescribes. Send long output to a file and read the file, rather than piping it through `head` or `tail`: truncation drops exactly the lines a failure needs, and in a pipeline the status you read is the last command's — `$?` after `pytest | tail -5` is `tail` succeeding, not the suite passing. Redirect, check the status, then read what was kept; the output on disk also survives the next command, so a re-run is never needed just to see it again. Never declare done while an in-scope check is red — an out-of-scope red follows the triage rule: named and left, never fixed here or committed over.
 
 ### 2. Stack-specific finalization
 
 Some changes need mechanical follow-on work that's specific to the stack — a database migration after a model change, a regenerated client after a schema change, a rebuilt lockfile after a dependency change. Don't hardcode these: **discover and invoke the project's convention skills by role** and apply whatever finalization they own for the layer this change touched. A model change with a `database` convention skill present means its migration step runs here.
 
 This is where silent gaps hide — a model change that ships without its migration looks done but isn't. If the relevant convention skill exists, its finalization is not optional.
+
+Where a check fails on a **generated** artifact, the fix goes into the generator — the schema, the template, the rule set, the prompt — and the artifact is regenerated. Hand-patching generated output buys a green run that the next regeneration silently reverts, and leaves the defect in the thing that produced it.
 
 Regeneration steps are also where out-of-scope failures are *born*: a generator that reads a sibling repo or an upstream schema can pull in state this change never adopted, reddening tests it doesn't touch. Re-run the checks after finalizing, and triage the result the same way.
 

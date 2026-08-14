@@ -2,7 +2,7 @@
 name: implement
 description: Build one loaded ticket's slice end to end — pick the build path, build, refactor, and close the loop.
 disable-model-invocation: true
-requires: tdd, feedback-loops, adr, diagnosing-bugs, receiving-review
+requires: tdd, feedback-loops, adr, diagnosing-bugs, receiving-review, discoverable-code
 ---
 
 # Implement
@@ -23,10 +23,14 @@ Decide how the slice is built, and say which path you picked and why:
 
 When it's genuinely ambiguous (some testable behavior, some glue), ask the user rather than guessing.
 
+The choice ratchets one way. Complexity that surfaces mid-slice **upgrades** the path — glue that turns out to carry a rule becomes a testable slice, and its tests get written from that point. Nothing downgrades: a testable slice doesn't become "just glue" because the tests are proving to be work. Doubt resolves upward for the same reason, and reaching for the lighter label in order to skip the heavier path is itself the doubt.
+
 ## Build
 
 - **Testable:** hand the slice to `tdd` and let it run its cycle — the refactor beat is `tdd`'s job there.
-- **Non-testable:** build the change directly, then do a cleanup pass — `/simplify` over what you wrote, applying what it finds. This is the direct path's refactor beat.
+- **Non-testable:** build the change directly, then do a cleanup pass — `/simplify` over what you wrote, applying what it finds, and the `/discoverable-code` behavior over anything the slice named, renamed, or moved. This is the direct path's refactor beat; on the testable path `tdd` runs both beats itself.
+- **Compatibility needs a named live reader.** Keeping the old path alive beside the new one is a cost carried forever, so pay it only when you can name who still reads it — a deployed client, stored records in the old shape, a consumer mid-migration. Never add a compatibility layer to make the diff smaller, and never to keep old tests green: tests follow the contract, not the reverse. With no reader left, the old path goes in the same slice.
+- **Never fabricate tooling.** When a command, binary, credential, or service the slice needs is missing, say so and hand the user the exact command to run — never stand up a shim, a stub binary, or a check that reports success without checking. Relay, don't bridge: a fabricated green removes the signal that would have brought the real tool.
 
 If an **unplanned failure** turns up mid-build that you can't quickly explain — a red that isn't the test you just wrote, behavior that contradicts the plan — stop guessing and run the `/diagnosing-bugs` skill before continuing (if you don't see a `Launching skill: diagnosing-bugs` line, load it). Don't fold an unexplained red into the slice's normal red/green rhythm; it needs its own tight feedback loop first.
 
