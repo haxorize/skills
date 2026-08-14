@@ -38,4 +38,6 @@ When changes touch both an ADR and the skill it shapes (lineage runs ADR → ski
 
 ## Linting
 
-`bash scripts/lint-skills.sh` checks SKILL.md and reference files against the conventions in [`src/write-skill/SKILL.md`](src/write-skill/SKILL.md) — size caps, frontmatter (description length/colon, the invocation-axis flag, `requires:` resolution), sibling-file byte-identity, the ban on skill bodies citing repo ADRs by number, reference-link resolution (every relative `.md` link points at a file that exists), and router coverage (every skill mentioned in `which-skill`). Run before committing skill changes.
+`bash scripts/lint-skills.sh` checks SKILL.md and reference files against the conventions in [`src/write-skill/SKILL.md`](src/write-skill/SKILL.md) — size caps, frontmatter (description length/colon, the invocation-axis flag, `requires:` resolution), sibling-file byte-identity, the ban on skill bodies citing repo ADRs by number, reference-link resolution (inline `[text](path.md)` links only — the script header names the link forms and resolution cases it does not reach, so a clean run isn't a claim about those), and router coverage (every skill mentioned in `which-skill` and in `README.md`). Run before committing skill changes.
+
+`bash scripts/lint-selftest.sh` runs the linter against `scripts/lint-fixtures/`, a miniature tree that is wrong on purpose, and fails if a check stops firing or starts firing on a form it should exempt. Run it after changing a check — a lint gate that quietly stopped matching looks identical to a repo with no violations.

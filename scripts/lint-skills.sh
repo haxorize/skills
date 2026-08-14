@@ -30,15 +30,29 @@
 #     so `adr-0023` and `Adr-7` are caught too. `docs/adr/` paths put a slash
 #     after `adr` (not a hyphen) so they stay legal, as do digitless
 #     placeholders ("ADR-N" — `N` isn't a digit).
-#   - Reference-link resolution: every relative `.md` link in a shipped skill
-#     file must resolve to a real file, relative to the linking file's own
-#     directory. A `SKILL.md` promising `references/foo.md` that isn't there
-#     degrades silently — the agent follows the pointer, finds nothing, and
-#     proceeds on whatever it already had. Fenced code blocks and backtick
-#     code spans are exempt because they hold deliberate placeholders (the
-#     template's `references/topic.md`, adr-format's `[ADR N](N-slug.md)`).
-#     The sibling-group check below covers the same ground for the paths
-#     registered there.
+#   - Reference-link resolution: an inline `[text](path.md)` link with a
+#     relative target must resolve to a real file, relative to the linking
+#     file's own directory. A `SKILL.md` promising `references/foo.md` that
+#     isn't there degrades silently — the agent follows the pointer, finds
+#     nothing, and proceeds on whatever it already had. Fenced code blocks
+#     (opened and closed by a triple-backtick line) and backtick code spans
+#     of any run length are exempt because they hold deliberate placeholders
+#     (the template's `references/topic.md`, adr-format's
+#     `[ADR N](N-slug.md)`).
+#     Scope, stated so a pass isn't read as more than it is: this covers the
+#     inline link form alone, on the `.md` extension alone. Reference-style
+#     (`[text][label]`), titled (`[text](path.md "Title")`), angle-bracketed,
+#     percent-encoded, and paren-bearing targets are not extracted, so a
+#     broken one passes unflagged. Resolution is the filesystem's, so a link
+#     escaping the skill directory (`../../docs/...`) passes here while
+#     breaking once the skill is symlinked into ~/.claude/skills/, and a
+#     case-only mismatch passes on a case-insensitive volume and fails on a
+#     case-sensitive one. The sibling-group check below covers the same
+#     ground for the paths registered there.
+#
+# scripts/lint-selftest.sh runs this file against a deliberately-bad fixture
+# tree and fails if any check stops firing (or starts firing on the exempt
+# forms). Run it after changing a check here.
 #   - Platform-true spec limits (ADR-0030): `name` <= 64 chars and no angle
 #     brackets in `description` — the two agent-skills-spec caps Claude Code
 #     shares. The rest of the spec (its closed frontmatter key set) deliberately
@@ -64,7 +78,15 @@
 set -uo pipefail
 
 repo_root="$(cd "$(dirname "$0")/.." && pwd)"
-cd "$repo_root"
+
+# LINT_ROOT points the whole sweep at another tree, so scripts/lint-selftest.sh
+# can run every check below against a fixture repo whose failures are known in
+# advance. Unset in normal use, which lints this repo.
+scan_root="$repo_root"
+if [ -n "${LINT_ROOT:-}" ]; then
+  scan_root="$(cd "$repo_root" && cd "$LINT_ROOT" && pwd)"
+fi
+cd "$scan_root"
 
 # The description caps below are character-based (<=1024 chars, no bare ': ').
 # bash's ${#var} and grep count bytes under LC_ALL=C or an unset locale, which
@@ -130,30 +152,60 @@ while IFS= read -r f; do
   # Reference-link resolution (see header). Fenced blocks and backtick code
   # spans are stripped first: both hold illustrative paths (the SKILL.md
   # template's `references/topic.md`, adr-format's `[ADR N](N-slug.md)`) that
-  # name no real file by design.
+  # name no real file by design. Spans are stripped by matching a backtick run
+  # against the next run of the same length, not by a fixed one-backtick
+  # pattern — `` `x` `` and ``code with a ` inside`` are spans too, and a
+  # one-backtick pattern reads their delimiters as an empty span and leaves the
+  # contents exposed.
+  # The extractor's own exit status is checked: an awk that dies mid-sweep
+  # prints nothing, which is indistinguishable from a file with no broken
+  # links. Reading that silence as a pass is the failure this check exists to
+  # prevent, one level up.
   dir=$(dirname "$f")
-  while IFS= read -r target; do
+  if ! link_targets=$(awk '
+    # Delete every backtick-delimited span: take a run of N backticks as an
+    # opener and the next run of the same length as its closer. An unclosed run
+    # leaves the rest of the line intact, so a stray backtick never hides a
+    # real link. (`shut` rather than `close` — `close` is a built-in name and
+    # awk rejects it as a parameter.)
+    function strip_spans(s,   out, run, rest, shut) {
+      out = ""
+      while (match(s, /`+/)) {
+        out = out substr(s, 1, RSTART - 1)
+        run = substr(s, RSTART, RLENGTH)
+        rest = substr(s, RSTART + RLENGTH)
+        shut = index(rest, run)
+        if (shut == 0) return out rest
+        s = substr(rest, shut + length(run))
+      }
+      return out s
+    }
+    /^[[:space:]]*```/ { fence = !fence; next }
+    fence { next }
+    {
+      line = strip_spans($0)
+      while (match(line, /\]\([^)]+\)/)) {
+        t = substr(line, RSTART + 2, RLENGTH - 3)
+        if (t ~ /\.md$/ || t ~ /\.md#/) print NR "\t" t
+        line = substr(line, RSTART + RLENGTH)
+      }
+    }
+  ' "$f"); then
+    echo "FAIL: $f — the reference-link extractor errored, so no link in this file was checked; fix the awk block in scripts/lint-skills.sh"
+    fail=1
+    link_targets=""
+  fi
+
+  while IFS=$'\t' read -r lineno target; do
     [ -z "$target" ] && continue
     case "$target" in
       *://* | /* | \#*) continue ;;
     esac
     if [ ! -f "$dir/${target%%#*}" ]; then
-      echo "FAIL: $f links to '$target', which resolves to no file — create $dir/${target%%#*}, fix the path, or drop the link; a pointer to a missing reference silently loads nothing at runtime"
+      echo "FAIL: $f links to '$target' (line $lineno), which resolves to no file — create $dir/${target%%#*}, fix the path, or drop the link; a pointer to a missing reference silently loads nothing at runtime"
       fail=1
     fi
-  done < <(awk '
-    /^[[:space:]]*```/ { fence = !fence; next }
-    fence { next }
-    {
-      line = $0
-      gsub(/`[^`]*`/, "", line)
-      while (match(line, /\]\([^)]+\)/)) {
-        t = substr(line, RSTART + 2, RLENGTH - 3)
-        if (t ~ /\.md$/ || t ~ /\.md#/) print t
-        line = substr(line, RSTART + RLENGTH)
-      }
-    }
-  ' "$f")
+  done <<< "$link_targets"
 done < <(find src -type f -name '*.md' | sort)
 
 for f in src/*/SKILL.md; do
@@ -260,24 +312,30 @@ sibling_groups=(
   "src/to-bug/references/work-item-tags.md|src/to-feature/references/work-item-tags.md|src/to-story/references/work-item-tags.md|src/to-tasks/references/work-item-tags.md|src/chart-course/references/work-item-tags.md"
 )
 
-for group in "${sibling_groups[@]}"; do
-  IFS='|' read -ra files <<< "$group"
-  ref="${files[0]}"
-  if [ ! -f "$ref" ]; then
-    echo "FAIL: sibling reference $ref is missing"
-    fail=1
-    continue
-  fi
-  for other in "${files[@]:1}"; do
-    if [ ! -f "$other" ]; then
-      echo "FAIL: sibling reference $other is missing"
+# The registry above names this repo's own paths, so byte-identity runs only
+# against this repo. Under LINT_ROOT every group would report as missing and
+# drown the fixture's real failures; lint-selftest.sh states this gap rather
+# than implying it covered the check.
+if [ -z "${LINT_ROOT:-}" ]; then
+  for group in "${sibling_groups[@]}"; do
+    IFS='|' read -ra files <<< "$group"
+    ref="${files[0]}"
+    if [ ! -f "$ref" ]; then
+      echo "FAIL: sibling reference $ref is missing"
       fail=1
-    elif ! cmp -s "$ref" "$other"; then
-      echo "FAIL: $other drifted from $ref (per ADR-0007 these must stay byte-identical)"
-      fail=1
+      continue
     fi
+    for other in "${files[@]:1}"; do
+      if [ ! -f "$other" ]; then
+        echo "FAIL: sibling reference $other is missing"
+        fail=1
+      elif ! cmp -s "$ref" "$other"; then
+        echo "FAIL: $other drifted from $ref (per ADR-0007 these must stay byte-identical)"
+        fail=1
+      fi
+    done
   done
-done
+fi
 
 # Sibling-group membership: any reference basename that exists under two or
 # more skills must be governed by a group above — an unlisted copy sits outside

@@ -51,6 +51,8 @@ skill-name/
     └── helper.py
 ```
 
+**Every relative link a shipped skill file writes must resolve from that file's own directory.** A pointer at a reference that isn't there degrades silently — the agent follows it, finds nothing, and proceeds on whatever it already had, which reads exactly like a run that never needed the reference. Renaming or moving a reference is therefore a two-file edit. (`scripts/lint-skills.sh` mechanizes this for the inline `[text](path.md)` form; its header states what that form does not reach.)
+
 Scripts are **black boxes**: they exist to be *run*, not read — don't ingest a large helper into context unless running it first proved a custom variant necessary. The signal to bundle one: repeated runs of the skill independently writing the same helper.
 
 ## Skills that keep state across sessions
