@@ -41,7 +41,7 @@ Write down the plan in one line, in the prototype's location or a top-of-file co
 
 > "Three variants of the settings page, switchable via `?variant=`, on the existing `/settings` route. Divergence axis: information density."
 
-Name the **divergence axis** before building — the one dimension the variants disagree along (density, information hierarchy, primary affordance, tone). Variants drawn without a declared axis differ by accident, and the user can't say what they are choosing between. No two variants take the same position on the axis; if they do, one of them is redundant before it is written.
+Name the **divergence axis** before building — the one dimension the variants disagree along (density, information hierarchy, primary affordance, tone). Variants drawn without a declared axis differ by accident, and the user can't say what they are choosing between. No two variants take the same position on the axis. A collision caught before the variant is drafted is redrawn against the axis; one caught after it is built is cut, and cut out loud — shipping three names over two ideas is a fake choice.
 
 ### 2. Generate radically different variants
 
@@ -51,7 +51,7 @@ Draft each variant. Hold each one to:
 - The project's component library / styling system (TailwindCSS, shadcn, MUI, plain CSS, whatever).
 - An exported component name that names the variant's **direction**, not its slot in the list — `QuietSettings`, `EditorialSettings`, `DenseSettings`, never `VariantA`. The URL key stays a letter so the switcher and the shareable link stay simple, but the label the user reads pairs the two (`B — Editorial`): a person holds "the editorial one" in their head for a week and cannot hold "option B" for an hour.
 
-Variants must be **structurally different** — different layout, different information hierarchy, different primary affordance, not just different colours. Three slightly-tweaked card grids isn't a UI prototype, it's wallpaper. If two drafts come out too similar, redo one with explicit "do not use a card grid" guidance.
+Variants must be **structurally different** — different layout, different information hierarchy, different primary affordance, not just different colours. Three slightly-tweaked card grids isn't a UI prototype, it's wallpaper. Redrawing a too-similar draft takes explicit negative guidance — "do not use a card grid" — because the second attempt drifts back to the first shape without it.
 
 ### 3. Wire them together
 
@@ -95,7 +95,7 @@ Build the switcher as its own clearly-named throwaway component (e.g. `Prototype
 
 Surface the URL (and the `?variant=` keys) with a short trade-off table: one row per direction, what it is the right choice for, and what it costs. State no preference — the choice is the user's, and a recommendation shipped alongside the variants collapses them back into one. The interesting feedback is usually **"I want the header from B with the sidebar from C"** — that's the actual design they want.
 
-If two variants converged while being built and now say the same thing, cut one and say that you cut it. Shipping three names over two ideas is a fake choice.
+A variant cut for converging is named in the table as cut, never quietly absent from it — the user is choosing among the directions that survived, and cannot tell a direction that was never drawn from one that collapsed.
 
 When a direction wins but isn't finished, run a **riff round**: two or three fresh variants that all sit inside the winning direction and diverge on a narrower axis. The first round picks the direction; the riff round picks within it.
 
