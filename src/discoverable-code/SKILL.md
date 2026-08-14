@@ -29,12 +29,12 @@ The rules below govern *findability*. How much behavior sits behind an interface
 - **Start error messages with a unique literal prefix**, so a message copied out of a log greps straight back to the throw site: ``throw new Error(`Webhook signature mismatch for ${id}`)``, never ``throw new Error(`${prefix}: mismatch`)``.
 - **A module should read with its imports unopened.** Each imported name plus its doc line should carry enough that the reader never opens the source module; when they have to, the import's name failed, not the reader.
 - **One searchable concept per file, and thin orchestrators.** The code answering "where is X done?" lives in a module named after X — the thing a reader would ask about, not the mechanism inside — never inline in a coordinator or service class. An orchestrator reads as a sequence of calls into well-named modules, each line one hop from the real implementation. Split until each question-sized concept has one home, then stop: a helper meaningful only inside one concept stays inline, and a file per tiny function scatters one answer across several reads.
-- **Colocate tests** (`foo.test.ts` beside `foo.ts`) so one search finds the behavior and its specification together.
+- **Put tests where the repo already puts them**, and where nothing settles it, beside the source (`foo.test.ts` next to `foo.ts`) so one search finds the behavior and its specification together. A house layout the rest of the suite follows beats a locally better one, the same way an existing naming convention does.
 - **Mark dead ends.** `@deprecated` on the old path, naming the new one, so the search hit that lands on it says so.
 
 ## Before the change lands
 
-1. Would one search for each new exported name reach its implementation, and only its implementation?
+1. Would one search for each new exported name reach its implementation, with no second definition of the same name competing for the reader?
 2. Does every log and error string in the change exist verbatim in the source, uninterpolated at its front?
 3. Is the one thing a caller must know that the signature cannot say written at the definition?
 4. Did anything change behavior, audience, or visibility without changing its name?

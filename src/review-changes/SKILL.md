@@ -45,7 +45,7 @@ Don't run every lens on every diff — `/security-review` on a docs change is no
 
 ## 3. Fan out (read-only subagents, findings only)
 
-Run each **custom lens** (DOMAIN, ADR, AC, design depth, smell baseline, verification gap, amendment bookends) as its own **read-only subagent** that returns *findings only* — keeps the caller's context clean. Built-ins that already self-parallelize (`/code-review`, `/security-review`) may run at top level rather than wrapped in a subagent.
+Run each **custom lens** (DOMAIN, ADR, AC, design depth, discoverability, smell baseline, verification gap, amendment bookends) as its own **read-only subagent** that returns *findings only* — keeps the caller's context clean. Built-ins that already self-parallelize (`/code-review`, `/security-review`) may run at top level rather than wrapped in a subagent.
 
 Every fan-out prompt follows three rules:
 

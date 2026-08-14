@@ -55,7 +55,7 @@ Before writing, confirm out loud which of the three criteria the decision meets,
 
 1. **Hard to reverse** — undoing this later carries real cost (schema migration, dependency change, methodology shift); name that cost, or the decision is reversible and fails this criterion — rating everything hard-to-reverse produces records nobody reads.
 2. **Surprising without context** — a future reader (or AFK agent) will look at the code and wonder "why did they do it this way?"
-3. **Result of a real trade-off** — there were genuine alternatives and one was picked for specific reasons. Probe this one with the **opposite test**: state the rejected alternative as a decision, and check that a rational team could have picked it. Where the opposite is nonsense — "we chose to validate the input" against "we chose not to" — there was no trade-off and no decision, only a description of the work.
+3. **Result of a real trade-off** — there were genuine alternatives and one was picked for specific reasons. Probe this one with the **opposite test**: state the rejected alternative as a decision of its own, and check that a rational team could have picked it. The opposite is the alternative someone argued for, never the claim negated — "validate at the handler" against "validate at the boundary and trust callers inward" is a trade-off two teams really do split on, while "we chose to write the feature" has no opposite anyone would defend, and describes the work rather than deciding anything.
 
 If any one is missing, do not write the ADR — stop and tell the user why.
 

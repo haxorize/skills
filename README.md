@@ -55,7 +55,7 @@ The route most work travels: **`/grill-and-record`** (or `/grill-me` with no cod
 - **`improve-design`** — Read-only design-quality review of the whole codebase: surfaces architectural friction and proposes deeper module interfaces as a prioritized, vetted report.
 - **`harden-domain`** — Sweep the codebase to refresh `DOMAIN.md`. Deliberate sweep mode (inline domain capture during grilling lives in `grill-and-record`).
 - **`backfill-adrs`** — Sweep recent git history for un-recorded architectural decisions and write the ones that pass the gate.
-- **`verify-docs`** — Check that a document's claims about the code are still true — prose vs code vs tests, with per-claim verdicts and fixes. The prose-drift sibling of `harden-domain` (vocabulary) and `backfill-adrs` (decisions).
+- **`verify-docs`** — Check whether a document's claims still hold, against the code and tests it describes or the sources a derived document was distilled from, with per-claim verdicts and fixes. The prose-drift sibling of `harden-domain` (vocabulary) and `backfill-adrs` (decisions).
 
 ### Crossing sessions & prototyping
 

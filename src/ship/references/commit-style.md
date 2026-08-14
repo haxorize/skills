@@ -4,11 +4,10 @@ The default shape for commit and PR prose. It yields to exactly one thing: a con
 
 ## The subject
 
-- An imperative verb leads: "Add", "Fix", "Move", "Remove", "Tag" — not "Added", "Adds", or a noun phrase.
+- An imperative verb leads: "Add", "Fix", "Move", "Remove", "Tag" — not "Added", "Adds", or a noun phrase. The probe: the subject completes "If applied, this commit will ___". A subject that fails it names a topic rather than what applying it does ("Auth changes", "Updates to the parser").
 - Aim for 50 characters; never exceed 72. No trailing period.
 - No type prefix (`feat:`, `fix(scope):`) — that is Conventional Commits, applied only where the repo declares it.
 - One logical change per subject; the change may include its tests and docs.
-- The subject completes the sentence "If applied, this commit will ___". A subject that reads as a label for the diff ("Auth changes", "Updates to the parser") fails the test — it names a topic, not what applying it does.
 
 ## The body: write one only when the subject cannot carry the why
 

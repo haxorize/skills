@@ -64,7 +64,7 @@ Either mode: if the text already complies, say so and stop — don't churn compl
 ## The preservation contract
 
 - Never fabricate a fact, citation, number, or example the original didn't contain.
-- **Modality is content.** A hedge, a scope word, a modal verb ("may", "usually", "in most cases", "on the paths we tested") is part of the claim, not decoration on it. Cutting one promotes a qualified statement into a flat assertion — a rewrite of the fact, and usually a false one. Where hedges stack, keep the single qualifier carrying the real uncertainty and cut the others; never cut to zero.
+- **Modality is content.** A hedge, a scope word, a modal verb ("may", "usually", "in most cases", "on the paths we tested") is part of the claim, not decoration on it. Cutting one promotes a qualified statement into a flat assertion — a rewrite of the fact, and usually a false one. So thinning a hedge stack to the catalog's one-qualifier maximum is a rewrite decision, not a tidy: keep the qualifier carrying the real uncertainty, never whichever one reads shortest.
 - Never silently drop a qualifier, scope condition, number, or safety condition to make a sentence fit a cap — keep the longer sentence and flag the trade-off instead.
 - Untouchables: code spans, identifiers, CLI commands, file paths, quoted error text, and proper nouns stay exact, even where they break a rule.
 
