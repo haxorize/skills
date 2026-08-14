@@ -39,7 +39,9 @@ Default to **3 variants**. More than 5 stops being radically different and start
 
 Write down the plan in one line, in the prototype's location or a top-of-file comment:
 
-> "Three variants of the settings page, switchable via `?variant=`, on the existing `/settings` route."
+> "Three variants of the settings page, switchable via `?variant=`, on the existing `/settings` route. Divergence axis: information density."
+
+Name the **divergence axis** before building — the one dimension the variants disagree along (density, information hierarchy, primary affordance, tone). Variants drawn without a declared axis differ by accident, and the user can't say what they are choosing between. No two variants take the same position on the axis; if they do, one of them is redundant before it is written.
 
 ### 2. Generate radically different variants
 
@@ -47,7 +49,7 @@ Draft each variant. Hold each one to:
 
 - The page's purpose and the data it has access to.
 - The project's component library / styling system (TailwindCSS, shadcn, MUI, plain CSS, whatever).
-- A clear exported component name, e.g. `VariantA`, `VariantB`, `VariantC`.
+- An exported component name that names the variant's **direction**, not its slot in the list — `QuietSettings`, `EditorialSettings`, `DenseSettings`, never `VariantA`. The URL key stays a letter so the switcher and the shareable link stay simple, but the label the user reads pairs the two (`B — Editorial`): a person holds "the editorial one" in their head for a week and cannot hold "option B" for an hour.
 
 Variants must be **structurally different** — different layout, different information hierarchy, different primary affordance, not just different colours. Three slightly-tweaked card grids isn't a UI prototype, it's wallpaper. If two drafts come out too similar, redo one with explicit "do not use a card grid" guidance.
 
@@ -60,9 +62,9 @@ Create a single switcher component on the route:
 const variant = searchParams.get('variant') ?? 'A';
 return (
   <>
-    {variant === 'A' && <VariantA {...data} />}
-    {variant === 'B' && <VariantB {...data} />}
-    {variant === 'C' && <VariantC {...data} />}
+    {variant === 'A' && <QuietSettings {...data} />}
+    {variant === 'B' && <EditorialSettings {...data} />}
+    {variant === 'C' && <DenseSettings {...data} />}
     <PrototypeSwitcher variants={['A','B','C']} current={variant} />
   </>
 );
@@ -77,7 +79,7 @@ For sub-shape B (new page): the throwaway route created above (per the project's
 A small fixed-position bar at the bottom-centre of the screen with three pieces:
 
 - **Left arrow** — cycles to the previous variant (wraps around).
-- **Variant label** — shows the current variant key and, if the variant exports a name, that name too. e.g. `B — Sidebar layout`.
+- **Variant label** — shows the current variant key and its direction name: `B — Editorial`.
 - **Right arrow** — cycles forward (wraps around).
 
 Behaviour:
@@ -91,7 +93,11 @@ Build the switcher as its own clearly-named throwaway component (e.g. `Prototype
 
 ### 5. Hand it over
 
-Surface the URL (and the `?variant=` keys). The interesting feedback is usually **"I want the header from B with the sidebar from C"** — that's the actual design they want.
+Surface the URL (and the `?variant=` keys) with a short trade-off table: one row per direction, what it is the right choice for, and what it costs. State no preference — the choice is the user's, and a recommendation shipped alongside the variants collapses them back into one. The interesting feedback is usually **"I want the header from B with the sidebar from C"** — that's the actual design they want.
+
+If two variants converged while being built and now say the same thing, cut one and say that you cut it. Shipping three names over two ideas is a fake choice.
+
+When a direction wins but isn't finished, run a **riff round**: two or three fresh variants that all sit inside the winning direction and diverge on a narrower axis. The first round picks the direction; the riff round picks within it.
 
 ### 6. Capture the answer and clean up
 
