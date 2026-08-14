@@ -147,6 +147,23 @@ ln -s "$(pwd)/src/handoff" ~/.claude/skills/
 
 A bare `ln -s` links only that one directory — it does **not** resolve `requires:`. For a skill that declares dependencies (e.g. `grill-me` → `grilling`), use `install.sh` instead, or the skill will be missing the behavior that carries its job.
 
+### Auto-hoist on pull
+
+To re-run the install automatically after every `git pull`, opt this clone in once:
+
+```bash
+bash scripts/setup-hooks.sh
+```
+
+This points the repo's `core.hooksPath` at the committed `scripts/git-hooks/` directory, whose `post-merge` hook runs `install.sh` after each merge that brings in new commits — so a pull that adds, renames, or removes a skill keeps `~/.claude/skills/` in step with no manual re-hoist. Git hooks can't be committed into `.git/hooks/` directly, so the hook body is version-controlled and the setup script wires it in; run it once per clone (it's local config, not committed).
+
+**Trust trade-off:** enabling this makes `git pull` **auto-run committed scripts** — the `post-merge` hook, and `install.sh` through it — on every merge, under your user, with no further prompt. Any hook a future commit adds under `scripts/git-hooks/` runs the same way. This is the standard cost of committed git hooks; only opt in on a repo whose commits you trust. The bare `bash scripts/install.sh` above stays available if you'd rather re-hoist by hand.
+
+Caveats:
+
+- `post-merge` does **not** fire on `git pull --rebase` — after a rebase pull, run `bash scripts/install.sh` yourself.
+- The hook fires on **any** merge that updates the tree, including a plain `git merge <branch>`, not only `git pull`.
+
 ## Notes
 
 - Skills that reference `DOMAIN.md`, `docs/adr/`, or `docs/solutions/` degrade gracefully in projects that don't use those conventions.

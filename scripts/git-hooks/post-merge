@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# post-merge fires after any merge that updates the working tree — the merge
+# half of `git pull`, and also a plain `git merge <branch>`. It re-hoists the
+# skill symlinks so a merge that adds, renames, or removes a skill is reflected
+# in ~/.claude/skills/ without a manual install run.
+#
+# NOTE: git does not run post-merge on `git pull --rebase`. After a rebase pull,
+# run `bash scripts/install.sh` manually.
+#
+# A post-merge hook cannot abort the merge: git ignores its exit code, so the
+# merge has already completed by the time this runs. A failed re-hoist must
+# therefore announce itself rather than scroll past — hence the explicit guard
+# below instead of relying on `set -e` to surface it.
+#
+# Enable with: bash scripts/setup-hooks.sh (points core.hooksPath here).
+
+repo_root="$(git rev-parse --show-toplevel)"
+
+echo "post-merge: re-hoisting skills → ~/.claude/skills/"
+if ! bash "$repo_root/scripts/install.sh"; then
+  echo "post-merge: WARN install.sh failed — run 'bash scripts/install.sh' manually to re-hoist" >&2
+fi
