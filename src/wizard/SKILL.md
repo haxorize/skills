@@ -23,6 +23,8 @@ Work out every manual step the human must take and every value captured along th
 - For setup: `.env`, `.env.example`, `.env.*`, `README`, `docker-compose*`, framework config, and CI workflow files (every secret/variable reference is a value the wizard must produce).
 - For a migration or transition: the current state, the target state, and the irreversible actions between them.
 
+Design for the **fewest stages that still work**. Every stage is a place the human can lose the thread or stop, so merge stages that always happen together, and cut any stage capturing a value the wizard could read from the repo or derive itself. A procedure written as eleven stages where six would do has five extra chances to be abandoned halfway.
+
 Then show the user the ordered list of stages and the values each produces, and confirm — they may add, drop, or reorder.
 
 **Done when:** every stage is named in order, and for each captured value you know (a) where the human gets it, (b) where it's written (`.env`, a CI secret, both, or nowhere — some stages are pure actions), and (c) whether it's secret (hidden entry) or public.
