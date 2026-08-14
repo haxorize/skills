@@ -16,7 +16,7 @@ All three must hold — confirm out loud which are met before drafting; if any i
 
 1. **Verified** — the fix is in and the original symptom is confirmed gone (the reproduction loop re-ran green). Never capture an unverified theory.
 2. **Expensive** — the diagnosis took real investigation: multiple hypotheses, failed attempts, a non-obvious root cause. If the error message alone led to the fix, a search engine already owns it.
-3. **Recurrence-plausible** — the class of problem can bite again in this repo or its siblings: the pattern is used repeatedly, or the trigger is easy to re-create. Its sharper form is a deletion test on the store: if this doc were deleted, would a future run be *steered differently*, or would only the history be lost? An account of what happened that changes nothing a later session does belongs in the commit log — the store exists to change behavior, not to remember.
+3. **Recurrence-plausible** — the class of problem can bite again in this repo or its siblings: the pattern is used repeatedly, or the trigger is easy to re-create. Its sharper form is a **retention test** on the store: if this doc were deleted, would a future run be *steered differently*, or would only the history be lost? An account of what happened that changes nothing a later session does belongs in the commit log — the store exists to change behavior, not to remember.
 
 A direct ask ("the team documents every fix") doesn't waive the gate — name the failing criterion first and let the human overrule explicitly; a store padded with trivia buries the learnings worth retrieving.
 
