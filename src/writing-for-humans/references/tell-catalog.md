@@ -12,6 +12,7 @@ Named patterns that read as AI-generated because they are clarity failures: each
 - **Capability filler** — "is designed to", "aims to", "has the ability to", "enables you to". Say what it does: "retries three times, then stops"; "you can".
 - **Trailing participle analysis** — a comma plus "-ing" clause pretending to explain: "highlighting", "underscoring", "showcasing", "reflecting". Cut it, or state the plain reason with "so" or "because".
 - **Slop vocabulary** — delve, tapestry, leverage, utilize, foster, empower, streamline, seamless, robust, comprehensive, cutting-edge, landscape, realm, journey, elevate, harness, deliver (for anything but goods), facilitate, key (as adjective), transform, game-changer. Use the everyday verb, or delete and state the measurable property.
+- **Audit-slop register** — the vocabulary of rigor standing in for the thing itself: evidence, receipt, authority, boundary, contract, durable, surface (as a verb), exact, signal. Each of these names a real mechanism inside an agent-facing rule file, which is where they belong; in prose written for a person they replace the concrete noun with its category — "the evidence" for *the failing log line*, "surfaced" for *showed*. Name the component and use the ordinary verb.
 
 ## Fake structure
 
@@ -36,6 +37,7 @@ Named patterns that read as AI-generated because they are clarity failures: each
 
 - **Weasel attribution** — "experts agree", "studies show", "widely regarded as", "best practice suggests". Name the source or cut the claim; if there is no source, ask — never invent one.
 - **Anthropomorphic justification** — "earns its place", "does the heavy lifting", "the data wants", "the benchmark settles the question", "emerged naturally". Say who did what, or state the property directly; a decision that "emerged" is a decision being dodged — name the decider and the reason.
+- **Retrospective neatness** — a causal history tidier than the work was: each step following from the last, no dead ends, no backtracking, the conclusion arriving on schedule. Its twin is the plan narrated as an accomplished result ("we then migrated the remaining callers", written before anyone did). Say what was tried and abandoned, and keep a plan in the tense of a plan.
 - **False balance** — "strike a balance", "both approaches have merit", "depends on various factors" in prose whose job is a verdict. Take the position or name the unresolved question explicitly.
 - **Absolute inflation** — "cannot be overstated", "the single most important", "make no mistake", "has never been more critical". Verify the superlative or delete the intensity.
 - **Hedge stack** — "may potentially", "it's possible that … might", "should generally". One qualifier maximum, chosen deliberately; state the unknown as "unknown" instead of fogging every clause.
@@ -80,3 +82,6 @@ Per-instance rules can't see these; they live in the run of the text, and *occas
 - **One-point dilution** — one argument restated many ways across paragraphs, circular repetition disguised as thoroughness. State it once, well, and move on.
 - **Dead-metaphor repetition** — one metaphor adopted early and repeated throughout. If a figure earns one use, it does not earn five.
 - **Synonym rotation** — the same referent renamed each mention for variety; the one-term-per-concept rule violated at rate, and an ambiguity besides the tell.
+- **Anaphora** — consecutive sentences or clauses opening on the same word or construction for rhythm ("We shipped the parser. We shipped the linter. We shipped the formatter."). One repetition is emphasis; a run is cadence doing the work content should be doing.
+- **Single-sentence paragraph run** — three or more one-sentence paragraphs in a row, each landing as a beat. Merge them into a paragraph that argues, or give at least one of them its second sentence.
+- **Aphorism rate** — a memorable general truth per section, set off as its own line. The occasional one is ordinary writing; the steady rate substitutes resonance for information. Read the section aloud: wherever the rhythm is doing the persuading, the sentence carries no fact.
