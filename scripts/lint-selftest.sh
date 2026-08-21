@@ -13,7 +13,9 @@
 #
 # Covered here: reference-link resolution (both directions, including the
 # backtick-span and fenced-block exemptions), the ADR-citation ban, the
-# description's unquoted ': ', and load-gate placement. NOT covered, so a clean
+# description's unquoted ': ', load-gate placement, and the global-rules
+# Depends: admission check (missing line, dangling name, and the well-formed
+# form that must stay quiet). NOT covered, so a clean
 # run here is not a claim about them: the 200-line caps, sibling byte-identity
 # (skipped under LINT_ROOT — the registry names this repo's own paths),
 # description length, angle brackets, name/directory agreement, the
@@ -59,12 +61,15 @@ expect "reference-link resolution" "links to 'references/does-not-exist.md' (lin
 expect "ADR-citation ban" "cites a repo ADR by number"
 expect "description colon" "description has unquoted ': '"
 expect "load-gate placement" "carries a load gate ('Launching skill'"
+expect "global-rule Depends (missing)" "global/rules/no-depends.md has no 'Depends:' line"
+expect "global-rule Depends (dangling)" "global/rules/dangling-depends.md Depends: names 'no-such-skill'"
 
 reject "reference-link resolution" "references/real-reference.md"
 reject "reference-link resolution" "references/exempt-single.md"
 reject "reference-link resolution" "references/exempt-double.md"
 reject "reference-link resolution" "references/exempt-inner.md"
 reject "reference-link resolution" "references/exempt-fenced.md"
+reject "global-rule Depends" "global/rules/well-formed.md"
 
 if [ "$status" -ne 1 ]; then
   echo "SELFTEST FAIL: lint exited $status against the fixture tree; a tree this broken must exit 1"

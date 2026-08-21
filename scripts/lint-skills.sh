@@ -65,6 +65,13 @@
 #     line. A model-invoked skill has no watcher, so a miss must degrade
 #     gracefully ("Never gate inside a model-invoked skill"); its body and
 #     references must not carry the phrase.
+#   - Global rules (ADR-0053): every global/rules/*.md carries a `Depends:`
+#     line naming at least one existing skill under src/ — the admission rule
+#     in global/README.md (only rules a skill depends on). A rule with no
+#     resolvable dependant has lost its reason to load on every turn. The
+#     200-line cap and the ADR-citation ban above also run over global/rules/,
+#     since those files are hoisted into ~/.claude/rules/ the same way skills
+#     are hoisted.
 #   - Router coverage (CLAUDE.md "Keep the router honest"): every skill under
 #     src/ must appear as a backticked code-span (`name` or `/name`) in
 #     src/which-skill/SKILL.md. Requiring the backtick keeps incidental prose
@@ -206,7 +213,7 @@ while IFS= read -r f; do
       fail=1
     fi
   done <<< "$link_targets"
-done < <(find src -type f -name '*.md' | sort)
+done < <({ find src -type f -name '*.md'; [ -d global/rules ] && find global/rules -type f -name '*.md'; } | sort)
 
 for f in src/*/SKILL.md; do
   desc=$(frontmatter_value "$f" description)
@@ -368,6 +375,31 @@ for f in src/*/SKILL.md; do
       fail=1
     fi
   done
+done
+
+# Global rules admission (see header): a `Depends:` line naming skills that
+# exist under src/. Names are read as backticked or bare comma-separated slugs.
+for f in global/rules/*.md; do
+  dep_line=$(grep -m1 -E '^Depends:' "$f" || true)
+  if [ -z "$dep_line" ]; then
+    echo "FAIL: $f has no 'Depends:' line — a global rule must name the skill(s) that depend on it (global/README.md admission rule), or leave global/"
+    fail=1
+    continue
+  fi
+  deps=$(printf '%s' "${dep_line#Depends:}" | tr -d '\`' | tr ',' ' ')
+  resolved=0
+  for dep in $deps; do
+    if [ -f "src/$dep/SKILL.md" ]; then
+      resolved=$((resolved + 1))
+    else
+      echo "FAIL: $f Depends: names '$dep' but src/$dep/SKILL.md does not exist — fix the name or drop it"
+      fail=1
+    fi
+  done
+  if [ "$resolved" -eq 0 ]; then
+    echo "FAIL: $f Depends: resolves to no existing skill — a global rule with no dependant leaves global/ (global/README.md admission rule)"
+    fail=1
+  fi
 done
 
 # Router coverage (see header); the trailing class keeps a name from

@@ -135,9 +135,13 @@ The route most work travels: **`/grill-and-record`** (or `/grill-me` with no cod
 - **Removed acceptance criteria** are kept under a `## Removed acceptance criteria` section in the description body, with the original text preserved as strike-through. On ADO, this section lives in the description rather than the AC field — the AC field shows only active criteria.
 - **KTLO Features** — per-PI buckets for one of {security vulnerabilities, tech debt, support requests, bug fixes} — sit outside the to-X publishing path. Canonical body lives in `docs/ktlo/<category>.md` in the PI workspace; draft and re-grill via `grill-me`, publish manually each PI. Body shape: Scope, Out of scope, Cadence/SLA, Constraints, Notes; no AC field, no Story map. Child Stories use `to-story --parent <ktlo-feature-id>` and behave normally.
 
+## Global rules and hooks
+
+[`global/`](global/README.md) holds the rules that must hold when no skill is loaded — evidence in the same message as the claim, the three-bin recommend-and-proceed gate, no unasked commits, per-section large writes — and the one hook the round found a hook could enforce (`rename-safety`, blocking `sed -i` and `xargs`-into-`perl`/`sed` mass renames). Admission is strict: a file lives there only while a skill under `src/` depends on it, named in its `Depends:` line, and lint checks the name resolves. `install.sh` symlinks the rules into `~/.claude/rules/` and **prints** the `settings.json` hook snippet; it never edits `settings.json` or `~/.claude/CLAUDE.md`.
+
 ## Install
 
-Symlink each skill directory into `~/.claude/skills/`:
+Symlink each skill directory into `~/.claude/skills/`, and the global rules into `~/.claude/rules/`:
 
 ```bash
 bash scripts/install.sh

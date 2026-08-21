@@ -3,6 +3,8 @@ set -euo pipefail
 
 SKILLS_DIR="$(cd "$(dirname "$0")/../src" && pwd)"
 TARGET_DIR="${HOME}/.claude/skills"
+GLOBAL_DIR="$(cd "$(dirname "$0")/../global" && pwd)"
+RULES_TARGET="${HOME}/.claude/rules"
 mkdir -p "$TARGET_DIR"
 
 # Read a skill's declared behavior dependencies from its frontmatter `requires:`
@@ -73,3 +75,58 @@ prune_stale
 for skill in "$SKILLS_DIR"/*/; do
   link_skill "$(basename "$skill")"
 done
+
+# Global rules (ADR-0053): link global/rules/*.md into ~/.claude/rules/, where
+# Claude Code loads them on every turn with no skill in force. Additive — a
+# link or file already there that does not point into this repo's global/ is
+# left alone, and ~/.claude/CLAUDE.md is never touched. Prune is scoped the
+# same way as prune_stale above: only dangling links into our global/.
+link_rules() {
+  mkdir -p "$RULES_TARGET"
+  for link in "$RULES_TARGET"/*; do
+    [ -L "$link" ] || continue
+    [ -e "$link" ] && continue
+    case "$(readlink "$link")" in
+      "$GLOBAL_DIR"/*)
+        rm "$link"
+        echo "prune rule $(basename "$link") (stale: target no longer exists)"
+        ;;
+    esac
+  done
+  for rule in "$GLOBAL_DIR"/rules/*.md; do
+    name="$(basename "$rule")"
+    target="$RULES_TARGET/$name"
+    if [ -L "$target" ]; then
+      echo "skip  rule $name (already linked)"
+    elif [ -e "$target" ]; then
+      echo "WARN  rule $name — $target exists but is not a symlink, skipping"
+    else
+      ln -s "$rule" "$target"
+      echo "link  rule $name"
+    fi
+  done
+}
+
+link_rules
+
+# Hooks are wired in ~/.claude/settings.json, which this script never edits:
+# an installer that rewrites the harness config leaves the user with a
+# settings file they no longer know the contents of. Print the block; the
+# user pastes it.
+cat <<SNIPPET
+
+Hook snippet — paste this into ~/.claude/settings.json under "hooks" (not applied automatically):
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "bash $GLOBAL_DIR/hooks/rename-safety.sh" }
+        ]
+      }
+    ]
+  }
+}
+Then opt a directory in with:  touch .claude/rename-safety   (at that repo's root)
+SNIPPET
