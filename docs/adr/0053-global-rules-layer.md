@@ -1,0 +1,28 @@
+# A `global/` layer of rules that fire with no skill loaded
+
+Two rules failed in the measured window while existing as text: "no em dashes in outbound prose" (a memory entry) and "commits go through `/ship`" (the ship skill's premise). Both failed the same way. A skill's rule binds only while the skill is loaded, and a memory entry binds only while it is recalled; the failures happened in turns where neither held. The work machine, where most of them happened, cannot pull this repo's memory file at all. The fixes the round adopted for the trust cluster, the evidence rule, the recommend-and-proceed bins, the no-unasked-commits rule, and large-write chunking, all share this property: they govern chat output and ad-hoc turns, which is exactly where no skill is in force.
+
+## Decision
+
+The repo gains a `global/` directory. `global/rules/*.md` holds rules that a user's `~/.claude/rules/` picks up on every turn; `scripts/install.sh` symlinks them there additively, pruning only links that point into this repo's own `global/`, and never touches `~/.claude/CLAUDE.md`. `global/hooks/` holds hook scripts; `install.sh` prints the `settings.json` snippet that wires a hook and never edits `settings.json`, because a settings file merged by a script is a settings file the user no longer knows the contents of.
+
+Four rules ship: `evidence`, `recommend-and-proceed`, `no-unasked-commits`, `large-write-chunking`. One hook ships: `rename-safety`, a PreToolUse check on Bash that blocks `sed -i` and `xargs` piped into `perl` or `sed` mass renames and lists the matching files. It is opt-in by directory and fails open.
+
+## Why rules and not hooks
+
+A hook sees tool calls and file writes. None of the four rules can be checked there: a hook cannot tell an asked commit from an unasked one, cannot sort a question into the fact, judgment, or preference bin, cannot see the chat message where an unverified count was stated, and sees a truncated write only after it has truncated. The em-dash hook three reports asked for was rejected for the same reason; the em dashes that were caught were in chat output. Where a hook *can* see the failure, the rename case, the hook is the right rung, and it is the only one this round ships.
+
+## Admission rule
+
+`global/` holds only rules a skill depends on. Each rule file names the depending skills and states why a hook or lint cannot do its job; `global/README.md` states the rule and lint checks the `Depends:` line resolves to an existing skill. Without this gate the directory becomes a second CLAUDE.md, the place every preference lands because it is global, and the context cost of a rule loaded on every turn is paid by every project the user opens.
+
+## Considered Options
+
+- **Add the rules to `~/.claude/CLAUDE.md` by hand.** Rejected: it is not version-controlled, does not reach the work machine, and the memory-file failure is the evidence that a personal file does not bind.
+- **Have `install.sh` edit `settings.json` and `CLAUDE.md`.** Rejected: an installer that rewrites the user's harness config is the trust failure the round is fixing, moved one level up. Printing the snippet keeps the edit a human act.
+- **A hook per rule, as the reports suggested.** Rejected per the section above; the one hook that can see its failure ships.
+- **Rules inside the skills that consume them.** Rejected: that is the arrangement that failed. The consumers are the skills named in each `Depends:` line; the rule lives above them so it holds when they do not load.
+
+## Consequences
+
+`install.sh` now runs three jobs (skills, rules, hook snippet) and the opt-in post-merge hook from [ADR-0049](0049-opt-in-post-merge-hook-auto-runs-install.md) re-runs all three on pull; the rules share the trust trade-off that record accepted. Lint gains a `Depends:` check and the 200-line and no-ADR-number checks extend to `global/rules/`. The layer is the host later batches point at: `committing` cites the no-unasked-commits rule, `receiving-review` and `address-findings` cite the evidence rule, `grilling` and `implement` cite the bins. A rule that loses its last depending skill leaves the directory.
