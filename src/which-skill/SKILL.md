@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # Which Skill
 
-This routes over the **user-invoked** skills — the ones you type. The **model-invoked behaviors** (`tdd`, `feedback-loops`, `diagnosing-bugs`, `codebase-design`, `discoverable-code`, `grilling`, `diverging`, `adoption-verdict`, `domain-modeling`, `adr`, `resolving-merge-conflicts`, `capturing-learnings`, `receiving-review`, `writing-for-agents`, `writing-for-humans`, `work-item-shape`, `wizard`) fire on their own when the work calls for them, or get pulled in by the orchestrators below — you rarely reach for them by name.
+This routes over the **user-invoked** skills — the ones you type. The **model-invoked behaviors** (`tdd`, `feedback-loops`, `diagnosing-bugs`, `codebase-design`, `discoverable-code`, `grilling`, `diverging`, `adoption-verdict`, `domain-modeling`, `adr`, `resolving-merge-conflicts`, `capturing-learnings`, `receiving-review`, `committing`, `writing-for-agents`, `writing-for-humans`, `work-item-shape`, `wizard`) fire on their own when the work calls for them, or get pulled in by the orchestrators below — you rarely reach for them by name.
 
 A **flow** is a path through the skills.
 
@@ -23,7 +23,7 @@ A **flow** is a path through the skills.
 3. **Load a single ticket back into a fresh session** — **`/from-ticket <id>`**. It auto-detects Task/Story/Bug and loads the right context (parent, `DOMAIN.md`, matching ADRs).
 4. **Build it** — **`/implement`**. Drives one vertical slice end to end: picks the build path (runs `tdd` for a testable slice, direct otherwise), refactors, and closes the loop once via `feedback-loops`. The `discoverable-code` behavior rides the refactor beat on either path, so names the next session will have to search for get fixed while the context is still live. One Task per session.
 5. **Review before it lands** — **`/review-changes`** (see Review gate).
-6. **Ship it** — **`/ship`** (see Review gate). Work that never went through `/implement` (docs, skills, config, a synced library) enters the flow here.
+6. **Land it** — a plain "commit and push" or "close #N" fires the `committing` behavior: one commit, every claim checked, outward acts gated on your ask or the repo's `Landing:` key. A change that needs a commit split, a branch, or a PR with an approver goes through **`/ship`** (see Review gate), which delegates its claims and its outward acts to the same behavior. Work that never went through `/implement` (docs, skills, config, a synced library) enters the flow here, and most of it is one commit.
 
 Keep steps 1–2 in **one unbroken context window** so the grilling, decomposition, and tasks build on the same thinking. Each `/implement` then starts fresh from its ticket. If a session fills up before you've decomposed, don't push on degraded — **`/handoff`** and continue in a fresh thread.
 
@@ -53,7 +53,7 @@ Keep steps 1–2 in **one unbroken context window** so the grilling, decompositi
 
 - **`/review-changes`** — read-only, project-aware judgment review of a **diff**, around shipping. Use it for a self-review before the change lands, on a teammate's PR, or on an already-landed commit. It produces a ranked, classified report.
 - Acting on findings — whether a reviewer's comments landed on *your* changes or `/review-changes` just handed you its own report — is the `receiving-review` behavior's loop: verify each claim before implementing it, reply to each PR thread with its outcome, and let its **convergence guard** stop a review from becoming a rewrite.
-- Once findings are addressed, **`/ship`** takes it the rest of the way. It never reviews and never builds: it proposes the commit split in lineage order, then drafts the commit messages, the closing comment, and a PR body where a PR is warranted — checking each claim it writes against the diff and the log. Whether a PR exists at all turns on whether someone else must approve — the host or `CLAUDE.md` may settle that for you; when neither does, `/ship` asks rather than deciding on its own. When the environment blocks an outward act (a sandboxed push, a permission classifier), it stops and hands you the exact command rather than routing around it.
+- Once findings are addressed, the change lands. The `committing` behavior owns what every landing shares — the claims rule, the closing comment, the `Closes`-or-`Refs` decision read off the completion audit, the blocked-action protocol, and the gate that no commit, push, or ticket write happens without your ask or a `Landing:` pre-authorisation in `CLAUDE.md`. It fires on its own for a one-commit landing. **`/ship`** is the path for a change that needs more: it proposes the commit split in lineage order and runs the PR path where someone else must approve — the host or `CLAUDE.md`'s `Landing:` block may settle that for you; when neither does, `/ship` asks rather than deciding on its own. Either way, when the environment blocks an outward act (a sandboxed push, a permission classifier), the behavior stops and hands you the exact command rather than routing around it.
 
 ## Crossing sessions
 
