@@ -42,7 +42,7 @@ Out-of-scope observations made mid-slice — a smell, a missing test, a refactor
 
 Run the `/feedback-loops` skill when the slice's behaviors are built and refactored — if you don't see a `Launching skill: feedback-loops` line, stop and load it. It is the mechanical finalize, and this is the slice's one run: when `tdd` runs under `implement`, it defers the close-the-loop pass here.
 
-Then run the **completion audit** against the loaded ticket: treat done as unproven, derive the requirements from the acceptance criteria the slice covers, name the authoritative evidence per requirement, and inspect it at matching scope — a narrow check never supports a broad claim, and a green suite counts only after confirming it exercises that criterion. The audit proves completion rather than failing to find remaining work.
+Then run the **completion audit** against the loaded ticket: treat done as unproven, derive the requirements from the acceptance criteria the slice covers, name the authoritative evidence per requirement, and inspect it at matching scope — a narrow check never supports a broad claim, and a green suite counts only after confirming it exercises that criterion. The audit proves completion rather than failing to find remaining work. Its written shape — the per-criterion table, beat ledger, parked ledger, and judgment-calls list — is [references/completion-audit.md](references/completion-audit.md); write it in that form, because `handoff` carries it and `committing` reads it to choose the closing word.
 
 ## Record a load-bearing decision
 

@@ -31,7 +31,7 @@ Seed the prompt with explicit boundaries: don't push, merge, close work items, o
 
 Seed three disciplines for the unattended stretch:
 
-- **The completion audit.** Before declaring the objective done, run the completion audit: treat done as unproven, derive the requirements from the objective, name the authoritative evidence per requirement, and inspect it at matching scope — a narrow check never supports a broad claim, and a green test or clean search counts only after confirming it covers the requirement. The audit proves completion rather than failing to find remaining work.
+- **The completion audit.** Before declaring the objective done, run the completion audit: treat done as unproven, derive the requirements from the objective, name the authoritative evidence per requirement, and inspect it at matching scope — a narrow check never supports a broad claim, and a green test or clean search counts only after confirming it covers the requirement. The audit proves completion rather than failing to find remaining work. Its form is [references/completion-audit.md](references/completion-audit.md), the same file `implement` writes at close; a review-bound handoff carries that audit verbatim.
 - **The blocked threshold.** "Blocked" is earned only when the same blocking condition has survived three consecutive attempts to move it — never merely because the work is hard, slow, uncertain, or would benefit from clarification. Once earned, declare it and stop; grinding past a real block is the mirror failure.
 - **No success-substitution.** An edit is aligned only if it makes the requested final state more true — never swap in a narrower, safer, easier-to-verify goal because it is more likely to pass.
 

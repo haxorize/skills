@@ -317,6 +317,7 @@ sibling_groups=(
   "src/improve-design/references/finding-discipline.md|src/review-changes/references/finding-discipline.md"
   "src/to-bug/references/github-sub-issues.md|src/to-story/references/github-sub-issues.md|src/to-tasks/references/github-sub-issues.md|src/chart-course/references/github-sub-issues.md"
   "src/to-bug/references/work-item-tags.md|src/to-feature/references/work-item-tags.md|src/to-story/references/work-item-tags.md|src/to-tasks/references/work-item-tags.md|src/chart-course/references/work-item-tags.md"
+  "src/implement/references/completion-audit.md|src/handoff/references/completion-audit.md"
 )
 
 # The registry above names this repo's own paths, so byte-identity runs only
