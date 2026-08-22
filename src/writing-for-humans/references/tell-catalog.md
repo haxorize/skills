@@ -17,12 +17,14 @@ Named patterns that read as AI-generated because they are clarity failures: each
 ## Fake structure
 
 - **Contrastive formula** — "It's not just X; it's Y", "The question isn't X, it's Y", "Not a X. Not a Y. A Z." State Y directly. *Displacement partner:* **contrastive negation** — the telegraphic "no setup, no config, no hassle" cadence that appears once the formula is banned.
-- **Dramatic label reveal** — a noun-phrase label, a colon, a punchy clause: "The catch: nothing persists." Fold the label into the sentence. *Displacement partner:* the **copula dodge** — a colon replacing "is" to evade weak-verb rules ("The candidate mechanism: a hook on Bash").
+- **Dramatic label reveal** — a noun-phrase label, a colon, a punchy clause: "The catch: nothing persists." Fold the label into the sentence. *Displacement partner:* the **copula dodge** — a colon replacing "is" to evade weak-verb rules ("The candidate mechanism: a hook on Bash"); its verb form is the same dodge one rung up — "serves as", "stands as", "marks", "represents", "boasts" where "is" or "has" is meant ("the hook serves as the gate" → "the hook is the gate").
 - **Mic-drop fragment** — "That's it. That's the whole thing.", "Simple, predictable, testable.", "Tools change. Principles don't." Complete sentences; state facts inline. *Displacement partner:* the verb-led contrastive sentence that appears once bare fragments are banned.
 - **Fake-profound kicker** — the final "deep" line that turns the point into an aphorism or metaphor. Delete it — **do not rewrite it into a better metaphor, do not preserve the rhythm** — and end on the clearest concrete sentence already in the draft.
 - **Rhetorical self-answer** — "The result? Faster builds.", stacked rhetorical questions, "What if I told you…". State the point as a sentence.
 - **Count announcement** — "Three things to keep in mind:", "Two cautions." State the first point directly; if the count genuinely helps, use a bullet list instead of announcing the number in prose.
 - **Summary-recap ending** — "In conclusion", "Ultimately", "Overall", or a closing paragraph restating the piece. The reader was just there; end when the content ends.
+- **Heading restated below itself** — the first sentence under a heading saying the heading again ("## Install" / "This section explains how to install"). Start on the first fact; the heading already said what the section is.
+- **Demonstrative kicker** — a mid-paragraph "This" or "That" followed by a verdict fragment ("This is the whole problem.", "That matters.") — the mic-drop fragment's in-line cousin. Name what "this" is and state the consequence as a fact.
 - **Tricolon habit** — nearly every enumeration having exactly three items, "X, Y, and Z" as a drumbeat. Rewrite some with two or four; an occasional triple is ordinary English, the uniform pattern is the tell.
 
 ## Metadiscourse
@@ -41,6 +43,10 @@ Named patterns that read as AI-generated because they are clarity failures: each
 - **False balance** — "strike a balance", "both approaches have merit", "depends on various factors" in prose whose job is a verdict. Take the position or name the unresolved question explicitly.
 - **Absolute inflation** — "cannot be overstated", "the single most important", "make no mistake", "has never been more critical". Verify the superlative or delete the intensity.
 - **Hedge stack** — "may potentially", "it's possible that … might", "should generally". One qualifier maximum, chosen deliberately; state the unknown as "unknown" instead of fogging every clause.
+- **Editorial scar tissue** — "A tempting approach would be X, but…" introducing an option no reader would have considered, rejecting it, and never mentioning it again: an old drafting idea left in the final text. Cut the rejected option unless a reader would actually reach for it.
+- **Shadowboxing** — answering an objection nobody raised: "This isn't mainly about X", "I'm not saying", "To be clear", "Don't get me wrong" with no source for the objection. Cut; keep an objection only where the text names who raised it or answers it in full.
+- **Figurative quantity** — "a sea of", "countless", "a handful" (when the count is known), "a fraction of" standing where a number could. Give the number or the honest range.
+- **Cleft explainer lead** — "What this means is", "The reason this works is that", "What happened was": a clause that points at the explanation instead of being it. Start on the explanation.
 - **Knowledge-cutoff residue** — "as of my last update", "while specific details are limited", "based on available information". Delete; state what is known and what was not checked.
 
 ## Cliché
@@ -57,6 +63,7 @@ Named patterns that read as AI-generated because they are clarity failures: each
 - **Bold decoration** — bold sprinkled mid-sentence for emphasis, emoji in headings, "**Note:**" callouts. Bold names the subject a list item explains, nothing else; emphasis lives in word choice.
 - **Bullet overuse** — prose chopped into bullets where two sentences read better. Keep a list when items are genuinely parallel, short, or sequential steps; convert to prose when the bullets are full sentences in costume, carry inline bold headers, or exist to look organized.
 - **Heading title case** — "Everything You Need To Know". Sentence case, everywhere, including titles.
+- **Keyboard-unreachable glyphs** — `→`, `⇒`, `≠`, curly quotes, non-ASCII bullets in prose a person types by hand (an email, a commit body, a Teams message). Nobody reaches for them on a keyboard, so they read as generated (the em dash has its own entry under Em-dash habit). Plain ASCII: `->`, `!=`, straight quotes, `-` bullets.
 - **Inline-header list** — "- **User experience:** significantly improved." — a bullet whose bold label repeats the pattern of its siblings. Either a real table or real prose.
 
 ## Commit and PR family
@@ -70,6 +77,7 @@ These fire in shipping prose — commit messages, PR bodies, review replies, clo
 - **Test enumeration** — "all 47 tests pass", "coverage: 92%". A commit body names what coverage changed, if anything; counts and percentages belong where they can carry the command and its verbatim output.
 - **Changelog headings** — "### Added" / "### Fixed" sections inside a commit or PR body. That is a changelog's format; a commit explains one change in prose.
 - **Shipping marketing** — "production-ready", "battle-tested", "enterprise-grade", "rock-solid", "carefully crafted". The slop-vocabulary list's shipping-flavored cousins; state what changed and what it now does.
+- **Bumped dependencies** — the body as the bump list: "Bumped lodash to 4.17.21, axios to 1.6.0, and updated the lockfile." The diff shows every version; the body says what changes for a caller and what was verified: "lodash 4.17.21 closes the prototype-pollution advisory; axios 1.6 changes the default timeout from none to 0, which our client already sets; suite green after each step."
 - **Copy-pasted issue text** — the body is the ticket's text verbatim instead of the author's own account of the problem. Restate the cause and the fix in your words; link the ticket for the rest.
 
 ## Rate tells

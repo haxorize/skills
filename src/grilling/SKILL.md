@@ -19,13 +19,17 @@ Within a round, order questions load-bearing-first — an assumption that sinks 
 
 💡 [your recommended answer]
 
+---
+
+Separate consecutive questions with a `---` line, so a wide round scans as a list of decisions rather than one block.
+
 Three guards on the question line itself: a topic label is not a question ("Acceptance device matrix (FR-023)" is a label — write the full interrogative, ending in `?`); the line must be answerable on its own by a reader who skipped the surrounding prose; and when the stake is not obvious, one plain why-it-matters sentence sits between the question and its options. Never letter a "let Claude decide" option — it invites the false yes by checkbox. Keep the interviewer voice matter-of-fact: praise and agreement lower the pressure the grill exists to apply.
 
-Invite shorthand answers keyed to the numbering — "1: yes, 2b, 3: no, back-compat" — so a wide round stays cheap to answer. When answers come back, check every question got one — an ignored question is re-asked alone, never silently defaulted; and when the user starts explaining instead of picking, drop the letters and follow the explanation — options serve answers, not the reverse.
+Invite shorthand answers keyed to the numbering — "1: yes, 2b, 3: no, back-compat" — so a wide round stays cheap to answer. A bare "yes", "go with yours", or "1: yes" resolves to that question's 💡 line and is recorded as the user's choice with the 💡 reason quoted beside it — the record shows what was agreed to, not only that something was. When answers come back, check every question got one — an ignored question is re-asked alone, never silently defaulted; and when the user starts explaining instead of picking, drop the letters and follow the explanation — options serve answers, not the reverse.
 
 When an answer comes back fuzzy — "should be fine", "probably", "we'll figure that out later" — **dwell**, and say that you are dwelling: name that you are staying on this point because the answer isn't sharp yet. Never leave the user facing a blank prompt; offer one or two candidate answers to pick, revise, or reject. Three rounds on one decision is not a reason to lower the bar, and neither is five — the point moves when the answer earns it. A grill that exits on approximately-fine has failed, whatever else it settled.
 
-If a *fact* can be found by exploring the environment (filesystem, tools, etc.), look it up rather than asking — the *decisions* are the user's; put each one to them and wait. Don't block a round on fact-finding: dispatch a subagent for the fact and hold back only the questions downstream of it — ask the rest of the frontier now.
+If a *fact* can be found by exploring the environment (filesystem, tools, etc.), look it up rather than asking — the *decisions* are the user's; put each one to them and wait. The **predictable-answer gate** runs per question: a question whose answer is already predictable from what the user said is not asked either — state the assumption in the round's preamble and spend the question on a branch that is genuinely open. This is the grill's half of the global three-bin rule (`~/.claude/rules/recommend-and-proceed.md`): facts are run, judgments are stated, and only the user's decisions reach the round. Don't block a round on fact-finding: dispatch a subagent for the fact and hold back only the questions downstream of it — ask the rest of the frontier now.
 
 That split also settles who wins a disagreement. **The decisions are the user's**: press hard, put the strongest counter-case, then record their answer even where you would have chosen otherwise. The **craft gate** is the other side of it — craft is gated, not owned. Where a thing has objective quality criteria — a question that leads the witness, an acceptance criterion no check can settle, a name the glossary already gives to something else — those criteria don't bend however the user insists, and the broken item isn't recorded, not even beside a compliant one. What gets refused is always the item, never the intent behind it; the intent always has a version that passes.
 
@@ -37,9 +41,8 @@ Even then, do not act on it until the user confirms shared understanding has bee
 
 ## Notes
 
-This is the bare discipline — no document side effects. Two orchestrators layer on top of it:
+This is the bare discipline — no document side effects. One orchestrator layers on top of it:
 
-- `grill-me` runs this loop and nothing else (a plain stress-test).
-- `grill-me` runs this loop and, where the project keeps a `DOMAIN.md` or ADR log, captures terminology and durable decisions as it goes (`DOMAIN.md` updates, opportunistic ADRs).
+- `grill-me` runs this loop and, where the project keeps a `DOMAIN.md` or ADR log, captures terminology and durable decisions as it goes (`DOMAIN.md` updates, opportunistic ADRs); `grill-me --plain` runs the loop and nothing else.
 
 Other skills reach for grilling at a natural "pressure-test this before committing" moment — e.g. `improve-design` offers it before filing a refactor.

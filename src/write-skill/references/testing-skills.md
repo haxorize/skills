@@ -18,6 +18,8 @@ When the micro-test runs against a skill that already ships, two extra rules kee
 
 ## Building pressure scenarios
 
+A scenario prompt carries the prior context a real session would have — the transcript before the ask, the files already open, the decisions already made — because a bare ask reproduces a bare-ask failure and nothing else. Prefer a captured real transcript over an authored one wherever one exists; a corpus that scores perfectly is a corpus smell, not a pass. A scenario where the shortcut and the discipline land the same diff cannot grade the rule — rebuild it until the two paths diverge in the output.
+
 Combine **3+ pressures** — a single pressure rarely reproduces real-session failure:
 
 - **Time** — "the demo is in ten minutes"
@@ -34,6 +36,8 @@ When an agent violates *despite* the skill, ask that same agent: "How could the 
 - It names a missing principle → foundational gap; add the principle.
 - It points at the line it negotiated past → wording gap; sharpen that line.
 - It says the rule was buried → organization gap; move the rule up the information hierarchy.
+
+A gap every rep reports unanimously is checked against the harness before the skill: a tool that was unavailable, a file the subagent could not reach, a permission it lacked — the skill cannot fix what the environment withheld.
 
 ## Done
 

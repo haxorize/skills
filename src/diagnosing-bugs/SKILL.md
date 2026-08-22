@@ -109,7 +109,7 @@ With the list ranked, **declare the edit boundary**: the narrowest directory in 
 
 ## Phase 4 — Instrument
 
-Each probe must map to a specific prediction from Phase 3. **Change one variable at a time.**
+Each probe must map to a specific prediction from Phase 3. **Change one variable at a time.** A probe's report lists the evidence *against* the hypothesis beside the evidence for it — a report with only confirming evidence is incomplete, and the same rule binds the fresh-eyes brief in Phase 5.
 
 Tool preference:
 
