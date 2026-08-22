@@ -1,10 +1,10 @@
 ---
-name: black-box-check
+name: validate-behavior
 description: Validate the running app, CLI, API, or generated artifact against a behavior contract written before testing — source-blind, with anti-cheat probes.
 disable-model-invocation: true
 ---
 
-# Black-Box Check
+# Validate Behavior
 
 Judge the **running** product — a web app, CLI, API, or generated artifact — against a **Behavior contract**, through the surfaces a user or operator can see. This is the black-box complement to the code-aware gates: `review-changes` judges the diff, `audit-tests` judges the test suite; this skill judges what actually runs. A UI that only prints success text passes both of those — it does not pass this.
 

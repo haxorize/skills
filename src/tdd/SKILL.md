@@ -99,4 +99,4 @@ The check itself is a suspect: a test that cannot fail reports green forever and
 
 When the cycle's behaviors are built and refactored, close the loop: run the `/feedback-loops` skill once to finalize mechanically. (Under `implement`, `implement` drives review and this close-the-loop pass; the nudge here keeps standalone `tdd` finishing cleanly on its own.)
 
-Tests prove code-correctness, not feature-correctness. If the slice touched behavior you couldn't actually run in a test — a UI flow, an external integration, a real ingest — say so and eyeball it (run the project's dev command) before declaring done, or suggest the user run `/black-box-check` for a contract-driven check of the running product.
+Tests prove code-correctness, not feature-correctness. If the slice touched behavior you couldn't actually run in a test — a UI flow, an external integration, a real ingest — say so and eyeball it (run the project's dev command) before declaring done, or suggest the user run `/validate-behavior` for a contract-driven check of the running product.

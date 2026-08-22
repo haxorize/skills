@@ -48,7 +48,7 @@ Keep steps 1–2 in **one unbroken context window** so the grilling, decompositi
 - **`/backfill-adrs`** — sweep recent git history for architectural decisions that were made but never recorded.
 - **`/verify-docs`** — check a document's claims against what it answers to — the code and tests, or the sources a derived doc was distilled from — verdict per claim. The prose-drift sibling of `/harden-domain` (vocabulary) and `/backfill-adrs` (decisions); run it pre-publish, post-refactor, or as a periodic sweep — `feedback-loops` still auto-fixes docs the current change touched.
 - **`/audit-tests`** — sweep an existing test suite asking "can these checks fail?", grading each load-bearing assertion (CONFIRMED / PLAUSIBLE / CANNOT FAIL / BLIND) and naming the suite's blind spots. The test-suite member of this family; `tdd`'s mutation check guards new tests at writing time.
-- **`/black-box-check`** — validate the *running* app, CLI, API, or generated artifact against a behavior contract written before testing: source-blind (reading the implementation contaminates the checker; a non-checker may derive the contract from legacy code), with anti-cheat probes that catch UI which only displays success. The runtime member of this family — `audit-tests` judges the suite, `verify-docs` the prose, this the product itself.
+- **`/validate-behavior`** — validate the *running* app, CLI, API, or generated artifact against a behavior contract written before testing: source-blind (reading the implementation contaminates the checker; a non-checker may derive the contract from legacy code), with anti-cheat probes that catch UI which only displays success. The runtime member of this family — `audit-tests` judges the suite, `verify-docs` the prose, this the product itself.
 
 ## Review gate
 
@@ -68,6 +68,6 @@ Keep steps 1–2 in **one unbroken context window** so the grilling, decompositi
 - **`/teach-me <topic>`** — tutored, multi-session learning of any topic, standalone or grounded in a codebase as its textbook.
 - **`/ask-for-me`** — the questionnaire and outbound-message drafter routed above, usable with no repo; pairs with a `chart-course` Errand when the blocker is someone else's knowledge.
 - **`/to-bug`** — file a defect as a tracked ticket from the current conversation.
-- **`/wait-what`** — stop and re-pitch: the last explanation didn't land, so it comes back with the missing context, in the plain register of the `writing-for-humans` behavior, using `DOMAIN.md` vocabulary. For when you stopped following — not a shortener.
+- **`/explain`** — stop and re-pitch: the last explanation didn't land, so it comes back with the missing context, in the plain register of the `writing-for-humans` behavior, using `DOMAIN.md` vocabulary. For when you stopped following — not a shortener.
 - **`/glapi-test-pass`** — ADO only; satisfy the GLAPI production deployment gate for a Story.
 - **`/write-skill`** — conventions for writing and editing skills (you're reading the suite that follows them).

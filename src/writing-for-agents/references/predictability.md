@@ -35,7 +35,7 @@ A document's content is ranked by how immediately the agent needs it — a ladde
 
 Each cut spends one of the two loads, so split only when the cut earns it:
 
-- **By invocation** — split off a model-invoked behavior skill when it has a distinct leading word that should trigger it on its own, or another skill must reach it. You pay context load for the new always-loaded description, so that independent reach has to be worth it. (This is the **Extraction test**: reuse by a real second consumer is the reason to extract.)
+- **By invocation** — split off a model-invoked Discipline skill when it has a distinct leading word that should trigger it on its own, or another skill must reach it. You pay context load for the new always-loaded description, so that independent reach has to be worth it. (This is the **Extraction test**: reuse by a real second consumer is the reason to extract.)
 - **By sequence** — split a run of steps when the steps still ahead tempt the agent to rush the one in front of it. Hiding them across a real context boundary (a user-invoked hand-off or a subagent dispatch) encourages more legwork on the current task; an inline model-invoked call leaves the later steps in context and clears nothing.
 
 ## The form-to-failure table
