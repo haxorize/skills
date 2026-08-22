@@ -41,7 +41,7 @@ The instruction-file lens in this repo also runs `write-skill`'s **pruning test*
 Landing:
 - Branch policy: trunk
 - PR required: no
-- Push pre-authorised: no
+- Push pre-authorised: yes
 - Ticket close pre-authorised: no (no tracker)
 - Defect policy: fix, don't file
 
