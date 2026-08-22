@@ -1,0 +1,19 @@
+# `grill-me` absorbs `grill-and-record`; the old name is a one-window stub
+
+Status: accepted (2026-08-22)
+
+`grill-me` now records by default: when the working directory has a `DOMAIN.md` or an ADR log, it loads `domain-modeling` beside `grilling`, updates the glossary inline, and writes ADRs inline at the gate — everything `grill-and-record` did. `--plain` suppresses the recording for a grill that should leave no document behind. `grill-and-record` stays in `src/` for one retire window as a deprecation stub whose whole body tells the human to type `/grill-me` (a user-invoked target is a human suggestion, not a load); its format reference moves to `src/grill-me/references/adr-format.md`, and the lint sibling group follows. This amends [ADR-0051](0051-usage-evidence-mining-round.md), which assigned the merge to a record written when its batch lands.
+
+The two skills were one interview with a switch on it, and the switch was the user's to remember: the router's first step asked "have a codebase?" before naming which to type, and `to-story`, `to-bug`, `to-feature`, and `improve-design` each spelled the pair out again (`to-tasks`, `harden-domain`, and `grilling` named `grill-and-record` alone — eight skills in all, `git grep -l grill-and-record HEAD -- src`). The evidence in [ADR-0051](0051-usage-evidence-mining-round.md) ranked the round on what failed in use, and a choice the human must make correctly before the skill can help is context the environment already answers — `ls DOMAIN.md docs/adr` settles it. The grill loop's rules on fuzzy answers and the craft gate were already `grilling`'s; the only body `grill-and-record` owned was the inline-recording override of `domain-modeling`'s "recording is `adr`'s job" line and the answers-overwrite rule, both of which `grill-me` now carries.
+
+The alternative was the ledger's D2: delete `grill-and-record` outright and let `grill-me` stand alone with no stub. A rational team would take it — one name fewer, no dead directory. It lost on typed muscle memory, the one cost a rename cannot undo: `grep -rl '"/grill-and-record' ~/.claude/projects | wc -l`, run on 2026-08-22 while writing this, finds 15 transcript files that name it (two of them this session and its review agent, quoting the name), and the same grep for `/grill-me` finds only those two — before today nobody typed `/grill-me`. The name people actually type is the one being retired, so it answers for one window — the same retire-on-zero window `validate-behavior` established — and then goes. Keeping `grill-and-record` as the surviving name was weighed in [ADR-0057](0057-rename-table-and-discipline-skill-term.md)'s table and lost there: a stranger reading `/` autocomplete recognises `grill-me`. Nick decided; the stub's one-window term is the user's, overriding D2.
+
+## Deferred
+
+- Retiring the stub: next window, on the stub's fire count (zero typed `/grill-and-record` in the window's transcripts retires it; any fire extends one more window).
+- The `--plain` spelling against the harness's argument conventions, if a later skill needs a second flag.
+
+## Consequences
+
+- `grill-me` gains `requires: grilling, domain-modeling, writing-for-humans` and a load gate on `domain-modeling` that fires only when recording is on.
+- The router, README, `DOMAIN.md`'s Orchestrator-skill row, and the eight skills that named it now name `grill-me` alone; `CLAUDE.md`'s upstream list keeps `grill-and-record` (grill-with-docs) as the lineage the stub still carries.

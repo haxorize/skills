@@ -1,6 +1,6 @@
 # Mine 28 new sources and 34 deltas against usage evidence; fold the trust fixes
 
-> **Amended by [ADR-0057](0057-rename-table-and-discipline-skill-term.md):** the Discipline-skill rename and the rename table are recorded there, not in ADR-0054 (which went to the commit-bypass hook); the `grill-me` merge is decided when B4c lands.
+> **Amended by [ADR-0057](0057-rename-table-and-discipline-skill-term.md):** the Discipline-skill rename and the rename table are recorded there, not in ADR-0054 (which went to the commit-bypass hook); the `grill-me` merge is recorded in [ADR-0058](0058-grill-me-absorbs-grill-and-record.md).
 
 The 2026-08-21 round read 28 previously unseen sources, delta-fetched the 34 repos already in the ledger, and re-heard every prior veto. Novelty ranked the candidates in the [ADR-0046](0046-four-repo-fragment-mine.md) and [ADR-0050](0050-twelve-repo-mine-and-discoverable-code-port.md) rounds; this time usage evidence did. Two Claude Code Insights reports (personal machine, 113 sessions over 2026-07-15 to 08-14; work machine, 83 sessions over 2026-07-21 to 08-20) and the typed history of 171 sessions since 2026-07-10 set the lens, and a candidate landed only where that evidence showed a failure it addresses and the current skill text lacked the fix. Three decisions own their own records and are only named here: the `committing` extraction from `ship` ([ADR-0052](0052-committing-extracted-from-ship.md)), the global rules layer ([ADR-0053](0053-global-rules-layer.md)), and the Discipline-skill rename with the `grill-me` merge (ADR-0054, written when its batch lands). Everything else the round decided is recorded below.
 
@@ -91,3 +91,4 @@ Batch 4a was the non-naming half of Batch 4 (the rename table is B4b, grilled se
 ### 2026-08-22 — Batch 4b: the rename table
 
 The `black-box-check` → `validate-behavior` line above was re-judged in B4b's table with every other skill name and stands. Of the two decisions this record assigned to "ADR-0054", the Discipline-skill rename is recorded in [ADR-0057](0057-rename-table-and-discipline-skill-term.md); the `grill-me` merge is decided when B4c lands, in its own record or a further amendment here. ADR-0054 went to the commit-bypass hook.
+- **2026-08-22** — B4c landed the merge in its own record, [ADR-0058](0058-grill-me-absorbs-grill-and-record.md): `grill-me` records by default, `--plain` suppresses, `grill-and-record` is a one-window stub.

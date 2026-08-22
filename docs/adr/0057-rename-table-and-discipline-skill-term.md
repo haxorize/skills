@@ -22,7 +22,7 @@ A name is judged at admission, at retirement, and when the skill's body gains or
 ## Deferred
 
 - The cold-topic mode of `explain` and the re-pitch's survival inside it: B5 adds the mode as a branch, with the bare `/explain` staying the re-pitch, so the tighter discipline is the default and not the thing a topic argument replaces.
-- The `grill-me` merge and the `grill-and-record` one-window stub: B4c, as a body change outside this record's scope.
+- The `grill-me` merge and the `grill-and-record` one-window stub: B4c, as a body change outside this record's scope. — settled: see Amendments 2026-08-22.
 - The bare shorthand "the `X` behavior" for a Discipline skill (37 lines in 28 files at review time, `grep -rIn 'the \`[a-z/-]*\` behavior\b' src DOMAIN.md README.md CLAUDE.md`, plus `write-skill`'s "Behavior vs orchestrator" heading): banned in the alias column now, swept in B4c as its first fold — 28 files is past what a names-only change carries.
 - The `validate-behavior` retire check: next window, fire count under the new name.
 
@@ -31,3 +31,7 @@ A name is judged at admission, at retirement, and when the skill's body gains or
 - `DOMAIN.md`'s Skill-invocation table and Relationships say Discipline skill, as does `writing-for-agents`' `predictability.md`; `README.md`, `which-skill`, `CLAUDE.md`'s upstream list, and `tdd`'s pointer follow the two landed renames; `install.sh` has pruned the dangling symlinks on this machine and does so on any other at its next run.
 - The batch plan and ledger at `~/code/lib/_rounds/2026-08-21/` say Behavior in their own text; they are updated in the same session so the next miner does not re-propose the rename from stale docs.
 - ADR-0051's `validate-behavior` line, ADR-0055's and ADR-0056's Deferred name lines are closed by dated amendments pointing here; the original citations of the old names stand, as amendments never rewrite.
+
+## Amendments
+
+- **2026-08-22** — The `grill-me` merge and stub landed in B4c, recorded in [ADR-0058](0058-grill-me-absorbs-grill-and-record.md).
