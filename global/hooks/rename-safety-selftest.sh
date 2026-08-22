@@ -66,6 +66,8 @@ expect_allow "ls -i"
 expect_allow $'git commit -F - <<\'MSG\'\nDrop the sed -i call\n\nIt no-ops on BSD.\nMSG'
 expect_allow $'cat > notes.md <<EOF\nnever run sed -i blind\nEOF'
 expect_allow $'cat <<-EOF | tee handoff.md\n\tuse perl -pi only with a file list\n\tEOF'
+expect_allow $'ls | xargs -I{} sh -c \'python3 -c "f=open(\\"{}\\"); print(\\"sed -i\\" in f.read())"\'; grep -rn "sed -i\\|xargs perl" notes.md'
+expect_allow 'echo "she said \"use sed -i\" twice"'
 expect_block $'bash <<EOF\nsed -i s/a/b/ *.md\nEOF'
 expect_block $'sh <<\'EOF\'\nperl -pi -e s/a/b/ f\nEOF'
 expect_block $'cat <<EOF > x.md\nnote\nEOF\nsed -i s/a/b/ x.md'

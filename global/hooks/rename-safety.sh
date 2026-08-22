@@ -81,8 +81,9 @@ fi
 [ -n "$opted_in" ] || exit 0
 
 # --- shape check ------------------------------------------------------------
-# Strip heredoc bodies (unless a shell consumes them) and quoted strings, so
-# text that only mentions the shape passes.
+# Strip heredoc bodies (unless a shell consumes them), then quoted strings
+# (honouring backslash-escaped quotes), so text that only mentions the shape
+# passes.
 bare="$(printf '%s' "$cmd" | python3 -c '
 import re, sys
 s = sys.stdin.read()
@@ -95,9 +96,12 @@ def drop(m):
     if SHELL.search(line + head):
         return m.group(0)            # a shell consumes the body: keep it
     return head + "\n"              # anything else: the body is text
-sys.stdout.write(HEREDOC.sub(drop, s))
+s = HEREDOC.sub(drop, s)
+# Quoted strings: single quotes hold no escapes; a double-quoted string may
+# carry backslash-escaped quotes, which a naive [^"]* pairs wrongly.
+s = re.sub(r"\x27[^\x27]*\x27|\"(\\.|[^\"\\])*\"", "", s, flags=re.S)
+sys.stdout.write(s)
 ' 2>/dev/null || printf '%s' "$cmd")"
-bare="$(printf '%s' "$bare" | sed -E "s/'[^']*'//g; s/\"[^\"]*\"//g")"
 sep='(^|[;&|([:space:]])'
 opts='(-[a-zA-Z]+[[:space:]]+)*'
 inplace='(-[a-zA-Z]*i|--in-place)'
