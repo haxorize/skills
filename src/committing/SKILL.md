@@ -63,7 +63,7 @@ For a change that is one attributable claim and needs no approver, land it in on
 
 1. Read the tree (`git status`, `git diff`, as above).
 2. Draft the subject and body against the diff, applying the claims rule per sentence.
-3. Stage and commit. Push only if asked or pre-authorised; say which.
+3. Stage and commit. The message, like every closing comment and PR body, goes through a file — `git commit -F <file>`, `gh ... --body-file`, `az ... --description @<file>` — never inline through shell interpolation, which mangles quotes and backticks and truncates silently. Push only if asked or pre-authorised; say which.
 4. Close or tick the ticket only if asked or pre-authorised, and only with the word the completion audit supports.
 5. Report what happened, in one block: SHA, pushed or not, ticket state as read back.
 
@@ -80,13 +80,14 @@ Sandboxes, credential policies, and permission classifiers block outward actions
 1. **Stop that step.** Do not retry variants, switch protocols, or find another way through. A blocked action is a decision the environment already made, not an error to route around.
 2. **Record it as a claim:** "blocked by X" carries the verbatim error, per the claims rule.
 3. **Continue with what isn't blocked.**
-4. **End with one manual-commands block.** Every command the human must run by hand, copy-pasteable, with its directory, gathered at the end of the report, never scattered through it. Not a description of what to do; the command.
+4. **A blocked tracker write lands as a file**, frontmatter carrying the create fields, and the manual-commands block carries the one command that consumes it (`--body-file` / `--description @file`) — the shape the publishers' `publishing.md` sibling gives under `## When the write is blocked`; for a close or a comment, the frontmatter carries the item ID and the command is the update call.
+5. **End with one manual-commands block.** Every command the human must run by hand, copy-pasteable, with its directory, gathered at the end of the report, never scattered through it. Not a description of what to do; the command.
 
 Report what actually happened: what landed, what's staged, what's waiting on a manual step. A change that is committed but unpushed gets described that way, never as shipped.
 
 ## Notes
 
-- Merge conflicts on the way in are `resolving-merge-conflicts`' job.
 - The `commit-bypass` hook under `global/hooks/` is this protocol's mechanical half: a failing pre-commit hook is a blocked action to report, never a reason for `--no-verify`, and the hook refuses the bypass shapes before they run.
+- Merge conflicts on the way in are `resolving-merge-conflicts`' job.
 - Findings that surface while drafting are follow-ups, not this change's work. Land the change; name what you noticed. Filing them is `/to-bug`'s, and only on the user's ask — the `Landing:` defect policy defaults to "fix, don't file".
 - The status report this skill ends with is governed by the evidence rule in `~/.claude/rules/`.

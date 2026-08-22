@@ -13,9 +13,9 @@ Use `to-feature` only when scope explicitly needs multiple stories beneath it.
 
 ## Publication constraints
 
-Every published sentence follows the `/writing-for-humans` behavior — run it before drafting.
+Run the `/writing-for-humans` and `/work-item-shape` skills — if you did not just see both `Launching skill:` lines, stop and load the missing one. Every published sentence follows the first; the body's shape follows the second.
 
-The body's shape — the goal, criteria, sizing, ambiguity, internals, and plan-not-changelog rules — follows the `/work-item-shape` behavior. Its internals rule covers every section here: `## Approach`, `## Layers touched`, `## Tests`, and all others describe behavior and design intent only.
+`/work-item-shape`'s internals rule covers every section here: `## Approach`, `## Layers touched`, `## Tests`, and all others describe behavior and design intent only.
 
 ## Workflow
 
@@ -48,6 +48,8 @@ Lead with a recommendation. Present it once; if the user pushes back, revise and
 
 ### 6. Draft the story
 
+The draft *file* follows the global `large-write-chunking` rule; the tracker sees the body only at publish.
+
 Classify the story as user-facing (has a real user role with a stated goal) or non-user-facing (refactor, infra, observability, dependency upgrade, security hardening). User-facing stories lead the body with a Connextra user-story line (`**User story:** As a [role], I want [goal] so that [benefit].`); non-user-facing stories omit it and describe the developer-facing or operational outcome in `## User-facing behavior` instead.
 
 Use the appropriate template:
@@ -68,7 +70,7 @@ Before showing the user, check:
 - AC IDs: append-only — no reused IDs across active and `## Removed acceptance criteria`; gaps from removals preserved (no renumbering)
 - On ADO: the **two-field split** holds (step 6) — acceptance bullets are their own artifact
 - `## Layers touched` populated for each layer (`none` is a valid value; missing layers are not)
-- Naming consistency vs. parent's story map (where `Hierarchy: required`) — surface conflicts before publish
+- **Naming drift** vs. the parent's story map (where `Hierarchy: required`) — `/work-item-shape`'s rule, surfaced before publish
 - User-story line matches step 6 classification (Connextra for user-facing, absent otherwise)
 - Documentation obligations, for stories that alter architecture or domain terms: ADR to write or amend, architecture-doc sections that go stale, glossary entries — each pinned as its own AC so a reviewer can't merge without them
 
@@ -80,10 +82,12 @@ Iterate until approved.
 
 ### 9. Publish via tracker dispatch
 
-- **GitHub:** `gh issue create --title "..." --body-file <draft>` with default labels from CLAUDE.md. Parent linking via template `Parent: #N` reference if `--parent` was provided. **Before creating the issue,** run the label precheck in [references/tracker-resolution.md](references/tracker-resolution.md). If a parent Feature was resolved, add the new issue as a native sub-issue of it after create — see [references/github-sub-issues.md](references/github-sub-issues.md).
+The **Publish gate** in [references/publishing.md](references/publishing.md) holds first.
+
+- **GitHub:** `gh issue create --title "..." --body-file <draft>` with default labels from CLAUDE.md. Parent linking via template `Parent: #N` reference if `--parent` was provided. **Before creating the issue,** run the label precheck in [references/publishing.md](references/publishing.md). If a parent Feature was resolved, add the new issue as a native sub-issue of it after create — see [references/github-sub-issues.md](references/github-sub-issues.md).
 - **ADO:** The **two-field split** lands as two flags on one `az boards work-item create` call — the body into `System.Description` via `--description`, the acceptance bullets into `Microsoft.VSTS.Common.AcceptanceCriteria` via `--fields`. Both expect HTML: convert each artifact on its own. Write each to a temp file and pass via command substitution to prevent shell newline mangling (embedded `\n` in a shell string becomes a literal two-character sequence in the stored HTML). See [references/story-template-ado.md](references/story-template-ado.md) for the conversion command. Parent linking via `az boards work-item relation add --id <new-story-id> --relation-type Parent --target-id <feature-id>`. Merge `System.Tags` into the create call's `--fields` — see [references/work-item-tags.md](references/work-item-tags.md).
 
-If a required CLAUDE.md field is missing, fail fast with a clear "add this to CLAUDE.md" message. If the create call fails with an auth/permission error, fall back to giving the user the drafted body to paste manually — don't loop on auth. Apply the **transport safety** rules in [references/tracker-resolution.md](references/tracker-resolution.md) to every create and retry.
+If a required CLAUDE.md field is missing, fail fast with a clear "add this to CLAUDE.md" message. A create call blocked on auth or policy follows `## When the write is blocked` in [references/publishing.md](references/publishing.md) — don't loop on auth. Apply the **transport safety** rules in [references/publishing.md](references/publishing.md) to every create and retry.
 
 **Read the AC field back before reporting the Story written (ADO)** — on any create or patch carrying acceptance criteria, update mode included. `az boards work-item show <story-id> --output json --query 'fields."Microsoft.VSTS.Common.AcceptanceCriteria"'` returns the stored value. Empty or null means the criteria landed in the body instead of the field — patch it with `az boards work-item update --id <story-id> --fields "Microsoft.VSTS.Common.AcceptanceCriteria=$(cat acceptance.html)"` and strip them from the description. A Story whose criteria are buried in the description looks written and isn't queryable.
 
@@ -101,6 +105,6 @@ Native dependency relations are an ADO feature, so this step runs only on ADO �
 
 `--update <story-id>` patches an existing Story in place. See [references/update-mode.md](references/update-mode.md) for cold-start commands, AC ID handling rules, self-review checks, re-snapshot prompt, reconcile prompt, and patch commands.
 
-## Naming-drift check
+## Naming drift
 
-If publish or an `--update` patch surfaces a name diverging from a sibling (another Story under the same parent Feature, or a Task under this Story), surface the drift as a self-review warning and offer to run the affected sibling's `--update` now — sometimes the new name is correct and the sibling needs renaming. Never block the publish or the patch. The story map's `### Naming consistency` section durably records names shared across sibling Stories; a deferred Task-level rename leaves no record, so prefer the immediate fix there.
+On publish or an `--update` patch, run `/work-item-shape`'s **Naming drift** rule against siblings (Stories under the same parent Feature, Tasks under this Story); the immediate fix it offers is the sibling's `--update`.

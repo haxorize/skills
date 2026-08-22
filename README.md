@@ -71,6 +71,10 @@ The route most work travels: **`/grill-and-record`** (or `/grill-me` with no cod
 
 - **`wait-what`** — Re-explain the last answer when it didn't land: a fresh pitch with the missing context, in plain register, using the project's vocabulary.
 
+### Human-run procedures
+
+- **`wizard`** — Generate an interactive bash wizard that walks a human through steps only they can perform — or run the same step-by-step interview in chat when a script isn't wanted.
+
 ### Meta
 
 - **`write-skill`** — Conventions for writing new skills.
@@ -115,10 +119,6 @@ The route most work travels: **`/grill-and-record`** (or `/grill-me` with no cod
 - **`writing-for-humans`** — Sentence-level clarity for prose that transfers understanding — tickets, ADR rationale, summaries, commit and PR prose — with per-artifact registers and the named AI-tell catalog.
 - **`work-item-shape`** — What a well-formed work-item body *is* (outcome goal, checkable criteria, readiness call, structural sizing, surfaced ambiguity), any tier, any tracker. In repos wired for the pipeline it routes creation asks to the `to-*` publishers instead of drafting lookalikes.
 
-### Human-run procedures
-
-- **`wizard`** — Generate an interactive bash wizard that walks a human through steps only they can perform — or run the same step-by-step interview in chat when a script isn't wanted.
-
 ## Conventions
 
 - **`DOMAIN.md`** at the repo root holds the project's ubiquitous language. For multi-context monorepos, the root is an index linking to nested `DOMAIN.md` files. Cross-repo siblings cross-reference each other in prose.
@@ -138,7 +138,7 @@ The route most work travels: **`/grill-and-record`** (or `/grill-me` with no cod
 
 ## Global rules and hooks
 
-[`global/`](global/README.md) holds the rules that must hold when no skill is loaded — evidence in the same message as the claim, the three-bin recommend-and-proceed gate, no unasked commits, per-section large writes — and the one hook the round found a hook could enforce (`rename-safety`; the script header states what it blocks). Admission is strict: a file lives there only while a skill under `src/` depends on it, named in its `Depends:` line, and lint checks the name resolves. `install.sh` symlinks the rules into `~/.claude/rules/` and **prints** the `settings.json` hook snippet; it never edits `settings.json` or `~/.claude/CLAUDE.md`.
+[`global/`](global/README.md) holds the rules that must hold when no skill is loaded — evidence in the same message as the claim, the three-bin recommend-and-proceed gate, no unasked commits, per-section large writes — and two hooks, `rename-safety` and `commit-bypass`, for the one class of failure a hook can see: a tool call whose shape is wrong before it runs. Admission is strict: a file lives there only while a skill under `src/` depends on it, named in its `Depends:` line, and lint checks the name resolves. `install.sh` symlinks the rules into `~/.claude/rules/` and **prints** the `settings.json` hook snippet; it never edits `settings.json` or `~/.claude/CLAUDE.md`. Each hook's contract and the live-checkout caveat are in `global/README.md`.
 
 ## Install
 
@@ -166,9 +166,9 @@ To re-run the install automatically after every `git pull`, opt this clone in on
 bash scripts/setup-hooks.sh
 ```
 
-This points the repo's `core.hooksPath` at the committed `scripts/git-hooks/` directory, whose `post-merge` hook runs `install.sh` after each merge that brings in new commits — so a pull that adds, renames, or removes a skill keeps `~/.claude/skills/` and `~/.claude/rules/` in step with no manual re-hoist. Git hooks can't be committed into `.git/hooks/` directly, so the hook body is version-controlled and the setup script wires it in; run it once per clone (it's local config, not committed).
+This points the repo's `core.hooksPath` at the committed `scripts/git-hooks/` directory, whose `post-merge` hook names any pulled change under `global/hooks/`, runs the lint and hook self-tests (warning, never aborting — the merge has landed), then runs `install.sh` — so a pull that adds, renames, or removes a skill keeps `~/.claude/skills/` and `~/.claude/rules/` in step with no manual re-hoist. Git hooks can't be committed into `.git/hooks/` directly, so the hook body is version-controlled and the setup script wires it in; run it once per clone (it's local config, not committed).
 
-**Trust trade-off:** enabling this makes `git pull` **auto-run committed scripts** — the `post-merge` hook, and `install.sh` through it — on every merge, under your user, with no further prompt. Any hook a future commit adds under `scripts/git-hooks/` runs the same way. This is the standard cost of committed git hooks; only opt in on a repo whose commits you trust. The bare `bash scripts/install.sh` above stays available if you'd rather re-hoist by hand.
+**Trust trade-off:** enabling this makes `git pull` **auto-run committed scripts** — the `post-merge` hook and, through it, `scripts/lint-skills.sh`, `scripts/lint-selftest.sh`, both hook self-tests (which invoke the PreToolUse hooks with synthetic payloads), and `install.sh` — on every merge, under your user, with no further prompt. Any hook a future commit adds under `scripts/git-hooks/` runs the same way. This is the standard cost of committed git hooks; only opt in on a repo whose commits you trust. The bare `bash scripts/install.sh` above stays available if you'd rather re-hoist by hand.
 
 Caveats:
 

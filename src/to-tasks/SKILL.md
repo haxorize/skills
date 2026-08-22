@@ -13,9 +13,9 @@ Tasks are always children of a User Story — never directly under a Feature. To
 
 ## Publication constraints
 
-Every published sentence follows the `/writing-for-humans` behavior — run it before drafting.
+Run the `/writing-for-humans` and `/work-item-shape` skills — if you did not just see both `Launching skill:` lines, stop and load the missing one. Every published sentence follows the first; the body's shape follows the second.
 
-The body's shape — the goal, readiness, sizing, ambiguity, internals, and plan-not-changelog rules — follows the `/work-item-shape` behavior. Its internals rule covers every section here, `## Layers touched` included. A Task's acceptance criteria live on the parent Story (`## Covers` points at them), so the checkable-criteria rules bind through the parent, not a body section.
+`/work-item-shape`'s internals rule covers every section here, `## Layers touched` included. A Task's acceptance criteria live on the parent Story (`## Covers` points at them), so the checkable-criteria rules bind through the parent, not a body section.
 
 ## Workflow
 
@@ -50,9 +50,11 @@ Solo repos (no declaration) get vanilla behavior — no cross-repo annotations. 
 
 ### 4. Explore codebase and apply ADR gate
 
-If the work isn't already grounded in the conversation, explore the touched modules. Identify durable architectural decisions — for any meeting the ADR gate (hard to reverse + surprising + real trade-off), record via the standalone `/adr` skill before slicing.
+If the work isn't already grounded in the conversation, explore the touched modules. Identify durable architectural decisions — for any that passes the **ADR gate** in `adr`, record via the standalone `/adr` skill before slicing.
 
 ### 5. Draft vertical slices
+
+The draft *file* follows the global `large-write-chunking` rule; the tracker sees the body only at publish.
 
 Each slice is one Task. Prefer many thin Tasks over few thick ones.
 
@@ -79,7 +81,7 @@ Before publishing, check:
 - **Parent coverage** — every active parent Story AC ID appears in at least one Task's `## Covers` line
 - **Covers references resolve** — every AC ID in any Task's `## Covers` exists on the parent Story and is active (not in `## Removed acceptance criteria`); surface stale references for user decision before publishing
 - **No orphan Tasks** — every Task's `## Covers` names at least one AC ID; a Task covering nothing is unmapped work — tie it to a parent criterion or question why it exists
-- **Naming consistency** — identical across Tasks (the names enumerated in step 5)
+- **Naming drift** — none across Tasks (the names enumerated in step 5), per `/work-item-shape`'s rule
 - **Domain language matches `DOMAIN.md`**
 - **No placeholders** — none of the literal kind (TBD/TODO) and none of the disguised kind: "add appropriate error handling", "write tests for the above", "similar to Task N" are placeholders wearing prose; each hides a decision the implementer will have to invent
 
@@ -87,22 +89,24 @@ Then run the **Cold-reader pass** from the `/work-item-shape` behavior: the cold
 
 ### 8. Publish in dependency order
 
+The **Publish gate** in [references/publishing.md](references/publishing.md) holds first.
+
 Publish blockers first so each blocker's real work-item ID is available when the dependent Task links or references it.
 
 For each Task, use the appropriate template:
 - GitHub: [references/task-template-github.md](references/task-template-github.md)
 - ADO: [references/task-template-ado.md](references/task-template-ado.md)
 
-- **GitHub:** `gh issue create --title "..." --body-file <draft>` with default labels from CLAUDE.md. Reference the parent via template `Parent: #N` line. **Before creating the first Task in a publishing batch,** run the label precheck in [references/tracker-resolution.md](references/tracker-resolution.md). When a parent Story was resolved, add each new issue as a native sub-issue of it after create — see [references/github-sub-issues.md](references/github-sub-issues.md).
+- **GitHub:** `gh issue create --title "..." --body-file <draft>` with default labels from CLAUDE.md. Reference the parent via template `Parent: #N` line. **Before creating the first Task in a publishing batch,** run the label precheck in [references/publishing.md](references/publishing.md). When a parent Story was resolved, add each new issue as a native sub-issue of it after create — see [references/github-sub-issues.md](references/github-sub-issues.md).
 - **ADO:** `az boards work-item create --type "Task" --title "..." --description "<html>"` with project / area path / iteration / state from CLAUDE.md — the description field expects HTML, so convert the Markdown draft before passing. Then, per created Task:
   - **Parent:** `az boards work-item relation add --id <task-id> --relation-type Parent --target-id <story-id>`.
   - **Tags:** merge `System.Tags` into the create call's `--fields` — see [references/work-item-tags.md](references/work-item-tags.md).
   - **Blockers:** materialize each in-project blocker as a built-in Predecessor relation: `az boards work-item relation add --id <task-id> --relation-type Predecessor --target-id <blocker-id>`. A just-created Task has no relations — add directly. Only when the Task already existed (a re-run or `--reconcile`) fetch `az boards work-item show <task-id> --output json --expand relations` first and skip the add if a Predecessor to that blocker is already present.
   - **On relation failure:** permission denied — surface immediately; any other error — surface with both work-item IDs for manual linking.
 
-If a required CLAUDE.md field is missing, fail fast with a clear "add this to CLAUDE.md" message. If a create call fails with an auth/permission error, fall back to giving the user the drafted Task bodies to paste manually — don't loop on auth. Apply the **transport safety** rules in [references/tracker-resolution.md](references/tracker-resolution.md) to every create and retry.
+If a required CLAUDE.md field is missing, fail fast with a clear "add this to CLAUDE.md" message. A create call blocked on auth or policy follows `## When the write is blocked` in [references/publishing.md](references/publishing.md) — don't loop on auth. Apply the **transport safety** rules in [references/publishing.md](references/publishing.md) to every create and retry.
 
-If publish surfaces a name diverging from sibling Tasks under the same parent, surface the drift as a warning and offer to run the sibling's `--update` now — sometimes the new name is correct and the sibling needs renaming. Don't block.
+On publish, run `/work-item-shape`'s **Naming drift** rule against sibling Tasks under the same parent; the immediate fix it offers is the sibling's `--update`.
 
 ## Maintenance modes
 
@@ -111,7 +115,7 @@ Two flows operate on already-published Tasks:
 - **`--update <task-id>`** — patch a single Task body in place. Skips tracker / parent / sibling-repo / codebase resolution. Body re-draft → self-review → patch.
 - **`--reconcile <story-id>`** — diff all child Tasks under a parent Story against the current Story spec, propose adds / closures / edits, apply approved changes. State-aware: closed Tasks leave alone, in-progress surface for decision, new are safe to revise.
 
-Both modes run the naming-drift check: `--update` warns on a divergence and offers the affected sibling's `--update`, while `--reconcile` folds the proposed rename into the affected Task's edit. Never block on it.
+Both modes run `/work-item-shape`'s **Naming drift** rule; the reference below says how each folds the rename in.
 
 GitHub reconcile distinguishes open-being-worked from open-not-started via an **In-progress signal** declared in CLAUDE.md's `Issue tracker:` block; ADO reads `System.State` directly. The declaration syntax and assignee-presence default live in the reference below.
 

@@ -15,7 +15,7 @@ It does not build, refactor, or review. Arrive here with the work already green 
 
 ### 1. Resolve the ground
 
-- **Host and tracker** — read `CLAUDE.md` for an `Issue tracker:` block. GitHub uses `gh`; Azure DevOps uses `az repos` for PRs and `az boards` for work items, and needs `Organization:` and `Project:` from the same file. A repo with no tracker (some tooling and docs repos) ships commits and a PR, and closes nothing — that's a normal path, not a missing configuration.
+- **Host and tracker** — resolve the tracker per [references/tracker-resolution.md](references/tracker-resolution.md) in **Declared** mode only — a repo with no tracker block takes the no-tracker path below, never Bootstrap-on-ask. GitHub uses `gh`; Azure DevOps uses `az repos` for PRs and `az boards` for work items, and needs `Organization:` and `Project:` from the same file. A repo with no tracker (some tooling and docs repos) ships commits and a PR, and closes nothing — that's a normal path, not a missing configuration.
 - **Landing key** — `committing` reads the `Landing:` block; where it settles the approver question, take its answer.
 - **Approver** — does another person have to sign off? This one answer decides the shape of everything below. Azure DevOps enforces it (a PR needs an approving reviewer); a GitHub repo may enforce it through branch protection or team convention; a solo repo often requires nobody. Read the host and `CLAUDE.md`, and ask when neither settles it — **an approver means a branch and a PR, no approver means the change lands on the trunk directly.**
 - **Base** — on a branch, the merge-base with the trunk; on the trunk itself, `origin/<trunk>`. Resolve the diff as `git diff <base>...HEAD` (three-dot) plus `git log <base>..HEAD --oneline`.

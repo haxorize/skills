@@ -13,9 +13,9 @@ Bugs are *not* parented under Stories — the fix is the slice. They can be file
 
 ## Publication constraints
 
-Every published sentence follows the `/writing-for-humans` behavior — run it before drafting.
+Run the `/writing-for-humans` and `/work-item-shape` skills — if you did not just see both `Launching skill:` lines, stop and load the missing one. Every published sentence follows the first; the body's shape follows the second.
 
-The body's shape — the goal, criteria, sizing, ambiguity, internals, and plan-not-changelog rules — follows the `/work-item-shape` behavior. This tier's evidence sections are `## Repro`, `## Expected behavior`, and `## Actual behavior`: exact error messages, stack traces, environment URLs, and observable route names belong there.
+This tier's evidence sections are `## Repro`, `## Expected behavior`, and `## Actual behavior`: exact error messages, stack traces, environment URLs, and observable route names belong there — `/work-item-shape`'s internals rule covers the rest.
 
 ## Workflow
 
@@ -50,6 +50,8 @@ Pick the severity from conversation context. If unclear, prompt the user with th
   - In no-repo CLI-only mode, save the resolved scale to memory keyed by tracker context (e.g., `Severity labels — work-backlog`).
 
 ### 5. Draft the bug
+
+The draft *file* follows the global `large-write-chunking` rule; the tracker sees the body only at publish.
 
 Use the appropriate template:
 - GitHub: [references/bug-template-github.md](references/bug-template-github.md)
@@ -98,10 +100,12 @@ Iterate until approved.
 
 ### 9. Publish via tracker dispatch
 
-- **GitHub:** `gh issue create --title "..." --body-file <draft>` with `--label bug --label <severity-label>` plus any default labels from CLAUDE.md. Parent linking via template `Parent: #N` reference if `--parent` was provided. **Before creating the issue,** run the label precheck in [references/tracker-resolution.md](references/tracker-resolution.md) — the labels about to be applied here are `bug`, the chosen severity label, and any `Default labels:`. If `--parent` was provided, add the new issue as a native sub-issue of the parent Feature after create — see [references/github-sub-issues.md](references/github-sub-issues.md).
+The **Publish gate** in [references/publishing.md](references/publishing.md) holds first.
+
+- **GitHub:** `gh issue create --title "..." --body-file <draft>` with `--label bug --label <severity-label>` plus any default labels from CLAUDE.md. Parent linking via template `Parent: #N` reference if `--parent` was provided. **Before creating the issue,** run the label precheck in [references/publishing.md](references/publishing.md) — the labels about to be applied here are `bug`, the chosen severity label, and any `Default labels:`. If `--parent` was provided, add the new issue as a native sub-issue of the parent Feature after create — see [references/github-sub-issues.md](references/github-sub-issues.md).
 - **ADO:** `az boards work-item create --type "Bug" --title "..." --description "<html>"` with project / area path / iteration / state from CLAUDE.md, plus `--fields "Microsoft.VSTS.TCM.ReproSteps=<html>" "Microsoft.VSTS.Common.Severity=<n - Label>"`. Both rich-text fields expect HTML — convert each Markdown source before passing. If `--parent` was provided, link via `az boards work-item relation add --id <bug-id> --relation-type Parent --target-id <feature-id>` after the create call. Merge `System.Tags` into the create call's `--fields` — see [references/work-item-tags.md](references/work-item-tags.md).
 
-If a required CLAUDE.md field is missing, fail fast with a clear "add this to CLAUDE.md" message. If the create call fails with an auth/permission error, fall back to giving the user the drafted body to paste manually — don't loop on auth. Apply the **transport safety** rules in [references/tracker-resolution.md](references/tracker-resolution.md) to every create and retry.
+If a required CLAUDE.md field is missing, fail fast with a clear "add this to CLAUDE.md" message. A create call blocked on auth or policy follows `## When the write is blocked` in [references/publishing.md](references/publishing.md) — don't loop on auth. Apply the **transport safety** rules in [references/publishing.md](references/publishing.md) to every create and retry.
 
 ## Update mode
 
@@ -125,6 +129,6 @@ Re-run all step 6 checks. The public-repo warning (step 7) re-runs if the body o
 
 State is never transitioned by `to-bug --update` — that's the team's process on the board.
 
-### Naming-drift check
+### Naming drift
 
-If the patch introduces module names, route paths, query keys, or model names that diverge from canonical names already in use elsewhere in the codebase or sibling work items, surface the drift as a warning during self-review and offer to run the affected sibling's `--update` now — sometimes the new name is correct and the sibling needs renaming. Never block the patch.
+Run `/work-item-shape`'s **Naming drift** rule over the patch; the immediate fix it offers is the sibling's `--update`.

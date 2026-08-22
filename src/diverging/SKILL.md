@@ -1,6 +1,6 @@
 ---
 name: diverging
-description: Break out of a locked problem frame with one committed lateral move. Use when the last 2+ iterations are variations of one idea, when a problem arrives as a binary with two bad options, when every solution hits the same constraint, when the same class of option keeps getting rejected for the same reason, when two related examples are in hand and the question is what lies between or beyond them, or when the user says "widen this", "what am I missing", "think differently", "I'm stuck", "feels too obvious". Generates framings, not judgment — `grilling` is the convergent complement that stress-tests what this frees up. Don't invoke this as a routine pre-task step — fixation, not stakes, is the trigger; if the current frame is working, let it work.
+description: Break out of a locked problem frame with one committed lateral move. Use when the last 2+ iterations are variations of one idea, when the same class of option keeps getting rejected for the same reason, when a problem arrives as a binary with two bad options, when every solution hits the same constraint, when two related examples are in hand and the question is what lies between or beyond them, or when the user says "widen this", "what am I missing", "think differently", "I'm stuck". Generates framings, not judgment — `grilling` is the convergent complement. Don't invoke this as a routine pre-task step — fixation, not stakes, is the trigger.
 ---
 
 # Diverging

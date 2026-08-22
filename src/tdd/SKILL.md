@@ -85,7 +85,7 @@ After all tests pass, review the implementation before calling the cycle done:
 - Extract duplication — lifting it to existing project primitives or shared modules rather than re-rolling (consult the active layer skill for where they live), extracting fresh only when no primitive fits, and then only at the third caller or when the concept has a domain name (`implement`'s third-caller clause; it binds this step whether or not `implement` is running)
 - Deepen modules (move complexity behind simple interfaces)
 - Simplify where the accumulated implementation reveals a cleaner design
-- Fix the names the change made wrong — follow the `/discoverable-code` behavior over what the slice exported, renamed, or moved, since a name that stops matching its behavior misleads every later search
+- Fix the names the change made wrong: a name that stops matching its behavior misleads every later search. Follow the `/discoverable-code` behavior over what the slice exported, renamed, or moved, loading it at the first such name if it isn't already live
 
 Run the test command after each refactor step. Never refactor while red.
 

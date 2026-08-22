@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # Which Skill
 
-This routes over the **user-invoked** skills — the ones you type. The **model-invoked behaviors** (`tdd`, `feedback-loops`, `diagnosing-bugs`, `codebase-design`, `discoverable-code`, `grilling`, `diverging`, `adoption-verdict`, `domain-modeling`, `adr`, `resolving-merge-conflicts`, `capturing-learnings`, `receiving-review`, `committing`, `writing-for-agents`, `writing-for-humans`, `work-item-shape`, `wizard`) fire on their own when the work calls for them, or get pulled in by the orchestrators below — you rarely reach for them by name.
+This routes over the **user-invoked** skills — the ones you type. The **model-invoked behaviors** (`tdd`, `feedback-loops`, `diagnosing-bugs`, `codebase-design`, `discoverable-code`, `grilling`, `diverging`, `adoption-verdict`, `domain-modeling`, `adr`, `resolving-merge-conflicts`, `capturing-learnings`, `receiving-review`, `committing`, `writing-for-agents`, `writing-for-humans`, `work-item-shape`) fire on their own when the work calls for them, or get pulled in by the orchestrators below — you rarely reach for them by name.
 
 A **flow** is a path through the skills.
 
@@ -36,7 +36,8 @@ Keep steps 1–2 in **one unbroken context window** so the grilling, decompositi
 - **A question needs a runnable answer** (state, business logic, a UI you have to see) → detour through a prototype, bridged by `/handoff` in both directions: **`/handoff`** out → open a fresh session → **`/prototype`** to answer it with throwaway code → **`/handoff`** the *answer* back, and reference it from the original thread.
 - **A hard bug or unexplained failure mid-build** → the `diagnosing-bugs` behavior takes over (it fires on its own; `implement` reaches for it on an unplanned red). It greps the repo's `docs/solutions/` store for past matches on the way in; when an expensive diagnosis closes, `capturing-learnings` offers to capture the solved problem there. File a found defect with **`/to-bug`**.
 - **A merge or rebase conflicts** → the `resolving-merge-conflicts` behavior handles it in place.
-- **A procedure only a human can perform** (credentials, third-party dashboards, a cutover) → the `wizard` behavior generates a stage-by-stage bash wizard that drives them through it — or runs the same interview step-by-step in chat when a script isn't wanted — capturing what they copy back.
+- **A procedure only a human can perform** (credentials, third-party dashboards, a cutover) → **`/wizard`** generates a stage-by-stage bash wizard that drives them through it — or runs the same interview step-by-step in chat when a script isn't wanted — capturing what they copy back.
+- **Drafting an email, Teams message, or questionnaire so someone else can answer what you can't** → **`/ask-for-me`** — it interviews you about the send and drafts the document in the `writing-for-humans` outbound register. For a message that asks nothing back, the behavior alone is enough.
 - **Thinking is circling — iterations that are variations of one idea, or a binary where both options are bad** → the `diverging` behavior fires: one committed lateral move that outputs new framings, which the grill then stress-tests. Fixation is its trigger, never stakes.
 - **An adopt-or-not question — "should we use X?", "does this CVE reach us?"** → the `adoption-verdict` behavior renders one graded, project-grounded verdict (Adopt/Trial/Hold/Reject/Not-our-problem) gated on verified project and external facts. It forms its *own* position, where the grill extracts *yours*.
 
@@ -65,7 +66,7 @@ Keep steps 1–2 in **one unbroken context window** so the grilling, decompositi
 
 - **`/grill-me`** — sharpen any plan or design with no repo to back it.
 - **`/teach-me <topic>`** — tutored, multi-session learning of any topic, standalone or grounded in a codebase as its textbook.
-- **`/ask-for-me`** — turn a decision you can't answer alone into a Markdown questionnaire for the person who can; it grills the *send* (recipient, needed answers), not the subject. Pairs with a `chart-course` Errand when the blocker is someone else's knowledge.
+- **`/ask-for-me`** — the questionnaire and outbound-message drafter routed above, usable with no repo; pairs with a `chart-course` Errand when the blocker is someone else's knowledge.
 - **`/to-bug`** — file a defect as a tracked ticket from the current conversation.
 - **`/wait-what`** — stop and re-pitch: the last explanation didn't land, so it comes back with the missing context, in the plain register of the `writing-for-humans` behavior, using `DOMAIN.md` vocabulary. For when you stopped following — not a shortener.
 - **`/glapi-test-pass`** — ADO only; satisfy the GLAPI production deployment gate for a Story.

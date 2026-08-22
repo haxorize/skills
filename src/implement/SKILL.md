@@ -52,9 +52,9 @@ Then run the **completion audit** against the loaded ticket: treat done as unpro
 
 ## Record a load-bearing decision
 
-If any decision — a listed judgment call or not — turned on a choice that is **hard to reverse**, **surprising without context**, and **the result of a real trade-off** (genuine alternatives, one picked for reasons), offer to record it via `adr` — synthesize the decision from what you just built and let the user approve or discard, rather than asking a blank yes/no.
+If any decision — a listed judgment call or not — turned on a choice that passes the **ADR gate** in `adr`, offer to record it via `adr` — synthesize the decision from what you just built and let the user approve or discard, rather than asking a blank yes/no.
 
-Keep this gated: the three criteria are strict and most slices won't clear them. Don't manufacture an ADR for an obvious or easily-reversed choice. `feedback-loops`' mechanical doc-sync does **not** cover this — recording rationale is judgment, which is why it delegates to `adr`.
+Most slices won't clear the gate; don't manufacture an ADR for an obvious or easily-reversed choice. `feedback-loops`' mechanical doc-sync does **not** cover this — recording rationale is judgment, which is why it delegates to `adr`.
 
 ## Suggest review, then ship
 

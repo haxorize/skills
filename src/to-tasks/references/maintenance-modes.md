@@ -24,7 +24,7 @@ Parse:
 
 - **Covers references resolve** — every AC ID in `## Covers` exists on the parent Story and is active (not in `## Removed acceptance criteria`). If a reference is now stale, prompt: edit it out, repoint, or close the Task.
 - **`## Layers touched`** — populated for each layer (`none` is valid; missing is not).
-- **Naming consistency** — matches sibling Tasks under the same parent Story (route paths, query keys, model names, search-param keys).
+- **Naming drift** — none against sibling Tasks under the same parent Story (route paths, query keys, model names, search-param keys), per `/work-item-shape`'s rule.
 - **Domain language** — matches `DOMAIN.md`.
 - **No placeholders.**
 
@@ -123,6 +123,6 @@ Healthy Task (N): listed for completeness, no action.
 
 Iterate per bucket until approved. Apply approved changes — body patches via `az boards work-item update` / `gh issue edit`, state transitions via update / close. Publish new Tasks in dependency order so each blocker's real ID is available; on ADO, materialize each in-project blocker as a built-in Predecessor relation, and on GitHub, add each new Task as a native sub-issue of the parent Story, exactly as the create path does — see [../SKILL.md](../SKILL.md) step 8. Reconcile operates on an existing set, so always apply the skip-if-exists guard there. A blocker may be an existing Task in the set, not just a newly published one.
 
-### Naming-drift check
+### Naming drift
 
-If reconcile surfaces naming drift across sibling Tasks (e.g., one uses `widgetId`, another `widget_id`), surface it in the affected bucket's proposal and offer to fold the rename into that Task's edit — sometimes the newer name is correct and the older sibling needs renaming. Never block a publish on it.
+Drift across sibling Tasks (`widgetId` vs `widget_id`) follows `/work-item-shape`'s **Naming drift** rule, surfaced in the affected bucket's proposal with the rename folded into that Task's edit.

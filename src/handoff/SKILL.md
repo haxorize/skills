@@ -34,7 +34,7 @@ claude --bg --name "<descriptive name>" "<handoff content>"
 
 `--name` labels the agent in the job list and session picker. The agent starts in the current working directory; the user manages it with `claude agents` — hand them that exact command (or the specific attach/tail command) right after launching, and repeat it in your final message. The redaction rule matters doubly here — the handoff becomes the agent's prompt verbatim.
 
-Seed the prompt with explicit boundaries: don't push, merge, close work items, or post to external services unless the handoff says to. An unattended agent inherits none of the conversation's implicit ones. A short load-bearing rule from a canonical doc is carried as the doc's line **verbatim** — a paraphrased brief drifts — while anything longer stays a pointer to the doc.
+Seed the prompt with explicit boundaries: don't push, merge, close work items, or post to external services unless the handoff says to. An unattended agent inherits none of the conversation's implicit ones — the rules in [references/subagent-brief.md](references/subagent-brief.md) go in quoted — the three its header names for an agent with no caller. A short load-bearing rule from a canonical doc is carried as the doc's line **verbatim** — a paraphrased brief drifts — while anything longer stays a pointer to the doc.
 
 Seed three disciplines for the unattended stretch:
 

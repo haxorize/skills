@@ -1,6 +1,7 @@
 ---
 name: wizard
-description: Generate an interactive bash wizard that walks a human through steps only they can perform — or run the same step-by-step interview in chat when a script isn't wanted. Use when provisioning infrastructure, setting up credentials or CI secrets, walking an unfamiliar third-party dashboard, or running a one-off migration or cutover. Don't invoke this for steps the agent can perform itself.
+description: Generate an interactive bash wizard that walks a human through steps only they can perform — credentials, third-party dashboards, a cutover — or run the same step-by-step interview in chat when a script isn't wanted.
+disable-model-invocation: true
 requires: writing-for-humans
 ---
 
@@ -11,8 +12,6 @@ A **wizard** is a bash script that walks a human, step by step, through a manual
 The UX is already solved by [template.sh](template.sh) — stage-by-stage progress, confirmation gates, cross-platform URL opening (including WSL), hidden secret entry, idempotent `.env` upserts, `gh secret`/`gh variable` writes, and a closing summary. **Your job is only to scope the procedure and author its stages.** The library above the `STAGES` marker is identical in every wizard; that consistency is the point — never hand-edit it.
 
 A wizard is ephemeral by default — built for one run, saved to a scratch or `scripts/` path, deleted when the job's done. Commit it only when the user wants a repeatable setup path that should live in the repo.
-
-Boundary: driving a human through a *debugging observation loop* stays inline — `diagnosing-bugs` owns that; a wizard is for procedures whose product is durable (credentials captured, services provisioned, a migration completed), not observations fed back into a diagnosis.
 
 ## Process
 

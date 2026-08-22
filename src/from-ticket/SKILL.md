@@ -12,13 +12,7 @@ Detects the work-item type and loads the right shape; hands off to `implement` o
 
 ### 1. Resolve tracker
 
-Read `CLAUDE.md` for an `Issue tracker:` block.
-
-- **Declared** — block present. Use the declared tracker.
-- **Bootstrap-on-ask** — repo present, CLAUDE.md missing or no tracker block. Ask the user inline; preview an appended `## Issue tracker` section; write to CLAUDE.md (or create a minimal CLAUDE.md if absent) on confirmation. **Always append, never overwrite.**
-- **No-repo CLI-only** — no git repo at all. Ask for tracker info. No file writes. Save to memory keyed by tracker context (e.g., `Tracker default — work-backlog`) so subsequent invocations don't re-ask.
-
-Required fields: GitHub needs only the tracker name; ADO requires `Project:` minimum.
+Resolve the tracker in one of three modes — **Declared**, **Bootstrap-on-ask**, or **No-repo CLI-only**. See [references/tracker-resolution.md](references/tracker-resolution.md) for each mode's behavior and the required fields.
 
 If the user passed a tracker URL instead of a bare ID, infer the tracker from the URL host and proceed. If they passed `latest`, take the ID from the newest handoff for this repo in the landing zone `handoff` defines (its "Where to write it" section fixes the directory and the handoff filename; `handoff` names work items with their ID attached) and say which file and ID you resolved before loading.
 

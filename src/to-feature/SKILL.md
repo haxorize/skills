@@ -13,9 +13,9 @@ No interviewing — this is a synthesis-only skill. Run `/grill-me` or `/grill-a
 
 ## Publication constraints
 
-Every published sentence follows the `/writing-for-humans` behavior — run it before drafting.
+Run the `/writing-for-humans` and `/work-item-shape` skills — if you did not just see both `Launching skill:` lines, stop and load the missing one. Every published sentence follows the first; the body's shape follows the second.
 
-The body's shape — the goal, criteria, sizing, ambiguity, internals, and plan-not-changelog rules — follows the `/work-item-shape` behavior. Its internals rule covers every section here, `## Approach` included.
+`/work-item-shape`'s internals rule covers every section here, `## Approach` included.
 
 ## Workflow
 
@@ -54,6 +54,8 @@ If the user can't decompose yet, confirm explicitly and skip to step 7. The publ
 
 ### 7. Draft the feature
 
+The draft *file* follows the global `large-write-chunking` rule; the tracker sees the body only at publish.
+
 Use the appropriate template:
 - GitHub: [references/feature-template-github.md](references/feature-template-github.md)
 - ADO: [references/feature-template-ado.md](references/feature-template-ado.md)
@@ -81,10 +83,12 @@ Iterate until approved.
 
 ### 10. Publish via tracker dispatch
 
-- **GitHub:** `gh issue create --title "..." --body-file <draft>` with default labels from CLAUDE.md. Parent linking via `Tracked-by:` line or template `Parent: #N` reference if `--parent` was provided. **Before creating the issue,** run the label precheck in [references/tracker-resolution.md](references/tracker-resolution.md).
+The **Publish gate** in [references/publishing.md](references/publishing.md) holds first.
+
+- **GitHub:** `gh issue create --title "..." --body-file <draft>` with default labels from CLAUDE.md. Parent linking via `Tracked-by:` line or template `Parent: #N` reference if `--parent` was provided. **Before creating the issue,** run the label precheck in [references/publishing.md](references/publishing.md).
 - **ADO:** publish with the create call in [feature-template-ado.md](references/feature-template-ado.md)'s "Markdown → HTML conversion" section — the **two-field split**, body into the description and outcome bullets into the AC field. Both fields expect HTML: convert each artifact on its own. The body's final section is `## Story Decomposition`; inside it, HTML markers (`<!-- BEGIN STORY MAP -->` / `<!-- END STORY MAP -->`) fence an append-only region — see the template for the snapshot separator and emergent-Story sentinel inside it. If decomposition was deferred, the section body is the single line `Story Decomposition: deferred at Feature creation.` (no markers). Link the parent per the template's field-mapping row. Tag derivation (`$TAGS` in the create call): see [references/work-item-tags.md](references/work-item-tags.md).
 
-If a required CLAUDE.md field is missing, fail fast with a clear "add this to CLAUDE.md" message. If the create call fails with an auth/permission error, fall back to giving the user the drafted body to paste manually — don't loop on auth. Apply the **transport safety** rules in [references/tracker-resolution.md](references/tracker-resolution.md) to every create and retry.
+If a required CLAUDE.md field is missing, fail fast with a clear "add this to CLAUDE.md" message. A create call blocked on auth or policy follows `## When the write is blocked` in [references/publishing.md](references/publishing.md) — don't loop on auth. Apply the **transport safety** rules in [references/publishing.md](references/publishing.md) to every create and retry.
 
 **Read the AC field back before reporting the Feature published (ADO).** `az boards work-item show <feature-id> --output json --query 'fields."Microsoft.VSTS.Common.AcceptanceCriteria"'` returns the stored value. Empty or null means the criteria landed in the body instead of the field — patch it with `az boards work-item update --id <feature-id> --fields "Microsoft.VSTS.Common.AcceptanceCriteria=$(cat acceptance.html)"` and strip them from the description. Buried criteria aren't queryable, and child Stories' `Covers:` lines then point at IDs no field holds.
 

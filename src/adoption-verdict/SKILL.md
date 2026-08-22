@@ -1,6 +1,6 @@
 ---
 name: adoption-verdict
-description: Render a graded, project-grounded verdict on an external-adoption question — a library, tool, service, or practice this project might take on. Use when asked "should we adopt/use/switch to X?", "is X worth it for us?", "should we migrate off Y?", "give me a verdict on X", when a CVE or deprecation raises "does this reach us?", or when a plan hinges on an unexamined adopt-or-not call. Not for casual technology curiosity ("what is X?" — answer normally), generating alternatives (`diverging`), or stress-testing the user's own thinking (`grilling`) — this skill forms and defends its own position.
+description: Render a graded, project-grounded verdict on an external-adoption question — a library, tool, service, or practice this project might take on. Use when asked "should we adopt/use/switch to X?", "is X worth it for us?", "should we migrate off Y?", "give me a verdict on X", when asked whether to take one dependency's major-version bump, when a CVE or deprecation raises "does this reach us?", or when a plan hinges on an unexamined adopt-or-not call. Not for casual technology curiosity ("what is X?" — answer normally), generating alternatives (`diverging`), or stress-testing the user's own thinking (`grilling`) — this skill forms and defends its own position.
 requires: capturing-learnings, adr, diverging
 ---
 
@@ -25,7 +25,7 @@ A shallow Tier-1 verdict is defensible *because* the tier is stated — don't ru
 A verdict must clear both floors. They are independent pass/fail checks — strong external evidence never compensates for a thin project leg, and vice versa.
 
 - **Project floor** — one concrete, verified project fact relevant to the decision: a named incumbent plus one touchpoint (a `file:line`, dependency, issue, or doc passage) for a replace/migrate; the verified absence of an incumbent plus one concrete integration point for a net-new adoption; or a prior recorded decision on the question. One touchpoint passes — the floor demands a look, not a dossier.
-- **External floor** — at least one external source, actually read this session, whose text supports the claim it backs.
+- **External floor** — at least one external source, actually read this session, whose text supports the claim it backs. Third-party status facts — latest version, maintenance activity, open advisories, licence — come from a live lookup (registry, changelog, advisory database, Context7 where present), never from memory.
 
 A failed floor forbids Adopt and Reject alike. Return the matching Hold — "Hold — insufficient project grounding" or "Hold — external evidence unavailable" — with a numbered list of exactly what to inspect to make the floor passable. Never a graded verdict at lowered confidence.
 
@@ -57,7 +57,7 @@ The verdict is a tight chat block sized by its tier — one screen for Tier 1, t
 
 ## The adversary pass (Tier 2/3)
 
-After emitting a Tier 2/3 verdict, offer one fresh-context adversary: a subagent seeded with the verdict, the framed question, and the cited facts as source-located evidence — never your argument for the grade; advocacy in the payload turns refutation into ratification. Tell it that rejecting the framing itself — wrong tier, wrong incumbent, wrong question — is a valid refutation. Fresh context beats self-critique — the author of a verdict cannot unsee their own reasoning. One pass, offered once; Tier 1 never offers. An adversary that finds nothing reports what it searched for and did not find — a bare "no refutation" is not a result. Fold a surviving refutation into the verdict before anyone acts on it. If an accepted pass then fails to run, deliver the verdict saying so — a requested pass never degrades silently into a bare verdict.
+After emitting a Tier 2/3 verdict, offer one fresh-context adversary: a subagent briefed per [references/subagent-brief.md](references/subagent-brief.md) and seeded with the verdict, the framed question, and the cited facts as source-located evidence — never your argument for the grade; advocacy in the payload turns refutation into ratification. Tell it that rejecting the framing itself — wrong tier, wrong incumbent, wrong question — is a valid refutation. Fresh context beats self-critique — the author of a verdict cannot unsee their own reasoning. One pass, offered once; Tier 1 never offers. An adversary that finds nothing reports what it searched for and did not find — a bare "no refutation" is not a result. Fold a surviving refutation into the verdict before anyone acts on it. If an accepted pass then fails to run, deliver the verdict saying so — a requested pass never degrades silently into a bare verdict.
 
 ## Boundaries
 

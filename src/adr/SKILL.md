@@ -12,7 +12,7 @@ The file location, numbering, amend-or-write-new rule, default template, optiona
 
 ## When to write an ADR
 
-The gate has three criteria (full statement in the reference) — **hard to reverse**, **surprising without context**, **the result of a real trade-off**. All three must hold.
+The **ADR gate** has three criteria (full statement in the reference) — **hard to reverse**, **surprising without context**, **the result of a real trade-off**. All three must hold.
 
 ### What qualifies
 

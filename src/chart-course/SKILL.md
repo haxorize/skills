@@ -31,7 +31,7 @@ Each ticket is a **Decision ticket** — the Charting sub-type, a child of the m
 - **Claim by assignment.** Before any work, assign the ticket to whoever is driving it. Assignment *is* the claim: an open, unassigned ticket is unclaimed, and concurrent sessions skip claimed ones.
 - **Blocking** uses the tracker's native dependency relations, so the frontier renders in the tracker's own UI. The **frontier** is the open, unblocked, unclaimed tickets — the edge of the known.
 
-In everything the human reads, refer to the map and its tickets by **name**, never bare id — see [references/tracker-resolution.md](references/tracker-resolution.md). Map bodies, ticket bodies, and resolution comments are human-facing prose — draft them per the `/writing-for-humans` behavior.
+In everything the human reads, refer to the map and its tickets by **name**, never bare id — see [references/tracker-resolution.md](references/tracker-resolution.md). Map bodies, ticket bodies, and resolution comments are human-facing prose: run the `/writing-for-humans` skill before the first draft — if you did not just see `Launching skill: writing-for-humans`, stop and load it.
 
 ## Ticket types
 
@@ -66,9 +66,9 @@ User invokes with a loose idea. Resolve the tracker first ([references/tracker-r
 
 1. **Name the destination.** Run the `/grilling` and `/domain-modeling` skills — if you did not just see both `Launching skill:` lines, stop and load the missing one. Grill until the destination is pinned; it fixes the scope, so it's settled first.
 2. **Map the frontier.** Grill again, breadth-first — fan out across the whole space, surfacing the open decisions and the first steps takeable now. If this surfaces no fog — the whole journey fits one session — you don't need a map: stop and ask the user how they'd like to proceed.
-3. **Create the map** with Destination and Notes filled in, Decisions-so-far empty, the fog sketched into Not yet specified.
+3. **Draft and create the map** with Destination and Notes filled in, Decisions-so-far empty, the fog sketched into Not yet specified. Show the draft and wait for the confirming turn: the **Publish gate** in [references/publishing.md](references/publishing.md) — its dedupe search is the one in [references/chart-tracker-ops.md](references/chart-tracker-ops.md) — holds for this create and every create in this skill, Work-the-chart's included.
 4. **Create the tickets you can specify now** as children of the map — then wire blocking edges in a second pass (items need ids before they can reference each other). Everything you can't yet specify stays fog.
-5. **Fire the research subagents** — one per research ticket, in parallel, each posting its findings as the ticket's resolution.
+5. **Fire the research subagents** — one per research ticket, in parallel, each briefed per [references/subagent-brief.md](references/subagent-brief.md). They return raw findings; you post each ticket's resolution from them — a resolution comment is human-facing prose and an outward act, both yours.
 6. Stop — charting is one session's work; it hand-resolves nothing.
 
 ### Work the chart
@@ -77,7 +77,7 @@ User invokes with the map (URL or id); a ticket is optional — without one, you
 
 1. **Load the map** — the low-res view, not every ticket body.
 2. **Choose the ticket.** The named one, else the first frontier ticket in order. **Claim it** before any work.
-3. **Resolve it** — zoom as needed: fetch related or closed tickets on demand; invoke the skills the map's Notes name. Default is a grilling ticket: run the `/grilling` and `/domain-modeling` skills (same load gate as charting step 1). A knowledge gap that surfaces mid-resolution gets an inline research subagent, its findings folded into the decision in hand — never a new research ticket, which buys a session boundary nothing needs. Research tickets are for gaps already visible at charting.
+3. **Resolve it** — zoom as needed: fetch related or closed tickets on demand; invoke the skills the map's Notes name. Default is a grilling ticket: run the `/grilling` and `/domain-modeling` skills (same load gate as charting step 1). A knowledge gap that surfaces mid-resolution gets an inline research subagent (briefed per [references/subagent-brief.md](references/subagent-brief.md)), its findings folded into the decision in hand — never a new research ticket, which buys a session boundary nothing needs. Research tickets are for gaps already visible at charting.
 4. **Record the resolution:** post the answer as a resolution comment, close the ticket, and append a one-line gist to the map's Decisions so far.
 5. **Update the map:** graduate newly-specifiable fog into tickets (create, then wire); rule mis-scoped tickets out of scope rather than resolving them; update or close (with a one-line invalidation comment) tickets the decision invalidated.
 

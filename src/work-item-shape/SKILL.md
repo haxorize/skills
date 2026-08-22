@@ -82,6 +82,10 @@ Too big announces itself as an "and" in the title or criteria that can't be chec
 
 Watch the **scope-reduction vocabulary** in a draft — "v1", "for now", "hardcoded", "placeholder", "will be wired later". Each either names deferred work that lands explicitly in out-of-scope or a follow-up item, or it quietly under-delivers the decision the item claims to implement. The only resolutions are deliver fully or propose a split; a body can cite its parent decision and still deliver a fraction of it.
 
+## Naming drift
+
+A name in a draft or patch — module, route path, query key, model name — that diverges from the canonical name already used in the codebase or a sibling item is surfaced as a self-review warning, never a block: sometimes the new name is right and the sibling needs the rename. Offer the immediate fix — under a publisher, the affected sibling's `--update` — because a deferred rename leaves no record unless a story map's `### Naming consistency` section carries it; that section is the durable record of names shared across siblings.
+
 ## Surfacing ambiguity
 
 Never resolve source ambiguity silently. Emit each find as an **Ambiguity block** of one of three types — **Unclear** (present but readable two ways), **Missing** (required but absent), **Conflicting** (two statements disagree) — each carrying the source text quoted verbatim, the question a human must answer, the impact if guessed wrong, and what you assumed for now.
@@ -92,7 +96,7 @@ When more than 5 blocks accumulate, triage which ones escalate by impact: **scop
 
 Self-review can't catch author blindness — after drafting, you see what you meant, not what you wrote. Before an item publishes, send it through a reader with none:
 
-- Spawn one fresh-context subagent — the cold reader. It gets only what a cold reader of the published artifact would see — the calling skill names the exact input; ad-hoc, it is the drafted body alone — never this conversation.
+- Spawn one fresh-context subagent — the cold reader, briefed per [references/subagent-brief.md](references/subagent-brief.md). It gets only what a cold reader of the published artifact would see — the calling skill names the exact input; ad-hoc, it is the drafted body alone — never this conversation.
 - It answers the calling skill's question — "what would you build?", or for a bug, "what's broken, and how do I reproduce it?"; ad-hoc, the question matching the inferred tier. Alongside the answer it names ambiguities in Ambiguity-block shape and any context it had to assume.
 - Fold real gaps back into the draft. One pass, not a loop.
 

@@ -1,6 +1,6 @@
 # Large writes land in sections
 
-Depends: `handoff`, `to-feature`, `to-story`, `to-tasks`, `to-bug`, `writing-for-humans`
+Depends: `handoff`, `to-feature`, `to-story`, `to-tasks`, `to-bug`, `chart-course`, `writing-for-humans`
 Why not a hook or lint: a hook sees the write after it has already been truncated, and cannot see the chat message that was cut mid-section.
 
 A single oversized write — one tool call carrying a whole document, one chat message carrying a whole report — truncates silently, and a truncated artifact shown as finished is the worst outcome: it reads as done and is not.

@@ -25,12 +25,12 @@ For each commit that smells like a design choice (new module, new dependency, sc
 
 Most commits reference a PR or work item; the rationale lives there, not in the commit message.
 
-Read `CLAUDE.md` for an `Issue tracker:` block to determine which tracker to query:
+Resolve the tracker per [references/tracker-resolution.md](references/tracker-resolution.md) in **Declared** mode only, then query it:
 
 - **GitHub**: `gh pr view <number>` and `gh issue view <number>` for PR/issue description and discussion. Use `--comments` to include the thread.
 - **Azure DevOps**: `az repos pr show --id <pr-id>` for PR rationale, `az boards work-item show --id <id>` for work-item description and discussion.
 
-If no tracker block is declared, fall back to commit message and code-only inference.
+No tracker block means commit-message and code-only inference — the sweep never bootstraps a block.
 
 ### 4. Apply the ADR gate
 
