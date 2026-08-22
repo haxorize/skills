@@ -25,7 +25,7 @@ Every passage is **procedural** (instructions — the reader will *do* something
 
 ## Register by artifact
 
-A row is admitted only with a named typist — the role that writes the artifact, and how often — never for an artifact nobody here produces.
+A row is admitted only with a named typist — the role that writes the artifact, and how often — never for an artifact nobody here produces; a register entry inside a row is admitted after two sightings in real drafts, never one.
 
 | Artifact | Register |
 | --- | --- |
@@ -38,7 +38,9 @@ A row is admitted only with a named typist — the role that writes the artifact
 | Commit message, PR body, review reply, closing comment | A maintainer recording a decision for another maintainer: impersonal, matter-of-fact ("Previously, …", "This caused …"); imperative only in the subject line; first person only for an actual decision or open question. The catalog's commit-and-PR family fires here |
 | Meeting notes (whoever posts the recap) | Decided separated from discussed; an action is an owner plus a date or is flagged unassigned or undated — the writer never fills either in; commitments and load-bearing statements verbatim, with a paraphrase marked as the writer's reading |
 | Weekly status note to a manager (any engineer, weekly) | Progress, not activity; every next step dated or marked undated; opens with what last week's note said would happen and whether it did |
-| Outbound as the user — email, Teams message, memo, proposal | The user's own voice and register. **No em dashes, none.** Sweep the full tell catalog at maximum strictness — the stake is authorship perception, not just clarity |
+| Outbound as the user — email, Teams message, memo, proposal | The user's own voice and register: a writing sample the user supplies (a prior email, a Teams thread) overrides every default in this row — read it first and match its sentence length, openers, and punctuation. No Markdown syntax in an email or Teams body (asterisks and pound signs render as symbols, and read as pasted). **No em dashes, none** — the one default no sample overrides. Sweep the full tell catalog at maximum strictness — the stake is authorship perception, not just clarity |
+
+**The dash sweep** is the mandatory last step on an outbound draft — one grep over the written draft, every hit quoted, any hit a rewrite of the clause (the catalog's displacement chain) and a second search. The global rule `~/.claude/rules/outbound-dash-sweep.md` owns the pattern and fires with no skill loaded; this skill cites it rather than restating it.
 
 This discipline deletes persuasion by design. Marketing, brand, and campaign copy are out of scope — say so and offer to apply it to the factual parts only.
 
@@ -63,14 +65,19 @@ This discipline deletes persuasion by design. Marketing, brand, and campaign cop
 
 **Detect.** Audit without rewriting: name each pattern from the catalog, quote the offending line, give the fix in a few words. No rewrite, no score, no authorship verdict. Offer the edit afterward.
 
-Either mode: if the text already complies, say so and stop — don't churn compliant prose.
+Either mode: if the text already complies, say so and stop — don't churn compliant prose. A pass that finds the draft contradicting itself (two sentences that cannot both hold) reports the pair and stops; picking one is the author's decision, not the editor's.
 
 ## The preservation contract
 
 - Never fabricate a fact, citation, number, or example the original didn't contain.
 - **Modality is content.** A hedge, a scope word, a modal verb ("may", "usually", "in most cases", "on the paths we tested") is part of the claim, not decoration on it. Cutting one promotes a qualified statement into a flat assertion — a rewrite of the fact, and usually a false one. So thinning a hedge stack to the catalog's one-qualifier maximum is a rewrite decision, not a tidy: keep the qualifier carrying the real uncertainty, never whichever one reads shortest.
 - Never silently drop a qualifier, scope condition, number, or safety condition to make a sentence fit a cap — keep the longer sentence and flag the trade-off instead.
-- Untouchables: code spans, identifiers, CLI commands, file paths, quoted error text, and proper nouns stay exact, even where they break a rule.
+- A qualifier bolted on after a flat claim ("X always holds. In most cases.") is the claim being walked back: fix the claim, not the hedge.
+- Untouchables: code spans, identifiers, CLI commands, file paths, quoted error text, proper nouns, and text quoted from or attributed to another person stay exact, even where they break a rule — a tell inside someone else's words is reported, never edited.
+
+## Long documents
+
+A document longer than a few screens is written per section with a resume pointer, and a truncated write is discarded rather than shown — the global large-write rule (`~/.claude/rules/large-write-chunking.md`) owns the procedure; this skill cites it rather than restating it.
 
 ## Error messages
 

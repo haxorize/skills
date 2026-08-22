@@ -11,12 +11,13 @@ A skill's rule binds only while the skill is loaded. The rules in `rules/` gover
 
 Without this gate the directory becomes a second CLAUDE.md, and every rule here is paid for on every turn the user spends anywhere.
 
-The four rules (each file's `Depends:` line is the one list of its dependants):
+The five rules (each file's `Depends:` line is the one list of its dependants):
 
 - [`evidence.md`](rules/evidence.md) — evidence in the same message as the claim, `UNVERIFIED:` for anything not re-checked, counts re-measured at write time.
 - [`recommend-and-proceed.md`](rules/recommend-and-proceed.md) — three bins for a question: fact, judgment, preference or outward act.
 - [`no-unasked-commits.md`](rules/no-unasked-commits.md) — no commit, push, tracker write, message, or loop without an ask or a `Landing:` pre-authorisation.
 - [`large-write-chunking.md`](rules/large-write-chunking.md) — per-section writes with a resume pointer; a truncated artifact is discarded, never shown.
+- [`outbound-dash-sweep.md`](rules/outbound-dash-sweep.md) — a message drafted as the user ends on one grep for dashes and tool residue; a hit means the draft is not done.
 
 ## Hooks
 

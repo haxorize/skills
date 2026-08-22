@@ -17,7 +17,7 @@ Turn something the user can't answer alone into a **discovery questionnaire** �
 
 2. **What do you need back?** Ask, in one exchange, the specific decisions or facts the user can't resolve alone and needs from this person. Done when you have a concrete list of what the user must walk away able to do or decide.
 
-3. **Write the questionnaire.** Draft questions aimed at the gap from steps 1–2, following [references/questionnaire-template.md](references/questionnaire-template.md); the document is human-facing prose, drafted per the `/writing-for-humans` discipline. Write it to `questionnaire-<slug>.md` in the current directory (slug from the topic). Done when the file exists and every item the user named in step 2 is covered by a question.
+3. **Write the questionnaire.** Draft questions aimed at the gap from steps 1–2, following [references/questionnaire-template.md](references/questionnaire-template.md); the document is human-facing prose, drafted per the `/writing-for-humans` discipline, and it ends on the dash sweep the global rule `~/.claude/rules/outbound-dash-sweep.md` prescribes. Write it to `questionnaire-<slug>.md` in the current directory (slug from the topic). Done when the file exists and every item the user named in step 2 is covered by a question.
 
 4. **Check the returns.** When the user brings the filled-in questionnaire back, check every question got an answer before treating the send as resolved — follow up on just the missed ones, never silently default them. Done when every question has an answer or a named follow-up.
 
