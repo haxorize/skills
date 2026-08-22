@@ -6,7 +6,7 @@ Two rules failed in the measured window while existing as text: "no em dashes in
 
 The repo gains a `global/` directory. `global/rules/*.md` holds rules that a user's `~/.claude/rules/` picks up on every turn; `scripts/install.sh` symlinks them there additively, pruning only links that point into this repo's own `global/`, and never touches `~/.claude/CLAUDE.md`. `global/hooks/` holds hook scripts; `install.sh` prints the `settings.json` snippet that wires a hook and never edits `settings.json`, because a settings file merged by a script is a settings file the user no longer knows the contents of.
 
-Four rules ship: `evidence`, `recommend-and-proceed`, `no-unasked-commits`, `large-write-chunking`. One hook ships: `rename-safety`, a PreToolUse check on Bash that blocks `sed -i` and `xargs` piped into `perl` or `sed` mass renames and lists the matching files. It is opt-in by directory and fails open.
+Four rules ship: `evidence`, `recommend-and-proceed`, `no-unasked-commits`, `large-write-chunking`. One hook ships: `rename-safety`, a PreToolUse check on Bash that blocks in-place mass edits — `sed -i`, `perl -pi`, and `xargs` feeding either — and names the path-shaped arguments it can see. It is opt-in by directory, fails open, and carries its own expect/reject selftest, because a fail-open gate whose regex drifts is indistinguishable from a clean run.
 
 ## Why rules and not hooks
 
@@ -14,7 +14,7 @@ A hook sees tool calls and file writes. None of the four rules can be checked th
 
 ## Admission rule
 
-`global/` holds only rules a skill depends on. Each rule file names the depending skills and states why a hook or lint cannot do its job; `global/README.md` states the rule and lint checks the `Depends:` line resolves to an existing skill. Without this gate the directory becomes a second CLAUDE.md, the place every preference lands because it is global, and the context cost of a rule loaded on every turn is paid by every project the user opens.
+`global/` holds only rules a skill depends on. Each rule file names the depending skills and states why a hook or lint cannot do its job; `global/README.md` states the rule and lint checks the `Depends:` line resolves to an existing skill. A named skill cites the rule from the batch that edits that skill onward — the `Depends:` line is the dependency, the citation is the later batch's deliverable, and lint grows a citation check once the last of those batches lands. Without this gate the directory becomes a second CLAUDE.md, the place every preference lands because it is global, and the context cost of a rule loaded on every turn is paid by every project the user opens.
 
 ## Considered Options
 

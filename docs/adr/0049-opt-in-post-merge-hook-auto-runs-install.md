@@ -33,3 +33,7 @@ ADR-0016 fixed the install *model* — per-skill symlinks, `install.sh` as the r
 - `install.sh` now runs from two contexts (manual and hook-driven); its idempotency and re-run safety, already relied on by ADR-0016, become load-bearing for the automated path too. Pre-existing hardening gaps in `install.sh` (unquoted `requires:` expansion, `prune_stale` prefix matching) gain a lower-friction trigger and are worth tightening, tracked separately.
 - The hook fires on *any* merge, not only `git pull` — `git merge <branch>` triggers it too. Documented in the hook comment so the behavior isn't surprising.
 - `git pull --rebase` does **not** fire `post-merge`; the manual `bash scripts/install.sh` remains the always-available fallback, stated in the README caveat.
+
+## Amendments
+
+- **2026-08-21** — [ADR-0053](0053-global-rules-layer.md) gives `install.sh` two more jobs, linking `global/rules/` into `~/.claude/rules/` and printing the hook snippet; the post-merge hook re-runs all three, and the trust trade-off above covers them unchanged.
