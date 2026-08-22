@@ -1,12 +1,10 @@
 # The completion audit
 
-The shape of the done-claim proof. `implement` writes it at a slice's close, `handoff` carries it verbatim into the next session, and `committing` reads it to choose between `Closes` and `Refs`. The procedures around it belong to those skills; this file is the form they share.
-
-Done is unproven until this table says otherwise. The audit proves completion; it does not fail to find remaining work.
+The form of the done-claim proof. `implement` writes it at a slice's close, `handoff` carries it verbatim into the next session, and `committing` reads it to choose between `Closes` and `Refs`. The procedure around it belongs to those skills; this file is the form they share.
 
 ## Per-criterion table
 
-One row per acceptance criterion the slice covers, in AC-ID order. Derive the rows from the ticket's criteria, never from the work done — a row per thing built is a progress report, not an audit.
+One row per acceptance criterion the slice covers, in AC-ID order, derived from the ticket's criteria — a row per thing built is a progress report, not an audit.
 
 | AC | Status | Evidence |
 |---|---|---|
@@ -16,7 +14,7 @@ One row per acceptance criterion the slice covers, in AC-ID order. Derive the ro
 
 Statuses, and what each requires:
 
-- **DONE** — the criterion holds, and the evidence line names what proves it at matching scope: the test that exercises that criterion, the command and its output, the file and line. A green suite proves a criterion only after confirming a test in it covers that criterion; "tests pass" is not an evidence line.
+- **DONE** — the criterion holds, and the evidence line names what proves it at matching scope: the test that exercises that criterion, the command and its output, the file and line. "Tests pass" is not an evidence line.
 - **PARTIAL** — some of the criterion holds; the line says which part does not.
 - **NOT DONE** — none of it holds; the line says why it was left.
 - **CHANGED** — the criterion was altered in the building (narrowed, reinterpreted, moved); the line states the original and the change, so the human can accept or reject the reinterpretation.

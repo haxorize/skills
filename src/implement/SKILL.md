@@ -21,7 +21,7 @@ Decide how the slice is built, and say which path you picked and why:
 - **Testable slice** → run the `/tdd` skill (if you don't see a `Launching skill: tdd` line, stop and load it). Use this whenever the slice's behaviors warrant tests (logic, endpoints, data flow).
 - **Non-testable slice** → build directly, no test-first. Use this for docs, scripts, config, and glue — work with no meaningful test seam.
 
-When it's genuinely ambiguous (some testable behavior, some glue), ask the user rather than guessing.
+When it's genuinely ambiguous (some testable behavior, some glue), it is a judgment under the recommend-and-proceed rule: pick the testable path, say so, and proceed.
 
 The choice ratchets one way. Complexity that surfaces mid-slice **upgrades** the path — glue that turns out to carry a rule becomes a testable slice, and its tests get written from that point. Nothing downgrades: a testable slice doesn't become "just glue" because the tests are proving to be work. Mid-slice doubt therefore resolves upward on its own, with no round-trip to the user: reaching for the lighter label in order to skip the heavier path is itself the doubt. Only doubt at the pick, before building starts, goes to the user.
 
@@ -42,7 +42,7 @@ Out-of-scope observations made mid-slice — a smell, a missing test, a refactor
 
 Run the `/feedback-loops` skill when the slice's behaviors are built and refactored — if you don't see a `Launching skill: feedback-loops` line, stop and load it. It is the mechanical finalize, and this is the slice's one run: when `tdd` runs under `implement`, it defers the close-the-loop pass here.
 
-Then run the **completion audit** against the loaded ticket: treat done as unproven, derive the requirements from the acceptance criteria the slice covers, name the authoritative evidence per requirement, and inspect it at matching scope — a narrow check never supports a broad claim, and a green suite counts only after confirming it exercises that criterion. The audit proves completion rather than failing to find remaining work. Its written shape — the per-criterion table, beat ledger, parked ledger, and judgment-calls list — is [references/completion-audit.md](references/completion-audit.md); write it in that form, because `handoff` carries it and `committing` reads it to choose the closing word.
+Then run the **completion audit** against the loaded ticket: treat done as unproven, derive the requirements from the acceptance criteria the slice covers, name the authoritative evidence per requirement, and inspect it at matching scope — a narrow check never supports a broad claim, and a green suite counts only after confirming it exercises that criterion. The audit proves completion rather than failing to find remaining work. Write it in the form of [references/completion-audit.md](references/completion-audit.md) — one row per acceptance criterion, `| AC | Status | Evidence |`, status one of `DONE` / `PARTIAL` / `NOT DONE` / `CHANGED` / `UNVERIFIABLE`, every row with an evidence line; then the beat ledger, the parked ledger with its zero case stated, and the judgment-calls list tagged user's / inferred / my call. `handoff` carries it verbatim and `committing` reads it to choose the closing word.
 
 ## Record a load-bearing decision
 
@@ -58,7 +58,7 @@ Keep this gated: the three criteria are strict and most slices won't clear them.
 
 If the user runs `review-changes` and acts on findings, re-run `feedback-loops` after the fixes. `receiving-review`'s **convergence guard** bounds that fix→re-review loop; what falls past the bound is a backlog follow-up, not this slice's work.
 
-Once the slice is reviewed and findings are addressed, the same applies to `ship` — suggest it, don't invoke it: "Green and reviewed — `/ship` from here." It owns the commit split, the closing comment, and a PR where one is warranted.
+Once the slice is reviewed and findings are addressed, it lands: a one-commit change through the `committing` behavior on the user's ask, a change that needs a split or a PR through `/ship` — suggest it, don't invoke it: "Green and reviewed — `/ship` from here."
 
 ## Notes
 

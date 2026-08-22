@@ -1,6 +1,6 @@
 ---
 name: committing
-description: The discipline for landing a change honestly — every claim in a commit message, closing comment, or status report checked against evidence as it is written, outward acts gated on an explicit ask or the repo's `Landing:` key, and a one-commit fast path for the change that needs no split. Use when asked to "commit and push", "land this", "commit what we have", "close the ticket", "can I close #N", or for any commit, push, or ticket-close ask outside `/ship`; also use when `/ship` delegates its claims check and its outward acts here. Not for proposing a commit split or opening a PR — that path is `/ship`'s.
+description: The discipline for landing a change honestly — claims checked against evidence as they are written, outward acts gated on an explicit ask or the repo's `Landing:` key, and the one-commit fast path. Use when asked to "commit and push", "land this", "commit what we have", "close the ticket", "can I close the issue", or for any commit, push, or ticket-close ask outside `/ship`. Not for proposing a commit split or opening a PR — that path is `/ship`'s, which declares this skill.
 requires: writing-for-humans
 ---
 
@@ -8,15 +8,17 @@ requires: writing-for-humans
 
 A change lands through prose that makes claims: a subject line says what the commit does, a closing comment says the ticket is done, a status report says what pushed. This skill checks each claim against evidence **as it is written**, and makes no outward act the user did not ask for.
 
-It never proposes a commit split. A change that needs several commits in lineage order, or a branch and a PR with an approver, is `/ship`'s path; `/ship` declares this skill and delegates every claim and every outward act here. Say so and stop when the ask is split-shaped — more than one attributable change in the tree, or an approver who must see a PR.
+It never proposes a commit split. A change that needs several commits in lineage order, or a branch and a PR with an approver, is `/ship`'s path; `/ship` declares this skill and delegates every claim and every outward act here. When the ask arrives split-shaped — more than one attributable change in the tree, or an approver who must see a PR — and `/ship` is not already running, say so and stop; under `/ship`, the split is its job and this skill's rules apply to each commit it proposes.
 
 ## Before any outward act
 
-Commit, push, a tracker write, a message, a loop: each is an outward act, and the global no-unasked-commits rule in `~/.claude/rules/` governs all of them — **an explicit ask in this conversation, or a `Landing:` pre-authorisation, and nothing else.** "Commit and push" authorises a commit and a push; it does not authorise closing the ticket. An ask that names one act names one act.
+Commit, push, a tracker write, a message, a loop: each is an outward act, and the global no-unasked-commits rule in `~/.claude/rules/` governs all of them. That rule has one owner; it is not restated here.
 
-Read `CLAUDE.md` for a `Landing:` block before the first act. It declares the branch policy, whether a PR is required, whether push and ticket-close are pre-authorised, and the defect policy. An act the key pre-authorises proceeds on the ask that started the work; every other act asks first, with a recommendation. No block means nothing is pre-authorised.
+Read `CLAUDE.md` for a `Landing:` block before the first act. Its five lines are `Branch policy:` (`trunk` or `branch-per-ticket`, with a naming pattern where the repo has one), `PR required:`, `Push pre-authorised:`, `Ticket close pre-authorised:` (each `yes`/`no`), and `Defect policy:` (default `fix, don't file`). An act the key pre-authorises proceeds on the ask that started the work; every other act asks first, with a recommendation. No block means nothing is pre-authorised.
 
-**Auth pre-flight.** Before the first act that leaves the machine, confirm the credential is live (`gh auth status`, `az account show`, a dry `git push --dry-run`). A push that fails on auth after the commit is a change described as landed that is not; the pre-flight makes that failure happen before the claim exists.
+`git status` and `git diff` before anything is staged, on either path: untracked or unstaged files that belong to the change are surfaced now, not discovered after the commit.
+
+**Auth pre-flight, before the commit.** When a push or a tracker write is asked or pre-authorised, confirm the credential is live before the commit exists (`gh auth status`, `az account show`, `git push --dry-run` — a read of the remote, not a push, and permitted on that basis). A push that fails on auth after the commit is a change described as landed that is not; the pre-flight makes that failure happen before the claim exists.
 
 **A command that succeeded silently is not re-run to see output.** `git push` and `gh issue close` print little on success; read the exit status, or verify the effect (`git status -sb` shows the branch up to date; `gh issue view` shows `CLOSED`). Re-running a mutating command to watch it is a second mutation.
 
@@ -34,7 +36,7 @@ Every assertion written into a commit message, closing comment, PR body, or end-
 | "I ran X" for any step | whether it ran in this session; inspection is not execution |
 | a screenshot, recording, or image cited as evidence | the file was opened and its contents are stated in the claim, not its filename |
 | "blocked by X" | the command's verbatim error output, quoted; a familiar-looking failure is not evidence of its familiar cause |
-| any count | re-measured at write time, with the command that produced it |
+| any count | re-measured now, per the evidence rule |
 
 **A claim you cannot check does not get written.** Drop it, or write the weaker claim the evidence supports. Evidence you cannot obtain, a capture that never landed, a system you cannot reach, gets its own line marked `UNVERIFIABLE` with what would have proven it; it never launders into a pass.
 
@@ -42,23 +44,24 @@ The pressure is predictable: the work is at its end, the change is green, the su
 
 ## The completion audit decides the closing word
 
-A ticket closes on a clean remainder, not on a push. Read the completion audit from the session (`implement` writes it at close, `handoff` carries it) before choosing the closing keyword:
+A ticket closes on a clean remainder, not on a push. Read the completion audit from the session (`implement` writes it at close, `handoff` carries it; its form is [references/completion-audit.md](references/completion-audit.md)) before choosing the closing keyword:
 
 - Every acceptance criterion `DONE` with evidence, zero parked items against the ticket: `Closes #N`.
 - Anything `PARTIAL`, `NOT DONE`, `CHANGED`, or `UNVERIFIABLE`, or a parked item the ticket owns: `Refs #N`, with the remainder named in the closing comment. A partial slice that auto-closed its ticket is the failure this rule answers.
-- No audit in the conversation: run the check yourself against the ticket's acceptance criteria, at matching scope, and say that you did.
+- The issue is already closed: `Refs #N`. A closing keyword against a closed issue reopens nothing and confuses the timeline. Check the issue's state before choosing the word.
+- No audit in the conversation: run the check yourself in that form against the ticket's acceptance criteria, at matching scope, and say that you did.
 
 Tick only what the audit evidenced. A checked box is a claim like any other.
 
 ## The closing comment
 
-It states: what landed, with the commit SHAs or the PR link; the change's status, every claim checked per the rule above; the remainder, anything deliberately not done or descoped, named plainly rather than left to be discovered; and a closure claim made only after re-reading the ticket's actual state. A closing comment that only says "done" fails every element at once. Register and wording follow the `/writing-for-humans` behavior, and the subject and body shape follow [references/commit-style.md](references/commit-style.md); load both at the first draft if they are not already live.
+It states: what landed, with the commit SHAs or the PR link; the change's status, every claim checked per the rule above; the remainder, anything deliberately not done or descoped, named plainly rather than left to be discovered; and a closure claim made only after re-reading the ticket's actual state. A closing comment that only says "done" fails every element at once. Register and wording follow the `/writing-for-humans` behavior; the subject and body shape follow [references/commit-style.md](references/commit-style.md).
 
 ## The one-commit fast path
 
 For a change that is one attributable claim and needs no approver, land it in one move:
 
-1. `git status` and `git diff` — read what is actually in the tree. Untracked files that belong to the change are surfaced now, not discovered after the commit.
+1. Read the tree (`git status`, `git diff`, as above).
 2. Draft the subject and body against the diff, applying the claims rule per sentence.
 3. Stage and commit. Push only if asked or pre-authorised; say which.
 4. Close or tick the ticket only if asked or pre-authorised, and only with the word the completion audit supports.
@@ -85,4 +88,4 @@ Report what actually happened: what landed, what's staged, what's waiting on a m
 
 - Merge conflicts on the way in are `resolving-merge-conflicts`' job.
 - Findings that surface while drafting are follow-ups, not this change's work. Land the change; name what you noticed. Filing them is `/to-bug`'s, and only on the user's ask — the `Landing:` defect policy defaults to "fix, don't file".
-- The evidence rule in `~/.claude/rules/` governs the status report this skill ends with: evidence in the same message as the claim, counts with their command, your own corrections named.
+- The status report this skill ends with is governed by the evidence rule in `~/.claude/rules/`.

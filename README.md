@@ -38,7 +38,7 @@ The route most work travels: **`/grill-and-record`** (or `/grill-me` with no cod
 ### Implementation
 
 - **`from-ticket`** — Cold-start loader. Pulls a published ticket (Task / Story / Bug) back into the conversation, auto-detects type, and loads the right shape — parent context, `DOMAIN.md`, ADRs matched against `## Layers touched`. Refuses Feature/Epic with a redirect. Hands off to `implement` or freeform.
-- **`implement`** — Build one loaded ticket's slice end to end: pick the build path, build, refactor, and close the loop. Picks `tdd` for a testable slice or the direct path otherwise; runs `feedback-loops` once; suggests `review-changes` before it lands, then `ship` to land it.
+- **`implement`** — Build one loaded ticket's slice end to end: pick the build path, build, refactor, and close the loop. Picks `tdd` for a testable slice or the direct path otherwise; runs `feedback-loops` once; suggests `review-changes` before it lands, then `committing` (one commit) or `ship` (split or PR) to land it.
 
 ### Review & validation
 
@@ -100,13 +100,13 @@ The route most work travels: **`/grill-and-record`** (or `/grill-me` with no cod
 - **`diagnosing-bugs`** — Diagnosis loop for hard bugs and performance regressions, centered on standing up a tight red-capable feedback loop first. A declared dependency of `implement`. Retrieves past Learning docs on the way in and offers `capturing-learnings` a capture when an expensive diagnosis closes.
 - **`resolving-merge-conflicts`** — Conflict-resolution loop for an in-progress merge or rebase that preserves both intents; delegates the project's checks to `feedback-loops`.
 
-### Landing
-
-- **`committing`** — The discipline for landing a change honestly, reached by any "commit and push", "land this", or "close #N" ask: every claim in a commit message, closing comment, or status report checked against evidence as it is written; `Closes` only when the completion audit shows a clean remainder; no outward act without an explicit ask or a `Landing:` pre-authorisation; a blocked act reported with its verbatim error and one manual-commands block at the end. Owns the one-commit fast path; never the split (`ship`'s).
-
 ### Review
 
 - **`receiving-review`** — Discipline for applying review feedback to your changes, whether a reviewer sent it or `review-changes` produced it: feedback is claims to verify against the codebase, not orders to follow or occasions for performative agreement. Its convergence guard bounds the fix→re-review loop so a review can't turn into a rewrite, and every PR review thread gets an outcome reply once its finding is settled.
+
+### Landing
+
+- **`committing`** — The discipline for landing a change honestly, reached by any "commit and push", "land this", or "close #N" ask: every claim in a commit message, closing comment, or status report checked against evidence as it is written; `Closes` only when the completion audit shows a clean remainder; no outward act without an explicit ask or a `Landing:` pre-authorisation; a blocked act reported with its verbatim error and one manual-commands block at the end. Owns the one-commit fast path; never the split (`ship`'s).
 
 ### Writing & work items
 
@@ -124,7 +124,7 @@ The route most work travels: **`/grill-and-record`** (or `/grill-me` with no cod
 - **ADRs** live in `docs/adr/<NNNN>-<slug>.md` per repo. Numbering: increment past the highest number in the working tree *or* anywhere in git history, whichever is higher — gaps are cosmetic, duplicates are not.
 - **Learning docs** live in `docs/solutions/<slug>.md` per repo — solved problems with symptom-keyed frontmatter, captured by `capturing-learnings`. The store is created lazily; new captures land flat at the root, and subdirectories from other tooling are tolerated.
 - **Tracker dispatch** is declared per-repo in `CLAUDE.md` under an `Issue tracker:` block. Supports GitHub (`gh`) and Azure DevOps (`az boards`). Hierarchy (`Hierarchy: required|optional`) controls whether the publishing skills enforce a `--parent` argument. ADO defaults to `required` (Epic → Feature → User Story → Task); GitHub defaults to `optional`.
-- **Landing policy** is declared per-repo in `CLAUDE.md` under a `Landing:` block, read by `committing` and `ship` before any outward act. Five lines: `Branch policy:` (`trunk` or `branch-per-ticket`, with a naming pattern where the repo has one), `PR required:` (`yes`/`no`), `Push pre-authorised:` (`yes`/`no`), `Ticket close pre-authorised:` (`yes`/`no`), and `Defect policy:` (default `fix, don't file` — defects found mid-work are fixed in place or parked, and filed as tickets only by `to-bug` on the user's ask). An act the block pre-authorises proceeds on the ask that started the work; every other outward act asks first. No block means nothing is pre-authorised.
+- **Landing key** — the landing policy is declared per-repo in `CLAUDE.md` under a `Landing:` block, read by `committing` and `ship` before any outward act. Five lines: `Branch policy:` (`trunk` or `branch-per-ticket`, with a naming pattern where the repo has one), `PR required:` (`yes`/`no`), `Push pre-authorised:` (`yes`/`no`), `Ticket close pre-authorised:` (`yes`/`no`), and `Defect policy:` (default `fix, don't file` — defects found mid-work are fixed in place or parked, and filed as tickets only by `to-bug` on the user's ask). An act the block pre-authorises proceeds on the ask that started the work; every other outward act asks first. No block means nothing is pre-authorised.
 - **Sibling repos** declared in `CLAUDE.md` under `## Sibling repos` so `to-tasks` can flag cross-repo blockers.
 - **Title prefixes** are declared in the `Issue tracker:` block. `Title prefix:` applies to Stories, Tasks, and Bugs. Features use `Feature title prefix:` if declared, falling back to `Title prefix:` if absent — allowing teams to give features a distinct prefix from the tickets below them.
 - **Work-item tags (ADO)** — the `to-*` publishers derive `System.Tags` from the drafted title's leading bracket (parsed before prefixing), unioned with an optional `Additional tags:` line and filtered by an optional `Never tag:` line in the `Issue tracker:` block; applied best-effort at creation inside the create call's existing `--fields`. `chart-course` applies the same derivation to maps and chart tickets. GitHub uses labels instead and ignores these lines.
@@ -137,7 +137,7 @@ The route most work travels: **`/grill-and-record`** (or `/grill-me` with no cod
 
 ## Global rules and hooks
 
-[`global/`](global/README.md) holds the rules that must hold when no skill is loaded — evidence in the same message as the claim, the three-bin recommend-and-proceed gate, no unasked commits, per-section large writes — and the one hook the round found a hook could enforce (`rename-safety`, blocking `sed -i` and `xargs`-into-`perl`/`sed` mass renames). Admission is strict: a file lives there only while a skill under `src/` depends on it, named in its `Depends:` line, and lint checks the name resolves. `install.sh` symlinks the rules into `~/.claude/rules/` and **prints** the `settings.json` hook snippet; it never edits `settings.json` or `~/.claude/CLAUDE.md`.
+[`global/`](global/README.md) holds the rules that must hold when no skill is loaded — evidence in the same message as the claim, the three-bin recommend-and-proceed gate, no unasked commits, per-section large writes — and the one hook the round found a hook could enforce (`rename-safety`; the script header states what it blocks). Admission is strict: a file lives there only while a skill under `src/` depends on it, named in its `Depends:` line, and lint checks the name resolves. `install.sh` symlinks the rules into `~/.claude/rules/` and **prints** the `settings.json` hook snippet; it never edits `settings.json` or `~/.claude/CLAUDE.md`.
 
 ## Install
 
@@ -165,7 +165,7 @@ To re-run the install automatically after every `git pull`, opt this clone in on
 bash scripts/setup-hooks.sh
 ```
 
-This points the repo's `core.hooksPath` at the committed `scripts/git-hooks/` directory, whose `post-merge` hook runs `install.sh` after each merge that brings in new commits — so a pull that adds, renames, or removes a skill keeps `~/.claude/skills/` in step with no manual re-hoist. Git hooks can't be committed into `.git/hooks/` directly, so the hook body is version-controlled and the setup script wires it in; run it once per clone (it's local config, not committed).
+This points the repo's `core.hooksPath` at the committed `scripts/git-hooks/` directory, whose `post-merge` hook runs `install.sh` after each merge that brings in new commits — so a pull that adds, renames, or removes a skill keeps `~/.claude/skills/` and `~/.claude/rules/` in step with no manual re-hoist. Git hooks can't be committed into `.git/hooks/` directly, so the hook body is version-controlled and the setup script wires it in; run it once per clone (it's local config, not committed).
 
 **Trust trade-off:** enabling this makes `git pull` **auto-run committed scripts** — the `post-merge` hook, and `install.sh` through it — on every merge, under your user, with no further prompt. Any hook a future commit adds under `scripts/git-hooks/` runs the same way. This is the standard cost of committed git hooks; only opt in on a repo whose commits you trust. The bare `bash scripts/install.sh` above stays available if you'd rather re-hoist by hand.
 

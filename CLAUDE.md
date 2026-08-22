@@ -32,12 +32,21 @@ The `to-feature`/`to-story`/`to-tasks`/`to-bug` family is structurally independe
 
 [`src/which-skill/SKILL.md`](src/which-skill/SKILL.md) is the router that maps every skill and how they relate. Whenever you add, rename, or remove a skill, or change how one fits the flows, update the router in the same change — a new skill it never mentions, or a stale one it still routes to, is a router that lies. `README.md`'s skill map is a second router under the same rule. `scripts/lint-skills.sh` catches missing mentions mechanically in both; routing and blurb accuracy stay editorial.
 
+## Landing
+
+Landing:
+- Branch policy: trunk
+- PR required: no
+- Push pre-authorised: no
+- Ticket close pre-authorised: no (no tracker)
+- Defect policy: fix, don't file
+
 ## Commit order
 
 When changes touch both an ADR and the skill it shapes (lineage runs ADR → skill — the ADR names the skill, never the reverse), commit the ADR first so reviewers see the rationale before the implementation.
 
 ## Linting
 
-`bash scripts/lint-skills.sh` checks SKILL.md and reference files against the conventions in [`src/write-skill/SKILL.md`](src/write-skill/SKILL.md) — size caps, frontmatter (description length/colon, the invocation-axis flag, `requires:` resolution), sibling-file byte-identity, the ban on skill bodies citing repo ADRs by number, reference-link resolution (inline `[text](path.md)` links only — the script header names the link forms and resolution cases it does not reach, so a clean run isn't a claim about those), and router coverage (every skill mentioned in `which-skill` and in `README.md`). Run before committing skill changes.
+`bash scripts/lint-skills.sh` checks SKILL.md and reference files against the conventions in [`src/write-skill/SKILL.md`](src/write-skill/SKILL.md) — size caps, frontmatter (description length/colon, the invocation-axis flag, `requires:` resolution), sibling-file byte-identity, the ban on skill bodies citing repo ADRs by number, reference-link resolution (inline `[text](path.md)` links only — the script header names the link forms and resolution cases it does not reach, so a clean run isn't a claim about those), router coverage (every skill mentioned in `which-skill` and in `README.md`), and the `global/rules/` admission check (every rule carries a `Depends:` line naming at least one existing skill; the size cap and ADR-number ban sweep `global/rules/` too). Run before committing skill changes.
 
 `bash scripts/lint-selftest.sh` runs the linter against `scripts/lint-fixtures/`, a miniature tree that is wrong on purpose, and fails if a check stops firing or starts firing on a form it should exempt. Run it after changing a check — a lint gate that quietly stopped matching looks identical to a repo with no violations.
