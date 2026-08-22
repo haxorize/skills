@@ -80,12 +80,21 @@ expect_crumb() {
   printf '%s' "$out" | grep -q 'rc=0' || { echo "FAIL (should allow with a breadcrumb) [$4]: $2 — $out"; fail=1; }
   printf '%s' "$out" | grep -q "$3" || { echo "FAIL (breadcrumb should say '$3') [$4]: $2 — $out"; fail=1; }
 }
+# expect_quiet <cwd> <command> <label>: allowed AND silent. On the receipt path
+# "allowed because a stamp matched" and "allowed because something failed open"
+# are both rc=0, so an expect_allow there proves nothing on its own; only the
+# match path exits without a breadcrumb (2026-08-22 review, F12).
+expect_quiet() {
+  local out; out="$(crumb "$1" "$2")"
+  [ "$out" = "rc=0" ] || { echo "FAIL (should allow on a stamp, with no breadcrumb) [$3]: $2 — $out"; fail=1; }
+}
 G="$work/gated"; P="$work/plain"
 
 # --- no receipt at all: block every live push shape in the gated repo ---------
 expect_block "$G" "git push"                                   "bare push"
 expect_block "$G" "git push origin main"                       "explicit remote"
 expect_block "$G" "git push -q origin main 2>&1 | tail -2"     "push in a pipeline"
+expect_block "$G" "git push origin main >out.txt"              "a redirection is not a second refspec"
 expect_block "$G" "git add . && git commit -m x && git push"   "push after commit"
 expect_block "$G" "/usr/bin/git push"                          "path-prefixed git"
 expect_block "$G" "git -C . push"                              "-C before the subcommand"
@@ -207,35 +216,112 @@ expect_block "$work/tworemotes" "git push --repo=origin"       "--repo= names th
 expect_block "$work/noupstream" "git push"                     "no tracking branch: origin/<branch> fallback"
 
 # --- receipts ------------------------------------------------------------------
-touch "$REVIEW_RECEIPT_DIR/other-2026-01-02-x.review.md"
+# tree_of <repo-dir>: the work-tree hash the skills stamp (the hook header's one-liner, verbatim)
+tree_of() { ( cd "$1" && T="$(mktemp -u)"; GIT_INDEX_FILE="$T" git read-tree HEAD 2>/dev/null; GIT_INDEX_FILE="$T" git add -A :/ && GIT_INDEX_FILE="$T" git write-tree; rm -f "$T" ); }
+stamp() { printf '%s\n' "$2" >> "$REVIEW_RECEIPT_DIR/$1"; }   # stamp <file> <line>
+HEADTREE="$(cd "$G" && git rev-parse 'HEAD^{tree}')"
+[ "$(tree_of "$G")" = "$HEADTREE" ] || { echo "FAIL (tree_of on a clean tree should equal HEAD^{tree})"; fail=1; }
+stamp other-2026-01-02-x.review.md "Reviewed-tree: $HEADTREE"
 expect_block "$G" "git push"                                   "other repo's report"
-touch "$REVIEW_RECEIPT_DIR/gated-archive-2026-01-02-x.review.md"
+stamp gated-archive-2026-01-02-x.review.md "Reviewed-tree: $HEADTREE"
 expect_block "$G" "git push"                                   "a repo whose name starts with this one"
-touch "$REVIEW_RECEIPT_DIR/gated-x.review.md"
+stamp gated-x.review.md "Reviewed-tree: $HEADTREE"
 expect_block "$G" "git push"                                   "no date segment is not the handoff filename"
-touch "$REVIEW_RECEIPT_DIR/gated-2026-01-02-x.md"
+stamp gated-2026-01-02-x.md "Reviewed-tree: $HEADTREE"
 expect_block "$G" "git push"                                   "handoff is not a receipt"
-touch -t 202512311200 "$REVIEW_RECEIPT_DIR/gated-2025-12-31-old.review.md"
-expect_block "$G" "git push"                                   "stale report"
-touch -t 202601011159.59 "$REVIEW_RECEIPT_DIR/gated-2026-01-01-second-before.review.md"
-expect_block "$G" "git push"                                   "one second older than the oldest commit blocks"
-touch -t 202601011200 "$REVIEW_RECEIPT_DIR/gated-2026-01-01-equal.review.md"
-expect_allow "$G" "git push"                                   "as new as the oldest commit passes (-ge)"
-touch -t 202601011300 "$REVIEW_RECEIPT_DIR/gated-2026-01-01-fresh.review.md"
-expect_allow "$G" "git push"                                   "fresh report"
-expect_allow "$G" "git push origin main"                       "fresh report, explicit remote"
+touch "$REVIEW_RECEIPT_DIR/gated-2025-12-31-empty.review.md"
+expect_block "$G" "git push"                                   "a report with no stamp"
+stamp gated-2025-12-31-old.review.md "Reviewed-tree: $(cd "$G" && git rev-parse 'HEAD~1^{tree}')"
+expect_block "$G" "git push"                                   "a stamp of an earlier tree"
+stamp gated-2026-01-01-short.review.md "Reviewed-tree: ${HEADTREE:0:12}"
+expect_block "$G" "git push"                                   "an abbreviated hash is not a stamp"
+stamp gated-2026-01-01-prose.review.md "the reviewed tree was $HEADTREE"
+expect_block "$G" "git push"                                   "a hash in prose is not a stamp"
+# a report quotes hashes — including this hook's own contract — and a quotation
+# is not a receipt; the opt-in scan strips fences the same way (F8)
+printf 'quoting the contract:\n\n```\nReviewed-tree: %s\n```\n' "$HEADTREE" > "$REVIEW_RECEIPT_DIR/gated-2026-01-01-fenced.review.md"
+expect_block "$G" "git push"                                   "a stamp inside a fenced block is a quotation, not a receipt"
+rm "$REVIEW_RECEIPT_DIR/gated-2026-01-01-fenced.review.md"
+stamp gated-2026-01-01-quoted.review.md "> Reviewed-tree: $HEADTREE"
+expect_block "$G" "git push"                                   "a blockquoted stamp is a quotation, not a receipt"
+rm "$REVIEW_RECEIPT_DIR/gated-2026-01-01-quoted.review.md"
+stamp gated-2026-01-01-nospace.review.md "Reviewed-tree:$HEADTREE"
+expect_allow "$G" "git push"                                   "no space after the key still reads"
+rm "$REVIEW_RECEIPT_DIR/gated-2026-01-01-nospace.review.md"
+expect_block "$G" "git push"                                   "and without it the block is back"
+stamp gated-2026-01-01-match.review.md "- **Reviewed-tree:** \`$HEADTREE\`"
+expect_allow "$G" "git push"                                   "a stamp of HEAD's tree (bold key, backticked value)"
+expect_allow "$G" "git push origin main"                       "stamped tree, explicit remote"
+( cd "$G" && git commit -q --amend --no-edit -m reworded )
+expect_allow "$G" "git push --force"                           "a message-only amend keeps the tree"
 ( cd "$G" && echo y > g && git add g && git commit -q -m fixup )
-expect_allow "$G" "git push"                                   "fix-up after review"
+expect_block "$G" "git push"                                   "a fix-up after the stamp is a new tree"
+stamp gated-2026-01-01-match.review.md "Reviewed-tree: $(cd "$G" && git rev-parse 'HEAD^{tree}')"
+expect_allow "$G" "git push"                                   "re-stamped after the fix-up (second stamp in one report)"
 ( cd "$G" && git push -q origin main 2>/dev/null )
 expect_allow "$G" "git push"                                   "nothing to push"
-( cd "$G" && echo z > h && git add h && git commit -q -m later )
-expect_block "$G" "git push"                                   "new range after the report"
-( cd "$G" && git commit -q --amend --no-edit -m later2 )
-expect_block "$G" "git push --force"                           "amend of a reviewed tree is a new tree"
+# the user's order: review the dirty tree, commit it whole, push
+( cd "$G" && echo z > h && echo w > w )
+stamp gated-2026-01-03-dirty.review.md "Reviewed-tree: $(tree_of "$G")"
+expect_crumb "$G" "git push" "nothing to push"                 "dirty tree stamped, nothing committed yet: HEAD is already pushed"
+( cd "$G" && git add h && git commit -q -m partial )
+expect_block "$G" "git push"                                   "a partial commit of the reviewed tree is a different tree"
+( cd "$G" && git add w && git commit -q -m rest )
+expect_allow "$G" "git push"                                   "the whole reviewed tree committed (two commits) matches"
+( cd "$G" && echo typo >> w && git commit -q -am typo )
+expect_block "$G" "git push"                                   "an edit after the stamp blocks"
+( cd "$G" && git push -q origin main 2>/dev/null )
+# a source ref other than HEAD: the refspec's source decides the tree
+( cd "$G" && git branch -q side && git checkout -q side && echo s > s && git add s && git commit -q -m side && git checkout -q main )
+expect_block "$G" "git push origin side:main"                  "refspec source is an unstamped tree"
+stamp gated-2026-01-04-side.review.md "Reviewed-tree: $(cd "$G" && git rev-parse 'side^{tree}')"
+expect_allow "$G" "git push origin side:main"                  "refspec source stamped"
+expect_allow "$G" "git push origin +side:main"                 "a leading + on the refspec is dropped"
+# ...and the companions that tell a stamp match from a fail-open (F12)
+expect_quiet "$G" "git push origin side:main"                  "stamped source allows silently, not by failing open"
+expect_quiet "$G" "git push origin +side:main"                 "the + is stripped and the stamp matched, not an unresolvable ref"
+expect_allow "$G" "git push origin refs/heads/side:refs/heads/main" "a fully-qualified refspec resolves"
+expect_quiet "$G" "git push origin refs/heads/side:refs/heads/main" "and it allows on the stamp, not a fail-open"
+# an unstamped source, an upper-case hash, and the src != HEAD range fallback (F13, F15)
+( cd "$G" && git checkout -q -b nostamp && echo n > n && git add n && git commit -q -m nostamp && git checkout -q main )
+expect_block "$G" "git push origin nostamp:main"               "an unstamped source blocks"
+stamp gated-2026-01-05-upper.review.md "Reviewed-tree: $(cd "$G" && git rev-parse 'nostamp^{tree}' | tr 'a-f' 'A-F')"
+expect_block "$G" "git push origin nostamp:main"               "an upper-case hash is not a stamp"
+expect_block "$G" "git push origin nostamp:brandnew"           "src != HEAD with no remote dst: the range falls back to origin/<branch>..<src>, not @{upstream}..HEAD"
+# the refs/heads/ strip on the destination, checked from a branch with no remote
+# counterpart, where an unstripped dst loses the range entirely (F15)
+( cd "$G" && git checkout -q nostamp )
+expect_quiet "$G" "git push origin refs/heads/side:refs/heads/main" "the refs/heads/ prefix is stripped from the destination"
+( cd "$G" && git checkout -q main )
+# an unreadable report is skipped, not a fail-open — a planted chmod 000 file
+# must not disable the gate the way it did before the 2026-08-22 review (F4, F14)
+if [ "$(id -u)" != 0 ]; then
+  : > "$REVIEW_RECEIPT_DIR/gated-2026-01-06-planted.review.md"
+  chmod 000 "$REVIEW_RECEIPT_DIR/gated-2026-01-06-planted.review.md"
+  expect_block "$G" "git push origin nostamp:main"             "an unreadable report does not disable the gate"
+  chmod 644 "$REVIEW_RECEIPT_DIR/gated-2026-01-06-planted.review.md"
+  rm -f "$REVIEW_RECEIPT_DIR/gated-2026-01-06-planted.review.md"
+fi
+# git sends every refspec, and --all/--mirror/a wildcard send every branch; the
+# gate derived everything from the first token until the 2026-08-22 review
+# (F2, F3, F6). side is stamped here, nostamp and main are not.
+expect_block "$G" "git push origin side:main nostamp:other"    "a second refspec is gated too, not just the first"
+expect_block "$G" "git push origin nostamp:other side:main"    "and in either order"
+expect_block "$G" "git push --all origin"                      "--all sends every branch, and every branch is gated"
+expect_block "$G" "git push --mirror origin"                   "--mirror likewise"
+expect_block "$G" "git push origin refs/heads/*:refs/heads/*"  "a wildcard refspec is the --all shape, not an unresolvable ref"
+stamp gated-2026-01-07-all.review.md "Reviewed-tree: $(cd "$G" && git rev-parse 'nostamp^{tree}')"
+expect_allow "$G" "git push origin side:main nostamp:other"    "every source stamped allows the multi-refspec push"
+expect_allow "$G" "git push --all origin"                      "and --all allows once every branch ahead of the remote is stamped"
+rm "$REVIEW_RECEIPT_DIR/gated-2026-01-07-all.review.md"
+( cd "$G" && git branch -q -D nostamp )
+( cd "$G" && git branch -q -D side )
 # a landing zone with a space in its path (unset the override so the TMPDIR path is searched)
+( cd "$G" && echo q > q && git add q && git commit -q -m q )
 mkdir -p "$work/t m p/claude-handoffs"
-touch -t 202612311200 "$work/t m p/claude-handoffs/gated-2026-12-31-x.review.md"
+printf 'Reviewed-tree: %s\n' "$(cd "$G" && git rev-parse 'HEAD^{tree}')" > "$work/t m p/claude-handoffs/gated-2026-12-31-x.review.md"
 expect_allow "$G" "git push" "TMPDIR with a space" REVIEW_RECEIPT_DIR= TMPDIR="$work/t m p"
+( cd "$G" && git push -q origin main 2>/dev/null )
 
 # --- fail-open -----------------------------------------------------------------
 expect_allow "$G" ""                                           "empty command (no tool_input.command)"

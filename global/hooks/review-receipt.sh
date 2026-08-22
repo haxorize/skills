@@ -2,15 +2,17 @@
 # review-receipt — a Claude Code PreToolUse hook for the Bash tool.
 #
 # Blocks `git push` into a repo that asks for review before landing, unless a
-# review report for that repo sits in the landing zone and is at least as new
-# as the oldest commit the push would send. The report is the receipt:
-# `review-changes` writes `<repo>-<date>-<slug>.review.md` to the landing zone
-# the `handoff` skill defines (its "Where to write it" section:
-# `claude-handoffs/` under the platform temp dir), and nothing else produces
-# one — an in-session subagent review that wrote no file is not a review this
-# hook can see, on purpose. `<repo>` is the basename of the work tree, so two
-# checkouts with one basename share receipts; the date segment keeps
-# `skills-archive-…` from answering for `skills`.
+# review report for that repo in the landing zone carries a `Reviewed-tree:`
+# stamp equal to the tree of the commit the push would send. The report is the
+# receipt: `review-changes` writes `<repo>-<date>-<slug>.review.md` to the
+# landing zone the `handoff` skill defines (its "Where to write it" section:
+# `claude-handoffs/` under the platform temp dir) and stamps it with the tree
+# hash of the work tree it reviewed; `address-findings` appends a fresh stamp
+# when its fix pass closes; nothing else produces one — an in-session subagent
+# review that wrote no file is not a review this hook can see, on purpose.
+# `<repo>` is the basename of the work tree, so two checkouts with one basename
+# share receipts; the date segment keeps `skills-archive-…` from answering for
+# `skills`.
 #
 # Which repo: the directory the push runs in, not merely the session's cwd —
 # a leading `cd <dir> &&`, `pushd <dir> &&`, `git -C <dir>`, or a `GIT_DIR=`
@@ -26,31 +28,54 @@
 # key or the value are fine; `yes (…)` is not yes. A repo with no such line is
 # never gated; outside a git work tree the hook allows with a breadcrumb.
 #
-# Which range: `<remote>/<dst>..HEAD` when the command names a remote (as an
-# argument or `--repo`) and the refspec's destination (`HEAD:main`), else
-# `@{upstream}..HEAD`, else `origin/<branch>..HEAD`. The newest matching
-# report's mtime is compared with the committer time of the OLDEST commit in
-# that range: a report not older than that commit passes (fix-up commits made
-# after the review are newer than the report and pass); a report older than
-# the oldest unpushed commit reviewed a different tree and blocks. With nothing
-# to push, or no ref to compare against, the command runs with a breadcrumb.
-# A push that sends no branch commits — a delete (`--delete`, `:dst`) or a
-# tag — runs with a breadcrumb too.
+# Which tree: EVERY source the push would send, because git sends them all.
+# For refspecs, each one's source (`feat:main`, `HEAD:main`, a bare `main`, a
+# leading `+` dropped) — a second refspec is gated exactly like the first —
+# else `HEAD`. For `--all`, `--mirror`, or a wildcard refspec, every local
+# branch that is new on the remote or ahead of it. Each source's tree hash
+# (`git rev-parse <src>^{tree}`) must equal a stamp in some matching report,
+# and one unstamped source blocks the whole command; the block message names
+# the first source that failed. The stamp is the line `Reviewed-tree: <40
+# hex>` (a list marker, bold, or backticks around it are fine), read
+# anywhere in the file EXCEPT
+# inside a fenced block or behind a blockquote `>` — a report quotes hashes,
+# including this hook's own contract, and a quotation is not a receipt; the
+# opt-in scan strips fences the same way. A report may carry several stamps,
+# one per stamping, and any of them matches. The work-tree
+# hash `review-changes` and `address-findings` write is
+#   T="$(mktemp -u)"; GIT_INDEX_FILE="$T" git read-tree HEAD 2>/dev/null; GIT_INDEX_FILE="$T" git add -A :/ && GIT_INDEX_FILE="$T" git write-tree; rm -f "$T"
+# (a throwaway index seeded from HEAD, so the real one is untouched and a
+# tracked-but-ignored file still counts); it equals the tree of a commit that
+# takes every tracked change and every untracked file `.gitignore` does not
+# exclude, so a commit of the whole reviewed tree matches and a partial commit
+# does not. An untracked file that must not land is deleted or ignored before
+# the stamp is taken, not committed to satisfy the gate. Content, not time:
+# review the dirty tree, fix, commit, push; a message-only amend keeps the
+# tree and passes; a rebase that changes no content keeps the tree and passes;
+# any edit after the last stamp — a fix-up, a typo — is a new tree and blocks
+# until re-stamped (`address-findings` stamps when its pass closes, or
+# `/review-changes` again).
 #
-# Order matters: the receipt must be at least as new as the oldest unpushed
-# commit, so the flow is commit, then `/review-changes`, then fix-up commits,
-# then push. A report written before the commits it covers were made is older
-# than all of them and blocks; a rebase rewrites committer times and has the
-# same effect (ADR-0059 records both).
+# Which range, for "nothing to push": only for a single-source push —
+# `<remote>/<dst>..<src>` when the command names a remote (as an argument or
+# `--repo`) and the refspec's destination, else `@{upstream}..HEAD`, else
+# `origin/<branch>..<src>`. With nothing to push, or no ref to compare
+# against, the command runs with a breadcrumb. A multi-refspec or `--all`
+# push skips this shortcut: "is anything being sent" is already answered by
+# whether any branch is ahead, and applying one branch's range to all of them
+# is what let every unreviewed branch out before. A
+# push that sends no branch commits — a delete (`--delete`, `:dst`) or a tag —
+# runs with a breadcrumb too.
 #
-# What it does not see: edits made after the review and folded into an
-# already-reviewed range (`review-changes`' reviewed-head stamp and
-# `committing`'s "N commits since" line carry that in prose); a push run
-# through a program it does not treat as a wrapper (the list is in the
-# scanner); a push the user runs themselves (`! git push` in the prompt, or
-# any terminal), which never passes through a tool hook — that is the one
-# skip path, and it is the user's. A `~/.gitconfig` alias is outside the
-# contract; an alias built on the command line (`git -c alias.p=push p`) is not.
+# What it does not see: whether `review-changes` wrote the stamp — a hash
+# typed into a file by hand matches as well as one the review computed, and
+# that is a fabricated receipt `committing`'s claims rule fails, not this
+# hook; a push run through a program it does not treat as a wrapper (the list
+# is in the scanner); a push the user runs themselves (`! git push` in the
+# prompt, or any terminal), which never passes through a tool hook — that is
+# the one skip path, and it is the user's. A `~/.gitconfig` alias is outside
+# the contract; an alias built on the command line (`git -c alias.p=push p`)
+# is not.
 #
 # `git push --dry-run` / `-n` (as a flag, before `--` and any refspec) is a
 # read of the remote and passes. Command lines are tokenised the way a shell
@@ -67,10 +92,14 @@
 # Fail-open, each with a one-line stderr breadcrumb: a malformed payload, a
 # missing python3 or git, a scanner error (an unterminated quote, nesting
 # deeper than four shells), a push outside a git work tree, a CLAUDE.md the
-# opt-in walk cannot read, a repo with no ref to compare against, a receipt
-# whose mtime cannot be read, or any error computing the range. A safety hook
-# that blocks on its own errors trains the user to disable it. Silent exits
-# (no breadcrumb): the command is not a push, or the repo is not opted in.
+# opt-in walk cannot read, a repo with no ref to compare against, a source ref
+# whose tree cannot be resolved, or any error counting the commits in the
+# range. A safety hook that blocks on its own errors trains the user to
+# disable it. A report that cannot be read is NOT a fail-open: it is skipped
+# with a breadcrumb and the remaining reports still decide, because an
+# unreadable file can carry no stamp and failing open on one would let a
+# planted `chmod 000` file disable the gate. Silent exits (no breadcrumb):
+# the command is not a push, or the repo is not opted in.
 #
 # REVIEW_RECEIPT_DIR, when set, replaces the landing-zone search (the selftest
 # uses it; a user with a non-standard temp dir can too).
@@ -122,8 +151,9 @@ cmd="${parsed#*$'\n'}"
 [ -d "$cwd" ] || cwd="$PWD"
 
 # --- the push record: a live `git push`, and where it runs ---------------------
-# Prints "kind<US>dir<US>remote<US>refspec" (US = 0x1f) on a match — kind is
-# `push` or `delete`; dir/remote/refspec may be empty — nothing otherwise. Any
+# Prints "kind<US>dir<US>remote<US>refspec<US>extra-refspecs<US>all" (US =
+# 0x1f, extras RS-separated) on a match — kind is `push` or `delete`; `all` is
+# set for --all/--mirror; any field may be empty — nothing otherwise. Any
 # non-zero exit is a scanner failure.
 record="$(printf '%s' "$cmd" | python3 -c '
 import os, re, shlex, sys
@@ -285,6 +315,7 @@ def check_git(args, curdir):
             return None
         rest = args[i + 1:]
         kind, remote, refspec, flags_done = "push", "", "", False
+        refspecs, pushall = [], ""
         j = 0
         while j < len(rest):
             r = rest[j]
@@ -309,14 +340,20 @@ def check_git(args, curdir):
                     return None         # a read of the remote
                 if DELETE.match(r):
                     kind = "delete"
+                if r in ("--all", "--mirror"):
+                    pushall = "1"     # sends every branch; no refspec appears
                 j += 1
+                continue
+            if "<" in r or ">" in r:
+                j += 1                 # a redirection the segment split left behind
                 continue
             if not remote:
                 remote = r
-            elif not refspec:
-                refspec = r
+            else:
+                refspecs.append(r)     # every refspec, not just the first
             j += 1
-        return (kind, d, remote, refspec)
+        return (kind, d, remote, refspecs[0] if refspecs else "",
+                "\x1e".join(refspecs[1:]), pushall)
     return None
 
 def scan(text, curdir, depth=0):
@@ -397,14 +434,15 @@ try:
 except Exception:
     sys.exit(3)
 if hit:
-    kind, d, remote, refspec = hit
-    sys.stdout.write("%s\x1f%s\x1f%s\x1f%s" % (kind, d or "", remote, refspec))
+    kind, d, remote, refspec, extras, pushall = hit
+    sys.stdout.write("%s\x1f%s\x1f%s\x1f%s\x1f%s\x1f%s"
+                     % (kind, d or "", remote, refspec, extras, pushall))
 ' 2>/dev/null)"
 rc=$?
 [ "$rc" -eq 0 ] || allow "shape scan failed (rc=$rc)"
 [ -n "$record" ] || exit 0
 
-IFS=$'\x1f' read -r kind pushdir remote refspec <<< "$record"
+IFS=$'\x1f' read -r kind pushdir remote refspec extras pushall <<< "$record"
 [ "$kind" = "delete" ] && allow "a delete sends no commits"
 case "$refspec" in :*) allow "a delete refspec sends no commits" ;; esac
 
@@ -469,22 +507,74 @@ if [ -n "$dst" ] \
   allow "a tag push sends no branch commits"
 fi
 
+# the commit the push would send: the refspec's source, else HEAD
+src=""
+if [ -n "$refspec" ]; then
+  case "$refspec" in *:*) src="${refspec%%:*}" ;; *) src="$refspec" ;; esac
+  src="${src#+}"
+fi
+[ -n "$src" ] || src="HEAD"
+
+# Every source the push would send, not only the first refspec. A second refspec,
+# `--all`/`--mirror`, and a wildcard refspec each reached the remote ungated
+# before (2026-08-22 review): the gate derived everything from one token.
+wide=""
+case "$refspec" in *'*'*) wide=1 ;; esac
+srcs=()
+if [ -n "$pushall" ] || [ -n "$wide" ]; then
+  wide=1
+  # every local branch the push would actually change: new on the remote, or ahead of it
+  rname="${remote:-origin}"
+  while IFS= read -r b; do
+    [ -n "$b" ] || continue
+    if git -C "$top" rev-parse --verify -q "$rname/$b" >/dev/null 2>&1; then
+      ahead="$(git -C "$top" rev-list --count "$rname/$b..$b" 2>/dev/null || echo '?')"
+      case "$ahead" in ''|0) continue ;; *[!0-9]*) allow "could not count the commits on $b" ;; esac
+    fi
+    srcs+=("$b")
+  done < <(git -C "$top" for-each-ref --format='%(refname:short)' refs/heads 2>/dev/null)
+  [ "${#srcs[@]}" -gt 0 ] || allow "no branch is ahead of $rname"
+else
+  srcs=("$src")
+  if [ -n "$extras" ]; then
+    while IFS= read -r extra || [ -n "$extra" ]; do
+      [ -n "$extra" ] || continue
+      case "$extra" in :*) continue ;; esac          # a delete refspec sends no commits
+      case "$extra" in *:*) es="${extra%%:*}" ;; *) es="$extra" ;; esac
+      es="${es#+}"
+      [ -n "$es" ] && srcs+=("$es")
+    done < <(printf '%s' "$extras" | tr '\036' '\n')
+  fi
+fi
+
 range=""
 if [ -n "$remote" ] && [ -n "$dst" ] && git -C "$top" rev-parse --verify -q "$remote/$dst" >/dev/null 2>&1; then
-  range="$remote/$dst..HEAD"
-elif git -C "$top" rev-parse --verify -q '@{upstream}' >/dev/null 2>&1; then
-  range='@{upstream}..HEAD'
+  range="$remote/$dst..$src"
+elif [ "$src" = "HEAD" ] && git -C "$top" rev-parse --verify -q '@{upstream}' >/dev/null 2>&1; then
+  range="@{upstream}..HEAD"
 elif [ -n "$branch" ] && git -C "$top" rev-parse --verify -q "origin/$branch" >/dev/null 2>&1; then
-  range="origin/$branch..HEAD"
+  range="origin/$branch..$src"
 fi
-[ -n "$range" ] || allow "no remote ref to compare against"
+count="?"
+if [ "${#srcs[@]}" -eq 1 ] && [ -z "$wide" ]; then
+  [ -n "$range" ] || allow "no remote ref to compare against"
+  count="$(git -C "$top" rev-list --count "$range" 2>/dev/null || echo '?')"
+  case "$count" in
+    ''|0)       allow "nothing to push on this branch" ;;
+    *[!0-9]*)   allow "could not count the commits in $range" ;;
+  esac
+fi
 
-oldest="$(git -C "$top" log --reverse --format='%ct %h' "$range" 2>/dev/null | head -1 || true)"
-[ -n "$oldest" ] || allow "nothing to push on this branch"
-oldest_ts="${oldest%% *}"
-oldest_sha="${oldest#* }"
-case "$oldest_ts" in ''|*[!0-9]*) allow "could not read the committer time of $oldest_sha" ;; esac
-count="$(git -C "$top" rev-list --count "$range" 2>/dev/null || echo '?')"
+# --- the tree(s) the push would send ---------------------------------------------
+# Every source must be stamped; one unstamped source blocks the whole command,
+# because git sends them all.
+trees=()
+for s in "${srcs[@]}"; do
+  t="$(git -C "$top" rev-parse --verify -q "$s^{tree}" 2>/dev/null || true)"
+  [ -n "$t" ] || allow "could not resolve the tree of $s"
+  trees+=("$t")
+done
+tree="${trees[0]}"
 
 # --- the receipt ---------------------------------------------------------------
 zones=()
@@ -492,39 +582,71 @@ if [ -n "${REVIEW_RECEIPT_DIR:-}" ]; then
   zones=("$REVIEW_RECEIPT_DIR")
 else
   [ -n "${TMPDIR:-}" ] && zones+=("${TMPDIR%/}/claude-handoffs")
-  zones+=("/tmp/claude-handoffs")
+  [ "${zones[0]:-}" = "/tmp/claude-handoffs" ] || zones+=("/tmp/claude-handoffs")
 fi
 
-newest_ts=0
-newest_file=""
+STAMP='^[-*]*[[:space:]]*\**`?Reviewed-tree:`?\**[[:space:]]*`?[0-9a-f]{40}`?[[:space:]]*$'
+reports=0
+stamps=""
+stamp_files=""
 for zone in "${zones[@]}"; do
   [ -d "$zone" ] || continue
   for f in "$zone"/"$repo"-[0-9][0-9][0-9][0-9]-*.review.md; do
     [ -f "$f" ] || continue
-    ts="$(stat -f %m "$f" 2>/dev/null || stat -c %Y "$f" 2>/dev/null)" || allow "could not read the mtime of $f"
-    case "$ts" in ''|*[!0-9]*) allow "could not read the mtime of $f" ;; esac
-    if [ "$ts" -gt "$newest_ts" ]; then
-      newest_ts="$ts"
-      newest_file="$f"
+    if [ ! -r "$f" ]; then
+      echo "review-receipt: skipping unreadable report $f" >&2
+      continue
+    fi
+    reports=$((reports + 1))
+    found="$(awk '
+      /^[[:space:]]*```/ { fence = !fence; next }
+      fence { next }
+      { print }' "$f" 2>/dev/null | grep -E "$STAMP" | grep -oE '[0-9a-f]{40}' || true)"
+    if [ -n "$found" ]; then
+      stamps="$stamps
+$found"
+      while IFS= read -r h; do
+        [ -n "$h" ] && stamp_files="$stamp_files
+$h $f"
+      done <<< "$found"
     fi
   done
 done
 
-if [ "$newest_ts" -ge "$oldest_ts" ]; then
-  exit 0
-fi
+unstamped=""
+for i in "${!trees[@]}"; do
+  printf '%s\n' "$stamps" | grep -qx "${trees[$i]}" && continue
+  unstamped="${srcs[$i]}"
+  tree="${trees[$i]}"
+  break
+done
+[ -n "$unstamped" ] || exit 0
+src="$unstamped"
 
 {
-  echo "review-receipt: blocked a push from $repo — no review report covers the $count unpushed commit(s) in $range."
+  echo "review-receipt: blocked a push from $repo — no review report stamps the tree the push would send ($src^{tree} = ${tree:0:12}; $count unpushed commit(s) in $range)."
   echo "  command: $cmd"
-  if [ -n "$newest_file" ]; then
-    echo "  newest report: $newest_file (older than the oldest unpushed commit $oldest_sha)"
+  if [ "$reports" -gt 0 ]; then
+    last_line="$(printf '%s\n' "$stamp_files" | grep -E '^[0-9a-f]{40} ' | tail -1)"
+    if [ -n "$last_line" ]; then
+      last="${last_line%% *}"
+      echo "  $reports $repo report(s) in ${zones[*]}; the last stamp read (${last:0:12}, in $(basename "${last_line#* }")) is a different tree —"
+      echo "  something changed after the last stamp (an edit, a fix-up, a file left uncommitted), or the commit is partial."
+      if git -C "$top" cat-file -e "$last^{tree}" 2>/dev/null; then
+        echo "  how the two trees differ:"
+        git -C "$top" diff --stat "$last" "$tree" 2>/dev/null | sed 's/^/    /' | head -12
+      fi
+      echo "  A scratch file folded into the stamped tree has to be committed, or deleted and the tree"
+      echo "  re-stamped — deleting or gitignoring it is the move; committing it to satisfy the gate is not."
+    else
+      echo "  $reports $repo report(s) in ${zones[*]}, none carrying a 'Reviewed-tree:' stamp."
+    fi
   else
     echo "  no $repo-<date>-*.review.md in: ${zones[*]}"
   fi
   echo "  This repo's Landing key says 'Review required: yes'. Ask the user to run /review-changes"
-  echo "  (it writes the report to the landing zone) and then /address-findings — both are"
-  echo "  user-invoked — and push after that. Report this as a blocked action; the user can push"
-  echo "  unreviewed work from their own terminal."
+  echo "  (it writes and stamps the report) or, after a fix pass, /address-findings (it re-stamps) —"
+  echo "  both are user-invoked — and push after that. Report this as a blocked action; the user"
+  echo "  can push unreviewed work from their own terminal."
 } >&2
 exit 2
