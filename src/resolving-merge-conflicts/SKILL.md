@@ -10,7 +10,7 @@ Resolve an in-progress merge or rebase **without losing intent**. Always resolve
 
 ## 1. See the current state
 
-Inspect the merge/rebase: `git status`, the list of conflicting files, and the relevant history on both sides (`git log --oneline --left-right <theirs>...<ours>`). Know what's being merged into what, and which way a rebase is replaying commits. Enumerate every conflict with `git diff --name-only --diff-filter=U` and `git ls-files -u` — the second list is the only place an **index-only** conflict shows: an add/add, a modify/delete, or a rename has no `<<<<<<<` markers in any file, and `git status` alone reads as if the file were clean.
+Inspect the merge/rebase: `git status`, the list of conflicting files, and the relevant history on both sides (`git log --oneline --left-right <theirs>...<ours>`). Know what's being merged into what, and which way a rebase is replaying commits. Enumerate every conflict with `git diff --name-only --diff-filter=U` — it lists every unmerged path, including the **marker-less** ones: a modify/delete or rename/delete writes no `<<<<<<<` into any file (`git status` shows it as `UD`/`DU`, "deleted by them"), so a grep for markers alone misses it. `git ls-files -u` shows which stages each path has, which tells a modify/delete from a content conflict.
 
 ## 2. Find the primary sources for each conflict
 
@@ -20,7 +20,7 @@ For each conflicting hunk, understand **why each change was made** — don't res
 
 - **Preserve both intents where possible** — most conflicts are compatible changes; keep both.
 - **Where the intents are genuinely incompatible**, pick the side that serves the operation's goal — in a merge, the change being merged in; in a rebase, the branch you're rebasing onto — and note the trade-off.
-- **Index-only conflicts resolve by taking one side where one side is the answer** — `git checkout --ours -- <path>` / `--theirs -- <path>` for a modify/delete or an add/add whose two versions are the same intent; a rename whose other side edited the old path gets the edit replayed onto the new one by hand. The same intent test applies: taking a side is a resolution, not a default.
+- **Marker-less conflicts resolve by taking one side where one side is the answer** — for a modify/delete, keep the file with `git checkout --ours -- <path>` or `--theirs -- <path>` *from the side that still has it* and `git add` it, or take the delete with `git rm -- <path>` (checking out the deleted side fails: "path does not have their version"); an add/add whose two versions are the same intent takes one side the same way; a rename whose other side edited the old path gets the edit replayed onto the new one by hand. The same intent test applies: taking a side is a resolution, not a default.
 - **Do not invent new behaviour.** Resolution combines what the two sides intended; it is not a place to redesign. If the right answer is neither side, that's a finding to raise — not something to smuggle into a merge commit.
 
 ## 4. Run the project's checks
@@ -29,7 +29,7 @@ Run the project's mechanical checks via the `/feedback-loops` skill. Fix anythin
 
 ## 5. Finish the merge/rebase
 
-Run `git diff --check` before staging — it names any conflict marker still in the tree, which a successful compile does not. Then stage everything and complete the operation:
+Run `git diff --check HEAD` before staging (bare `git diff --check` skips files already staged mid-resolution) — it names any conflict marker still in the tree, which a successful compile does not. Then stage everything and complete the operation:
 
 - **Merge:** `git commit` (keep the merge commit message; note any trade-off from step 3).
 - **Rebase:** `git rebase --continue`, and repeat from step 1 for each subsequent commit that conflicts until the rebase finishes.

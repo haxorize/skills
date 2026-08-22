@@ -109,7 +109,7 @@ With the list ranked, **declare the edit boundary**: the narrowest directory in 
 
 ## Phase 4 — Instrument
 
-Each probe must map to a specific prediction from Phase 3. **Change one variable at a time.** A probe's report lists the evidence *against* the hypothesis beside the evidence for it — a report with only confirming evidence is incomplete, and the same rule binds the fresh-eyes brief in Phase 5.
+Each probe must map to a specific prediction from Phase 3. **Change one variable at a time.** A probe's report lists the evidence *against* the hypothesis beside the evidence for it — a report with only confirming evidence is incomplete, and the same rule binds the evidence trail Phase 5 hands to fresh eyes.
 
 Tool preference:
 
@@ -165,4 +165,4 @@ Walk that question as a why-chain, **one level at a time** — a single-shot cha
 
 - If the answer involves **architectural change** — no good test seam, a too-shallow module, tangled callers, hidden coupling — suggest the user run `/improve-design` with the specifics (it's user-invoked, so suggest it; don't try to invoke it). The deepening it surfaces is the durable fix.
 - If the root cause was a **load-bearing decision gap** — the bug existed because a real trade-off was made implicitly and never recorded — offer to capture it via `adr`. A recorded decision stops the same class of bug recurring for the next person.
-- If the **diagnosis itself was the expensive part** — and `capturing-learnings`' capture gate holds (verified, expensive, recurrence-plausible) — offer to capture the solved problem as a Learning doc, so the next diagnosis of this symptom starts where this one ended.
+- Run `capturing-learnings`' capture gate (verified, expensive, recurrence-plausible) and say the result out loud either way: where it holds, offer to capture the solved problem as a Learning doc, so the next diagnosis of this symptom starts where this one ended; where it fails, say so — "none this session: the fix came from the error message" is a result, silence is not.

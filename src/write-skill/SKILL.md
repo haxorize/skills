@@ -53,7 +53,7 @@ skill-name/
 
 **Every relative link a shipped skill file writes must resolve from that file's own directory.** A pointer at a reference that isn't there degrades silently — the agent follows it, finds nothing, and proceeds on whatever it already had, which reads exactly like a run that never needed the reference. Renaming or moving a reference is therefore a two-file edit. (`scripts/lint-skills.sh` mechanizes this for the inline `[text](path.md)` form; its header states what that form does not reach.)
 
-When the same correction recurs in the same shape across sessions, the rule is the suspect, not the wielder: find where its argument goes wrong for that case and write the exception into the rule there, rather than restating the rule louder. Wording escalates one rung per observed failure — judgment prose, then a hard prohibition with its rationalization table once the agent skips it under pressure; a rule jumped to a rung no failure earned binds worse than none. A mechanism (hook, lint, type, template) is the exception: it is taken whenever one can see the exact violation, at creation or after — `writing-for-agents`' Scaffolding ground — because it removes the judgment call instead of wording it harder.
+When the same correction recurs in the same shape across sessions, the rule is the suspect, not the wielder: find where its argument goes wrong for that case and write the exception into the rule there, rather than restating the rule louder.
 
 Scripts are **black boxes**: they exist to be *run*, not read — don't ingest a large helper into context unless running it first proved a custom variant necessary. The signal to bundle one: repeated runs of the skill independently writing the same helper.
 
@@ -103,7 +103,7 @@ The description is the skill's top-level **context pointer** — its wording dec
 - **SKILL.md**: ≤200 lines. Past that, move detail into `references/`.
 - **Reference files**: ≤200 lines each. Split by topic, not arbitrarily.
 - **The caps measure loaded context, not file bytes** — lint's line count is the proxy. Extracting prose into a reference the body then tells the agent to always read shrinks the file without shrinking what loads — that games the cap, it doesn't satisfy it. And a cap is never raised because content is approaching it — past the cap, cut or restructure.
-- **Over the cap: relocate verbatim, then edit.** Move the over-cap section into a reference byte-for-byte first, check that every pre-split heading lands exactly once across body and fragments, and only then edit in place — a cut-and-rewrite in one motion leaves nothing to diff the rewrite against.
+- **Over the cap: relocate verbatim, then edit.** Move the over-cap section — one some branches never reach, per the on-demand test above — into a reference byte-for-byte first, check that every pre-split heading lands exactly once across body and fragments, and only then edit in place — a cut-and-rewrite in one motion leaves nothing to diff the rewrite against.
 - **Description**: ≤1024 chars, and no angle brackets (`<` or `>`) — the platform chokes on them, so replace placeholder text like `<topic>` before shipping.
 - **Name**: ≤64 chars.
 - **One line per paragraph/bullet** — soft-wrap, no hard newlines mid-paragraph (let the editor wrap). The cap is line-based, so a "line" should be a unit of content, not an artifact of wrapping; hard-wrapping inflates the count and renders identically. Code fences, tables, and YAML frontmatter keep their own line breaks.

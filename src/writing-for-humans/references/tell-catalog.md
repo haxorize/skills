@@ -1,6 +1,6 @@
 # The tell catalog
 
-Named patterns that read as AI-generated because they are clarity failures: each performs insight, emphasis, or structure instead of delivering a fact. Cite by **name**, never by number or position. A fix is an instruction to recover the deleted information, never a synonym swap.
+Named patterns that read as AI-generated: almost all because they are clarity failures — each performs insight, emphasis, or structure instead of delivering a fact — and a few (the Formatting glyph entries) because nobody typing by hand produces them. Cite by **name**, never by number or position. A fix is an instruction to recover the deleted information, never a synonym swap.
 
 **Displacement partners.** Suppressing a tell relocates it: a model told not to write em dashes writes semicolons; told not to write "not X, it's Y" writes "no setup, no config". Where a partner is named, check for it in the same pass — a clean run on the tell with a dirty run on its partner is the same defect, evaded.
 
@@ -18,21 +18,19 @@ Named patterns that read as AI-generated because they are clarity failures: each
 
 - **Contrastive formula** — "It's not just X; it's Y", "The question isn't X, it's Y", "Not a X. Not a Y. A Z." State Y directly. *Displacement partner:* **contrastive negation** — the telegraphic "no setup, no config, no hassle" cadence that appears once the formula is banned.
 - **Dramatic label reveal** — a noun-phrase label, a colon, a punchy clause: "The catch: nothing persists." Fold the label into the sentence. *Displacement partner:* the **copula dodge** — a colon replacing "is" to evade weak-verb rules ("The candidate mechanism: a hook on Bash"); its verb form is the same dodge one rung up — "serves as", "stands as", "marks", "represents", "boasts" where "is" or "has" is meant ("the hook serves as the gate" → "the hook is the gate").
-- **Mic-drop fragment** — "That's it. That's the whole thing.", "Simple, predictable, testable.", "Tools change. Principles don't." Complete sentences; state facts inline. *Displacement partner:* the verb-led contrastive sentence that appears once bare fragments are banned.
+- **Mic-drop fragment** — "That's it. That's the whole thing.", "Simple, predictable, testable.", "Tools change. Principles don't." — and its in-line cousin, the demonstrative kicker: a mid-paragraph "This" or "That" plus a verdict fragment ("This is the whole problem."). Complete sentences; name what "this" is and state the consequence as a fact. *Displacement partner:* the verb-led contrastive sentence that appears once bare fragments are banned.
 - **Fake-profound kicker** — the final "deep" line that turns the point into an aphorism or metaphor. Delete it — **do not rewrite it into a better metaphor, do not preserve the rhythm** — and end on the clearest concrete sentence already in the draft.
 - **Rhetorical self-answer** — "The result? Faster builds.", stacked rhetorical questions, "What if I told you…". State the point as a sentence.
 - **Count announcement** — "Three things to keep in mind:", "Two cautions." State the first point directly; if the count genuinely helps, use a bullet list instead of announcing the number in prose.
 - **Summary-recap ending** — "In conclusion", "Ultimately", "Overall", or a closing paragraph restating the piece. The reader was just there; end when the content ends.
-- **Heading restated below itself** — the first sentence under a heading saying the heading again ("## Install" / "This section explains how to install"). Start on the first fact; the heading already said what the section is.
-- **Demonstrative kicker** — a mid-paragraph "This" or "That" followed by a verdict fragment ("This is the whole problem.", "That matters.") — the mic-drop fragment's in-line cousin. Name what "this" is and state the consequence as a fact.
 - **Tricolon habit** — nearly every enumeration having exactly three items, "X, Y, and Z" as a drumbeat. Rewrite some with two or four; an occasional triple is ordinary English, the uniform pattern is the tell.
 
 ## Metadiscourse
 
 - **Interpretive metadiscourse** — prose stepping outside the subject to direct the reader: "The key point is", "As you can see", "This distinction matters", redundant "In other words". Cut; the emphasis must live in the facts.
-- **Throat-clearing opener** — "Here's the thing,", "Let me be clear,", "To be honest,". Cut and state the point.
+- **Throat-clearing opener** — "Here's the thing,", "Let me be clear,", "To be clear,", "To be honest,". Cut and state the point.
 - **Faux-insight setup** — "What most people miss", "Here's what nobody tells you", "The uncomfortable truth is". Cut the setup; the claim stands on its own or it doesn't.
-- **Structure announcement** — "Below you'll find", "This section covers", "Let's dive in", "Key takeaway:" bolded callouts. Delete; headings and front-loading already do this job.
+- **Structure announcement** — "Below you'll find", "This section covers", "Let's dive in", "Key takeaway:" bolded callouts, and the heading restated as the section's first sentence ("## Install" / "This section explains how to install"). Delete; headings and front-loading already do this job — start on the first fact.
 - **Sycophantic frame** — "Great question!", "I hope this helps", "Feel free to reach out", "Happy coding". Cut entirely; warmth lives in usefulness, not pleasantries.
 
 ## Dodged agency and sourcing
@@ -44,8 +42,7 @@ Named patterns that read as AI-generated because they are clarity failures: each
 - **Absolute inflation** — "cannot be overstated", "the single most important", "make no mistake", "has never been more critical". Verify the superlative or delete the intensity.
 - **Hedge stack** — "may potentially", "it's possible that … might", "should generally". One qualifier maximum, chosen deliberately; state the unknown as "unknown" instead of fogging every clause.
 - **Editorial scar tissue** — "A tempting approach would be X, but…" introducing an option no reader would have considered, rejecting it, and never mentioning it again: an old drafting idea left in the final text. Cut the rejected option unless a reader would actually reach for it.
-- **Shadowboxing** — answering an objection nobody raised: "This isn't mainly about X", "I'm not saying", "To be clear", "Don't get me wrong" with no source for the objection. Cut; keep an objection only where the text names who raised it or answers it in full.
-- **Figurative quantity** — "a sea of", "countless", "a handful" (when the count is known), "a fraction of" standing where a number could. Give the number or the honest range.
+- **Shadowboxing** — answering an objection nobody raised: "This isn't mainly about X", "I'm not saying", "Don't get me wrong" with no source for the objection. Cut; keep an objection only where the text names who raised it or answers it in full.
 - **Cleft explainer lead** — "What this means is", "The reason this works is that", "What happened was": a clause that points at the explanation instead of being it. Start on the explanation.
 - **Knowledge-cutoff residue** — "as of my last update", "while specific details are limited", "based on available information". Delete; state what is known and what was not checked.
 
@@ -59,11 +56,11 @@ Named patterns that read as AI-generated because they are clarity failures: each
 
 ## Formatting
 
-- **Em-dash habit** — budgeted, not banned: none in short copy, one or two in a long draft where they clearly beat commas or parentheses; delete clusters (the register table sets the outbound budget). *Displacement chain:* em dash → semicolon → colon — the punchy appended clause survives the ban by swapping its glyph; fix the clause, not the mark.
+- **Em-dash habit** — budgeted, not banned: none in short copy, one or two in a long draft where they clearly beat commas or parentheses; delete clusters; the outbound row bans them outright, and the global dash-sweep rule enforces it. *Displacement partner chain:* em dash → semicolon → colon — the punchy appended clause survives the ban by swapping its glyph; fix the clause, not the mark.
 - **Bold decoration** — bold sprinkled mid-sentence for emphasis, emoji in headings, "**Note:**" callouts. Bold names the subject a list item explains, nothing else; emphasis lives in word choice.
 - **Bullet overuse** — prose chopped into bullets where two sentences read better. Keep a list when items are genuinely parallel, short, or sequential steps; convert to prose when the bullets are full sentences in costume, carry inline bold headers, or exist to look organized.
 - **Heading title case** — "Everything You Need To Know". Sentence case, everywhere, including titles.
-- **Keyboard-unreachable glyphs** — `→`, `⇒`, `≠`, curly quotes, non-ASCII bullets in prose a person types by hand (an email, a commit body, a Teams message). Nobody reaches for them on a keyboard, so they read as generated (the em dash has its own entry under Em-dash habit). Plain ASCII: `->`, `!=`, straight quotes, `-` bullets.
+- **Keyboard-unreachable glyphs** — `→`, `⇒`, `≠`, non-ASCII bullets in prose a person types into a plain-text surface (a commit body, a chat message, a terminal). Nobody reaches for them on a keyboard, so they read as generated (the em dash has its own entry under Em-dash habit). Plain ASCII: `->`, `!=`, `-` bullets. Curly quotes are not a tell: Outlook, Word, and Teams convert them automatically, so human mail is full of them.
 - **Inline-header list** — "- **User experience:** significantly improved." — a bullet whose bold label repeats the pattern of its siblings. Either a real table or real prose.
 
 ## Commit and PR family
@@ -77,7 +74,7 @@ These fire in shipping prose — commit messages, PR bodies, review replies, clo
 - **Test enumeration** — "all 47 tests pass", "coverage: 92%". A commit body names what coverage changed, if anything; counts and percentages belong where they can carry the command and its verbatim output.
 - **Changelog headings** — "### Added" / "### Fixed" sections inside a commit or PR body. That is a changelog's format; a commit explains one change in prose.
 - **Shipping marketing** — "production-ready", "battle-tested", "enterprise-grade", "rock-solid", "carefully crafted". The slop-vocabulary list's shipping-flavored cousins; state what changed and what it now does.
-- **Bumped dependencies** — the body as the bump list: "Bumped lodash to 4.17.21, axios to 1.6.0, and updated the lockfile." The diff shows every version; the body says what changes for a caller and what was verified: "lodash 4.17.21 closes the prototype-pollution advisory; axios 1.6 changes the default timeout from none to 0, which our client already sets; suite green after each step."
+- **Bumped dependencies** — the body as the bump list: "Bumped fastjson to 3.2.1, httpkit to 2.0.0, and updated the lockfile." The diff shows every version; the body says what changes for a caller and what was verified: "fastjson 3.2.1 closes the advisory on nested-array parsing; httpkit 2.0 drops the implicit retry, which `ApiClient` now sets explicitly; suite green after each step." (Fictional packages on purpose — the catalog never states facts about real ones it has not checked.)
 - **Copy-pasted issue text** — the body is the ticket's text verbatim instead of the author's own account of the problem. Restate the cause and the fix in your words; link the ticket for the rest.
 
 ## Rate tells

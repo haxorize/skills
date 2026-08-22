@@ -18,7 +18,7 @@ When the micro-test runs against a skill that already ships, two extra rules kee
 
 ## Building pressure scenarios
 
-A scenario prompt carries the prior context a real session would have — the transcript before the ask, the files already open, the decisions already made — because a bare ask reproduces a bare-ask failure and nothing else. Prefer a captured real transcript over an authored one wherever one exists; a corpus that scores perfectly is a corpus smell, not a pass. A scenario where the shortcut and the discipline land the same diff cannot grade the rule — rebuild it until the two paths diverge in the output.
+A scenario prompt carries the prior context a real session would have — the transcript before the ask, the files already open, the decisions already made — because a bare ask reproduces a bare-ask failure and nothing else. Prefer a captured real transcript over an authored one wherever one exists; an *authored* corpus that scores perfectly on its first run was built to pass and is a corpus smell — a clean run on a corpus that has caught failures before is a pass (below). A scenario where the shortcut and the discipline land the same diff cannot grade the rule — rebuild it until the two paths diverge in the output.
 
 Combine **3+ pressures** — a single pressure rarely reproduces real-session failure:
 

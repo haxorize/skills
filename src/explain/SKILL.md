@@ -8,7 +8,7 @@ argument-hint: "[<topic>] — bare re-pitches the last answer; a topic explains 
 
 # Explain
 
-Run the `/writing-for-humans` skill now — if you did not just see a `Launching skill: writing-for-humans` line, stop and load it before re-pitching.
+Run the `/writing-for-humans` skill now — if you did not just see a `Launching skill: writing-for-humans` line, stop and load it before writing either branch.
 
 Wait — the human stopped following. Re-pitch what you were explaining: supply the piece of context they were missing, write in `writing-for-humans`' plain descriptive register, and use the ubiquitous language from `DOMAIN.md`. With no `DOMAIN.md`, the re-pitch still works — you drop only the vocabulary instruction.
 
@@ -18,4 +18,4 @@ How far back to re-pitch is your judgment — what lost them is usually bigger t
 
 ## `/explain <topic>` — cold
 
-Nothing has failed yet; the human wants the shape of a thing before they meet it — a module, a concept, a decision in the ADR log. Same register, same vocabulary, same smallest-view rule, and one difference in where it starts: with no failed pitch to read the missing premise from, open by naming what the topic is *for* in this project (the caller, the reader, the decision it serves), then the one view that carries its shape, then the two or three facts a person must hold to work with it. Stop there — a cold explanation that tries to be complete is the wall the re-pitch exists to take down. When the topic names something the repo holds, read it before explaining it; when it names nothing here, say so and explain the general thing.
+Nothing has failed yet; the human wants the shape of a thing before they meet it — a module, a concept, a decision in the ADR log. Same register, same vocabulary, same smallest-view rule, and one difference in where it starts: with no failed pitch to read the missing premise from, open by naming what the topic is *for* in this project (the caller, the reader, the decision it serves), then the one view that carries its shape, then the two or three facts a person must hold to work with it. Stop there — a cold explanation that tries to be complete is the wall the re-pitch exists to take down. When the topic names nothing the repo holds, say so and explain the general thing.

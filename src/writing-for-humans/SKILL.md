@@ -38,9 +38,9 @@ A row is admitted only with a named typist — the role that writes the artifact
 | Commit message, PR body, review reply, closing comment | A maintainer recording a decision for another maintainer: impersonal, matter-of-fact ("Previously, …", "This caused …"); imperative only in the subject line; first person only for an actual decision or open question. The catalog's commit-and-PR family fires here |
 | Meeting notes (whoever posts the recap) | Decided separated from discussed; an action is an owner plus a date or is flagged unassigned or undated — the writer never fills either in; commitments and load-bearing statements verbatim, with a paraphrase marked as the writer's reading |
 | Weekly status note to a manager (any engineer, weekly) | Progress, not activity; every next step dated or marked undated; opens with what last week's note said would happen and whether it did |
-| Outbound as the user — email, Teams message, memo, proposal | The user's own voice and register: a writing sample the user supplies (a prior email, a Teams thread) overrides every default in this row — read it first and match its sentence length, openers, and punctuation. No Markdown syntax in an email or Teams body (asterisks and pound signs render as symbols, and read as pasted). **No em dashes, none** — the one default no sample overrides. Sweep the full tell catalog at maximum strictness — the stake is authorship perception, not just clarity |
+| Outbound as the user — email, Teams message, memo, proposal | The user's own voice and register: a writing sample the user supplies (a prior email, a Teams thread) sets the voice — read it first and match its sentence length, openers, and punctuation. No Markdown syntax in an email or Teams body (asterisks and pound signs render as symbols, and read as pasted). **No em dashes, none.** Sweep the full tell catalog at maximum strictness — the stake is authorship perception, not just clarity |
 
-**The dash sweep** is the mandatory last step on an outbound draft — one grep over the written draft, every hit quoted, any hit a rewrite of the clause (the catalog's displacement chain) and a second search. The global rule `~/.claude/rules/outbound-dash-sweep.md` owns the pattern and fires with no skill loaded; this skill cites it rather than restating it.
+**The dash sweep** is the mandatory last step on an outbound draft; the global rule `~/.claude/rules/outbound-dash-sweep.md` owns it and fires with no skill loaded.
 
 This discipline deletes persuasion by design. Marketing, brand, and campaign copy are out of scope — say so and offer to apply it to the factual parts only.
 
@@ -49,7 +49,7 @@ This discipline deletes persuasion by design. Marketing, brand, and campaign cop
 - **Front-load.** The most important sentence comes first — in the document, in each paragraph, in each heading. Headings are descriptive and verb-first where they name an action; never questions, never clever labels ("Applicable legal constraints", not "Legal requirements as a floor").
 - **One term per concept.** Pick the word and reuse it — "check" every time, never rotated with "verify" and "confirm"; synonyms imply the things differ. Domain terms never vary; common verbs may repeat freely; `DOMAIN.md` is the project's approved vocabulary.
 - **The press-release test.** If a sentence could move unchanged into any company's press release, it carries no fact — cut it, or replace it with the fact, number, mechanism, or consequence specific to this subject.
-- **Vague quantifiers become questions.** "Many", "significant", "improved" each demand their number: how many, by how much. Answer from evidence you have; **never invent the number — ask.**
+- **Vague quantifiers become questions.** "Many", "significant", "improved", "countless", "a handful" (when the count is known) each demand their number: how many, by how much. Answer from evidence you have; **never invent the number — ask.**
 - **A number carries its method.** A precise figure with no sample, window, or measurement behind it reads as precision it has not earned — "94% of runs" needs the run count and the period, or it becomes "most runs". State the method beside the number, or write the honest imprecise version.
 - **Durable docs carry no clock.** "Currently", "recently", "soon", "for now", "the new endpoint", "at the time of writing" date a sentence to the day it was typed and read as wrong the day after. State what is true without the temporal frame; where a change is the point, tie it to the version or date that carries it.
 - **A deliverable ships bare.** When the output *is* the artifact — a drafted message, a release note, a summary someone will paste onward — it arrives with nothing wrapped around it: no "Here's the draft", no note on the approach taken, no closing offer to revise. The wrapper makes the reader dig the artifact out, and it travels with the artifact into wherever it lands next.
@@ -77,7 +77,7 @@ Either mode: if the text already complies, say so and stop — don't churn compl
 
 ## Long documents
 
-A document longer than a few screens is written per section with a resume pointer, and a truncated write is discarded rather than shown — the global large-write rule (`~/.claude/rules/large-write-chunking.md`) owns the procedure; this skill cites it rather than restating it.
+A document longer than a few screens is written the way the global large-write rule (`~/.claude/rules/large-write-chunking.md`) prescribes.
 
 ## Error messages
 

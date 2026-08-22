@@ -37,7 +37,7 @@ The route most work travels: **`/grill-me`** → **`/to-feature` / `/to-story` /
 
 ### First contact
 
-- **`onboard-repo`** — Wire a repo for the suite in one sitting: `Issue tracker:` and `Landing:` blocks, loop commands, convention-skill roles, and the `DOMAIN.md` / `docs/adr/` / `docs/solutions/` seeds, each written only where nothing exists yet. Prints the hook snippet; never edits `settings.json`.
+- **`onboard-repo`** — Wire a repo for the suite in one sitting: the `Issue tracker:`, `Landing:`, and `## Registry` blocks, loop commands, convention-skill roles, and the `DOMAIN.md` / `docs/solutions/` seeds, each written only where nothing exists yet. Prints the hook snippet; never edits `settings.json`.
 
 ### Implementation
 
@@ -57,7 +57,7 @@ The route most work travels: **`/grill-me`** → **`/to-feature` / `/to-story` /
 
 ### Dependencies
 
-- **`upgrade-deps`** — Upgrade dependencies in the safe order — security-flagged first, each major its own step with the changelog read and the suite run between, then the minor/patch batch — with a per-package supply-chain audit (maintainers, publish age, provenance, tarball diff, licence) before anything touches the lockfile. npm, pip/uv, and NuGet.
+- **`upgrade-deps`** — Upgrade dependencies in the safe order — security-flagged first, each major its own step with the changelog read and the suite run between, then the minor/patch batch — with a per-package supply-chain audit (publisher, publish age, provenance, tarball diff, licence) before anything touches the lockfile. npm, pip/uv, and NuGet.
 
 ### Codebase health
 
@@ -130,7 +130,7 @@ The route most work travels: **`/grill-me`** → **`/to-feature` / `/to-story` /
 
 ## Repo-local skills
 
-`.claude/skills/` holds two skills that run only inside this repo and are never hoisted: **`mine-skills`** (the mining-round opener — clone, scan, inventory, read under the standing lenses, write the ledger rows a grill ratifies) and **`sweep-corpus`** (the scheduled health sweep — lint, `verify-docs` over README, router, and `DOMAIN.md`, the cross-reference check — report-only against an additive baseline). They live outside `src/` because they name this repo's paths and procedure; `scripts/lint-skills.sh` does not scan them, and the router does not route to them.
+`.claude/skills/` holds two skills that run only inside this repo and are never hoisted: **`mine-skills`** (the mining-round opener — clone, scan, inventory, read under the standing lenses, write the ledger rows a grill ratifies) and **`sweep-corpus`** (the scheduled health sweep — lint, the cross-reference and router checks, and the three `/verify-docs` lines printed for the human, since one user-invoked skill never runs another — report-only against an additive `docs/health/open-findings.md`). They live outside `src/` because they name this repo's paths and procedure; `scripts/lint-skills.sh` does not scan them, and the router does not route to them.
 
 ## Conventions
 
@@ -138,6 +138,8 @@ The route most work travels: **`/grill-me`** → **`/to-feature` / `/to-story` /
 - **ADRs** live in `docs/adr/<NNNN>-<slug>.md` per repo. Numbering: increment past the highest number in the working tree *or* anywhere in git history, whichever is higher — gaps are cosmetic, duplicates are not.
 - **Learning docs** live in `docs/solutions/<slug>.md` per repo — solved problems with symptom-keyed frontmatter, captured by `capturing-learnings`. The store is created lazily; new captures land flat at the root, and subdirectories from other tooling are tolerated.
 - **Tracker dispatch** is declared per-repo in `CLAUDE.md` under an `Issue tracker:` block. Supports GitHub (`gh`) and Azure DevOps (`az boards`). Hierarchy (`Hierarchy: required|optional`) controls whether the publishing skills enforce a `--parent` argument. ADO defaults to `required` (Epic → Feature → User Story → Task); GitHub defaults to `optional`.
+- **Registry block** — a package-curation policy is declared per-repo in `CLAUDE.md` under `## Registry`, written by `onboard-repo` and read by `upgrade-deps`: `Minimum release age:` (the proxy's floor, in days) and any other curation line. The number is the org's and lives only here.
+- **Deferred bumps** live in `docs/deps-deferred.md` per repo, one line each — `<package> <from> → <to>: <reason>; review by <date>` — written by `upgrade-deps` at close and read back by its next run.
 - **Landing key** — the landing policy is declared per-repo in `CLAUDE.md` under a `Landing:` block, read by `committing` and `ship` before any outward act. Five lines: `Branch policy:` (`trunk` or `branch-per-ticket`, with a naming pattern where the repo has one), `PR required:` (`yes`/`no`), `Push pre-authorised:` (`yes`/`no`), `Ticket close pre-authorised:` (`yes`/`no`), and `Defect policy:` (default `fix, don't file` — defects found mid-work are fixed in place or parked, and filed as tickets only by `to-bug` on the user's ask). An act the block pre-authorises proceeds on the ask that started the work; every other outward act asks first. No block means nothing is pre-authorised.
 - **Sibling repos** declared in `CLAUDE.md` under `## Sibling repos` so `to-tasks` can flag cross-repo blockers.
 - **Title prefixes** are declared in the `Issue tracker:` block. `Title prefix:` applies to Stories, Tasks, and Bugs. Features use `Feature title prefix:` if declared, falling back to `Title prefix:` if absent — allowing teams to give features a distinct prefix from the tickets below them.
