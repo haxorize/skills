@@ -7,7 +7,7 @@ to prove a check stays quiet on a form it is supposed to exempt.
 This file doubles as the fixture's README-coverage target, so the roster check has
 something to read: `which-skill`, `broken-links`, `undeclared-dep`, `unused-dep`, `quoted-dep`, `fixture-discipline`.
 
-`global/rules/` holds three rule fixtures for the `Depends:` admission check: one with no line, one naming a skill that does not exist, and one well-formed rule that must stay quiet.
+`global/rules/` holds four rule fixtures for the `Depends:` admission check: one with no line, one naming a skill that does not exist, one naming a skill (`quoted-dep`) that never cites it, and one well-formed rule that must stay quiet — `broken-links` cites it by stem.
 
 `src/undeclared-dep/` invokes `fixture-discipline` by slash form without declaring it; `src/quoted-dep/` mentions it only in a quoted string, an arrow-parenthesised aside, and a fenced block, and must stay quiet; `src/unused-dep/` declares it and never names it.
 

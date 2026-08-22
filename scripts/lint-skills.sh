@@ -85,7 +85,10 @@
 #   - Global rules (ADR-0053): every global/rules/*.md carries a `Depends:`
 #     line naming at least one existing skill under src/ — the admission rule
 #     in global/README.md (only rules a skill depends on). A rule with no
-#     resolvable dependant has lost its reason to load on every turn. The
+#     resolvable dependant has lost its reason to load on every turn. Each
+#     named dependant must also cite the rule somewhere under src/<dep>/ —
+#     the literal `~/.claude/rules/` or the rule's filename stem — so the
+#     Depends: line and the skill body agree on who leans on whom. The
 #     200-line cap and the ADR-citation ban above also run over global/rules/,
 #     since those files are hoisted into ~/.claude/rules/ the same way skills
 #     are hoisted.
@@ -437,9 +440,17 @@ for f in global/rules/*.md; do
   fi
   deps=$(printf '%s' "${dep_line#Depends:}" | tr -d '`' | tr ',' ' ')
   resolved=0
+  stem=$(basename "$f" .md)
   for dep in $deps; do
     if [ -f "src/$dep/SKILL.md" ]; then
       resolved=$((resolved + 1))
+      # Citation: a dependant that never names the rule is a dependency on
+      # paper only. Either the rules directory or the rule's filename stem
+      # (`large-write-chunking`, with or without `.md`) satisfies it.
+      if ! grep -rqF -e '~/.claude/rules/' -e "$stem" "src/$dep"; then
+        echo "FAIL: $f Depends: names '$dep' but src/$dep/ never cites the rule — mention '~/.claude/rules/' or '$stem' where the skill leans on it, or drop the name"
+        fail=1
+      fi
     else
       echo "FAIL: $f Depends: names '$dep' but src/$dep/SKILL.md does not exist — names are bare or backticked slugs, comma-separated; fix the name or drop it"
       fail=1

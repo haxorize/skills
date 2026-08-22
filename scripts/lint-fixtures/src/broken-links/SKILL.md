@@ -20,6 +20,9 @@ quietly greener lint run.
 
 A resolvable link is not a finding: [real reference](references/real-reference.md)
 
+A dependant of a global rule that cites it by stem is not a finding either: the global
+`well-formed` rule.
+
 Backtick spans hold deliberate placeholders, so none of these three may be flagged — the
 one-backtick, two-backtick, and inner-backtick forms each broke a previous version of the
 extractor:

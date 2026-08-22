@@ -14,8 +14,8 @@
 # Covered here: reference-link resolution (both directions, including the
 # backtick-span and fenced-block exemptions), the ADR-citation ban, the
 # description's unquoted ': ' and ' #', load-gate placement, and the global-rules
-# Depends: admission check (missing line, dangling name, and the well-formed
-# form that must stay quiet). NOT covered, so a clean
+# Depends: admission check (missing line, dangling name, a dependant that never
+# cites the rule, and the well-formed form that must stay quiet). NOT covered, so a clean
 # run here is not a claim about them: the 200-line caps, sibling byte-identity
 # (skipped under LINT_ROOT — the registry names this repo's own paths),
 # description length, angle brackets, name/directory agreement, the
@@ -67,6 +67,7 @@ expect "description hash" "description has unquoted ' #'"
 expect "load-gate placement" "carries a load gate ('Launching skill'"
 expect "global-rule Depends (missing)" "global/rules/no-depends.md has no 'Depends:' line"
 expect "global-rule Depends (dangling)" "global/rules/dangling-depends.md Depends: names 'no-such-skill'"
+expect "global-rule Depends (uncited)" "global/rules/uncited-depends.md Depends: names 'quoted-dep' but src/quoted-dep/ never cites the rule"
 expect "two-way requires (undeclared)" "src/undeclared-dep/SKILL.md invokes \`/fixture-discipline\` but its requires: line does not declare"
 expect "two-way requires (unused)" "src/unused-dep/SKILL.md declares requires: 'fixture-discipline' but the body never names it"
 
