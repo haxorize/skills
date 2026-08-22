@@ -16,7 +16,7 @@
 #     `tracker-resolution.md`, and the other sibling groups below) across the
 #     skills that need them; ADR-0007 records this with mitigation
 #     "editorial discipline." This check turns the discipline into mechanism.
-#   - Declared dependencies (ADR-0016): an orchestrator names the behaviors it
+#   - Declared dependencies (ADR-0016): an orchestrator names the disciplines it
 #     needs in a frontmatter `requires:` line (comma-separated skill names).
 #     Each named dep must exist as a skill AND be model-invoked — prose
 #     invocation can only reach model-invoked skills, so a user-invoked dep

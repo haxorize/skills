@@ -14,7 +14,7 @@ When the ask names a tier a publisher owns — "file a story", "create a feature
 
 Say what ad-hoc drafting would skip — parent reconciliation against the story map, `Covers:` wiring, tags, the per-tier template, update modes — and wait. A published lookalike is worse than nothing: it looks done, and the pipeline's bookkeeping never hears about it.
 
-Ad-hoc drafting is the right path when the repo has no pipeline, the item targets someone else's repo, or the user declines the publisher. Every rule below still binds there — including that the parent question ("what does this hang under?") is answered or explicitly scoped out, never skipped. Ad-hoc prose also follows the `/writing-for-humans` behavior — load it at the first write if it isn't already live (under a publisher, the publisher has already run it).
+Ad-hoc drafting is the right path when the repo has no pipeline, the item targets someone else's repo, or the user declines the publisher. Every rule below still binds there — including that the parent question ("what does this hang under?") is answered or explicitly scoped out, never skipped. Ad-hoc prose also follows the `/writing-for-humans` discipline — load it at the first write if it isn't already live (under a publisher, the publisher has already run it).
 
 ## The goal
 

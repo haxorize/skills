@@ -7,12 +7,12 @@ requires: writing-for-agents
 
 # Writing Skills
 
-Skills wrangle determinism out of a stochastic system. The goal is **predictability** — the agent taking the same *process* every run. The prose conventions serving it — information hierarchy, pruning, style, the deep vocabulary and form-to-failure table — govern every agent-consumed document, and live in the `writing-for-agents` behavior: run the `/writing-for-agents` skill now; if you don't see a `Launching skill: writing-for-agents` line, stop and load it before drafting. This file is the operational guide for the skill *package* — classification, structure, description, testing.
+Skills wrangle determinism out of a stochastic system. The goal is **predictability** — the agent taking the same *process* every run. The prose conventions serving it — information hierarchy, pruning, style, the deep vocabulary and form-to-failure table — govern every agent-consumed document, and live in the `writing-for-agents` discipline: run the `/writing-for-agents` skill now; if you don't see a `Launching skill: writing-for-agents` line, stop and load it before drafting. This file is the operational guide for the skill *package* — classification, structure, description, testing.
 
 ## Workflow
 
 1. **Gather requirements** — what domain, what use cases, any reference material?
-2. **Classify the skill** — behavior or orchestrator? Model-invoked or user-invoked? (See *Invocation axis* — decide this first; it shapes the description and the body.)
+2. **Classify the skill** — discipline or orchestrator? Model-invoked or user-invoked? (See *Invocation axis* — decide this first; it shapes the description and the body.)
 3. **Draft the skill** — `SKILL.md` with references if needed
 4. **Pressure-test if it carries a discipline** — when the skill encodes a rule the agent might rationalize around under pressure (an iron law, a gate, a prohibition — not a format doc, template, or router), run the micro-test loop in [references/testing-skills.md](references/testing-skills.md) before shipping — and offer that reference's wind tunnel when the skill runs a conversation with a person or keeps an artifact across turns
 5. **Review with user** — present draft, iterate
@@ -28,16 +28,16 @@ Pick model-invocation only when the agent must reach the skill on its own, or an
 
 A user-invoked skill also handles the ask it *didn't* get: when the invocation bundles a second intent outside the skill's job ("...and also fix the flaky test"), the skill does its own job, then names the deferred intent visibly — and the skill or route that owns it — without executing it. Silently doing it is scope creep; silently dropping it loses the user's ask.
 
-### Behavior vs orchestrator, and declared dependencies
+### Discipline vs orchestrator, and declared dependencies
 
 An **orchestrator** (user-invoked) drives a workflow and delegates reusable discipline to **behaviors** (model-invoked) via prose. Cross-skill invocation is soft — there is no hard primitive; the model reads the body and decides to call the `Skill` tool, so a dep can silently fail to load. Phrase every reference with **two independent signals**:
 
-- **Slash vs backtick — *is this invoked?*** Use the slash form ("Run the `/feedback-loops` skill") whenever a reference actually fires the `Skill` tool or names a command the human will type: a load-bearing delegation (`implement` → `/tdd`), a model-invoked skill's own soft delegation (`tdd` → `/feedback-loops`), or a human suggestion of a user-invoked skill (`to-story` → "run `/grill-me` first"). Keep the light backtick form where nothing fires: borrowed **vocabulary** ("a `codebase-design` problem"), a **boundary** ("recording is `adr`'s job"), or a **gated offer** you must not fire before the user consents (`implement` offers `adr`). Slashing a mere mention trains a spurious load; slashing an offer jumps the gun. The noun after the slash tracks the same split: "Run the `/X` **skill**" for imperative loads, "follows the `/X` **behavior**" for soft delegation to a model-invoked behavior.
-- **Load gate vs none — *must I verify it loaded?*** Add the gate ("if you don't see a `Launching skill: X` line, stop and load it") **only** to a load-bearing delegation — the behavior carries the caller's whole job (`grill-me` → `grilling`) — **in a user-invoked orchestrator**, where the human who typed the command watches the load line. Never gate inside a model-invoked skill (no watcher — a miss must degrade gracefully, so slash but don't gate), a human suggestion (the model can't invoke a user-invoked skill — its description is hidden), or a built-in command (`/code-review`, `/simplify` — always installed, no `requires:`).
+- **Slash vs backtick — *is this invoked?*** Use the slash form ("Run the `/feedback-loops` skill") whenever a reference actually fires the `Skill` tool or names a command the human will type: a load-bearing delegation (`implement` → `/tdd`), a model-invoked skill's own soft delegation (`tdd` → `/feedback-loops`), or a human suggestion of a user-invoked skill (`to-story` → "run `/grill-me` first"). Keep the light backtick form where nothing fires: borrowed **vocabulary** ("a `codebase-design` problem"), a **boundary** ("recording is `adr`'s job"), or a **gated offer** you must not fire before the user consents (`implement` offers `adr`). Slashing a mere mention trains a spurious load; slashing an offer jumps the gun. The noun after the slash tracks the same split: "Run the `/X` **skill**" for imperative loads, "follows the `/X` **discipline**" for soft delegation to a model-invoked Discipline skill.
+- **Load gate vs none — *must I verify it loaded?*** Add the gate ("if you don't see a `Launching skill: X` line, stop and load it") **only** to a load-bearing delegation — the discipline carries the caller's whole job (`grill-me` → `grilling`) — **in a user-invoked orchestrator**, where the human who typed the command watches the load line. Never gate inside a model-invoked skill (no watcher — a miss must degrade gracefully, so slash but don't gate), a human suggestion (the model can't invoke a user-invoked skill — its description is hidden), or a built-in command (`/code-review`, `/simplify` — always installed, no `requires:`).
 
 So slash tracks *invoked*, the gate tracks *verified*. A model-invoked skill's `requires:` deps stay ungated (and usually opportunistic — an auto-reached chain has no watcher).
 
-Extract a behavior only where a **real second consumer** exists (the Extraction test) — reuse is the reason to extract, not a guess that it might be reused. When an orchestrator depends on a behavior, declare it in a frontmatter `requires:` line (comma-separated skill names); `scripts/install.sh` resolves and links those deps, and lint checks each named dep exists and is model-invoked. Inert *format* docs (a glossary format, a template) are not behaviors — they stay sibling reference files (see *Sharing a reference across skills*).
+Extract a discipline only where a **real second consumer** exists (the Extraction test) — reuse is the reason to extract, not a guess that it might be reused. When an orchestrator depends on a discipline, declare it in a frontmatter `requires:` line (comma-separated skill names); `scripts/install.sh` resolves and links those deps, and lint checks each named dep exists and is model-invoked. Inert *format* docs (a glossary format, a template) are not disciplines — they stay sibling reference files (see *Sharing a reference across skills*).
 
 ## Skill structure
 
@@ -66,7 +66,7 @@ When a skill's process spans sessions or builds an artifact item by item, the fi
 name: skill-name
 description: <model-facing with triggers, OR human-facing one-liner if user-invoked>
 # disable-model-invocation: true   # add for user-invoked skills
-# requires: behavior-a, behavior-b # add when an orchestrator declares behavior deps
+# requires: discipline-a, discipline-b # add when an orchestrator declares discipline deps
 ---
 
 # Skill Name
@@ -107,7 +107,7 @@ The description is the skill's top-level **context pointer** — its wording dec
 
 ## Sharing a reference across skills
 
-When two skills need the same *inert* doc (a format, a template), don't reach for a repo-root shared folder or a symlink between skills — skills install individually, so anything outside a skill's own `references/` doesn't travel with it. Duplicate the file byte-identically into each skill's `references/`, and register the group in `scripts/lint-skills.sh` (`sibling_groups`) so drift fails lint. The duplication tax only stays bounded for short, stable docs. (Reusable *behavior* is the other case — that becomes a model-invoked skill reached via `requires:`, not a duplicated file.)
+When two skills need the same *inert* doc (a format, a template), don't reach for a repo-root shared folder or a symlink between skills — skills install individually, so anything outside a skill's own `references/` doesn't travel with it. Duplicate the file byte-identically into each skill's `references/`, and register the group in `scripts/lint-skills.sh` (`sibling_groups`) so drift fails lint. The duplication tax only stays bounded for short, stable docs. (Reusable *discipline* is the other case — that becomes a model-invoked skill reached via `requires:`, not a duplicated file.)
 
 ## Skill bodies don't cite repo ADRs
 
@@ -120,7 +120,7 @@ Frontmatter parses as strict YAML. The hazard is an unquoted `: ` (colon **follo
 ## Review checklist
 
 - [ ] Invocation kind chosen deliberately; description matches it (triggers for model-invoked, human-facing one-liner for user-invoked)
-- [ ] Behaviors declared via `requires:`; extraction backed by a real second consumer
+- [ ] Disciplines declared via `requires:`; extraction backed by a real second consumer
 - [ ] Cross-skill references carry both signals — slash form on anything that actually fires (load-bearing delegations and a model-invoked skill's soft `requires:` delegations alike); load gate only on load-bearing delegations inside user-invoked orchestrators; bare backticks for vocabulary, boundaries, and gated offers
 - [ ] SKILL.md ≤200 lines; each reference ≤200 lines; one line per paragraph/bullet (no mid-paragraph hard wraps)
 - [ ] Escalated wording (hard prohibitions) justified by an observed pressure-failure; no nuance or exemption clauses anywhere

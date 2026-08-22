@@ -62,7 +62,7 @@ Most slices won't clear the gate; don't manufacture an ADR for an obvious or eas
 
 If the user runs `review-changes`, the findings are acted on in `/address-findings`' one pass (it runs `feedback-loops` after its last fix); a finding that pass cannot fix is a deferral the user ratifies there, never a follow-up this slice files on its own.
 
-Once the slice is reviewed and findings are addressed, it lands: a one-commit change through the `committing` behavior on the user's ask, a change that needs a split or a PR through `/ship` — suggest it, don't invoke it: "Green and reviewed — `/ship` from here."
+Once the slice is reviewed and findings are addressed, it lands: a one-commit change through the `committing` discipline on the user's ask, a change that needs a split or a PR through `/ship` — suggest it, don't invoke it: "Green and reviewed — `/ship` from here."
 
 ## Notes
 

@@ -72,7 +72,7 @@ Before showing the user, check:
 - **Severity matches scope.** Critical is reserved for outage / data loss / security; cosmetic isn't High.
 - **Domain language matches `DOMAIN.md`.**
 
-Then run the **Cold-reader pass** from the `/work-item-shape` behavior: the cold reader gets only the drafted body and answers "what's broken, and how do I reproduce it?".
+Then run the **Cold-reader pass** from the `/work-item-shape` discipline: the cold reader gets only the drafted body and answers "what's broken, and how do I reproduce it?".
 
 ### 7. Public-repo warning (GitHub only)
 

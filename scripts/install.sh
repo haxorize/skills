@@ -7,10 +7,10 @@ GLOBAL_DIR="$(cd "$(dirname "$0")/../global" && pwd)"
 RULES_TARGET="${HOME}/.claude/rules"
 mkdir -p "$TARGET_DIR"
 
-# Read a skill's declared behavior dependencies from its frontmatter `requires:`
+# Read a skill's declared discipline dependencies from its frontmatter `requires:`
 # line (comma-separated skill names). ADR-0016: an orchestrator's portable unit
-# is the skill plus the model-invoked behaviors it declares, so linking a skill
-# links those behaviors too — a behavior reached by prose invocation only works
+# is the skill plus the model-invoked disciplines it declares, so linking a skill
+# links those disciplines too — a discipline reached by prose invocation only works
 # if it is also installed.
 read_requires() {
   awk '
@@ -60,7 +60,7 @@ link_skill() {
     ln -s "$skill" "$target"
     echo "link  $name"
   fi
-  # Resolve declared behavior dependencies. Only descend into deps that aren't
+  # Resolve declared discipline dependencies. Only descend into deps that aren't
   # already present, which also guards against cycles.
   for dep in $(read_requires "$skill"); do
     if [ ! -L "$TARGET_DIR/$dep" ] && [ ! -e "$TARGET_DIR/$dep" ]; then

@@ -50,7 +50,7 @@ Ask the user to confirm or refine each. Drop rejected candidates without arguing
 
 ### 6. Write approved ADRs
 
-Number and save each approved ADR per [references/adr-format.md](references/adr-format.md), in chronological order of the underlying decisions. Rationale prose follows the `/writing-for-humans` behavior's ADR-rationale register — load it at the first write if it isn't already live.
+Number and save each approved ADR per [references/adr-format.md](references/adr-format.md), in chronological order of the underlying decisions. Rationale prose follows the `/writing-for-humans` discipline's ADR-rationale register — load it at the first write if it isn't already live.
 
 ### 7. Stop
 

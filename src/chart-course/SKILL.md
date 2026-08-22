@@ -25,7 +25,7 @@ The map is an **index**, not a store: a decision lives in exactly one place — 
 
 ## Decision tickets
 
-Each ticket is a **Decision ticket** — the Charting sub-type, a child of the map. ADO: a User Story under the map Feature; GitHub: a native sub-issue (see [references/github-sub-issues.md](references/github-sub-issues.md)). The body leads with `## Question`, carries its `Chart-type:` line, and is sized to one agent session. Decision-ticket bodies follow chart-format, not the `work-item-shape` behavior's goal/AC rules — a Chart ticket is a question, not a deliverable.
+Each ticket is a **Decision ticket** — the Charting sub-type, a child of the map. ADO: a User Story under the map Feature; GitHub: a native sub-issue (see [references/github-sub-issues.md](references/github-sub-issues.md)). The body leads with `## Question`, carries its `Chart-type:` line, and is sized to one agent session. Decision-ticket bodies follow chart-format, not the `work-item-shape` discipline's goal/AC rules — a Chart ticket is a question, not a deliverable.
 
 - **Title marker (ADO):** every drafted title bakes in `Chart: ` so nobody scanning a board mistakes a question for a build-ready Story — mechanics in [references/chart-format.md](references/chart-format.md). On GitHub the labels carry this; skip the marker.
 - **Claim by assignment.** Before any work, assign the ticket to whoever is driving it. Assignment *is* the claim: an open, unassigned ticket is unclaimed, and concurrent sessions skip claimed ones.

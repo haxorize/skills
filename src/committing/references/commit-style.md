@@ -36,4 +36,4 @@ A routine PR description is the commit body, then the ticket and issue reference
 
 ## Register
 
-The prose register — a maintainer recording a decision for another maintainer — and the commit-and-PR tells belong to the `writing-for-humans` behavior: its register table carries the row, its tell catalog the family.
+The prose register — a maintainer recording a decision for another maintainer — and the commit-and-PR tells belong to the `writing-for-humans` discipline: its register table carries the row, its tell catalog the family.

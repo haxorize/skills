@@ -55,7 +55,7 @@ Tick only what the audit evidenced. A checked box is a claim like any other.
 
 ## The closing comment
 
-It states: what landed, with the commit SHAs or the PR link; the change's status, every claim checked per the rule above; the remainder, anything deliberately not done or descoped, named plainly rather than left to be discovered; and a closure claim made only after re-reading the ticket's actual state. A closing comment that only says "done" fails every element at once. Register and wording follow the `/writing-for-humans` behavior; the subject and body shape follow [references/commit-style.md](references/commit-style.md).
+It states: what landed, with the commit SHAs or the PR link; the change's status, every claim checked per the rule above; the remainder, anything deliberately not done or descoped, named plainly rather than left to be discovered; and a closure claim made only after re-reading the ticket's actual state. A closing comment that only says "done" fails every element at once. Register and wording follow the `/writing-for-humans` discipline; the subject and body shape follow [references/commit-style.md](references/commit-style.md).
 
 ## The one-commit fast path
 

@@ -8,7 +8,7 @@ argument-hint: "[path to a review report — default: the newest for this repo]"
 
 # Address Findings
 
-One pass over a review report: every finding gets a disposition, nothing is deferred silently, and the pass ends with a ledger rather than another review. The judgment per finding — verify the claim, route by what it indicts, push back with reasons, when to stop — is the `receiving-review` behavior's (if you don't see a `Launching skill: receiving-review` line, load it first); this skill owns the pass and the table.
+One pass over a review report: every finding gets a disposition, nothing is deferred silently, and the pass ends with a ledger rather than another review. The judgment per finding — verify the claim, route by what it indicts, push back with reasons, when to stop — is the `receiving-review` discipline's (if you don't see a `Launching skill: receiving-review` line, load it first); this skill owns the pass and the table.
 
 ## 1. Resolve the report
 
@@ -57,6 +57,6 @@ Re-measure the count at write time — `grep -oE '\bF[0-9]+\b' <report> | sort -
 
 ## After the pass
 
-Stop. Landing is the `committing` behavior's, on the user's ask. When the findings arrived as PR review threads, `receiving-review`'s reply contract runs after the commit is on the remote, not before.
+Stop. Landing is the `committing` discipline's, on the user's ask. When the findings arrived as PR review threads, `receiving-review`'s reply contract runs after the commit is on the remote, not before.
 
 **Guard.** This skill never runs `review-changes` and never starts a second pass unasked. It owns the pass and the table; `receiving-review` owns the verdict per finding and the rules this body points at rather than restates.

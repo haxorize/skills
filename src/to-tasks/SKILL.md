@@ -85,7 +85,7 @@ Before publishing, check:
 - **Domain language matches `DOMAIN.md`**
 - **No placeholders** — none of the literal kind (TBD/TODO) and none of the disguised kind: "add appropriate error handling", "write tests for the above", "similar to Task N" are placeholders wearing prose; each hides a decision the implementer will have to invent
 
-Then run the **Cold-reader pass** from the `/work-item-shape` behavior: the cold reader gets only the drafted Tasks plus the parent Story spec and answers, per Task, "what would you build?".
+Then run the **Cold-reader pass** from the `/work-item-shape` discipline: the cold reader gets only the drafted Tasks plus the parent Story spec and answers, per Task, "what would you build?".
 
 ### 8. Publish in dependency order
 

@@ -55,7 +55,7 @@ When a reviewer wants something "implemented properly" (a fuller endpoint, more 
 
 ## Replying on the review's own threads
 
-When the findings arrived as PR review comments, every comment gets an outcome reply — no silent ignores; an unanswered thread reads as a finding dropped, to humans and to the bots that re-raise it. Replies are outbound tracker prose: the `/writing-for-humans` behavior's commit-and-PR register applies, and every claim in a reply is governed by the global evidence rule (`~/.claude/rules/evidence.md`).
+When the findings arrived as PR review comments, every comment gets an outcome reply — no silent ignores; an unanswered thread reads as a finding dropped, to humans and to the bots that re-raise it. Replies are outbound tracker prose: the `/writing-for-humans` discipline's commit-and-PR register applies, and every claim in a reply is governed by the global evidence rule (`~/.claude/rules/evidence.md`).
 
 Enumerate the open threads by command before the sweep, and re-run the same command after it — "every thread answered" is a claim, and the list it was checked against is its evidence (GitHub: `gh api graphql` over `reviewThreads { isResolved isOutdated comments }`, since the REST comment list cannot show resolved state; ADO: `az repos pr` has no thread subcommand, so use the REST route — `az devops invoke --area git --resource pullRequestThreads --route-parameters project=<project> repositoryId=<repo-id> pullRequestId=<n> --api-version 7.1 --query 'value[?status!=`closed` && status!=`fixed`]'`).
 
