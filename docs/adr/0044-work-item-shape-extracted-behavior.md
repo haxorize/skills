@@ -19,3 +19,7 @@ The contested calls:
 - **Publication constraints:** one deliberate softening — a stable invocation surface (a script name, CLI command, or endpoint) may now be named in a verification clause; those are contracts, not the internals the drift argument protects, and a checkable criterion needs a nameable check (armory's "unless the file identity itself is the contract" exception, adopted narrowly). Internal field, type, and file names stay banned everywhere. This amends ADR-0014's blanket rule; that record carries the matching pointer.
 
 Rejected: armory's `.out-of-scope/` rejection ledger (covered — ADR rejections are decisions, and chart-course Charts carry out-of-scope rulings); define-goal's ask-a-question branch (the publishers stay synthesis-only and interviewing stays the grill's job — only its repair survives, as the binary-validator fallback); the spec-quality rubric (a negated mirror of the rules, no mechanism); and every time-based sizing figure (the three sources disagree — 1–4 hours, 1–2 days, 1–3 days — which is the tell that hours were never the invariant; the structural tests are).
+
+## Amendments
+
+- **2026-08-22** — `work-item-shape` gains a seventh pillar, **Naming drift** — the publish-time check [ADR-0048](0048-naming-drift-queue-trimmed-to-check-only.md) kept when it removed the queue, moved here from the three publishers that carried it so the check has one owner and binds ad-hoc drafting too.

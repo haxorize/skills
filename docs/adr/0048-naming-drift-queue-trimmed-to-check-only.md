@@ -24,3 +24,7 @@ The reading adopted here: the check is the working half, and it is plausibly *wh
 - The check now has no artifact defending it. Future simplification passes must not erode the naming-drift check out of the publishers on the grounds that it writes nothing — its output is the warning itself.
 - This removal is not precedent for stripping other insurance-shaped mechanisms (for example, reconcile's state table) on usage evidence alone; the queue fell because the *check* demonstrably covers its scenario, not merely because the queue was unused.
 - If the repos gain multiple authors and warned-then-deferred naming drift starts slipping through handoff gaps, re-add the queue from this record and ADR-0003.
+
+## Amendments
+
+- **2026-08-22** — The check moves out of the three publishers into the `work-item-shape` behavior (`## Naming drift`), which all four publishers already declare; their bodies keep one-line pointers at the publish and `--update`/`--reconcile` steps, and the rule widens from sibling work items to "the canonical name already used in the codebase or a sibling item". The never-block warning and the offer of the sibling's `--update` survive unchanged; nothing in the Decision above is reversed, only relocated.
