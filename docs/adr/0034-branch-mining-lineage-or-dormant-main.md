@@ -17,3 +17,13 @@ CLAUDE.md carries the revisit trigger: materially editing a ported skill starts 
 - obra/superpowers at `44c9b2d` (2026-07-27)
 - oaustegard/claude-skills at `61a85b8` (2026-08-08) — now also the upstream of `audit-tests`, ported from `gating`'s audit half in the 2026-08-08 round
 - openclaw/agent-skills at `2a409d3` (2026-08-02) — upstream of `black-box-check`, and absent from every earlier entry in this ledger
+
+**2026-08-22** — Swept points refreshed at the 2026-08-21 round (ledger Part B; every SHA is the tip of the checkout under `~/code/lib` and resolves with `git cat-file -t`); this ledger supersedes the 2026-08-09 one:
+
+- mattpocock/skills at `5b15a47` (2026-08-21; 34 commits since `84fdeff`, nine unmerged branches read, nothing portable) — `grill-and-record` is now a one-window stub of `grill-me`, so the grill-with-docs lineage ends there
+- compound-engineering-plugin at `66ccf57` (2026-08-20; 118 commits, branches carried nothing beyond main)
+- obra/superpowers at `b36e082` (2026-08-12; one commit, still dormant)
+- oaustegard/claude-skills at `66ec85b` (2026-08-21; 37 commits, the three ported skills byte-unchanged)
+- openclaw/agent-skills at `128a4ea` (2026-08-21; 25 commits) — upstream of `validate-behavior`, the skill this ledger's 2026-08-09 entry knew as `black-box-check`
+- dmmulroy/dotfiles at `a7beb72` (2026-08-20; 12 commits) — upstream of `discoverable-code`, absent from every earlier entry; modem-dev/skills is an md5-identical mirror of its `write-discoverable-code` and is never diffed again
+- jakubkrehel/skills at `6c43b20` (2026-08-20; range `d01493b..6c43b20`, 41 commits) — not a lineage upstream; recorded because the `after` SHA the round's plan wrote down did not resolve, and this is the `main` tip actually mined
