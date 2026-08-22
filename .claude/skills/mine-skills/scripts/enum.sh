@@ -1,27 +1,29 @@
 #!/bin/bash
 # Enumerate skills/commands/plugins under a lib dir, one TSV line per entry: source<TAB>relpath<TAB>name<TAB>description. Usage: enum.sh [lib-dir] [skip-regex]
+export LC_ALL=en_US.UTF-8
 LIB="${1:-$HOME/code/lib}"
 SKIP="${2:-^_rounds}"   # regex of directory names to skip (pass sources already reported)
-desc_of() { # print description from frontmatter, else first heading, else first nonblank line
+SKILL_PRUNE=( -name node_modules -o -name .git -o -name docs )   # docs/<lang>/ holds translated copies of the same skills
+CMD_PRUNE=( "${SKILL_PRUNE[@]}" -o -name references -o -name reference -o -name examples -o -name templates -o -name assets -o -name scripts )
+desc_of() { # print description from frontmatter, else first heading, else first nonblank body line; CRLF-safe, UTF-8-safe
   local f="$1" d
-  d=$(awk 'NR==1&&$0!="---"{exit} NR>1&&$0=="---"{exit} NR>1{print}' "$f" | awk '
+  d=$(tr -d '\r' < "$f" | awk 'NR==1&&$0!="---"{exit} NR>1&&$0=="---"{exit} NR>1{print}' | awk '
     /^description:[[:space:]]*[>|]?[[:space:]]*$/ {m=1; next}
     /^description:/ {sub(/^description:[[:space:]]*/,""); print; exit}
     m && /^[[:space:]]+/ {sub(/^[[:space:]]+/,""); printf "%s ", $0; next}
-    m {exit}' | head -c 300)
-  if [ -z "$d" ]; then d=$(grep -m1 -E '^#' "$f" | sed 's/^#* *//' | head -c 200); fi
-  if [ -z "$d" ]; then d=$(grep -m1 -vE '^\s*$|^---' "$f" | head -c 200); fi
-  printf '%s' "$d" | tr -d '"\r' | tr '\t' ' '
+    m {exit}')
+  if [ -z "$d" ]; then d=$(tr -d '\r' < "$f" | grep -m1 -E '^#' | sed 's/^#* *//'); fi
+  if [ -z "$d" ]; then d=$(tr -d '\r' < "$f" | awk 'NR==1&&$0=="---"{fm=1; next} fm&&$0=="---"{fm=0; next} fm{next} /^[[:space:]]*$/{next} {print; exit}'); fi
+  printf '%s' "$d" | sed -e 's/\\"/"/g' -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'$/\1/" | tr '\t' ' ' | cut -c1-300 | iconv -c -f UTF-8 -t UTF-8
 }
 for src in "$LIB"/*/; do
   s=$(basename "$src"); [[ "$s" =~ $SKIP ]] && continue
   {
-    find "$src" -type f \( -iname 'SKILL.md' -o -iname 'skill.md' \) -not -path '*/node_modules/*' -not -path '*/.git/*'
-    find "$src" -type f -name '*.md' -not -path '*/node_modules/*' -not -path '*/.git/*' \
-      \( -path '*/commands/*' -o -path '*/.claude/commands/*' -o -path '*/agents/*' -o -path '*/plugins/*' -o -path '*/.codex/*' -o -path '*/prompts/*' \) \
-      -not -iname 'README.md' -not -iname 'SKILL.md' -not -path '*/references/*' -not -path '*/reference/*' -not -path '*/docs/*' -not -path '*/examples/*' -not -path '*/templates/*' -not -path '*/assets/*' -not -path '*/scripts/*'
+    find "$src" \( "${SKILL_PRUNE[@]}" \) -prune -o -type f -iname 'SKILL.md' -print
+    find "$src" \( "${CMD_PRUNE[@]}" \) -prune -o -type f -name '*.md' ! -iname 'README.md' ! -iname 'SKILL.md' \
+      \( -path '*/commands/*' -o -path '*/agents/*' -o -path '*/plugins/*' -o -path '*/.codex/*' -o -path '*/prompts/*' \) -print
   } | sort -u | while read -r f; do
-    rel=${f#$src}
+    rel=${f#"$src"}
     case "$(basename "$f" | tr A-Z a-z)" in
       skill.md) name=$(basename "$(dirname "$f")");;
       *) name=$(basename "$f" .md);;

@@ -10,7 +10,7 @@ The mining-round opener. It produces reports and ledger rows under `~/code/lib/_
 
 ## 1. Open the round
 
-Create `~/code/lib/_rounds/<YYYY-MM-DD>/` and read the previous round's `batch-plan*.md` tail first — the last order line and any "queue EMPTY" note say what is still owed. Write `briefing.md`: sources named, the lenses in force (D-first: friction observed in this user's transcripts before upstream parity; person-serving; Gap-and-stakes for a Domain skill), and the standing reject classes, applied unread: orchestration and multi-agent machinery, vendor and stack packs, whole catalogs and registries, memory and loop machinery, anti-slop and humanizer packs (`writing-for-humans` covers the class), and any non-permissive licence for text (ideas only).
+Create `~/code/lib/_rounds/<YYYY-MM-DD>/` and read the previous round's `batch-plan*.md` tail first — the last order line and any "queue EMPTY" note say what is still owed. Write `briefing.md`: sources named, the lenses in force (D-first: friction observed in this user's transcripts before upstream parity; person-serving: the idea helps the person at the keyboard, not the agent's tidiness; off-path: a skill for a moment the main flow never reaches, admitted on stakes, not frequency; Gap-and-stakes for a Domain skill), and the standing reject classes, applied unread: orchestration and multi-agent machinery, vendor and stack packs, whole catalogs and registries, memory and loop machinery, anti-slop and humanizer packs (`writing-for-humans` covers the class), and any non-permissive licence for text (ideas only).
 
 ## 2. Clone and scan
 
@@ -18,7 +18,7 @@ A source new to `~/code/lib/` is shallow-cloned as `<owner>-<repo>` and read who
 
 ## 3. Inventory, then read
 
-Enumerate name and description of every skill in every source with `scripts/enum.sh <lib-dir> <skip-regex>` (one TSV line per entry); shortlist by the lenses, and read bodies only from the shortlist. Every read answers the read contract: who types it (a role, or "nobody; a fold"); fold-or-new by the Extraction test with the host skill named; observed friction, or "none; admitted on the off-path lens"; licence.
+Enumerate name and description of every skill in every source with `bash .claude/skills/mine-skills/scripts/enum.sh [lib-dir] [skip-regex]` from the repo root (one TSV line per entry; both arguments default — `~/code/lib` and `^_rounds`); shortlist by the lenses, and read bodies only from the shortlist. Every read answers the read contract: who types it (a role, or "nobody; a fold"); fold-or-new (an existing skill hosts it, named, or nothing does and it needs its own); observed friction, or "none; admitted on the off-path lens above"; licence.
 
 ## 4. Triage each idea
 

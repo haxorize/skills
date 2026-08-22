@@ -76,9 +76,9 @@
 #     line. A model-invoked skill has no watcher, so a miss must degrade
 #     gracefully ("Never gate inside a model-invoked skill"); its body and
 #     references must not carry the phrase.
-#   - Scope: every check walks src/*/SKILL.md (and references beneath). The
-#     repo-local skills under .claude/skills/ (mine-skills, sweep-corpus) are
-#     deliberately outside the walk: they never hoist, so the router-coverage
+#   - Scope: the skill checks walk src/*/SKILL.md (and references beneath);
+#     the global-rules checks below walk global/rules/. The repo-local skills
+#     under .claude/skills/ are deliberately outside both walks: they never hoist, so the router-coverage
 #     and requires checks would demand mentions that do not belong, and they
 #     legitimately cite this repo's paths. Their size and frontmatter are the
 #     author's to keep; a pass here says nothing about them.
