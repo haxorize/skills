@@ -16,7 +16,7 @@ One pass over a review report: every finding gets a disposition, nothing is defe
 - **No argument** — the newest report for this repo in the landing zone `handoff` defines (its "Where to write it" section fixes the directory and the `.review.md` filename).
 - **No report** — stop and say so. This skill never runs a review to get one; `/review-changes` is the user's move.
 
-Read the report's **reviewed-head stamp** and compare it to `HEAD`. When commits have landed since, say how many (`git log <stamp>..HEAD --oneline`) and which findings cite files those commits touched; the pass still runs on the report's IDs, because the report is the contract, but a finding whose line has already moved is verified against the tree as it is now.
+Read the report's **reviewed-head stamp** and **reviewed-tree stamp** (`Reviewed-tree: <40-hex>`), compare the head to `HEAD`, and compare the last tree stamp to the one-liner's output *now* (the same command the re-stamp below uses, run from the repo root) — a mismatch means edits landed between the review and this pass, so say so before the pass starts and treat every finding's line numbers as moved. When commits have landed since, say how many (`git log <stamp>..HEAD --oneline`) and which findings cite files those commits touched; the pass still runs on the report's IDs, because the report is the contract, but a finding whose line has already moved is verified against the tree as it is now.
 
 ## 2. Partition the findings
 
@@ -56,6 +56,8 @@ Close with one row per finding, every `F<n>` in the report present, in ID order:
 Re-measure the count at write time — `grep -oE '\bF[0-9]+\b' <report> | sort -u | wc -l` against the rows you wrote — and state both numbers. The global evidence rule (`~/.claude/rules/evidence.md`) governs every claim in the table.
 
 ## After the pass
+
+**Re-stamp the report.** When the pass changed any file, append one line to the report, `Reviewed-tree: <40-hex>`, with the hash of the tree as it now stands — `T="$(mktemp -u)"; GIT_INDEX_FILE="$T" git read-tree HEAD 2>/dev/null; GIT_INDEX_FILE="$T" git add -A :/ && GIT_INDEX_FILE="$T" git write-tree; rm -f "$T"` (a throwaway index; uncommitted and untracked files count) — and close the pass with one line, `re-stamped: <12-hex>`. The `review-receipt` hook matches the tree being pushed against the report's stamps, so the stamp of the tree the fix pass produced is what lets the commit of it be pushed; the review's own stamp stays above it, and the disposition table is what certifies the difference between the two. The condition is the tree, not the edit count: re-stamp whenever the tree now differs from the report's last stamp — which includes a pass that declined everything but found the tree already drifted (§1's comparison), and excludes a pass that changed nothing on a tree that still matches. The report itself lives outside the tree being hashed, so writing to it never triggers a re-stamp.
 
 Stop. Landing is the `committing` discipline's, on the user's ask. When the findings arrived as PR review threads, `receiving-review`'s reply contract runs after the commit is on the remote, not before.
 
