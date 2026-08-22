@@ -10,6 +10,7 @@ Three checks answer three different questions: the micro-test asks whether a rul
 4. **Re-run with the skill, 5+ fresh-context reps.** One rep proves nothing.
 5. **Read every response.** Don't grep for compliance keywords — template echoes masquerade as hits.
 6. **Variance is a metric.** Five reps producing five interpretations means the wording isn't binding, even when no single rep clearly violates.
+7. **A rep that cannot be classified is inconclusive.** A response that neither holds the discipline nor clearly breaks it is recorded as inconclusive and the rep re-run, never rounded to pass.
 
 ## Revising an existing skill
 

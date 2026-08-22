@@ -39,6 +39,8 @@ Every contract clause ends in exactly one state — the check isn't done while a
 
 Reject aesthetic, code-quality, and implementation-style concerns — those belong to the code-aware review family, and this skill can't see the code anyway.
 
+A contract clause no visible surface can reach is fixed by a user-facing affordance — a command, a flag, a page — never by a private test API; the absence is itself a finding, reported as FAIL on that clause.
+
 ## Report
 
 A prose report: the target exercised and how it was reached; the contract used (file or inline); the per-clause verdict summary; each failure with reproduction steps and its evidence; the anti-cheat probes run and what they showed; remaining blockers. Findings cite contract clauses and observable steps, never code locations.

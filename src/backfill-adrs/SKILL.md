@@ -19,7 +19,7 @@ Default suggestion: **last 90 days OR last 200 commits, whichever is shorter**. 
 git log --oneline --since="<date>" | head -<n>
 ```
 
-For each commit that smells like a design choice (new module, new dependency, schema change, infra change, test-strategy change), capture the SHA and one-line subject.
+For each commit that smells like a design choice (new module, new dependency, schema change, infra change, test-strategy change), capture the SHA and one-line subject. Code shapes are candidates beside the log smells: a defensive check that looks unnecessary, a magic constant, a compatibility workaround, a boundary that does not follow from the domain. A candidate resolved from code alone carries an **inferred** or **unknown** label on its rationale; it is never recorded as confirmed.
 
 ### 3. Follow PR / work-item references via tracker dispatch
 
@@ -32,11 +32,13 @@ Resolve the tracker per [references/tracker-resolution.md](references/tracker-re
 
 No tracker block means commit-message and code-only inference — the sweep never bootstraps a block.
 
+Evidence order: the PR or work-item thread first, then in-repo comments, TODOs, and test names, then `git log -S` on the changed string. Code is never evidence of its own intent — what it does is not why it was chosen.
+
 ### 4. Apply the ADR gate
 
 Apply the three-criteria gate per [references/adr-format.md](references/adr-format.md). Reject any candidate that fails.
 
-Then verify the **decision**, not just the history: before recording a decision as standing, confirm its mechanism still exists in the tree (the files, symbols, or checks it names resolve), the work that carried it closed as *completed* (closed-as-not-planned means the decision was dropped, not decided), no material part stayed unshipped, and no later decision superseded it. A decision that fails this check is recorded as history with its outcome named, or not at all — never as a standing decision.
+Then verify the **decision**, not just the history: before recording a decision as standing, confirm its mechanism still exists in the tree (the files, symbols, or checks it names resolve), the work that carried it closed as *completed* (closed-as-not-planned means the decision was dropped, not decided), no material part stayed unshipped, and no later decision superseded it. A decision that fails this check is recorded as history with its outcome named, or not at all — never as a standing decision. An existing ADR whose named mechanism no longer resolves is reported **STALE**, with three dispositions for the user to pick: re-confirm (a dated amendment), supersede, or a dated waiver naming the trigger that would reopen it; an ADR carrying a `Revisit when:` line is checked against that line too.
 
 ### 5. Quiz the user on the candidate list
 

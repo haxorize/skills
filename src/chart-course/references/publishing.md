@@ -8,6 +8,7 @@ No create call goes out until all three hold:
 
 - **A confirming turn exists to cite.** The user approved the draft in a turn you can point to; "looks good" on an earlier version, or approval of the plan the draft came from, is not approval of this body. Never create mid-grill — the grill settling is not the ask.
 - **A dedupe search ran.** List the tracker's open items for the title's key terms (`gh issue list --search`, `az boards query --wiql`) and show any near match; a match means update or link, not a second item.
+- **The approval ask names the undo.** The ask that seeks the confirming turn names the command that deletes the item it is about to create (`gh issue delete <n>` / `az boards work-item delete --id <n>`), so the cost of a wrong yes is visible before it is given.
 - **The draft shown is the draft published.** Any edit after the confirming turn — a reworded criterion, a changed parent — re-shows the body and waits for a fresh confirmation. The publish report cites the confirming turn.
 
 ## Label precheck (GitHub)

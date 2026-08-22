@@ -25,6 +25,8 @@ Every passage is **procedural** (instructions — the reader will *do* something
 
 ## Register by artifact
 
+A row is admitted only with a named typist — the role that writes the artifact, and how often — never for an artifact nobody here produces.
+
 | Artifact | Register |
 | --- | --- |
 | Ticket body, doc | Neutral and plain; contractions fine — but avoid negative ones ("cannot", not "can't": readers misread them as their opposite) |
@@ -34,6 +36,8 @@ Every passage is **procedural** (instructions — the reader will *do* something
 | Changelog entry, release note | Notable-to-users only: what a user of the product observes changed — never typo fixes or internal refactors ("Refactored internal code structure" is an entry about nothing). Order breaking changes → features → fixes; cite PRs (`#1234`), never commit SHAs; append to the unreleased section rather than rewriting released ones; match the file's declared format where one exists |
 | Error message, UX microcopy | Calm, zero playfulness; the five-question shape below |
 | Commit message, PR body, review reply, closing comment | A maintainer recording a decision for another maintainer: impersonal, matter-of-fact ("Previously, …", "This caused …"); imperative only in the subject line; first person only for an actual decision or open question. The catalog's commit-and-PR family fires here |
+| Meeting notes (whoever posts the recap) | Decided separated from discussed; an action is an owner plus a date or is flagged unassigned or undated — the writer never fills either in; commitments and load-bearing statements verbatim, with a paraphrase marked as the writer's reading |
+| Weekly status note to a manager (any engineer, weekly) | Progress, not activity; every next step dated or marked undated; opens with what last week's note said would happen and whether it did |
 | Outbound as the user — email, Teams message, memo, proposal | The user's own voice and register. **No em dashes, none.** Sweep the full tell catalog at maximum strictness — the stake is authorship perception, not just clarity |
 
 This discipline deletes persuasion by design. Marketing, brand, and campaign copy are out of scope — say so and offer to apply it to the factual parts only.

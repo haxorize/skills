@@ -46,7 +46,7 @@ Missions change as understanding grows — that's normal. Confirm the change wit
 Every topic is grounded one of two ways, declared in `MISSION.md`:
 
 - **External** — lessons draw on `RESOURCES.md` sources.
-- **Repo-grounded** — `MISSION.md` names a codebase; the repo is the textbook. Lessons cite stable anchors (module names, glossary terms, decision records) over line numbers and re-verify against live code at teach time; the repo's own glossary and decision log are the teaching material, referenced rather than copied into the workspace.
+- **Repo-grounded** — `MISSION.md` names a codebase; the repo is the textbook. Lessons cite stable anchors (module names, glossary terms, decision records) over line numbers and re-verify against live code at teach time; the repo's own glossary and decision log are the teaching material, referenced rather than copied into the workspace. Lesson order, absent a mission reason to differ: the README first, then the entry point, then the module with the highest fan-in (most depended upon), with tightly coupled clusters taught together in one lesson rather than split.
 
 ## The topic glossary
 

@@ -24,6 +24,7 @@ Cover **every** such source, not a sample — list the surfaces you scanned so a
 - Different words used for the same concept (synonyms)
 - Vague or overloaded terms
 - Mismatches between conversation terminology and codebase terminology
+- Orphan terms (defined in `DOMAIN.md`, used nowhere in code or conversation) and missing terms (used in three or more places, never defined)
 
 ### 3. Propose a canonical glossary
 

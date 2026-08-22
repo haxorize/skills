@@ -58,7 +58,7 @@ If a Story or Task issue exists, pull acceptance criteria from it. If not, brief
 - What interface changes are needed (route, endpoint, component, hook, query, model)
 - Which behaviors to test, and the seam each is tested at — naming seams up front aims testing effort at critical paths instead of every edge case (prioritize with the user)
 - Whether the slice is inner-loop testable, outer-loop testable, or both
-- Whether any behavior here carries a law a property test states better than examples do — a roundtrip (`decode(encode(x))` returns `x`), an ordering or idempotence rule, a bound that must hold for every input. Answer it either way rather than leaving it unasked; most slices don't have one, and the ones that do are exactly where examples miss
+- Whether any behavior here carries a law a property test states better than examples do — a roundtrip (`decode(encode(x))` returns `x`), a conservation rule (the totals before and after a split or transfer agree), parse/format stability (`parse(format(x))` returns `x`), an ordering or idempotence rule, a bound that must hold for every input. Answer it either way rather than leaving it unasked; most slices don't have one, and the ones that do are exactly where examples miss
 - Opportunities for deep modules
 
 Confirm the plan with the user before writing any code.
@@ -85,7 +85,7 @@ After all tests pass, review the implementation before calling the cycle done:
 - Extract duplication — lifting it to existing project primitives or shared modules rather than re-rolling (consult the active layer skill for where they live), extracting fresh only when no primitive fits, and then only at the third caller or when the concept has a domain name (`implement`'s third-caller clause; it binds this step whether or not `implement` is running)
 - Deepen modules (move complexity behind simple interfaces)
 - Simplify where the accumulated implementation reveals a cleaner design
-- Fix the names the change made wrong: a name that stops matching its behavior misleads every later search. Follow the `/discoverable-code` behavior over what the slice exported, renamed, or moved, loading it at the first such name if it isn't already live
+- Fix the names the change made wrong: a name that stops matching its behavior misleads every later search. Follow the `/discoverable-code` discipline over what the slice exported, renamed, or moved, loading it at the first such name if it isn't already live
 
 Run the test command after each refactor step. Never refactor while red.
 

@@ -4,7 +4,7 @@ The form of the done-claim proof. `implement` writes it at a slice's close, `han
 
 ## Per-criterion table
 
-One row per acceptance criterion the slice covers, in AC-ID order, derived from the ticket's criteria — a row per thing built is a progress report, not an audit.
+One row per acceptance criterion the slice covers, in AC-ID order, derived from the ticket's criteria — a row per thing built is a progress report, not an audit. A verification clause the ticket carries ("confirm the migration runs on a fresh database") gets a row like an AC, its evidence the command and its output.
 
 | AC | Status | Evidence |
 |---|---|---|
@@ -53,7 +53,7 @@ The decisions made during the build that the user did not make, each tagged with
 
 - **user's** — the user decided it in a cited turn.
 - **inferred** — derived from the ticket, the codebase, or `DOMAIN.md`; name the source.
-- **my call** — chosen on judgment with no source to cite; these are the rows a reviewer most needs to see, and a confident silent default belongs here as much as an uncertain one.
+- **my call** — chosen on judgment with no source to cite; these are the rows a reviewer most needs to see, and a confident silent default belongs here as much as an uncertain one. A call that rests on a guess at unclear wording is tagged `my call (unclear: <what>)`, naming the phrase guessed at.
 
 ```
 - Kept the old `score_v1` endpoint alive — my call; no consumer named, worth a look

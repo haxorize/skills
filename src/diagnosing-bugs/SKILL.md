@@ -20,7 +20,7 @@ Name the object of every vague failure sentence before reasoning from it — "th
 
 This skill has you show commands, outputs, and captured artifacts. **Redact every secret first** — write `<REDACTED>` in its place. Build loops against env vars so the credential stays in the environment rather than in what you show; from captured artifacts, quote only the lines that carry the signal. If the redacted output is not enough to diagnose the bug, say so and ask the user.
 
-This is the behavior `implement` reaches for when a build turns up an **unplanned failure** mid-slice: a red that isn't the test you just wrote, behavior that contradicts the plan. Stop guessing and run this loop before continuing.
+This is the discipline `implement` reaches for when a build turns up an **unplanned failure** mid-slice: a red that isn't the test you just wrote, behavior that contradicts the plan. Stop guessing and run this loop before continuing.
 
 ## Phase 1 — Build a feedback loop
 

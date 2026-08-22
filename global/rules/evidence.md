@@ -12,4 +12,9 @@ A self-report — a status line, a count, a "done", a "tests pass" — carries i
 - **A claim about the transcript needs a transcript grep.** "You said", "we agreed", "as discussed" cite the turn. Memory of a conversation is the least reliable evidence in it.
 - **After a command that exits 0 regardless, verify the effect, not the status.** `sed -i` on a pattern that matched nothing, `az boards work-item update` on a field it ignored, a `git push` to the branch that was already up to date: check the file, the item, the remote.
 - **A correction binds its whole category, immediately.** Told that one count was wrong, re-measure every count in the message — including the ones used to check the others.
+- **Dispatch is not completion.** A spawned agent's result is not evidence until it is in hand; a count or status written while a lens is still running is a guess about what it will return.
+- **A count measured through a limit is `N+`.** `head`, a Read cap, `grep -m`, a truncated tool result: the number is written `N+` with the limit named, never as a total.
+- **Evidence is captured, never composed.** A screenshot, a terminal excerpt, or an output offered as proof comes from the running thing and names where — the URL, the fixture, the commit — never a mockup, a synthetic card, or an assembled image.
+- **`UNVERIFIED:` is for what this session cannot reach.** A claim one read or run away is checked before the sentence is written, and the more irreversible the act the claim feeds, the less room there is to leave it marked.
+- **A period-scoped summary enumerates the period.** "What I did this week" runs `git log --author=<me> --since=<from> --until=<to> --oneline` and states the window it used; the recall check above binds `<base>..HEAD`, this binds the calendar.
 - **Prose is a first draft.** A report written at the end of long work is a hypothesis about what happened; say so where the evidence is thin rather than letting the register imply certainty.

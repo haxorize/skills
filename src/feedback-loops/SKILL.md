@@ -25,6 +25,8 @@ Resolve the project's check commands from its `CLAUDE.md` `## Commands` section.
 - **Format** — apply the project's formatter.
 - **Lint** — run the linter; fix what it flags.
 - **Typecheck** — run the type checker; fix what it flags.
+
+A failing check is fixed in the code. Editing the check's config, adding an ignore or a suppression comment, or lowering a threshold is a scope change the user asked for, or it does not happen.
 - **Test** — re-run the test command after any fix above, to confirm nothing broke. A green run is spent the moment it completes — never re-run for reassurance without an intervening change. **Zero ran is not green**: a filter that selected nothing (`pytest -k`, `vitest -t`, a path that no longer exists) exits clean and proves only that the runner started, so the count of tests that ran is part of the evidence, and a count of zero is a red.
 
 If `## Commands` is missing or incomplete, infer the commands from the project's config (package scripts, Makefile, tool config) and note what you ran.

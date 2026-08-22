@@ -20,3 +20,5 @@ When you do ask, or when you push back on the user's stated direction, use the f
 **If I'm wrong, the cost is:** the concrete consequence
 
 The user's original direction is the default; the case for changing it is yours to make, and a bare "yes" from them resolves to the recommended line.
+
+The last two lines also close an actable recommendation nobody asked for — an architecture call, a diagnosis, an estimate — once, at the end; not when running the code is the check, and not when the user asked for a take.

@@ -46,7 +46,8 @@ Only when they add real value, not for completeness:
 
 - **Status** frontmatter (`proposed | accepted | superseded by [ADR N](N-slug.md)`) — useful when revisiting
 - **Considered Options** — only when rejected alternatives are worth remembering in detail. The gate's third criterion guarantees an alternative was weighed, so when the section is omitted the rationale still names that alternative and why it lost, in a clause — a record with no alternative anywhere reads, years on, as a decision nobody compared
-- **Deferred** — the open questions the decision leaves standing, one line each naming the question and the artifact that settles it (a ticket, a later ADR, a measurement); omitted when nothing is open, never padded
+- **Deferred** — the open questions the decision leaves standing, one line each naming the question and the artifact that settles it (a ticket, a later ADR, a measurement); omitted when nothing is open, never padded. A line later settled stays as written and gains a trailing `— settled: see Amendments <date>`, so a reader who stops at Deferred is not left with a stale open question
+- **Revisit when:** — one line naming the assumption or trigger that would falsify the decision (a load figure, a dependency's status, a team size); `backfill-adrs`' STALE sweep and the amendment step read it
 - **Consequences** — only when downstream effects are non-obvious
 - **Amendments** — the dated log an in-place amendment appends to; created on the first amendment, never up front
 
