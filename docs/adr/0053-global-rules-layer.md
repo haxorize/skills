@@ -26,3 +26,7 @@ A hook sees tool calls and file writes. None of the four rules can be checked th
 ## Consequences
 
 `install.sh` now runs three jobs (skills, rules, hook snippet) and the opt-in post-merge hook from [ADR-0049](0049-opt-in-post-merge-hook-auto-runs-install.md) re-runs all three on pull; the rules share the trust trade-off that record accepted. Lint gains a `Depends:` check and the 200-line and no-ADR-number checks extend to `global/rules/`. The layer is the host later batches point at: `committing` cites the no-unasked-commits rule, `receiving-review` and `address-findings` cite the evidence rule, `grilling` and `implement` cite the bins. A rule that loses its last depending skill leaves the directory.
+
+## Amendments
+
+- **2026-08-22 (see [ADR-0054](0054-commit-bypass-hook-always-on.md))** — A second hook ships: `commit-bypass`, always on rather than opt-in by directory, with `committing` as its depending skill. "The only one this round ships" above was true of Batch 1; the rename case is no longer the only failure a hook can see. The admission rule stands — the hook's header names its dependant, and `global/README.md` carries the roster.
