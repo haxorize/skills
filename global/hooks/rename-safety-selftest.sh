@@ -63,6 +63,12 @@ expect_allow "perl -e 'print 1'"
 expect_allow "python3 -c 'import sys'"
 expect_allow "sedlike -i x"
 expect_allow "ls -i"
+expect_allow $'git commit -F - <<\'MSG\'\nDrop the sed -i call\n\nIt no-ops on BSD.\nMSG'
+expect_allow $'cat > notes.md <<EOF\nnever run sed -i blind\nEOF'
+expect_allow $'cat <<-EOF | tee handoff.md\n\tuse perl -pi only with a file list\n\tEOF'
+expect_block $'bash <<EOF\nsed -i s/a/b/ *.md\nEOF'
+expect_block $'sh <<\'EOF\'\nperl -pi -e s/a/b/ f\nEOF'
+expect_block $'cat <<EOF > x.md\nnote\nEOF\nsed -i s/a/b/ x.md'
 
 # --- opt-in and fail-open ----------------------------------------------------
 rc="$(run "$plain" "sed -i 's/a/b/' f.txt")"; [ "$rc" = 0 ] || { echo "FAIL: non-opted dir should allow (rc=$rc)"; fail=1; }
