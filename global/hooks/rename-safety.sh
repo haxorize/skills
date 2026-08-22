@@ -90,13 +90,18 @@ s = sys.stdin.read()
 SHELL = re.compile(r"(^|[;&|(\s])(bash|sh|zsh|dash|ksh|eval|source|\.)(\s|$)")
 HEREDOC = re.compile(r"<<-?\s*[\x27\"]?([A-Za-z_][A-Za-z0-9_]*)[\x27\"]?[^\n]*\n.*?\n\t*\1(?=\n|$)", re.S)
 def drop(m):
-    # The command line the heredoc hangs off, from its start to the <<.
-    line = s[s.rfind("\n", 0, m.start()) + 1 : m.start()]
+    # The command line the heredoc hangs off, from its start to the <<. A
+    # backslash-newline before the << continues the same logical line, so
+    # `bash \<newline><<EOF` is `bash <<EOF` to the shell: join first.
+    line = re.sub(r"\\\n", " ", s[:m.start()]).rsplit("\n", 1)[-1]
     head = m.group(0).split("\n", 1)[0]
     if SHELL.search(line + head):
         return m.group(0)            # a shell consumes the body: keep it
     return head + "\n"              # anything else: the body is text
 s = HEREDOC.sub(drop, s)
+# A backslash-newline continues the command line, so `sed \<newline> -i` is
+# `sed -i` to the shell; join it before the shape check sees a line break.
+s = re.sub(r"\\\n", " ", s)
 # Quoted strings: single quotes hold no escapes; a double-quoted string may
 # carry backslash-escaped quotes, which a naive [^"]* pairs wrongly.
 s = re.sub(r"\x27[^\x27]*\x27|\"(\\.|[^\"\\])*\"", "", s, flags=re.S)

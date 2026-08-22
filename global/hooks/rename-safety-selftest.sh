@@ -34,6 +34,7 @@ expect_block "x=\$(sed -i 's/a/b/' f.txt)"
 expect_block "cd src && sed -i 's/a/b/' f.txt"
 expect_block $'grep -l a *.md\nsed -i \'s/a/b/\' *.md'
 expect_block "find . -name '*.md' -exec sed -i 's/a/b/' {} +"
+expect_block $'sed \\\n  -i \'s/a/b/\' f.txt'          # backslash-newline continuation is one line to the shell
 expect_block "sudo sed -i 's/a/b/' /etc/hosts"
 expect_block "perl -pi -e 's/a/b/' *.md"
 expect_block "perl -i -pe 's/a/b/' f.txt"
@@ -71,6 +72,8 @@ expect_allow 'echo "she said \"use sed -i\" twice"'
 expect_block $'bash <<EOF\nsed -i s/a/b/ *.md\nEOF'
 expect_block $'sh <<\'EOF\'\nperl -pi -e s/a/b/ f\nEOF'
 expect_block $'cat <<EOF > x.md\nnote\nEOF\nsed -i s/a/b/ x.md'
+expect_block $'bash \\\n<<EOF\nsed -i s/a/b/ *.md\nEOF'              # continuation before the << is still a shell-fed heredoc
+expect_allow $'cat > n.md <<EOF\nline ends \\\nsed -i s/a/b/ x\nEOF'  # a body line ending in a backslash is still body
 
 # --- opt-in and fail-open ----------------------------------------------------
 rc="$(run "$plain" "sed -i 's/a/b/' f.txt")"; [ "$rc" = 0 ] || { echo "FAIL: non-opted dir should allow (rc=$rc)"; fail=1; }
