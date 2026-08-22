@@ -1,6 +1,6 @@
 # skills
 
-Personal collection of repo-agnostic agent skills, hoisted into `~/.claude/skills/` for use across projects.
+Personal collection of agent skills — repo-agnostic in mechanism, with a Domain skill that carries subject matter — hoisted into `~/.claude/skills/` for use across projects.
 
 ## How these fit together
 
@@ -46,8 +46,8 @@ The route most work travels: **`/grill-me`** → **`/to-feature` / `/to-story` /
 
 ### Review & validation
 
-- **`review-changes`** — Read-only, project-aware judgment review of a diff before it lands, on a teammate's PR, or on a landed commit. Runs review lenses (subagents on a large diff, in-process on a small prose one), vets the findings, and presents a ranked, classified report with stable `F<n>` IDs, stamped with the head it reviewed. No argument reviews the newest handoff for the repo.
-- **`address-findings`** — Act on a `review-changes` report in one pass: fix the mechanical findings, batch the rest into one question with recommendations, and close with a disposition per ID (FIXED / DECLINED / DEFERRED / ABANDON). Never re-runs the review; re-review is the user's call.
+- **`review-changes`** — Read-only, project-aware judgment review of a diff before it lands, on a teammate's PR, or on a landed commit. Runs review lenses (subagents on a large diff, in-process on a small prose one), vets the findings, and presents a ranked, classified report with stable `F<n>` IDs, stamped with the head and the tree it reviewed. No argument reviews the newest handoff for the repo.
+- **`address-findings`** — Act on a `review-changes` report in one pass: fix the mechanical findings, batch the rest into one question with recommendations, and close with a disposition per ID (FIXED / DECLINED / DEFERRED / ABANDON). Re-stamps the report with the tree the pass produced, which is what lets a gated push through. Never re-runs the review; re-review is the user's call.
 - **`audit-tests`** — Audit an existing test suite by asking "can these checks fail?" — grades load-bearing assertions and reports the suite's stated blind spots.
 - **`validate-behavior`** — Validate the running app, CLI, API, or generated artifact against a behavior contract written before testing — source-blind, with anti-cheat probes. The runtime complement to `review-changes` (the diff) and `audit-tests` (the test suite).
 
@@ -90,7 +90,7 @@ The route most work travels: **`/grill-me`** → **`/to-feature` / `/to-story` /
 
 ## Model-invoked skills
 
-### Grilling & domain
+### Grilling & domain modeling
 
 - **`grilling`** — The relentless-interview discipline at the core of `grill-me`.
 - **`diverging`** — Break out of a locked problem frame with one committed lateral move. Fires on fixation signals (iterations circling one idea, a binary with two bad options); generates framings that `grilling`, its convergent complement, then stress-tests.
@@ -120,13 +120,17 @@ The route most work travels: **`/grill-me`** → **`/to-feature` / `/to-story` /
 
 ### Landing
 
-- **`committing`** — The discipline for landing a change honestly, reached by any "commit and push", "land this", or "close #N" ask: every claim in a commit message, closing comment, or status report checked against evidence as it is written; `Closes` only when the completion audit shows a clean remainder; no outward act without an explicit ask or a `Landing:` pre-authorisation; in a `Review required: yes` repo the `review-receipt` hook refuses a push no fresh review report covers, and that refusal is a blocked act like any other, reported with its verbatim error and one manual-commands block at the end. Owns the one-commit fast path; never the split (`ship`'s).
+- **`committing`** — The discipline for landing a change honestly, reached by any "commit and push", "land this", or "close #N" ask: every claim in a commit message, closing comment, or status report checked against evidence as it is written; `Closes` only when the completion audit shows a clean remainder; no outward act without an explicit ask or a `Landing:` pre-authorisation; in a `Review required: yes` repo the `review-receipt` hook refuses a push of a tree no review report stamps, and that refusal is a blocked act like any other, reported with its verbatim error and one manual-commands block at the end. Owns the one-commit fast path; never the split (`ship`'s).
 
 ### Writing & work items
 
 - **`writing-for-agents`** — Conventions for documents that steer agent process — skill bodies, `CLAUDE.md`, reference files — prose whose job is to be obeyed.
 - **`writing-for-humans`** — Sentence-level clarity for prose that transfers understanding — tickets, ADR rationale, summaries, commit and PR prose — with per-artifact registers and the named AI-tell catalog.
 - **`work-item-shape`** — What a well-formed work-item body *is* (outcome goal, checkable criteria, readiness call, structural sizing, surfaced ambiguity), any tier, any tracker. In repos wired for the pipeline it routes creation asks to the `to-*` publishers instead of drafting lookalikes.
+
+### Domain
+
+- **`phi-safe-code`** (Domain) — Keeping member and patient data out of every sink it leaks into — logs, error text, URLs, fixtures, analytics, prompts, queues, commits, chat — by tracing each field to each sink and allowing fields by name; the audit trail, the malformed-input rule, and the BAA gate for external sinks. Mechanism only: the allowed-field list and retention figures are the project's convention skill.
 
 ## Repo-local skills
 
@@ -140,7 +144,7 @@ The route most work travels: **`/grill-me`** → **`/to-feature` / `/to-story` /
 - **Tracker dispatch** is declared per-repo in `CLAUDE.md` under an `Issue tracker:` block. Supports GitHub (`gh`) and Azure DevOps (`az boards`). Hierarchy (`Hierarchy: required|optional`) controls whether the publishing skills enforce a `--parent` argument. ADO defaults to `required` (Epic → Feature → User Story → Task); GitHub defaults to `optional`.
 - **Registry block** — a package-curation policy is declared per-repo in `CLAUDE.md` under `## Registry`, written by `onboard-repo` and read by `upgrade-deps`: `Minimum release age:` (the proxy's floor, in days) and any other curation line. The number is the org's and lives only here.
 - **Deferred bumps** live in `docs/deps-deferred.md` per repo, one line each — `<package> <from> → <to>: <reason>; review by <date>` — written by `upgrade-deps` at close and read back by its next run.
-- **Landing key** — the landing policy is declared per-repo in `CLAUDE.md` under a `Landing:` block, read by `committing` and `ship` before any outward act. Six lines: `Branch policy:` (`trunk` or `branch-per-ticket`, with a naming pattern where the repo has one), `PR required:` (`yes`/`no`), `Push pre-authorised:` (`yes`/`no`), `Ticket close pre-authorised:` (`yes`/`no`), `Review required:` (`yes`/`no`, absent means `no` — `yes` gates the push through the `review-receipt` hook), and `Defect policy:` (default `fix, don't file` — defects found mid-work are fixed in place or parked, and filed as tickets only by `to-bug` on the user's ask). An act the block pre-authorises proceeds on the ask that started the work; every other outward act asks first. No block means nothing is pre-authorised.
+- **Landing key** — the landing policy is declared per-repo in `CLAUDE.md` under a `Landing:` block, read by `committing` and `ship` before any outward act. Six lines: `Branch policy:` (`trunk` or `branch-per-ticket`, with a naming pattern where the repo has one), `PR required:` (`yes`/`no`), `Push pre-authorised:` (`yes`/`no`), `Ticket close pre-authorised:` (`yes`/`no`), `Review required:` (`yes`/`no`, absent means `no` — `yes` gates the push through the `review-receipt` hook on a report stamped with the pushed tree), and `Defect policy:` (default `fix, don't file` — defects found mid-work are fixed in place or parked, and filed as tickets only by `to-bug` on the user's ask). An act the block pre-authorises proceeds on the ask that started the work; every other outward act asks first. No block means nothing is pre-authorised.
 - **Sibling repos** declared in `CLAUDE.md` under `## Sibling repos` so `to-tasks` can flag cross-repo blockers.
 - **Title prefixes** are declared in the `Issue tracker:` block. `Title prefix:` applies to Stories, Tasks, and Bugs. Features use `Feature title prefix:` if declared, falling back to `Title prefix:` if absent — allowing teams to give features a distinct prefix from the tickets below them.
 - **Work-item tags (ADO)** — the `to-*` publishers derive `System.Tags` from the drafted title's leading bracket (parsed before prefixing), unioned with an optional `Additional tags:` line and filtered by an optional `Never tag:` line in the `Issue tracker:` block; applied best-effort at creation inside the create call's existing `--fields`. `chart-course` applies the same derivation to maps and chart tickets. GitHub uses labels instead and ignores these lines.
