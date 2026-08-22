@@ -28,3 +28,7 @@ The first build matched shapes on the command text after deleting quoted strings
 ## Deferred
 
 - Porting the tokeniser to `rename-safety.sh` (its `bash -c 'sed -i …'` hole) — the batch plan's B4a deferrals list, with the `hook-lib.sh` extraction decided there.
+
+## Amendments
+
+- **2026-08-22** — The third hook, `review-receipt` ([ADR-0059](0059-review-receipt-hook.md)), shipped without the `hook-lib.sh` extraction this record scheduled for it; the scan was copied and extended instead, and the trigger moved to the rename-safety tokeniser port. `install.sh` now prints one object holding three hooks.

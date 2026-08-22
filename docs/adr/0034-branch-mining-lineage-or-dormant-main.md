@@ -4,7 +4,9 @@ The 2026-07-19 branch-coverage audit of the mined repos under `~/code/lib` found
 
 ## Consequences
 
-CLAUDE.md carries the revisit trigger: materially editing a ported skill starts with an upstream diff — main and branches — since the last-swept point. As of this ADR: wayfinder at main `9603c1c` (branches audited 2026-07-19), ce-pov at main `4927d7a1`.
+CLAUDE.md carries the revisit trigger: materially editing a ported skill starts with an upstream diff — main and branches — since the last-swept point. As of this ADR: wayfinder at main `9603c1c` (branches audited 2026-07-19), ce-pov at main `4927d7a1` (superseded; the newest dated entry under Amendments is the live ledger).
+
+## Amendments
 
 **2026-07-20** — `chart-course` edited under [ADR-0035](0035-ticket-names-the-assignable-tier.md) (terminology only: its tickets defined as the Charting sub-type of the new **Ticket** term). Upstream diff waived: wayfinder was swept the day before and the edit carries no behavioral delta.
 
@@ -27,3 +29,5 @@ CLAUDE.md carries the revisit trigger: materially editing a ported skill starts 
 - openclaw/agent-skills at `128a4ea` (2026-08-21; 25 commits) — upstream of `validate-behavior`, the skill this ledger's 2026-08-09 entry knew as `black-box-check`
 - dmmulroy/dotfiles at `a7beb72` (2026-08-20; 12 commits) — upstream of `discoverable-code`, absent from every earlier entry; modem-dev/skills is an md5-identical mirror of its `write-discoverable-code` and is never diffed again
 - jakubkrehel/skills at `6c43b20` (2026-08-20; range `d01493b..6c43b20`, 41 commits) — not a lineage upstream; recorded because the `after` SHA the round's plan wrote down did not resolve, and this is the `main` tip actually mined
+
+**2026-08-22, correction** — Two lines above, read as written at `e913c39`: `grill-and-record` is a deprecation stub of `grill-me` ([ADR-0058](0058-grill-me-absorbs-grill-and-record.md)) whose revisit trigger is waived for the stub's window, so "the lineage ends there" means the port, not the upstream; and dmmulroy/dotfiles' twelve commits are counted since `aae3dd3`, the tip at the 2026-08-14 port.
