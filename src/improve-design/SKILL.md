@@ -107,7 +107,7 @@ Be opinionated — the user wants a strong recommendation, not a menu.
 
 Where the recommendation is **incremental** — call sites migrated over weeks rather than in one cut — pair it with a baseline check that stops the situation getting worse while the migration runs: a lint rule against the old shape, or a count of remaining old-shape call sites pinned at today's number and failing on any increase. Incremental cleanup with no such pin loses to new code arriving in the old form, and the effort then reads as failed when it was only outpaced.
 
-Then offer to grill the design before filing — `/grill-me` for a stress-test, or `/grill-and-record` if the project has `DOMAIN.md` or `docs/adr/`. Grilling is the norm, not an aside; expect the design to evolve, and file what comes out the other side.
+Then offer to grill the design before filing — `/grill-me` — it records to `DOMAIN.md` and `docs/adr/` where the project has them. Grilling is the norm, not an aside; expect the design to evolve, and file what comes out the other side.
 
 ### 7. File via `to-story`
 

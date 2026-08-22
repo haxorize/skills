@@ -7,7 +7,7 @@ requires: writing-for-humans, work-item-shape, adr
 
 # To Tasks
 
-Synthesis-only, no interviewing — run `/grill-and-record` upstream if context is thin.
+Synthesis-only, no interviewing — run `/grill-me` upstream if context is thin.
 
 Tasks are always children of a User Story — never directly under a Feature. To break a Feature into stories, run `/to-story` repeatedly under the same Feature parent.
 

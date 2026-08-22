@@ -7,7 +7,7 @@ requires: writing-for-humans, work-item-shape
 
 # To Feature
 
-No interviewing — this is a synthesis-only skill. Run `/grill-me` or `/grill-and-record` first if context is thin.
+No interviewing — this is a synthesis-only skill. Run `/grill-me` first if context is thin.
 
 `to-feature` is for **broad scope** — work that decomposes into multiple stories. The default for single-feature work is `to-story`: if the scope in front of you fits one story, say so and offer `/to-story` instead of publishing a thin Feature.
 

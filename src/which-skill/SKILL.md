@@ -6,15 +6,14 @@ disable-model-invocation: true
 
 # Which Skill
 
-This routes over the **user-invoked** skills — the ones you type. The **model-invoked behaviors** (`tdd`, `feedback-loops`, `diagnosing-bugs`, `codebase-design`, `discoverable-code`, `grilling`, `diverging`, `adoption-verdict`, `domain-modeling`, `adr`, `resolving-merge-conflicts`, `capturing-learnings`, `receiving-review`, `committing`, `writing-for-agents`, `writing-for-humans`, `work-item-shape`) fire on their own when the work calls for them, or get pulled in by the orchestrators below — you rarely reach for them by name.
+This routes over the **user-invoked** skills — the ones you type. The **model-invoked Discipline skills** (`tdd`, `feedback-loops`, `diagnosing-bugs`, `codebase-design`, `discoverable-code`, `grilling`, `diverging`, `adoption-verdict`, `domain-modeling`, `adr`, `resolving-merge-conflicts`, `capturing-learnings`, `receiving-review`, `committing`, `writing-for-agents`, `writing-for-humans`, `work-item-shape`) fire on their own when the work calls for them, or get pulled in by the orchestrators below — you rarely reach for them by name.
 
 A **flow** is a path through the skills.
 
 ## The main flow: idea → ship
 
 1. **Sharpen the idea by interview.**
-   - **`/grill-and-record`** when you **have a codebase** — it's doc-aware, updating `DOMAIN.md` as terms resolve and offering ADRs when the gate triggers.
-   - **`/grill-me`** when you **don't** (or the plan doesn't live in a repo) — same relentless interview, stateless, saves nothing.
+   - **`/grill-me`** — relentless interview. With a `DOMAIN.md` or ADR log in the repo it records as it goes, updating `DOMAIN.md` as terms resolve and writing ADRs when the gate triggers; `/grill-me --plain` (or no such docs) is the same interview with nothing saved. (`/grill-and-record` is a deprecation stub for one window — it tells you to type `/grill-me`.)
 2. **Decompose into tracked work** (three tiers, top-down as scope warrants):
    - **`/to-feature`** — a PRD-shaped Feature, when scope spans multiple stories.
    - **`/to-story`** — a single-feature Story. The usual entry point.
@@ -43,7 +42,7 @@ Keep steps 1–2 in **one unbroken context window** so the grilling, decompositi
 
 ## Codebase health (upkeep, not feature work)
 
-- **`/improve-design`** — read-only design-quality review of the whole codebase; surfaces deepening opportunities. Picking one frames a design, offers a grill (`/grill-me` or `/grill-and-record`), then hands you to `/to-story` to file the result.
+- **`/improve-design`** — read-only design-quality review of the whole codebase; surfaces deepening opportunities. Picking one frames a design, offers a grill (`/grill-me`), then hands you to `/to-story` to file the result.
 - **`/harden-domain`** — sweep the codebase to refresh `DOMAIN.md` when the vocabulary has drifted.
 - **`/backfill-adrs`** — sweep recent git history for architectural decisions that were made but never recorded.
 - **`/verify-docs`** — check a document's claims against what it answers to — the code and tests, or the sources a derived doc was distilled from — verdict per claim. The prose-drift sibling of `/harden-domain` (vocabulary) and `/backfill-adrs` (decisions); run it pre-publish, post-refactor, or as a periodic sweep — `feedback-loops` still auto-fixes docs the current change touched.

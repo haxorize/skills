@@ -7,7 +7,7 @@ requires: writing-for-humans, work-item-shape
 
 # To Bug
 
-No interviewing — synthesis only. Run `/grill-and-record` (or `/grill-me`) first if repro, scope, or regression context is thin.
+No interviewing — synthesis only. Run `/grill-me` first if repro, scope, or regression context is thin.
 
 Bugs are *not* parented under Stories — the fix is the slice. They can be filed parentless or attached to a Feature directly.
 

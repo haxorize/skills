@@ -40,6 +40,6 @@ Even then, do not act on it until the user confirms shared understanding has bee
 This is the bare discipline — no document side effects. Two orchestrators layer on top of it:
 
 - `grill-me` runs this loop and nothing else (a plain stress-test).
-- `grill-and-record` runs this loop and captures terminology and durable decisions as it goes (`DOMAIN.md` updates, opportunistic ADRs).
+- `grill-me` runs this loop and, where the project keeps a `DOMAIN.md` or ADR log, captures terminology and durable decisions as it goes (`DOMAIN.md` updates, opportunistic ADRs).
 
 Other skills reach for grilling at a natural "pressure-test this before committing" moment — e.g. `improve-design` offers it before filing a refactor.

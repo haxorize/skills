@@ -7,7 +7,7 @@ requires: writing-for-humans, work-item-shape
 
 # To Story
 
-Synthesize the current conversation into a Story-level artifact (single-feature spec) and publish it to the project's tracker. No interviewing — this is a synthesis-only skill. Run `/grill-and-record` (or `/grill-me`) first if context is thin.
+Synthesize the current conversation into a Story-level artifact (single-feature spec) and publish it to the project's tracker. No interviewing — this is a synthesis-only skill. Run `/grill-me` first if context is thin.
 
 Use `to-feature` only when scope explicitly needs multiple stories beneath it.
 

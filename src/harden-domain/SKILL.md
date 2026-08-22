@@ -1,13 +1,13 @@
 ---
 name: harden-domain
-description: Sweep the codebase to refresh DOMAIN.md — extract and formalize domain terminology into a consistent glossary. For inline domain capture during a grilling session, reach for `grill-and-record` instead.
+description: Sweep the codebase to refresh DOMAIN.md — extract and formalize domain terminology into a consistent glossary. For inline domain capture during a grilling session, reach for `grill-me` instead.
 disable-model-invocation: true
 requires: domain-modeling
 ---
 
 # Harden Domain
 
-This is the **deliberate sweep mode** — a focused one-shot pass to refresh the glossary. The glossary-writing discipline itself belongs to the `domain-modeling` behavior; this skill drives a sweep over it. Inline updates during a grilling session are owned by `grill-and-record`.
+This is the **deliberate sweep mode** — a focused one-shot pass to refresh the glossary. The glossary-writing discipline itself belongs to the `domain-modeling` discipline; this skill drives a sweep over it. Inline updates during a grilling session are owned by `grill-me`.
 
 ## Workflow
 
