@@ -13,7 +13,7 @@
 #
 # Covered here: reference-link resolution (both directions, including the
 # backtick-span and fenced-block exemptions), the ADR-citation ban, the
-# description's unquoted ': ', load-gate placement, and the global-rules
+# description's unquoted ': ' and ' #', load-gate placement, and the global-rules
 # Depends: admission check (missing line, dangling name, and the well-formed
 # form that must stay quiet). NOT covered, so a clean
 # run here is not a claim about them: the 200-line caps, sibling byte-identity
@@ -60,6 +60,7 @@ reject() {
 expect "reference-link resolution" "links to 'references/does-not-exist.md' (line 14)"
 expect "ADR-citation ban" "cites a repo ADR by number"
 expect "description colon" "description has unquoted ': '"
+expect "description hash" "description has unquoted ' #'"
 expect "load-gate placement" "carries a load gate ('Launching skill'"
 expect "global-rule Depends (missing)" "global/rules/no-depends.md has no 'Depends:' line"
 expect "global-rule Depends (dangling)" "global/rules/dangling-depends.md Depends: names 'no-such-skill'"

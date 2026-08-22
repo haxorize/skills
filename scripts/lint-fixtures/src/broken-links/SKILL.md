@@ -1,6 +1,6 @@
 ---
 name: broken-links
-description: Fixture skill that trips four checks at once. Use when running scripts/lint-selftest.sh. Bad: this unquoted colon-space is one of the four.
+description: Fixture skill that trips five checks at once. Use when running scripts/lint-selftest.sh. Bad: this unquoted colon-space is one of the five, and so is this #hash.
 ---
 
 # Broken links (fixture)

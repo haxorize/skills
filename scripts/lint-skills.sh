@@ -95,7 +95,7 @@ if [ -n "${LINT_ROOT:-}" ]; then
 fi
 cd "$scan_root"
 
-# The description caps below are character-based (<=1024 chars, no bare ': ').
+# The description caps below are character-based (<=1024 chars, no bare ': ' and no bare ' #' — both end an unquoted YAML scalar early).
 # bash's ${#var} and grep count bytes under LC_ALL=C or an unset locale, which
 # would mis-measure the Unicode-rich (em-dash) descriptions. Force a UTF-8
 # ctype unless one is already active, so the checks match their stated contract.
@@ -242,6 +242,12 @@ for f in src/*/SKILL.md; do
         echo "FAIL: $f description has unquoted ': ' (use em-dash) — $desc"
         fail=1
       fi
+      # A ' #' in an unquoted scalar starts a YAML comment: the loaded
+      # description ends there, silently. Same exemptions as the colon check.
+      if printf '%s' "$stripped" | grep -qE '(^|[[:space:]])#'; then
+        echo "FAIL: $f description has unquoted ' #' (YAML comment — the description is truncated there) — $desc"
+        fail=1
+      fi
       ;;
   esac
 
@@ -317,7 +323,7 @@ sibling_groups=(
   "src/improve-design/references/finding-discipline.md|src/review-changes/references/finding-discipline.md"
   "src/to-bug/references/github-sub-issues.md|src/to-story/references/github-sub-issues.md|src/to-tasks/references/github-sub-issues.md|src/chart-course/references/github-sub-issues.md"
   "src/to-bug/references/work-item-tags.md|src/to-feature/references/work-item-tags.md|src/to-story/references/work-item-tags.md|src/to-tasks/references/work-item-tags.md|src/chart-course/references/work-item-tags.md"
-  "src/implement/references/completion-audit.md|src/handoff/references/completion-audit.md"
+  "src/implement/references/completion-audit.md|src/handoff/references/completion-audit.md|src/committing/references/completion-audit.md"
 )
 
 # The registry above names this repo's own paths, so byte-identity runs only
@@ -387,13 +393,13 @@ for f in global/rules/*.md; do
     fail=1
     continue
   fi
-  deps=$(printf '%s' "${dep_line#Depends:}" | tr -d '\`' | tr ',' ' ')
+  deps=$(printf '%s' "${dep_line#Depends:}" | tr -d '`' | tr ',' ' ')
   resolved=0
   for dep in $deps; do
     if [ -f "src/$dep/SKILL.md" ]; then
       resolved=$((resolved + 1))
     else
-      echo "FAIL: $f Depends: names '$dep' but src/$dep/SKILL.md does not exist — fix the name or drop it"
+      echo "FAIL: $f Depends: names '$dep' but src/$dep/SKILL.md does not exist — names are bare or backticked slugs, comma-separated; fix the name or drop it"
       fail=1
     fi
   done
