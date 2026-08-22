@@ -38,7 +38,7 @@ The route most work travels: **`/grill-and-record`** (or `/grill-me` with no cod
 ### Implementation
 
 - **`from-ticket`** — Cold-start loader. Pulls a published ticket (Task / Story / Bug) back into the conversation, auto-detects type, and loads the right shape — parent context, `DOMAIN.md`, ADRs matched against `## Layers touched`. Refuses Feature/Epic with a redirect. Hands off to `implement` or freeform.
-- **`implement`** — Build one loaded ticket's slice end to end: pick the build path, build, refactor, and close the loop. Picks `tdd` for a testable slice or the direct path otherwise; runs `feedback-loops` once; suggests `review-changes` before it lands, then `committing` (one commit) or `ship` (split or PR) to land it.
+- **`implement`** — Build one loaded ticket's slice end to end: pick the build path, build, refactor, and close the loop. Picks `tdd` for a testable slice or the direct path otherwise; runs `feedback-loops` once; writes the completion audit (per-AC evidence, beat ledger, parked ledger, judgment calls, completion line) in one inspection round; suggests `review-changes` before it lands, then `committing` (one commit) or `ship` (split or PR) to land it.
 
 ### Review & validation
 

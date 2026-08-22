@@ -17,6 +17,7 @@ The rules below govern *findability*. How much behavior sits behind an interface
 - **Put the disambiguating context in the symbol, not the folder.** The import that tells `users/diff.ts` from `orders/diff.ts` sits at the top of the file; the search hit is at line 300. Name it `diffUserObjects`.
 - **One concept, one spelling.** Pick `organizationId` or `orgId` and use it everywhere; each synonym splits every future search. Reuse the vocabulary already in the code you are editing rather than introducing a near-synonym, and follow a rigid repo-wide convention where one exists (every contract file exporting `Input`/`Output`) — an existing convention beats a locally better name.
 - **Rename in the same change as the behavior.** A stale name is misinformation with a 100% open rate. That includes visibility markers: a `_private` helper other modules now import needs a public name.
+- **A rename ends when every remaining hit of the old name is one you named as deliberate.** After renaming, search the whole repo for the old spelling — code, tests, docs, config, string literals — and stop only when the hit list is empty or each hit is named (a changelog entry, a `@deprecated` alias). Rename from the match list with an edit tool, one site at a time; a mass substitution (`sed -i`, `xargs perl`) rewrites what it never listed, and the rename-safety hook blocks it where installed.
 - **Names carry durable vocabulary, not planning vocabulary.** `Phase2Handler`, `NewCheckoutService`, `v2Client` name a moment in a plan, and the plan ends while the name stays. Ticket IDs, migration phases, and rollout stages belong in the ticket and the ADR; the public name says what the thing does.
 - **Filenames are names.** `config.ts`, `types.ts`, `utils.ts`, `helpers.ts`, `handlers.ts` say nothing in a result list and collide with every other module's copy of the same file. Prefix the domain: `billing-plan-config.ts`. `index.ts` earns its name only as a thin re-export entry point.
 - **Name a type the way a compiler error will quote it.** The agent self-corrects from that error text; `OrgScopedDb` explains itself there, `Ctx2` does not.
@@ -39,5 +40,6 @@ The rules below govern *findability*. How much behavior sits behind an interface
 3. Is the one thing a caller must know that the signature cannot say written at the definition?
 4. Did anything change behavior, audience, or visibility without changing its name?
 5. Where code moved, is it gone from where it came from?
+6. Where something was renamed, does the old name search to zero, with every remaining hit named as deliberate?
 
 A "no" here is a finding on the change, the same as a failing check.

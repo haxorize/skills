@@ -74,7 +74,7 @@ Confirm the test **fails for the right reason** (behavior is missing, not a typo
 For each remaining behavior:
 
 1. **RED**: Write one test for the next behavior. Name the oracle the assertion uses — a specified value, a derived property, or (weakest) "it does not crash"; crash-only is never the silent default — if it is genuinely the best available, say so and why. Run the test command — confirm it fails for the right reason.
-2. **GREEN**: Write minimal code to pass. Run the test command — confirm it passes. Minimal narrows the code, never the behavior under test: passing means making the *requested* behavior true, not a narrower, safer, easier-to-test substitute; redefining success around what already passes is the failure, not a strategy.
+2. **GREEN**: Write minimal code to pass. Run the test command — confirm it passes. Minimal narrows the code, never the behavior under test: passing means making the *requested* behavior true, not a substitute that trips the quiet-narrowing tripwire (`DOMAIN.md`); redefining success around what already passes is the failure, not a strategy.
 
 Rule: don't anticipate future tests — write only enough code for the test in front of you. (Philosophy already sets the rest: one test at a time, behavior through the public interface, not implementation.)
 
@@ -82,7 +82,7 @@ Rule: don't anticipate future tests — write only enough code for the test in f
 
 After all tests pass, review the implementation before calling the cycle done:
 
-- Extract duplication — lifting it to existing project primitives or shared modules rather than re-rolling (consult the active layer skill for where they live), extracting fresh only when no primitive fits
+- Extract duplication — lifting it to existing project primitives or shared modules rather than re-rolling (consult the active layer skill for where they live), extracting fresh only when no primitive fits, and then only at the third caller or when the concept has a domain name (`implement`'s third-caller clause; it binds this step whether or not `implement` is running)
 - Deepen modules (move complexity behind simple interfaces)
 - Simplify where the accumulated implementation reveals a cleaner design
 - Fix the names the change made wrong — follow the `/discoverable-code` behavior over what the slice exported, renamed, or moved, since a name that stops matching its behavior misleads every later search

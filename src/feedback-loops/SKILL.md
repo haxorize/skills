@@ -1,6 +1,6 @@
 ---
 name: feedback-loops
-description: The mechanical pass that closes the loop after a slice's behaviors are built and refactored. Use when finishing a change, after the last test passes, or when another skill needs to run lint, format, typecheck, migrations, and doc updates before declaring work done.
+description: The mechanical pass that closes the loop after a slice's behaviors are built and refactored. Use when finishing a change, after the last test passes, when asked to clear the lint, typecheck, format, or test warnings, or when another skill needs to run lint, format, typecheck, migrations, and doc updates before declaring work done.
 requires: diagnosing-bugs
 ---
 
@@ -12,7 +12,7 @@ This pass is **mechanical only**: it runs the checks and never judges whether co
 
 ## Triage before you fix
 
-A red check is classified **in-scope or out-of-scope before anything is touched**. The parked list `implement` keeps is that scope declaration when `implement` ran; otherwise it's the diff.
+A red check is classified **in-scope or out-of-scope before anything is touched**. The parked ledger `implement` keeps is that scope declaration when `implement` ran; otherwise it's the diff.
 
 Failures outside it are not this pass's work. Name them, leave them, and don't commit over them — "making the suite green again" by absorbing an unrelated failure buries it inside your change, where the next person will find it wearing your name. For an out-of-scope red you can't quickly explain, run the `/diagnosing-bugs` skill.
 
@@ -20,12 +20,12 @@ Failures outside it are not this pass's work. Name them, leave them, and don't c
 
 ## What "the loop" is
 
-Resolve the project's check commands from its `CLAUDE.md` `## Commands` section. The universal ones:
+Resolve the project's check commands from its `CLAUDE.md` `## Commands` section. The universal ones — and warnings from any of them are in scope when the ask was to clear them, with that ask setting the scope instead of the diff:
 
 - **Format** — apply the project's formatter.
 - **Lint** — run the linter; fix what it flags.
 - **Typecheck** — run the type checker; fix what it flags.
-- **Test** — re-run the test command after any fix above, to confirm nothing broke. A green run is spent the moment it completes — never re-run for reassurance without an intervening change.
+- **Test** — re-run the test command after any fix above, to confirm nothing broke. A green run is spent the moment it completes — never re-run for reassurance without an intervening change. **Zero ran is not green**: a filter that selected nothing (`pytest -k`, `vitest -t`, a path that no longer exists) exits clean and proves only that the runner started, so the count of tests that ran is part of the evidence, and a count of zero is a red.
 
 If `## Commands` is missing or incomplete, infer the commands from the project's config (package scripts, Makefile, tool config) and note what you ran.
 
@@ -34,6 +34,8 @@ If `## Commands` is missing or incomplete, infer the commands from the project's
 ### 1. Format, lint, typecheck
 
 Run the loop's format, lint, and typecheck commands, then the test re-run the loop prescribes. Send long output to a file and read the file, rather than piping it through `head` or `tail`: truncation drops exactly the lines a failure needs, and in a pipeline the status you read is the last command's — `$?` after `pytest | tail -5` is `tail` succeeding, not the suite passing. Redirect, check the status, then read what was kept; the output on disk also survives the next command, so a re-run is never needed just to see it again. Never declare done while an in-scope check is red — an out-of-scope red follows the triage rule: named and left, never fixed here or committed over.
+
+**A second rejection of the same class by a mechanical gate means the class is in your change, not just the instance.** When the linter, the type checker, or a pre-commit hook rejects a second hit of the same shape, stop fixing hits as the gate surfaces them: sweep what you are about to submit for the pattern, fix every instance in one batch, then re-run — the gate was generating your fix list one item at a time.
 
 ### 2. Stack-specific finalization
 
@@ -47,4 +49,4 @@ Regeneration steps are also where out-of-scope failures are *born*: a generator 
 
 ### 3. Update docs
 
-Check whether the change affects anything documented in `README.md`, `CLAUDE.md`, or `DOMAIN.md` — new or changed commands, structure, conventions, or domain terms. Update what drifted. This step only fixes docs the change has already made stale: recording a *decision* is the `adr` skill's job, and capturing or sharpening a *domain term* is `domain-modeling`'s.
+Start from what the diff removed: grep `README.md`, `CLAUDE.md`, `DOMAIN.md`, and any docs the project names for each deleted name before reading for anything else (a renamed name is `discoverable-code`'s search-to-zero check, not this step's) — a doc that still names a thing that is gone is the drift a read-through misses, because nothing on the page looks wrong. Then check whether the change affects anything else documented there — new or changed commands, structure, conventions, or domain terms. Update what drifted. This step only fixes docs the change has already made stale: recording a *decision* is the `adr` skill's job, and capturing or sharpening a *domain term* is `domain-modeling`'s.

@@ -18,7 +18,9 @@ Statuses, and what each requires:
 - **PARTIAL** — some of the criterion holds; the line says which part does not.
 - **NOT DONE** — none of it holds; the line says why it was left.
 - **CHANGED** — the criterion was altered in the building (narrowed, reinterpreted, moved); the line states the original and the change, so the human can accept or reject the reinterpretation.
-- **UNVERIFIABLE** — the evidence cannot be obtained from here (a system outside the repo, a capture that never landed, a deliverable that is not code); the line names what would prove it. When in doubt between DONE and UNVERIFIABLE, write UNVERIFIABLE. A named path or command you could run is not unverifiable; "I did not check" is not a status.
+- **UNVERIFIABLE** — the evidence cannot be obtained from here (a system outside the repo, a capture that never landed, a deliverable that is not code — code that handles a deliverable is not the deliverable); the line names what would prove it. When in doubt between DONE and UNVERIFIABLE, write UNVERIFIABLE. A named path or command you could run is not unverifiable; "I did not check" is not a status.
+
+**The quiet-narrowing tripwire, run before any row is written DONE.** Five flavours: what was built is **smaller** than asked, **safer** than asked, **easier to test** than asked, was **already existing** and got claimed without the criterion being exercised, or is **merely compatible** with the criterion without meeting it. A row that trips any of them is not DONE: it is PARTIAL when the criterion still stands and part of it is missing, and CHANGED when the criterion itself was redefined to fit what was built.
 
 **A criterion marked done without an evidence line reports as open.** It is worse than an unchecked one: it claims the proof exists and hides that it does not.
 
@@ -37,11 +39,11 @@ A skipped beat with no reason is a beat that was forgotten, and reads as one.
 
 ## Parked ledger
 
-Every out-of-scope observation made mid-slice and deliberately left alone. Each row carries three things, because a parked item without them is a note that lost its reasoning:
+Every out-of-scope observation made mid-slice and deliberately left alone. Each row carries three things, because a parked item without them is a note that lost its reasoning — and the third opens with whether **this ticket** or something **outside** it owns the item, because the completion line and `committing` both count only the rows this ticket owns:
 
 | Where | Observed problem | Why parked |
 |---|---|---|
-| `src/api/scores.py:112` | N+1 query when brands exceed the page size | outside AC1–AC3; fix touches the repository layer this slice does not own |
+| `src/api/scores.py:112` | N+1 query when brands exceed the page size | outside — not in AC1–AC3; fix touches the repository layer this slice does not own |
 
 **State the zero case explicitly:** `0 parked; 3 ACs checked against tests/test_scores.py and the ticket body`. An empty section and a section that was never written look the same; the count with its source does not.
 
@@ -60,3 +62,15 @@ The decisions made during the build that the user did not make, each tagged with
 ```
 
 A list that holds only the choices you would defend is not this list. The test is whether the user could reverse the decision if they knew it was made.
+
+## Completion line
+
+One closing line, in one of three shapes, every count taken from the table and the parked ledger above. The table above yields the third; the first two show the other shapes against tables of their own:
+
+```
+complete — 3 ACs DONE, 0 parked this ticket owns                       (every row DONE)
+complete with 1 unverified — AC3 (check: screenshot of the tile after deploy)   (every row DONE or UNVERIFIABLE)
+incomplete — AC2 PARTIAL (sort order), AC3 UNVERIFIABLE (check: screenshot of the tile after deploy); 0 parked this ticket owns
+```
+
+`complete` needs every row DONE and zero parked items this ticket owns. `complete with N unverified` needs every other row DONE, and names each UNVERIFIABLE row with its manual check. Anything else is `incomplete`, naming every row that is not DONE and the count of parked items this ticket owns.

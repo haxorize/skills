@@ -44,7 +44,7 @@ The pressure is predictable: the work is at its end, the change is green, the su
 
 ## The completion audit decides the closing word
 
-A ticket closes on a clean remainder, not on a push. Read the completion audit from the session (`implement` writes it at close, `handoff` carries it; its form is [references/completion-audit.md](references/completion-audit.md)) before choosing the closing keyword:
+A ticket closes on a clean remainder, not on a push. Read the completion audit from the session (`implement` writes it at close, `handoff` carries it; its form is [references/completion-audit.md](references/completion-audit.md)) before choosing the closing keyword — start from its completion line, where only the bare `complete` shape can yield `Closes`, then re-derive the word from the table:
 
 - Every acceptance criterion `DONE` with evidence, zero parked items against the ticket: `Closes #N`.
 - Anything `PARTIAL`, `NOT DONE`, `CHANGED`, or `UNVERIFIABLE`, or a parked item the ticket owns: `Refs #N`, with the remainder named in the closing comment. A partial slice that auto-closed its ticket is the failure this rule answers.
