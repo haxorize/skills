@@ -43,6 +43,7 @@ Landing:
 - PR required: no
 - Push pre-authorised: yes
 - Ticket close pre-authorised: no (no tracker)
+- Review required: yes
 - Defect policy: fix, don't file
 
 ## Commit order

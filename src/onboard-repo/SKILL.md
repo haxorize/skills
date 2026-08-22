@@ -20,25 +20,25 @@ Look first, then ask only what the repo cannot answer: the remote (`git remote -
 One numbered round, only the gaps from step 1:
 
 1. **Tracker** — name (GitHub, ADO, other), and for ADO every field a reader of the block names: `Organization:` and `Project:` (`ship` and the publishers), `Area path:` and `Iteration:` (`glapi-test-pass`); default labels if the team uses them. Ask for all four now — step 3 never adds a line to a block that exists, so a field skipped here stays missing.
-2. **Landing** — the five lines `committing` reads: `Branch policy:`, `PR required:`, `Push pre-authorised:`, `Ticket close pre-authorised:`, `Defect policy:` (their values are `committing`'s to define; the README's Landing key convention lists them). Recommend the conservative line wherever the answer is unsure: nothing pre-authorised costs one question per landing; a wrong `yes` costs a push nobody asked for.
+2. **Landing** — the six lines `committing` reads: `Branch policy:`, `PR required:`, `Push pre-authorised:`, `Ticket close pre-authorised:`, `Review required:`, `Defect policy:` (their values are `committing`'s to define; the README's Landing key convention lists them). Recommend the conservative line wherever the answer is unsure: nothing pre-authorised costs one question per landing; a wrong `yes` costs a push nobody asked for. `Review required:` is `yes` when the review happens in the session and `no` when it happens on a PR an approver signs — the `PR required:` answer decides it; `yes` gates rather than authorises, which is why it is the conservative line.
 3. **Commands** — the test, lint, typecheck, and format invocations `feedback-loops` reads from `## Commands`, asked only where step 1 found none or found an invocation that looks wrong and is right.
 4. **Convention-skill roles** — which project-local skills own which layer (`database` → migrations, `api` → endpoint shape), for the `## Convention skills` section `implement` points `tdd` and `feedback-loops` at, by role.
 5. **Registry** — whether installs go through a proxy with a curation policy (an Artifactory or JFrog minimum release age, a blocked-licence list): the `## Registry` lines `upgrade-deps` reads, asked only where the manifest or `.npmrc` / `NuGet.config` / `pip.conf` does not already name the proxy.
-6. **Hooks** — whether to wire `rename-safety` (opt-in per directory) and `commit-bypass` from the suite's `global/hooks/`.
+6. **Hooks** — whether to wire `rename-safety` (opt-in per directory), `commit-bypass` (always on), and `review-receipt` (armed by the `Review required: yes` line from item 2 — a repo with that line and no hook wired believes its pushes are gated while nothing fires) from the suite's `global/hooks/`.
 
 ## 3. Write, never overwrite
 
 Preview every block, then write on confirmation. A block or file that already exists is left exactly as it is and reported as skipped, even where it disagrees with the interview — the user edits it; this skill does not. Append to `CLAUDE.md` (create a minimal one when absent); never reorder or rewrite what is there.
 
 - `## Issue tracker` — the `Issue tracker:` block the publishers read: the tracker name; for ADO, the four fields from step 2; optional default labels.
-- `## Landing` — the `Landing:` block, five lines.
+- `## Landing` — the `Landing:` block, six lines.
 - `## Commands` — only the commands step 2 admitted, each preceded by the question it answers.
 - `## Convention skills` — role → skill name, one line each.
 - `## Registry` — `Minimum release age:` and any other curation line step 2 admitted; the number is the org's and lives here, never in a skill.
 - `DOMAIN.md` — a heading and an empty `| Term | Definition | Aliases to avoid |` table; the vocabulary arrives through `grill-me` and `harden-domain`, not here.
 - `docs/solutions/` — the directory plus the `CLAUDE.md` line `capturing-learnings` would otherwise add at first capture, verbatim from its step 4: `docs/solutions/ — solved problems keyed by symptom frontmatter`.
 
-Hook opt-in is a printed `settings.json` snippet and, for `rename-safety`, the `touch .claude/rename-safety` line — this skill never edits `settings.json`.
+Hook opt-in is a printed `settings.json` snippet and, for `rename-safety`, the `touch .claude/rename-safety` line; `review-receipt`'s opt-in is the `Review required: yes` line the Landing block already carries — this skill never edits `settings.json`.
 
 ## 4. Close
 

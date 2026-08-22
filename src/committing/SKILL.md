@@ -14,7 +14,7 @@ It never proposes a commit split. A change that needs several commits in lineage
 
 Commit, push, a tracker write, a message, a loop: each is an outward act, and the global no-unasked-commits rule in `~/.claude/rules/` governs all of them. That rule has one owner; it is not restated here.
 
-Read `CLAUDE.md` for a `Landing:` block before the first act. Its five lines are `Branch policy:` (`trunk` or `branch-per-ticket`, with a naming pattern where the repo has one), `PR required:`, `Push pre-authorised:`, `Ticket close pre-authorised:` (each `yes`/`no`), and `Defect policy:` (default `fix, don't file`). An act the key pre-authorises proceeds on the ask that started the work; every other act asks first, with a recommendation. No block means nothing is pre-authorised.
+Read `CLAUDE.md` for a `Landing:` block before the first act. Its six lines are `Branch policy:` (`trunk` or `branch-per-ticket`, with a naming pattern where the repo has one), `PR required:`, `Push pre-authorised:`, `Ticket close pre-authorised:`, `Review required:` (each `yes`/`no`; `yes` gates the push on a review receipt, and the "reviewed" row below is the claim), and `Defect policy:` (default `fix, don't file`). An act the key pre-authorises proceeds on the ask that started the work; every other act asks first, with a recommendation, under `~/.claude/rules/recommend-and-proceed.md`. No block means nothing is pre-authorised, and a missing `Review required:` line means `no`.
 
 `git status` and `git diff` before anything is staged, on either path: untracked or unstaged files that belong to the change are surfaced now, not discovered after the commit.
 
@@ -30,7 +30,7 @@ Every assertion written into a commit message, closing comment, PR body, or end-
 |---|---|
 | "this change does X" / scope of any kind | the diff |
 | "no contract change", "test-only", "no production code" | the diff, file by file, not from memory |
-| "reviewed" | a review report or handoff path in this conversation, or the user's exact skip phrase; if the report carries a reviewed-head stamp and HEAD has moved past it, the claim is "reviewed at `<sha>`, N commits since" — silence on review is a stop, never an assumed yes |
+| "reviewed" | in a `Review required: yes` repo, the `review-changes` report the `review-receipt` hook accepts (its header is the contract — a subagent review that wrote no file, and a handoff, are not it), and there is no skip phrase: the only skip is the user pushing from their own terminal, so a refusal is a blocked action to report; elsewhere a review report or handoff path in this conversation, or the user's exact skip phrase; in either case, if the report carries a reviewed-head stamp and HEAD has moved past it, the claim is "reviewed at `<sha>`, N commits since" — silence on review is a stop, never an assumed yes |
 | "the user approved" / "as agreed" | the turn where they said it; quote it. A fabricated approval is the failure this row exists for |
 | "closes N" / "fixes N" / "done" | the ticket body, re-read now, and the completion audit (below) |
 | "I ran X" for any step | whether it ran in this session; inspection is not execution |
@@ -87,7 +87,7 @@ Report what actually happened: what landed, what's staged, what's waiting on a m
 
 ## Notes
 
-- The `commit-bypass` hook under `global/hooks/` is this protocol's mechanical half: a failing pre-commit hook is a blocked action to report, never a reason for `--no-verify`, and the hook refuses the bypass shapes before they run.
+- The `commit-bypass` hook under `global/hooks/` is this protocol's mechanical half: a failing pre-commit hook is a blocked action to report, never a reason for `--no-verify`, and the hook refuses the bypass shapes before they run. The `review-receipt` hook beside it is the "reviewed" row's mechanical half at the push.
 - Merge conflicts on the way in are `resolving-merge-conflicts`' job.
 - Findings that surface while drafting are follow-ups, not this change's work. Land the change; name what you noticed. Filing them is `/to-bug`'s, and only on the user's ask — the `Landing:` defect policy defaults to "fix, don't file".
 - The status report this skill ends with is governed by the evidence rule in `~/.claude/rules/`.
