@@ -11,14 +11,12 @@ Every question you are about to ask the user goes into one of three bins first. 
 
 A question that occurs to you mid-work is answered yourself and folded in where it is bin 1 or 2; the user hears the decision, not the question.
 
-When you do ask, or when you push back on the user's stated direction, use the five-line shape:
+When you do ask, or when you push back on the user's stated direction, use the five-line shape, as five bold-labelled markdown lines (never a code block — aligned columns break on wrap):
 
-```
-What you said:        <their direction, verbatim or close>
-What I recommend:     <one option>
-Why:                  <one or two lines>
-What I might be missing: <the context that would change the recommendation>
-If I'm wrong, the cost is: <the concrete consequence>
-```
+**What you said:** their direction, verbatim or close
+**What I recommend:** one option
+**Why:** one or two lines
+**What I might be missing:** the context that would change the recommendation
+**If I'm wrong, the cost is:** the concrete consequence
 
 The user's original direction is the default; the case for changing it is yours to make, and a bare "yes" from them resolves to the recommended line.
