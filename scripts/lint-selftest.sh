@@ -15,7 +15,9 @@
 # backtick-span and fenced-block exemptions), the ADR-citation ban, the
 # description's unquoted ': ' and ' #', load-gate placement, and the global-rules
 # Depends: admission check (missing line, dangling name, a dependant that never
-# cites the rule, and the well-formed form that must stay quiet). NOT covered, so a clean
+# cites the rule outside a fence, a dependant that cites only another rule's
+# path, and the two well-formed forms — backticked stem, and path — that must
+# stay quiet). NOT covered, so a clean
 # run here is not a claim about them: the 200-line caps, sibling byte-identity
 # (skipped under LINT_ROOT — the registry names this repo's own paths),
 # description length, angle brackets, name/directory agreement, the
@@ -68,6 +70,9 @@ expect "load-gate placement" "carries a load gate ('Launching skill'"
 expect "global-rule Depends (missing)" "global/rules/no-depends.md has no 'Depends:' line"
 expect "global-rule Depends (dangling)" "global/rules/dangling-depends.md Depends: names 'no-such-skill'"
 expect "global-rule Depends (uncited)" "global/rules/uncited-depends.md Depends: names 'quoted-dep' but src/quoted-dep/ never cites the rule"
+expect "global-rule Depends (directory only)" "global/rules/dir-only-cited.md Depends: names 'unused-dep' but src/unused-dep/ never cites the rule"
+expect "global-rule Depends (other rule's path)" "global/rules/other-path-cited.md Depends: names 'unused-dep' but src/unused-dep/ never cites the rule"
+expect "global-rule Depends (unmarked stem)" "global/rules/bare-stem-cited.md Depends: names 'unused-dep' but src/unused-dep/ never cites the rule"
 expect "two-way requires (undeclared)" "src/undeclared-dep/SKILL.md invokes \`/fixture-discipline\` but its requires: line does not declare"
 expect "two-way requires (unused)" "src/unused-dep/SKILL.md declares requires: 'fixture-discipline' but the body never names it"
 
@@ -77,6 +82,8 @@ reject "reference-link resolution" "references/exempt-double.md"
 reject "reference-link resolution" "references/exempt-inner.md"
 reject "reference-link resolution" "references/exempt-fenced.md"
 reject "global-rule Depends" "global/rules/well-formed.md"
+reject "global-rule Depends (path form)" "global/rules/path-cited.md"
+# The trailing /SKILL.md is load-bearing: the uncited-depends FAIL names src/quoted-dep/ without it.
 reject "two-way requires (quoted and parenthesised forms)" "src/quoted-dep/SKILL.md"
 
 if [ "$status" -ne 1 ]; then

@@ -86,9 +86,12 @@
 #     line naming at least one existing skill under src/ — the admission rule
 #     in global/README.md (only rules a skill depends on). A rule with no
 #     resolvable dependant has lost its reason to load on every turn. Each
-#     named dependant must also cite the rule somewhere under src/<dep>/ —
-#     the literal `~/.claude/rules/` or the rule's filename stem — so the
-#     Depends: line and the skill body agree on who leans on whom. The
+#     named dependant must also cite the rule by name somewhere under
+#     src/<dep>/ (SKILL.md or a reference): the path `~/.claude/rules/<stem>.md`
+#     or the backticked stem (`large-write-chunking`). A bare mention of the
+#     rules directory does not count — it cannot say which rule is leaned on —
+#     and neither does the stem as an unmarked word (`evidence` in prose) or a
+#     citation inside a fenced block. The
 #     200-line cap and the ADR-citation ban above also run over global/rules/,
 #     since those files are hoisted into ~/.claude/rules/ the same way skills
 #     are hoisted.
@@ -105,6 +108,16 @@
 set -uo pipefail
 
 repo_root="$(cd "$(dirname "$0")/.." && pwd)"
+
+# The one fence-stripping awk fragment every text check starts with: a line
+# inside a ``` block is never read. `fence` resets per file so an unclosed
+# fence in one file cannot hide (or expose) lines in the next file of an
+# `-exec … +` batch; an indented fence counts as a fence. Prepend to an awk
+# program: awk "$FENCE_AWK"'{ … }'.
+FENCE_AWK='FNR == 1 { fence = 0 }
+/^[[:space:]]*```/ { fence = !fence; next }
+fence { next }
+'
 
 # LINT_ROOT points the whole sweep at another tree, so scripts/lint-selftest.sh
 # can run every check below against a fixture repo whose failures are known in
@@ -207,8 +220,7 @@ while IFS= read -r f; do
       }
       return out s
     }
-    /^[[:space:]]*```/ { fence = !fence; next }
-    fence { next }
+  '"$FENCE_AWK"'
     {
       line = strip_spans($0)
       while (match(line, /\]\([^)]+\)/)) {
@@ -411,7 +423,7 @@ for f in src/*/SKILL.md; do
   skill=$(basename "$(dirname "$f")")
   reqs=$(frontmatter_value "$f" requires | tr ',' ' ')
   body=$(awk '/^---$/ { c++; next } c >= 2' "$f")
-  scan=$(printf '%s\n' "$body" | awk '/^```/ { fence = !fence; next } !fence' | sed -e 's/"[^"]*"//g' -e 's/([^)]*→[^)]*)//g')
+  scan=$(printf '%s\n' "$body" | awk "$FENCE_AWK"'{ print }' | sed -e 's/"[^"]*"//g' -e 's/([^)]*→[^)]*)//g')
   for used in $(printf '%s\n' "$scan" | grep -o '`/[a-z-]*`' | tr -d '`/' | sort -u); do
     [ -f "src/$used/SKILL.md" ] || continue
     [ "$(is_user_invoked "src/$used/SKILL.md")" = "true" ] && continue
@@ -444,11 +456,10 @@ for f in global/rules/*.md; do
   for dep in $deps; do
     if [ -f "src/$dep/SKILL.md" ]; then
       resolved=$((resolved + 1))
-      # Citation: a dependant that never names the rule is a dependency on
-      # paper only. Either the rules directory or the rule's filename stem
-      # (`large-write-chunking`, with or without `.md`) satisfies it.
-      if ! grep -rqF -e '~/.claude/rules/' -e "$stem" "src/$dep"; then
-        echo "FAIL: $f Depends: names '$dep' but src/$dep/ never cites the rule — mention '~/.claude/rules/' or '$stem' where the skill leans on it, or drop the name"
+      # Citation (see header): the path form or the backticked stem.
+      if ! find "src/$dep" -type f -name '*.md' -exec awk "$FENCE_AWK"'{ print }' {} + 2>/dev/null \
+          | grep -qE "~/\.claude/rules/${stem}\.md|\`${stem}\`"; then
+        echo "FAIL: $f Depends: names '$dep' but src/$dep/ never cites the rule — write '~/.claude/rules/$stem.md' or the backticked stem '\`$stem\`' where the skill leans on it, or drop the name"
         fail=1
       fi
     else

@@ -9,5 +9,5 @@ disable-model-invocation: true
 A quoted example stays exempt: "Run the `/fixture-discipline` skill" is how the guide quotes it, and so is an aside (`caller` → `/fixture-discipline`).
 
 ```md
-Run the `/fixture-discipline` skill now.
+Run the `/fixture-discipline` skill now. The global `uncited-depends` rule is named only here, inside a fence, which is not a citation.
 ```

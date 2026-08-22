@@ -12,7 +12,7 @@ It never proposes a commit split. A change that needs several commits in lineage
 
 ## Before any outward act
 
-Commit, push, a tracker write, a message, a loop: each is an outward act, and the global no-unasked-commits rule in `~/.claude/rules/` governs all of them. That rule has one owner; it is not restated here.
+Commit, push, a tracker write, a message, a loop: each is an outward act, and the global rule `~/.claude/rules/no-unasked-commits.md` governs all of them. That rule has one owner; it is not restated here.
 
 Read `CLAUDE.md` for a `Landing:` block before the first act. Its six lines are `Branch policy:` (`trunk` or `branch-per-ticket`, with a naming pattern where the repo has one), `PR required:`, `Push pre-authorised:`, `Ticket close pre-authorised:`, `Review required:` (each `yes`/`no`; `yes` gates the push on a review receipt, and the "reviewed" row below is the claim), and `Defect policy:` (default `fix, don't file`). An act the key pre-authorises proceeds on the ask that started the work; every other act asks first, with a recommendation, under `~/.claude/rules/recommend-and-proceed.md`. No block means nothing is pre-authorised, and a missing `Review required:` line means `no`.
 
@@ -90,4 +90,4 @@ Report what actually happened: what landed, what's staged, what's waiting on a m
 - The `commit-bypass` hook under `global/hooks/` is this protocol's mechanical half: a failing pre-commit hook is a blocked action to report, never a reason for `--no-verify`, and the hook refuses the bypass shapes before they run. The `review-receipt` hook beside it is the "reviewed" row's mechanical half at the push.
 - Merge conflicts on the way in are `resolving-merge-conflicts`' job.
 - Findings that surface while drafting are follow-ups, not this change's work. Land the change; name what you noticed. Filing them is `/to-bug`'s, and only on the user's ask — the `Landing:` defect policy defaults to "fix, don't file".
-- The status report this skill ends with is governed by the evidence rule in `~/.claude/rules/`.
+- The status report this skill ends with is governed by `~/.claude/rules/evidence.md`.

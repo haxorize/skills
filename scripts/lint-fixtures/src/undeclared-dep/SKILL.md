@@ -6,4 +6,4 @@ disable-model-invocation: true
 
 # Undeclared dep
 
-Run the `/fixture-discipline` skill now.
+Run the `/fixture-discipline` skill now. This body cites a global rule by path: `~/.claude/rules/path-cited.md`.
