@@ -1,0 +1,267 @@
+#!/usr/bin/env bash
+# Self-test for review-receipt.sh: an expect/reject table run against throwaway
+# repos. The hook is fail-open, so a rule that quietly stops matching looks
+# exactly like a clean push — this table is the only thing that tells the two
+# apart. Run it after changing any rule: bash global/hooks/review-receipt-selftest.sh
+#
+# REVIEW_RECEIPT_SELFTEST_VERBOSE=1 shows each row's stderr.
+set -u
+here="$(cd "$(dirname "$0")" && pwd)"
+hook="$here/review-receipt.sh"
+
+work="$(mktemp -d "${TMPDIR:-/tmp}/review-receipt-selftest.XXXXXX")"
+work="$(cd "$work" && pwd -P)"
+trap 'chmod -R u+rw "$work" 2>/dev/null; rm -rf "$work"' EXIT
+export REVIEW_RECEIPT_DIR="$work/zone"
+mkdir -p "$REVIEW_RECEIPT_DIR"
+export HOME="$work"            # `~` in a command expands here; nothing outside the sandbox is read
+export TZ=UTC                  # `touch -t` is local time; the commit dates below are UTC
+export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null
+export GIT_AUTHOR_NAME=t GIT_AUTHOR_EMAIL=t@t GIT_COMMITTER_NAME=t GIT_COMMITTER_EMAIL=t@t
+
+GATED_LINES='# repo\n\n## Landing\n\nLanding:\n- Branch policy: trunk\n- Push pre-authorised: yes\n- Review required: yes\n'
+# mkrepo <name> <CLAUDE.md printf-format>: a clone with its own bare remote, upstream set, one
+# unpushed commit dated 2026-01-01T12:00Z (epoch 1767268800) so receipts can be placed before,
+# at, or after it.
+mkrepo() {
+  git init -q --bare "$work/$1-remote.git"
+  git clone -q "$work/$1-remote.git" "$work/$1" 2>/dev/null
+  ( cd "$work/$1" && git checkout -q -b main 2>/dev/null
+    printf "$2" > CLAUDE.md
+    git add CLAUDE.md && git commit -q -m init && git push -q -u origin main 2>/dev/null
+    echo x > f && git add f && GIT_COMMITTER_DATE="2026-01-01T12:00:00Z" git commit -q -m change )
+}
+mkrepo gated "$GATED_LINES"
+mkrepo plain '# repo\n\nLanding:\n- Branch policy: trunk\n'
+mkrepo bold '# repo\n\n**Review required:** yes\n'
+mkrepo boldall '# repo\n\n**Review required: yes**\n'
+mkrepo boldval '# repo\n\n- **Review required:** **yes**\n'
+mkrepo ticks '# repo\n\n- Review required: `yes`\n'
+mkrepo planned '# repo\n\n- Review required: yes (planned)\n'
+mkrepo fenced '# repo\n\n```\n- Review required: yes\n```\n'
+mkrepo unreadable "$GATED_LINES"
+chmod 000 "$work/unreadable/CLAUDE.md"
+# monorepo: the line at the root, a package CLAUDE.md without it
+mkrepo mono "$GATED_LINES"
+( cd "$work/mono" && mkdir -p pkg optout && printf '# pkg\n' > pkg/CLAUDE.md && printf '# optout\n\n- Review required: no\n' > optout/CLAUDE.md \
+  && git add pkg optout && GIT_COMMITTER_DATE="2026-01-01T12:00:00Z" git commit -q -m pkg )
+# two remotes: upstream is `other` and fully pushed there; `origin` is one commit behind
+mkrepo tworemotes "$GATED_LINES"
+( cd "$work/tworemotes" && git init -q --bare "$work/other-remote.git" && git remote add other "$work/other-remote.git" \
+  && git push -q -u other main 2>/dev/null )
+# no tracking branch, but origin/main fetched: the `origin/<branch>` fallback range
+mkrepo noupstream "$GATED_LINES"
+( cd "$work/noupstream" && git branch -q --unset-upstream )
+
+fail=0
+run() { # run <cwd> <command-string> [env...]; prints exit code
+  local cwd="$1" cmd="$2"; shift 2
+  local payload
+  payload="$(python3 -c 'import json,sys; print(json.dumps({"cwd":sys.argv[1],"tool_input":{"command":sys.argv[2]}}))' "$cwd" "$cmd")"
+  if [ -n "${REVIEW_RECEIPT_SELFTEST_VERBOSE:-}" ]; then
+    echo "--- $cmd" >&2
+    printf '%s' "$payload" | env "$@" bash "$hook" >/dev/null; echo $?
+  else
+    printf '%s' "$payload" | env "$@" bash "$hook" >/dev/null 2>&1; echo $?
+  fi
+}
+crumb() { # crumb <cwd> <command-string> [env...]; prints the hook's stderr and "rc=N"
+  local cwd="$1" cmd="$2"; shift 2
+  local payload
+  payload="$(python3 -c 'import json,sys; print(json.dumps({"cwd":sys.argv[1],"tool_input":{"command":sys.argv[2]}}))' "$cwd" "$cmd")"
+  printf '%s' "$payload" | env "$@" bash "$hook" 2>&1 >/dev/null; echo "rc=$?"
+}
+# expect_block / expect_allow <cwd> <command> <label> [env...]
+expect_block() { local rc; rc="$(run "$1" "$2" "${@:4}")"; if [ "$rc" != 2 ]; then echo "FAIL (should block, rc=$rc) [$3]: $2"; fail=1; fi; }
+expect_allow() { local rc; rc="$(run "$1" "$2" "${@:4}")"; if [ "$rc" != 0 ]; then echo "FAIL (should allow, rc=$rc) [$3]: $2"; fail=1; fi; }
+# expect_crumb <cwd> <command> <stderr pattern> <label>: allowed, and the breadcrumb names why
+expect_crumb() {
+  local out; out="$(crumb "$1" "$2")"
+  printf '%s' "$out" | grep -q 'rc=0' || { echo "FAIL (should allow with a breadcrumb) [$4]: $2 — $out"; fail=1; }
+  printf '%s' "$out" | grep -q "$3" || { echo "FAIL (breadcrumb should say '$3') [$4]: $2 — $out"; fail=1; }
+}
+G="$work/gated"; P="$work/plain"
+
+# --- no receipt at all: block every live push shape in the gated repo ---------
+expect_block "$G" "git push"                                   "bare push"
+expect_block "$G" "git push origin main"                       "explicit remote"
+expect_block "$G" "git push -q origin main 2>&1 | tail -2"     "push in a pipeline"
+expect_block "$G" "git add . && git commit -m x && git push"   "push after commit"
+expect_block "$G" "/usr/bin/git push"                          "path-prefixed git"
+expect_block "$G" "git -C . push"                              "-C before the subcommand"
+expect_block "$G" "git -c push.default=simple push"            "-c key=value before the subcommand"
+expect_block "$G" "git --git-dir .git push"                    "--git-dir <value> before the subcommand"
+expect_block "$G" "git --git-dir=.git push"                    "--git-dir=<value> before the subcommand"
+expect_block "$G" "git --work-tree . push"                     "--work-tree <value> before the subcommand"
+expect_block "$G" "git -c alias.p=push p"                      "alias built on the command line"
+expect_block "$G" "git -c 'alias.p=push origin main' p"        "alias carrying its own arguments"
+expect_block "$G" "bash -c 'git push origin main'"             "nested shell"
+expect_block "$G" "bash -lc 'git push'"                        "clustered -c"
+expect_block "$G" "sh -c 'git push'"                           "sh -c"
+expect_block "$G" "zsh -c 'git push'"                          "zsh -c"
+expect_block "$G" "dash -c 'git push'"                         "dash -c"
+expect_block "$G" "ksh -c 'git push'"                          "ksh -c"
+expect_block "$G" 'eval "git push"'                            "eval"
+expect_block "$G" "eval eval eval eval git push"               "eval nested four deep"
+expect_block "$G" "env GIT_TRACE=1 git push"                   "env wrapper"
+expect_block "$G" 'env -S "git push"'                          "env -S string"
+expect_block "$G" "timeout 30 git push"                        "timeout wrapper"
+expect_block "$G" "timeout -k 5 30 git push"                   "timeout with a value-taking option"
+expect_block "$G" "nice git push"                              "nice wrapper"
+expect_block "$G" "nice -n 5 git push"                         "nice with a value-taking option"
+expect_block "$G" "sudo git push"                              "sudo wrapper"
+expect_block "$G" "sudo -u me git push"                        "sudo with a value-taking option"
+expect_block "$G" "doas git push"                              "doas wrapper"
+expect_block "$G" "exec git push"                              "exec wrapper"
+expect_block "$G" "exec -a x git push"                         "exec with a value-taking option"
+expect_block "$G" "command git push"                           "command wrapper"
+expect_block "$G" "nohup git push"                             "nohup wrapper"
+expect_block "$G" "time git push"                              "time wrapper"
+expect_block "$G" "stdbuf -o0 git push"                        "stdbuf wrapper"
+expect_block "$G" "ionice -c 3 git push"                       "ionice wrapper"
+expect_block "$G" "caffeinate -i git push"                     "caffeinate wrapper"
+expect_block "$G" "echo origin main | xargs git push"          "xargs"
+expect_block "$G" "echo push | xargs git"                      "xargs supplying the subcommand"
+expect_block "$G" $'bash <<EOF\ngit push\nEOF'                  "shell-fed heredoc"
+expect_block "$G" $'printf "git push\\n" | bash'                "string piped into a shell"
+expect_block "$G" 'p=push; git $p'                             "subcommand in a variable"
+expect_block "$G" 'g=git; $g push'                             "git in a variable"
+expect_block "$G" 'export p=push; git $p'                      "exported variable"
+expect_block "$G" "git \$'push'"                               "ANSI-C quoted subcommand"
+expect_block "$G" '$(which git) push'                          "\$(which git)"
+expect_block "$G" 'echo `git push`'                            "backtick substitution"
+expect_block "$G" 'echo $(git push)'                           "\$() substitution"
+expect_block "$G" "git push # -n"                              "dry-run flag in a comment"
+expect_block "$G" 'git commit -m "#123 fix" && git push'       "quoted # is not a comment"
+expect_block "$G" "echo '#'; git push"                         "single-quoted # is not a comment"
+expect_block "$G" "echo foo#bar; git push"                     "mid-word # is not a comment"
+expect_block "$G" "git push -- -n"                             "-n after -- is a refspec"
+expect_block "$G" "git push -on origin main"                   "-o<value> is not a dry-run cluster"
+expect_block "$G" "git push -o n origin main"                  "-o n is a push option"
+expect_block "$G" "{ git push; }"                              "brace group"
+expect_block "$G" "if true; then git push; fi"                 "compound statement"
+expect_block "$G" "f(){ git push; }; f"                        "function"
+expect_block "$G" "git push --force"                           "force"
+expect_block "$G" "git push --mirror"                          "mirror"
+expect_block "$G" "git push origin HEAD:main"                  "refspec"
+expect_block "$G" "git push -o ci.skip origin main"            "value-taking option"
+
+# --- mentions, reads, and other commands: allow --------------------------------
+expect_allow "$G" "git push --dry-run"                         "dry run"
+expect_allow "$G" "git push -n origin main"                    "dry run short"
+expect_allow "$G" "git push -qn origin main"                   "dry run in a cluster"
+expect_allow "$G" "git status -sb"                             "read"
+expect_allow "$G" "git commit -m x"                            "commit is not a push"
+expect_allow "$G" "git log origin/main..HEAD"                  "range read"
+expect_allow "$G" "echo 'then git push'"                       "mention in echo"
+expect_allow "$G" "git commit -m 'do not git push yet'"        "mention in a message"
+expect_allow "$G" $'cat <<EOF\ngit push\nEOF'                   "heredoc no shell consumes"
+expect_allow "$G" "grep -rn 'git push' docs/"                  "grep pattern"
+expect_allow "$G" "# git push"                                 "whole line is a comment"
+expect_allow "$G" "command -v git"                             "command -v is a lookup"
+expect_crumb "$G" "git push origin :feat"    "delete refspec"   "delete refspec sends no commits"
+expect_crumb "$G" "git push --delete origin feat" "sends no commits" "--delete sends no commits"
+expect_crumb "$G" "git push -d origin feat"  "sends no commits" "-d sends no commits"
+( cd "$G" && git tag v1.0 )
+expect_crumb "$G" "git push origin v1.0"     "tag push"         "a tag push sends no branch commits"
+
+# --- the opt-in ---------------------------------------------------------------
+expect_allow "$P" "git push"                                   "no opt-in"
+expect_block "$work/bold" "git push"                           "bold key"
+expect_block "$work/boldall" "git push"                        "bold line"
+expect_block "$work/boldval" "git push"                        "bold key and bold value"
+expect_block "$work/ticks" "git push"                          "backticked value"
+expect_allow "$work/planned" "git push"                        "'yes (planned)' is not yes"
+expect_allow "$work/fenced" "git push"                         "line inside a fence is not read"
+expect_block "$work/mono/pkg" "git push"                       "monorepo: root line gates a package dir"
+expect_block "$work/mono" "git push"                           "monorepo root"
+expect_allow "$work/mono/optout" "git push"                    "monorepo: nearest CLAUDE.md saying no opts a package out"
+if [ "$(id -u)" != 0 ]; then
+  expect_crumb "$work/unreadable" "git push" "could not read"  "unreadable CLAUDE.md fails open with a breadcrumb"
+fi
+
+# --- the repo the push runs in, not the session cwd -----------------------------
+expect_block "$P" "cd ../gated && git push"                    "cd into the gated repo"
+expect_block "$P" "cd -- ../gated && git push"                 "cd -- into the gated repo"
+expect_block "$P" "cd -P ../gated && git push"                 "cd -P into the gated repo"
+expect_block "$P" "pushd ../gated >/dev/null && git push"      "pushd into the gated repo"
+expect_block "$P" "cd $G && git push origin main"              "absolute cd"
+expect_block "$P" "git -C ../gated push"                       "-C into the gated repo"
+expect_block "$P" "git -C $G push"                             "-C absolute"
+expect_allow "$G" "git -C ../plain push"                       "-C out of the gated repo"
+expect_allow "$G" "cd ../plain && git push"                    "cd out of the gated repo"
+expect_block "$G" 'cd "$SOMEWHERE" && git push'                "unexpandable cd falls back to cwd"
+expect_block "$G" "cd ../nope && git push"                     "cd to a missing dir falls back to cwd"
+expect_block "$G" "git -C ../nope push"                        "-C to a missing dir falls back to cwd"
+expect_block "$G" "cd .git && git push"                        "push from inside .git"
+expect_block "$G" "git -C .git push"                           "-C .git"
+expect_block "$work" "GIT_DIR=$G/.git git push"                "GIT_DIR= from outside the repo"
+expect_block "$work" "GIT_DIR=$G/.git; git push"               "GIT_DIR= assigned in an earlier segment"
+
+# --- the range: the remote on the command line decides ---------------------------
+expect_allow "$work/tworemotes" "git push"                     "upstream remote is fully pushed"
+expect_allow "$work/tworemotes" "git push other main"          "named remote fully pushed"
+expect_block "$work/tworemotes" "git push origin main"         "named remote is behind"
+expect_block "$work/tworemotes" "git push --repo origin"       "--repo names the remote"
+expect_block "$work/tworemotes" "git push --repo=origin"       "--repo= names the remote"
+expect_block "$work/noupstream" "git push"                     "no tracking branch: origin/<branch> fallback"
+
+# --- receipts ------------------------------------------------------------------
+touch "$REVIEW_RECEIPT_DIR/other-2026-01-02-x.review.md"
+expect_block "$G" "git push"                                   "other repo's report"
+touch "$REVIEW_RECEIPT_DIR/gated-archive-2026-01-02-x.review.md"
+expect_block "$G" "git push"                                   "a repo whose name starts with this one"
+touch "$REVIEW_RECEIPT_DIR/gated-x.review.md"
+expect_block "$G" "git push"                                   "no date segment is not the handoff filename"
+touch "$REVIEW_RECEIPT_DIR/gated-2026-01-02-x.md"
+expect_block "$G" "git push"                                   "handoff is not a receipt"
+touch -t 202512311200 "$REVIEW_RECEIPT_DIR/gated-2025-12-31-old.review.md"
+expect_block "$G" "git push"                                   "stale report"
+touch -t 202601011159.59 "$REVIEW_RECEIPT_DIR/gated-2026-01-01-second-before.review.md"
+expect_block "$G" "git push"                                   "one second older than the oldest commit blocks"
+touch -t 202601011200 "$REVIEW_RECEIPT_DIR/gated-2026-01-01-equal.review.md"
+expect_allow "$G" "git push"                                   "as new as the oldest commit passes (-ge)"
+touch -t 202601011300 "$REVIEW_RECEIPT_DIR/gated-2026-01-01-fresh.review.md"
+expect_allow "$G" "git push"                                   "fresh report"
+expect_allow "$G" "git push origin main"                       "fresh report, explicit remote"
+( cd "$G" && echo y > g && git add g && git commit -q -m fixup )
+expect_allow "$G" "git push"                                   "fix-up after review"
+( cd "$G" && git push -q origin main 2>/dev/null )
+expect_allow "$G" "git push"                                   "nothing to push"
+( cd "$G" && echo z > h && git add h && git commit -q -m later )
+expect_block "$G" "git push"                                   "new range after the report"
+( cd "$G" && git commit -q --amend --no-edit -m later2 )
+expect_block "$G" "git push --force"                           "amend of a reviewed tree is a new tree"
+# a landing zone with a space in its path (unset the override so the TMPDIR path is searched)
+mkdir -p "$work/t m p/claude-handoffs"
+touch -t 202612311200 "$work/t m p/claude-handoffs/gated-2026-12-31-x.review.md"
+expect_allow "$G" "git push" "TMPDIR with a space" REVIEW_RECEIPT_DIR= TMPDIR="$work/t m p"
+
+# --- fail-open -----------------------------------------------------------------
+expect_allow "$G" ""                                           "empty command (no tool_input.command)"
+rc="$(printf 'not json' | bash "$hook" >/dev/null 2>&1; echo $?)"
+[ "$rc" = 0 ] || { echo "FAIL (malformed payload should allow, rc=$rc)"; fail=1; }
+expect_crumb "$G" 'git push "unterminated'   "shape scan failed" "unterminated quote is a scanner error"
+expect_crumb "$G" "eval eval eval eval eval git push" "shape scan failed" "nesting deeper than four shells is a scanner error"
+# a PATH with cat but no python3, then one with python3 but no git
+payload="$(python3 -c 'import json,sys; print(json.dumps({"cwd":sys.argv[1],"tool_input":{"command":"git push"}}))' "$G")"
+mkdir -p "$work/nopy" "$work/nogit" && ln -s "$(command -v cat)" "$work/nopy/cat" \
+  && ln -s "$(command -v cat)" "$work/nogit/cat" && ln -s "$(command -v python3)" "$work/nogit/python3"
+out="$(printf '%s' "$payload" | PATH="$work/nopy" /bin/bash "$hook" 2>&1 >/dev/null; echo "rc=$?")"
+printf '%s' "$out" | grep -q 'python3 not found' && printf '%s' "$out" | grep -q 'rc=0' \
+  || { echo "FAIL (no python3 should allow with a breadcrumb): $out"; fail=1; }
+out="$(printf '%s' "$payload" | PATH="$work/nogit" /bin/bash "$hook" 2>&1 >/dev/null; echo "rc=$?")"
+printf '%s' "$out" | grep -q 'git not found' && printf '%s' "$out" | grep -q 'rc=0' \
+  || { echo "FAIL (no git should allow with a breadcrumb): $out"; fail=1; }
+( cd "$work" && git init -q detached && cd detached && printf "$GATED_LINES" > CLAUDE.md && git add . && git commit -q -m init )
+expect_crumb "$work/detached" "git push" "no remote ref"      "no remote ref: fail-open"
+( cd "$work/detached" && git remote add origin "$work/gated-remote.git" && git fetch -q origin && git checkout -q --detach )
+expect_block "$work/detached" "git push origin HEAD:main"      "detached HEAD with a refspec still resolves a range"
+( cd "$G" && git checkout -q -b feat && echo w > w && git add w && git commit -q -m feat )
+expect_crumb "$G" "git push -u origin feat" "no remote ref"    "first push of a new branch is ungated (by design, header)"
+expect_block "$G" "git push origin feat:main"                  "new branch pushed onto a tracked one is gated"
+( cd "$G" && git checkout -q main )
+expect_crumb "$work" "git push" "not inside a git work tree"  "outside a git work tree"
+
+if [ "$fail" -ne 0 ]; then echo "SELFTEST FAIL: review-receipt"; exit 1; fi
+echo "OK: review-receipt self-test clean — every gated push blocked, every exempt form and receipt allowed, fail-open holds."

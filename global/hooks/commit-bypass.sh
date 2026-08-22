@@ -28,8 +28,9 @@
 # that blocks on its own errors trains the user to disable it.
 #
 # The payload parse and the heredoc handling are copied from rename-safety.sh
-# rather than shared through a library: two hooks is one short of the third
-# caller that justifies the extraction. The quote handling differs on purpose
+# rather than shared through a library; the third hook (review-receipt.sh)
+# copied them again and deferred the extraction to the rename-safety
+# tokeniser port — ADR-0059 says why. The quote handling differs on purpose
 # (rename-safety strips quoted text; this hook tokenises it) — see the
 # selftest's quoted-flag rows for why.
 #

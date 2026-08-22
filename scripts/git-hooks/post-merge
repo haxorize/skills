@@ -34,7 +34,7 @@ fi
 # broken skill or a hook whose regex quietly stopped matching is named before
 # it is live. Failures warn rather than abort: git ignores this hook's exit
 # code, and the merge has already landed.
-for gate in scripts/lint-skills.sh scripts/lint-selftest.sh global/hooks/rename-safety-selftest.sh global/hooks/commit-bypass-selftest.sh; do
+for gate in scripts/lint-skills.sh scripts/lint-selftest.sh global/hooks/rename-safety-selftest.sh global/hooks/commit-bypass-selftest.sh global/hooks/review-receipt-selftest.sh; do
   if [ ! -f "$repo_root/$gate" ]; then
     echo "post-merge: WARN gate missing: $gate — renamed or removed without updating this hook" >&2
   elif ! bash "$repo_root/$gate" >/dev/null 2>&1; then

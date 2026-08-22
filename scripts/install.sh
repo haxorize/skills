@@ -116,7 +116,7 @@ link_rules
 # post-merge hook (ADR-0049) re-runs this script on every merge.
 SETTINGS="${HOME}/.claude/settings.json"
 missing=""
-for hook in rename-safety commit-bypass; do
+for hook in rename-safety commit-bypass review-receipt; do
   if [ -f "$SETTINGS" ] && grep -q "hooks/$hook.sh" "$SETTINGS"; then
     echo "hook  $hook already named in $SETTINGS"
   else
@@ -156,5 +156,6 @@ for hook in $missing; do
   case "$hook" in
     rename-safety) echo "rename-safety: then opt a directory in with:  touch .claude/rename-safety   (at that repo's root)" ;;
     commit-bypass) echo "commit-bypass: always on — no opt-in." ;;
+    review-receipt) echo "review-receipt: opt a repo in with a 'Review required: yes' line in its CLAUDE.md Landing: block (nearest CLAUDE.md wins; 'no' opts a directory out)." ;;
   esac
 done

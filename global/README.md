@@ -6,7 +6,7 @@ A skill's rule binds only while the skill is loaded. The rules in `rules/` gover
 
 **`global/` holds only rules a skill depends on.** Each `rules/*.md` file carries two lines near its top, and lint checks the first:
 
-- `Depends:` — the skills in `src/` that depend on this rule and cite it instead of restating it; each skill's citation lands with the batch that edits that skill. A rule with no depending skill leaves the directory.
+- `Depends:` — the skills in `src/` that depend on this rule and cite it instead of restating it, in the forms `scripts/lint-skills.sh`'s header names; lint checks both that each name resolves and that the named skill carries the citation. A rule with no depending skill leaves the directory.
 - `Why not a hook or lint:` — what the rule checks that no mechanism can see. A rule a hook *could* enforce belongs in `hooks/`, not here.
 
 Without this gate the directory becomes a second CLAUDE.md, and every rule here is paid for on every turn the user spends anywhere.
@@ -21,10 +21,11 @@ The five rules (each file's `Depends:` line is the one list of its dependants):
 
 ## Hooks
 
-`hooks/` holds hook scripts for the one class of failure a hook can see: a tool call whose shape is wrong before it runs. Two ship:
+`hooks/` holds hook scripts for the class of failure a hook can see: a tool call whose shape, or whose precondition on disk, is wrong before it runs. Three ship:
 
 - `rename-safety.sh` — a `PreToolUse` check on Bash that blocks in-place mass edits (`sed -i`, `perl -pi`, and `xargs` feeding either) and says to use the edit tools; its header states the exact contract, the opt-in, and the fail-open rule.
 - `commit-bypass.sh` — a `PreToolUse` check on Bash that blocks the three command-line shapes that skip the repo's hooks (`--no-verify` and its prefixes, `git commit -n`, `-c core.hooksPath=`), seen through quotes, `bash -c`, `eval`, variables, and shell-fed heredocs; always on, no opt-in, fail-open. A mention inside a message or note passes. `git config` writes and `GIT_CONFIG_*` overrides are outside its contract — the header says so.
+- `review-receipt.sh` — a `PreToolUse` check on Bash that blocks `git push` when the nearest `CLAUDE.md` says `Review required: yes` (`no` opts a package out; the line belongs in the `Landing:` block but is read anywhere outside a fence) unless a fresh `review-changes` report for the repo sits in the landing zone; its header is the contract — what counts as fresh and the commit-then-review order that implies, what it cannot see, the opt-in forms, and the fail-open rule.
 
 Each has a `*-selftest.sh` beside it running an expect/reject payload table — run it after changing a rule.
 
@@ -38,7 +39,7 @@ bash scripts/install.sh
 
 The installer symlinks `rules/*.md` into `~/.claude/rules/` additively — it prunes only links that point into this repo's `global/`, and never touches `~/.claude/CLAUDE.md` — then prints the `settings.json` block for each hook until `settings.json` names it. The opt-in post-merge hook (`bash scripts/setup-hooks.sh`, see the repo README) re-runs the installer after every merging pull (not `pull --rebase`), so the rules track the repo.
 
-To wire a hook, paste the printed block into `~/.claude/settings.json` under `hooks` (one entry per hook; `commit-bypass.sh` takes the same shape):
+To wire a hook, paste the printed block into `~/.claude/settings.json` under `hooks` (one entry per hook; the other hooks take the same shape):
 
 ```json
 {
@@ -55,4 +56,4 @@ To wire a hook, paste the printed block into `~/.claude/settings.json` under `ho
 }
 ```
 
-and, for `rename-safety` only, opt a directory in with `touch .claude/rename-safety` at its root.
+and opt in where a hook asks for it: `touch .claude/rename-safety` at a repo's root for `rename-safety`, a `Review required: yes` line in its `CLAUDE.md` `Landing:` block for `review-receipt`.
