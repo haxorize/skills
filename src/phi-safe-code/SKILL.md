@@ -1,0 +1,82 @@
+---
+name: phi-safe-code
+description: Keeping member and patient data out of every surface it leaks into — logs, error text, URLs, fixtures, analytics, crash reports, model prompts, queues, caches, commits, tickets, and chat. Use when writing or reviewing code that touches member, subscriber, patient, claim, eligibility, enrollment, 834/837, FHIR, MRN, or date-of-birth data — adding logging or error handling, building fixtures or seed data, emitting analytics or telemetry, choosing an identifier for a URL, key, or event, writing an audit trail, sending such data to a vendor, API, or model, parsing a malformed file, or drafting a commit message, ticket, screenshot, or chat reply from a repo that holds it. Also use when an identifier or a real member turns up in a log, test, or commit. Not for provider-side data (NPI, provider directory, facility records), which is public. Not a regulation digest and not the project's own allowed-field list — those live in the project's convention skill.
+---
+
+# PHI-safe code
+
+The data class is **protected health information**: anything that identifies a person and connects them to health care, coverage, or payment. The statutory identifier list is the eighteen of Safe Harbor (§164.514(b)(2)) — one lookup away, and this skill never inlines it. What it governs is the *class*, because no denylist enumerates it: a payer's own identifiers (member ID, subscriber ID, group number, claim number, MRN) are as identifying as an SSN; the eighteenth identifier is "any other unique identifying number, characteristic, or code", which is why a surrogate key is a floor and not an exit; ZIP, date of birth, and sex together re-identify most of a population, so a row holding them was never de-identified to begin with; and a claim note or appeal text holds whatever a person wrote in it. Some categories change how a sink may be used, not just what reaches it — psychotherapy notes, HIV status, minors' records, records from a federally assisted program under 42 CFR Part 2, and state law (CMIA, MHMDA) are the ones that bite a payer; the convention skill named below says which apply here.
+
+The default output gets this wrong in a specific way: it knows "don't log PHI" and then puts the member's name in a fixture, the subscriber ID in a URL, the date of birth in an error string, the whole request in a debug log, and the member record in a model prompt — each an incident the assessor rules on, and none of them a typo. So the discipline runs by **sink**, not by intent: every field that is PHI is traced to every place it could land, and each landing is shown to be opaque-ID-only.
+
+Two layers are deliberately outside this skill. The org's own allowed-field list, its retention figures, and its policy numbers belong to the project's convention skill for the `phi` role — named in `CLAUDE.md`'s `## Convention skills` block — or to `CLAUDE.md` itself; read those for the *what*, this for the *how*. And what lies past the data-flow row below — risk assessment, control mapping, attestation — is the assessor's, never an engineer's output from a repo. Where no such convention skill exists, every rule below that defers to it degrades the same way the allow-list does: apply the rule to what this change needs, and raise the missing project answer — which categories apply, which fields are allowed, what the retention figure is — as a finding rather than guessing a number.
+
+## Allow by name, never block by substring
+
+- **A sink receives named fields; everything else is dropped.** A log event, an analytics event, an error payload, a prompt is built from an explicit list of field names, and the serializer for that sink accepts only those names. This is the principle every block-list misses: a filter keyed on `password|ssn|card` passes `dob`, `mrn`, `member_id`, `subscriber_id`, `claim_notes`, and every field named next quarter.
+- **Never pass an object to a sink.** `log.info("lookup", request=req)`, `logger.error(f"failed for {member}")`, `track("checked", payload)` — a whole request body or a whole member object logged are the two shapes to look for, and an unbounded serializer is how one reaches a log. Whether an argument is an object is a type-level fact no grep settles, so the review is a read of every logger, error-formatter, analytics, and prompt-builder call site the change touches — the grep (`log\.|logger\.|track\(|capture`) finds the call sites; the read decides. Bound payload sizes at the serializer; a free-text field is a payload.
+- **The allow-list is the project's; the mechanism is not.** Where the project names no list yet, the list for this change is the fields the change actually needs at that sink, written at the serializer, and the absence of a project list is raised as a finding.
+
+## Identifiers
+
+- **An opaque internal ID is the only identifier that travels.** Surrogate keys for members, claims, and enrollments go in URLs, path and query parameters, log events, cache keys, queue payloads, and analytics; MRN, SSN, subscriber ID, member ID, name, and date of birth do not — not as a key, not as a "harmless" label, not Base64'd, and not hashed — member IDs have a known format and low entropy, so a plain SHA-256 of one is a dictionary lookup back to the original. A keyed pseudonym (HMAC, tokenisation) is an opaque ID only when the key lives outside every sink that holds the output, and the mapping is itself treated as PHI.
+- **An opaque ID confines re-identification; it does not end it.** The mapping is the re-identification key, so a sink holding surrogate IDs beside health events is still a PHI store — access-controlled, retained on the project's schedule, audited, and listed as a sink in the data-flow row. "Opaque-ID-only" is the floor every sink must reach, never a finding that the sink is out of scope.
+- **Correlate with request and trace IDs, never with the person.** A `request_id`/`trace_id` is minted at the boundary and propagated through every call, async job, and retry, so a production question is answered by correlation, not by searching logs for a member.
+
+## Trace every field to every sink
+
+For each PHI field the change touches, name each sink it can reach and the guarantee at that crossing. The sinks the default forgets:
+
+| Sink | What reaches it | The check |
+|---|---|---|
+| Logs, traces, crash reports | opaque IDs, named non-PHI fields, the skeleton (`timestamp`, `level`, snake_case `event`, `request_id`/`trace_id`, `service`, `environment`) | structured key-value events, no string interpolation, no object arguments |
+| Error text | **internal:** field name and position; **returned to the caller:** what was wrong, by field name, never the value | the failure path is tested for what it emits, not just that it fails |
+| URLs, query strings, headers, browser storage | opaque IDs only | grep routes and fetch calls for the identifier fields |
+| Caches, search indexes, queue payloads, backups, exports | the same allow-list as the store they copy; a copy inherits no fewer obligations | each copy named in the data-flow row |
+| Product analytics | event name and opaque properties, separated from engineering diagnostics so one pipeline's relaxation never leaks into the other | the event schema is the allow-list |
+| Model prompts and LLM telemetry | minimum necessary for the task; prompt and completion payloads stay local or are explicitly gated out of telemetry | the prompt builder takes named fields, and the provider passes the external-sink gate |
+| Outbound HTTP (vendors, SaaS, observability, model providers) | nothing until the BAA gate below clears | the external-sink row names the counterparty and its BAA status |
+| Free-text fields (claim notes, appeal text, chat transcripts) | they drift into holding PHI whatever their schema says; treat them as PHI at every sink | reached only through the prompt builder's named fields and a provider past the external-sink gate; never a log, an analytics sink, or an index outside the store's access control |
+| SDK auto-capture and query logging | nothing — the defaults capture request bodies, headers, and local variables (`send_default_pii`, `include_local_variables`, breadcrumbs, debug error pages) and write bound parameters to the *database's* logs (`echo`, `show_sql`, `log_min_duration_statement`, slow-query logs, `pg_stat_statements`) | proven off by configuration; none of this passes through a call site a diff can show |
+| Reverse proxy, load balancer, CDN access logs | the path and query string as sent, outside the app and outside its allow-list | the URL rule above holds at the edge too, and the edge's own retention is the project's |
+| Session replay and RUM on a member portal | nothing until masking is proven per field | the vendor is an external sink like any other |
+| Templates and rendering (email, SMS, push, print, PDF, EOB) | the minimum the document needs, addressed to the right member | the mis-mailing path is tested; a template variable is an allow-list entry |
+| CI logs, test output, notebooks | synthetic fixtures only — a failing assertion prints the diff, and `.ipynb` caches its outputs | fixtures are generated (below), and notebook outputs are cleared before commit |
+| Feature-flag and experiment context, alert payloads (Slack, Teams, PagerDuty), heap and core dumps, temp files | opaque IDs and non-PHI attributes | each named in the data-flow row; a targeting attribute is a sink, not config |
+| **The agent's own tool output** | nothing — `cat` of a log, a fixture, or a record ships it to the model provider | an external sink under the BAA gate below, and the one on this list the reader of this skill is likeliest to cross |
+
+## Logging and the audit trail
+
+- **Structured events, never interpolated strings.** `log.info("eligibility_lookup_failed", request_id=rid, product_code=pc, reason="subscriber_not_found")`, not `log.info(f"lookup failed for {subscriber_id} dob {dob}")`. The reason is a code from a closed set, never the input that caused it.
+- **Expected conditions are not errors.** A not-found, a validation rejection, an expired coverage is an event at `info`, with its reason code; `error` is for what the service could not do, and an error log that carries the rejected input to "help reproduce it" is the leak this skill exists to stop — reproduce from the request ID and the stored record, under access control.
+- **A pipeline attaches only what operating the service needs.** A log pipeline that enriches events with user attributes "so we can filter later" is the minimum-necessary violation in pipeline form: enrichment adds fields nobody traced to a sink, so a field not needed to operate the service is not attached.
+- **Every read, write, delete, and export of PHI is an audit event,** keyed by actor, resource (opaque ID), action, result, and time, written to an insert-only store: an append-only table whose application role holds no `UPDATE`/`DELETE` grant, an append-only stream, or a hash-chained file — never the application log, and never a table the service can rewrite. Reading is an event too. The granularity is the actor and the scope, not the row: a nightly job over ten million claims writes one event naming the job, its query predicate, and the count, not ten million rows — a bulk export and a classification change are their own categories on the same rule. A service account records the human or system it acts on behalf of, and the event's own fields are allow-listed like any other sink, so there is no free-text reason column. The retention period is the project's figure, not a guess.
+- **The failure path emits sanitised diagnostics, as a test.** A test raises the exception on real-shaped input and asserts the log and the caller's error body carry the request ID and field names and none of the input values.
+
+## Malformed input: an error, never a silent pass
+
+A unit that fails validation — the claim in an 837, the member record in an 834, the request on an API — is rejected whole, never skipped, defaulted, or partially loaded, **at the granularity the transaction defines**: a 50,000-claim file with one bad subscriber ID rejects that claim, not the file, because a silent pass on member data is a wrong payment or a wrong coverage decision that surfaces months later. Every rejection names the file, the segment, the field position, and the reason code; is reported on the acknowledgment the trading partner expects (TA1 at the interchange, 999 at the functional group and transaction set, 277CA per claim); and is its own audit event. In logs, in internal error text, and to any caller that is not that acknowledgment, the error never echoes the value, because the value is the PHI — the 999's IK404 returns the offending element to the partner by spec, and that is the one place it belongs. The same holds for a single API request: the caller learns *which* field was wrong and *how*, by name, and nothing of what was sent. "Say exactly what was wrong" is the ask that produces `f"subscriber_id must be 6-15 characters, got {value!r}"` — the rule, the field, and the value, where the value is the one part that may not leave; `"subscriber_id must be 6-15 alphanumeric characters"` says everything the caller can act on.
+
+## Fixtures and test data
+
+- **Synthetic, generated, never extracted.** A fixture is built by a generator with a fixed seed, never copied from production, a QA extract, or a support ticket. Removing names does not de-identify a row — ZIP, date of birth, and sex re-identify most of a population — so "scrubbed" production data is still PHI.
+- **Realistic means realistic in shape,** not in identity: a member ID in the project's format for a person who does not exist, a date of birth that validates, a claim that exercises the branch.
+
+## The repo and the conversation
+
+- **The conversation is private; the repo is not.** A member named in a chat turn, a support thread, or a pasted log is never written anywhere durable: not a commit message, branch name, PR or work-item body, test name, comment, screenshot, or terminal excerpt in a report. Reproduce the case with a synthetic record and refer to the real one by ticket number.
+- **A PHI value already in published history is an incident, not a typo.** It is raised through the project's incident path before any edit to history; that path preserves the evidence first — the original refs bundled or tagged, the SHAs recorded on the ticket — and then decides the purge, the clone sweep, and the host's cache. An engineer's own amend, tip-edit, or force-push is not a remediation: it forfeits the record the response needs, leaves every existing clone holding the original, and settles nothing, because whether this is a reportable breach is the assessor's call under the line above.
+
+## External sinks and the BAA gate
+
+Any external sink that receives PHI — a vendor API, a SaaS, an observability backend, a crash reporter, a model provider — is blocked by default until its business-associate status is clear, and the five questions are answered in order: **is this PHI at all** — de-identified data and a true conduit (a carrier that never accesses content) leave the gate here; **on whose behalf does the recipient act, and is a BAA needed** — a vendor acting for the entity is a business associate by definition, while a covered entity receiving for treatment or payment needs none; **is that BAA signed before the first byte, and does it bind the recipient's own subcontractors**; **is this the minimum necessary for the purpose**; **is the access auditable**. The one audit input an engineer produces from a repo is the **data-flow row**, one per PHI field: field class, source, each sink or boundary crossed, the guarantee at that crossing, and BAA yes/no for each external sink. A row with an unanswered BAA column is a blocked change, reported as one.
+
+## Before the change lands
+
+1. Is every PHI field the change touches traced to every sink, with each landing opaque-ID-only?
+2. Does a search of the diff for object arguments to a logger, an error formatter, an analytics call, or a prompt builder come back empty?
+3. Does a test prove the failure path emits field names and request IDs and no input values?
+4. Is every fixture generated, and does no commit, branch, ticket, or screenshot carry a real identifier?
+5. Does every external sink have a BAA answer, and is a `no` or `unknown` reported as a blocker rather than shipped?
+
+A "no" here is a finding on the change, the same as a failing check.
