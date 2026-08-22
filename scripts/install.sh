@@ -112,7 +112,14 @@ link_rules
 # Hooks are wired in ~/.claude/settings.json, which this script never edits:
 # an installer that rewrites the harness config leaves the user with a
 # settings file they no longer know the contents of. Print the block; the
-# user pastes it.
+# user pastes it. Once settings.json names the hook, stay quiet — the
+# post-merge hook (ADR-0049) re-runs this script on every merge.
+SETTINGS="${HOME}/.claude/settings.json"
+if [ -f "$SETTINGS" ] && grep -q 'rename-safety.sh' "$SETTINGS"; then
+  echo "hook  rename-safety already named in $SETTINGS"
+  exit 0
+fi
+HOOK_PATH="$(printf '%s' "$GLOBAL_DIR/hooks/rename-safety.sh" | sed 's/[\\"]/\\&/g')"
 cat <<SNIPPET
 
 Hook snippet — paste this into ~/.claude/settings.json under "hooks" (not applied automatically):
@@ -122,7 +129,7 @@ Hook snippet — paste this into ~/.claude/settings.json under "hooks" (not appl
       {
         "matcher": "Bash",
         "hooks": [
-          { "type": "command", "command": "bash $GLOBAL_DIR/hooks/rename-safety.sh" }
+          { "type": "command", "command": "bash $HOOK_PATH" }
         ]
       }
     ]
