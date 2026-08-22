@@ -35,6 +35,10 @@ The route most work travels: **`/grill-me`** → **`/to-feature` / `/to-story` /
 - **`to-bug`** — Synthesize a Bug from the current conversation and publish it. ADO: native Bug work item with `Microsoft.VSTS.Common.Severity` and `Microsoft.VSTS.TCM.ReproSteps`. GitHub: issue tagged with `bug` plus a severity label declared in CLAUDE.md. `--update <bug-id>` from day one.
 - **`glapi-test-pass`** — ADO only. Creates a passing test result on a User Story to satisfy the GLAPI (Greenlight API) production deployment gate. Use when a prod deployment is blocked because a story linked via commits has no passing test point. Automates the full test-case → suite → run → result sequence against the team's PI test plan via `az devops invoke`.
 
+### First contact
+
+- **`onboard-repo`** — Wire a repo for the suite in one sitting: `Issue tracker:` and `Landing:` blocks, loop commands, convention-skill roles, and the `DOMAIN.md` / `docs/adr/` / `docs/solutions/` seeds, each written only where nothing exists yet. Prints the hook snippet; never edits `settings.json`.
+
 ### Implementation
 
 - **`from-ticket`** — Cold-start loader. Pulls a published ticket (Task / Story / Bug) back into the conversation, auto-detects type, and loads the right shape — parent context, `DOMAIN.md`, ADRs matched against `## Layers touched`. Refuses Feature/Epic with a redirect. Hands off to `implement` or freeform.
@@ -50,6 +54,10 @@ The route most work travels: **`/grill-me`** → **`/to-feature` / `/to-story` /
 ### Ship
 
 - **`ship`** — Carry a green, reviewed change to a closed ticket: proposes the commit split in lineage order, then lands it through a PR where someone must approve or directly where nobody must. Every claim it writes and every outward act it takes goes through the `committing` discipline it declares. Whether there's a PR turns on whether someone else must approve, not on the host. A change that resolves to one commit needs no `/ship` at all — `committing` lands it.
+
+### Dependencies
+
+- **`upgrade-deps`** — Upgrade dependencies in the safe order — security-flagged first, each major its own step with the changelog read and the suite run between, then the minor/patch batch — with a per-package supply-chain audit (maintainers, publish age, provenance, tarball diff, licence) before anything touches the lockfile. npm, pip/uv, and NuGet.
 
 ### Codebase health
 
@@ -70,7 +78,7 @@ The route most work travels: **`/grill-me`** → **`/to-feature` / `/to-story` /
 ### Conversation
 
 - **`merge-quiz`** — Off-path. Before merging a change you did not watch being built: a report grouped by intent, the paths the diff does not show, and a 5–8 question quiz on interaction effects to pass before approving. Two failed rounds means split or simplify the change.
-- **`explain`** — Re-explain the last answer when it didn't land: a fresh pitch with the missing context, in plain register, using the project's vocabulary.
+- **`explain`** — Re-explain the last answer when it didn't land: a fresh pitch with the missing context, in plain register, using the project's vocabulary. `explain <topic>` explains a thing cold, before any confusion.
 
 ### Human-run procedures
 
@@ -120,6 +128,10 @@ The route most work travels: **`/grill-me`** → **`/to-feature` / `/to-story` /
 - **`writing-for-humans`** — Sentence-level clarity for prose that transfers understanding — tickets, ADR rationale, summaries, commit and PR prose — with per-artifact registers and the named AI-tell catalog.
 - **`work-item-shape`** — What a well-formed work-item body *is* (outcome goal, checkable criteria, readiness call, structural sizing, surfaced ambiguity), any tier, any tracker. In repos wired for the pipeline it routes creation asks to the `to-*` publishers instead of drafting lookalikes.
 
+## Repo-local skills
+
+`.claude/skills/` holds two skills that run only inside this repo and are never hoisted: **`mine-skills`** (the mining-round opener — clone, scan, inventory, read under the standing lenses, write the ledger rows a grill ratifies) and **`sweep-corpus`** (the scheduled health sweep — lint, `verify-docs` over README, router, and `DOMAIN.md`, the cross-reference check — report-only against an additive baseline). They live outside `src/` because they name this repo's paths and procedure; `scripts/lint-skills.sh` does not scan them, and the router does not route to them.
+
 ## Conventions
 
 - **`DOMAIN.md`** at the repo root holds the project's ubiquitous language. For multi-context monorepos, the root is an index linking to nested `DOMAIN.md` files. Cross-repo siblings cross-reference each other in prose.
@@ -139,7 +151,7 @@ The route most work travels: **`/grill-me`** → **`/to-feature` / `/to-story` /
 
 ## Global rules and hooks
 
-[`global/`](global/README.md) holds the rules that must hold when no skill is loaded — evidence in the same message as the claim, the three-bin recommend-and-proceed gate, no unasked commits, per-section large writes — and two hooks, `rename-safety` and `commit-bypass`, for the one class of failure a hook can see: a tool call whose shape is wrong before it runs. Admission is strict: a file lives there only while a skill under `src/` depends on it, named in its `Depends:` line, and lint checks the name resolves. `install.sh` symlinks the rules into `~/.claude/rules/` and **prints** the `settings.json` hook snippet; it never edits `settings.json` or `~/.claude/CLAUDE.md`. Each hook's contract and the live-checkout caveat are in `global/README.md`.
+[`global/`](global/README.md) holds the rules that must hold when no skill is loaded — evidence in the same message as the claim, the three-bin recommend-and-proceed gate, no unasked commits, per-section large writes, the dash sweep on every outbound draft — and two hooks, `rename-safety` and `commit-bypass`, for the one class of failure a hook can see: a tool call whose shape is wrong before it runs. Admission is strict: a file lives there only while a skill under `src/` depends on it, named in its `Depends:` line, and lint checks the name resolves. `install.sh` symlinks the rules into `~/.claude/rules/` and **prints** the `settings.json` hook snippet; it never edits `settings.json` or `~/.claude/CLAUDE.md`. Each hook's contract and the live-checkout caveat are in `global/README.md`.
 
 ## Install
 

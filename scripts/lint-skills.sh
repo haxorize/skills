@@ -76,6 +76,12 @@
 #     line. A model-invoked skill has no watcher, so a miss must degrade
 #     gracefully ("Never gate inside a model-invoked skill"); its body and
 #     references must not carry the phrase.
+#   - Scope: every check walks src/*/SKILL.md (and references beneath). The
+#     repo-local skills under .claude/skills/ (mine-skills, sweep-corpus) are
+#     deliberately outside the walk: they never hoist, so the router-coverage
+#     and requires checks would demand mentions that do not belong, and they
+#     legitimately cite this repo's paths. Their size and frontmatter are the
+#     author's to keep; a pass here says nothing about them.
 #   - Global rules (ADR-0053): every global/rules/*.md carries a `Depends:`
 #     line naming at least one existing skill under src/ — the admission rule
 #     in global/README.md (only rules a skill depends on). A rule with no

@@ -61,6 +61,10 @@ Keep steps 1–2 in **one unbroken context window** so the grilling, decompositi
 - **`/handoff`** — fork the conversation: into a document a **fresh session** picks up, or straight to a **background agent** when the work should continue unattended. Use it when the window is full or you're branching off. The doc lands in the landing zone (see Review gate), stamped with the head it observed; `/review-changes` and `/from-ticket latest` pick the newest up without an argument. (Contrast `/compact`, the built-in, which continues *in place*. `handoff` forks; `/compact` continues.)
 - **At any phase boundary**, the ordered five-question tree in [references/phase-boundaries.md](references/phase-boundaries.md) picks the move — Continue / `/clear` / `/handoff` / unattended / `/compact`, first yes wins. `/compact` is the default, never the first reach, and the decision belongs at the boundary, not mid-phase.
 
+## First contact with a repo
+
+- **`/onboard-repo`** — wire a repo for the suite in one sitting: the `Issue tracker:` and `Landing:` blocks the publishers and `committing` read, the loop commands, the `## Convention skills` roles, and the seed files (`DOMAIN.md`, `docs/adr/`, `docs/solutions/`) — written only where nothing exists. Optional: every skill degrades to asking when a block is missing.
+
 ## Standalone
 
 - **`/grill-me`** — sharpen any plan or design with no repo to back it.
@@ -68,6 +72,7 @@ Keep steps 1–2 in **one unbroken context window** so the grilling, decompositi
 - **`/ask-for-me`** — the questionnaire and outbound-message drafter routed above, usable with no repo; pairs with a `chart-course` Errand when the blocker is someone else's knowledge.
 - **`/to-bug`** — file a defect as a tracked ticket from the current conversation.
 - **`/merge-quiz`** (Off-path) — before merging a change you did not watch being built: a report grouped by intent, a section on the paths the diff does not show, and 5–8 questions on interaction effects you answer before approving. Two failed rounds is a verdict on the change — split or simplify it — not on you.
-- **`/explain`** — stop and re-pitch: the last explanation didn't land, so it comes back with the missing context, in the plain register of the `writing-for-humans` discipline, using `DOMAIN.md` vocabulary. For when you stopped following — not a shortener.
+- **`/explain`** — stop and re-pitch: the last explanation didn't land, so it comes back with the missing context, in the plain register of the `writing-for-humans` discipline, using `DOMAIN.md` vocabulary. For when you stopped following — not a shortener. `/explain <topic>` is the cold branch: the shape of a thing before you meet it, same register, shorter by design.
+- **`/upgrade-deps`** — upgrade a project's dependencies in the safe order (security first, each major its own step with the changelog read and the suite run, then the rest), with a supply-chain check on every package before the lockfile moves. npm, pip/uv, NuGet.
 - **`/glapi-test-pass`** — ADO only; satisfy the GLAPI production deployment gate for a Story.
 - **`/write-skill`** — conventions for writing and editing skills (you're reading the suite that follows them).
