@@ -17,3 +17,7 @@ Admitting the skill admits the class, and that is the part reversal cannot undo 
 
 - `DOMAIN.md` gains the term **Off-path skill** beside Domain skill; the router and README each gain one row marked Off-path.
 - The window is the evidence. A second Off-path admission argues from this skill's fire and pass counts, never from the lens alone.
+
+## Amendments
+
+- **2026-08-22** — The final name is `merge-quiz`, judged in [ADR-0057](0057-rename-table-and-discipline-skill-term.md)'s table: the quiz is the gating half and "before merging" is the moment this record names. The B4c build creates `src/merge-quiz/`; the name `change-quiz` above is the working name as cited at the time.
