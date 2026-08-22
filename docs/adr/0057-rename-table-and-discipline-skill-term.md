@@ -35,3 +35,4 @@ A name is judged at admission, at retirement, and when the skill's body gains or
 ## Amendments
 
 - **2026-08-22** — The `grill-me` merge and stub landed in B4c, recorded in [ADR-0058](0058-grill-me-absorbs-grill-and-record.md).
+- **2026-08-22** — B5 admitted two user-invoked skills and judged their names at admission, as this record requires: the plan's `deps-upgrade` and `corpus-sweep` became `upgrade-deps` and `sweep-corpus`, because every user-invoked orchestrator in `src/` is verb-first (`harden-domain`, `verify-docs`, `audit-tests`, `validate-behavior`) and a noun-first name read as the upstream's (`dependency-upgrade`) for a skill that was authored, not ported. `onboard-repo` and `mine-skills` were already verb-first. Neither renamed string had ever been typed, so no stub.
