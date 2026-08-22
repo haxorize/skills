@@ -8,11 +8,14 @@ Exploration and subagent fan-out **over-report** — a friction that looks real 
 
 - **By-design reported as a bug** — including a tradeoff an ADR records (settled, not a finding).
 - **Mis-attributed evidence** — a real concern pinned to the wrong file/line.
-- **Duplicates** — the same underlying issue surfaced twice (two angles on one coupling, or two independent reports of one finding); merge them — confidence follows the rules below, never the number of reporters.
+- **Duplicates** — the same underlying issue surfaced twice (two angles on one coupling, or two independent reports of one finding); merge them — confidence follows the rules below, never the number of reporters. Judge each finding on its own before grouping any, and merge only by a shared **root cause** — two findings that share a file, a theme, or a reporter are not one finding, and a group formed before the judgment hides the member that would not have survived alone.
+
 - **Noise shapes** — findings wrong by shape rather than provenance: overengineering suggestions, speculative what-ifs nothing calls, defensive paranoia against states that can't occur, unreachable edges, concerns the change already handles elsewhere, and findings built on a wrong premise about what the code does.
 - **Unproven blast radius** — a finding claiming the change disrupts *other* parts of the code must name the parts provably affected (the call sites, the consumer, the contract); "this may break something elsewhere" without a named elsewhere is speculation, not a finding.
 - **Imported rigor** — a finding demanding rigor the surrounding codebase doesn't practice (stricter typing, heavier validation, a pattern the project never adopted) holds the diff to a foreign standard; the gap between house style and best practice is a conversation, not a finding against this change. Two bounds: a shape the review's carried smell catalog names is house standard, never imported rigor; and `improve-design`'s deepening proposals are exempt — proposing what the project hasn't yet adopted is that skill's job, not a foreign standard.
 - **Owned elsewhere** — a concern an existing tool already owns (the linter, `/security-review`, a CI gate) gets a one-line breadcrumb naming the owner, never a minted finding: minted duplicates of owned canon drown the few bespoke findings that matter.
+
+Every dismissal carries a reason that disposes *that* claim — names the evidence that makes it not hold — never a category ("noise", "out of scope") standing in for one; a finding dropped without a disposing reason is a finding dropped.
 
 When you dispose of a finding on a line — fix, defer, or dismiss — check that same line once for defects on the other axes before moving on: attention that arrived for one axis tends to leave without checking the others.
 
@@ -26,7 +29,7 @@ The ADR and `DOMAIN.md` checks aren't only "does the code violate recorded inten
 
 ## Finding format and leverage ranking
 
-Every finding carries **`file:line` evidence**, impact, **effort (S/M/L)**, fix-risk, and **confidence (HIGH/MED/LOW)** — no vibes-only findings. When a finding references an identifier the subject defines rather than the reader — an option label, a requirement or unit ID — pair it with a short distinguishing gloss at first mention (`R8 (elevated-call read access)`, not bare `R8`), so the finding stands alone for a reader without the source open; relayed content inherits the same contract — a source that wrote a bare label doesn't license relaying one. Rank by **leverage = impact ÷ effort, discounted by confidence and fix-risk**, so the highest-payoff finding reads first.
+Every finding carries a **stable ID** (`F<n>`, assigned once in report order; a re-review keeps the IDs that persist and mints new ones, never renumbers), **`file:line` evidence**, impact, **effort (S/M/L)**, fix-risk, and **confidence (HIGH/MED/LOW)** — no vibes-only findings. When a finding references an identifier the subject defines rather than the reader — an option label, a requirement or unit ID — pair it with a short distinguishing gloss at first mention (`R8 (elevated-call read access)`, not bare `R8`), so the finding stands alone for a reader without the source open; relayed content inherits the same contract — a source that wrote a bare label doesn't license relaying one. Rank by **leverage = impact ÷ effort, discounted by confidence and fix-risk**, so the highest-payoff finding reads first.
 
 ## Anchored confidence
 

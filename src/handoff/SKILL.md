@@ -13,7 +13,14 @@ If the user passed an argument, treat it as a description of what the next sessi
 
 ## Where to write it
 
-Default to the **OS temporary directory** (`$TMPDIR` on macOS, `/tmp` on Linux, `%TEMP%` on Windows) — a handoff is throwaway, and the durable content already lives in the artifacts the doc points at.
+One fixed **landing zone**: `claude-handoffs/` under the platform temp dir (`$TMPDIR` on macOS, `/tmp` on Linux, `%TEMP%` on Windows; `mkdir -p` it). Two filenames live there, and this section is the only place they are defined — every pickup points here rather than spelling its own glob:
+
+- a handoff: `<repo>-<date>-<slug>.md`
+- a `review-changes` report: `<repo>-<date>-<slug>.review.md`
+
+where `<repo>` is the basename of `git rev-parse --show-toplevel`, `<date>` is `YYYY-MM-DD`, and `<slug>` names the focus. The `.review.md` suffix is what keeps "the newest handoff" from resolving to a report and "the newest report" from resolving to a handoff slugged `pre-review`. A handoff is throwaway — the durable content lives in the artifacts the doc points at — and the fixed names are what let `/review-changes` and `/from-ticket latest` pick up the newest handoff, and `/address-findings` the newest report, without a pasted path.
+
+A long handoff is written per section under the global large-write-chunking rule (`~/.claude/rules/large-write-chunking.md`) — first settled section first, a resume pointer at the top until the last section lands.
 
 **Escape hatch:** if the user names a path or asks for a durable target, honor it. Only then does the doc land in the workspace.
 
@@ -38,8 +45,8 @@ Seed three disciplines for the unattended stretch:
 ## What goes in it
 
 - **The goal** — what the next session is trying to achieve (sharpened by the argument, if given).
-- **State so far** — ground truth the next session can verify, stamped with the commit it was observed at (`git rev-parse --short HEAD`, plus a note when the tree was dirty), so the reader can tell whether the ground has moved: what's done, what's in flight (and what remains inside each piece), what's missing, what's blocked and on what. Prefer that status framing over work orders aimed at the next session — status claims are checkable, orders aren't. Carry explicit directives only when the user asked the handoff to include them, kept visibly separate from the status.
-- **The completion audit** — when `implement` wrote one this session, carried verbatim in its [references/completion-audit.md](references/completion-audit.md) form (per-AC table, beat ledger, parked ledger, judgment calls), because `committing` in the next session reads it to choose the closing word. State "no audit this session" when there is none.
+- **State so far** — ground truth the next session can verify, stamped with the commit it was observed at (`git rev-parse --short HEAD`, plus a note when the tree was dirty) and with the model the session ran at (and the effort when the harness exposes it, else "unknown"), so the reader can tell whether the ground has moved and what produced the account — `review-changes` reads the head stamp to state how many commits have landed since, and `committing` restates "reviewed" as "reviewed at `<sha>`, N commits since" for a tree past the stamp a review carried: what's done, what's in flight (and what remains inside each piece), what's missing, what's blocked and on what. Prefer that status framing over work orders aimed at the next session — status claims are checkable, orders aren't. Carry explicit directives only when the user asked the handoff to include them, kept visibly separate from the status.
+- **The completion audit** — when `implement` wrote one this session, carried verbatim in its [references/completion-audit.md](references/completion-audit.md) form (per-AC table, beat ledger, parked ledger, judgment calls), because `committing` in the next session reads it to choose the closing word, and `review-changes` hands the judgment calls and parked ledger to its falsification lens. State "no audit this session" when there is none.
 - **Next steps** — the concrete things to do next, in order. Related sequential work is one path — never pad it into competing options; number alternatives only at a real fork, where the next session can pick at most one. If only one natural continuation fits, name it alone.
 - **Residual traps** — failed approaches already abandoned, and the wrong paths the next session is likely to retry, with why they don't work. Git history only records what survived; this bullet is where the dead ends live.
 - **Suggested skills** — name the skills the next session should reach for. Start it at `/which-skill` if the next move isn't obvious; otherwise name the specific skill (e.g. "load the task with `/from-ticket <id>`, then `/implement`").

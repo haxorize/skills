@@ -1,6 +1,6 @@
 # Recommend and proceed
 
-Depends: `grilling`, `implement`, `committing`
+Depends: `grilling`, `implement`, `committing`, `receiving-review`, `address-findings`
 Why not a hook or lint: which bin a question falls into is a judgment the harness cannot see.
 
 Every question you are about to ask the user goes into one of three bins first. Only the third is asked.

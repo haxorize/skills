@@ -20,7 +20,7 @@ Read `CLAUDE.md` for an `Issue tracker:` block.
 
 Required fields: GitHub needs only the tracker name; ADO requires `Project:` minimum.
 
-If the user passed a tracker URL instead of a bare ID, infer the tracker from the URL host and proceed.
+If the user passed a tracker URL instead of a bare ID, infer the tracker from the URL host and proceed. If they passed `latest`, take the ID from the newest handoff for this repo in the landing zone `handoff` defines (its "Where to write it" section fixes the directory and the handoff filename; `handoff` names work items with their ID attached) and say which file and ID you resolved before loading.
 
 ### 2. Detect work-item type
 

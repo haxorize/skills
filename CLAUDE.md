@@ -32,6 +32,10 @@ The `to-feature`/`to-story`/`to-tasks`/`to-bug` family is structurally independe
 
 [`src/which-skill/SKILL.md`](src/which-skill/SKILL.md) is the router that maps every skill and how they relate. Whenever you add, rename, or remove a skill, or change how one fits the flows, update the router in the same change — a new skill it never mentions, or a stale one it still routes to, is a router that lies. `README.md`'s skill map is a second router under the same rule. `scripts/lint-skills.sh` catches missing mentions mechanically in both; routing and blurb accuracy stay editorial.
 
+## Review lenses
+
+The instruction-file lens in this repo also runs `write-skill`'s **pruning test**: for every rule the diff adds or edits, report keep / condense / move / delete, with the covering rule named for anything but keep (the rule elsewhere that already says it, or the reason nothing does). A skill-change review that never reports this ran the lens on another repo's terms.
+
 ## Landing
 
 Landing:

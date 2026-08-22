@@ -9,7 +9,7 @@ Every skill sits on one axis — **who can reach it** (see [`DOMAIN.md`](DOMAIN.
 - **User-invoked skills** — reachable only by a human typing them (`disable-model-invocation: true`). They **orchestrate** a workflow.
 - **Model-invoked skills** — reachable by the model or a human (the default). They hold a reusable **behavior** the model reaches for on its own, or that an orchestrator pulls in via a declared dependency.
 
-The route most work travels: **`/grill-and-record`** (or `/grill-me` with no codebase) → **`/to-feature` / `/to-story` / `/to-tasks`** to decompose → **`/from-ticket`** to load one slice → **`/implement`** to build it → **`/review-changes`** before it lands → a plain "commit and push" (the `committing` behavior) or **`/ship`** to land it. Detours branch off: a runnable question goes **`/handoff` → `/prototype` → `/handoff`**; a hard bug pulls in `diagnosing-bugs`; a conflicted merge pulls in `resolving-merge-conflicts`. An effort too big for one session and still wrapped in fog goes through **`/chart-course`** first. Upkeep loops — **`/improve-design`**, **`/harden-domain`**, **`/backfill-adrs`**, **`/verify-docs`** — run between features. When you don't remember which to reach for, ask **`/which-skill`**.
+The route most work travels: **`/grill-and-record`** (or `/grill-me` with no codebase) → **`/to-feature` / `/to-story` / `/to-tasks`** to decompose → **`/from-ticket`** to load one slice → **`/implement`** to build it → **`/review-changes`** before it lands → **`/address-findings`** to act on the report → a plain "commit and push" (the `committing` behavior) or **`/ship`** to land it. Detours branch off: a runnable question goes **`/handoff` → `/prototype` → `/handoff`**; a hard bug pulls in `diagnosing-bugs`; a conflicted merge pulls in `resolving-merge-conflicts`. An effort too big for one session and still wrapped in fog goes through **`/chart-course`** first. Upkeep loops — **`/improve-design`**, **`/harden-domain`**, **`/backfill-adrs`**, **`/verify-docs`** — run between features. When you don't remember which to reach for, ask **`/which-skill`**.
 
 ## User-invoked skills
 
@@ -42,7 +42,8 @@ The route most work travels: **`/grill-and-record`** (or `/grill-me` with no cod
 
 ### Review & validation
 
-- **`review-changes`** — Read-only, project-aware judgment review of a diff before it lands, on a teammate's PR, or on a landed commit. Fans review lenses out to subagents, vets the findings, and presents a ranked, classified report.
+- **`review-changes`** — Read-only, project-aware judgment review of a diff before it lands, on a teammate's PR, or on a landed commit. Runs review lenses (subagents on a large diff, in-process on a small prose one), vets the findings, and presents a ranked, classified report with stable `F<n>` IDs, stamped with the head it reviewed. No argument reviews the newest handoff for the repo.
+- **`address-findings`** — Act on a `review-changes` report in one pass: fix the mechanical findings, batch the rest into one question with recommendations, and close with a disposition per ID (FIXED / DECLINED / DEFERRED / ABANDON). Never re-runs the review; re-review is the user's call.
 - **`audit-tests`** — Audit an existing test suite by asking "can these checks fail?" — grades load-bearing assertions and reports the suite's stated blind spots.
 - **`black-box-check`** — Validate the running app, CLI, API, or generated artifact against a behavior contract written before testing — source-blind, with anti-cheat probes. The runtime complement to `review-changes` (the diff) and `audit-tests` (the test suite).
 
@@ -59,7 +60,7 @@ The route most work travels: **`/grill-and-record`** (or `/grill-me` with no cod
 
 ### Crossing sessions & prototyping
 
-- **`handoff`** — Fork the current conversation: into a handoff document a fresh session picks up, or straight to a background agent when the work should continue unattended. The doc defaults to the OS temp dir and references durable artifacts rather than duplicating them.
+- **`handoff`** — Fork the current conversation: into a handoff document a fresh session picks up, or straight to a background agent when the work should continue unattended. The doc lands in the landing zone `handoff` defines (`claude-handoffs/` under the temp dir), stamped with the head it observed, and references durable artifacts rather than duplicating them; `review-changes` and `from-ticket latest` pick the newest up without a path.
 - **`prototype`** — Build a throwaway prototype to answer a design question — a shareable single-file HTML demo for state/logic questions, or several radically different UI variations toggleable from one route.
 
 ### Learning
@@ -102,7 +103,7 @@ The route most work travels: **`/grill-and-record`** (or `/grill-me` with no cod
 
 ### Review
 
-- **`receiving-review`** — Discipline for applying review feedback to your changes, whether a reviewer sent it or `review-changes` produced it: feedback is claims to verify against the codebase, not orders to follow or occasions for performative agreement. Its convergence guard bounds the fix→re-review loop so a review can't turn into a rewrite, and every PR review thread gets an outcome reply once its finding is settled.
+- **`receiving-review`** — Discipline for applying review feedback to your changes, whether a reviewer sent it or `review-changes` produced it: feedback is claims to verify against the codebase, not orders to follow or occasions for performative agreement. One fix pass — deferrals are proposals the user ratifies, re-review is the user's call — and every PR review thread gets an outcome reply once its fix is on the remote. `address-findings` runs this pass over a `review-changes` report.
 
 ### Landing
 

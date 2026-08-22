@@ -1,6 +1,6 @@
 # Evidence travels with the claim
 
-Depends: `committing`, `review-changes`, `implement`, `receiving-review`
+Depends: `committing`, `review-changes`, `implement`, `receiving-review`, `address-findings`
 Why not a hook or lint: the claims this governs are made in chat output, which no gate sees.
 
 A self-report — a status line, a count, a "done", a "tests pass" — carries its evidence **in the same message**, or it carries the marker `UNVERIFIED:`. There is no third state; a confident sentence with no evidence and no marker is the failure.

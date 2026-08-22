@@ -17,6 +17,6 @@ Ask **in order**; first yes wins:
 2. **Is the context irrelevant to what comes next?** `/clear` (built-in) and start clean. The cost of getting this wrong is one-way: clear a *relevant* context and you lose the **why** behind what you built.
 3. **Does the context need to travel?** `/handoff` is narrow — what it buys is **portability**, a file that travels to a fresh session, another machine, another person. If nothing is travelling, you don't need it.
 4. **Can the remaining work run unattended?** Scoped tightly enough to run with you away from the keyboard, no steering → `handoff`'s background-agent exit, or a subagent for a bounded sub-question.
-5. **Otherwise, `/compact`.** The **default, not the first reach**. A summary flattens decisions; the failure mode when people start here is a fresh session that is confidently wrong about a decision the summary lost.
+5. **Otherwise, `/compact`.** The **default, not the first reach**. A summary flattens decisions; the failure mode when people start here is a fresh session that is confidently wrong about a decision the summary lost. Pass a focus instruction naming what must survive — the decision map, the parked list, the ticket ID, the handoff path — `/compact keep the decisions from the grill, the parked ledger, and #142`; a bare `/compact` keeps whatever the summariser found salient.
 
 The questions are not objective — each has taste in it, and the same boundary can go two ways on two days. The value is in asking them **in order**, at the boundary rather than in the middle of the work.

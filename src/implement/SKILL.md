@@ -56,7 +56,7 @@ Keep this gated: the three criteria are strict and most slices won't clear them.
 
 `review-changes` is user-invoked, like this skill, so nothing here can invoke it. **Suggest** it to the user before the change lands: "Slice built and green — consider `/review-changes` before it lands."
 
-If the user runs `review-changes` and acts on findings, re-run `feedback-loops` after the fixes. `receiving-review`'s **convergence guard** bounds that fix→re-review loop; what falls past the bound is a backlog follow-up, not this slice's work.
+If the user runs `review-changes`, the findings are acted on in `/address-findings`' one pass (it runs `feedback-loops` after its last fix); a finding that pass cannot fix is a deferral the user ratifies there, never a follow-up this slice files on its own.
 
 Once the slice is reviewed and findings are addressed, it lands: a one-commit change through the `committing` behavior on the user's ask, a change that needs a split or a PR through `/ship` — suggest it, don't invoke it: "Green and reviewed — `/ship` from here."
 
