@@ -9,10 +9,12 @@
 # listed. The fix is the same in both cases: list the matches, then use the
 # edit tools on each.
 #
-# Quoted strings are stripped before matching, so a commit message or echo
-# that mentions `sed -i` passes. A heredoc body is not stripped and still
-# blocks — rephrase it. Reads of a pipeline (`xargs grep | sed -n`) pass: only
-# an in-place flag after sed/perl/ruby counts.
+# Quoted strings and heredoc bodies are stripped before matching, so a commit
+# message, echo, or handoff that mentions `sed -i` passes. A heredoc fed to a
+# shell (`bash <<EOF`, `sh`, `zsh`, `eval`, `source`) is not stripped: that is
+# an in-place edit delivered by heredoc and still blocks. Reads of a pipeline
+# (`xargs grep | sed -n`) pass: only an in-place flag after sed/perl/ruby
+# counts.
 #
 # Opt-in by directory: the hook acts only when the command's directory (the
 # payload's `cwd`, else $PWD) or an ancestor up to $HOME contains a
@@ -79,8 +81,23 @@ fi
 [ -n "$opted_in" ] || exit 0
 
 # --- shape check ------------------------------------------------------------
-# Strip quoted strings so text that only mentions the shape passes.
-bare="$(printf '%s' "$cmd" | sed -E "s/'[^']*'//g; s/\"[^\"]*\"//g")"
+# Strip heredoc bodies (unless a shell consumes them) and quoted strings, so
+# text that only mentions the shape passes.
+bare="$(printf '%s' "$cmd" | python3 -c '
+import re, sys
+s = sys.stdin.read()
+SHELL = re.compile(r"(^|[;&|(\s])(bash|sh|zsh|dash|ksh|eval|source|\.)(\s|$)")
+HEREDOC = re.compile(r"<<-?\s*[\x27\"]?([A-Za-z_][A-Za-z0-9_]*)[\x27\"]?[^\n]*\n.*?\n\t*\1(?=\n|$)", re.S)
+def drop(m):
+    # The command line the heredoc hangs off, from its start to the <<.
+    line = s[s.rfind("\n", 0, m.start()) + 1 : m.start()]
+    head = m.group(0).split("\n", 1)[0]
+    if SHELL.search(line + head):
+        return m.group(0)            # a shell consumes the body: keep it
+    return head + "\n"              # anything else: the body is text
+sys.stdout.write(HEREDOC.sub(drop, s))
+' 2>/dev/null || printf '%s' "$cmd")"
+bare="$(printf '%s' "$bare" | sed -E "s/'[^']*'//g; s/\"[^\"]*\"//g")"
 sep='(^|[;&|([:space:]])'
 opts='(-[a-zA-Z]+[[:space:]]+)*'
 inplace='(-[a-zA-Z]*i|--in-place)'
