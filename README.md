@@ -69,6 +69,7 @@ The route most work travels: **`/grill-me`** → **`/to-feature` / `/to-story` /
 
 ### Conversation
 
+- **`merge-quiz`** — Off-path. Before merging a change you did not watch being built: a report grouped by intent, the paths the diff does not show, and a 5–8 question quiz on interaction effects to pass before approving. Two failed rounds means split or simplify the change.
 - **`explain`** — Re-explain the last answer when it didn't land: a fresh pitch with the missing context, in plain register, using the project's vocabulary.
 
 ### Human-run procedures

@@ -43,7 +43,7 @@ Stage, commit, push, close the ticket — each an outward act under `committing`
 
 **With no approver, that is the entire path.** Commits land on the trunk and push; there is no branch, no PR, no merge. With no PR body, the commit messages and the closing comment are the only prose carrying the change's claims.
 
-**With an approver, a PR carries it.** Never merge a PR the human hasn't seen.
+**With an approver, a PR carries it.** Never merge a PR the human hasn't seen — and for a change the human did not watch being built, suggest `/merge-quiz` before they approve it (user-invoked; suggest, never require).
 
 - **Link the work item.** On Azure DevOps this is an explicit relation and it is *required*, not decoration: pass `--work-items` when creating the PR. A PR that completes without it strands the work item, and no later comment repairs the link. On GitHub the link is textual — a closing keyword in the PR body, and only when the issue is still open. The closing word — `Closes`, or `Refs` against a partial remainder or an already-closed issue — is `committing`'s decision.
 - **Approval is someone else's act.** Open the PR, set the reviewers (from `CLAUDE.md` where the project declares them; ask when it doesn't, and never guess a name — on ADO, marking them *required* is a second call, below), and **stop there**. Don't wait, poll, or nudge. Report the PR as open and awaiting approval, because that's what it is.
