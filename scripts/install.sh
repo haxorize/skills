@@ -115,25 +115,46 @@ link_rules
 # user pastes it. Once settings.json names the hook, stay quiet — the
 # post-merge hook (ADR-0049) re-runs this script on every merge.
 SETTINGS="${HOME}/.claude/settings.json"
-if [ -f "$SETTINGS" ] && grep -q 'rename-safety.sh' "$SETTINGS"; then
-  echo "hook  rename-safety already named in $SETTINGS"
-  exit 0
-fi
-HOOK_PATH="$(printf '%s' "$GLOBAL_DIR/hooks/rename-safety.sh" | sed 's/[\\"]/\\&/g')"
+missing=""
+for hook in rename-safety commit-bypass; do
+  if [ -f "$SETTINGS" ] && grep -q "hooks/$hook.sh" "$SETTINGS"; then
+    echo "hook  $hook already named in $SETTINGS"
+  else
+    missing="$missing $hook"
+  fi
+done
+[ -n "$missing" ] || exit 0
 cat <<SNIPPET
 
-Hook snippet — paste this into ~/.claude/settings.json under "hooks" (not applied automatically):
+Hook snippet — paste this into ~/.claude/settings.json under "hooks" (not applied automatically).
+The paths point at this checkout: a 'git pull' that edits global/hooks/ changes the live hook.
+SNIPPET
+# One JSON object for every missing hook: a settings file holds one object,
+# so the entries are built first and printed once.
+entries=""
+for hook in $missing; do
+  HOOK_PATH="$(printf '%s' "$GLOBAL_DIR/hooks/$hook.sh" | sed 's/[\\"]/\\&/g')"
+  entry="      {
+        \"matcher\": \"Bash\",
+        \"hooks\": [
+          { \"type\": \"command\", \"command\": \"bash $HOOK_PATH\" }
+        ]
+      }"
+  if [ -n "$entries" ]; then entries="$entries,
+$entry"; else entries="$entry"; fi
+done
+cat <<SNIPPET
 {
   "hooks": {
     "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          { "type": "command", "command": "bash $HOOK_PATH" }
-        ]
-      }
+$entries
     ]
   }
 }
-Then opt a directory in with:  touch .claude/rename-safety   (at that repo's root)
 SNIPPET
+for hook in $missing; do
+  case "$hook" in
+    rename-safety) echo "rename-safety: then opt a directory in with:  touch .claude/rename-safety   (at that repo's root)" ;;
+    commit-bypass) echo "commit-bypass: always on — no opt-in." ;;
+  esac
+done

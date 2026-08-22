@@ -18,6 +18,30 @@ set -euo pipefail
 
 repo_root="$(git rev-parse --show-toplevel)"
 
+# The settings.json snippet points at this checkout's global/hooks/ directly,
+# so a pulled commit that edits a hook changes the live PreToolUse check with
+# no re-consent. Name it, one line, so the change does not scroll past.
+# ORIG_HEAD is the pre-merge tip only when the merge set it last; a reset or
+# rebase in between moves it, so the range can be stale — the line is a
+# prompt to look, never the audit itself. Captured once: a pipe into grep -q
+# under pipefail can misreport exactly when there is a change.
+hook_changes="$(git diff --name-only ORIG_HEAD HEAD -- global/hooks/ 2>/dev/null || true)"
+if [ -n "$hook_changes" ]; then
+  echo "post-merge: NOTE hook behavior changed — this pull touched: $(printf '%s' "$hook_changes" | tr '\n' ' ')"
+fi
+
+# A re-hoist publishes whatever the pull brought in; run the gates first so a
+# broken skill or a hook whose regex quietly stopped matching is named before
+# it is live. Failures warn rather than abort: git ignores this hook's exit
+# code, and the merge has already landed.
+for gate in scripts/lint-skills.sh scripts/lint-selftest.sh global/hooks/rename-safety-selftest.sh global/hooks/commit-bypass-selftest.sh; do
+  if [ ! -f "$repo_root/$gate" ]; then
+    echo "post-merge: WARN gate missing: $gate — renamed or removed without updating this hook" >&2
+  elif ! bash "$repo_root/$gate" >/dev/null 2>&1; then
+    echo "post-merge: WARN $gate failed — run 'bash $gate' to see why" >&2
+  fi
+done
+
 echo "post-merge: re-hoisting skills → ~/.claude/skills/"
 if ! bash "$repo_root/scripts/install.sh"; then
   echo "post-merge: WARN install.sh failed — run 'bash scripts/install.sh' manually to re-hoist" >&2

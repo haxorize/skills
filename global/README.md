@@ -20,11 +20,14 @@ The four rules (each file's `Depends:` line is the one list of its dependants):
 
 ## Hooks
 
-`hooks/` holds hook scripts for the one class of failure a hook can see: a tool call whose shape is wrong before it runs. One ships:
+`hooks/` holds hook scripts for the one class of failure a hook can see: a tool call whose shape is wrong before it runs. Two ship:
 
-- `rename-safety.sh` — a `PreToolUse` check on Bash that blocks in-place mass edits (`sed -i`, `perl -pi`, and `xargs` feeding either) and says to use the edit tools; its header states the exact contract, the opt-in, and the fail-open rule. `rename-safety-selftest.sh` beside it runs an expect/reject payload table — run it after changing a regex.
+- `rename-safety.sh` — a `PreToolUse` check on Bash that blocks in-place mass edits (`sed -i`, `perl -pi`, and `xargs` feeding either) and says to use the edit tools; its header states the exact contract, the opt-in, and the fail-open rule.
+- `commit-bypass.sh` — a `PreToolUse` check on Bash that blocks the three command-line shapes that skip the repo's hooks (`--no-verify` and its prefixes, `git commit -n`, `-c core.hooksPath=`), seen through quotes, `bash -c`, `eval`, variables, and shell-fed heredocs; always on, no opt-in, fail-open. A mention inside a message or note passes. `git config` writes and `GIT_CONFIG_*` overrides are outside its contract — the header says so.
 
-Hooks are wired in `~/.claude/settings.json`, and **`install.sh` never edits that file**. It prints the snippet; you paste it.
+Each has a `*-selftest.sh` beside it running an expect/reject payload table — run it after changing a rule.
+
+Hooks are wired in `~/.claude/settings.json`, and **`install.sh` never edits that file**. It prints the snippet; you paste it. **The snippet's path is this checkout** — a `git pull` that edits `hooks/` changes the live hook with no re-consent; the post-merge hook prints one line naming any such change.
 
 ## Install
 
@@ -32,9 +35,9 @@ Hooks are wired in `~/.claude/settings.json`, and **`install.sh` never edits tha
 bash scripts/install.sh
 ```
 
-The installer symlinks `rules/*.md` into `~/.claude/rules/` additively — it prunes only links that point into this repo's `global/`, and never touches `~/.claude/CLAUDE.md` — then prints the `settings.json` block for the hook until `settings.json` names it. The opt-in post-merge hook (`bash scripts/setup-hooks.sh`, see the repo README) re-runs the installer after every merging pull (not `pull --rebase`), so the rules track the repo.
+The installer symlinks `rules/*.md` into `~/.claude/rules/` additively — it prunes only links that point into this repo's `global/`, and never touches `~/.claude/CLAUDE.md` — then prints the `settings.json` block for each hook until `settings.json` names it. The opt-in post-merge hook (`bash scripts/setup-hooks.sh`, see the repo README) re-runs the installer after every merging pull (not `pull --rebase`), so the rules track the repo.
 
-To wire the rename hook, paste the printed block into `~/.claude/settings.json` under `hooks`:
+To wire a hook, paste the printed block into `~/.claude/settings.json` under `hooks` (one entry per hook; `commit-bypass.sh` takes the same shape):
 
 ```json
 {
@@ -51,4 +54,4 @@ To wire the rename hook, paste the printed block into `~/.claude/settings.json` 
 }
 ```
 
-and opt a directory in with `touch .claude/rename-safety` at its root.
+and, for `rename-safety` only, opt a directory in with `touch .claude/rename-safety` at its root.

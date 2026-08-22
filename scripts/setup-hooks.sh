@@ -2,8 +2,8 @@
 set -euo pipefail
 
 # One-time, per-clone opt-in: point this repo's hooks at the committed
-# scripts/git-hooks/ directory. From then on `git pull` runs scripts/install.sh
-# automatically via the post-merge hook. Hooks themselves can't be committed to
+# scripts/git-hooks/ directory. From then on `git pull` runs the post-merge
+# hook: the lint and hook self-tests, then scripts/install.sh. Hooks themselves can't be committed to
 # .git/hooks/, so we version-control the hook body and set core.hooksPath here.
 #
 # TRUST NOTE: after this runs, any hook committed under scripts/git-hooks/ —
@@ -26,5 +26,5 @@ fi
 git config --local core.hooksPath "$hooks_path"
 
 echo "core.hooksPath → $hooks_path"
-echo "Done. 'git pull' will now re-hoist skills automatically (post-merge)."
+echo "Done. 'git pull' now runs the post-merge hook: lint and hook self-tests, then install.sh (re-hoist)."
 echo "Note: not triggered by 'git pull --rebase' — run 'bash scripts/install.sh' manually after a rebase pull."

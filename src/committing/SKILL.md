@@ -87,5 +87,6 @@ Report what actually happened: what landed, what's staged, what's waiting on a m
 ## Notes
 
 - Merge conflicts on the way in are `resolving-merge-conflicts`' job.
+- The `commit-bypass` hook under `global/hooks/` is this protocol's mechanical half: a failing pre-commit hook is a blocked action to report, never a reason for `--no-verify`, and the hook refuses the bypass shapes before they run.
 - Findings that surface while drafting are follow-ups, not this change's work. Land the change; name what you noticed. Filing them is `/to-bug`'s, and only on the user's ask — the `Landing:` defect policy defaults to "fix, don't file".
 - The status report this skill ends with is governed by the evidence rule in `~/.claude/rules/`.
