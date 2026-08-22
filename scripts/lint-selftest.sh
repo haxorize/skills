@@ -19,7 +19,10 @@
 # run here is not a claim about them: the 200-line caps, sibling byte-identity
 # (skipped under LINT_ROOT — the registry names this repo's own paths),
 # description length, angle brackets, name/directory agreement, the
-# requires: resolution check, and router coverage.
+# requires: resolution check (existence and model-invoked), and router
+# coverage. The two-way requires check is covered in both directions for the
+# fixture forms (an imperative slash use; a quoted and an arrow-parenthesised
+# mention that must stay quiet); its header states what it does not reach.
 
 set -uo pipefail
 
@@ -64,6 +67,8 @@ expect "description hash" "description has unquoted ' #'"
 expect "load-gate placement" "carries a load gate ('Launching skill'"
 expect "global-rule Depends (missing)" "global/rules/no-depends.md has no 'Depends:' line"
 expect "global-rule Depends (dangling)" "global/rules/dangling-depends.md Depends: names 'no-such-skill'"
+expect "two-way requires (undeclared)" "src/undeclared-dep/SKILL.md invokes \`/fixture-discipline\` but its requires: line does not declare"
+expect "two-way requires (unused)" "src/unused-dep/SKILL.md declares requires: 'fixture-discipline' but the body never names it"
 
 reject "reference-link resolution" "references/real-reference.md"
 reject "reference-link resolution" "references/exempt-single.md"
@@ -71,6 +76,7 @@ reject "reference-link resolution" "references/exempt-double.md"
 reject "reference-link resolution" "references/exempt-inner.md"
 reject "reference-link resolution" "references/exempt-fenced.md"
 reject "global-rule Depends" "global/rules/well-formed.md"
+reject "two-way requires (quoted and parenthesised forms)" "src/quoted-dep/SKILL.md"
 
 if [ "$status" -ne 1 ]; then
   echo "SELFTEST FAIL: lint exited $status against the fixture tree; a tree this broken must exit 1"

@@ -5,7 +5,7 @@ via `LINT_ROOT`. Nothing here is a real skill — every file exists to make a ch
 to prove a check stays quiet on a form it is supposed to exempt.
 
 This file doubles as the fixture's README-coverage target, so the roster check has
-something to read: `which-skill`, `broken-links`.
+something to read: `which-skill`, `broken-links`, `undeclared-dep`, `unused-dep`, `quoted-dep`, `fixture-discipline`.
 
 `global/rules/` holds three rule fixtures for the `Depends:` admission check: one with no line, one naming a skill that does not exist, and one well-formed rule that must stay quiet.
 

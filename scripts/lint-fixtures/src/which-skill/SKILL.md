@@ -10,3 +10,4 @@ The router-coverage check reads this file for a backticked mention of every skil
 fixture tree. Keep one line per fixture skill.
 
 - `broken-links` — the deliberately-bad skill the self-test asserts against.
+- `undeclared-dep`, `unused-dep`, `quoted-dep`, `fixture-discipline` — the two-way requires fixtures and the dep they share.

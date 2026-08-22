@@ -2,7 +2,7 @@
 name: implement
 description: Build one loaded ticket's slice end to end — pick the build path, build, refactor, and close the loop.
 disable-model-invocation: true
-requires: tdd, feedback-loops, adr, diagnosing-bugs, receiving-review, discoverable-code
+requires: tdd, feedback-loops, adr, diagnosing-bugs, discoverable-code
 ---
 
 # Implement

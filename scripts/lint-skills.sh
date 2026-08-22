@@ -21,6 +21,17 @@
 #     Each named dep must exist as a skill AND be model-invoked — prose
 #     invocation can only reach model-invoked skills, so a user-invoked dep
 #     could never be resolved at runtime.
+#     The check runs both ways: a body that invokes a model-invoked skill by
+#     its slash form (`/name`) must declare it, and a declared dep must be
+#     named in the body — a `requires:` line nobody reads is drift the
+#     installer still links. Before the slash scan, double-quoted spans,
+#     parenthesised asides containing an arrow (`→`, the example form), and
+#     fenced code blocks are stripped, so an authoring guide can quote the
+#     form it teaches without declaring the example. Scope, stated so a pass
+#     isn't read as more than it is: only the backticked `/name` form counts
+#     as a use (a bare "run the X skill" is invisible), and "named in the
+#     body" means SKILL.md — a dep consumed only from a reference file must
+#     still be named once in the body.
 #   - Skill bodies must not cite repo ADRs by number (write-skill: "Skill
 #     bodies don't cite repo ADRs"). Skills symlink into ~/.claude/skills/ and
 #     run in the user's project, where this repo's docs/adr/ does not exist, so
@@ -380,7 +391,30 @@ for f in src/*/SKILL.md; do
     fi
     dep_dmi=$(is_user_invoked "$depfile")
     if [ "$dep_dmi" = "true" ]; then
-      echo "FAIL: $f requires '$dep', but '$dep' is user-invoked — prose invocation can only reach model-invoked behaviors"
+      echo "FAIL: $f requires '$dep', but '$dep' is user-invoked — prose invocation can only reach model-invoked Discipline skills"
+      fail=1
+    fi
+  done
+done
+
+# Two-way requires (see header): used-but-undeclared and declared-but-unused.
+for f in src/*/SKILL.md; do
+  skill=$(basename "$(dirname "$f")")
+  reqs=$(frontmatter_value "$f" requires | tr ',' ' ')
+  body=$(awk '/^---$/ { c++; next } c >= 2' "$f")
+  scan=$(printf '%s\n' "$body" | awk '/^```/ { fence = !fence; next } !fence' | sed -e 's/"[^"]*"//g' -e 's/([^)]*→[^)]*)//g')
+  for used in $(printf '%s\n' "$scan" | grep -o '`/[a-z-]*`' | tr -d '`/' | sort -u); do
+    [ -f "src/$used/SKILL.md" ] || continue
+    [ "$(is_user_invoked "src/$used/SKILL.md")" = "true" ] && continue
+    [ "$used" = "$skill" ] && continue
+    if ! printf ' %s ' "$reqs" | grep -q " $used "; then
+      echo "FAIL: $f invokes \`/$used\` but its requires: line does not declare '$used' — the installer will not link it"
+      fail=1
+    fi
+  done
+  for dep in $reqs; do
+    if ! printf '%s\n' "$body" | grep -q "\`/\{0,1\}$dep\`"; then
+      echo "FAIL: $f declares requires: '$dep' but the body never names it — drop the declaration, or name the skill in the body where it is used"
       fail=1
     fi
   done
