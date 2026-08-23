@@ -1,6 +1,6 @@
 # skills
 
-Personal collection of agent skills — repo-agnostic in mechanism, with a Domain skill that carries subject matter — hoisted into `~/.claude/skills/` for use across projects.
+Personal collection of agent skills — repo-agnostic in mechanism, with Domain skills that carry subject matter — hoisted into `~/.claude/skills/` for use across projects.
 
 ## How these fit together
 
@@ -132,6 +132,7 @@ The route most work travels: **`/grill-me`** → **`/to-feature` / `/to-story` /
 ### Domain
 
 - **`phi-safe-code`** (Domain) — Keeping member and patient data out of every sink it leaks into — logs, error text, URLs, fixtures, analytics, prompts, queues, commits, chat — by tracing each field to each sink and allowing fields by name; the audit trail, the malformed-input rule, and the BAA gate for external sinks. Mechanism only: the allowed-field list and retention figures are the project's convention skill.
+- **`health-literacy`** (Domain) — Writing member-facing copy a person can act on: the insurance term defined in the sentence where it appears, the amount shown as the figure they will be billed rather than a formula, the action in an active sentence with a computed date, a way to get help that is not "contact us", and a tested rendering for every template branch. Mechanism only: the approved-language list, the reading-level policy, and which sentences are legally required verbatim are the project's convention skill.
 
 ## Repo-local skills
 

@@ -1,6 +1,6 @@
 # CLAUDE.md — Skills Repo
 
-A repo of Claude Code skills — repo-agnostic in mechanism, with its first Domain skill carrying subject matter — symlinked into `~/.claude/skills/`. The skill bodies, `references/`, and templates *are* the codebase — there's no application to build, run, or deploy.
+A repo of Claude Code skills — repo-agnostic in mechanism, with its Domain skills carrying subject matter — symlinked into `~/.claude/skills/`. The skill bodies, `references/`, and templates *are* the codebase — there's no application to build, run, or deploy.
 
 ## Canonical references
 
