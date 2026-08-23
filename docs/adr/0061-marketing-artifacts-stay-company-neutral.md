@@ -1,0 +1,3 @@
+# Marketing artifacts in the repo stay company-neutral
+
+The repo's adoption-marketing artifacts — the README's `## Why this exists` section and [`docs/pitch.md`](../pitch.md) — carry no employer name and no employer-specific framing; material that does name an employer (a slide deck, a demo script, a follow-up message) is drafted and stored outside the repo. Nick decided this during the 2026-08-23 marketing grill: the repo is personal tooling reused across machines and jobs, so employer-named prose would tie its history to one context. The alternative — employer-specific framing in the repo, for a sharper internal pitch — was rejected because a neutral pitch still works as an internal handout, while un-naming a repo later means rewriting history.

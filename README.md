@@ -1,6 +1,18 @@
 # skills
 
-Personal collection of agent skills — repo-agnostic in mechanism, with Domain skills that carry subject matter — hoisted into `~/.claude/skills/` for use across projects.
+Personal collection of agent skills — repo-agnostic in mechanism, with Domain skills that carry subject matter — hoisted into `~/.claude/skills/` for use across projects. The shortest path to running it: `bash scripts/install.sh` (see [Install](#install)).
+
+## Why this exists
+
+An agent session produces work faster than it produces evidence that the work is done. The failures that follow are consistent: a "tests pass" claim nobody ran, a commit nobody asked for, a mass edit that rewrote files nobody listed, a push of code nobody reviewed, a ticket closed on a partial slice. Each rule here exists because one of those failures happened, and a polite instruction alone did not stop it recurring.
+
+The mechanism is three layers, each catching what the softer one misses:
+
+- **Skills** hold the workflows and disciplines: how to stress-test a plan, publish a ticket an agent can execute, build a slice, review a diff, and land a change with every claim checked against evidence.
+- **Global rules** ([`global/rules/`](global/rules/)) bind on every turn, with no skill loaded — evidence travels with the claim, no unasked commits, recommend-and-proceed, chunked large writes, the outbound dash sweep.
+- **Hooks** ([`global/hooks/`](global/hooks/)) mechanically refuse the failures a script can see before a tool call runs: an in-place mass edit, a hook-bypassing git flag, a push with no matching review receipt.
+
+Decisions live in [`docs/adr/`](docs/adr/), so the why survives the session that decided it. [`docs/pitch.md`](docs/pitch.md) is the one-page version for a team deciding whether to adopt, with the on-ramp.
 
 ## How these fit together
 
