@@ -114,9 +114,17 @@ link_rules
 # settings file they no longer know the contents of. Print the block; the
 # user pastes it. Once settings.json names the hook, stay quiet — the
 # post-merge hook (ADR-0049) re-runs this script on every merge.
+# The roster is the directory: a hook is a hooks/*.sh whose header carries an
+# `# Install note:` line (the libraries and selftests beside it carry none);
+# that line is also its one-line install note. post-merge derives the same
+# roster the same way.
 SETTINGS="${HOME}/.claude/settings.json"
+hooks=""
+for f in $(grep -l '^# Install note: ' "$GLOBAL_DIR"/hooks/*.sh); do
+  hooks="$hooks $(basename "$f" .sh)"
+done
 missing=""
-for hook in rename-safety commit-bypass review-receipt; do
+for hook in $hooks; do
   if [ -f "$SETTINGS" ] && grep -q "hooks/$hook.sh" "$SETTINGS"; then
     echo "hook  $hook already named in $SETTINGS"
   else
@@ -153,9 +161,6 @@ $entries
 }
 SNIPPET
 for hook in $missing; do
-  case "$hook" in
-    rename-safety) echo "rename-safety: then opt a directory in with:  touch .claude/rename-safety   (at that repo's root)" ;;
-    commit-bypass) echo "commit-bypass: always on — no opt-in." ;;
-    review-receipt) echo "review-receipt: opt a repo in with a 'Review required: yes' line in its CLAUDE.md Landing: block (nearest CLAUDE.md wins; 'no' opts a directory out)." ;;
-  esac
+  note="$(grep -m1 '^# Install note: ' "$GLOBAL_DIR/hooks/$hook.sh" | sed 's/^# Install note: //' || true)"
+  echo "$hook: ${note:-see the header of global/hooks/$hook.sh}"
 done

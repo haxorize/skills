@@ -78,20 +78,18 @@
 # is not.
 #
 # `git push --dry-run` / `-n` (as a flag, before `--` and any refspec) is a
-# read of the remote and passes. Command lines are tokenised the way a shell
-# would: a string handed to `bash -c` / `-lc`, `eval`, `env -S`, `xargs git`,
-# a shell-fed heredoc, a backtick or `$(…)` substitution, or a literal string
-# piped into `bash` is scanned in turn; a variable assigned in the same
-# command (`p=push; git $p`) is followed, and so is `$(which git)`; a
-# `# comment` starts only at the beginning of a word outside quotes; `{ git
-# push; }` and `if …; then git push; fi` are still pushes. `git push` inside
-# a quoted message, an echo, or a heredoc no shell consumes is text. A string
-# another program builds (`base64 -d | bash`, `python3 -c "os.system(…)"`) is
-# not scanned.
+# read of the remote and passes. `git push` inside a quoted message, an echo,
+# or a heredoc no shell consumes is text. How a push may be spelled — a `bash
+# -c` string, `eval`, a shell-fed heredoc, a variable, a wrapper, a compound
+# statement, `xargs git`, a `-c alias.p=push` built on the command line, and
+# how `cd`/`pushd`/`GIT_DIR=` move the directory it runs in — is hook-lib.sh /
+# hook-lib.py beside this file; the lib's header is that part of the contract.
+# `git -C <dir>` is this hook's own. This file holds only the push shape and
+# the receipt check.
 #
 # Fail-open, each with a one-line stderr breadcrumb: a malformed payload, a
-# missing python3 or git, a scanner error (an unterminated quote, nesting
-# deeper than four shells), a push outside a git work tree, a CLAUDE.md the
+# missing python3 or git, a tokeniser error (an unterminated quote, more
+# than four nested shells), a push outside a git work tree, a CLAUDE.md the
 # opt-in walk cannot read, a repo with no ref to compare against, a source ref
 # whose tree cannot be resolved, or any error counting the commits in the
 # range. A safety hook that blocks on its own errors trains the user to
@@ -104,10 +102,7 @@
 # REVIEW_RECEIPT_DIR, when set, replaces the landing-zone search (the selftest
 # uses it; a user with a non-standard temp dir can too).
 #
-# The payload parse and the segment scan are copied from commit-bypass.sh and
-# extended (comment and brace handling, cwd tracking); the shared hook-lib.sh
-# extraction ADR-0054 scheduled for the third hook is deferred again, with the
-# rename-safety tokeniser port (ADR-0059 records why).
+# Install note: opt a repo in with a 'Review required: yes' line in its CLAUDE.md Landing: block (nearest CLAUDE.md wins; 'no' opts a directory out).
 #
 # Wire it in ~/.claude/settings.json (scripts/install.sh prints the block):
 #   hooks.PreToolUse[] = { matcher: "Bash",
@@ -123,172 +118,24 @@
 # consumer relation, not a dependant.
 
 set -u
-
-allow() { echo "review-receipt: $1, allowing" >&2; exit 0; }
-
-payload="$(cat 2>/dev/null || true)"
-[ -n "$payload" ] || allow "empty payload"
-
-command -v python3 >/dev/null 2>&1 || allow "python3 not found"
-command -v git >/dev/null 2>&1 || allow "git not found"
-
-parsed="$(printf '%s' "$payload" | python3 -c '
-import json, sys
-try:
-    d = json.load(sys.stdin)
-    ti = d.get("tool_input") or {}
-    cmd = ti.get("command") if isinstance(ti, dict) else None
-    cwd = d.get("cwd") or ""
-    if isinstance(cmd, str) and cmd:
-        print(cwd if isinstance(cwd, str) else "")
-        print(cmd)
-except Exception:
-    pass
-' 2>/dev/null || true)"
-[ -n "$parsed" ] || allow "payload has no tool_input.command"
-cwd="${parsed%%$'\n'*}"
-cmd="${parsed#*$'\n'}"
-[ -d "$cwd" ] || cwd="$PWD"
+hook_name="review-receipt"
+[[ ${BASH_SOURCE[0]} == */* ]] && hook_dir="${BASH_SOURCE[0]%/*}" || hook_dir=.
+. "$hook_dir/hook-lib.sh" 2>/dev/null || { echo "$hook_name: hook-lib.sh not found beside the hook, allowing" >&2; exit 0; }
+hook_read_payload
+command -v git >/dev/null 2>&1 || hook_allow "git not found"
 
 # --- the push record: a live `git push`, and where it runs ---------------------
 # Prints "kind<US>dir<US>remote<US>refspec<US>extra-refspecs<US>all" (US =
 # 0x1f, extras RS-separated) on a match — kind is `push` or `delete`; `all` is
-# set for --all/--mirror; any field may be empty — nothing otherwise. Any
-# non-zero exit is a scanner failure.
-record="$(printf '%s' "$cmd" | python3 -c '
-import os, re, shlex, sys
-
-s = sys.stdin.read()
-
-SHELL = re.compile(r"(^|[;&|(\s])(bash|sh|zsh|dash|ksh|eval|source|\.)(\s|$)")
-HEREDOC = re.compile(r"<<-?\s*[\x27\"]?([A-Za-z_][A-Za-z0-9_]*)[\x27\"]?[^\n]*\n.*?\n\t*\1(?=\n|$)", re.S)
-def drop(m):
-    line = re.sub(r"\\\n", " ", s[:m.start()]).rsplit("\n", 1)[-1]
-    head = m.group(0).split("\n", 1)[0]
-    if SHELL.search(line + head):
-        body = m.group(0).split("\n", 1)[1].rsplit("\n", 1)[0]
-        return head + "\n" + body + "\n"
-    return head + "\n"
-s = HEREDOC.sub(drop, s)
-s = re.sub(r"\\\n", " ", s)
-
-SHELLS = {"bash", "sh", "zsh", "dash", "ksh"}
-WRAPPERS = {"env", "command", "exec", "nohup", "time", "sudo", "nice", "ionice",
-            "caffeinate", "stdbuf", "timeout", "doas"}
-TAKES_ONE = {"timeout"}            # one positional (the duration) before the command
-WRAPPER_VALUE_OPTS = {             # options whose value is skipped, not scanned
-    "exec": {"-a"}, "nice": {"-n"}, "ionice": {"-c", "-n", "-p"},
-    "sudo": {"-u", "-g", "-p", "-C", "-D", "-h", "-r", "-t", "-T", "-U"},
-    "doas": {"-u", "-C"}, "timeout": {"-k", "-s"}, "stdbuf": {"-i", "-o", "-e"},
-    "env": {"-u", "-C"},
-}
-SEPS = {";", "&&", "||", "|", "&", "(", ")", "\n", "{", "}",
-        "then", "do", "else", "elif", "fi", "done", "esac"}
-GIT_VALUE_OPTS = {"-c", "--git-dir", "--work-tree", "--namespace", "--exec-path",
-                  "--super-prefix", "--config-env"}
+# set for --all/--mirror; any field may be empty — nothing otherwise.
+hook_scan '
 PUSH_VALUE_OPTS = {"-o", "--push-option", "--receive-pack", "--exec", "--repo"}
 DRYRUN = re.compile(r"^(--dry-run|-[A-Za-z]*n[A-Za-z]*)$")
 DELETE = re.compile(r"^(--delete|-[A-Za-z]*d[A-Za-z]*)$")
-ALIAS = re.compile(r"^alias\.([^=\s]+)=push(\s|$)")
-ASSIGN = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)=(.*)$", re.S)
-VAR = re.compile(r"\$\{?([A-Za-z_][A-Za-z0-9_]*)\}?")
-VARS = {}
-
-def strip_comments(text):
-    """Drop `# …` to end of line where `#` begins a word outside quotes — the
-    shell rule; a `#` inside quotes or mid-word is text."""
-    out, i, n, q, word_start = [], 0, len(text), None, True
-    while i < n:
-        c = text[i]
-        if q:
-            if c == "\\" and q == "\"" and i + 1 < n:
-                out.append(c); i += 1; c = text[i]
-            elif c == q:
-                q = None
-            out.append(c); i += 1
-            continue
-        if c == "\\" and i + 1 < n:
-            out.append(c); out.append(text[i + 1]); i += 2; word_start = False
-            continue
-        if c in "\x27\"":
-            q = c; out.append(c); i += 1; word_start = False
-            continue
-        if c == "#" and word_start:
-            j = text.find("\n", i)
-            if j < 0:
-                break
-            i = j
-            continue
-        out.append(c)
-        word_start = c in " \t\r\n;&|(){}"
-        i += 1
-    return "".join(out)
-
-def tokens(text):
-    text = strip_comments(text)
-    text = re.sub(r"\$(\x27(?:[^\x27\\]|\\.)*\x27)", lambda m: m.group(1), text)   # ANSI-C $\x27…\x27 quoting
-    text = re.sub(r"\$\((?:which|command -v|type -P)\s+git\)", "git", text)
-    text = re.sub(r"`(?:which|command -v|type -P)\s+git`", "git", text)
-    text = re.sub(r"`([^`]*)`", r"( \1 )", text)                                # a backtick body runs
-    lex = shlex.shlex(text, posix=True, punctuation_chars=";&|()\n")
-    lex.whitespace_split = True
-    lex.whitespace = " \t\r"
-    lex.commenters = ""
-    out = []
-    for t in lex:
-        if all(c in ";&|()\n" for c in t):
-            out.extend(re.findall(r"&&|\|\||[;&|()\n]", t))
-        else:
-            out.append(t)
-    return out
-
-def segments(toks):
-    seg = []
-    for t in toks:
-        if t in SEPS:
-            if seg:
-                yield seg
-            seg = []
-        else:
-            seg.append(t)
-    if seg:
-        yield seg
-
-def is_git(tok):
-    return tok.rsplit("/", 1)[-1] == "git"
-
-def subst(seg):
-    """Replace $name / ${name} with a value assigned earlier in this command."""
-    out = []
-    for t in seg:
-        n = VAR.sub(lambda m: VARS.get(m.group(1), m.group(0)), t)
-        if n == t:
-            out.append(t)
-        else:
-            try:
-                out.extend(shlex.split(n))
-            except ValueError:
-                out.append(n)
-    return out
-
-def expand(path):
-    if path.startswith("~"):
-        return os.path.expanduser(path)
-    if "$" in path or "`" in path:
-        return None                 # cannot expand; caller falls back to cwd
-    return path
-
-def joined(base, path):
-    if path is None:
-        return None
-    if base is None:
-        return None if not os.path.isabs(path) else path
-    return path if os.path.isabs(path) else os.path.join(base, path)
 
 def check_git(args, curdir):
     """args = tokens after the git word. Returns (kind, dir, remote, refspec) or None."""
     d = curdir
-    alias = None
     i = 0
     while i < len(args):
         a = args[i]
@@ -297,20 +144,11 @@ def check_git(args, curdir):
             i += 2
             continue
         if a in GIT_VALUE_OPTS and i + 1 < len(args):
-            m = ALIAS.match(args[i + 1]) if a == "-c" else None
-            if m:
-                try:
-                    alias = (m.group(1), shlex.split(args[i + 1].split("=", 1)[1])[1:])
-                except ValueError:
-                    alias = (m.group(1), [])
             i += 2
             continue
         if a.startswith("-"):
             i += 1
             continue
-        if alias and a == alias[0]:
-            args = args[:i] + ["push"] + alias[1] + args[i + 1:]
-            a = "push"
         if a != "push":
             return None
         rest = args[i + 1:]
@@ -356,95 +194,22 @@ def check_git(args, curdir):
                 "\x1e".join(refspecs[1:]), pushall)
     return None
 
-def scan(text, curdir, depth=0):
-    if depth > 4:
-        raise RuntimeError("nesting deeper than four shells")
-    prev = None
-    for seg in segments(tokens(text)):
-        seg = subst(seg)
-        # assignments at the head of a segment (or after `export`) are followed
-        k = 1 if seg and seg[0] == "export" else 0
-        while k < len(seg) and ASSIGN.match(seg[k]):
-            name, value = ASSIGN.match(seg[k]).groups()
-            VARS[name] = value
-            if name == "GIT_DIR":
-                curdir = joined(curdir, expand(value))
-            k += 1
-        seg = seg[k:]
-        head = seg[0].rsplit("/", 1)[-1] if seg else ""
-        if head in ("cd", "pushd"):
-            rest = [t for t in seg[1:] if t == "-" or not t.startswith("-")]
-            target = rest[0] if rest else None
-            curdir = joined(curdir, expand(target)) if target and target != "-" else None
-            prev = seg
-            continue
-        hit = scan_segment(seg, prev, curdir, depth)
-        if hit:
-            return hit
-        prev = seg
-    return None
 
-def scan_segment(seg, prev, curdir, depth):
-    # assignments after a wrapper (env FOO=bar git …) — `scan` took the leading ones
-    j = 0
-    while j < len(seg) and ASSIGN.match(seg[j]):
-        j += 1
-    seg = seg[j:]
-    if not seg:
-        return None
-    head = seg[0].rsplit("/", 1)[-1]
-    if head in WRAPPERS:
-        vals = WRAPPER_VALUE_OPTS.get(head, set())
-        k = 1
-        while k < len(seg) and seg[k].startswith("-"):
-            if head == "env" and seg[k] == "-S" and k + 1 < len(seg):
-                return scan(seg[k + 1], curdir, depth + 1)
-            k += 2 if seg[k] in vals else 1
-        if head in TAKES_ONE:
-            k += 1
-        return scan_segment(seg[k:], prev, curdir, depth)
-    if head == "xargs":
-        k = 1
-        while k < len(seg) and seg[k].startswith("-"):
-            k += 1
-        fed = list(prev or [])
-        if fed and fed[0].rsplit("/", 1)[-1] in ("echo", "printf"):
-            fed = [t for t in fed[1:] if not t.startswith("-")]
-        if k < len(seg) and is_git(seg[k]):
-            return check_git(seg[k + 1:] + fed, curdir)
-        return scan_segment(seg[k:], prev, curdir, depth)
-    if head in SHELLS:
-        for k, t in enumerate(seg):
-            if re.match(r"^-[A-Za-z]*c[A-Za-z]*$", t) and k + 1 < len(seg):
-                return scan(seg[k + 1], curdir, depth + 1)
-        # no -c: a string piped in from the previous segment runs here
-        for t in (prev or []):
-            hit = scan(t.replace("\\n", "\n"), curdir, depth + 1)
-            if hit:
-                return hit
-        return None
-    if head == "eval":
-        return scan(" ".join(seg[1:]), curdir, depth + 1)
-    if is_git(seg[0]):
-        return check_git(seg[1:], curdir)
-    return None
+def on_command(seg, curdir):
+    args = git_args(seg)
+    return check_git(args, curdir) if args is not None else None
 
-try:
-    hit = scan(s, "")
-except Exception:
-    sys.exit(3)
-if hit:
+def emit(hit):
     kind, d, remote, refspec, extras, pushall = hit
     sys.stdout.write("%s\x1f%s\x1f%s\x1f%s\x1f%s\x1f%s"
                      % (kind, d or "", remote, refspec, extras, pushall))
-' 2>/dev/null)"
-rc=$?
-[ "$rc" -eq 0 ] || allow "shape scan failed (rc=$rc)"
+'
+record="$hook_result"
 [ -n "$record" ] || exit 0
 
 IFS=$'\x1f' read -r kind pushdir remote refspec extras pushall <<< "$record"
-[ "$kind" = "delete" ] && allow "a delete sends no commits"
-case "$refspec" in :*) allow "a delete refspec sends no commits" ;; esac
+[ "$kind" = "delete" ] && hook_allow "a delete sends no commits"
+case "$refspec" in :*) hook_allow "a delete refspec sends no commits" ;; esac
 
 start="$cwd"
 if [ -n "$pushdir" ]; then
@@ -464,7 +229,7 @@ if [ -z "$top" ]; then
     [ -e "$top/.git" ] || top=""
   fi
 fi
-[ -n "$top" ] || allow "not inside a git work tree"
+[ -n "$top" ] || hook_allow "not inside a git work tree"
 repo="$(basename "$top")"
 
 # --- opt-in: the nearest CLAUDE.md carrying the line, from the push directory up ---
@@ -477,10 +242,10 @@ while :; do
     unfenced="$(awk '
       /^[[:space:]]*```/ { fence = !fence; next }
       fence { next }
-      { print }' "$dir/CLAUDE.md" 2>/dev/null)" || allow "could not read $dir/CLAUDE.md"
+      { print }' "$dir/CLAUDE.md" 2>/dev/null)" || hook_allow "could not read $dir/CLAUDE.md"
     line="$(printf '%s\n' "$unfenced" | grep -iE "$OPT_IN" | head -1; exit "${PIPESTATUS[1]}")"
     grc=$?
-    [ "$grc" -le 1 ] || allow "could not scan $dir/CLAUDE.md (grep rc=$grc)"
+    [ "$grc" -le 1 ] || hook_allow "could not scan $dir/CLAUDE.md (grep rc=$grc)"
     if [ -n "$line" ]; then
       # the nearest CLAUDE.md that carries the line decides, either value
       printf '%s\n' "$line" | grep -qi 'yes' && gated=1
@@ -504,7 +269,7 @@ dst="${dst#refs/heads/}"
 if [ -n "$dst" ] \
    && ! git -C "$top" rev-parse --verify -q "refs/heads/$dst" >/dev/null 2>&1 \
    && git -C "$top" rev-parse --verify -q "refs/tags/$dst" >/dev/null 2>&1; then
-  allow "a tag push sends no branch commits"
+  hook_allow "a tag push sends no branch commits"
 fi
 
 # the commit the push would send: the refspec's source, else HEAD
@@ -529,11 +294,11 @@ if [ -n "$pushall" ] || [ -n "$wide" ]; then
     [ -n "$b" ] || continue
     if git -C "$top" rev-parse --verify -q "$rname/$b" >/dev/null 2>&1; then
       ahead="$(git -C "$top" rev-list --count "$rname/$b..$b" 2>/dev/null || echo '?')"
-      case "$ahead" in ''|0) continue ;; *[!0-9]*) allow "could not count the commits on $b" ;; esac
+      case "$ahead" in ''|0) continue ;; *[!0-9]*) hook_allow "could not count the commits on $b" ;; esac
     fi
     srcs+=("$b")
   done < <(git -C "$top" for-each-ref --format='%(refname:short)' refs/heads 2>/dev/null)
-  [ "${#srcs[@]}" -gt 0 ] || allow "no branch is ahead of $rname"
+  [ "${#srcs[@]}" -gt 0 ] || hook_allow "no branch is ahead of $rname"
 else
   srcs=("$src")
   if [ -n "$extras" ]; then
@@ -557,11 +322,11 @@ elif [ -n "$branch" ] && git -C "$top" rev-parse --verify -q "origin/$branch" >/
 fi
 count="?"
 if [ "${#srcs[@]}" -eq 1 ] && [ -z "$wide" ]; then
-  [ -n "$range" ] || allow "no remote ref to compare against"
+  [ -n "$range" ] || hook_allow "no remote ref to compare against"
   count="$(git -C "$top" rev-list --count "$range" 2>/dev/null || echo '?')"
   case "$count" in
-    ''|0)       allow "nothing to push on this branch" ;;
-    *[!0-9]*)   allow "could not count the commits in $range" ;;
+    ''|0)       hook_allow "nothing to push on this branch" ;;
+    *[!0-9]*)   hook_allow "could not count the commits in $range" ;;
   esac
 fi
 
@@ -571,7 +336,7 @@ fi
 trees=()
 for s in "${srcs[@]}"; do
   t="$(git -C "$top" rev-parse --verify -q "$s^{tree}" 2>/dev/null || true)"
-  [ -n "$t" ] || allow "could not resolve the tree of $s"
+  [ -n "$t" ] || hook_allow "could not resolve the tree of $s"
   trees+=("$t")
 done
 tree="${trees[0]}"

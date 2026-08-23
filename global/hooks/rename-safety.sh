@@ -2,30 +2,43 @@
 # rename-safety — a Claude Code PreToolUse hook for the Bash tool.
 #
 # Blocks in-place mass edits: `sed -i` (also gsed, a path-prefixed sed, and
-# options before the -i), `perl -i` / `ruby -i` (any cluster carrying i, so
-# `-pi`, `-pi.bak`, `-i -pe`), and `xargs` feeding any of those. On BSD sed,
-# `sed -i 's/a/b/'` silently no-ops (the first argument is taken as the backup
+# options before the -i), `perl -i` / `ruby -i` (`-pi`, `-pi.bak`, `-i -pe`,
+# `-Mstrict -i`), and `xargs` feeding any of those. On BSD sed, `sed -i
+# 's/a/b/'` silently no-ops (the first argument is taken as the backup
 # suffix); on either platform, an unanchored pattern rewrites files nobody
 # listed. The fix is the same in both cases: list the matches, then use the
 # edit tools on each.
 #
-# Quoted strings and heredoc bodies are stripped before matching, so a commit
-# message, echo, or handoff that mentions `sed -i` passes. A heredoc fed to a
-# shell (`bash <<EOF`, `sh`, `zsh`, `eval`, `source`) is not stripped: that is
-# an in-place edit delivered by heredoc and still blocks. Reads of a pipeline
-# (`xargs grep | sed -n`) pass: only an in-place flag after sed/perl/ruby
-# counts.
+# Only an in-place flag after sed/perl/ruby counts, and a short-option cluster
+# is read left to right: an `i` before any letter that takes a value is the
+# flag (`-pi.bak`, `-Ei`); a letter that takes the next token as its value
+# (`-e`, `-f`; perl `-M`; ruby `-r`, `-C`) ends the cluster and skips that token
+# (`perl -e '-i'` runs the program `-i`; `-Mstrict` names a module); a letter
+# whose value is only ever attached (sed `-l`, perl `-l -x -C -0 -d -D -F`,
+# ruby `-0 -K -F -x`) ends the cluster and skips nothing. Reads of a pipeline
+# (`xargs grep | sed -n`), and a mention in a commit message, an echo, a grep
+# pattern, a handoff, or a heredoc no shell consumes, pass.
 #
-# Opt-in by directory: the hook acts only when the command's directory (the
-# payload's `cwd`, else $PWD) or an ancestor up to $HOME contains a
+# How the flag may reach the program — a quoted `-i`, a `bash -c` string,
+# `eval`, a shell-fed heredoc, a variable, a wrapper, a compound statement,
+# `find -exec`, `xargs`, and how `cd`/`pushd` move the directory the command
+# runs in — is hook-lib.sh / hook-lib.py beside this file; the lib's header is
+# that part of the contract. This file holds only the in-place shapes and the
+# opt-in.
+#
+# Opt-in by directory: the hook acts only when the directory the blocked
+# command runs in (the payload's `cwd`, else $PWD, moved by any `cd`/`pushd`
+# the lib could expand) or an ancestor up to $HOME contains a
 # `.claude/rename-safety` file, or when that directory is under one listed in
 # RENAME_SAFETY_DIRS (colon-separated; empty elements are ignored). Elsewhere
 # it exits 0 and the command runs.
 #
-# Fail-open: a malformed payload, missing python3, or unreadable directory
-# lets the command through, with a one-line stderr breadcrumb so drift shows
-# in the debug log. A safety hook that blocks on its own errors trains the
-# user to disable it.
+# Fail-open: a malformed payload, missing python3, a tokeniser error, or a
+# payload cwd that is not a directory lets the command through, with a
+# one-line stderr breadcrumb so drift shows in the debug log. A safety hook
+# that blocks on its own errors trains the user to disable it.
+#
+# Install note: opt a directory in with:  touch .claude/rename-safety   (at that repo's root)
 #
 # Wire it in ~/.claude/settings.json (scripts/install.sh prints the block):
 #   hooks.PreToolUse[] = { matcher: "Bash",
@@ -33,37 +46,78 @@
 #
 # Exit 2 blocks the call and feeds stderr back to the model; exit 0 allows it.
 # rename-safety-selftest.sh beside this file runs the expect/reject payload
-# table; run it after changing a regex.
+# table; run it after changing a rule.
+#
+# Depends: implement and discoverable-code (their edit-from-a-match-list lines
+# name this hook as the mechanical half where it is wired and the directory is
+# opted in, and stand in for it everywhere else).
 
 set -u
+hook_name="rename-safety"
+[[ ${BASH_SOURCE[0]} == */* ]] && hook_dir="${BASH_SOURCE[0]%/*}" || hook_dir=.
+. "$hook_dir/hook-lib.sh" 2>/dev/null || { echo "$hook_name: hook-lib.sh not found beside the hook, allowing" >&2; exit 0; }
+hook_read_payload
+[ -d "$cwd" ] || hook_allow "directory $cwd unreadable"
 
-allow() { echo "rename-safety: $1, allowing" >&2; exit 0; }
+# --- shape check ------------------------------------------------------------
+# on_command sees each program that runs; sed/gsed, perl, and ruby segments
+# are read for an in-place flag. emit prints the shape name, the directory the
+# segment runs in (empty when it is the payload cwd), then the path-shaped
+# arguments of the blocked segment, one per line.
+hook_scan '
+# Short-option letters that take a value. NEXT_TOKEN: the cluster ends there
+# and the next token is the value. ATTACHED: the cluster ends there and the
+# next token is an argument in its own right (`sed -l -i` is in place).
+NEXT_TOKEN = {"sed": set("ef"), "perl": set("eEMmI"), "ruby": set("eIrCE")}
+ATTACHED = {"sed": set("l"), "perl": set("lxC0dDF"), "ruby": set("0KFx")}
+PATH = re.compile(r"^[^-/][^\s]*\.[A-Za-z0-9]+$|^\.?/[^\s]+\.[A-Za-z0-9]+$")
 
-payload="$(cat 2>/dev/null || true)"
-[ -n "$payload" ] || allow "empty payload"
+def inplace(prog, args):
+    i = 0
+    while i < len(args):
+        a = args[i]
+        if a == "--":
+            return False
+        if prog == "sed" and a.startswith("--in-place"):
+            return True
+        if re.match(r"^-[A-Za-z]", a):
+            for ch in a[1:]:
+                if ch == "i":
+                    return True
+                if ch in NEXT_TOKEN[prog]:
+                    if ch == a[-1]:          # value is the next token
+                        i += 1
+                    break
+                if ch in ATTACHED[prog] or not ch.isalpha():
+                    break
+        i += 1
+    return False
 
-command -v python3 >/dev/null 2>&1 || allow "python3 not found"
+def on_command(seg, curdir):
+    head = progname(seg[0])
+    prog = {"sed": "sed", "gsed": "sed", "perl": "perl", "ruby": "ruby"}.get(head)
+    if prog and inplace(prog, seg[1:]):
+        shape = "sed -i" if prog == "sed" else "perl/ruby -i"
+        files = [t for t in seg[1:] if PATH.match(t) and not re.match(r"^(s|y)[/|#]", t)]
+        return (shape, curdir or "", files[:20])
+    return None
 
-parsed="$(printf '%s' "$payload" | python3 -c '
-import json, sys
-try:
-    d = json.load(sys.stdin)
-    ti = d.get("tool_input") or {}
-    cmd = ti.get("command") if isinstance(ti, dict) else None
-    cwd = d.get("cwd") or ""
-    if isinstance(cmd, str) and cmd:
-        print(cwd if isinstance(cwd, str) else "")
-        print(cmd)
-except Exception:
-    pass
-' 2>/dev/null || true)"
-[ -n "$parsed" ] || allow "payload has no tool_input.command"
-cwd="${parsed%%$'\n'*}"
-cmd="${parsed#*$'\n'}"
+def emit(hit):
+    shape, d, files = hit
+    sys.stdout.write(shape + "\n" + d + "".join("\n" + f for f in files))
+'
+[ -n "$hook_result" ] || exit 0
+shape="${hook_result%%$'\n'*}"
+rest="${hook_result#*$'\n'}"
+segdir="${rest%%$'\n'*}"
+files=""; [ "$rest" != "$segdir" ] && files="${rest#*$'\n'}"
 
 # --- opt-in check -----------------------------------------------------------
-start="${cwd:-$PWD}"
-[ -d "$start" ] || allow "directory $start unreadable"
+start="$cwd"
+if [ -n "$segdir" ]; then
+  case "$segdir" in /*) start="$segdir" ;; *) start="$cwd/$segdir" ;; esac
+  start="$(cd "$start" 2>/dev/null && pwd)" || start="$cwd"   # a cd to a missing dir falls back to the payload cwd
+fi
 opted_in=""
 dir="$start"
 while :; do
@@ -80,51 +134,9 @@ if [ -z "$opted_in" ] && [ -n "${RENAME_SAFETY_DIRS:-}" ]; then
 fi
 [ -n "$opted_in" ] || exit 0
 
-# --- shape check ------------------------------------------------------------
-# Strip heredoc bodies (unless a shell consumes them), then quoted strings
-# (honouring backslash-escaped quotes), so text that only mentions the shape
-# passes.
-bare="$(printf '%s' "$cmd" | python3 -c '
-import re, sys
-s = sys.stdin.read()
-SHELL = re.compile(r"(^|[;&|(\s])(bash|sh|zsh|dash|ksh|eval|source|\.)(\s|$)")
-HEREDOC = re.compile(r"<<-?\s*[\x27\"]?([A-Za-z_][A-Za-z0-9_]*)[\x27\"]?[^\n]*\n.*?\n\t*\1(?=\n|$)", re.S)
-def drop(m):
-    # The command line the heredoc hangs off, from its start to the <<. A
-    # backslash-newline before the << continues the same logical line, so
-    # `bash \<newline><<EOF` is `bash <<EOF` to the shell: join first.
-    line = re.sub(r"\\\n", " ", s[:m.start()]).rsplit("\n", 1)[-1]
-    head = m.group(0).split("\n", 1)[0]
-    if SHELL.search(line + head):
-        return m.group(0)            # a shell consumes the body: keep it
-    return head + "\n"              # anything else: the body is text
-s = HEREDOC.sub(drop, s)
-# A backslash-newline continues the command line, so `sed \<newline> -i` is
-# `sed -i` to the shell; join it before the shape check sees a line break.
-s = re.sub(r"\\\n", " ", s)
-# Quoted strings: single quotes hold no escapes; a double-quoted string may
-# carry backslash-escaped quotes, which a naive [^"]* pairs wrongly.
-s = re.sub(r"\x27[^\x27]*\x27|\"(\\.|[^\"\\])*\"", "", s, flags=re.S)
-sys.stdout.write(s)
-' 2>/dev/null || printf '%s' "$cmd")"
-sep='(^|[;&|([:space:]])'
-opts='(-[a-zA-Z]+[[:space:]]+)*'
-inplace='(-[a-zA-Z]*i|--in-place)'
-shape=""
-if printf '%s' "$bare" | grep -Eq "${sep}([^[:space:]]*/)?g?sed[[:space:]]+${opts}${inplace}"; then
-  shape="sed -i"
-elif printf '%s' "$bare" | grep -Eq "${sep}(perl|ruby)[[:space:]]+${opts}-[a-zA-Z]*i"; then
-  shape="perl/ruby -i"
-elif printf '%s' "$bare" | grep -Eq "xargs[^|;&]*[[:space:]]([^[:space:]]*/)?(g?sed|perl|ruby)[[:space:]]+${opts}${inplace}"; then
-  shape="xargs into an in-place edit"
-fi
-[ -n "$shape" ] || exit 0
-
 # --- report and block -------------------------------------------------------
 # Path-shaped arguments the command names literally. Paths that arrive through
 # find or a glob are not visible here, so an empty list is not an empty edit.
-files="$(printf '%s' "$bare" | tr ' ' '\n' | grep -E '^[^-/][^[:space:]]*\.[a-zA-Z0-9]+$|^\.?/[^[:space:]]+\.[a-zA-Z0-9]+$' | grep -Ev '^(s|y)[/|#]' | head -20 || true)"
-
 {
   echo "rename-safety: blocked an in-place mass edit ($shape)."
   echo "  command: $cmd"

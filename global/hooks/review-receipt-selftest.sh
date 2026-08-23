@@ -4,7 +4,11 @@
 # exactly like a clean push — this table is the only thing that tells the two
 # apart. Run it after changing any rule: bash global/hooks/review-receipt-selftest.sh
 #
-# REVIEW_RECEIPT_SELFTEST_VERBOSE=1 shows each row's stderr.
+# HOOK_SELFTEST_VERBOSE=1 shows each row's stderr. The run/expect helpers are
+# selftest-lib.sh beside this file; expect_quiet is the receipt path's own
+# check: "allowed because a stamp matched" and "allowed because something
+# failed open" are both rc=0, and only the match path exits without a
+# breadcrumb.
 set -u
 here="$(cd "$(dirname "$0")" && pwd)"
 hook="$here/review-receipt.sh"
@@ -53,41 +57,7 @@ mkrepo tworemotes "$GATED_LINES"
 mkrepo noupstream "$GATED_LINES"
 ( cd "$work/noupstream" && git branch -q --unset-upstream )
 
-fail=0
-run() { # run <cwd> <command-string> [env...]; prints exit code
-  local cwd="$1" cmd="$2"; shift 2
-  local payload
-  payload="$(python3 -c 'import json,sys; print(json.dumps({"cwd":sys.argv[1],"tool_input":{"command":sys.argv[2]}}))' "$cwd" "$cmd")"
-  if [ -n "${REVIEW_RECEIPT_SELFTEST_VERBOSE:-}" ]; then
-    echo "--- $cmd" >&2
-    printf '%s' "$payload" | env "$@" bash "$hook" >/dev/null; echo $?
-  else
-    printf '%s' "$payload" | env "$@" bash "$hook" >/dev/null 2>&1; echo $?
-  fi
-}
-crumb() { # crumb <cwd> <command-string> [env...]; prints the hook's stderr and "rc=N"
-  local cwd="$1" cmd="$2"; shift 2
-  local payload
-  payload="$(python3 -c 'import json,sys; print(json.dumps({"cwd":sys.argv[1],"tool_input":{"command":sys.argv[2]}}))' "$cwd" "$cmd")"
-  printf '%s' "$payload" | env "$@" bash "$hook" 2>&1 >/dev/null; echo "rc=$?"
-}
-# expect_block / expect_allow <cwd> <command> <label> [env...]
-expect_block() { local rc; rc="$(run "$1" "$2" "${@:4}")"; if [ "$rc" != 2 ]; then echo "FAIL (should block, rc=$rc) [$3]: $2"; fail=1; fi; }
-expect_allow() { local rc; rc="$(run "$1" "$2" "${@:4}")"; if [ "$rc" != 0 ]; then echo "FAIL (should allow, rc=$rc) [$3]: $2"; fail=1; fi; }
-# expect_crumb <cwd> <command> <stderr pattern> <label>: allowed, and the breadcrumb names why
-expect_crumb() {
-  local out; out="$(crumb "$1" "$2")"
-  printf '%s' "$out" | grep -q 'rc=0' || { echo "FAIL (should allow with a breadcrumb) [$4]: $2 — $out"; fail=1; }
-  printf '%s' "$out" | grep -q "$3" || { echo "FAIL (breadcrumb should say '$3') [$4]: $2 — $out"; fail=1; }
-}
-# expect_quiet <cwd> <command> <label>: allowed AND silent. On the receipt path
-# "allowed because a stamp matched" and "allowed because something failed open"
-# are both rc=0, so an expect_allow there proves nothing on its own; only the
-# match path exits without a breadcrumb (2026-08-22 review, F12).
-expect_quiet() {
-  local out; out="$(crumb "$1" "$2")"
-  [ "$out" = "rc=0" ] || { echo "FAIL (should allow on a stamp, with no breadcrumb) [$3]: $2 — $out"; fail=1; }
-}
+. "$here/selftest-lib.sh"
 G="$work/gated"; P="$work/plain"
 
 # --- no receipt at all: block every live push shape in the gated repo ---------
@@ -277,7 +247,7 @@ expect_block "$G" "git push origin side:main"                  "refspec source i
 stamp gated-2026-01-04-side.review.md "Reviewed-tree: $(cd "$G" && git rev-parse 'side^{tree}')"
 expect_allow "$G" "git push origin side:main"                  "refspec source stamped"
 expect_allow "$G" "git push origin +side:main"                 "a leading + on the refspec is dropped"
-# ...and the companions that tell a stamp match from a fail-open (F12)
+# ...and the companions that tell a stamp match from a fail-open
 expect_quiet "$G" "git push origin side:main"                  "stamped source allows silently, not by failing open"
 expect_quiet "$G" "git push origin +side:main"                 "the + is stripped and the stamp matched, not an unresolvable ref"
 expect_allow "$G" "git push origin refs/heads/side:refs/heads/main" "a fully-qualified refspec resolves"
@@ -320,15 +290,15 @@ rm "$REVIEW_RECEIPT_DIR/gated-2026-01-07-all.review.md"
 ( cd "$G" && echo q > q && git add q && git commit -q -m q )
 mkdir -p "$work/t m p/claude-handoffs"
 printf 'Reviewed-tree: %s\n' "$(cd "$G" && git rev-parse 'HEAD^{tree}')" > "$work/t m p/claude-handoffs/gated-2026-12-31-x.review.md"
-expect_allow "$G" "git push" "TMPDIR with a space" REVIEW_RECEIPT_DIR= TMPDIR="$work/t m p"
+REVIEW_RECEIPT_DIR= TMPDIR="$work/t m p" expect_allow "$G" "git push" "TMPDIR with a space"
 ( cd "$G" && git push -q origin main 2>/dev/null )
 
 # --- fail-open -----------------------------------------------------------------
 expect_allow "$G" ""                                           "empty command (no tool_input.command)"
 rc="$(printf 'not json' | bash "$hook" >/dev/null 2>&1; echo $?)"
 [ "$rc" = 0 ] || { echo "FAIL (malformed payload should allow, rc=$rc)"; fail=1; }
-expect_crumb "$G" 'git push "unterminated'   "shape scan failed" "unterminated quote is a scanner error"
-expect_crumb "$G" "eval eval eval eval eval git push" "shape scan failed" "nesting deeper than four shells is a scanner error"
+expect_crumb "$G" 'git push "unterminated'   "tokeniser error" "unterminated quote is a tokeniser error"
+expect_crumb "$G" "eval eval eval eval eval git push" "tokeniser error" "more than four nested shells is a tokeniser error"
 # a PATH with cat but no python3, then one with python3 but no git
 payload="$(python3 -c 'import json,sys; print(json.dumps({"cwd":sys.argv[1],"tool_input":{"command":"git push"}}))' "$G")"
 mkdir -p "$work/nopy" "$work/nogit" && ln -s "$(command -v cat)" "$work/nopy/cat" \
