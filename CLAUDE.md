@@ -26,7 +26,7 @@ Before materially editing any skill below, diff its upstream — main *and* unme
 - **openclaw/agent-skills** — `validate-behavior` (behavior-validator).
 - **dmmulroy/dotfiles** — `discoverable-code` (write-discoverable-code, under `home/.agents/skills/`).
 
-The `to-feature`/`to-story`/`to-tasks`/`to-bug` family is structurally independent of Matt's `to-prd`/`to-issues`/`to-spec`/`to-tickets` — scan those for portable ideas, never diff them as an upstream. `writing-for-humans` is a multi-source synthesis, not a port — ten sources, no single upstream to diff; [ADR-0042](docs/adr/0042-writing-for-humans-synthesized-from-writing-sources.md) records them. `work-item-shape` is likewise a synthesis — agent-armory and openai-skills ideas folded over local publisher discipline; [ADR-0044](docs/adr/0044-work-item-shape-extracted-behavior.md) records sources and rejections. Every other skill not listed here is a local original.
+The `to-feature`/`to-story`/`to-tasks`/`to-bug` family is structurally independent of Matt's `to-prd`/`to-issues`/`to-spec`/`to-tickets` — scan those for portable ideas, never diff them as an upstream. `writing-for-humans` is a multi-source synthesis, not a port — ten sources, no single upstream to diff; [ADR-0042](docs/adr/0042-writing-for-humans-synthesized-from-writing-sources.md) records them. `work-item-shape` is likewise a synthesis — agent-armory and openai-skills ideas folded over local publisher discipline; [ADR-0044](docs/adr/0044-work-item-shape-extracted-behavior.md) records sources and rejections. Domain skills (`phi-safe-code`, `health-literacy`, `accessible-ui`) are local originals mined from the sources their admission ADRs name. Every other skill not listed here is a local original.
 
 ## Keep the router honest
 
