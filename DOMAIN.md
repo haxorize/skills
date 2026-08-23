@@ -336,7 +336,7 @@ Ubiquitous-language glossary for the entire skills repo. Covers the areas of wor
 | **Terminology drift** | `DOMAIN.md` vocabulary changes between sessions that leave Task text using retired terms | Vocabulary drift |
 | **Scope drift** | Feature- or Story-scope shift over refinement cycles | Scope creep (different connotation) |
 | **Stale reference** | A `Covers: ACx` line pointing to a Removed AC | Dangling reference |
-| **Unsupported claim** | A `verify-docs` verdict — a doc claim that matches the current code but has no test backing it, so nothing protects it from the code later diverging; surfaced as a missing test, not just a doc bug | Untested claim |
+| **Unsupported claim** | A `doc-claims` verdict — a claim that matches what it answers to but nothing protects: no test behind it, or, for a derived document, no source passage; surfaced as a missing test, never filed as a doc bug | Untested claim |
 | **Cross-repo blocker** | A Task annotation marking dependence on a contract change in a Sibling repo (`Blocked by: ../<sibling-repo> — contract change required`) | Cross-repo dependency |
 
 ## Reconcile mechanics

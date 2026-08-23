@@ -1,7 +1,8 @@
 ---
 name: sweep-corpus
-description: Run the dormant health family over this repo on a schedule — lint, the cross-reference and router checks, and the three `/verify-docs` lines for the human to run — report-only against an additive open-findings file. Repo-local to the skills repo.
+description: Run the dormant health family over this repo on a schedule — lint, the doc-claim check over the three documents that claim what the suite is, and the cross-reference and router checks — report-only against an additive open-findings file. Repo-local to the skills repo.
 disable-model-invocation: true
+requires: doc-claims
 ---
 
 # Sweep Corpus
@@ -15,7 +16,7 @@ Read `docs/health/open-findings.md` (create it empty on the first run). A findin
 ## 2. Run the family
 
 - `bash scripts/lint-skills.sh && bash scripts/lint-selftest.sh && bash scripts/security-selftest.sh` — the mechanical gate, verbatim output kept.
-- The doc-claim check over `README.md`, `src/which-skill/SKILL.md`, and `DOMAIN.md` — the three documents that claim what the suite is. `verify-docs` is user-invoked, so this skill neither fires it nor re-runs its procedure by hand (a user-invoked skill never invokes another): the report's first lines are the three `/verify-docs <doc>` commands for the human to type, and each one's non-VERIFIED verdicts are appended to `open-findings.md` when it runs.
+- The doc-claim check over `README.md`, `src/which-skill/SKILL.md`, and `DOMAIN.md` — the three documents that claim what the suite is. Run the `/doc-claims` skill over each: if you don't see a `Launching skill: doc-claims` line, stop and load it before continuing. What each answers to: the router and README blurbs answer to the skill descriptions under `src/`; `DOMAIN.md` answers to the tree for its counts, paths, and names, and to nothing for its rulings. A **FAIL** or **STALE** is a finding, appended to `open-findings.md` in step 3; an **UNSUPPORTED** is listed in the report as a candidate task and never opened as a finding.
 - **Cross-reference check** — every reference file a `SKILL.md` names resolves (lint covers the inline-link form; this step reads the prose pointers too), and no skill body uses a term `DOMAIN.md` lists under `Aliases to avoid` as if it were the term (grep each alias, bare, across `src/*/SKILL.md`).
 - **Router honesty** — every `src/` directory appears in the router and README with a blurb that still matches its description (lint checks the mention; this checks the blurb).
 

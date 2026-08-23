@@ -2,43 +2,22 @@
 name: verify-docs
 description: Check whether a document's claims still hold — against the code and tests it describes, or against the sources a derived document was distilled from — with per-claim verdicts and fixes.
 disable-model-invocation: true
+requires: doc-claims
 ---
 
 # Verify Docs
 
-Check what a document *says* against what it is answerable to — the code and tests it describes, or the corpus it was derived from — and report where they disagree. Read the prose's meaning directly — no claim markers, no annotation DSL: the thing being checked is the thing the human reads.
+Check what a document *says* against what it is answerable to — the code and tests it describes, or the corpus it was derived from — and report where they disagree.
+
+The judgment is `doc-claims`'; this skill chooses what to check, ranks what came back, and offers the fixes.
 
 ## Division of labor
 
-The test suite owns the behavioral contract — deterministic, cheap, gated. This skill owns the prose layer, and its judgment is fallible — so it runs as a triggered review (pre-publish, post-refactor, on a docs PR, or as a periodic sweep), never as a CI merge gate.
-
-`feedback-loops` owns the mechanical case — updating docs the current change just made stale, at every close. This skill is the judgment case: is this whole document still true, regardless of which change made it drift.
+The test suite owns the behavioral contract — deterministic, cheap, gated. This skill owns the prose layer, run as a triggered review: pre-publish, post-refactor, on a docs PR, or as a periodic sweep.
 
 ## Workflow
 
 1. **Identify** the document(s) to check and what they answer to — the code and tests they describe, or the sources they were derived from — from the argument, or ask. A document can have both, and the two passes run against the same prose.
-2. **Extract the claims** by reading the prose: every checkable assertion about the code — signatures, behavior, return shapes, defaults, guarantees, examples.
-3. **Judge each claim** against the code and the tests: does the code do what the prose says? Is the claim backed by a test, or merely asserted? Does it reference something that no longer exists? Authority differs by claim kind: a doc is authoritative for *decisions* (what was chosen and why), never for *counts and versions* (how many rules, which dependency version) — measure those live.
-4. **Report** drift ranked by severity, each finding citing the prose claim and the contradicting reality (`file:function`), with a per-claim verdict from the table below.
-5. **Offer fixes**: rewrite the prose to match reality, and flag every **UNSUPPORTED** claim as a missing test — a candidate task, not just a doc bug. A FAIL can also mean the code regressed and the doc caught it — check before "fixing" the doc.
-
-## Verdicts
-
-| Verdict | Meaning |
-| --- | --- |
-| **PASS** | Matches the code and is exercised by a test |
-| **FAIL** | The code contradicts the claim |
-| **UNSUPPORTED** | Matches the current code but no test backs it — nothing protects it from future drift |
-| **STALE** | Refers to something removed or renamed |
-
-## Derived documents
-
-Where the document is derived from something other than the code — a guide distilled from a longer one, a summary of a spec, a local rewrite of an upstream — run the same pass with the sources in place of the code, and build a **source map** first: one row per section, and per distinct claim inside it, grounded as exactly one of a **source passage** (name the file plus a few identifying words of the passage), a **recorded decision** (a deliberate departure someone signed off on), or **UNGROUNDED**. Ground against the sources reopened now, never from memory of them — memory of a corpus is where drift hides.
-
-Three failure classes come out of the map. **Ungrounded** means the writer invented it: cut it, or get it signed off so it becomes a recorded decision. **Contradiction** means the derived doc asserts what the source denies — show both, side by side. **Drift** means a paraphrase moved the meaning, scope, or strength, and drift runs in both directions: a rule that came out *stricter* than its source is invented doctrine exactly as much as one that came out looser. "Usually" promoted to "always", a two-condition rule that lost a condition, a narrow ban widened into a general one — each is a finding.
-
-Report them with the same verdicts, read with the source in place of the code and a recorded decision in place of a test. A claim traced to a source passage is a **PASS**; a Contradiction or a Drift is a **FAIL**, quoting the passage it moved from; an Ungrounded claim is **UNSUPPORTED**, the derived-doc analogue of a claim nothing protects; and a claim whose source passage no longer exists in the corpus is **STALE**.
-
-## Honest limits
-
-This skill does not verify the tests themselves — garbage tests produce a confident-but-wrong PASS; upstream `tdd` discipline still matters. Prose with no factual claims about code has nothing to check — say so and stop.
+2. **Run the `/doc-claims` skill** over each document — its body is the judgment this step runs on: if you don't see a `Launching skill: doc-claims` line, stop and load it before continuing.
+3. **Report** drift ranked by severity — highest for the claims a reader would act on without checking: a command they would paste, a flag they would pass, a guarantee they would build against — each finding citing the prose claim and the contradicting reality (`file:function`), with its verdict.
+4. **Offer fixes**: rewrite the prose to match reality.

@@ -127,6 +127,7 @@ The route most work travels: **`/grill-me`** → **`/to-feature` / `/to-story` /
 - **`writing-for-agents`** — Conventions for documents that steer agent process — skill bodies, `CLAUDE.md`, reference files — prose whose job is to be obeyed.
 - **`writing-for-humans`** — Sentence-level clarity for prose that transfers understanding — tickets, ADR rationale, summaries, commit and PR prose — with per-artifact registers and the named AI-tell catalog.
 - **`work-item-shape`** — What a well-formed work-item body *is* (outcome goal, checkable criteria, readiness call, structural sizing, surfaced ambiguity), any tier, any tracker. In repos wired for the pipeline it routes creation asks to the `to-*` publishers instead of drafting lookalikes.
+- **`doc-claims`** — Judging a document's claims against what it answers to — the code and tests, or the sources a derived doc came from — one verdict per claim (PASS/FAIL/UNSUPPORTED/STALE), with the source map and the both-directions drift rule for derived documents. Declared by `/verify-docs` and the repo-local `sweep-corpus`.
 
 ### Domain
 
@@ -134,7 +135,7 @@ The route most work travels: **`/grill-me`** → **`/to-feature` / `/to-story` /
 
 ## Repo-local skills
 
-`.claude/skills/` holds two skills that run only inside this repo and are never hoisted: **`mine-skills`** (the mining-round opener — clone, scan, inventory, read under the standing lenses, write the ledger rows a grill ratifies) and **`sweep-corpus`** (the scheduled health sweep — lint, the cross-reference and router checks, and the three `/verify-docs` lines printed for the human, since one user-invoked skill never runs another — report-only against an additive `docs/health/open-findings.md`). They live outside `src/` because they name this repo's paths and procedure; `scripts/lint-skills.sh` does not scan them, and the router does not route to them.
+`.claude/skills/` holds two skills that run only inside this repo and are never hoisted: **`mine-skills`** (the mining-round opener — clone, scan, inventory, read under the standing lenses, write the ledger rows a grill ratifies) and **`sweep-corpus`** (the scheduled health sweep — lint, the `doc-claims` check over the three documents that claim what the suite is, and the cross-reference and router checks — report-only against an additive `docs/health/open-findings.md`). They live outside `src/` because they name this repo's paths and procedure; `scripts/lint-skills.sh` does not scan them, and the router does not route to them.
 
 ## Conventions
 

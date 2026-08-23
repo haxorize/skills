@@ -22,7 +22,7 @@ Before materially editing any skill below, diff its upstream — main *and* unme
 - **mattpocock/skills** — `grilling`, `grill-me`, `grill-and-record` (grill-with-docs; a one-window deprecation stub of `grill-me` — no upstream diff), `handoff`, `write-skill` (writing-great-skills), `review-changes` (review), `which-skill` (ask-matt), `improve-design` (improve-codebase-architecture), `teach-me` (teach), `chart-course` (wayfinder), `ask-for-me` (to-questionnaire), `codebase-design`, `domain-modeling`, `diagnosing-bugs`, `implement`, `prototype`, `tdd`, `explain` (wait-what), `wizard`, `writing-for-agents`.
 - **compound-engineering-plugin** — `adoption-verdict` (ce-pov), `capturing-learnings` (the learnings loop).
 - **obra/superpowers** — `receiving-review` (receiving-code-review).
-- **oaustegard/claude-skills** — `diverging` (generative-thinking), `verify-docs` (verifying-claims), `audit-tests` (gating — the audit half only).
+- **oaustegard/claude-skills** — `diverging` (generative-thinking), `verify-docs` and `doc-claims` (both from verifying-claims — the verdict table lives in `doc-claims`), `audit-tests` (gating — the audit half only).
 - **openclaw/agent-skills** — `validate-behavior` (behavior-validator).
 - **dmmulroy/dotfiles** — `discoverable-code` (write-discoverable-code, under `home/.agents/skills/`).
 

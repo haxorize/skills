@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # Which Skill
 
-This routes over the **user-invoked** skills — the ones you type. The **model-invoked Discipline skills** (`tdd`, `feedback-loops`, `diagnosing-bugs`, `codebase-design`, `discoverable-code`, `grilling`, `diverging`, `adoption-verdict`, `domain-modeling`, `adr`, `resolving-merge-conflicts`, `capturing-learnings`, `receiving-review`, `committing`, `writing-for-agents`, `writing-for-humans`, `work-item-shape`) fire on their own when the work calls for them, or get pulled in by the orchestrators below — you rarely reach for them by name. One **Domain skill** sits beside them: `phi-safe-code` fires on PHI-bearing data (member, claim, 834/837, …) at any sink — its description owns the trigger list.
+This routes over the **user-invoked** skills — the ones you type. The **model-invoked Discipline skills** (`tdd`, `feedback-loops`, `diagnosing-bugs`, `codebase-design`, `discoverable-code`, `grilling`, `diverging`, `adoption-verdict`, `domain-modeling`, `adr`, `resolving-merge-conflicts`, `capturing-learnings`, `receiving-review`, `committing`, `writing-for-agents`, `writing-for-humans`, `work-item-shape`, `doc-claims`) fire on their own when the work calls for them, or get pulled in by the orchestrators below — you rarely reach for them by name. One **Domain skill** sits beside them: `phi-safe-code` fires on PHI-bearing data (member, claim, 834/837, …) at any sink — its description owns the trigger list.
 
 A **flow** is a path through the skills.
 
