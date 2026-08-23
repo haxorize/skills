@@ -73,7 +73,7 @@ Be precise about inputs, environments, and the observed failure.
 
 ## Severity defaults
 
-Used when CLAUDE.md declares no `Severity definitions:` block:
+Used when CLAUDE.md declares no `## Severity definitions` section:
 
 - **1 - Critical** — production outage, data loss, security incident; needs immediate response.
 - **2 - High** — broken core flow with no workaround; blocks a release or significant user segment.

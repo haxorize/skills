@@ -28,3 +28,7 @@ GitHub bug filings on public repositories are detected via `gh repo view --json 
 - Upstream grilling (`grill-me` / `grill-and-record`) becomes available for bug triage. Teams can grill repro and scope-of-impact before filing, instead of after.
 - `from-work-item <bug-id>` works without modification — the loader's auto-detect already handles Bug IDs.
 - The public-repo warning is GitHub-specific; ADO instances are typically internal and the warning is silently skipped.
+
+## Amendments
+
+- **2026-08-23** — The GitHub severity-labels lookup moves from a `Severity labels:` key block to a Markdown section: `to-bug` reads a `## Bug severity labels` section (the canonical heading, and what the bootstrap now writes) holding `Scale:` and `Labels:` lines, and also accepts an existing `## Severity labels` section, so repos bootstrapped under the key form keep working once their block is reheaded rather than being re-bootstrapped. `README.md`, `DOMAIN.md`, and the two bug templates carry the section form; ADR-0011's mention of the key form stands as written.

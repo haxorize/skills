@@ -43,10 +43,10 @@ Look at the modules implicated by the actual behavior. Use canonical terms from 
 
 Pick the severity from conversation context. If unclear, prompt the user with the team's severity scale.
 
-- **ADO:** values are `1 - Critical` / `2 - High` / `3 - Medium` / `4 - Low`. Use the team's `Severity definitions:` block in CLAUDE.md if present; otherwise the ADO defaults.
-- **GitHub:** values come from CLAUDE.md's `Severity labels:` block. If the block is missing, run the bootstrap-on-ask flow:
+- **ADO:** values are `1 - Critical` / `2 - High` / `3 - Medium` / `4 - Low`. Use the team's `## Severity definitions` section in CLAUDE.md if present; otherwise the ADO defaults.
+- **GitHub:** values come from CLAUDE.md's severity-labels block — a `## Bug severity labels` section (the canonical heading; an existing `## Severity labels` section also counts) holding a `Scale:` line and a `Labels:` line. If no such section exists, run the bootstrap-on-ask flow:
   - Ask the user for the team's severity scale (default offer: `critical, high, medium, low` mapping to labels `sev:critical`, `sev:high`, `sev:medium`, `sev:low`).
-  - Preview an appended `## Severity labels` section; write to CLAUDE.md on confirmation. **Always append, never overwrite.**
+  - Preview an appended `## Bug severity labels` section (`- Scale:` and `- Labels:` lines); write to CLAUDE.md on confirmation. **Always append, never overwrite** — and never append when a section under either name already exists.
   - In no-repo CLI-only mode, save the resolved scale to memory keyed by tracker context (e.g., `Severity labels — work-backlog`).
 
 ### 5. Draft the bug

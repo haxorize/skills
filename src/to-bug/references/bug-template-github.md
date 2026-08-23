@@ -58,9 +58,9 @@ Parent: #<issue-number>
 Two label categories apply:
 
 - **Type:** `bug` — applied unconditionally by `to-bug` on GitHub.
-- **Severity:** one of the labels declared in CLAUDE.md's `Severity labels:` block (e.g., `sev:critical`, `sev:high`, `sev:medium`, `sev:low`).
+- **Severity:** one of the labels declared in CLAUDE.md's severity-labels block — the `## Severity labels` or `## Bug severity labels` section (e.g., `sev:critical`, `sev:high`, `sev:medium`, `sev:low`).
 
-If a `Severity labels:` block is missing, `to-bug` bootstraps it on ask — see SKILL step 4 (Resolve severity) for the procedure.
+If neither section exists, `to-bug` bootstraps one on ask — see SKILL step 4 (Resolve severity) for the procedure.
 
 ## Severity definitions (default)
 
@@ -69,7 +69,7 @@ If a `Severity labels:` block is missing, `to-bug` bootstraps it on ask — see 
 - **medium** — broken non-core flow, or core flow with a workaround.
 - **low** — cosmetic, edge-case, or minor inconvenience.
 
-Teams override these by declaring `## Severity definitions` in CLAUDE.md alongside the `Severity labels:` block.
+Teams override these by declaring `## Severity definitions` in CLAUDE.md alongside the severity-labels section.
 
 ## Notes
 

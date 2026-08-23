@@ -317,7 +317,7 @@ Ubiquitous-language glossary for the entire skills repo. Covers the areas of wor
 | **Sibling repo** | A repo declared adjacent to the current one in `CLAUDE.md`'s `## Sibling repos` section | Linked repo, Related repo |
 | **PI workspace** | A directory dedicated to cross-team backlog construction, declaring Sibling repos but holding no code itself | Backlog repo, Planning workspace |
 | **Label-precheck** | The GitHub-specific publish step ensuring every label about to be applied — `Default labels:` values, `bug` and its Severity label, `chart:*` type labels — exists on the repo before the batch's first `gh issue create`; the procedure lives in the shared `tracker-resolution.md` | Label sync |
-| **Severity label** | A GitHub label representing a Bug's severity (e.g., `sev:critical`), declared per repo in CLAUDE.md's `Severity labels:` block; ADO uses the native `Microsoft.VSTS.Common.Severity` field instead | Severity tag, Sev label |
+| **Severity label** | A GitHub label representing a Bug's severity (e.g., `sev:critical`), declared per repo in CLAUDE.md's `## Bug severity labels` section (an existing `## Severity labels` section also counts); ADO uses the native `Microsoft.VSTS.Common.Severity` field instead | Severity tag, Sev label |
 | **In-progress signal** | The CLAUDE.md `In-progress signal:` declaration telling `to-tasks --reconcile` how to distinguish open-and-being-worked from open-and-not-yet-started GitHub issues; defaults to assignee-presence when absent | WIP signal, Status signal |
 | **Iteration** | The ADO sprint assignment for a work item (field `System.IterationPath`), declared per-repo via the CLAUDE.md `Iteration:` block | Sprint (acceptable casually; **Iteration** is the field name) |
 | **Field reference name** | The stable, process-template-invariant ADO field identifier (`System.Description`, `Microsoft.VSTS.Common.AcceptanceCriteria`, `Microsoft.VSTS.Common.Severity`, `Microsoft.VSTS.TCM.ReproSteps`, `System.Tags`) that publishing skills target instead of the per-org display name (see ADR-0008) | Display name (rejected per ADR-0008) |
@@ -380,7 +380,7 @@ Ubiquitous-language glossary for the entire skills repo. Covers the areas of wor
 - A **Sibling reference file** is enforced byte-identical by `scripts/lint-skills.sh`; ADR-0007 records why duplication exists (symlink-per-skill install) and the lint mechanizes the editorial discipline.
 - A **Cross-repo blocker** annotates a **Task** whose Vertical slice cannot land until a **Sibling repo** ships a contract change.
 - **Two-way sync** propagates content between **ADO** and **Jira Align** at the **Feature** level — markup that survives the round-trip cleanly is not guaranteed.
-- A **Severity label** is GitHub-only; on ADO, severity rides the native field and the `Severity labels:` block is ignored.
+- A **Severity label** is GitHub-only; on ADO, severity rides the native field and the severity-labels section is ignored.
 - An **In-progress signal** is GitHub-only; on ADO, `--reconcile` reads `System.State` directly and the `In-progress signal:` line is ignored.
 - A **Module** has exactly one **Interface** and one **Implementation**; **Depth** is measured at the Interface and corresponds to the **Leverage** callers receive.
 - A **Port** is an **Interface** at a **Seam** with ≥2 **Adapters**; a single-Adapter Seam is just indirection, not a Port.
