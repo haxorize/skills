@@ -45,6 +45,7 @@ Diagnose the *baseline* failure — how the agent behaves without the guidance �
 | Observed baseline failure | Form that fixes it |
 | --- | --- |
 | Agent skips the rule under pressure (deadline, sunk cost, "just this once") | Hard prohibition + rationalization table + red-flags list |
+| The hard prohibition is in place and the agent still breaks it | The rung above prose: a hook or lint that sees the violation. A prohibition kept as prose after that states why neither can see it |
 | Agent complies but the output is wrong-shaped (bloated, buried verdict, restated spec) | Positive recipe — state what the output IS, in order |
 | Agent omits a required element | A REQUIRED slot in the template, not prose asking for it |
 | Output respects a stated bound (length, register, "keep it brief") but smuggles in what the bound existed to exclude | An **exclusion spec** — name what may *not* appear there (commentary, the finding's history, comparisons to prior belief) plus one wrong/right pair; positive adjectives ("brief", "tight", "salient") get honored while the drift continues underneath them |

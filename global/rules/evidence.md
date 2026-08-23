@@ -5,6 +5,7 @@ Why not a hook or lint: the claims this governs are made in chat output, which n
 
 A self-report — a status line, a count, a "done", a "tests pass" — carries its evidence **in the same message**, or it carries the marker `UNVERIFIED:`. There is no third state; a confident sentence with no evidence and no marker is the failure.
 
+- **The answer first, then the evidence.** A yes/no question gets "yes" or "no" in its first words, a count gets the number, and the command and output follow — never a paragraph the reader mines for the verdict.
 - **Re-measure every count at write time.** A number stated from memory is a guess wearing a number's clothes. If it matters enough to report, it matters enough to run the command again now — and the count comes with the command and its verbatim output, inline, once. That is the whole evidence for a count; no proof blocks, no receipts, no command logs.
 - **Recall check.** A summary of a change enumerates `git log <base>..HEAD --oneline` and every commit appears somewhere in it. A commit the summary does not reflect was missed, and the miss is reported, not absorbed.
 - **Name your own corrections.** When a number or claim you stated earlier turns out wrong, say "earlier I said 34; it is 17" — never restate the right figure as if it had always been so.

@@ -12,7 +12,7 @@ The store is flat and lazily created at first capture. Doc format, filename, fro
 
 ## The capture gate
 
-All three must hold — confirm out loud which are met before drafting; if any is missing, say why and stop:
+All three must hold — confirm out loud which are met before drafting; if any is missing, say why and stop: "none this session: <the failing criterion>" is a result, while silence reads as the gate not having run.
 
 1. **Verified** — the fix is in and the original symptom is confirmed gone (the reproduction loop re-ran green). Never capture an unverified theory.
 2. **Expensive** — the diagnosis took real investigation: multiple hypotheses, failed attempts, a non-obvious root cause. If the error message alone led to the fix, a search engine already owns it.
