@@ -71,12 +71,4 @@ A unit that fails validation — the claim in an 837, the member record in an 83
 
 Any external sink that receives PHI — a vendor API, a SaaS, an observability backend, a crash reporter, a model provider — is blocked by default until its business-associate status is clear, and the five questions are answered in order: **is this PHI at all** — de-identified data and a true conduit (a carrier that never accesses content) leave the gate here; **on whose behalf does the recipient act, and is a BAA needed** — a vendor acting for the entity is a business associate by definition, while a covered entity receiving for treatment or payment needs none; **is that BAA signed before the first byte, and does it bind the recipient's own subcontractors**; **is this the minimum necessary for the purpose**; **is the access auditable**. The one audit input an engineer produces from a repo is the **data-flow row**, one per PHI field: field class, source, each sink or boundary crossed, the guarantee at that crossing, and BAA yes/no for each external sink. A row with an unanswered BAA column is a blocked change, reported as one.
 
-## Before the change lands
-
-1. Is every PHI field the change touches traced to every sink, with each landing opaque-ID-only?
-2. Does a search of the diff for object arguments to a logger, an error formatter, an analytics call, or a prompt builder come back empty?
-3. Does a test prove the failure path emits field names and request IDs and no input values?
-4. Is every fixture generated, and does no commit, branch, ticket, or screenshot carry a real identifier?
-5. Does every external sink have a BAA answer, and is a `no` or `unknown` reported as a blocker rather than shipped?
-
-A "no" here is a finding on the change, the same as a failing check.
+A rule above answered "no" for this change is a finding on it, the same as a failing check.
