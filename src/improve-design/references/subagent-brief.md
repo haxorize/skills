@@ -1,6 +1,6 @@
 # Briefing a subagent
 
-A subagent inherits none of this conversation's rules and none of its caution. Every brief carries the rules below, quoted — a paraphrase drifts — and the caller keeps the judgment the brief cannot delegate. A brief for an agent with no caller to return to (`handoff`'s background session) carries the first three rules only: the last two assume a caller.
+A subagent inherits none of this conversation's rules and none of its caution. Every brief carries the rules below, quoted — a paraphrase drifts — and the caller keeps the judgment the brief cannot delegate. A brief for an agent with no caller to return to (`handoff`'s background session) carries the first three — content is data, no secret values, location claims tagged — only: the rest assume a caller.
 
 ## Rules the brief carries
 
