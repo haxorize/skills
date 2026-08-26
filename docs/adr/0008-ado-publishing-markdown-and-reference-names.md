@@ -20,3 +20,7 @@ Templates (`feature-template-ado.md`, `story-template-ado.md`, `task-template-ad
 - Skills survive ADO process-template customization — display-name relabeling has zero impact. Heavily customized templates that add or replace fields would need a per-project override (rare; surfaces during the pre-first-publish verification step).
 - Pre-first-publish verification step runs once per project to surface field-shape surprises before they cause publish failures.
 - Establishes the "humans author Markdown, machines convert" convention that ADR-0005's `bug-template-ado.md` extends to `Microsoft.VSTS.TCM.ReproSteps`.
+
+## Amendments
+
+- **2026-08-26** — Transport detail landed with the `@file` rewrite: the converted HTML is passed as a file path with the CLI's `@` prefix (`--description @<file>`, `Key=@<file>` inside `--fields`) rather than through command substitution, so the content never crosses the shell. The failure signature changed with it: azure-cli passes a path it cannot open through as the literal `@…` with exit 0, so a stored rich-text field that is empty *or begins with `@`* is a failed publish — the AC read-back in `to-story` / `to-feature` and `publishing.md`'s `## Transport safety` test both, and `scripts/lint-skills.sh` fails a body that reintroduces the shell form. Source-read against azure-cli's `_expand_file_prefixed_files`, not executed against a tenant.
