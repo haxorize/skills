@@ -10,10 +10,14 @@ The alternative was the ledger's D2: delete `grill-and-record` outright and let 
 
 ## Deferred
 
-- Retiring the stub: next window, on the stub's fire count (zero typed `/grill-and-record` in the window's transcripts retires it; any fire extends one more window).
+- Retiring the stub: next window, on the stub's fire count (zero typed `/grill-and-record` in the window's transcripts retires it; any fire extends one more window). — settled: see Amendments 2026-08-26.
 - The `--plain` spelling against the harness's argument conventions, if a later skill needs a second flag.
 
 ## Consequences
 
 - `grill-me` gains `requires: grilling, domain-modeling, writing-for-humans` and a load gate on `domain-modeling` that fires only when recording is on.
 - The router, README, `DOMAIN.md`'s Orchestrator-skill row, and the eight skills that named it now name `grill-me` alone; `CLAUDE.md`'s upstream list keeps `grill-and-record` (grill-with-docs) as the lineage the stub still carries.
+
+## Amendments
+
+- **2026-08-26** — The stub is retired on its window count: zero typed `/grill-and-record` in any user turn after the stub landed (`80e74bb`, 2026-08-22 18:38Z) — `~/.claude/history.jsonl` shows 57 all-time with the last at 17:34Z that day, the parsed transcripts 25 with the same last — against 6 typed `/grill-me` since. The count is one machine's, and it settles the window: the stub existed for typed muscle memory, the whole of which is this machine's — the 15-file grep above is what earned the stub — so this is the case `DOMAIN.md`'s **Retire-on-zero window** row makes decisive on one machine. The work machine received the skills on 2026-08-25 and holds no typing under either name before that. The 15-file grep above, re-run today, finds 23 files, every post-landing one a skills-repo transcript discussing the retirement, which is why the retire count reads user turns and not files. `src/grill-and-record/` is deleted; the router, `README.md`, and `CLAUDE.md`'s upstream list drop the name (`grill-me` now diffs both upstream directories), and `DOMAIN.md`'s Deprecation-stub row keeps it as the worked example, dated. **The Consequences line above is reversed by this**: `CLAUDE.md`'s upstream list no longer keeps `grill-and-record` (grill-with-docs) as the lineage the stub carried — the grill-with-docs lineage attaches to `grill-me` from here, and [ADR-0034](0034-branch-mining-lineage-or-dormant-main.md)'s ledger carries the reassignment in its amendment of this date. The window's other counts are in [ADR-0051](0051-usage-evidence-mining-round.md)'s amendment of the same date.
