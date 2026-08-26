@@ -1,13 +1,13 @@
 ---
 name: write-skill
-description: Create or revise agent skills — classification, structure, descriptions, cross-session state, and testing them from wording through simulated use.
+description: Create or revise agent skills — classification, structure, descriptions, cross-session state, security surface, and testing them from wording through simulated use.
 disable-model-invocation: true
 requires: writing-for-agents
 ---
 
 # Writing Skills
 
-Skills wrangle determinism out of a stochastic system. The goal is **predictability** — the agent taking the same *process* every run. The prose conventions serving it — information hierarchy, pruning, style, the deep vocabulary and form-to-failure table — govern every agent-consumed document, and live in the `writing-for-agents` discipline: run the `/writing-for-agents` skill now; if you don't see a `Launching skill: writing-for-agents` line, stop and load it before drafting. This file is the operational guide for the skill *package* — classification, structure, description, testing.
+Skills wrangle determinism out of a stochastic system. The goal is **predictability** — the agent taking the same *process* every run. The prose conventions serving it — information hierarchy, pruning, style, the deep vocabulary and form-to-failure table — govern every agent-consumed document, and live in the `writing-for-agents` discipline: run the `/writing-for-agents` skill now; if you don't see a `Launching skill: writing-for-agents` line, stop and load it before drafting. This file is the operational guide for the skill *package* — classification, structure, description, security surface, testing.
 
 ## Workflow
 
@@ -15,13 +15,14 @@ Skills wrangle determinism out of a stochastic system. The goal is **predictabil
 2. **Classify the skill** — discipline or orchestrator? Model-invoked or user-invoked? (See *Invocation axis* — decide this first; it shapes the description and the body.)
 3. **Draft the skill** — `SKILL.md` with references if needed
 4. **Pressure-test if it carries a discipline** — when the skill encodes a rule the agent might rationalize around under pressure (an iron law, a gate, a prohibition — not a format doc, template, or router), run the micro-test loop in [references/testing-skills.md](references/testing-skills.md) before shipping — and offer that reference's wind tunnel when the skill runs a conversation with a person or keeps an artifact across turns
-5. **Review with user** — present draft, iterate
+5. **Skill-surface security review** — when the skill takes untrusted input, runs a shell, dispatches subagents, reads user-named paths, or deserializes external data, run the FAIL / WARN / PASS lens in [references/skill-security-review.md](references/skill-security-review.md) before shipping (not the built-in `/security-review`, which reviews a diff). A format doc, template, or router has no surface — skip it there.
+6. **Review with user** — present draft, iterate
 
 ## Invocation axis
 
 Every skill is exactly one of two kinds, trading two different costs (full framing — the two loads — in `writing-for-agents`' `predictability.md` reference):
 
-- **Model-invoked** (default — omit the flag): the agent can fire it autonomously *and* other skills can reach it via prose invocation; you can still type its name. Its description sits in the context window every turn — it costs **context load**. Write a model-facing description rich in triggers. This is where reusable discipline lives — the **Discipline skills** (`grilling`, `domain-modeling`, `codebase-design`, `feedback-loops`, `tdd`, `adr`) — and also the **Domain skills** (`phi-safe-code`, `health-literacy`), which encode a subject-matter discipline rather than a stage of the build flow and are admitted only by `DOMAIN.md`'s Gap-and-stakes test. The tier is flat: a Domain skill takes no new frontmatter and no new directory, so everything below applies to it unchanged.
+- **Model-invoked** (default — omit the flag): the agent can fire it autonomously *and* other skills can reach it via prose invocation; you can still type its name. Its description sits in the context window every turn — it costs **context load**. Write a model-facing description rich in triggers. This is where reusable discipline lives — the **Discipline skills** (`grilling`, `domain-modeling`, `codebase-design`, `feedback-loops`, `tdd`, `adr`) — and also the **Domain skills** (`phi-safe-code`, `health-literacy`, `accessible-ui`), which encode a subject-matter discipline rather than a stage of the build flow and are admitted only by `DOMAIN.md`'s Gap-and-stakes test. The tier is flat: a Domain skill takes no new frontmatter and no new directory, so everything below applies to it unchanged.
 - **User-invoked** (`disable-model-invocation: true`): reachable *only* by a human typing its name — invisible to the agent and to other skills. Zero context load, but it spends **cognitive load** (the human is the index that must remember it). Its description is **human-facing** — a one-line summary, trigger lists stripped. This is where **orchestration** lives — the skills a person deliberately runs (`grill-me`, `harden-domain`, `improve-design`, the `to-*` publishers).
 
 Pick model-invocation only when the agent must reach the skill on its own, or another skill must. If it only ever fires by hand, make it user-invoked and pay no context load.
@@ -127,6 +128,7 @@ Frontmatter parses as strict YAML. The hazard is an unquoted `: ` (colon **follo
 - [ ] Cross-skill references carry both signals — slash form on anything that actually fires (load-bearing delegations and a model-invoked skill's soft `requires:` delegations alike); load gate only on load-bearing delegations inside user-invoked orchestrators; bare backticks for vocabulary, boundaries, and gated offers
 - [ ] SKILL.md ≤200 lines; each reference ≤200 lines; one line per paragraph/bullet (no mid-paragraph hard wraps)
 - [ ] Escalated wording (hard prohibitions) justified by an observed pressure-failure; no nuance or exemption clauses anywhere
+- [ ] Step 5 run where a security surface exists (`references/skill-security-review.md`)
 - [ ] No generic best-practices the model already knows (no-op check)
 - [ ] Encodes project-specific decisions, not textbook knowledge
 - [ ] Concrete examples from the actual codebase

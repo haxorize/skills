@@ -77,6 +77,7 @@ The route most work travels: **`/grill-me`** → **`/to-feature` / `/to-story` /
 - **`harden-domain`** — Sweep the codebase to refresh `DOMAIN.md`. Deliberate sweep mode (inline domain capture during grilling lives in `grill-me`).
 - **`backfill-adrs`** — Sweep recent git history for un-recorded architectural decisions and write the ones that pass the gate.
 - **`verify-docs`** — Check whether a document's claims still hold, against the code and tests it describes or the sources a derived document was distilled from, with per-claim verdicts and fixes. The prose-drift sibling of `harden-domain` (vocabulary) and `backfill-adrs` (decisions).
+- **`delete-dead-code`** — A deliberate whole-repo dead-code sweep: find what nothing calls, tier it SAFE / CAUTION / DANGER, and remove it one test-verified deletion at a time — the removals `implement` parks, `improve-design` never makes, and `/simplify` scopes to a diff.
 
 ### Crossing sessions & prototyping
 
@@ -99,6 +100,7 @@ The route most work travels: **`/grill-me`** → **`/to-feature` / `/to-story` /
 ### Meta
 
 - **`write-skill`** — Conventions for writing new skills.
+- **`audit-skills`** — Audit the whole installed skill collection under `~/.claude/skills/`: a Keep / Improve / Update / Retire / Merge verdict per skill, on Overlap, Currency, Actionability, and Scope fit. Library hygiene across every repo that fed the machine; the repo-local `sweep-corpus` is this repo's mechanical health run (lint, doc-claims, router checks), not a narrower audit.
 
 ## Model-invoked skills
 
