@@ -41,6 +41,12 @@
 #     so `adr-0023` and `Adr-7` are caught too. `docs/adr/` paths put a slash
 #     after `adr` (not a hyphen) so they stay legal, as do digitless
 #     placeholders ("ADR-N" — `N` isn't a digit).
+#   - Rich-text transport: a skill body passes converted HTML to a tracker CLI
+#     as `@<file>`, never through the shell — `$(cat x.html)`, an inline
+#     `"<html>"` string, or prose prescribing "temp file plus command
+#     substitution" all fail (publishing.md '## Transport safety'). A shell
+#     string mangles the body, and the two forms fail differently on a
+#     missing file (loud vs a stored literal `@path`), so they must not coexist.
 #   - Reference-link resolution: an inline `[text](path.md)` link with a
 #     relative target must resolve to a real file, relative to the linking
 #     file's own directory. A `SKILL.md` promising `references/foo.md` that
@@ -186,6 +192,15 @@ while IFS= read -r f; do
   if [ -n "$adr_hits" ]; then
     badlines=$(printf '%s\n' "$adr_hits" | cut -d: -f1 | tr '\n' ' ')
     echo "FAIL: $f cites a repo ADR by number (line(s) ${badlines}) — skill bodies must not (write-skill: 'Skill bodies don't cite repo ADRs'); lineage is ADR -> skill"
+    fail=1
+  fi
+
+  # Rich-text transport (see header): converted HTML reaches the tracker CLI
+  # as `@<file>`, never through the shell.
+  shell_hits=$(grep -nE '\$\(cat [^)]*\.html\)|--description "<html>"|=<html>"|temp file plus command substitution' "$f")
+  if [ -n "$shell_hits" ]; then
+    badlines=$(printf '%s\n' "$shell_hits" | cut -d: -f1 | tr '\n' ' ')
+    echo "FAIL: $f passes HTML through the shell (line(s) ${badlines}) — write the converted HTML to a file and pass its path as \`@<file>\` (publishing.md '## Transport safety'); a shell string mangles the body and hides a missing file"
     fail=1
   fi
 

@@ -13,6 +13,7 @@
 #
 # Covered here: reference-link resolution (both directions, including the
 # backtick-span and fenced-block exemptions), the ADR-citation ban, the
+# rich-text transport ban, the
 # description's unquoted ': ' and ' #', load-gate placement, and the global-rules
 # Depends: admission check (missing line, dangling name, a dependant that never
 # cites the rule outside a fence, a dependant that cites only another rule's
@@ -64,6 +65,7 @@ reject() {
 # to fail here until the number is updated with it.
 expect "reference-link resolution" "links to 'references/does-not-exist.md' (line 14)"
 expect "ADR-citation ban" "cites a repo ADR by number"
+expect "rich-text transport ban" "src/unused-dep/references/shell-transport.md passes HTML through the shell (line(s) 3 )"
 expect "description colon" "description has unquoted ': '"
 expect "description hash" "description has unquoted ' #'"
 expect "load-gate placement" "carries a load gate ('Launching skill'"
