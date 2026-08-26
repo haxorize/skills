@@ -27,10 +27,10 @@ If the parent has no story-map markers but has a headed decomposition section (l
 <h3>Story 2 — short title — <a href="https://dev.azure.com/...">#<id></a></h3>
 ```
 
-Write the modified HTML to a temp file and patch:
+Write the modified HTML to a file and patch with its absolute path:
 
 ```bash
-az boards work-item update --id <feature-id> --description "$(cat /tmp/feature_desc.html)"
+az boards work-item update --id <feature-id> --description @/absolute/path/feature_desc.html
 ```
 
 **Never pass the fetched description through pandoc or a Markdown converter.** It is already HTML; re-converting will double-encode any `<code>`, `<hr>`, and other HTML tags already present.

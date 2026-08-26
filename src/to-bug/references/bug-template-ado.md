@@ -7,10 +7,10 @@ Use this when publishing a Bug work item to Azure DevOps via `az boards work-ite
 | ADO field (display name) | Reference name | Source | CLI flag |
 |---|---|---|---|
 | Title | `System.Title` | Set on command line | `--title` |
-| Description | `System.Description` | Body markdown converted to HTML | `--description` |
-| Repro Steps | `Microsoft.VSTS.TCM.ReproSteps` | Repro markdown converted to HTML | `--fields "Microsoft.VSTS.TCM.ReproSteps=<html>"` |
+| Description | `System.Description` | Body markdown converted to HTML | `--description @<file>` |
+| Repro Steps | `Microsoft.VSTS.TCM.ReproSteps` | Repro markdown converted to HTML | `--fields "Microsoft.VSTS.TCM.ReproSteps=@<file>"` |
 | Severity | `Microsoft.VSTS.Common.Severity` | One of `1 - Critical`, `2 - High`, `3 - Medium`, `4 - Low` | `--fields "Microsoft.VSTS.Common.Severity=..."` |
-| System Info | `Microsoft.VSTS.TCM.SystemInfo` | Environment details (optional) | `--fields "Microsoft.VSTS.TCM.SystemInfo=<html>"` |
+| System Info | `Microsoft.VSTS.TCM.SystemInfo` | Environment details (optional) | `--fields "Microsoft.VSTS.TCM.SystemInfo=@<file>"` |
 | Area Path | `System.AreaPath` | From CLAUDE.md `Area path:` | `--area` |
 | Iteration Path | `System.IterationPath` | From CLAUDE.md `Iteration:` | `--iteration` |
 | State | `System.State` | From CLAUDE.md `Default state:` (typically `New`) | `--fields "System.State=..."` |
@@ -91,9 +91,9 @@ pandoc -f markdown -t html repro.md > repro.html
 az boards work-item create \
   --type "Bug" \
   --title "$TITLE" \
-  --description "$(cat description.html)" \
+  --description @description.html \
   --fields \
-    "Microsoft.VSTS.TCM.ReproSteps=$(cat repro.html)" \
+    "Microsoft.VSTS.TCM.ReproSteps=@repro.html" \
     "Microsoft.VSTS.Common.Severity=$SEVERITY" \
     "System.State=New" \
     "System.Tags=$TAGS" \
@@ -101,12 +101,13 @@ az boards work-item create \
   --iteration "$ITERATION"
 ```
 
-`$TAGS` is the derived tag set — see [work-item-tags.md](work-item-tags.md); omit the `System.Tags` pair when no tags derive.
+`$TAGS` is the derived tag set — see [work-item-tags.md](work-item-tags.md); omit the `System.Tags` pair when no tags derive. Also assign `TITLE` in single quotes (`TITLE='…'`, an apostrophe inside written `'\''`) — the title is the one value that still crosses the shell, and a backtick or `$` inside double quotes is expanded there. `@<file>` transport and its read-back are in [publishing.md](publishing.md) `## Transport safety`.
 
 Or, if `pandoc` is not available, a Python one-liner:
 
 ```bash
-HTML=$(python3 -c "import sys, markdown; print(markdown.markdown(sys.stdin.read()))" < description.md)
+python3 -c "import sys, markdown; print(markdown.markdown(sys.stdin.read()))" < description.md > description.html
+python3 -c "import sys, markdown; print(markdown.markdown(sys.stdin.read()))" < repro.md > repro.html
 ```
 
 If neither `pandoc` nor the Python `markdown` module is present, stop and ask for one to be installed — never publish raw Markdown into an HTML-rendering field.

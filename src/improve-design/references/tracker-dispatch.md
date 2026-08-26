@@ -10,6 +10,6 @@ CLI commands for step 1 (search) and step 7 (comments) — creating or rewriting
 ## Add comment
 
 - **GitHub:** `gh issue comment <N> --body "..."`
-- **ADO:** `az boards work-item update --id <N> --discussion "<markdown>"` — Markdown rendered (GA)
+- **ADO:** `az boards work-item update --id <N> --discussion @<file>` — Markdown rendered (GA); the body is written to a file and passed as `@<file>` so it never crosses the shell
 
 If the chosen tool errors with auth/permission failure, fall back to giving the user the comment text to post manually. Don't loop on auth.

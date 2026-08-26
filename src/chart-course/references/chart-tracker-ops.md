@@ -6,7 +6,7 @@ Resolve project, area path, iteration, default labels, and title prefixes from t
 
 Merge domain `System.Tags` into each create call's `--fields` per [work-item-tags.md](work-item-tags.md). A chart's drafted title has no leading bracket (its `[App]` arrives via `Title prefix:`), so the set is usually just the tracker block's `Additional tags:`.
 
-- **Create map:** `az boards work-item create --type Feature --title "<prefixed title>" --description "$(cat <converted-html>)"` with project/area/iteration from CLAUDE.md. Parent it under an Epic only if the tracker block requires hierarchy above Features.
+- **Create map:** `az boards work-item create --type Feature --title "<prefixed title>" --description @<converted-html>` with project/area/iteration from CLAUDE.md. Parent it under an Epic only if the tracker block requires hierarchy above Features.
 - **Create ticket:** `az boards work-item create --type "User Story" ...`, then parent it to the map: `az boards work-item relation add --id <ticket-id> --relation-type Parent --target-id <map-id>`.
 - **Wire blocking:** the blocker is a Predecessor of the blocked ticket: `az boards work-item relation add --id <blocked-id> --relation-type Predecessor --target-id <blocker-id>`.
 - **Claim:** `az boards work-item update --id <ticket-id> --assigned-to <user>`.

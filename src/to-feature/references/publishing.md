@@ -22,3 +22,5 @@ A blocked tracker write (auth, sandbox, policy) lands the body as a file in the 
 ## Transport safety
 
 A create call is not idempotent: on a timeout or transport error after the call went out, list the tracker for the item before retrying — the error may have arrived after the write committed, and a blind retry double-files. Never cite a query result or command output you didn't actually run this session, and never attach a link you haven't resolved.
+
+A rich-text body travels as a file path with the CLI's `@` prefix (`--description @<file>`; `<Field>=@<file>` inside `--fields`), so the content never crosses the shell. The CLI passes a path it cannot open through as the literal `@…` with exit 0, so `test -s <file>` before the call, and after any create or update carrying `@<file>` read the item back — `az boards work-item show --id <id> --output json --query fields` — treating a rich-text field that is empty or begins with `@` as a failed publish: fix the path (absolute is safest), never re-run the same command.

@@ -30,7 +30,7 @@ Parse:
 
 ### Patch
 
-- **ADO:** convert Markdown → HTML, then `az boards work-item update --id <task-id> --description "<html>"`. Tasks have no AC field; do not pass `Microsoft.VSTS.Common.AcceptanceCriteria`.
+- **ADO:** convert Markdown → HTML to a file, then `az boards work-item update --id <task-id> --description @<file>`. Tasks have no AC field; do not pass `Microsoft.VSTS.Common.AcceptanceCriteria`.
 - **GitHub:** `gh issue edit <task-number> --body-file <draft>`.
 
 The naming-drift check in SKILL.md runs against the sibling Task titles fetched at cold-start.

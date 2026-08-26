@@ -7,7 +7,7 @@ Use this when publishing a Task work item to Azure DevOps via `az boards work-it
 | ADO field (display name) | Reference name | Source | CLI flag |
 |---|---|---|---|
 | Title | `System.Title` | Set on command line | `--title` |
-| Description (HTML) | `System.Description` | Body markdown converted to HTML | `--description` |
+| Description (HTML) | `System.Description` | Body markdown converted to HTML | `--description @<file>` |
 | Area Path | `System.AreaPath` | From CLAUDE.md `Area path:` | `--area` |
 | Iteration Path | `System.IterationPath` | From CLAUDE.md `Iteration:` | `--iteration` |
 | State | `System.State` | From CLAUDE.md `Default state:` (typically `New`) | `--fields "System.State=..."` |
@@ -69,18 +69,18 @@ pandoc -f markdown -t html <draft>.md > <draft>.html
 az boards work-item create \
   --type "Task" \
   --title "$TITLE" \
-  --description "$(cat <draft>.html)" \
+  --description @<draft>.html \
   --area "$AREA_PATH" \
   --iteration "$ITERATION" \
   --fields "System.State=New" "System.Tags=$TAGS"
 ```
 
-`$TAGS` is the derived tag set — see [work-item-tags.md](work-item-tags.md); omit the `System.Tags` pair when no tags derive.
+`$TAGS` is the derived tag set — see [work-item-tags.md](work-item-tags.md); omit the `System.Tags` pair when no tags derive. Also assign `TITLE` in single quotes (`TITLE='…'`, an apostrophe inside written `'\''`) — the title is the one value that still crosses the shell, and a backtick or `$` inside double quotes is expanded there. `@<file>` transport and its read-back are in [publishing.md](publishing.md) `## Transport safety`.
 
 Or, if `pandoc` is not available, use a Python one-liner:
 
 ```bash
-DESC_HTML=$(python3 -c "import sys, markdown; print(markdown.markdown(sys.stdin.read()))" < <draft>.md)
+python3 -c "import sys, markdown; print(markdown.markdown(sys.stdin.read()))" < <draft>.md > <draft>.html
 ```
 
 If neither `pandoc` nor the Python `markdown` module is present, stop and ask for one to be installed — never publish raw Markdown into an HTML-rendering field.

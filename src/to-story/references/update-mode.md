@@ -43,15 +43,15 @@ If the update adds or removes ACs, changes the module list, or reshapes layers, 
 
 ## Patch
 
-- **ADO:** Convert Markdown → HTML using the tempfile pattern from step 9 (write to file, pass via `$(cat ...)`). Always patch the title — scope changes that trigger `--update` frequently invalidate the prior title:
+- **ADO:** Convert Markdown → HTML per step 9 (each artifact to a file, its path passed as `@<file>`). Always patch the title — scope changes that trigger `--update` frequently invalidate the prior title:
   ```bash
   az boards work-item update --id <story-id> \
     --title "<updated-title>" \
-    --description "$(cat desc.html)" \
-    --fields "Microsoft.VSTS.Common.AcceptanceCriteria=$(cat acs.html)"
+    --description @desc.html \
+    --fields "Microsoft.VSTS.Common.AcceptanceCriteria=@acs.html"
   ```
 - **GitHub:** `gh issue edit <story-number> --title "<updated-title>" --body-file <draft>`.
 
-On ADO, read the AC field back after patching, per step 9 — a patch can bury criteria in the description just as a create can.
+On ADO, read the AC field back after patching, per step 9 — empty, null, or a value beginning with `@` is a failed patch, just as on a create.
 
 The naming-drift check in SKILL.md applies to patches the same as to publishes.

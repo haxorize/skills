@@ -90,7 +90,7 @@ The **Publish gate** in [references/publishing.md](references/publishing.md) hol
 
 If a required CLAUDE.md field is missing, fail fast with a clear "add this to CLAUDE.md" message. A create call blocked on auth or policy follows `## When the write is blocked` in [references/publishing.md](references/publishing.md) — don't loop on auth. Apply the **transport safety** rules in [references/publishing.md](references/publishing.md) to every create and retry.
 
-**Read the AC field back before reporting the Feature published (ADO).** `az boards work-item show <feature-id> --output json --query 'fields."Microsoft.VSTS.Common.AcceptanceCriteria"'` returns the stored value. Empty or null means the criteria landed in the body instead of the field — patch it with `az boards work-item update --id <feature-id> --fields "Microsoft.VSTS.Common.AcceptanceCriteria=$(cat acceptance.html)"` and strip them from the description. Buried criteria aren't queryable, and child Stories' `Covers:` lines then point at IDs no field holds.
+**Read the AC field back before reporting the Feature published (ADO).** `az boards work-item show <feature-id> --output json --query 'fields."Microsoft.VSTS.Common.AcceptanceCriteria"'` returns the stored value. Empty or null means the criteria landed in the body instead of the field — patch it with `az boards work-item update --id <feature-id> --fields "Microsoft.VSTS.Common.AcceptanceCriteria=@/absolute/path/acceptance.html"` and strip them from the description. A value beginning with `@` means the HTML file was not at the path the command named (the CLI passes an unopenable path through as the literal) — fix the path, never re-run the same command. Buried criteria aren't queryable, and child Stories' `Covers:` lines then point at IDs no field holds.
 
 ## Update mode
 
@@ -115,9 +115,9 @@ Re-run the story-map checks from step 8 (every active Feature AC ID covered by a
 
 ### Patch
 
-- **ADO:** The fetched description is already HTML. Convert **only the new story map section** from Markdown to HTML (using the pandoc or Python one-liner from `feature-template-ado.md`), splice the result between the `<!-- BEGIN STORY MAP -->` and `<!-- END STORY MAP -->` markers in the existing HTML, write to a temp file, and patch:
+- **ADO:** The fetched description is already HTML. Convert **only the new story map section** from Markdown to HTML (using the pandoc or Python one-liner from `feature-template-ado.md`), splice the result between the `<!-- BEGIN STORY MAP -->` and `<!-- END STORY MAP -->` markers in the existing HTML, write to a file, and patch with its absolute path:
   ```bash
-  az boards work-item update --id <feature-id> --description "$(cat /tmp/feature_desc.html)"
+  az boards work-item update --id <feature-id> --description @/absolute/path/feature_desc.html
   ```
   (description-only; do not pass `Microsoft.VSTS.Common.AcceptanceCriteria`). **Never pass the full fetched description through a Markdown → HTML converter** — it is already HTML and re-converting will double-encode any `<code>`, `<hr>`, and other HTML tags already present.
 - **GitHub:** `gh issue edit <feature-number> --body-file <draft>`.

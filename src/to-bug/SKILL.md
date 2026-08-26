@@ -103,7 +103,7 @@ Iterate until approved.
 The **Publish gate** in [references/publishing.md](references/publishing.md) holds first.
 
 - **GitHub:** `gh issue create --title "..." --body-file <draft>` with `--label bug --label <severity-label>` plus any default labels from CLAUDE.md. Parent linking via template `Parent: #N` reference if `--parent` was provided. **Before creating the issue,** run the label precheck in [references/publishing.md](references/publishing.md) — the labels about to be applied here are `bug`, the chosen severity label, and any `Default labels:`. If `--parent` was provided, add the new issue as a native sub-issue of the parent Feature after create — see [references/github-sub-issues.md](references/github-sub-issues.md).
-- **ADO:** `az boards work-item create --type "Bug" --title "..." --description "<html>"` with project / area path / iteration / state from CLAUDE.md, plus `--fields "Microsoft.VSTS.TCM.ReproSteps=<html>" "Microsoft.VSTS.Common.Severity=<n - Label>"`. Both rich-text fields expect HTML — convert each Markdown source before passing. If `--parent` was provided, link via `az boards work-item relation add --id <bug-id> --relation-type Parent --target-id <feature-id>` after the create call. Merge `System.Tags` into the create call's `--fields` — see [references/work-item-tags.md](references/work-item-tags.md).
+- **ADO:** `az boards work-item create --type "Bug" --title "..." --description @description.html` with project / area path / iteration / state from CLAUDE.md, plus `--fields "Microsoft.VSTS.TCM.ReproSteps=@repro.html" "Microsoft.VSTS.Common.Severity=<n - Label>"`. Both rich-text fields expect HTML — convert each Markdown source to a file and pass its path with the `@` prefix. If `--parent` was provided, link via `az boards work-item relation add --id <bug-id> --relation-type Parent --target-id <feature-id>` after the create call. Merge `System.Tags` into the create call's `--fields` — see [references/work-item-tags.md](references/work-item-tags.md).
 
 If a required CLAUDE.md field is missing, fail fast with a clear "add this to CLAUDE.md" message. A create call blocked on auth or policy follows `## When the write is blocked` in [references/publishing.md](references/publishing.md) — don't loop on auth. Apply the **transport safety** rules in [references/publishing.md](references/publishing.md) to every create and retry.
 
@@ -124,7 +124,7 @@ Re-run all step 6 checks. The public-repo warning (step 7) re-runs if the body o
 
 ### Patch
 
-- **ADO:** convert Markdown → HTML for description and repro, then `az boards work-item update --id <bug-id> --description "<html>" --fields "Microsoft.VSTS.TCM.ReproSteps=<html>"`. Severity is patched only if explicitly changed: `--fields "Microsoft.VSTS.Common.Severity=..."`.
+- **ADO:** convert Markdown → HTML for description and repro, each to a file, then `az boards work-item update --id <bug-id> --description @description.html --fields "Microsoft.VSTS.TCM.ReproSteps=@repro.html"`. When severity changed, add `"Microsoft.VSTS.Common.Severity=<n - Label>"` inside the same `--fields` list — never a second `--fields` flag, which replaces the first.
 - **GitHub:** `gh issue edit <issue-number> --body-file <draft>`. Severity-label changes are applied via `gh issue edit --remove-label <old> --add-label <new>` only if explicitly changed.
 
 State is never transitioned by `to-bug --update` — that's the team's process on the board.

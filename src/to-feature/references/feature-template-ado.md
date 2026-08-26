@@ -7,8 +7,8 @@ Use this when publishing a Feature work item to Azure DevOps via `az boards work
 | ADO field | Reference name | Source | CLI flag |
 |---|---|---|---|
 | Title | `System.Title` | Set on command line | `--title` |
-| Description | `System.Description` | Body markdown converted to HTML | `--description` |
-| Acceptance Criteria | `Microsoft.VSTS.Common.AcceptanceCriteria` | Outcome bullets converted to HTML | `--fields "Microsoft.VSTS.Common.AcceptanceCriteria=<html>"` |
+| Description | `System.Description` | Body markdown converted to HTML | `--description @<file>` |
+| Acceptance Criteria | `Microsoft.VSTS.Common.AcceptanceCriteria` | Outcome bullets converted to HTML | `--fields "Microsoft.VSTS.Common.AcceptanceCriteria=@<file>"` |
 | Area Path | `System.AreaPath` | From CLAUDE.md `Area path:` | `--area` |
 | Iteration Path | `System.IterationPath` | From CLAUDE.md `Iteration:` | `--iteration` |
 | State | `System.State` | From CLAUDE.md `Default state:` (typically `New`) | `--fields "System.State=..."` |
@@ -111,21 +111,22 @@ pandoc -f markdown -t html acceptance.md > acceptance.html
 az boards work-item create \
   --type "Feature" \
   --title "$TITLE" \
-  --description "$(cat description.html)" \
+  --description @description.html \
   --fields \
-    "Microsoft.VSTS.Common.AcceptanceCriteria=$(cat acceptance.html)" \
+    "Microsoft.VSTS.Common.AcceptanceCriteria=@acceptance.html" \
     "System.State=New" \
     "System.Tags=$TAGS" \
   --area "$AREA_PATH" \
   --iteration "$ITERATION"
 ```
 
-`$TAGS` is the derived tag set — see [work-item-tags.md](work-item-tags.md).
+`$TAGS` is the derived tag set — see [work-item-tags.md](work-item-tags.md). Also assign `TITLE` in single quotes (`TITLE='…'`, an apostrophe inside written `'\''`) — the title is the one value that still crosses the shell, and a backtick or `$` inside double quotes is expanded there. `@<file>` transport and its read-back are in [publishing.md](publishing.md) `## Transport safety`.
 
 Or, if `pandoc` is not available, a Python one-liner:
 
 ```bash
-HTML=$(python3 -c "import sys, markdown; print(markdown.markdown(sys.stdin.read()))" < description.md)
+python3 -c "import sys, markdown; print(markdown.markdown(sys.stdin.read()))" < description.md > description.html
+python3 -c "import sys, markdown; print(markdown.markdown(sys.stdin.read()))" < acceptance.md > acceptance.html
 ```
 
 If neither `pandoc` nor the Python `markdown` module is present, stop and ask for one to be installed — never publish raw Markdown into an HTML-rendering field.

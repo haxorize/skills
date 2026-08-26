@@ -59,7 +59,7 @@ Assets: <links to any prototype, document, or branch produced — linked, never 
 
 ## ADO body handling
 
-ADO description and comment fields expect HTML. Convert the Markdown draft before writing — temp file plus command substitution, never an inline shell string (embedded `\n` in a shell string becomes a literal two-character sequence in the stored HTML). Same rule as the `to-*` family's ADO templates.
+ADO description and comment fields expect HTML. Write the converted HTML to a file and pass its path with the CLI's `@` prefix (`--description @<file>`) — the content never crosses the shell; the commands are in [chart-tracker-ops.md](chart-tracker-ops.md) and the read-back in [publishing.md](publishing.md) `## Transport safety`.
 
 ## Titles
 
