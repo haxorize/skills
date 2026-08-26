@@ -32,7 +32,6 @@ The route most work travels: **`/grill-me`** → **`/to-feature` / `/to-story` /
 ### Grilling
 
 - **`grill-me`** — Stress-testing through relentless interview. In a project with a `DOMAIN.md` or an ADR log it records as it goes — glossary updates inline, ADRs when the gate triggers; `--plain` (or no such docs) saves nothing. Runs anywhere.
-- **`grill-and-record`** — Deprecated, one window: a stub that points at `grill-me`, which now records by default.
 
 ### Charting
 

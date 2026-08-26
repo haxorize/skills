@@ -13,7 +13,7 @@ A **flow** is a path through the skills.
 ## The main flow: idea → ship
 
 1. **Sharpen the idea by interview.**
-   - **`/grill-me`** — relentless interview. With a `DOMAIN.md` or ADR log in the repo it records as it goes, updating `DOMAIN.md` as terms resolve and writing ADRs when the gate triggers; `/grill-me --plain` (or no such docs) is the same interview with nothing saved. (`/grill-and-record` is a deprecation stub for one window — it tells you to type `/grill-me`.)
+   - **`/grill-me`** — relentless interview. With a `DOMAIN.md` or ADR log in the repo it records as it goes, updating `DOMAIN.md` as terms resolve and writing ADRs when the gate triggers; `/grill-me --plain` (or no such docs) is the same interview with nothing saved.
 2. **Decompose into tracked work** (three tiers, top-down as scope warrants):
    - **`/to-feature`** — a PRD-shaped Feature, when scope spans multiple stories.
    - **`/to-story`** — a single-feature Story. The usual entry point.
