@@ -1,5 +1,7 @@
 # `grill-me` absorbs `grill-and-record`; the old name is a one-window stub
 
+> **Amended by [ADR-0063](0063-team-fit-test-replaces-retire-on-zero-window.md):** the retire-on-zero window now binds Deprecation stubs alone — every **Skill** is judged by the Team-fit test instead. This record's own stub is not affected: its window had already closed and `src/grill-and-record/` was deleted on 2026-08-26 (the amendment below). The general rule for future stubs lives on `DOMAIN.md`'s **Deprecation stub** row and in ADR-0063, not here.
+
 Status: accepted (2026-08-22)
 
 `grill-me` now records by default: when the working directory has a `DOMAIN.md` or an ADR log, it loads `domain-modeling` beside `grilling`, updates the glossary inline, and writes ADRs inline at the gate — everything `grill-and-record` did. `--plain` suppresses the recording for a grill that should leave no document behind. `grill-and-record` stays in `src/` for one retire window as a deprecation stub whose whole body tells the human to type `/grill-me` (a user-invoked target is a human suggestion, not a load); its format reference moves to `src/grill-me/references/adr-format.md`, and the lint sibling group follows. This amends [ADR-0051](0051-usage-evidence-mining-round.md), which assigned the merge to a record written when its batch lands.
