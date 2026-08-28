@@ -25,7 +25,7 @@ For each conflicting hunk, understand **why each change was made** — don't res
 
 ## 4. Run the project's checks
 
-Run the project's mechanical checks via the `/feedback-loops` skill. Fix anything the merge broke; a conflict resolved to compile is not the same as a conflict resolved correctly.
+Call the Skill tool with `feedback-loops` to run the project's mechanical checks. Fix anything the merge broke; a conflict resolved to compile is not the same as a conflict resolved correctly.
 
 ## 5. Finish the merge/rebase
 

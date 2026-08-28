@@ -1,13 +1,23 @@
 ---
 name: quoted-dep
-description: Fixture whose only slash mentions are quoted or parenthesised — the forms an authoring guide uses — and must stay quiet.
+description: Fixture whose only Skill-tool and slash mentions are quoted, parenthesised or fenced, plus the two slash forms that are correct unmasked — and all must stay quiet.
 disable-model-invocation: true
 ---
 
 # Quoted dep
 
-A quoted example stays exempt: "Run the `/fixture-discipline` skill" is how the guide quotes it, and so is an aside (`caller` → `/fixture-discipline`).
+A quoted example stays exempt: "Call the Skill tool with `fixture-discipline`" and "Run the `/fixture-discipline` skill" are how the guide quotes the live form and the retired one, and so is an aside (`caller` → Call the Skill tool with `fixture-discipline`, never `/fixture-discipline`).
+
+Both scans read the same masked text, so each exempt shape carries both forms: drop a mask
+and the quoted or parenthesised mention fires on one scan or the other. The masks are
+line-based, so each construct above stays on one line — a quoted span or an aside that
+wraps is not masked at all.
+
+Two slash forms are correct with no mask, and grade the slash check's own guards:
+`/quoted-dep` names a user-invoked skill, which is exactly who the slash form is for, and
+`/compact` is a built-in that resolves to no skill directory.
 
 ```md
-Run the `/fixture-discipline` skill now. The global `uncited-depends` rule is named only here, inside a fence, which is not a citation.
+Call the Skill tool with `fixture-discipline` now, and never write `/fixture-discipline`.
+The global `uncited-depends` rule is named only here, inside a fence, which is not a citation.
 ```

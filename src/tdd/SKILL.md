@@ -85,7 +85,7 @@ After all tests pass, review the implementation before calling the cycle done:
 - Extract duplication — lifting it to existing project primitives or shared modules rather than re-rolling (consult the active layer skill for where they live), extracting fresh only when no primitive fits, and then only at the third caller or when the concept has a domain name (`implement`'s third-caller clause; it binds this step whether or not `implement` is running)
 - Deepen modules (move complexity behind simple interfaces)
 - Simplify where the accumulated implementation reveals a cleaner design
-- Fix the names the change made wrong: a name that stops matching its behavior misleads every later search. Follow the `/discoverable-code` discipline over what the slice exported, renamed, or moved, loading it at the first such name if it isn't already live
+- Fix the names the change made wrong: a name that stops matching its behavior misleads every later search. Follow the naming discipline over what the slice exported, renamed, or moved — call the Skill tool with `discoverable-code` at the first such name if it isn't already live
 
 Run the test command after each refactor step. Never refactor while red.
 
@@ -97,7 +97,7 @@ Before closing, run the **mutation check**: mentally mutate the production code 
 
 The check itself is a suspect: a test that cannot fail reports green forever and is indistinguishable from a working one. For a load-bearing check, break the code for real once and watch it go red, then restore it and watch the green return — that red must be **content-caused**; a check that reds regardless proves only that it runs. And name what the suite cannot catch (the seam with no test, the behavior only eyeballed) rather than letting green imply total coverage.
 
-When the cycle's behaviors are built and refactored, close the loop: run the `/feedback-loops` skill once to finalize mechanically. (Under `implement`, `implement` drives review and this close-the-loop pass; the nudge here keeps standalone `tdd` finishing cleanly on its own.)
+When the cycle's behaviors are built and refactored, close the loop: call the Skill tool with `feedback-loops` once to finalize mechanically. (Under `implement`, `implement` drives review and this close-the-loop pass; the nudge here keeps standalone `tdd` finishing cleanly on its own.)
 
 Tests prove code-correctness, not feature-correctness. When the slice touched behavior no test actually ran — a UI flow, an external integration, a real ingest — name it before declaring done and take one of two branches; the failure here is closing the cycle with the gap unnamed because the suite is green.
 

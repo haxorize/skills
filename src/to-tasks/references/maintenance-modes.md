@@ -24,7 +24,7 @@ Parse:
 
 - **Covers references resolve** — every AC ID in `## Covers` exists on the parent Story and is active (not in `## Removed acceptance criteria`). If a reference is now stale, prompt: edit it out, repoint, or close the Task.
 - **`## Layers touched`** — populated for each layer (`none` is valid; missing is not).
-- **Naming drift** — none against sibling Tasks under the same parent Story (route paths, query keys, model names, search-param keys), per `/work-item-shape`'s rule.
+- **Naming drift** — none against sibling Tasks under the same parent Story (route paths, query keys, model names, search-param keys), per `work-item-shape`'s rule.
 - **Domain language** — matches `DOMAIN.md`.
 - **No placeholders.**
 
@@ -125,4 +125,4 @@ Iterate per bucket until approved. Apply approved changes — body patches via `
 
 ### Naming drift
 
-Drift across sibling Tasks (`widgetId` vs `widget_id`) follows `/work-item-shape`'s **Naming drift** rule, surfaced in the affected bucket's proposal with the rename folded into that Task's edit.
+Drift across sibling Tasks (`widgetId` vs `widget_id`) follows `work-item-shape`'s **Naming drift** rule, surfaced in the affected bucket's proposal with the rename folded into that Task's edit.

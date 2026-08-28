@@ -36,7 +36,7 @@ For the prototype: with no tests and no maintenance story it doesn't belong on t
 For the answer, this is a natural delegation boundary — delegate rather than inline:
 
 - If the answer settled a **load-bearing decision** that passes the **ADR gate** in `adr`, offer to record it via `adr`. The prototype *is* the considered-options exploration; synthesize the ADR from what it proved.
-- If the prototype surfaced or sharpened a **domain concept** — a new state, a clearer name for a thing — run the `/domain-modeling` skill to capture it in `DOMAIN.md` before the precision is lost.
+- If the prototype surfaced or sharpened a **domain concept** — a new state, a clearer name for a thing — call the Skill tool with `domain-modeling` to capture it in `DOMAIN.md` before the precision is lost.
 
 If the user is around, that capture is a quick conversation. If not, leave the answer in a `NOTES.md` next to the prototype (with the question it answered) so they — or you, on the next pass — can record it before the code moves to its branch.
 

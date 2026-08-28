@@ -36,13 +36,13 @@ The **KT map** and every later lesson live in the learner's **Learning workspace
 
 Everything else about the workspace's shape is `teach-me`'s. This skill leaves no trail of its own inside the repo, because a second record beside the workspace splits the learner's history in two and abandons a directory in someone else's project.
 
-The KT map is prose a person reads: run the `/writing-for-humans` skill before writing it — if you did not just see a `Launching skill: writing-for-humans` line, stop and load it.
+The KT map is prose a person reads: call the Skill tool with `writing-for-humans` at that write if it isn't already live.
 
 ## When the repo has no product description
 
 Before the first rung, list `docs/product-description/` and read its `README.md` if one is there. Where it exists, say so, say where, and go on to the ladder; where the directory is absent or holds no `README.md`, there is no description.
 
-Where it is not, offer one — saying that it writes a `docs/product-description/` directory — and on a yes run the `product-description` skill **with `--seed`**, which bounds it to the four axes, one pilot document, the foundations, and a list of the areas left unwritten. That skill owns the artifact and the method entirely; this session owns only the decision that one is needed, and the bound it passes. If the skill does not load, say so and go on to the ladder — never write the description yourself.
+Where it is not, offer one — saying that it writes a `docs/product-description/` directory — and on a yes call the Skill tool with `product-description` **with `--seed`**, which bounds it to the four axes, one pilot document, the foundations, and a list of the areas left unwritten. That skill owns the artifact and the method entirely; this session owns only the decision that one is needed, and the bound it passes. If the skill does not load, say so and go on to the ladder — never write the description yourself.
 
 An existing description is evidence like any other file, and evidence of what somebody believed at the commit they wrote it at. A claim the map takes from it is an **[inference]** until it has been checked against the code at the current commit.
 

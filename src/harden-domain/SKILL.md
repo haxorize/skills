@@ -30,9 +30,9 @@ Cover **every** such source, not a sample — list the surfaces you scanned so a
 
 Pick the best term for each concept and list alternatives as aliases to avoid.
 
-### 4. Write to `DOMAIN.md` via `/domain-modeling`
+### 4. Write to `DOMAIN.md` via `domain-modeling`
 
-Run the `/domain-modeling` skill to write the glossary to `DOMAIN.md` in the working directory — if you don't see a `Launching skill: domain-modeling` line, stop and load it before continuing. It owns the output format and the multi-context rules; apply its checks to the swept terms as you write.
+Call the Skill tool with `domain-modeling` to write the glossary to `DOMAIN.md` in the working directory — if you don't see a `Launching skill: domain-modeling` line, stop and call it again before continuing. It owns the output format and the multi-context rules; apply its checks to the swept terms as you write.
 
 ### 5. Output a summary
 
@@ -44,4 +44,4 @@ Summarize the glossary inline in the conversation. Suggest: "Consider adding a r
 
 ## Re-running
 
-When invoked again in the same conversation, re-sweep the conversation and codebase for new terms, revise existing definitions whose understanding has evolved (don't just append), and re-run step 4's `/domain-modeling` write to fold them into the existing `DOMAIN.md`.
+When invoked again in the same conversation, re-sweep the conversation and codebase for new terms, revise existing definitions whose understanding has evolved (don't just append), and re-run step 4's write — call the Skill tool with `domain-modeling` again if it isn't still live — to fold them into the existing `DOMAIN.md`.

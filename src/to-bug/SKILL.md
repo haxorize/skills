@@ -13,9 +13,9 @@ Bugs are *not* parented under Stories — the fix is the slice. They can be file
 
 ## Publication constraints
 
-Run the `/writing-for-humans` and `/work-item-shape` skills — if you did not just see both `Launching skill:` lines, stop and load the missing one. Every published sentence follows the first; the body's shape follows the second.
+Call the Skill tool with `writing-for-humans`, then again with `work-item-shape` — if you did not just see both `Launching skill:` lines, stop and call the Skill tool with the missing one. Every published sentence follows the first; the body's shape follows the second.
 
-This tier's evidence sections are `## Repro`, `## Expected behavior`, and `## Actual behavior`: exact error messages, stack traces, environment URLs, and observable route names belong there — `/work-item-shape`'s internals rule covers the rest.
+This tier's evidence sections are `## Repro`, `## Expected behavior`, and `## Actual behavior`: exact error messages, stack traces, environment URLs, and observable route names belong there — `work-item-shape`'s internals rule covers the rest.
 
 ## Workflow
 
@@ -72,7 +72,7 @@ Before showing the user, check:
 - **Severity matches scope.** Critical is reserved for outage / data loss / security; cosmetic isn't High.
 - **Domain language matches `DOMAIN.md`.**
 
-Then run the **Cold-reader pass** from the `/work-item-shape` discipline: the cold reader gets only the drafted body and answers "what's broken, and how do I reproduce it?".
+Then run the **Cold-reader pass** from the `work-item-shape` discipline: the cold reader gets only the drafted body and answers "what's broken, and how do I reproduce it?".
 
 ### 7. Public-repo warning (GitHub only)
 
@@ -131,4 +131,4 @@ State is never transitioned by `to-bug --update` — that's the team's process o
 
 ### Naming drift
 
-Run `/work-item-shape`'s **Naming drift** rule over the patch; the immediate fix it offers is the sibling's `--update`.
+Run `work-item-shape`'s **Naming drift** rule over the patch; the immediate fix it offers is the sibling's `--update`.

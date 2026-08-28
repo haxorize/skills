@@ -19,7 +19,7 @@ Drive the build of **one Vertical slice** — the slice `from-ticket` just loade
 
 Decide how the slice is built, and say which path you picked and why:
 
-- **Testable slice** → run the `/tdd` skill (if you don't see a `Launching skill: tdd` line, stop and load it). Use this whenever the slice's behaviors warrant tests (logic, endpoints, data flow).
+- **Testable slice** → call the Skill tool with `tdd` (if you don't see a `Launching skill: tdd` line, stop and call it again). Use this whenever the slice's behaviors warrant tests (logic, endpoints, data flow).
 - **Non-testable slice** → build directly, no test-first. Use this for docs, scripts, config, and glue — work with no meaningful test seam.
 
 When it's genuinely ambiguous (some testable behavior, some glue), it is a judgment under the global recommend-and-proceed rule (`~/.claude/rules/recommend-and-proceed.md`): pick the testable path, say so, and proceed.
@@ -29,13 +29,13 @@ The choice ratchets one way. Complexity that surfaces mid-slice **upgrades** the
 ## Build
 
 - **Testable:** hand the slice to `tdd` and let it run its cycle — the refactor beat is `tdd`'s job there.
-- **Non-testable:** build the change directly, then do a cleanup pass — `/simplify` over what you wrote, applying what it finds, and the `/discoverable-code` skill over anything the slice named, renamed, or moved (if you don't see a `Launching skill: discoverable-code` line, load it first). This is the direct path's refactor beat; on the testable path `tdd` runs both beats itself.
+- **Non-testable:** build the change directly, then do a cleanup pass — `/simplify` over what you wrote, applying what it finds, and the naming discipline over anything the slice named, renamed, or moved. Call the Skill tool with `discoverable-code` there; if you don't see a `Launching skill: discoverable-code` line, stop and call it again. This is the direct path's refactor beat; on the testable path `tdd` runs both beats itself.
 - **Extract at the third caller, or when the concept has a domain name.** Two call sites are duplication you can see; a helper, abstraction, option, or guard for a case no caller can produce needs its caller named before it exists. This is the **third-caller clause**; the refactor beat on both paths runs under it, and `tdd`'s refactor step carries it for the testable path.
 - **Compatibility needs a named live reader.** Keeping the old path alive beside the new one is a cost carried forever, so pay it only when you can name who still reads it — a deployed client, stored records in the old shape, a consumer mid-migration. Never add a compatibility layer to make the diff smaller, and never to keep old tests green: tests follow the contract, not the reverse. With no reader left, the old path goes in the same slice.
 - **Edit from a match list, with an edit tool.** `discoverable-code`'s rule for a rename holds for any edit: search first, then change each listed site — a mass substitution rewrites sites the search never listed. The rename-safety hook blocks it where it is wired and the directory is opted in; this line is for everywhere else.
 - **Never fabricate tooling.** When a command, binary, credential, or service the slice needs is missing, say so and hand the user the exact command to run — never stand up a shim, a stub binary, or a check that reports success without checking. Relay, don't bridge: a fabricated green removes the signal that would have brought the real tool.
 
-If an **unplanned failure** turns up mid-build that you can't quickly explain — a red that isn't the test you just wrote, behavior that contradicts the plan — stop guessing and run the `/diagnosing-bugs` skill before continuing (if you don't see a `Launching skill: diagnosing-bugs` line, load it). Don't fold an unexplained red into the slice's normal red/green rhythm; it needs its own tight feedback loop first.
+If an **unplanned failure** turns up mid-build that you can't quickly explain — a red that isn't the test you just wrote, behavior that contradicts the plan — stop guessing and call the Skill tool with `diagnosing-bugs` before continuing (if you don't see a `Launching skill: diagnosing-bugs` line, stop and call it again). Don't fold an unexplained red into the slice's normal red/green rhythm; it needs its own tight feedback loop first.
 
 ## Park what you notice
 
@@ -43,7 +43,7 @@ Out-of-scope observations made mid-slice — a smell, a missing test, a refactor
 
 ## Close the loop
 
-Run the `/feedback-loops` skill when the slice's behaviors are built and refactored — if you don't see a `Launching skill: feedback-loops` line, stop and load it. It is the mechanical finalize, and this is the slice's one run: when `tdd` runs under `implement`, it defers the close-the-loop pass here.
+Call the Skill tool with `feedback-loops` when the slice's behaviors are built and refactored — if you don't see a `Launching skill: feedback-loops` line, stop and call it again. It is the mechanical finalize, and this is the slice's one run: when `tdd` runs under `implement`, it defers the close-the-loop pass here.
 
 Then run the **completion audit** against the loaded ticket: treat done as unproven, derive the requirements from the acceptance criteria the slice covers, name the authoritative evidence per requirement, and inspect it at matching scope — a narrow check never supports a broad claim, and a green suite counts only after confirming it exercises that criterion. The audit proves completion rather than failing to find remaining work. Write it in the form of [references/completion-audit.md](references/completion-audit.md) — one row per acceptance criterion, `| AC | Status | Evidence |`, status one of `DONE` / `PARTIAL` / `NOT DONE` / `CHANGED` / `UNVERIFIABLE`, every row with an evidence line; then the beat ledger, the parked ledger with its zero case stated, the judgment-calls list tagged user's / inferred / my call, and the completion line. `handoff` carries it verbatim and `committing` reads it to choose the closing word. Filling it:
 

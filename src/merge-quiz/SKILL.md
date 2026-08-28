@@ -8,7 +8,7 @@ argument-hint: "[<base>|<PR number>] — defaults to the current branch against 
 
 # Merge Quiz
 
-Run the `/writing-for-humans` skill now — the report is prose a person reads cold; if you did not just see a `Launching skill: writing-for-humans` line, stop and load it before writing.
+Call the Skill tool with `writing-for-humans` now — the report is prose a person reads cold; if you did not just see a `Launching skill: writing-for-humans` line, stop and call it again before writing.
 
 You are the reader's check on their own understanding, not a second review. `review-changes` audits the change's claims; this skill makes the person who is about to approve the change prove they hold a working model of it. It runs when the reader was not here for the build — a session they handed off, an agent that ran unattended, a teammate's PR they are asked to approve.
 

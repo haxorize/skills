@@ -13,9 +13,9 @@ No interviewing — this is a synthesis-only skill. Run `/grill-me` first if con
 
 ## Publication constraints
 
-Run the `/writing-for-humans` and `/work-item-shape` skills — if you did not just see both `Launching skill:` lines, stop and load the missing one. Every published sentence follows the first; the body's shape follows the second.
+Call the Skill tool with `writing-for-humans`, then again with `work-item-shape` — if you did not just see both `Launching skill:` lines, stop and call the Skill tool with the missing one. Every published sentence follows the first; the body's shape follows the second.
 
-`/work-item-shape`'s internals rule covers every section here, `## Approach` included.
+`work-item-shape`'s internals rule covers every section here, `## Approach` included.
 
 ## Workflow
 
@@ -75,7 +75,7 @@ Before showing the user, check:
 - On ADO: the **two-field split** holds (step 7) — outcome bullets are their own artifact
 - Story map: every active Feature AC ID appears in at least one Story's `Covers:` line; every Story's `Covers:` names at least one active AC ID (a Story covering nothing is unmapped work); no `Covers:` line references a removed AC ID; `### Naming consistency` dedup; dependency acyclicity (skip if no story map — `Hierarchy: optional` without the story-map opt-in, or deferred decomposition)
 
-Then run the **Cold-reader pass** from the `/work-item-shape` discipline: the cold reader gets only the drafted body and answers "what would you build?".
+Then run the **Cold-reader pass** from the `work-item-shape` discipline: the cold reader gets only the drafted body and answers "what would you build?".
 
 ### 9. Present draft to user
 

@@ -2,12 +2,12 @@
 name: ship
 description: Carry a green, reviewed change to a closed ticket — proposes the commit split, then lands it through a PR where someone must approve it or directly where nobody must, with every claim checked by the committing discipline.
 disable-model-invocation: true
-requires: committing, writing-for-humans
+requires: committing
 ---
 
 # Ship
 
-The last beat of the main flow: a change that is green and reviewed becomes commits, lands on the trunk — through a PR where someone must approve it, directly where nobody must — and closes its ticket. This skill owns the **split** and the **PR path**; the claims rule, the closing comment, the blocked-action protocol, and every outward act are the `committing` discipline's. Run the `/committing` skill now; if you don't see a `Launching skill: committing` line, stop and load it before going on.
+The last beat of the main flow: a change that is green and reviewed becomes commits, lands on the trunk — through a PR where someone must approve it, directly where nobody must — and closes its ticket. This skill owns the **split** and the **PR path**; the claims rule, the closing comment, the blocked-action protocol, and every outward act are the `committing` discipline's. Call the Skill tool with `committing` now; if you don't see a `Launching skill: committing` line, stop and call it again before going on.
 
 It does not build, refactor, or review. Arrive here with the work already green (`feedback-loops` ran) and already reviewed (`review-changes` ran, findings addressed). If either is missing, say so and stop — and "reviewed" is a claim `committing` checks against a report, not a word this skill takes on faith.
 
@@ -35,7 +35,7 @@ Show the proposed split — which files, which message, in which order — and l
 
 ### 3. Draft the prose
 
-Write the commit messages, the PR body, and the closing comment under `committing`'s claims rule, sentence by sentence — the rule, the closing-comment contract, the house commit style, and the `/writing-for-humans` register are all that skill's; the project's declared style wins wherever they disagree.
+Write the commit messages, the PR body, and the closing comment under `committing`'s claims rule, sentence by sentence — the rule, the closing-comment contract, the house commit style, and the `writing-for-humans` register are all that skill's; the project's declared style wins wherever they disagree.
 
 ### 4. Execute, one step at a time
 

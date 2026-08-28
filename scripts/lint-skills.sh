@@ -21,17 +21,27 @@
 #     Each named dep must exist as a skill AND be model-invoked — prose
 #     invocation can only reach model-invoked skills, so a user-invoked dep
 #     could never be resolved at runtime.
-#     The check runs both ways: a body that invokes a model-invoked skill by
-#     its slash form (`/name`) must declare it, and a declared dep must be
-#     named in the body — a `requires:` line nobody reads is drift the
-#     installer still links. Before the slash scan, double-quoted spans,
-#     parenthesised asides containing an arrow (`→`, the example form), and
-#     fenced code blocks are stripped, so an authoring guide can quote the
-#     form it teaches without declaring the example. Scope, stated so a pass
-#     isn't read as more than it is: only the backticked `/name` form counts
-#     as a use (a bare "run the X skill" is invisible), and "named in the
-#     body" means SKILL.md — a dep consumed only from a reference file must
-#     still be named once in the body.
+#     The check runs both ways: a body that calls a model-invoked skill by the
+#     Skill-tool form (``Call the Skill tool with `<name>` ``) must declare it,
+#     and a declared dep must be named in the body — a `requires:` line nobody
+#     reads is drift the installer still links. Calling the Skill tool with a
+#     *user-invoked* skill fails outright: its description is hidden from the
+#     model, so the call does nothing at runtime.
+#     The slash-on-model-invoked check is the mirror image, and file-local
+#     rather than per-skill: `/<name>` naming a model-invoked skill fails,
+#     because the slash form is what a human types and it hides the call from
+#     the scan above. Needing no `requires:` line, it sweeps every markdown
+#     file the repo ships as instructions — `src/**`, `.claude/skills/**`,
+#     `DOMAIN.md`, `README.md` — not just `src/*/SKILL.md`.
+#     Before every scan, double-quoted spans, parenthesised asides containing
+#     an arrow (`→`, the example form), and fenced code blocks are stripped,
+#     so an authoring guide can quote the form it teaches without declaring
+#     the example. Scope, stated so a pass isn't read as more than it is: a
+#     use is the ``Call the Skill tool with `<name>` `` clause, imperative or
+#     gerund, and every backticked name in it — a bare "run the X skill" is
+#     invisible, and so is a call whose clause wraps a line, since every scan
+#     here is line-based. "Named in the body" means SKILL.md — a dep consumed
+#     only from a reference file must still be named once in the body.
 #   - Skill bodies must not cite repo ADRs by number (write-skill: "Skill
 #     bodies don't cite repo ADRs"). Skills symlink into ~/.claude/skills/ and
 #     run in the user's project, where this repo's docs/adr/ does not exist, so
@@ -439,12 +449,21 @@ for f in src/*/SKILL.md; do
   reqs=$(frontmatter_value "$f" requires | tr ',' ' ')
   body=$(awk '/^---$/ { c++; next } c >= 2' "$f")
   scan=$(printf '%s\n' "$body" | awk "$FENCE_AWK"'{ print }' | sed -e 's/"[^"]*"//g' -e 's/([^)]*→[^)]*)//g')
-  for used in $(printf '%s\n' "$scan" | grep -o '`/[a-z-]*`' | tr -d '`/' | sort -u); do
+  # One clause can name more than one skill ("with `A` and `B`", "with `A`,
+  # then again with `B`"), and the verb is written as imperative or gerund
+  # ("by calling the Skill tool with"). Match the whole clause, then take
+  # every backticked name out of it — a regex ending at the first name reads
+  # a two-skill call as a one-skill call and leaves the second undeclared.
+  for used in $(printf '%s\n' "$scan" | grep -oiE 'call(ing)? the Skill tool with `[a-z0-9-]+`(,? (and|then again with|then with|again with) `[a-z0-9-]+`)*' | grep -o '`[a-z0-9-]*`' | tr -d '`' | sort -u); do
     [ -f "src/$used/SKILL.md" ] || continue
-    [ "$(is_user_invoked "src/$used/SKILL.md")" = "true" ] && continue
+    if [ "$(is_user_invoked "src/$used/SKILL.md")" = "true" ]; then
+      echo "FAIL: $f calls the Skill tool with \`$used\`, but '$used' is user-invoked — a user-invoked skill's description is hidden from the model, so the call does nothing; suggest \`/$used\` for the human to type"
+      fail=1
+      continue
+    fi
     [ "$used" = "$skill" ] && continue
     if ! printf ' %s ' "$reqs" | grep -q " $used "; then
-      echo "FAIL: $f invokes \`/$used\` but its requires: line does not declare '$used' — the installer will not link it"
+      echo "FAIL: $f calls the Skill tool with \`$used\` but its requires: line does not declare '$used' — the installer will not link it"
       fail=1
     fi
   done
@@ -455,6 +474,31 @@ for f in src/*/SKILL.md; do
     fi
   done
 done
+
+# slash-on-model-invoked check (see header). The slash form names a command a
+# human types, so it can only name a user-invoked skill or a built-in. A
+# `/name` naming a model-invoked skill asks the model to type what it cannot
+# type, and hides the call from the used-but-undeclared scan above. This one
+# is file-local — it needs no `requires:` line — so it sweeps wider than the
+# scan above: every markdown file the repo ships as instructions, not just
+# `src/*/SKILL.md`. A `references/` template is where the convention regresses
+# unseen, because that is what a publisher writes from.
+while IFS= read -r f; do
+  # Strip frontmatter where there is any; a reference file has none.
+  scan=$(awk 'NR == 1 && $0 == "---" { fm = 1; next }
+              fm && $0 == "---" { fm = 0; next }
+              fm { next } { print }' "$f" \
+    | awk "$FENCE_AWK"'{ print }' | sed -e 's/"[^"]*"//g' -e 's/([^)]*→[^)]*)//g')
+  for slashed in $(printf '%s\n' "$scan" | grep -o '`/[a-z0-9-]*`' | tr -d '`/' | sort -u); do
+    [ -f "src/$slashed/SKILL.md" ] || continue
+    [ "$(is_user_invoked "src/$slashed/SKILL.md")" = "true" ] && continue
+    echo "FAIL: $f writes \`/$slashed\`, but '$slashed' is model-invoked — the slash form is for commands a human types; use \`\`Call the Skill tool with \`$slashed\` \`\`"
+    fail=1
+  done
+done < <({ find src -type f -name '*.md'
+           [ -d .claude/skills ] && find .claude/skills -type f -name '*.md'
+           [ -f DOMAIN.md ] && echo DOMAIN.md
+           [ -f README.md ] && echo README.md; } | sort -u)
 
 # Global rules admission (see header): a `Depends:` line naming skills that
 # exist under src/. Names are read as backticked or bare comma-separated slugs.

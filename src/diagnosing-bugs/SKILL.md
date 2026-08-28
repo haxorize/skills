@@ -8,7 +8,7 @@ requires: codebase-design, adr, capturing-learnings
 
 A discipline for hard bugs.
 
-When exploring, read `DOMAIN.md` (if present) for the project's vocabulary and check `docs/adr/` in the area you're touching — a behavior an ADR records as deliberate is not a bug. If `docs/solutions/` exists, run the `/capturing-learnings` skill's retrieval protocol on the reported symptom — a match seeds a Phase 3 hypothesis, never a reason to skip Phases 1–2.
+When exploring, read `DOMAIN.md` (if present) for the project's vocabulary and check `docs/adr/` in the area you're touching — a behavior an ADR records as deliberate is not a bug. If `docs/solutions/` exists, call the Skill tool with `capturing-learnings` and run its retrieval protocol on the reported symptom — a match seeds a Phase 3 hypothesis, never a reason to skip Phases 1–2.
 
 A defect found on the way to something else follows the `Landing:` defect policy in the project's `CLAUDE.md`, inside the edit boundary Phase 3 declares; this skill never opens a ticket on its own.
 
@@ -165,4 +165,4 @@ Walk that question as a why-chain, **one level at a time** — a single-shot cha
 
 - If the answer involves **architectural change** — no good test seam, a too-shallow module, tangled callers, hidden coupling — suggest the user run `/improve-design` with the specifics (it's user-invoked, so suggest it; don't try to invoke it). The deepening it surfaces is the durable fix.
 - If the root cause was a **load-bearing decision gap** — the bug existed because a real trade-off was made implicitly and never recorded — offer to capture it via `adr`. A recorded decision stops the same class of bug recurring for the next person.
-- Run `capturing-learnings`' capture gate (verified, expensive, recurrence-plausible) and say its result either way, in the gate's own words: where it holds, offer to capture the solved problem as a Learning doc, so the next diagnosis of this symptom starts where this one ended.
+- Call the Skill tool with `capturing-learnings` if it isn't already live, and run its capture gate (verified, expensive, recurrence-plausible), saying the result either way in the gate's own words: where it holds, offer to capture the solved problem as a Learning doc, so the next diagnosis of this symptom starts where this one ended.

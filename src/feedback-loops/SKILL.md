@@ -14,7 +14,7 @@ This pass is **mechanical only**: it runs the checks and never judges whether co
 
 A red check is classified **in-scope or out-of-scope before anything is touched**. The parked ledger `implement` keeps is that scope declaration when `implement` ran; otherwise it's the diff.
 
-Failures outside it are not this pass's work. Name them, leave them, and don't commit over them — "making the suite green again" by absorbing an unrelated failure buries it inside your change, where the next person will find it wearing your name. For an out-of-scope red you can't quickly explain, run the `/diagnosing-bugs` skill.
+Failures outside it are not this pass's work. Name them, leave them, and don't commit over them — "making the suite green again" by absorbing an unrelated failure buries it inside your change, where the next person will find it wearing your name. For an out-of-scope red you can't quickly explain, call the Skill tool with `diagnosing-bugs`.
 
 **"Absent from the diff" is a prior, not a verdict.** A test whose file you never touched can still be yours — shared state, a changed fixture, an altered default, a regenerated client. The prior decides who investigates first, never whether the failure gets investigated.
 

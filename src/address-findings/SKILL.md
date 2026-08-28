@@ -8,7 +8,7 @@ argument-hint: "[path to a review report — default: the newest for this repo]"
 
 # Address Findings
 
-One pass over a review report: every finding gets a disposition, nothing is deferred silently, and the pass ends with a ledger rather than another review. The judgment per finding — verify the claim, route by what it indicts, push back with reasons, when to stop — is the `receiving-review` discipline's (if you don't see a `Launching skill: receiving-review` line, load it first); this skill owns the pass and the table.
+One pass over a review report: every finding gets a disposition, nothing is deferred silently, and the pass ends with a ledger rather than another review. The judgment per finding — verify the claim, route by what it indicts, push back with reasons, when to stop — is the `receiving-review` discipline's; this skill owns the pass and the table. Call the Skill tool with `receiving-review` now: if you don't see a `Launching skill: receiving-review` line, stop and call it again.
 
 ## 1. Resolve the report
 
@@ -33,7 +33,7 @@ Open the pass with one line — the file you picked when no path was given, and 
 
 Fix the mechanical set in that order, each fix verified per `receiving-review` before the next starts. Then ask the batch, once. Apply the answers. A bare "yes" to the batch resolves every entry to its recommended line.
 
-Run `feedback-loops` once after the last fix, not per fix.
+Call the Skill tool with `feedback-loops` once after the last fix, not per fix.
 
 Nothing here loops back to review: re-review is the user's call, per `receiving-review`; round N is one more run of this skill on the new report, with its own ledger.
 

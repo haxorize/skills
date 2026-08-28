@@ -42,7 +42,7 @@ Apply the gate per [references/adr-format.md](references/adr-format.md). With an
 
 ### 3. Draft
 
-Number, slug, and draft per [references/adr-format.md](references/adr-format.md); default form is 1-3 sentences, and optional sections are added only when they earn their place. Rationale prose follows the `/writing-for-humans` discipline's ADR-rationale register — load it at the first write if it isn't already live.
+Number, slug, and draft per [references/adr-format.md](references/adr-format.md); default form is 1-3 sentences, and optional sections are added only when they earn their place. Rationale prose follows the ADR-rationale register — call the Skill tool with `writing-for-humans` at the first write if it isn't already live.
 
 ### 4. Show and save
 

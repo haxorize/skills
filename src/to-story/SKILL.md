@@ -13,9 +13,9 @@ Use `to-feature` only when scope explicitly needs multiple stories beneath it.
 
 ## Publication constraints
 
-Run the `/writing-for-humans` and `/work-item-shape` skills — if you did not just see both `Launching skill:` lines, stop and load the missing one. Every published sentence follows the first; the body's shape follows the second.
+Call the Skill tool with `writing-for-humans`, then again with `work-item-shape` — if you did not just see both `Launching skill:` lines, stop and call the Skill tool with the missing one. Every published sentence follows the first; the body's shape follows the second.
 
-`/work-item-shape`'s internals rule covers every section here: `## Approach`, `## Layers touched`, `## Tests`, and all others describe behavior and design intent only.
+`work-item-shape`'s internals rule covers every section here: `## Approach`, `## Layers touched`, `## Tests`, and all others describe behavior and design intent only.
 
 ## Workflow
 
@@ -70,11 +70,11 @@ Before showing the user, check:
 - AC IDs: append-only — no reused IDs across active and `## Removed acceptance criteria`; gaps from removals preserved (no renumbering)
 - On ADO: the **two-field split** holds (step 6) — acceptance bullets are their own artifact
 - `## Layers touched` populated for each layer (`none` is a valid value; missing layers are not)
-- **Naming drift** vs. the parent's story map (where `Hierarchy: required`) — `/work-item-shape`'s rule, surfaced before publish
+- **Naming drift** vs. the parent's story map (where `Hierarchy: required`) — `work-item-shape`'s rule, surfaced before publish
 - User-story line matches step 6 classification (Connextra for user-facing, absent otherwise)
 - Documentation obligations, for stories that alter architecture or domain terms: ADR to write or amend, architecture-doc sections that go stale, glossary entries — each pinned as its own AC so a reviewer can't merge without them
 
-Then run the **Cold-reader pass** from the `/work-item-shape` discipline: the cold reader gets only the drafted body and answers "what would you build?".
+Then run the **Cold-reader pass** from the `work-item-shape` discipline: the cold reader gets only the drafted body and answers "what would you build?".
 
 ### 8. Present draft to user
 
@@ -107,4 +107,4 @@ Native dependency relations are an ADO feature, so this step runs only on ADO �
 
 ## Naming drift
 
-On publish or an `--update` patch, run `/work-item-shape`'s **Naming drift** rule against siblings (Stories under the same parent Feature, Tasks under this Story); the immediate fix it offers is the sibling's `--update`.
+On publish or an `--update` patch, run `work-item-shape`'s **Naming drift** rule against siblings (Stories under the same parent Feature, Tasks under this Story); the immediate fix it offers is the sibling's `--update`.

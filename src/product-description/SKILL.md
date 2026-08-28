@@ -75,10 +75,10 @@ Drafted from <source> commit <sha>.
 
 ## Writing a document
 
-Follow the `/writing-for-humans` discipline for the prose itself; the rules below are what this artifact adds.
+Call the Skill tool with `writing-for-humans` at the first write if it isn't already live; the rules below are what this artifact adds.
 
 - **Describe the experience, not the mechanism.** "The form stays disabled until the server answers", not "the mutation sets `isPending`". Mechanism goes in a `> Technical note:` block quote, and only where it changes what the user would otherwise expect.
-- **Use the repo's own words for the product.** `DOMAIN.md` owns the *product's* vocabulary; a term of art the description needs for the product and that file does not have is a gap in the model, so run the `/domain-modeling` discipline to add it there rather than coining a synonym here. The structural terms at the top of this skill — feature area, unit of interaction, variant axis, foundations, coverage index — are this skill's own scaffolding, not the product's, and never go into the repo's `DOMAIN.md`.
+- **Use the repo's own words for the product.** `DOMAIN.md` owns the *product's* vocabulary; a term of art the description needs for the product and that file does not have is a gap in the model, so call the Skill tool with `domain-modeling` to add it there rather than coining a synonym here. The structural terms at the top of this skill — feature area, unit of interaction, variant axis, foundations, coverage index — are this skill's own scaffolding, not the product's, and never go into the repo's `DOMAIN.md`.
 - **Link to the document that owns a fact instead of restating it.** Foundations own thresholds, numbers, and definitions; a second copy is a second answer the next edit will not update.
 - **Where the code and tests do not settle a behavior, write what they do settle, put the rest under Open questions, and move on.**
 - **State surprising behavior plainly, with the reason where the code gives one.** Something that looks like a defect is written as one under Open questions, never smoothed into a feature.

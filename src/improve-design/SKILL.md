@@ -11,7 +11,7 @@ This is an **advisory, read-only** pass: it explores, ranks findings, and files 
 
 ## Design vocabulary
 
-This skill speaks the `codebase-design` vocabulary — **module**, **interface**, **implementation**, **depth** (deep/shallow), **seam**, **adapter**, **leverage**, **locality** — and its principles (the deletion test, "the interface is the test surface," "one adapter = hypothetical seam, two = real," internal-seams-are-private). Run the `/codebase-design` skill for the full definitions — this whole pass *is* the application of its vocabulary and principles, so if you don't see a `Launching skill: codebase-design` line, stop and load it before continuing. Use those terms exactly in every suggestion; don't drift into "component," "service," "API," or "boundary."
+This skill speaks the `codebase-design` vocabulary — **module**, **interface**, **implementation**, **depth** (deep/shallow), **seam**, **adapter**, **leverage**, **locality** — and its principles (the deletion test, "the interface is the test surface," "one adapter = hypothetical seam, two = real," internal-seams-are-private). Call the Skill tool with `codebase-design` for the full definitions — this whole pass *is* the application of its vocabulary and principles, so if you don't see a `Launching skill: codebase-design` line, stop and call it again before continuing. Use those terms exactly in every suggestion; don't drift into "component," "service," "API," or "boundary."
 
 When framing a candidate, classify its dependencies using `codebase-design`'s **dependency categories** (in-process / local-substitutable / remote-but-owned / true-external) — the category determines how the deepened module is tested across its seam, and whether a port is justified. Tests at the deepened interface replace the old shallow-module tests; delete them, don't layer.
 
@@ -115,11 +115,11 @@ If grilling in Step 6 disqualified the candidate (e.g., revealed it isn't actual
 
 Before filing, check whether `DOMAIN.md` contains the recommended module's name. If not, add it now (create the file lazily if absent).
 
-Once the user approves, suggest running **`/to-story`** to synthesize and publish the Story — it owns the single issue template, tracker dispatch, and hierarchy handling. If the design was never grilled — the step 6 offer was skipped rather than declined — run a short grill via the `/grilling` skill first.
+Once the user approves, suggest running **`/to-story`** to synthesize and publish the Story — it owns the single issue template, tracker dispatch, and hierarchy handling. If the design was never grilled — the step 6 offer was skipped rather than declined — run a short grill first — call the Skill tool with `grilling`.
 
 Improve-design context to carry into the synthesis:
 
-- to-story's publication constraints bar interface signatures and rejected alternatives from the story body, so give them a durable home: if the grill produced no ADR, offer to record one via the `adr` skill before filing; failing that, attach the interface sketch as a comment on the filed story afterward, its prose following the `/writing-for-humans` discipline. Have `## Approach` reference that ADR — even one recorded just now in this session.
+- to-story's publication constraints bar interface signatures and rejected alternatives from the story body, so give them a durable home: if the grill produced no ADR, offer to record one via the `adr` skill before filing; failing that, attach the interface sketch as a comment on the filed story afterward — call the Skill tool with `writing-for-humans` at that write if it isn't already live. Have `## Approach` reference that ADR — even one recorded just now in this session.
 - Name, at module level, which existing shallow-module tests the new interface tests replace (step 6 lists them), so the story's `## Tests` section captures the cleanup as well as the new coverage.
 - If step 1 found an existing work item covering this candidate, suggest `/to-story --update <id>` (or add a comment via [references/tracker-dispatch.md](references/tracker-dispatch.md)) rather than filing a duplicate.
 - State the candidate's **success bar** in the story — the future change this deepening makes easier, and how you'd tell — and the keep-or-revert rule beside it: an executed refactor that doesn't clear its stated bar is a revert, not a keep. **Neutral is a revert** — sunk cost never argues for keeping, and kept complexity that bought nothing is paid for forever.

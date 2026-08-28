@@ -27,9 +27,16 @@
 # covering it needs a fixture pair with one shared basename and no group),
 # description length, angle brackets, name/directory agreement, the
 # requires: resolution check (existence and model-invoked), and router
-# coverage. The two-way requires check is covered in both directions for the
-# fixture forms (an imperative slash use; a quoted and an arrow-parenthesised
-# mention that must stay quiet); its header states what it does not reach.
+# coverage. The two-way requires check is covered in both directions across the
+# forms the matcher must reach — an imperative call, a gerund one, two names in
+# one clause, and a call on a user-invoked skill, each firing; a quoted, an
+# arrow-parenthesised and a fenced mention staying quiet. The
+# slash-on-model-invoked check is covered the same way, in a SKILL.md and in a
+# reference file (the wider sweep), with the two slash forms that are correct
+# unmasked — a user-invoked skill and a built-in — staying quiet. What that
+# buys, stated no larger than it is: those shapes cannot stop grading without
+# this script saying so. It is not a claim about shapes no fixture holds, and
+# lint-skills.sh's own header states what its scans never reach at all.
 
 set -uo pipefail
 
@@ -79,7 +86,16 @@ expect "global-rule Depends (uncited)" "global/rules/uncited-depends.md Depends:
 expect "global-rule Depends (directory only)" "global/rules/dir-only-cited.md Depends: names 'unused-dep' but src/unused-dep/ never cites the rule"
 expect "global-rule Depends (other rule's path)" "global/rules/other-path-cited.md Depends: names 'unused-dep' but src/unused-dep/ never cites the rule"
 expect "global-rule Depends (unmarked stem)" "global/rules/bare-stem-cited.md Depends: names 'unused-dep' but src/unused-dep/ never cites the rule"
-expect "two-way requires (undeclared)" "src/undeclared-dep/SKILL.md invokes \`/fixture-discipline\` but its requires: line does not declare"
+expect "two-way requires (undeclared)" "src/undeclared-dep/SKILL.md calls the Skill tool with \`fixture-discipline\` but its requires: line does not declare"
+# The gerund and the two-name clause are separate matcher reaches: the first name
+# grades 'calling', the second grades that the clause does not end at name one.
+expect "two-way requires (gerund form)" "src/call-forms/SKILL.md calls the Skill tool with \`fixture-discipline\` but its requires: line does not declare"
+expect "two-way requires (second name in one clause)" "src/call-forms/SKILL.md calls the Skill tool with \`broken-links\` but its requires: line does not declare"
+expect "Skill-tool call on a user-invoked skill" "src/call-forms/SKILL.md calls the Skill tool with \`quoted-dep\`, but 'quoted-dep' is user-invoked"
+expect "slash-on-model-invoked" "src/slash-on-model-invoked/SKILL.md writes \`/fixture-discipline\`, but 'fixture-discipline' is model-invoked"
+# The check sweeps past src/*/SKILL.md: a references/ template is where the convention
+# regresses unseen, because that is what a publisher writes from.
+expect "slash-on-model-invoked (reference file)" "src/slash-on-model-invoked/references/retired-form.md writes \`/fixture-discipline\`"
 expect "two-way requires (unused)" "src/unused-dep/SKILL.md declares requires: 'fixture-discipline' but the body never names it"
 
 reject "reference-link resolution" "references/real-reference.md"
@@ -90,7 +106,10 @@ reject "reference-link resolution" "references/exempt-fenced.md"
 reject "global-rule Depends" "global/rules/well-formed.md"
 reject "global-rule Depends (path form)" "global/rules/path-cited.md"
 # The trailing /SKILL.md is load-bearing: the uncited-depends FAIL names src/quoted-dep/ without it.
-reject "two-way requires (quoted and parenthesised forms)" "src/quoted-dep/SKILL.md"
+# One reject covers both scans' exemptions: quoted-dep carries every exempt shape in the
+# Skill-tool form and the slash form, plus the two slash forms that are correct unmasked
+# (a user-invoked skill, a built-in). Drop a mask or invert either slash guard and it fires.
+reject "two-way requires and slash-on-model-invoked (quoted, parenthesised and fenced forms)" "src/quoted-dep/SKILL.md"
 
 if [ "$status" -ne 1 ]; then
   echo "SELFTEST FAIL: lint exited $status against the fixture tree; a tree this broken must exit 1"

@@ -13,9 +13,9 @@ Tasks are always children of a User Story — never directly under a Feature. To
 
 ## Publication constraints
 
-Run the `/writing-for-humans` and `/work-item-shape` skills — if you did not just see both `Launching skill:` lines, stop and load the missing one. Every published sentence follows the first; the body's shape follows the second.
+Call the Skill tool with `writing-for-humans`, then again with `work-item-shape` — if you did not just see both `Launching skill:` lines, stop and call the Skill tool with the missing one. Every published sentence follows the first; the body's shape follows the second.
 
-`/work-item-shape`'s internals rule covers every section here, `## Layers touched` included. A Task's acceptance criteria live on the parent Story (`## Covers` points at them), so the checkable-criteria rules bind through the parent, not a body section.
+`work-item-shape`'s internals rule covers every section here, `## Layers touched` included. A Task's acceptance criteria live on the parent Story (`## Covers` points at them), so the checkable-criteria rules bind through the parent, not a body section.
 
 ## Workflow
 
@@ -50,7 +50,7 @@ Solo repos (no declaration) get vanilla behavior — no cross-repo annotations. 
 
 ### 4. Explore codebase and apply ADR gate
 
-If the work isn't already grounded in the conversation, explore the touched modules. Identify durable architectural decisions — for any that passes the **ADR gate** in `adr`, record via the standalone `/adr` skill before slicing.
+If the work isn't already grounded in the conversation, explore the touched modules. Identify durable architectural decisions — for any that passes the **ADR gate** in `adr`, offer to record it via `adr` before slicing, on the standalone path.
 
 ### 5. Draft vertical slices
 
@@ -66,7 +66,7 @@ Each slice is one Task. Prefer many thin Tasks over few thick ones.
 
 For each Task:
 
-- **Mark HITL or AFK** per the `/work-item-shape` readiness gate — the template's `## Mode` section carries the format and the AFK stop-condition line.
+- **Mark HITL or AFK** per the `work-item-shape` readiness gate — the template's `## Mode` section carries the format and the AFK stop-condition line.
 - **Flag blockers.** For a sibling-repo dependency, read the `Sibling repos` declaration and mark the Task `Blocked by: ../sibling-repo — contract change required`. For a dependency on another Task in this breakdown, note which Task blocks it; step 8 records it on the tracker.
 - **Name consistently across Tasks.** Route paths, query keys, model names, search-param keys must be identical in every Task that touches them.
 
@@ -81,11 +81,11 @@ Before publishing, check:
 - **Parent coverage** — every active parent Story AC ID appears in at least one Task's `## Covers` line
 - **Covers references resolve** — every AC ID in any Task's `## Covers` exists on the parent Story and is active (not in `## Removed acceptance criteria`); surface stale references for user decision before publishing
 - **No orphan Tasks** — every Task's `## Covers` names at least one AC ID; a Task covering nothing is unmapped work — tie it to a parent criterion or question why it exists
-- **Naming drift** — none across Tasks (the names enumerated in step 5), per `/work-item-shape`'s rule
+- **Naming drift** — none across Tasks (the names enumerated in step 5), per `work-item-shape`'s rule
 - **Domain language matches `DOMAIN.md`**
 - **No placeholders** — none of the literal kind (TBD/TODO) and none of the disguised kind: "add appropriate error handling", "write tests for the above", "similar to Task N" are placeholders wearing prose; each hides a decision the implementer will have to invent
 
-Then run the **Cold-reader pass** from the `/work-item-shape` discipline: the cold reader gets only the drafted Tasks plus the parent Story spec and answers, per Task, "what would you build?".
+Then run the **Cold-reader pass** from the `work-item-shape` discipline: the cold reader gets only the drafted Tasks plus the parent Story spec and answers, per Task, "what would you build?".
 
 ### 8. Publish in dependency order
 
@@ -106,7 +106,7 @@ For each Task, use the appropriate template:
 
 If a required CLAUDE.md field is missing, fail fast with a clear "add this to CLAUDE.md" message. A create call blocked on auth or policy follows `## When the write is blocked` in [references/publishing.md](references/publishing.md) — don't loop on auth. Apply the **transport safety** rules in [references/publishing.md](references/publishing.md) to every create and retry.
 
-On publish, run `/work-item-shape`'s **Naming drift** rule against sibling Tasks under the same parent; the immediate fix it offers is the sibling's `--update`.
+On publish, run `work-item-shape`'s **Naming drift** rule against sibling Tasks under the same parent; the immediate fix it offers is the sibling's `--update`.
 
 ## Maintenance modes
 
@@ -115,7 +115,7 @@ Two flows operate on already-published Tasks:
 - **`--update <task-id>`** — patch a single Task body in place. Skips tracker / parent / sibling-repo / codebase resolution. Body re-draft → self-review → patch.
 - **`--reconcile <story-id>`** — diff all child Tasks under a parent Story against the current Story spec, propose adds / closures / edits, apply approved changes. State-aware: closed Tasks leave alone, in-progress surface for decision, new are safe to revise.
 
-Both modes run `/work-item-shape`'s **Naming drift** rule; the reference below says how each folds the rename in.
+Both modes run `work-item-shape`'s **Naming drift** rule; the reference below says how each folds the rename in.
 
 GitHub reconcile distinguishes open-being-worked from open-not-started via an **In-progress signal** declared in CLAUDE.md's `Issue tracker:` block; ADO reads `System.State` directly. The declaration syntax and assignee-presence default live in the reference below.
 
