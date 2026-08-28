@@ -197,22 +197,25 @@ ln -s "$(pwd)/src/handoff" ~/.claude/skills/
 
 A bare `ln -s` links only that one directory — it does **not** resolve `requires:`. For a skill that declares dependencies (e.g. `grill-me` → `grilling`), use `install.sh` instead, or the skill will be missing the discipline that carries its job.
 
-### Auto-hoist on pull
+### Committed git hooks (opt-in)
 
-To re-run the install automatically after every `git pull`, opt this clone in once:
+Two hooks ship in `scripts/git-hooks/`: `post-merge` re-hoists after a pull, and `commit-msg` checks commit-message shape. One opt-in enables both:
 
 ```bash
 bash scripts/setup-hooks.sh
 ```
 
-This points the repo's `core.hooksPath` at the committed `scripts/git-hooks/` directory, whose `post-merge` hook names any pulled change under `global/hooks/`, runs the lint and hook self-tests (warning, never aborting — the merge has landed), then runs `install.sh` — so a pull that adds, renames, or removes a skill keeps `~/.claude/skills/` and `~/.claude/rules/` in step with no manual re-hoist. Git hooks can't be committed into `.git/hooks/` directly, so the hook body is version-controlled and the setup script wires it in; run it once per clone (it's local config, not committed).
+This points the repo's `core.hooksPath` at the committed `scripts/git-hooks/` directory. Its `post-merge` hook names any pulled change under `global/hooks/`, runs the lint and hook self-tests (warning, never aborting — the merge has landed), then runs `install.sh` — so a pull that adds, renames, or removes a skill keeps `~/.claude/skills/` and `~/.claude/rules/` in step with no manual re-hoist. Git hooks can't be committed into `.git/hooks/` directly, so the hook body is version-controlled and the setup script wires it in; run it once per clone (it's local config, not committed).
 
-**Trust trade-off:** enabling this makes `git pull` **auto-run committed scripts** — the `post-merge` hook and, through it, `scripts/lint-skills.sh`, `scripts/lint-selftest.sh`, the hook self-tests (which invoke the PreToolUse hooks with synthetic payloads), and `install.sh` — on every merge, under your user, with no further prompt. Any hook a future commit adds under `scripts/git-hooks/` runs the same way. This is the standard cost of committed git hooks; only opt in on a repo whose commits you trust. The bare `bash scripts/install.sh` above stays available if you'd rather re-hoist by hand.
+Its `commit-msg` hook rejects a commit whose message breaks the deterministic half of the house style — subject cap and trailing period, a Conventional Commits prefix this repo does not declare, a missing blank separator, a code fence, a `Summary`/`Changes`/`Testing` heading, or a body line past 72 columns. The imperative-opener check warns and lets the commit through. **Opting in for auto-hoist therefore also starts rejecting commit messages** — that is the half of this opt-in most likely to surprise you. The hook checks shape only; register is not machine-checkable and still needs a read.
+
+**Trust trade-off:** enabling this makes `git pull` **auto-run committed scripts** — the `post-merge` hook and, through it, `scripts/lint-skills.sh`, `scripts/lint-selftest.sh`, the hook self-tests (which invoke the PreToolUse hooks with synthetic payloads), `scripts/commit-msg-selftest.sh`, and `install.sh` — on every merge, under your user, with no further prompt. Any hook a future commit adds under `scripts/git-hooks/` runs the same way. This is the standard cost of committed git hooks; only opt in on a repo whose commits you trust. The bare `bash scripts/install.sh` above stays available if you'd rather re-hoist by hand.
 
 Caveats:
 
 - `post-merge` does **not** fire on `git pull --rebase` — after a rebase pull, run `bash scripts/install.sh` yourself.
 - The hook fires on **any** merge that updates the tree, including a plain `git merge <branch>`, not only `git pull`.
+- `commit-msg` skips merges, reverts, and `fixup!`/`squash!` messages, and exempts trailer lines and unbreakable long tokens from the wrap check.
 
 ## Notes
 

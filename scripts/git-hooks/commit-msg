@@ -1,0 +1,135 @@
+#!/usr/bin/env bash
+set -uo pipefail
+
+# commit-msg checks a commit message against the deterministic half of the
+# house style in src/committing/references/commit-style.md.
+#
+# Why a hook at all, when the style is already written down: `committing` is
+# model-invoked, so nothing can gate its load the way a user-invoked
+# orchestrator gates a dependency — there is no caller to put the gate in. The
+# reference file is reached by two soft steps (the model reaches for the skill,
+# then follows the link), and a miss is invisible until review. This hook is
+# the watcher that a model-invoked skill cannot carry: it rejects at the moment
+# of the mistake and names the reference in the rejection, so the block is also
+# the load instruction. Same shape as review-receipt, one layer down.
+#
+# WHAT IT CANNOT CHECK, and must never be read as covering: whether the subject
+# is one logical change, whether the body's "why" was non-obvious enough to
+# need writing, the register, and every entry in writing-for-humans'
+# tell-catalog.md. Those need a reader. A green run here is a claim about
+# shape, never about prose — do not prune commit-style.md against it.
+#
+# Blocks on the exact rules. Warns on the imperative-opener check, which is a
+# wordlist heuristic and will not always be right.
+#
+# Skipped entirely: merges, reverts, fixup!/squash!, and an empty message
+# (git aborts that one itself).
+#
+# Enable with: bash scripts/setup-hooks.sh (points core.hooksPath here).
+
+msg_file="${1:?commit-msg: no message file}"
+[ -f "$msg_file" ] || exit 0
+
+STYLE="src/committing/references/commit-style.md"
+fail=0
+warn=0
+
+# Git's own comment lines and the scissors block are not the message. Git's
+# comment form is a lone '#' or '# text', so the pattern stops short of '##' —
+# stripping every '#' line would delete the markdown headings this hook exists
+# to reject. A level-one '# Summary' is the one ambiguous case and is treated
+# as a git comment, which is the safe way round: a stray comment must never
+# abort a commit.
+body_all="$(awk '/^diff --git /{exit} /^##/{print;next} /^#/{next} {print}' "$msg_file")"
+
+# Subject is the first non-blank line.
+subject="$(printf '%s\n' "$body_all" | grep -m1 -v '^[[:space:]]*$' || true)"
+[ -n "$subject" ] || exit 0
+
+case "$subject" in
+  Merge\ *|Revert\ *|fixup!*|squash!*|amend!*) exit 0 ;;
+esac
+
+say() { echo "commit-msg: $1" >&2; }
+
+# --- Subject ---------------------------------------------------------------
+
+n=${#subject}
+if [ "$n" -gt 72 ]; then
+  say "FAIL subject is $n chars, over the 72 hard cap (aim 50) — $STYLE '## The subject'"
+  fail=1
+fi
+
+case "$subject" in
+  *.) say "FAIL subject ends with a period — $STYLE '## The subject'"; fail=1 ;;
+esac
+
+# Conventional Commits prefix, unless the repo declares that convention.
+declares_cc=0
+for f in .commitlintrc .commitlintrc.json .commitlintrc.yml .commitlintrc.yaml \
+         .commitlintrc.js commitlint.config.js commitlint.config.cjs commitlint.config.mjs \
+         commitlint.config.ts .czrc; do
+  [ -e "$f" ] && declares_cc=1
+done
+if [ "$declares_cc" -eq 0 ] &&
+   printf '%s' "$subject" | grep -qE '^[a-z]+(\([a-zA-Z0-9_/.-]+\))?!?: '; then
+  say "FAIL subject carries a Conventional Commits type prefix, which this repo does not declare — $STYLE '## The subject'"
+  fail=1
+fi
+
+# Imperative opener — heuristic, so a warning rather than a block. The probe in
+# the style doc is "If applied, this commit will ___".
+first_word="$(printf '%s' "$subject" | awk '{print $1}' | tr -d ',:')"
+case "$first_word" in
+  Added|Adds|Adding|Updated|Updates|Updating|Fixed|Fixes|Fixing|Changed|Changes|Changing|\
+  Removed|Removes|Removing|Created|Creates|Creating|Deleted|Deletes|Deleting|\
+  Refactored|Refactors|Refactoring|Implemented|Implements|Implementing|\
+  Improved|Improves|Improving|Bumped|Bumps|Bumping|Moved|Moves|Moving|\
+  Renamed|Renames|Renaming|Tagged|Tags|Tagging)
+    say "WARN subject opens with '$first_word' — an imperative verb leads, so it completes 'If applied, this commit will ___' ($STYLE)"
+    warn=1 ;;
+esac
+
+# --- Body ------------------------------------------------------------------
+
+# Everything after the subject line, with the blank separator dropped.
+body="$(printf '%s\n' "$body_all" | awk 'NR > 1' | sed -e '1{/^[[:space:]]*$/d;}')"
+
+if [ -n "$(printf '%s' "$body" | tr -d '[:space:]')" ]; then
+  # A body must be separated from the subject by a blank line.
+  second="$(printf '%s\n' "$body_all" | awk 'NR == 2')"
+  if [ -n "$(printf '%s' "$second" | tr -d '[:space:]')" ]; then
+    say "FAIL no blank line between subject and body — $STYLE '## The body'"
+    fail=1
+  fi
+
+  if printf '%s\n' "$body" | grep -qE '^[[:space:]]*```'; then
+    say "FAIL body contains a code fence — $STYLE '## The body' ('No code fences')"
+    fail=1
+  fi
+
+  if printf '%s\n' "$body" | grep -qiE '^[[:space:]]*#{1,6}[[:space:]]*(summary|changes|testing|test plan|notes?)[[:space:]]*:?[[:space:]]*$'; then
+    say "FAIL body uses a Summary/Changes/Testing heading — $STYLE '## The body' (order the body without headings)"
+    fail=1
+  fi
+
+  # Wrap at 72. A trailer, and a line with no space at or before column 72
+  # (an unbreakable URL or token), cannot wrap and is exempt.
+  while IFS= read -r line; do
+    [ ${#line} -le 72 ] && continue
+    printf '%s' "$line" | grep -qE '^[A-Za-z][A-Za-z-]*: ' && continue
+    printf '%s' "$line" | cut -c1-73 | grep -q ' ' || continue
+    say "FAIL body line exceeds 72 columns: ${line:0:60}… — $STYLE '## The body'"
+    fail=1
+    break
+  done <<< "$body"
+fi
+
+if [ "$fail" -ne 0 ]; then
+  say "commit rejected. Fix the message, or read $STYLE."
+  say "This checks message SHAPE only — register and the tell catalog still need a read."
+  exit 1
+fi
+
+[ "$warn" -ne 0 ] && say "warnings only; commit allowed."
+exit 0

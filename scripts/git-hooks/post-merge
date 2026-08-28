@@ -37,7 +37,7 @@ fi
 # install.sh derives it — every global/hooks/*.sh with an `# Install note:`
 # header line — so a hook that lands without a selftest is named here, not
 # silently ungated.
-gates="scripts/lint-skills.sh scripts/lint-selftest.sh"
+gates="scripts/lint-skills.sh scripts/lint-selftest.sh scripts/commit-msg-selftest.sh"
 for h in $(grep -l '^# Install note: ' "$repo_root"/global/hooks/*.sh); do
   gates="$gates global/hooks/$(basename "$h" .sh)-selftest.sh"
 done
