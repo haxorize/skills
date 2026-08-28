@@ -37,7 +37,7 @@ Hooks are wired in `~/.claude/settings.json`, and **`install.sh` never edits tha
 bash scripts/install.sh
 ```
 
-The installer symlinks `rules/*.md` into `~/.claude/rules/` additively — it prunes only links that point into this repo's `global/`, and never touches `~/.claude/CLAUDE.md` — then prints the `settings.json` block for each hook until `settings.json` names it. The opt-in post-merge hook (`bash scripts/setup-hooks.sh`, see the repo README) re-runs the installer after every merging pull (not `pull --rebase`), so the rules track the repo.
+The installer symlinks `rules/*.md` into `~/.claude/rules/` additively — it prunes only links that point into this repo's `global/`, and never touches `~/.claude/CLAUDE.md` — then prints the `settings.json` block for each hook until `settings.json` names it. The opt-in git hooks (`bash scripts/setup-hooks.sh`, see the repo README) re-run the installer after every merging pull (not `pull --rebase`), so the rules track the repo — and the same opt-in enables a `commit-msg` hook that rejects a commit message breaking the house style.
 
 To wire a hook, paste the printed block into `~/.claude/settings.json` under `hooks` (one entry per hook; the other hooks take the same shape):
 

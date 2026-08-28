@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# One-time, per-clone opt-in: point this repo's hooks at the committed
-# scripts/git-hooks/ directory. From then on `git pull` runs the post-merge
-# hook: the lint and hook self-tests, then scripts/install.sh. Hooks themselves can't be committed to
-# .git/hooks/, so we version-control the hook body and set core.hooksPath here.
+# One-time, per-clone opt-in: point this repo's git hooks at the committed
+# scripts/git-hooks/ directory. Two git hooks live there, and this enables
+# both: post-merge, which runs the gates and re-hoists after a merging pull,
+# and commit-msg, which rejects a commit message that breaks the deterministic
+# half of the house style. Git hooks can't be committed to .git/hooks/, so we
+# version-control the hook bodies and set core.hooksPath here.
 #
 # TRUST NOTE: after this runs, any hook committed under scripts/git-hooks/ —
 # now or added by a future pulled commit — executes automatically on its git
@@ -26,5 +28,10 @@ fi
 git config --local core.hooksPath "$hooks_path"
 
 echo "core.hooksPath → $hooks_path"
-echo "Done. 'git pull' now runs the post-merge hook: lint and hook self-tests, then install.sh (re-hoist)."
-echo "Note: not triggered by 'git pull --rebase' — run 'bash scripts/install.sh' manually after a rebase pull."
+echo "Done. Two git hooks are now live in this clone:"
+echo "  post-merge  — after a merging pull: runs the gates, then install.sh (re-hoist)."
+echo "                Not triggered by 'git pull --rebase' — run install.sh yourself after one."
+echo "  commit-msg  — rejects a commit whose message breaks the exact rules in"
+echo "                src/committing/references/commit-style.md. This is the half of"
+echo "                the opt-in most likely to surprise you: your next commit here"
+echo "                can be blocked. The rejection names the rule and the file."
