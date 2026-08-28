@@ -20,7 +20,11 @@
 # path, and the two well-formed forms — backticked stem, and path — that must
 # stay quiet). NOT covered, so a clean
 # run here is not a claim about them: the 200-line caps, sibling byte-identity
-# (skipped under LINT_ROOT — the registry names this repo's own paths),
+# (skipped under LINT_ROOT — the registry names this repo's own paths), the
+# sibling-group MEMBERSHIP check (it does run against the fixture tree, but the
+# fixtures hold no two reference files sharing a basename, so its `uniq -d`
+# input is always empty and the check is structurally incapable of firing —
+# covering it needs a fixture pair with one shared basename and no group),
 # description length, angle brackets, name/directory agreement, the
 # requires: resolution check (existence and model-invoked), and router
 # coverage. The two-way requires check is covered in both directions for the

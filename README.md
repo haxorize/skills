@@ -75,7 +75,7 @@ The route most work travels: **`/grill-me`** → **`/to-feature` / `/to-story` /
 - **`improve-design`** — Read-only design-quality review of the whole codebase: surfaces architectural friction and proposes deeper module interfaces as a prioritized, vetted report.
 - **`harden-domain`** — Sweep the codebase to refresh `DOMAIN.md`. Deliberate sweep mode (inline domain capture during grilling lives in `grill-me`).
 - **`backfill-adrs`** — Sweep recent git history for un-recorded architectural decisions and write the ones that pass the gate.
-- **`verify-docs`** — Check whether a document's claims still hold, against the code and tests it describes or the sources a derived document was distilled from, with per-claim verdicts and fixes. The prose-drift sibling of `harden-domain` (vocabulary) and `backfill-adrs` (decisions).
+- **`verify-docs`** — Check whether a document's claims still hold, against the code and tests it describes, the running product it describes, or the sources a derived document was distilled from, with per-claim verdicts and fixes. The prose-drift sibling of `harden-domain` (vocabulary) and `backfill-adrs` (decisions).
 - **`delete-dead-code`** — A deliberate whole-repo dead-code sweep: find what nothing calls, tier it SAFE / CAUTION / DANGER, and remove it one test-verified deletion at a time — the removals `implement` parks, `improve-design` never makes, and `/simplify` scopes to a diff.
 
 ### Crossing sessions & prototyping
@@ -140,7 +140,8 @@ The route most work travels: **`/grill-me`** → **`/to-feature` / `/to-story` /
 - **`writing-for-agents`** — Conventions for documents that steer agent process — skill bodies, `CLAUDE.md`, reference files — prose whose job is to be obeyed.
 - **`writing-for-humans`** — Sentence-level clarity for prose that transfers understanding — tickets, ADR rationale, summaries, commit and PR prose — with per-artifact registers and the named AI-tell catalog.
 - **`work-item-shape`** — What a well-formed work-item body *is* (outcome goal, checkable criteria, readiness call, structural sizing, surfaced ambiguity), any tier, any tracker. In repos wired for the pipeline it routes creation asks to the `to-*` publishers instead of drafting lookalikes.
-- **`doc-claims`** — Judging a document's claims against what it answers to — the code and tests, or the sources a derived doc came from — one verdict per claim (PASS/FAIL/UNSUPPORTED/STALE), with the source map and the both-directions drift rule for derived documents. Declared by `/verify-docs` and the repo-local `sweep-corpus`.
+- **`doc-claims`** — Judging a document's claims against what it answers to — the code and tests, the running product, or the sources a derived doc came from — one verdict per claim (PASS/FAIL/UNSUPPORTED/STALE), with the source map and the both-directions drift rule for derived documents. Declared by `/verify-docs` and the repo-local `sweep-corpus`.
+- **`product-description`** — The outside-in behavior record of a product — what the user sees, what they can do, and exactly what happens when they act, including when they abandon halfway. One document per feature area on one shared skeleton so gaps show by comparison, drafted from code and tests and then verified against the running product, with a coverage index that never says `verified` on a read. Owns the interrupt taxonomy. Declared by `/onboard-me`.
 
 ### Domain
 
