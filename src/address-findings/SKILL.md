@@ -33,7 +33,7 @@ Open the pass with one line — the file you picked when no path was given, and 
 
 Fix the mechanical set in that order, each fix verified per `receiving-review` before the next starts. Then ask the batch, once. Apply the answers. A bare "yes" to the batch resolves every entry to its recommended line.
 
-Call the Skill tool with `feedback-loops` once after the last fix, not per fix.
+Call the Skill tool with `feedback-loops` once after the last fix, not per fix — if you don't see a `Launching skill: feedback-loops` line, stop and call it again.
 
 Nothing here loops back to review: re-review is the user's call, per `receiving-review`; round N is one more run of this skill on the new report, with its own ledger.
 

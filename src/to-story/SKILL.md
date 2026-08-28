@@ -13,7 +13,7 @@ Use `to-feature` only when scope explicitly needs multiple stories beneath it.
 
 ## Publication constraints
 
-Call the Skill tool with `writing-for-humans`, then again with `work-item-shape` — if you did not just see both `Launching skill:` lines, stop and call the Skill tool with the missing one. Every published sentence follows the first; the body's shape follows the second.
+Call the Skill tool with `writing-for-humans`, then again with `work-item-shape` — if you did not just see a `Launching skill: work-item-shape` line, stop and call it again. Every published sentence follows the first; the body's shape follows the second.
 
 `work-item-shape`'s internals rule covers every section here: `## Approach`, `## Layers touched`, `## Tests`, and all others describe behavior and design intent only.
 

@@ -13,7 +13,7 @@ Tasks are always children of a User Story — never directly under a Feature. To
 
 ## Publication constraints
 
-Call the Skill tool with `writing-for-humans`, then again with `work-item-shape` — if you did not just see both `Launching skill:` lines, stop and call the Skill tool with the missing one. Every published sentence follows the first; the body's shape follows the second.
+Call the Skill tool with `writing-for-humans`, then again with `work-item-shape` — if you did not just see a `Launching skill: work-item-shape` line, stop and call it again. Every published sentence follows the first; the body's shape follows the second.
 
 `work-item-shape`'s internals rule covers every section here, `## Layers touched` included. A Task's acceptance criteria live on the parent Story (`## Covers` points at them), so the checkable-criteria rules bind through the parent, not a body section.
 
