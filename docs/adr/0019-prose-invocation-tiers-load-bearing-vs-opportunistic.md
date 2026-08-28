@@ -1,5 +1,7 @@
 # Prose invocation is two-tier; load-bearing delegation is User-invoked only
 
+> **Amended by [ADR-0066](0066-skill-tool-form-replaces-slash-for-model-fired-invocations.md):** the model-facing half of "slash every real invocation" is inverted — a model-fired reference now names the Skill tool, and `/name` is reserved for a command a human types. The human-suggestion half stands. That record also names the ungated soft-delegation tier and mechanizes the corollary this one left to authoring discipline.
+
 Cross-skill **Prose invocation** (ADR-0016) has no hard primitive — the model reads the invoking skill's body and decides to call the `Skill` tool, so a required skill can silently fail to load and leave the caller running a half-remembered discipline. We split prose invocation into two tiers by the severity of that miss, and phrase each tier to match:
 
 - **Load-bearing delegation** — the target carries the caller's whole job (e.g. `grill-and-record` → `grilling`, `implement` → `tdd`). It gets an explicit imperative plus a **load gate** ("Run the `/grilling` skill now; if you did not just see it load, stop and load it"). It may live **only in a User-invoked Orchestrator**, where the human who typed the command watches the `Launching skill:` line and catches a non-load.
