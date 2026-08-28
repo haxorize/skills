@@ -8,7 +8,7 @@ argument-hint: "[<topic>] — bare re-pitches the last answer; a topic explains 
 
 # Explain
 
-Call the Skill tool with `writing-for-humans` now — if you did not just see a `Launching skill: writing-for-humans` line, stop and call it again before writing either branch.
+Call the Skill tool with `writing-for-humans` now — the register change *is* the intervention here and not the finish, in both branches: on a re-pitch it is what differs from the answer that just failed, and on a cold open it is what keeps the explanation from being the wall the re-pitch exists to take down. If you did not just see a `Launching skill: writing-for-humans` line, stop and call it again before writing either branch.
 
 Wait — the human stopped following. Re-pitch what you were explaining: supply the piece of context they were missing, write in `writing-for-humans`' plain descriptive register, and use the ubiquitous language from `DOMAIN.md`. With no `DOMAIN.md`, the re-pitch still works — you drop only the vocabulary instruction.
 

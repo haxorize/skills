@@ -44,4 +44,4 @@ Summarize the glossary inline in the conversation. Suggest: "Consider adding a r
 
 ## Re-running
 
-When invoked again in the same conversation, re-sweep the conversation and codebase for new terms, revise existing definitions whose understanding has evolved (don't just append), and re-run step 4's write — call the Skill tool with `domain-modeling` again if it isn't still live — to fold them into the existing `DOMAIN.md`.
+When invoked again in the same conversation, re-sweep the conversation and codebase for new terms, revise existing definitions whose understanding has evolved (don't just append), and re-run step 4's write to fold them into the existing `DOMAIN.md` — call the Skill tool with `domain-modeling` again — if you don't see a `Launching skill: domain-modeling` line, stop and call it again before continuing.

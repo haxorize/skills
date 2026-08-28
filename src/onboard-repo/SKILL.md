@@ -7,7 +7,7 @@ requires: writing-for-agents
 
 # Onboard Repo
 
-Call the Skill tool with `writing-for-agents` now — `CLAUDE.md` is prose an agent obeys; if you did not just see a `Launching skill: writing-for-agents` line, stop and call it again before writing a block.
+Call the Skill tool with `writing-for-agents` before writing a block — `CLAUDE.md` is prose an agent obeys.
 
 One sitting turns a repo the suite has never seen into one every skill can read without asking. The skills degrade when the blocks are missing (the publishers bootstrap-on-ask, `committing` treats an absent `Landing:` as nothing pre-authorised), so this is a convenience, never a prerequisite — run it once per repo; a block that later goes stale is edited by hand, since this skill never rewrites one.
 
