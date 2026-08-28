@@ -99,4 +99,7 @@ The check itself is a suspect: a test that cannot fail reports green forever and
 
 When the cycle's behaviors are built and refactored, close the loop: run the `/feedback-loops` skill once to finalize mechanically. (Under `implement`, `implement` drives review and this close-the-loop pass; the nudge here keeps standalone `tdd` finishing cleanly on its own.)
 
-Tests prove code-correctness, not feature-correctness. If the slice touched behavior you couldn't actually run in a test — a UI flow, an external integration, a real ingest — say so and eyeball it (run the project's dev command) before declaring done, or suggest the user run `/validate-behavior` for a contract-driven check of the running product.
+Tests prove code-correctness, not feature-correctness. When the slice touched behavior no test actually ran — a UI flow, an external integration, a real ingest — name it before declaring done and take one of two branches; the failure here is closing the cycle with the gap unnamed because the suite is green.
+
+- **Eyeball it** — run the project's dev command, exercise the path, and say in the close what you saw and what you did not.
+- **Offer `/validate-behavior`** where being wrong is expensive. It is source-blind against a contract fixed before the run, so it catches a product that only *reports* success — which the person who just wrote the code cannot catch by looking. Say what it costs, so they can judge rather than be sold: a contract written first by someone who is not the checker, and a session sharing none of this one's context. It is user-invoked, so this is a suggestion they act on, never a load.
