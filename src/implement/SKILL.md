@@ -39,7 +39,7 @@ If an **unplanned failure** turns up mid-build that you can't quickly explain �
 
 ## Park what you notice
 
-Out-of-scope observations made mid-slice — a smell, a missing test, a refactor itch — get **parked**, never fixed inline: add a row to the **parked ledger** in the audit form's shape and hold the slice's line. Pre-existing dead code is parked; what this slice orphaned — a function, import, or test nothing calls once the change lands — is removed in the slice. A refactor you went ahead with because it felt natural is a judgment-calls row (`my call`), so the reviewer sees the scope it took. At close the ledger is surfaced inside the completion audit — "noticed but didn't touch" — and doubles as the change's scope declaration: what you deliberately left alone. Filing a parked item is the user's ask — `to-bug` for a defect, `to-tasks` or `to-story` otherwise, where the repo has them; the `Landing:` defect policy in `CLAUDE.md` says what a found defect does by default.
+Out-of-scope observations made mid-slice — a smell, a missing test, a refactor itch — get **parked**, never fixed inline: add a row to the **parked ledger** in the audit form's shape and hold the slice's line. Pre-existing dead code is parked; what this slice orphaned — a function, import, or test nothing calls once the change lands — is removed in the slice. A refactor you went ahead with because it felt natural is a judgment-calls row (`my call`), so the reviewer sees the scope it took. At close the ledger is surfaced inside the completion audit — "noticed but didn't touch" — and doubles as the change's scope declaration: what you deliberately left alone. It opens with the rows the last slice on this ticket parked, each carried forward or given the exit the audit form defines; a ledger that starts empty on a ticket whose prior slice parked rows has resolved them by omission, which is the one exit that is not available. Filing a parked item is the user's ask — `to-bug` for a defect, `to-tasks` or `to-story` otherwise, where the repo has them; the `Landing:` defect policy in `CLAUDE.md` says what a found defect does by default.
 
 ## Close the loop
 
@@ -55,7 +55,7 @@ Then run the **completion audit** against the loaded ticket: treat done as unpro
 
 If any decision — a listed judgment call or not — turned on a choice that passes the **ADR gate** in `adr`, offer to record it via `adr` — synthesize the decision from what you just built and let the user approve or discard, rather than asking a blank yes/no.
 
-Most slices won't clear the gate; don't manufacture an ADR for an obvious or easily-reversed choice. `feedback-loops`' mechanical doc-sync does **not** cover this — recording rationale is judgment, which is why it delegates to `adr`.
+Most slices won't clear the gate; don't manufacture an ADR for an obvious or easily-reversed choice — but say the gate's result either way, in its own words, so a stated zero is on the record. `feedback-loops`' mechanical doc-sync does **not** cover this — recording rationale is judgment, which is why it delegates to `adr`.
 
 ## Suggest review, then ship
 

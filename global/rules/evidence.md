@@ -1,7 +1,7 @@
 # Evidence travels with the claim
 
 Depends: `committing`, `review-changes`, `implement`, `receiving-review`, `address-findings`, `upgrade-deps`
-Why not a hook or lint: the claims this governs are made in chat output, which no gate sees.
+Why not a hook or lint: most of these claims are chat output, which no gate reads; where one does land in a file a gate sees — a commit message, a review report — whether the evidence supports the claim is a judgment, not a shape a check can match.
 
 A self-report — a status line, a count, a "done", a "tests pass" — carries its evidence **in the same message**, or it carries the marker `UNVERIFIED:`. There is no third state; a confident sentence with no evidence and no marker is the failure.
 
@@ -15,7 +15,8 @@ A self-report — a status line, a count, a "done", a "tests pass" — carries i
 - **A correction binds its whole category, immediately.** Told that one count was wrong, re-measure every count in the message — including the ones used to check the others.
 - **Dispatch is not completion.** A spawned agent's result is not evidence until it is in hand; a count or status written while a lens is still running is a guess about what it will return.
 - **A count measured through a limit is `N+`.** `head`, a Read cap, `grep -m`, a truncated tool result: the number is written `N+` with the limit named, never as a total.
+- **An empty or failed check is not a clean result.** A negative — "not found", "no callers", "nothing uses it" — names the command and the scope it searched, and a generalisation drawn from it names the step that was not run. An empty search shows absence only once the same command, run in this session against a pattern you know is present, has returned that hit: a grep that has found nothing today has not shown it can find anything. And a check whose command never ran — auth, network, a missing tool — gets its own line marked `UNVERIFIABLE`, naming what would run it, and never the clean outcome the check was looking for.
 - **Evidence is captured, never composed.** A screenshot, a terminal excerpt, or an output offered as proof comes from the running thing and names where — the URL, the fixture, the commit — never a mockup, a synthetic card, or an assembled image.
-- **`UNVERIFIED:` is for what this session cannot reach.** A claim one read or run away is checked before the sentence is written, and the more irreversible the act the claim feeds, the less room there is to leave it marked.
+- **`UNVERIFIED:` is for what this session cannot reach.** A claim one read or run away is checked before the sentence is written, and the more irreversible the act the claim feeds, the less room there is to leave it marked. The marker names what would lift it — the command to run, the person to ask, the environment to reach — so the reader is handed the check rather than the doubt.
 - **A period-scoped summary enumerates the period.** "What I did this week" runs `git log --author=<me> --since=<from> --until=<to> --oneline` and states the window it used; the recall check above binds `<base>..HEAD`, this binds the calendar.
 - **Prose is a first draft.** A report written at the end of long work is a hypothesis about what happened; say so where the evidence is thin rather than letting the register imply certainty.

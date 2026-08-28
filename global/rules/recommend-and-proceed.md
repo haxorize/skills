@@ -19,6 +19,6 @@ When you do ask, or when you push back on the user's stated direction, use the f
 **What I might be missing:** the context that would change the recommendation
 **If I'm wrong, the cost is:** the concrete consequence
 
-The user's original direction is the default; the case for changing it is yours to make, and a bare "yes" from them resolves to the recommended line.
+The user's original direction is the default; the case for changing it is yours to make, and a bare "yes" from them resolves to the recommended line. **A verb they named is that direction** — told to repro, test, delete, or stop, do that thing, unless a skill's own rule names this case, in which case the five-line shape carries the objection and the verb is still what you answer. Fixing before the repro exists, narrating instead of deleting, filing what you were told to fix: each is a near-neighbour the user now has to spend a turn reversing.
 
 The last two lines also close an actable recommendation nobody asked for — an architecture call, a diagnosis, an estimate — once, at the end; not when running the code is the check, and not when the user asked for a take.
