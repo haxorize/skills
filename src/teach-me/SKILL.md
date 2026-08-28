@@ -15,7 +15,7 @@ The user is learning a topic across multiple sessions, and you are their teacher
 ## Workspace resolution
 
 - The **learning root** defaults to `~/learning/`. On the very first run ever, confirm the root with the user and persist the choice as a user memory; read it from memory thereafter.
-- `/teach-me <topic>` — kebab-case the topic into a slug and resolve `<root>/<slug>/`. Existing workspace → resume (see Session flow). New → mission intake.
+- `/teach-me <topic>` — kebab-case the topic into a slug and resolve `<root>/<slug>/`. Existing workspace → resume (see Session flow). New → mission intake. New, and the topic is a whole codebase the learner cannot yet name a goal in → `/onboard-me` first (see Mission intake); no workspace is created for it here.
 - `/teach-me` bare — list the workspaces under the root, each with a one-line "where you left off" derived from its `PROGRESS.md` and latest learning record; the user picks.
 
 ## The learning workspace
@@ -23,6 +23,8 @@ The user is learning a topic across multiple sessions, and you are their teacher
 ```
 <root>/<slug>/
 ├── MISSION.md            # the grilled "why" — grounds every lesson
+├── KT-MAP.md             # written by /onboard-me, not by this skill — present only where a
+│                         # knowledge-transfer session came first; read it, never rewrite it
 ├── RESOURCES.md          # high-trust sources
 ├── PROGRESS.md           # per-concept review state + open threads — input to every session
 ├── NOTES.md              # the user's teaching preferences, your working notes
@@ -33,11 +35,11 @@ The user is learning a topic across multiple sessions, and you are their teacher
 └── assets/               # reusable lesson components; stylesheet first
 ```
 
-Formats: the four text files at [references/workspace-format.md](references/workspace-format.md); the topic `DOMAIN.md` uses the `domain-modeling` lens's own format (see The topic glossary).
+Formats: the four text files at [references/workspace-format.md](references/workspace-format.md); the topic `DOMAIN.md` uses the `domain-modeling` lens's own format (see The topic glossary). `KT-MAP.md` has no format here — `onboard-me` owns it. A workspace created by a knowledge-transfer session is keyed on the repo's directory name rather than a topic slug and has no `MISSION.md` until the first topic is grilled; both are expected, not damage.
 
 ## Mission intake (new topic, or the mission drifted)
 
-Run the `/grilling` skill now — if you did not just see a `Launching skill: grilling` line, stop and load it before the first question. Grill the mission, not the topic: why this, to be able to do what, on what horizon, and what the learner already knows. A mission like "learn as much as possible" fails the grilling session; sharpen until a lesson could be judged against it. Write `MISSION.md`, then gather sources before teaching anything: an External topic needs `RESOURCES.md` populated with high-trust sources; a Repo-grounded topic's textbook is the codebase itself, so confirm the repo and note its glossary and decision log as the sources instead.
+Run the `/grilling` skill now — if you did not just see a `Launching skill: grilling` line, stop and load it before the first question. Grill the mission, not the topic: why this, to be able to do what, on what horizon, and what the learner already knows. A mission like "learn as much as possible" fails the grilling session; sharpen until a lesson could be judged against it. Where the topic is a codebase and the learner cannot name what they want to be able to do in it, sharpening has nothing to work from — stop the intake and send them to `/onboard-me`, whose **KT map** names the topics; take the one they come back with and grill that. Write `MISSION.md`, then gather sources before teaching anything: an External topic needs `RESOURCES.md` populated with high-trust sources; a Repo-grounded topic's textbook is the codebase itself, so confirm the repo and note its glossary and decision log as the sources instead.
 
 Missions change as understanding grows — that's normal. Confirm the change with the user and rewrite `MISSION.md`.
 

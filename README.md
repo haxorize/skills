@@ -49,6 +49,9 @@ The route most work travels: **`/grill-me`** → **`/to-feature` / `/to-story` /
 ### First contact
 
 - **`onboard-repo`** — Wire a repo for the suite in one sitting: the `Issue tracker:`, `Landing:`, and `## Registry` blocks, loop commands, convention-skill roles, and the `DOMAIN.md` / `docs/solutions/` seeds, each written only where nothing exists yet. Prints the hook snippet; never edits `settings.json`.
+- **`onboard-me`** — A knowledge-transfer session over an unfamiliar repo: evidence-tagged findings, a KT map of what is still dark, one rung per turn, and each topic handed to the learner's Learning workspace. Writes nothing itself, and the map lives outside the repo; where the repo has no product description it offers one, and on a yes `product-description` writes a `docs/product-description/` directory.
+
+`onboard-repo` wires the repo for the suite; `onboard-me` teaches the person the repo. Same first day, different subject, and neither needs the other.
 
 ### Implementation
 
@@ -85,7 +88,7 @@ The route most work travels: **`/grill-me`** → **`/to-feature` / `/to-story` /
 
 ### Learning
 
-- **`teach-me`** — Tutored, multi-session learning over a persistent per-topic workspace — grilled mission intake, one HTML lesson at a time, spaced retrieval, and durable learning records. Standalone or grounded in a codebase as its textbook.
+- **`teach-me`** — Tutored, multi-session learning over a persistent per-topic workspace — grilled mission intake, one HTML lesson at a time, spaced retrieval, and durable learning records. Standalone or grounded in a codebase as its textbook. Takes a topic you can already name; an unfamiliar repo starts at `onboard-me`, which produces them.
 
 ### Conversation
 

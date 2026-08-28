@@ -29,6 +29,9 @@ Keep steps 1–2 in **one unbroken context window** so the grilling, decompositi
 ## First contact with a repo
 
 - **`/onboard-repo`** — wire a repo for the suite in one sitting: the `Issue tracker:` and `Landing:` blocks the publishers and `committing` read, the `## Registry` block `upgrade-deps` reads, the loop commands, the `## Convention skills` roles, and the seed files (`DOMAIN.md`, `docs/solutions/`) — written only where nothing exists, plus the printed hook snippet. Optional: every skill degrades to asking when a block is missing.
+- **`/onboard-me`** — a knowledge-transfer session over a repo you don't know: evidence-tagged findings, a KT map of what is still dark, one rung per turn, and each topic worth going deeper on handed to `/teach-me`. Writes nothing of its own, and the map lives in your Learning workspace, not the repo. Where the repo has no product description it offers one; saying yes lets `product-description` write a `docs/product-description/` directory.
+
+The two are different jobs on the same first day: **`/onboard-repo`** wires the *repo* for the suite and writes config blocks into it; **`/onboard-me`** teaches the *person* the repo and writes nothing into it. Neither needs the other.
 
 ## When the way isn't clear: chart-course
 
@@ -70,7 +73,7 @@ Keep steps 1–2 in **one unbroken context window** so the grilling, decompositi
 ## Standalone
 
 - **`/grill-me`** — sharpen any plan or design with no repo to back it.
-- **`/teach-me <topic>`** — tutored, multi-session learning of any topic, standalone or grounded in a codebase as its textbook.
+- **`/teach-me <topic>`** — tutored, multi-session learning of any topic, standalone or grounded in a codebase as its textbook. Bring it a topic you can name; a repo you cannot yet name a mission for goes to `/onboard-me` first, which produces the topics.
 - **`/ask-for-me`** — the questionnaire and outbound-message drafter routed above, usable with no repo; pairs with a `chart-course` Errand when the blocker is someone else's knowledge.
 - **`/to-bug`** — file a defect as a tracked ticket from the current conversation.
 - **`/merge-quiz`** (Off-path) — before merging a change you did not watch being built: a report grouped by intent, a section on the paths the diff does not show, and 5–8 questions on interaction effects you answer before approving. Two failed rounds is a verdict on the change — split or simplify it — not on you.
