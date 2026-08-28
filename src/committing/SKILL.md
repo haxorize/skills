@@ -83,11 +83,16 @@ Sandboxes, credential policies, and permission classifiers block outward actions
 4. **A blocked tracker write lands as a file**, frontmatter carrying the create fields, and the manual-commands block carries the one command that consumes it (`--body-file` / `--description @file`) — the shape the publishers' `publishing.md` sibling gives under `## When the write is blocked`; for a close or a comment, the frontmatter carries the item ID and the command is the update call.
 5. **End with one manual-commands block.** Every command the human must run by hand, copy-pasteable, with its directory, gathered at the end of the report, never scattered through it. Not a description of what to do; the command.
 
+**A rejected commit message is not a blocked action.** A `commit-msg` hook rejecting your message is the one exception to rule 1: nothing in the environment refused you, and the thing at fault is a message you wrote and can rewrite. Read the rule the rejection names, fix the message, and commit again — reporting "blocked by commit-msg" and stopping leaves the change staged and unlanded for the user to finish by hand. Rewriting the *message* is the whole remedy; `--no-verify` and unsetting `core.hooksPath` are not, and `commit-bypass` refuses the first.
+
+**When you believe the check itself is wrong**, that is a finding, not an obstacle to route around: say which rule fired, on which line, and why the message is right — then stop and let the user decide. Do not disable the hook to get past it, and do not damage a correct message to satisfy an incorrect rule.
+
 Report what actually happened: what landed, what's staged, what's waiting on a manual step. A change that is committed but unpushed gets described that way, never as shipped.
 
 ## Notes
 
 - The `commit-bypass` hook under `global/hooks/` is this protocol's mechanical half: a failing pre-commit hook is a blocked action to report, never a reason for `--no-verify`, and the hook refuses the bypass shapes before they run. The `review-receipt` hook beside it is the "reviewed" row's mechanical half at the push.
+- In a repo that ships a `commit-msg` git hook, the exact rules in `references/commit-style.md` are enforced at the commit: the message is rejected, the rejection names the rule and the file, and the check is over shape only — it says nothing about register or the tell catalog, so a green run never stands in for the read.
 - Merge conflicts on the way in are `resolving-merge-conflicts`' job.
 - Findings that surface while drafting are follow-ups, not this change's work. Land the change; name what you noticed. Filing them is `/to-bug`'s, and only on the user's ask — the `Landing:` defect policy defaults to "fix, don't file".
 - The status report this skill ends with is governed by `~/.claude/rules/evidence.md`.
