@@ -33,11 +33,24 @@ fi
 # A re-hoist publishes whatever the pull brought in; run the gates first so a
 # broken skill or a hook whose rule quietly stopped matching is named before
 # it is live. Failures warn rather than abort: git ignores this hook's exit
-# code, and the merge has already landed. The hook roster is derived as
-# install.sh derives it — every global/hooks/*.sh with an `# Install note:`
-# header line — so a hook that lands without a selftest is named here, not
-# silently ungated.
-gates="scripts/lint-skills.sh scripts/lint-selftest.sh scripts/commit-msg-selftest.sh"
+# code, and the merge has already landed.
+#
+# Both hook rosters are derived, never hand-kept: the PreToolUse hooks the way
+# install.sh derives them — every global/hooks/*.sh with an `# Install note:`
+# header line — and the git hooks from the selftests sitting beside them here.
+# A hook that lands in either directory without a selftest is named below, not
+# silently ungated. Only scripts/lint-skills.sh is hardcoded, because it is the
+# subject of a selftest rather than one itself.
+#
+# scripts/*-selftest.sh outside this directory is deliberately not swept:
+# security-selftest.sh grades security.sh, which is a tool run by hand before
+# reading an external directory rather than anything a git event fires. The
+# scheduled corpus sweep is where it is graded.
+gates="scripts/lint-skills.sh scripts/lint-selftest.sh"
+for s in "$repo_root"/scripts/git-hooks/*-selftest.sh; do
+  [ -e "$s" ] || continue
+  gates="$gates scripts/git-hooks/$(basename "$s")"
+done
 for h in $(grep -l '^# Install note: ' "$repo_root"/global/hooks/*.sh); do
   gates="$gates global/hooks/$(basename "$h" .sh)-selftest.sh"
 done

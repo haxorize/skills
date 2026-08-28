@@ -2,16 +2,9 @@
 set -uo pipefail
 
 # commit-msg checks a commit message against the deterministic half of the
-# house style in src/committing/references/commit-style.md.
-#
-# Why a hook at all, when the style is already written down: `committing` is
-# model-invoked, so nothing can gate its load the way a user-invoked
-# orchestrator gates a dependency — there is no caller to put the gate in. The
-# reference file is reached by two soft steps (the model reaches for the skill,
-# then follows the link), and a miss is invisible until review. This hook is
-# the watcher that a model-invoked skill cannot carry: it rejects at the moment
-# of the mistake and names the reference in the rejection, so the block is also
-# the load instruction. Same shape as review-receipt, one layer down.
+# house style in src/committing/references/commit-style.md. The reasoning for
+# why the deterministic half is the only half a hook may check lives in the
+# ADR that admitted this hook, under docs/adr/.
 #
 # WHAT IT CANNOT CHECK, and must never be read as covering: whether the subject
 # is one logical change, whether the body's "why" was non-obvious enough to
@@ -22,49 +15,121 @@ set -uo pipefail
 # Blocks on the exact rules. Warns on the imperative-opener check, which is a
 # wordlist heuristic and will not always be right.
 #
-# Skipped entirely: merges, reverts, fixup!/squash!, and an empty message
-# (git aborts that one itself).
+# Skipped entirely: a commit git is making for a merge, revert, or cherry-pick
+# in progress (detected from the git state, not from the subject text), a
+# subject git generated for a fixup!/squash!/amend! or a Reapply, and an empty
+# message (git aborts that one itself). A subject a person wrote that merely
+# begins "Merge " or "Revert " is ordinary prose and is checked.
+#
+# The style doc yields to a convention the project explicitly declares. This
+# hook implements only the commitlint half of that yield, and only for the
+# Conventional Commits rule — a wrap width declared in CONTRIBUTING is not
+# read, and every other rule still applies.
+#
+# Rejection lines are written with the "commit-msg: " prefix inline so that a
+# pasted line greps back to this file.
+#
+# IF THIS CHECK IS WRONG: rewrite the message, never the gate. A human can pass
+# --no-verify once and say why; an agent may not, and commit-bypass refuses it.
+# Unsetting core.hooksPath is not the escape hatch — it silently disables every
+# hook in the clone, post-merge included, until setup-hooks.sh is run again. A
+# rule that is wrong is a defect to report and fix here, with a selftest row.
+#
+# NOT INVOKED BY: git cherry-pick, git revert, or a plain git rebase replay, so
+# a message any of those brings in is never seen. Inside rebase -i, coverage is
+# per-verb: reword fires this, squash does not. This gate is a check on what
+# you write, not a guarantee about what reaches the branch.
 #
 # Enable with: bash scripts/setup-hooks.sh (points core.hooksPath here).
 
 msg_file="${1:?commit-msg: no message file}"
 [ -f "$msg_file" ] || exit 0
 
-STYLE="src/committing/references/commit-style.md"
+readonly WRAP=72          # hard cap on the subject and on every body line
+readonly AIM=50           # the subject length to aim for, named in the advice
+readonly STYLE="src/committing/references/commit-style.md"
+# The anchors are the headings verbatim, so a reader who searches the style
+# doc for the quoted string lands rather than having to guess a prefix.
+readonly SUBJECT_ANCHOR="'## The subject'"
+readonly BODY_ANCHOR="'## The body: write one only when the subject cannot carry the why'"
 fail=0
 warn=0
 
-# Git's own comment lines and the scissors block are not the message. Git's
-# comment form is a lone '#' or '# text', so the pattern stops short of '##' —
+# Count characters, not bytes. ${#var} counts bytes under a C locale, and this
+# repo's prose is dense with em dashes at three bytes each — a 65-column line
+# measures 79 and is rejected. Git passes the ambient locale through unchanged,
+# so cron, CI, and a container with LANG=C all land here.
+if __em="——"; [ ${#__em} -ne 2 ]; then
+  for __loc in C.UTF-8 en_US.UTF-8 UTF-8; do
+    export LC_ALL="$__loc"
+    [ ${#__em} -eq 2 ] && break
+  done
+fi
+unset __em __loc
+
+# A commit git is making to conclude a merge, revert, or cherry-pick carries a
+# message git generated, which the author cannot freely reword — and rejecting
+# it strands the operation resolved but uncommitted. Git records each of these
+# as a file in the git dir, which is what this asks; the older subject-text
+# test both missed real merges and exempted ordinary prose beginning "Merge ".
+git_dir="$(git rev-parse --git-dir 2>/dev/null || echo .git)"
+for state in MERGE_HEAD REVERT_HEAD CHERRY_PICK_HEAD; do
+  [ -e "$git_dir/$state" ] && exit 0
+done
+
+# Git's own comment lines and the scissors block are not the message. The
+# comment character is configurable, so it is read rather than assumed; 'auto'
+# is treated as '#'. The pattern stops short of a doubled comment char —
 # stripping every '#' line would delete the markdown headings this hook exists
 # to reject. A level-one '# Summary' is the one ambiguous case and is treated
 # as a git comment, which is the safe way round: a stray comment must never
-# abort a commit.
-body_all="$(awk '/^diff --git /{exit} /^##/{print;next} /^#/{next} {print}' "$msg_file")"
+# abort a commit. Note that a -m commit uses cleanup mode 'whitespace', which
+# strips no comments, so a body line opening '#' is dropped here and kept by
+# git — the one case where this hook sees less than git commits.
+comment_char="$(git config --get core.commentChar 2>/dev/null || true)"
+case "$comment_char" in ''|auto) comment_char='#' ;; esac
 
-# Subject is the first non-blank line.
-subject="$(printf '%s\n' "$body_all" | grep -m1 -v '^[[:space:]]*$' || true)"
+# A CR is stripped here so it cannot survive into the subject, where it would
+# defeat the trailing-period test and count against the cap.
+body_all="$(awk -v cc="$comment_char" '
+  /^diff --git /            { exit }
+                            { sub(/\r$/, "") }
+  index($0, cc cc) == 1     { print; next }
+  index($0, cc) == 1        { next }
+                            { print }
+' "$msg_file")"
+
+# Drop leading blank lines so that the subject and the body agree on which
+# physical line is which. Taking the subject as the first non-blank line while
+# taking the separator by line number desynchronises them, and a message that
+# opens with a blank line then fails a body rule it does not break.
+body_all="$(printf '%s\n' "$body_all" | awk 'NF == 0 && !seen { next } { seen = 1; print }')"
+
+subject="$(printf '%s\n' "$body_all" | awk 'NR == 1')"
 [ -n "$subject" ] || exit 0
 
+# fixup!/squash!/amend! and Reapply "…" are prefixes git itself generates, so
+# they are genuine text markers. Reapply is over the cap by construction for
+# any original subject of 63 characters or more.
 case "$subject" in
-  Merge\ *|Revert\ *|fixup!*|squash!*|amend!*) exit 0 ;;
+  fixup!*|squash!*|amend!*|Reapply\ \"*) exit 0 ;;
 esac
-
-say() { echo "commit-msg: $1" >&2; }
 
 # --- Subject ---------------------------------------------------------------
 
 n=${#subject}
-if [ "$n" -gt 72 ]; then
-  say "FAIL subject is $n chars, over the 72 hard cap (aim 50) — $STYLE '## The subject'"
+if [ "$n" -gt "$WRAP" ]; then
+  echo "commit-msg: FAIL subject is $n chars, over the $WRAP hard cap (aim $AIM) — $STYLE $SUBJECT_ANCHOR" >&2
   fail=1
 fi
 
 case "$subject" in
-  *.) say "FAIL subject ends with a period — $STYLE '## The subject'"; fail=1 ;;
+  *.) echo "commit-msg: FAIL subject ends with a period — $STYLE $SUBJECT_ANCHOR" >&2; fail=1 ;;
 esac
 
-# Conventional Commits prefix, unless the repo declares that convention.
+# Conventional Commits prefix, unless the repo declares that convention. The
+# alternation is the CC type set: a bare "note: " or "todo: " is ordinary prose
+# and must not be told it carries a prefix it does not carry.
 declares_cc=0
 for f in .commitlintrc .commitlintrc.json .commitlintrc.yml .commitlintrc.yaml \
          .commitlintrc.js commitlint.config.js commitlint.config.cjs commitlint.config.mjs \
@@ -72,8 +137,8 @@ for f in .commitlintrc .commitlintrc.json .commitlintrc.yml .commitlintrc.yaml \
   [ -e "$f" ] && declares_cc=1
 done
 if [ "$declares_cc" -eq 0 ] &&
-   printf '%s' "$subject" | grep -qE '^[a-z]+(\([a-zA-Z0-9_/.-]+\))?!?: '; then
-  say "FAIL subject carries a Conventional Commits type prefix, which this repo does not declare — $STYLE '## The subject'"
+   printf '%s' "$subject" | grep -qE '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-zA-Z0-9_/.-]+\))?!?: '; then
+  echo "commit-msg: FAIL subject carries a Conventional Commits type prefix, which this repo does not declare — $STYLE $SUBJECT_ANCHOR" >&2
   fail=1
 fi
 
@@ -86,50 +151,73 @@ case "$first_word" in
   Refactored|Refactors|Refactoring|Implemented|Implements|Implementing|\
   Improved|Improves|Improving|Bumped|Bumps|Bumping|Moved|Moves|Moving|\
   Renamed|Renames|Renaming|Tagged|Tags|Tagging)
-    say "WARN subject opens with '$first_word' — an imperative verb leads, so it completes 'If applied, this commit will ___' ($STYLE)"
+    echo "commit-msg: WARN subject opens with '$first_word' — an imperative verb leads, so it completes 'If applied, this commit will ___' ($STYLE)" >&2
     warn=1 ;;
 esac
 
 # --- Body ------------------------------------------------------------------
 
-# Everything after the subject line, with the blank separator dropped.
+second="$(printf '%s\n' "$body_all" | awk 'NR == 2')"
 body="$(printf '%s\n' "$body_all" | awk 'NR > 1' | sed -e '1{/^[[:space:]]*$/d;}')"
 
 if [ -n "$(printf '%s' "$body" | tr -d '[:space:]')" ]; then
   # A body must be separated from the subject by a blank line.
-  second="$(printf '%s\n' "$body_all" | awk 'NR == 2')"
   if [ -n "$(printf '%s' "$second" | tr -d '[:space:]')" ]; then
-    say "FAIL no blank line between subject and body — $STYLE '## The body'"
+    echo "commit-msg: FAIL no blank line between subject and body — $STYLE $BODY_ANCHOR" >&2
     fail=1
   fi
 
   if printf '%s\n' "$body" | grep -qE '^[[:space:]]*```'; then
-    say "FAIL body contains a code fence — $STYLE '## The body' ('No code fences')"
+    echo "commit-msg: FAIL body contains a code fence — $STYLE $BODY_ANCHOR ('No code fences')" >&2
     fail=1
   fi
 
-  if printf '%s\n' "$body" | grep -qiE '^[[:space:]]*#{1,6}[[:space:]]*(summary|changes|testing|test plan|notes?)[[:space:]]*:?[[:space:]]*$'; then
-    say "FAIL body uses a Summary/Changes/Testing heading — $STYLE '## The body' (order the body without headings)"
+  # The style doc's rule is "Order the body, without headings" — all of them,
+  # not a wordlist. A level-one heading never reaches here: the comment strip
+  # above treats it as git's own comment.
+  if printf '%s\n' "$body" | grep -qE '^[[:space:]]*#{2,6}[[:space:]]*[^[:space:]]'; then
+    echo "commit-msg: FAIL body uses a markdown heading — $STYLE $BODY_ANCHOR ('Order the body, without headings')" >&2
     fail=1
   fi
 
-  # Wrap at 72. A trailer, and a line with no space at or before column 72
-  # (an unbreakable URL or token), cannot wrap and is exempt.
+  # A trailer is exempt from the wrap rule because it cannot be wrapped. What
+  # counts as one is git's decision, not a pattern that guesses: the older test
+  # matched any "Word: " opener, so an ordinary paragraph beginning "Note: " or
+  # "Why: " silently turned the wrap rule off for that line.
+  trailers="$(git interpret-trailers --parse < "$msg_file" 2>/dev/null || true)"
+
+  # Wrap at the cap. A trailer, and a line with no space at or before the cap
+  # (an unbreakable URL or token), cannot wrap and is exempt. Every offending
+  # line is reported, so one commit attempt shows the whole list.
+  nl=$'\n'
   while IFS= read -r line; do
-    [ ${#line} -le 72 ] && continue
-    printf '%s' "$line" | grep -qE '^[A-Za-z][A-Za-z-]*: ' && continue
-    printf '%s' "$line" | cut -c1-73 | grep -q ' ' || continue
-    say "FAIL body line exceeds 72 columns: ${line:0:60}… — $STYLE '## The body'"
+    [ ${#line} -le "$WRAP" ] && continue
+    case "$nl$trailers$nl" in
+      *"$nl$line$nl"*) continue ;;
+    esac
+    # No pipeline here: under pipefail a SIGPIPE from an early grep exit would
+    # read as "exempt" and skip the line silently.
+    case "${line:0:$((WRAP + 1))}" in
+      *' '*) ;;
+      *) continue ;;
+    esac
+    echo "commit-msg: FAIL body line exceeds $WRAP columns: ${line:0:60}… — $STYLE $BODY_ANCHOR" >&2
     fail=1
-    break
   done <<< "$body"
 fi
 
 if [ "$fail" -ne 0 ]; then
-  say "commit rejected. Fix the message, or read $STYLE."
-  say "This checks message SHAPE only — register and the tell catalog still need a read."
+  echo "commit-msg: commit rejected. Fix the message, or read $STYLE." >&2
+  echo "commit-msg: This checks message SHAPE only — register and the tell catalog still need a read." >&2
+  # A rejection inside a rebase leaves a detached HEAD mid-rebase, and git's own
+  # suggestion (commit --amend) re-runs this check on the same message. Say so,
+  # or the author loops on advice that cannot succeed.
+  if [ -d "$git_dir/rebase-merge" ] || [ -d "$git_dir/rebase-apply" ]; then
+    echo "commit-msg: a rebase is in progress and HEAD is detached — reword and continue," >&2
+    echo "commit-msg: or 'git rebase --abort' to put the branch back." >&2
+  fi
   exit 1
 fi
 
-[ "$warn" -ne 0 ] && say "warnings only; commit allowed."
+[ "$warn" -ne 0 ] && echo "commit-msg: warnings only; commit allowed." >&2
 exit 0
