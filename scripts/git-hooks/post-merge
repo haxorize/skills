@@ -57,8 +57,18 @@ done
 for gate in $gates; do
   if [ ! -f "$repo_root/$gate" ]; then
     echo "post-merge: WARN gate missing: $gate — renamed or removed without updating this hook" >&2
-  elif ! bash "$repo_root/$gate" >/dev/null 2>&1; then
-    echo "post-merge: WARN $gate failed — run 'bash $gate' to see why" >&2
+  else
+    bash "$repo_root/$gate" >/dev/null 2>&1
+    gate_status=$?
+    # 2 is not a failure and not a clean: lint-selftest.sh uses it for a run that
+    # graded everything it could reach and left its read-error branches
+    # unexercised (root, or a filesystem that ignores modes). This loop discards
+    # output, so the status is the only thing that can carry that distinction.
+    if [ "$gate_status" -eq 2 ]; then
+      echo "post-merge: WARN $gate graded partial — some checks went unexercised; run 'bash $gate' to see which" >&2
+    elif [ "$gate_status" -ne 0 ]; then
+      echo "post-merge: WARN $gate failed — run 'bash $gate' to see why" >&2
+    fi
   fi
 done
 
