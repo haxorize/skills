@@ -13,3 +13,4 @@ fixture tree. Keep one line per fixture skill.
 - `undeclared-dep`, `unused-dep`, `quoted-dep`, `fixture-discipline` — the two-way requires fixtures and the dep they share.
 - `call-forms` — the call shapes a one-name imperative regex misses, plus a user-invoked target.
 - `slash-on-model-invoked` — the retired slash form, which the slash-on-model-invoked check must flag.
+- `bulk-cited-dep` — the long-bodied dependant that grades the citation check on a stream the reader abandons mid-write.

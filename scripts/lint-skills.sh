@@ -468,7 +468,7 @@ for f in src/*/SKILL.md; do
     fi
   done
   for dep in $reqs; do
-    if ! printf '%s\n' "$body" | grep -q "\`/\{0,1\}$dep\`"; then
+    if ! grep -q "\`/\{0,1\}$dep\`" <<<"$body"; then
       echo "FAIL: $f declares requires: '$dep' but the body never names it — drop the declaration, or name the skill in the body where it is used"
       fail=1
     fi
@@ -515,9 +515,23 @@ for f in global/rules/*.md; do
   for dep in $deps; do
     if [ -f "src/$dep/SKILL.md" ]; then
       resolved=$((resolved + 1))
-      # Citation (see header): the path form or the backticked stem.
-      if ! find "src/$dep" -type f -name '*.md' -exec awk "$FENCE_AWK"'{ print }' {} + 2>/dev/null \
-          | grep -qE "~/\.claude/rules/${stem}\.md|\`${stem}\`"; then
+      # Citation (see header): the path form or the backticked stem. The
+      # bodies are captured first rather than piped straight into `grep -q`.
+      # `grep -q` exits at its first match and closes the pipe; awk, which
+      # writes in chunks, then takes SIGPIPE on the writes it still had to
+      # make, and under `set -o pipefail` that status is the pipeline's — so
+      # the check reported the *earliest* citations as missing, failing
+      # loudest on the skills that cite a rule in their opening lines. Size
+      # alone is not the trigger: what decides it is whether the producer
+      # still has writes pending when the reader walks away, which is why a
+      # single-write producer survives lengths a chunked one dies at.
+      # Dropping `2>/dev/null` also lets a real read failure say so instead
+      # of being read as a violation; find's status is checked separately
+      # from grep's.
+      if ! bodies=$(find "src/$dep" -type f -name '*.md' -exec awk "$FENCE_AWK"'{ print }' {} +); then
+        echo "FAIL: $f Depends: names '$dep' but src/$dep/ could not be read, so the '$stem' citation was never checked — this is not a verdict on the citation; fix the permissions or the path and re-run"
+        fail=1
+      elif ! grep -qE "~/\.claude/rules/${stem}\.md|\`${stem}\`" <<<"$bodies"; then
         echo "FAIL: $f Depends: names '$dep' but src/$dep/ never cites the rule — write '~/.claude/rules/$stem.md' or the backticked stem '\`$stem\`' where the skill leans on it, or drop the name"
         fail=1
       fi

@@ -17,8 +17,10 @@
 # description's unquoted ': ' and ' #', load-gate placement, and the global-rules
 # Depends: admission check (missing line, dangling name, a dependant that never
 # cites the rule outside a fence, a dependant that cites only another rule's
-# path, and the two well-formed forms — backticked stem, and path — that must
-# stay quiet). NOT covered, so a clean
+# path, and the three well-formed forms that must stay quiet — backticked stem,
+# path, and a citation in the opening lines of a body whose tail the producer is
+# still writing when the reader walks away, which grades the check's plumbing
+# rather than its pattern). NOT covered, so a clean
 # run here is not a claim about them: the 200-line caps, sibling byte-identity
 # (skipped under LINT_ROOT — the registry names this repo's own paths), the
 # sibling-group MEMBERSHIP check (it does run against the fixture tree, but the
@@ -105,11 +107,28 @@ reject "reference-link resolution" "references/exempt-inner.md"
 reject "reference-link resolution" "references/exempt-fenced.md"
 reject "global-rule Depends" "global/rules/well-formed.md"
 reject "global-rule Depends (path form)" "global/rules/path-cited.md"
+# Grades the check's plumbing, not its pattern: bulk-cited-dep cites early and then
+# carries a long tail, the shape that made a `grep -q` pipeline report a present
+# citation as missing once the reader abandoned the producer mid-write.
+reject "global-rule Depends (early citation, long tail behind it)" "global/rules/early-cited.md"
 # The trailing /SKILL.md is load-bearing: the uncited-depends FAIL names src/quoted-dep/ without it.
 # One reject covers both scans' exemptions: quoted-dep carries every exempt shape in the
 # Skill-tool form and the slash form, plus the two slash forms that are correct unmasked
 # (a user-invoked skill, a built-in). Drop a mask or invert either slash guard and it fires.
 reject "two-way requires and slash-on-model-invoked (quoted, parenthesised and fenced forms)" "src/quoted-dep/SKILL.md"
+
+# The reject above is the only row in this suite that grades the citation check's
+# plumbing, and it discriminates only while bulk-cited-dep's tail is longer than a
+# pipe will hold — otherwise the producer finishes writing before the reader walks
+# away, the pre-fix pipeline passes too, and the row silently stops testing
+# anything. Linux's pipe capacity is a fixed 65536 bytes and is the larger of the
+# two this repo is run on, so that is the floor. Trimming the fixture must fail
+# here, loudly, rather than turning the row into a no-op.
+bulk_bytes=$(find "$fixtures/src/bulk-cited-dep" -type f -name '*.md' -exec cat {} + | wc -c | tr -d ' ')
+if [ "$bulk_bytes" -le 65536 ]; then
+  echo "SELFTEST FAIL: src/bulk-cited-dep/ is $bulk_bytes bytes, at or under a Linux pipe's 65536-byte capacity — the early-citation reject no longer discriminates, because the producer can hand over the whole stream before the reader exits. Add reference-file length back (each file caps at 200 lines)."
+  fail=1
+fi
 
 if [ "$status" -ne 1 ]; then
   echo "SELFTEST FAIL: lint exited $status against the fixture tree; a tree this broken must exit 1"
