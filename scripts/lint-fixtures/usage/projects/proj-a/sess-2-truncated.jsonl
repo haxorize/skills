@@ -1,0 +1,2 @@
+{"type":"assistant","sessionId":"sess-2","timestamp":"2026-08-11T10:00:00.000Z","message":{"role":"assistant","content":[{"type":"tool_use","id":"t4","name":"Skill","input":{"skill":"committing"}}]}}
+{"type":"assistant","sessionId":"sess-2","timestamp":"2026-08-11T10:00:01.000Z","message":{"role":"assistant","content":[{"type":"tool_use","id":"t5","name":"Ski

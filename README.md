@@ -102,7 +102,7 @@ The route most work travels: **`/grill-me`** → **`/to-feature` / `/to-story` /
 ### Meta
 
 - **`write-skill`** — Conventions for writing new skills.
-- **`audit-skills`** — Audit the whole installed skill collection under `~/.claude/skills/`: a Keep / Improve / Update / Retire / Merge verdict per skill, on Overlap, Currency, Actionability, and Scope fit. Library hygiene across every repo that fed the machine; the repo-local `sweep-corpus` is this repo's mechanical health run (lint, doc-claims, router checks), not a narrower audit.
+- **`audit-skills`** — Audit the whole installed skill collection under `~/.claude/skills/`: a Keep / Improve / Update / Retire / Merge verdict per skill, on Overlap, Currency, Actionability, Scope fit, and Usage (counts from `scripts/skill-usage.sh`). Library hygiene across every repo that fed the machine; the repo-local `sweep-corpus` is this repo's mechanical health run (lint, doc-claims, router checks), not a narrower audit.
 
 ## Model-invoked skills
 
