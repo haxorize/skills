@@ -6,4 +6,4 @@ disable-model-invocation: true
 
 # Which skill
 
-`clean-skill` and `near-cap` are the skills here.
+`clean-skill`, `near-cap` and `ledger-legend` are the skills here.

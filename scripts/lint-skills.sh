@@ -98,11 +98,15 @@
 #     references must not carry the phrase.
 #   - Scope: the skill checks walk src/*/SKILL.md (and references beneath);
 #     the global-rules checks below walk global/rules/, the hook-selftest
-#     check global/hooks/, the script-selftest check scripts/. The repo-local skills
-#     under .claude/skills/ are deliberately outside both walks: they never hoist, so the router-coverage
-#     and requires checks would demand mentions that do not belong, and they
-#     legitimately cite this repo's paths. Their size and frontmatter are the
-#     author's to keep; a pass here says nothing about them.
+#     check global/hooks/, the script-selftest check scripts/. The repo-local
+#     skills under .claude/skills/, and DOMAIN.md and README.md, are in pass
+#     2's walk for the slash sweep and the evaluation-ledger consumer sweep
+#     and for nothing else: the hoisting, size, frontmatter, ADR-citation,
+#     HTML-transport and reference-link checks do not read them. They never
+#     hoist, so the router-coverage and requires checks would demand mentions
+#     that do not belong, and they legitimately cite this repo's paths. Their
+#     size and frontmatter are the author's to keep; a pass here says nothing
+#     about those. CLAUDE.md is in no walk at all.
 #   - Global rules (ADR-0053): every global/rules/*.md carries a `Depends:`
 #     line naming at least one existing skill under src/ — the admission rule
 #     in global/README.md (only rules a skill depends on). A rule with no
@@ -158,6 +162,25 @@
 #     scripts/<name>-selftest.sh beside it, so a gate landing without one is
 #     named here rather than silently ungated. scripts/git-hooks/ is the git
 #     hooks' directory and post-merge derives its roster there.
+#   - Evaluation ledger statuses (ADR-0071; DOMAIN.md's Evaluation-ledger row):
+#     one file defines the legend, the body's stored-status rule defines the
+#     same three, and any other file naming two of the three names all three.
+#     All three checks find their authority by CONTENT — the legend line and
+#     the rule phrase, wherever they live — never by path, so a deliberate
+#     rename is followed rather than today's spelling pinned, and the checks
+#     are portable to a fixture root. Scope, stated so a pass isn't read as
+#     more than it is. They do not police a fourth status invented in a
+#     consumer: the anchored lines legitimately carry other backticked
+#     lowercase words (`awaiting:`, `sources/`, an ID, a path), and no marker
+#     separates a status token from those, so a closed-set assertion would
+#     false-positive on prose that is fine. They read backticked spans only,
+#     so the bare forms in the memo's counts stamp are outside them, and they
+#     read past fenced examples, so a worked example of the ledger's own
+#     format is prose about the vocabulary rather than an enumeration of it.
+#     And they cannot see a definition reworded without a rename — but a
+#     reword that leaves no legend or no rule site is a FAIL in this repo
+#     rather than a silent stand-down, and each anchor sentence carries a note
+#     in its own file saying it is load-bearing.
 #   - Router coverage (CLAUDE.md "Keep the router honest"): every skill under
 #     src/ must appear as a backticked code-span (`name` or `/name`) in
 #     src/which-skill/SKILL.md. Requiring the backtick keeps incidental prose
@@ -212,9 +235,14 @@
 #     check_reference_links    every inline .md link resolves
 #     check_load_gate          no "Launching skill" under a model-invoked skill
 #     check_slash_form         no `/name` naming a model-invoked skill
-#   Pass 3 — the sibling-reference registry:
+#   Pass 3 — cross-file contracts, read from pass 2's captured walk:
 #     check_sibling_identity   byte-identical copies (this repo only)
 #     check_sibling_membership every basename shared by two skills is grouped
+#     check_evaluation_ledger_authority       one legend, defining three statuses
+#     check_evaluation_ledger_rule_agreement  the body's stored-status rule
+#                              defines the same set as the legend
+#     check_evaluation_ledger_consumers       a file that enumerates the
+#                              vocabulary carries all of it
 #   Pass 4 — the other trees, each read once:
 #     check_global_rule        Depends: resolves, and each dependant cites back
 #     check_hook_selftest      every hook has an executable selftest
@@ -646,7 +674,13 @@ check_shared_trigger_phrase "$trigger_phrases"
 
 check_line_cap() {
   local f=$1 lines
-  lines=$(awk 'END { print NR }' "$f")
+  # The count is taken from a checked read: awk on an unreadable file prints
+  # nothing and the comparison below would then error and leave the cap
+  # unapplied, which reads exactly like a file that came in under it.
+  if ! lines=$(awk 'END { print NR }' "$f") || [ -z "$lines" ]; then
+    say_fail "$f could not be read for its line count — the 200-line cap was not applied to it"
+    return 0
+  fi
   if [ "$lines" -gt 200 ]; then
     say_fail "$f exceeds 200-line cap ($lines lines) — cut or move detail into references/; never raise the cap"
   fi
@@ -765,41 +799,307 @@ check_slash_form() {
   done
 }
 
-# One walk. A find sweep (rather than a fixed-depth glob) covers nested
-# reference files (references/sub/*.md) too. Which checks a file gets is
-# decided by where it sits: the body checks for src/** and global/rules/,
-# the load-gate check for a file under a model-invoked skill's directory,
-# the slash sweep for everything but global/rules/.
+# One walk, produced once and passed to every consumer. Pass 2 classifies it
+# file by file; pass 3's checks need the same list as a whole, and re-running
+# the find there would be a second walk that could silently disagree with this
+# one. A find sweep rather than a fixed-depth glob, so nested reference files
+# (references/sub/*.md) are covered too.
+#
+# The set of classes this emits is closed, and the classifier below fails on a
+# path no arm claims — so adding a tree here without giving it an arm is a
+# loud error rather than a class that silently gets one check.
+walk_shipped_md() {
+  { find src -type f -name '*.md'
+    [ -d global/rules ] && find global/rules -type f -name '*.md'
+    [ -d .claude/skills ] && find .claude/skills -type f -name '*.md'
+    [ -f DOMAIN.md ] && echo DOMAIN.md
+    [ -f README.md ] && echo README.md; } | sort -u
+}
+walked_files=$(walk_shipped_md)
+
+# The four body checks, named once. Spelling them out per arm put the same
+# four calls in three places, and a cell dropped from one arm reads identically
+# to one that never ran there.
+body_checks() {
+  check_line_cap "$1"
+  check_adr_citation "$1"
+  check_html_transport "$1"
+  check_reference_links "$1"
+}
+
+# One classifier, and it is exhaustive because the last arm says so rather
+# than because a catch-all absorbs the remainder: a file the walk emits and no
+# arm claims is a FAIL naming itself. Each arm names that class's whole check
+# set, so "what runs on a rule file?" is one arm and not three blocks.
+# Arms run most-specific first.
+#
+# In `case`, `*` matches `/` — so `src/*` is any depth under src/ and `src/*/*`
+# is depth two or more. That is what separates a skill's own files (which have
+# an owning SKILL.md to gate the load check on) from a bare src/*.md.
+#
+# The walk is guarded rather than fed straight in: `printf '%s\n' ""` emits one
+# empty line, so an empty walk would otherwise run one iteration with an empty
+# filename and hand `""` to the checks.
+if [ -n "$walked_files" ]; then
 while IFS= read -r f; do
   case "$f" in
-    src/* | global/rules/*)
-      check_line_cap "$f"
-      check_adr_citation "$f"
-      check_html_transport "$f"
-      check_reference_links "$f"
+    global/rules/*)
+      # Hoisted prose. Body checks, and deliberately no slash sweep: a rule
+      # file addresses the model directly and names no skill as a command.
+      body_checks "$f"
       ;;
-  esac
-  case "$f" in
     src/*/*)
+      # A skill's own SKILL.md or a reference beneath it. Everything.
+      body_checks "$f"
       owner=${f#src/}; owner=${owner%%/*}
       if [ -f "src/$owner/SKILL.md" ] && ! name_is_user_invoked "$owner"; then
         check_load_gate "$f"
       fi
+      check_slash_form "$f"
+      ;;
+    src/*)
+      # Depth one under src/: no owning skill, so no load gate to apply.
+      body_checks "$f"
+      check_slash_form "$f"
+      ;;
+    .claude/skills/* | DOMAIN.md | README.md)
+      # Swept for the slash form only; their size and frontmatter are the
+      # author's (see header Scope).
+      check_slash_form "$f"
+      ;;
+    *)
+      say_fail "walk_shipped_md emitted $f and no classifier arm claims it — add an arm naming that class's whole check set, or drop the tree from the walk; an unclaimed file would otherwise be graded by nothing"
       ;;
   esac
-  case "$f" in
-    global/rules/*) ;;
-    *) check_slash_form "$f" ;;
-  esac
-done < <({ find src -type f -name '*.md'
-           [ -d global/rules ] && find global/rules -type f -name '*.md'
-           [ -d .claude/skills ] && find .claude/skills -type f -name '*.md'
-           [ -f DOMAIN.md ] && echo DOMAIN.md
-           [ -f README.md ] && echo README.md; } | sort -u)
+done < <(printf '%s\n' "$walked_files")
+fi
 
 # ---------------------------------------------------------------------------
-# Pass 3 — the sibling-reference registry.
+# Pass 3 — cross-file contracts: the sibling-reference registry, and the
+# evaluation ledger's stored-status vocabulary.
 # ---------------------------------------------------------------------------
+
+# The evaluation ledger's stored statuses are one vocabulary defined in two
+# places and prescribed in six more, and nothing checked either direction:
+# rename one in the legend and `adoption-verdict` goes on telling a grader to
+# look for a status no ledger will ever carry again.
+#
+# The authority is found by CONTENT, never by path — the legend line, wherever
+# it lives. That is what makes this follow a deliberate rename instead of
+# pinning today's spelling, and what makes it portable to a fixture root.
+#
+# Three checks, not one, and each is reachable on its own: a tree with two
+# legends still gets its consumers swept, which a single short-circuiting
+# function could not do. `find_evaluation_ledger_legend` is the one discovery
+# they share.
+#
+# The two English sentences these anchor on — the legend's "Status is exactly
+# one of:" and the body rule's "Exactly one stored status" — are machine
+# contracts, and each anchor site says so in its own file, because a reword
+# here is exactly the edit that would otherwise turn the checks off in silence.
+# Discovery finding nothing is a FAIL in this repo (LINT_ROOT unset), never a
+# quiet pass.
+evaluation_ledger_anchor_re='docs/evaluation/|evaluation-ledger|[Ee]valuation ledger|ledger\.md'
+
+# file -> its whole text; rc 2 and no output if the file cannot be read, so a
+# read failure never reads as "no violations".
+readable_text() {
+  local raw
+  raw=$(cat -- "$1") || return 2
+  printf '%s\n' "$raw"
+}
+
+# file, line-matching regex -> the lowercase backticked status tokens on the
+# lines that match, sorted and deduplicated, so two results compare as sets
+# (the legend-versus-rule test is a raw string compare and is only a SET
+# comparison because of that sort). Matches `[a-z][a-z-]*` only, so a
+# `Verified` or a `not_started` is invisible to it. rc 2 and no output if the
+# file cannot be read; empty output and rc 0 if nothing matched.
+#
+# Read RAW, deliberately: both callers anchor on a specific sentence, and in
+# this repo the legend sentence itself sits inside a fenced block because
+# `ledger-format.md` shows the row format it is describing. Masking here would
+# find no legend at all. The whole-file sweep below is the one that has to
+# tell prose from example, and it is the one that masks.
+status_tokens_on() {
+  local text
+  text=$(readable_text "$1") || return 2
+  printf '%s\n' "$text" | grep -hE "$2" | grep -o '`[a-z][a-z-]*`' | tr -d '`' | sort -u || true
+}
+
+# file -> the same tokens from every line, with fenced examples, quoted spans
+# and arrow asides masked first — the same masking the other whole-file scans
+# use, so "what counts as an example" keeps its one home. A worked example of
+# the ledger's own format, which is exactly what `evaluation-ledger`'s memo
+# reference is for, is prose ABOUT the vocabulary rather than an enumeration
+# of it; without the mask an author documenting the format correctly draws a
+# hard FAIL. The all-lines case is its own entry point rather than
+# `status_tokens_on "$f" '.'`, so a reader greps a name that says what it does
+# and no caller pays for a second grep process.
+status_tokens_anywhere() {
+  local text
+  text=$(readable_text "$1") || return 2
+  printf '%s\n' "$text" | mask_examples | grep -o '`[a-z][a-z-]*`' | tr -d '`' | sort -u || true
+}
+
+# -> every file in the walk carrying the legend line, one per line.
+evaluation_ledger_legend_files() {
+  local f
+  printf '%s\n' "$1" | while IFS= read -r f; do
+    grep -qE '^Status is exactly one of:' "$f" && echo "$f"
+  done
+}
+
+# -> every file in the walk carrying the body's stored-status rule.
+evaluation_ledger_rule_files() {
+  local f
+  printf '%s\n' "$1" | while IFS= read -r f; do
+    grep -qE 'Exactly one stored status' "$f" && echo "$f"
+  done
+}
+
+# -> "<legend file><TAB><status> <status> …" for the one file carrying the
+# legend line, or nothing. Every caller re-runs it rather than sharing state:
+# it is one grep over a captured list.
+find_evaluation_ledger_legend() {
+  local legend_files legend_file statuses
+  legend_files=$(evaluation_ledger_legend_files "$1")
+  [ -z "$legend_files" ] && return 1
+  [ "$(printf '%s\n' "$legend_files" | grep -c .)" -gt 1 ] && return 2
+  legend_file=$legend_files
+  statuses=$(status_tokens_on "$legend_file" '^Status is exactly one of:') || return 3
+  printf '%s\t%s\n' "$legend_file" "$(printf '%s' "$statuses" | tr '\n' ' ')"
+}
+
+# Rule 1 — one legend, defining three statuses. The two anchors pin each
+# other: a tree that states the stored-status rule but defines no legend has
+# had the legend sentence reworded, which is the edit that would otherwise
+# switch all three checks off in silence. A tree with neither is a tree with
+# no ledger vocabulary to hold together, which a fixture root legitimately is.
+check_evaluation_ledger_authority() {
+  local walked_files=$1 legend_files rule_files legend_file statuses n
+  legend_files=$(evaluation_ledger_legend_files "$walked_files")
+  rule_files=$(evaluation_ledger_rule_files "$walked_files")
+  if [ -z "$legend_files" ]; then
+    if [ -n "$rule_files" ]; then
+      say_fail "an evaluation ledger stored-status rule exists ($(printf '%s' "$rule_files" | tr '\n' ' ' | sed 's/ $//')) but no file defines the legend — the line 'Status is exactly one of:' is the anchor all three ledger checks find their authority by, so rewording it turns them off rather than failing them; restore the line, or move the anchor in scripts/lint-skills.sh with it"
+      return 0
+    fi
+    # Neither anchor present: no ledger vocabulary in this tree at all. Honest
+    # silence for a fixture root; in this repo it means both sentences were
+    # reworded in one pass, which no fixture can stage.
+    [ -n "${LINT_ROOT:-}" ] && return 0
+    say_fail "no file defines the evaluation ledger status legend and none states its stored-status rule — both anchors the three ledger checks hang on are gone, so they are grading nothing; restore them, or move the anchors in scripts/lint-skills.sh with them"
+    return 0
+  fi
+  n=$(printf '%s\n' "$legend_files" | grep -c .)
+  if [ "$n" -gt 1 ]; then
+    say_fail "two files define the evaluation ledger status legend ($(printf '%s' "$legend_files" | tr '\n' ' ' | sed 's/ $//')) — one authority, or a rename updates whichever the reader did not open"
+    return 0
+  fi
+  legend_file=$legend_files
+  if ! statuses=$(status_tokens_on "$legend_file" '^Status is exactly one of:'); then
+    say_fail "the evaluation ledger legend in $legend_file could not be read — the vocabulary checks did not run on it, which is not the same as it having nothing to report"
+    return 0
+  fi
+  n=$(printf '%s\n' "$statuses" | grep -c .)
+  if [ "$n" -ne 3 ]; then
+    say_fail "the evaluation ledger legend defines $n statuses, not 3, in $legend_file — the skill body says 'There is no fourth'; change both or neither"
+  fi
+}
+
+# Rule 2 — the body's own stored-status rule defines the same set as the
+# legend. Same set, or the file a reader opens decides which vocabulary they
+# get. A legend with no rule site is the mirror of rule 1's case: the rule
+# phrase was reworded, and half the contract stopped being graded.
+check_evaluation_ledger_rule_agreement() {
+  local walked_files=$1 legend legend_file v_legend rule_files rule_file v_rule n
+  legend=$(find_evaluation_ledger_legend "$walked_files") || return 0
+  legend_file=${legend%%	*}
+  v_legend=$(printf '%s\n' "${legend#*	}" | tr ' ' '\n' | grep -v '^$' | sort -u)
+  rule_files=$(evaluation_ledger_rule_files "$walked_files")
+  if [ -z "$rule_files" ]; then
+    say_fail "the evaluation ledger legend is defined in $legend_file but no file states the stored-status rule — the phrase 'Exactly one stored status' is the anchor this check finds the second authority by, so rewording it leaves the two definition sites ungraded against each other"
+    return 0
+  fi
+  n=$(printf '%s\n' "$rule_files" | grep -c .)
+  if [ "$n" -gt 1 ]; then
+    say_fail "two files state the evaluation ledger's stored-status rule ($(printf '%s' "$rule_files" | tr '\n' ' ' | sed 's/ $//')) — only one would be compared against the legend and the other could drift unseen; one rule site, or one sibling group covering them"
+    return 0
+  fi
+  rule_file=$rule_files
+  if ! v_rule=$(status_tokens_on "$rule_file" 'Exactly one stored status'); then
+    say_fail "the evaluation ledger stored-status rule in $rule_file could not be read — it was not compared against the legend, which is not the same as the two agreeing"
+    return 0
+  fi
+  if [ "$v_legend" != "$v_rule" ]; then
+    say_fail "the evaluation ledger's two definition sites define different vocabularies — $legend_file's legend has ($(printf '%s' "$v_legend" | tr '\n' ' ' | sed 's/ $//')) and $rule_file's stored-status rule has ($(printf '%s' "$v_rule" | tr '\n' ' ' | sed 's/ $//')) — they are read by different people and must agree"
+  fi
+}
+
+# Rule 3 — consumers. A file carrying two of the three is ENUMERATING the
+# vocabulary and must carry all of it; one is referencing a single status,
+# which is a legitimate thing to do (`doc-claims` judges a verified row and no
+# other).
+#
+# Anchored per FILE, not per line. A consumer's sentence wraps, and the ledger
+# mention and the statuses it lists then sit on different lines — a per-line
+# anchor reads that as "one status" and stays quiet, which is the miss this
+# check exists to prevent. The anchor names the evaluation ledger specifically:
+# a bare "the ledger" would reach `accessible-ui`'s per-change criterion
+# ledger, `implement`'s parked ledger and `review-changes`' coverage ledger,
+# none of which use this vocabulary.
+check_evaluation_ledger_consumers() {
+  local walked_files=$1 legend legend_file v_legend legend_owner f hits missing t
+  if ! legend=$(find_evaluation_ledger_legend "$walked_files"); then
+    # No single readable legend, so there is no vocabulary to check consumers
+    # against. Say so where a legend exists at all: the author fixes the
+    # authority problem reported above, re-runs, and meets a crop of consumer
+    # FAILs that were there all along — which reads as a regression their fix
+    # caused unless this line told them the sweep had not run.
+    if [ -n "$(evaluation_ledger_legend_files "$walked_files")" ]; then
+      say_fail "the evaluation ledger consumer sweep did not run — it needs one readable legend to check against, and the failure above says there is not one; expect further failures here once that is fixed"
+    fi
+    return 0
+  fi
+  legend_file=${legend%%	*}
+  v_legend=$(printf '%s\n' "${legend#*	}" | tr ' ' '\n' | grep -v '^$' | sort -u)
+  # The legend's own skill is read wholesale, anchor or no anchor. Keyed off
+  # the owning src/<name>/ segment the pass-2 classifier computes the same way,
+  # so moving the legend line into a SKILL.md does not silently empty the rule.
+  case "$legend_file" in
+    src/*) legend_owner=${legend_file#src/}; legend_owner="src/${legend_owner%%/*}" ;;
+    *) legend_owner=$(dirname "$legend_file") ;;
+  esac
+  # Process substitution, never a pipe: say_fail sets `fail` and a piped
+  # `while` runs in a subshell, so every failure here would be discarded and
+  # the gate would go green on a broken contract.
+  while IFS= read -r f; do
+    case "$f" in
+      "$legend_owner"/*) : ;;
+      *)
+        grep -qE "$evaluation_ledger_anchor_re" "$f"
+        case $? in
+          0) : ;;
+          1) continue ;;
+          *) say_fail "$f could not be read for the evaluation ledger anchor — the vocabulary check did not run on it, which is not the same as it having nothing to report"; continue ;;
+        esac
+        ;;
+    esac
+    if ! hits=$(status_tokens_anywhere "$f"); then
+      say_fail "$f could not be read for evaluation ledger statuses — the vocabulary check did not run on it, which is not the same as it having nothing to report"
+      continue
+    fi
+    hits=$(printf '%s\n' "$hits" | grep -xF "$v_legend" | grep -c .)
+    [ "$hits" -ge 2 ] || continue
+    [ "$hits" -eq 3 ] && continue
+    missing=$(printf '%s\n' "$v_legend" | while IFS= read -r t; do
+      grep -q "\`$t\`" "$f" || echo "$t"
+    done | tr '\n' ' ')
+    say_fail "an evaluation ledger status is missing from $f — it names 2 of the 3 and not \`${missing% }\`; a file that enumerates the vocabulary carries all of it, or a rename leaves this one pointing at a status that no longer exists"
+  done < <(printf '%s\n' "$walked_files")
+}
+
 
 sibling_groups=(
   "src/onboard-me/references/evidence-tags.md|src/offboard-me/references/evidence-tags.md|src/rebuild-contract/references/evidence-tags.md"
@@ -842,17 +1142,20 @@ check_sibling_identity() {
 # exists to prevent. A deliberate variant needs a distinct name (or its own
 # group entry).
 check_sibling_membership() {
-  local grouped_basenames base
+  local walked_files=$1 grouped_basenames base
   grouped_basenames=$(printf '%s|' "${sibling_groups[@]}" | tr '|' '\n' | awk -F/ 'NF { print $NF }' | sort -u)
   while IFS= read -r base; do
     if ! printf '%s\n' "$grouped_basenames" | grep -qxF "$base"; then
       say_fail "reference file '$base' exists in multiple skills but no sibling group covers it — add it to sibling_groups in scripts/lint-skills.sh, or rename the deliberate variant"
     fi
-  done < <(find src -path '*/references/*' -type f -name '*.md' | awk -F/ '{ print $NF }' | sort | uniq -d)
+  done < <(printf '%s\n' "$walked_files" | grep '^src/.*/references/.*\.md$' | awk -F/ '{ print $NF }' | sort | uniq -d)
 }
 
 [ -z "${LINT_ROOT:-}" ] && check_sibling_identity
-check_sibling_membership
+check_sibling_membership "$walked_files"
+check_evaluation_ledger_authority "$walked_files"
+check_evaluation_ledger_rule_agreement "$walked_files"
+check_evaluation_ledger_consumers "$walked_files"
 
 # ---------------------------------------------------------------------------
 # Pass 4 — the other trees, each read once.

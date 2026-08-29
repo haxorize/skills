@@ -36,3 +36,6 @@ A fenced block is exempt for the same reason:
 ```md
 [fenced link](references/exempt-fenced.md)
 ```
+
+This body is also the dependant the `body-checked` rule names, cited here by stem so
+that rule's own admission check stays quiet and only its body checks fire.
