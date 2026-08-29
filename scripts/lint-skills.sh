@@ -802,6 +802,7 @@ done < <({ find src -type f -name '*.md'
 # ---------------------------------------------------------------------------
 
 sibling_groups=(
+  "src/onboard-me/references/evidence-tags.md|src/offboard-me/references/evidence-tags.md|src/rebuild-contract/references/evidence-tags.md"
   "src/grill-me/references/adr-format.md|src/backfill-adrs/references/adr-format.md|src/adr/references/adr-format.md"
   "src/to-bug/references/tracker-resolution.md|src/to-feature/references/tracker-resolution.md|src/to-story/references/tracker-resolution.md|src/to-tasks/references/tracker-resolution.md|src/improve-design/references/tracker-resolution.md|src/chart-course/references/tracker-resolution.md|src/from-ticket/references/tracker-resolution.md|src/ship/references/tracker-resolution.md|src/backfill-adrs/references/tracker-resolution.md"
   "src/to-bug/references/publishing.md|src/to-feature/references/publishing.md|src/to-story/references/publishing.md|src/to-tasks/references/publishing.md|src/chart-course/references/publishing.md"

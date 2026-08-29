@@ -46,12 +46,14 @@ The route most work travels: **`/grill-me`** → **`/to-feature` / `/to-story` /
 - **`to-bug`** — Synthesize a Bug from the current conversation and publish it. ADO: native Bug work item with `Microsoft.VSTS.Common.Severity` and `Microsoft.VSTS.TCM.ReproSteps`. GitHub: issue tagged with `bug` plus a severity label declared in CLAUDE.md. `--update <bug-id>` from day one.
 - **`glapi-test-pass`** — ADO only. Creates a passing test result on a User Story to satisfy the GLAPI (Greenlight API) production deployment gate. Use when a prod deployment is blocked because a story linked via commits has no passing test point. Automates the full test-case → suite → run → result sequence against the team's PI test plan via `az devops invoke`.
 
-### First contact
+### Meeting, and leaving, a system you did not write
 
 - **`onboard-repo`** — Wire a repo for the suite in one sitting: the `Issue tracker:`, `Landing:`, and `## Registry` blocks, loop commands, convention-skill roles, and the `DOMAIN.md` / `docs/solutions/` seeds, each written only where nothing exists yet. Prints the hook snippet; never edits `settings.json`.
 - **`onboard-me`** — A knowledge-transfer session over an unfamiliar repo: evidence-tagged findings, a KT map of what is still dark, one rung per turn, and each topic handed to the learner's Learning workspace. Writes nothing itself, and the map lives outside the repo; where the repo has no product description it offers one, and on a yes `product-description` writes a `docs/product-description/` directory.
+- **`rebuild-contract`** — The pre-rewrite contract for a system about to be ported or replaced: every observer at its declared boundary, a fidelity per surface, and everything they can see written as rules a reimplementer builds from without opening the source, with the audit trail beside it under `docs/rebuild-contract/`. Reads the repo and writes only that folder, after asking. Declares `product-description` and calls it with `--seed` where the repo has none; the architecture it strips out is `onboard-me`'s KT map.
+- **`offboard-me`** — Evidence-led knowledge capture from an engineer who is leaving: the repo is scanned for what only they can answer, the risks ranked by how exclusively theirs and how badly the loss hurts, then one area per turn is put to them with your reading offered first, and the handover lands beside its risk register under `docs/handover/`, what nobody knows first. Runs with the departing person, never at them, and has no unattended run — without them it produces an agenda that says so. What they will answer in writing after the session goes to `ask-for-me`.
 
-`onboard-repo` wires the repo for the suite; `onboard-me` teaches the person the repo. Same first day, different subject, and neither needs the other.
+The first two are the same first day, different subject: `onboard-repo` wires the repo for the suite; `onboard-me` teaches the person the repo. Neither needs the other. The last two are the other end of the same relationship — a system about to be rewritten, a person about to leave — and each writes one folder into the repo after asking.
 
 ### Implementation
 
@@ -63,7 +65,7 @@ The route most work travels: **`/grill-me`** → **`/to-feature` / `/to-story` /
 - **`review-changes`** — Read-only, project-aware judgment review of a diff before it lands, on a teammate's PR, or on a landed commit. Runs review lenses (subagents on a large diff, in-process on a small prose one), vets the findings, and presents a ranked, classified report with stable `F<n>` IDs, stamped with the head and the tree it reviewed. No argument reviews the newest handoff for the repo.
 - **`address-findings`** — Act on a `review-changes` report in one pass: fix the mechanical findings, batch the rest into one question with recommendations, and close with a disposition per ID (FIXED / DECLINED / DEFERRED / ABANDON). Re-stamps the report with the tree the pass produced, which is what lets a gated push through. Never re-runs the review; re-review is the user's call.
 - **`audit-tests`** — Audit an existing test suite by asking "can these checks fail?" — grades load-bearing assertions and reports the suite's stated blind spots.
-- **`validate-behavior`** — Validate the running app, CLI, API, or generated artifact against a behavior contract written before testing — source-blind, with anti-cheat probes. The runtime complement to `review-changes` (the diff) and `audit-tests` (the test suite).
+- **`validate-behavior`** — Validate the running app, CLI, API, or generated artifact against a behavior contract written before testing — source-blind, with anti-cheat probes. The runtime complement to `review-changes` (the diff) and `audit-tests` (the test suite). Its *behavior contract* is one change checked against a running target by someone who did not write it — not `rebuild-contract`'s **rebuild contract**, which covers every observer at a system's boundary for someone who will never see the source.
 
 ### Ship
 
@@ -73,12 +75,16 @@ The route most work travels: **`/grill-me`** → **`/to-feature` / `/to-story` /
 
 - **`upgrade-deps`** — Upgrade dependencies in the safe order — security-flagged first, each major its own step with the changelog read and the suite run between, then the minor/patch batch — with a per-package supply-chain audit (publisher, publish age, provenance, tarball diff, licence) before anything touches the lockfile. npm, pip/uv, and NuGet.
 
+### Evaluating
+
+- **`evaluation-ledger`** — A multi-week evaluation kept as a ledger in the repo under `docs/evaluation/`: the questions the memo must answer, then one row per claim with its source, the date seen, `marketed` or `verified` against this project or `contradicted`, and an expiry the sweep reads every session. The decision memo is drafted from the rows alone, every sentence citing one and the four counts per candidate on the line after its title; an adopt-or-not recommendation is the `adoption-verdict` grade, which it declares. `doc-claims` sweeps the file; a watch over a rule set is the same ledger with one candidate.
+
 ### Codebase health
 
 - **`improve-design`** — Read-only design-quality review of the whole codebase: surfaces architectural friction and proposes deeper module interfaces as a prioritized, vetted report.
 - **`harden-domain`** — Sweep the codebase to refresh `DOMAIN.md`. Deliberate sweep mode (inline domain capture during grilling lives in `grill-me`).
 - **`backfill-adrs`** — Sweep recent git history for un-recorded architectural decisions and write the ones that pass the gate.
-- **`verify-docs`** — Check whether a document's claims still hold, against the code and tests it describes, the running product it describes, or the sources a derived document was distilled from, with per-claim verdicts and fixes. The prose-drift sibling of `harden-domain` (vocabulary) and `backfill-adrs` (decisions).
+- **`verify-docs`** — Check whether a document's claims still hold, against the code and tests it describes, the running product it describes, or the sources a derived document was distilled from, with per-claim verdicts and fixes. An `evaluation-ledger` is one of the documents it sweeps: a row past its Expires date is STALE. The prose-drift sibling of `harden-domain` (vocabulary) and `backfill-adrs` (decisions).
 - **`delete-dead-code`** — A deliberate whole-repo dead-code sweep: find what nothing calls, tier it SAFE / CAUTION / DANGER, and remove it one test-verified deletion at a time — the removals `implement` parks, `improve-design` never makes, and `/simplify` scopes to a diff.
 
 ### Crossing sessions & prototyping
@@ -115,7 +121,7 @@ The route most work travels: **`/grill-me`** → **`/to-feature` / `/to-story` /
 ### Decisions & learnings
 
 - **`adr`** — Capture a single fresh Architecture Decision Record after a deliberate decision.
-- **`adoption-verdict`** — Render a project-grounded verdict on an external-adoption question ("should we use X?", "does this CVE reach us?") — exactly one grade (Adopt / Trial / Hold / Reject / Not-our-problem), gated on verified project and external facts. It forms its own position, where `grilling` extracts yours.
+- **`adoption-verdict`** — Render a project-grounded verdict on an external-adoption question ("should we use X?", "does this CVE reach us?") — exactly one grade (Adopt / Trial / Hold / Reject / Not-our-problem), gated on verified project and external facts. It forms its own position, where `grilling` extracts yours. Declared by `evaluation-ledger`, and reads that ledger's rows where a project kept one.
 - **`capturing-learnings`** — Owns the per-repo `docs/solutions/` solved-problems store on both sides: captures a Learning doc when its gate holds, and serves the symptom-keyed retrieval protocol any skill reads the store with.
 
 ### Design
@@ -143,8 +149,8 @@ The route most work travels: **`/grill-me`** → **`/to-feature` / `/to-story` /
 - **`writing-for-agents`** — Conventions for documents that steer agent process — skill bodies, `CLAUDE.md`, reference files — prose whose job is to be obeyed.
 - **`writing-for-humans`** — Sentence-level clarity for prose that transfers understanding — tickets, ADR rationale, summaries, commit and PR prose — with per-artifact registers and the named AI-tell catalog.
 - **`work-item-shape`** — What a well-formed work-item body *is* (outcome goal, checkable criteria, readiness call, structural sizing, surfaced ambiguity), any tier, any tracker. In repos wired for the pipeline it routes creation asks to the `to-*` publishers instead of drafting lookalikes.
-- **`doc-claims`** — Judging a document's claims against what it answers to — the code and tests, the running product, or the sources a derived doc came from — one verdict per claim (PASS/FAIL/UNSUPPORTED/STALE), with the source map and the both-directions drift rule for derived documents. Declared by `/verify-docs` and the repo-local `sweep-corpus`.
-- **`product-description`** — The outside-in behavior record of a product — what the user sees, what they can do, and exactly what happens when they act, including when they abandon halfway. One document per feature area on one shared skeleton so gaps show by comparison, drafted from code and tests and then verified against the running product, with a coverage index that never says `verified` on a read. Owns the interrupt taxonomy. Declared by `/onboard-me`.
+- **`doc-claims`** — Judging a document's claims against what it answers to — the code and tests, the running product, or the sources a derived doc came from — one verdict per claim (PASS/FAIL/UNSUPPORTED/STALE, where STALE covers an evaluation-ledger row past its expiry), with the source map and the both-directions drift rule for derived documents. Declared by `/verify-docs` and the repo-local `sweep-corpus`.
+- **`product-description`** — The outside-in behavior record of a product — what the user sees, what they can do, and exactly what happens when they act, including when they abandon halfway. One document per feature area on one shared skeleton so gaps show by comparison, drafted from code and tests and then verified against the running product, with a coverage index that never says `verified` on a read. Owns the interrupt taxonomy. Declared by `/onboard-me` and `/rebuild-contract`.
 
 ### Domain
 

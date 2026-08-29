@@ -48,14 +48,9 @@ An existing description is evidence like any other file, and evidence of what so
 
 ## Tag every claim
 
-This is what makes the session worth trusting. Keep what you verified separate from what you are guessing:
+This is what makes the session worth trusting. Keep what you verified separate from what you are guessing: every claim in the map carries exactly one of **[fact]**, **[inference]**, **[unknown]**, **[human]**, **[conflict]**. Read [references/evidence-tags.md](references/evidence-tags.md) for all five — it is the one definition, shared byte-identical with `offboard-me` and `rebuild-contract`, and it carries the never-transcribe-a-secret rule this map needs most, since the map lands outside the repo and outside its `.gitignore`.
 
-- **[fact]** — supported by something you read, cited: `path/to/file.ts:42`, a `git log` line, a config value, a test name. No citation means it is not a fact. **Never transcribe a secret into the map.** The map lands outside the repo and outside its `.gitignore`, so a key, token, password, or connection string is cited as `file:line` and its kind — never its value — and a live one found in the repo is a finding to tell the human about.
-- **[inference]** — a reasonable deduction, with the evidence it rests on named.
-- **[unknown]** — you could not determine it. These are the map's dark part and the reason the next step is obvious; naming them is the work, not a failure.
-- **[human]** — the engineer told you. This is the strongest evidence in the room: they know which service is dead, which module lies, which comment is a decade stale.
-
-When the human corrects you, retag the claim as **[human]**, fix the map in the same turn, and ask whether the correction invalidates anything else you have said.
+The **[unknown]**s are this map's dark part and the reason the next step is obvious; naming them is the work, not a failure. A **[conflict]** — the engineer's account against the code — is recorded with both sides rather than resolved, and is worth more than either side alone.
 
 ## The ladder
 

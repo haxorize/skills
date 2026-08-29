@@ -1,6 +1,6 @@
 ---
 name: doc-claims
-description: Checking what a document claims against what that document answers to — the code and tests it describes, the running product it describes, or the sources it was derived from — one verdict per claim rather than an impression of the whole. Use when judging whether a README, guide, reference, or spec is still true, when prose may have drifted after a refactor, rename, or removal, when a derived document (a distillation, a summary, a local rewrite of an upstream) needs grounding against its sources, when a periodic sweep or another skill needs per-claim verdicts it can act on, or when someone asks whether the docs still match the code or the shipped product. Not for updating docs the current change just made stale, which is feedback-loops at every close. Not a merge gate — this judgment is fallible and runs as a triggered review, never as CI.
+description: Checking what a document claims against what that document answers to — the code and tests it describes, the running product it describes, or the sources it was derived from — one verdict per claim rather than an impression of the whole. Use when judging whether a README, guide, reference, or spec is still true, when prose may have drifted after a refactor, rename, or removal, when a derived document (a distillation, a summary, a local rewrite of an upstream) needs grounding against its sources, when a periodic sweep or another skill needs per-claim verdicts it can act on, when someone asks whether the docs still match the code or the shipped product, or when an evaluation ledger's claim rows and their expiry dates need checking. Not for updating docs the current change just made stale, which is feedback-loops at every close. Not a merge gate — this judgment is fallible and runs as a triggered review, never as CI.
 ---
 
 # Doc claims
@@ -19,7 +19,7 @@ Go through the prose and write down every assertion that could be false. Include
 
 - **Judge against the code and the tests, not the code alone.** A claim the code satisfies but nothing tests is not the same as one a test protects, and the verdicts below keep them apart. Where the document describes what a product does for the person using it, the **running product** is a third thing it answers to — a behaviour claim is settled by performing the interaction and watching, and one the code appears to support but the product contradicts is a **FAIL** against the product; what to do about the product is never a verdict this discipline softens.
 - **A contradiction can mean the code regressed.** The document may be the only place the intended behaviour is written down. Check which side is wrong before "fixing" the prose — a doc that caught a regression is the doc doing its job.
-- **Ground against the artifact reopened now, never from memory of it.** Memory of a codebase or a corpus is where drift hides, and a claim judged from recall is a guess with a verdict attached.
+- **Ground against the artifact reopened now, never from memory of it.** Memory of a codebase or a corpus is where drift hides, and a claim judged from recall is a guess with a verdict attached. An evaluation ledger (`docs/evaluation/<slug>/ledger.md`) is a document already in claim form: a `verified` row is judged against the evidence its own row cites, and a row past its Expires date is **STALE** whatever its source still says.
 
 ## Verdicts
 
@@ -28,9 +28,9 @@ Go through the prose and write down every assertion that could be false. Include
 | **PASS** | Matches what it answers to, and is protected — exercised by a test; or, for a behaviour claim, confirmed by performing the interaction against the running product; or, for a derived document, traced to a source passage or to a recorded decision |
 | **FAIL** | The code, the running product, or the source contradicts the claim |
 | **UNSUPPORTED** | Matches what it answers to, but nothing protects it — no test, no observed run, or no source passage behind it |
-| **STALE** | Refers to something removed or renamed |
+| **STALE** | Refers to something removed or renamed — or rests on a source whose currency has lapsed: an evaluation-ledger row past its Expires date, where the source is still there and no longer stands for what it did when it was read |
 
-Every claim gets exactly one. An **UNSUPPORTED** verdict is a missing protection — a missing test, or a behaviour claim nobody has watched hold — reported as a candidate task rather than filed as a doc bug: the prose is fine, the protection is absent.
+Every claim gets exactly one. **STALE** carries the whole "was true, is not now" class, expiry included; the fix for an expired row is a `check` that re-reads its source, not a rewrite of the prose. An **UNSUPPORTED** verdict is a missing protection — a missing test, or a behaviour claim nobody has watched hold — reported as a candidate task rather than filed as a doc bug: the prose is fine, the protection is absent.
 
 ## Derived documents answer to their sources
 
