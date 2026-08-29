@@ -1,7 +1,7 @@
 # Evidence travels with the claim
 
 Depends: `committing`, `review-changes`, `implement`, `receiving-review`, `address-findings`, `upgrade-deps`, `handoff`
-Why not a hook or lint: most of these claims are chat output, which no gate reads; where one does land in a file a gate sees — a commit message, a review report — whether the evidence supports the claim is a judgment, not a shape a check can match.
+Why not a hook or lint: a Stop hook can read the final message and a write hook the files a claim lands in — a commit message, a review report, a handoff — but whether the evidence supports the claim is a judgment, not a shape a check can match; a claims regex run on 2026-08-29 over 75 handoff and review files in the landing zone and 112 commit messages in this repo's log matched prose about verification, never a claim the rule had missed.
 
 A self-report — a status line, a count, a "done", a "tests pass" — carries its evidence **in the same message**, or it carries the marker `UNVERIFIED:`. There is no third state; a confident sentence with no evidence and no marker is the failure.
 
