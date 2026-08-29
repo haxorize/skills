@@ -35,37 +35,44 @@ fi
 # it is live. Failures warn rather than abort: git ignores this hook's exit
 # code, and the merge has already landed.
 #
-# Both hook rosters are derived, never hand-kept: the PreToolUse hooks the way
-# install.sh derives them — every global/hooks/*.sh with an `# Install note:`
-# header line — and the git hooks from the selftests sitting beside them here.
-# A hook that lands in either directory without a selftest is named below, not
-# silently ungated. Only scripts/lint-skills.sh is hardcoded, because it is the
-# subject of a selftest rather than one itself.
-#
-# scripts/*-selftest.sh outside this directory is deliberately not swept:
-# security-selftest.sh grades security.sh, which is a tool run by hand before
-# reading an external directory rather than anything a git event fires. The
-# scheduled corpus sweep is where it is graded.
-gates="scripts/lint-skills.sh scripts/lint-selftest.sh"
+# Every roster is derived, never hand-kept: the two linters are the
+# scripts/*.sh that grade the tree rather than themselves; every other gate is
+# a selftest — scripts/*-selftest.sh (lint-skills.sh enforces that pairing, so
+# a script landing without one is named there), the git hooks' selftests
+# beside this file, and the PreToolUse hooks' the way install.sh derives them:
+# every global/hooks/*.sh with an `# Install note:` header line. A hook that
+# lands in either directory without a selftest is named below, not silently
+# ungated. security-selftest.sh runs here too: its last row grades every
+# shipped skill body against the scanner, and a pulled body that acquired a
+# flagged phrase is exactly what a merge can bring in.
+gates="scripts/lint-skills.sh scripts/lint-adrs.sh"
+for s in "$repo_root"/scripts/*-selftest.sh; do
+  [ -e "$s" ] || continue
+  gates="$gates scripts/$(basename "$s")"
+done
 for s in "$repo_root"/scripts/git-hooks/*-selftest.sh; do
   [ -e "$s" ] || continue
   gates="$gates scripts/git-hooks/$(basename "$s")"
 done
-for h in $(grep -l '^# Install note: ' "$repo_root"/global/hooks/*.sh); do
+for h in $(grep -l '^# Install note: ' "$repo_root"/global/hooks/*.sh 2>/dev/null); do
   gates="$gates global/hooks/$(basename "$h" .sh)-selftest.sh"
 done
 for gate in $gates; do
   if [ ! -f "$repo_root/$gate" ]; then
-    echo "post-merge: WARN gate missing: $gate — renamed or removed without updating this hook" >&2
+    echo "post-merge: WARN gate missing: $gate — a hook whose selftest was renamed or removed, or a linter this hook names by hand" >&2
   else
-    bash "$repo_root/$gate" >/dev/null 2>&1
-    gate_status=$?
-    # 2 is not a failure and not a clean: lint-selftest.sh uses it for a run that
-    # graded everything it could reach and left its read-error branches
-    # unexercised (root, or a filesystem that ignores modes). This loop discards
-    # output, so the status is the only thing that can carry that distinction.
+    # `|| gate_status=$?`, never a bare call: this file runs under `set -e`,
+    # and a bare call that failed would end the hook here — before the WARN,
+    # before the remaining gates, and before the re-hoist below.
+    gate_status=0
+    bash "$repo_root/$gate" >/dev/null 2>&1 || gate_status=$?
+    # 2 is not a failure and not a clean. The lint family gives it two
+    # meanings — a selftest that graded everything it could reach and left a
+    # branch unexercised (root, or a filesystem that ignores modes), or a run
+    # with nothing to check — and this loop discards output, so the status is
+    # the only thing that can carry either; the line names both.
     if [ "$gate_status" -eq 2 ]; then
-      echo "post-merge: WARN $gate graded partial — some checks went unexercised; run 'bash $gate' to see which" >&2
+      echo "post-merge: WARN $gate exited 2 — a partial (some checks went unexercised) or nothing checked; run 'bash $gate' to see which" >&2
     elif [ "$gate_status" -ne 0 ]; then
       echo "post-merge: WARN $gate failed — run 'bash $gate' to see why" >&2
     fi

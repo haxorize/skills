@@ -15,4 +15,4 @@ had not made — died of SIGPIPE, so the pipeline reported the citation as missi
 reference file repeats the citation on its own third line, so the match lands early
 whichever file the directory walk yields first. Three files rather than one because a
 reference file caps at 200 lines and the tail has to outrun a Linux pipe's fixed 64 KiB,
-not just a macOS pipe's initial 16 KiB; `scripts/lint-selftest.sh` asserts that length.
+not just a macOS pipe's initial 16 KiB; `scripts/lint-skills-selftest.sh` asserts that length.

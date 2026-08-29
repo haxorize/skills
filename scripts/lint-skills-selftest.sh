@@ -50,7 +50,22 @@
 # arrow-parenthesised and a fenced mention staying quiet. The
 # slash-on-model-invoked check is covered the same way, in a SKILL.md and in a
 # reference file (the wider sweep), with the two slash forms that are correct
-# unmasked — a user-invoked skill and a built-in — staying quiet. What that
+# unmasked — a user-invoked skill and a built-in — staying quiet. Covered since
+# 2026-08-29: the single-line-description check in three shapes (a folded
+# block scalar, a literal one with an indentation indicator, a continued plain
+# scalar), the re-attach byte-size WARN (fires on the oversize fixture, draws
+# no FAIL, stays silent on the clean root, and stays silent on the clean
+# root's near-cap body 49 bytes under the bound — so the threshold is pinned
+# from below as well as above), the hook-selftest check (a marked hook with no
+# selftest, one whose selftest lacks the exec bit, an unmarked file that must
+# stay quiet whatever its name, and a *-lib.sh), the script-selftest check
+# (a script with no selftest, one whose selftest lacks the exec bit, and the
+# quiet forms: a *-lib.sh and install.sh), the pinned FAIL count against the
+# broken tree (a check that begins false-positiving on a fixture reds here
+# even when no substring row names it), and argument handling (--help runs
+# nothing and exits 0, an unknown argument, two arguments, and an empty
+# argument run nothing and exit 3, a LINT_ROOT that is not a directory runs
+# nothing and exits 2). What that
 # buys, stated no larger than it is: those shapes cannot stop grading without
 # this script saying so. It is not a claim about shapes no fixture holds, and
 # lint-skills.sh's own header states what its scans never reach at all.
@@ -59,10 +74,11 @@ set -uo pipefail
 
 repo_root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$repo_root"
+. scripts/selftest-lib.sh
 
 fixtures="scripts/lint-fixtures"
 if [ ! -d "$fixtures" ]; then
-  echo "SELFTEST FAIL: fixture tree $fixtures is missing"
+  selftest_fail "fixture tree $fixtures is missing"
   exit 1
 fi
 
@@ -70,38 +86,24 @@ fi
 # the thing induced. See the read-error block near the bottom.
 clean_fixtures="scripts/lint-fixtures-clean"
 if [ ! -d "$clean_fixtures" ]; then
-  echo "SELFTEST FAIL: clean fixture tree $clean_fixtures is missing"
+  selftest_fail "clean fixture tree $clean_fixtures is missing"
   exit 1
 fi
 
 output=$(LINT_ROOT="$fixtures" bash scripts/lint-skills.sh 2>&1)
 status=$?
 
-fail=0
-
 # Grading both directions. Each `expect` names a check and a substring only
 # that check's message can produce; each `reject` names a form the linter must
-# leave alone.
-# One matcher for every root: $1 is the linter output to search, $2 says what
-# went wrong and where, $3 is the substring only the graded check can produce.
-# The wrappers below give each root its own wording without a second copy of
-# the matcher, so a fix to the matching lands once.
-expect_in() {
-  if ! printf '%s\n' "$1" | grep -qF "$3"; then
-    echo "SELFTEST FAIL: $2 — expected a line containing: $3"
-    fail=1
-  fi
-}
-
+# leave alone. The matcher is scripts/selftest-lib.sh's (expect_in/reject_in:
+# haystack, what went wrong and where, the substring only the graded check can
+# produce); the wrappers below give each root its own wording.
 expect() {
   expect_in "$output" "the $1 check did not fire on the fixture tree" "$2"
 }
 
 reject() {
-  if printf '%s\n' "$output" | grep -qF "$2"; then
-    echo "SELFTEST FAIL: the $1 check fired on a form it must exempt — found a line containing: $2"
-    fail=1
-  fi
+  reject_in "$output" "the $1 check fired on a form it must exempt" "$2"
 }
 
 # The line number is pinned, not just the path: reporting the wrong line is the
@@ -130,6 +132,14 @@ expect "slash-on-model-invoked" "src/slash-on-model-invoked/SKILL.md writes \`/f
 # regresses unseen, because that is what a publisher writes from.
 expect "slash-on-model-invoked (reference file)" "src/slash-on-model-invoked/references/retired-form.md writes \`/fixture-discipline\`"
 expect "two-way requires (unused)" "src/unused-dep/SKILL.md declares requires: 'fixture-discipline' but the body never names it"
+expect "single-line description (block scalar)" "src/folded-description/SKILL.md description is a YAML block scalar ('>-')"
+expect "single-line description (literal block scalar with indicators)" "src/literal-description/SKILL.md description is a YAML block scalar ('|2-')"
+expect "single-line description (continued line)" "src/continued-description/SKILL.md description continues onto an indented next line"
+expect "re-attach byte-size WARN" "WARN: src/oversize-body/SKILL.md is "
+expect "hook selftest (missing)" "global/hooks/orphan-hook.sh carries an '# Install note:' header, so it is a hook, and has no selftest — write global/hooks/orphan-hook-selftest.sh"
+expect "hook selftest (not executable)" "global/hooks/unexec-hook-selftest.sh is not executable"
+expect "script selftest (missing)" "scripts/orphan-tool.sh has no selftest — write scripts/orphan-tool-selftest.sh"
+expect "script selftest (not executable)" "scripts/unexec-tool-selftest.sh is not executable"
 
 reject "reference-link resolution" "references/real-reference.md"
 reject "reference-link resolution" "references/exempt-single.md"
@@ -147,6 +157,12 @@ reject "global-rule Depends (early citation, long tail behind it)" "global/rules
 # Skill-tool form and the slash form, plus the two slash forms that are correct unmasked
 # (a user-invoked skill, a built-in). Drop a mask or invert either slash guard and it fires.
 reject "two-way requires and slash-on-model-invoked (quoted, parenthesised and fenced forms)" "src/quoted-dep/SKILL.md"
+# The WARN is a warning: the oversize body must draw no FAIL line of its own.
+reject "re-attach byte-size WARN does not FAIL" "FAIL: src/oversize-body/SKILL.md"
+reject "hook selftest (library exempt)" "global/hooks/quiet-lib.sh"
+reject "hook selftest (no Install note, so not a hook)" "global/hooks/unmarked-helper.sh"
+reject "script selftest (library exempt)" "scripts/quiet-lib.sh"
+reject "script selftest (installer exempt)" "scripts/install.sh"
 
 # The reject above is the only row in this suite that grades the citation check's
 # plumbing, and it discriminates only while bulk-cited-dep's tail is longer than a
@@ -157,24 +173,47 @@ reject "two-way requires and slash-on-model-invoked (quoted, parenthesised and f
 # here, loudly, rather than turning the row into a no-op.
 bulk_bytes=$(find "$fixtures/src/bulk-cited-dep" -type f -name '*.md' -exec cat {} + | wc -c | tr -d ' ')
 if [ "$bulk_bytes" -le 65536 ]; then
-  echo "SELFTEST FAIL: src/bulk-cited-dep/ is $bulk_bytes bytes, at or under a Linux pipe's 65536-byte capacity — the early-citation reject no longer discriminates, because the producer can hand over the whole stream before the reader exits. Add reference-file length back (each file caps at 200 lines)."
-  fail=1
+  selftest_fail "src/bulk-cited-dep/ is $bulk_bytes bytes, at or under a Linux pipe's 65536-byte capacity — the early-citation reject no longer discriminates, because the producer can hand over the whole stream before the reader exits. Add reference-file length back (each file caps at 200 lines)."
 fi
 
-if [ "$status" -ne 1 ]; then
-  echo "SELFTEST FAIL: lint exited $status against the fixture tree; a tree this broken must exit 1"
-  fail=1
-fi
+expect_rc "the lint against the fixture tree" 1 "$status"
+# The count of FAIL lines is pinned: a check that begins firing on a fixture
+# it should leave alone reds here even when no substring row names the line.
+nfail=$(printf '%s\n' "$output" | grep -c '^FAIL: ')
+[ "$nfail" -eq 28 ] || selftest_fail "expected exactly 28 FAIL lines against the fixture tree, got $nfail"
+# The near-cap body is measured: the clean root holds one 49 bytes under the
+# bound (asserted below to draw no WARN), and this pins that it is really there.
+near_bytes=$(wc -c < "$clean_fixtures/src/near-cap/SKILL.md" | tr -d ' ')
+{ [ "$near_bytes" -gt 14800 ] && [ "$near_bytes" -le 15000 ]; } || selftest_fail "src/near-cap/SKILL.md in the clean root is $near_bytes bytes; it must sit inside (14800, 15000] to pin the WARN threshold from below"
 
 # The clean root's baseline. Every later assertion against it reads "the thing
 # I broke caused this", and that reading is only sound while the untouched tree
 # exits 0 — so a violation drifting into scripts/lint-fixtures-clean/ must fail
 # here rather than quietly restoring the vacuous check this replaced.
 if ! clean_baseline=$(LINT_ROOT="$clean_fixtures" bash scripts/lint-skills.sh 2>&1); then
-  echo "SELFTEST FAIL: $clean_fixtures does not lint clean, so a failure induced in it proves nothing. Linter output was:"
+  selftest_fail "$clean_fixtures does not lint clean, so a failure induced in it proves nothing. Linter output was:"
   printf '%s\n' "$clean_baseline"
-  fail=1
 fi
+
+# The clean root draws no WARN either: the byte-size warning fires on size alone,
+# and nothing there is near the bound.
+if printf '%s\n' "$clean_baseline" | grep -q '^WARN:'; then
+  selftest_fail "the clean fixture drew a WARN line; the byte-size warning fired on a body under the bound (near-cap sits 49 bytes under it)"
+fi
+
+# Argument handling, each direction: --help prints usage and runs no check;
+# an unknown argument exits 3 and runs no check; a LINT_ROOT that is not a
+# directory exits 2 rather than linting whatever directory the shell was in.
+help_out=$(bash scripts/lint-skills.sh --help 2>&1); expect_rc "--help" 0 $?
+expect_in "$help_out" "--help printed no Usage: line" "Usage:"
+printf '%s\n' "$help_out" | grep -qE '^(OK|FAIL|WARN):' && selftest_fail "--help ran the lint"
+bogus_out=$(LINT_ROOT="$fixtures" bash scripts/lint-skills.sh --bogus 2>&1); expect_rc "an unknown argument" 3 $?
+printf '%s\n' "$bogus_out" | grep -qE '^(OK|FAIL|WARN):' && selftest_fail "an unknown argument still ran the lint"
+expect_in "$bogus_out" "the unknown-argument error did not name --help as the fix" "--help"
+LINT_ROOT="$fixtures" bash scripts/lint-skills.sh --help --bogus >/dev/null 2>&1; expect_rc "two arguments (the second unknown)" 3 $?
+LINT_ROOT="$fixtures" bash scripts/lint-skills.sh "" >/dev/null 2>&1; expect_rc "an empty argument" 3 $?
+root_out=$(LINT_ROOT="$fixtures/does-not-exist" bash scripts/lint-skills.sh 2>&1); expect_rc "a LINT_ROOT that is not a directory" 2 $?
+printf '%s\n' "$root_out" | grep -qE '^(OK|FAIL|WARN):' && selftest_fail "a LINT_ROOT that is not a directory still ran the lint"
 
 # The two read-error branches, exercised by runtime injection. Both report that
 # a check never ran rather than that it passed, so a branch that stops firing
@@ -186,16 +225,13 @@ fi
 # which `global/rules/well-formed.md` names in its Depends: line — the link
 # extractor reads the file directly, and the citation check reads it through
 # the find/awk pipeline over that dep's directory.
-skipped=0
 # `set -e` is deliberately off in this script, so an empty inject_root would not
 # stop anything: `cp -R "$fixtures/." "/"` is a valid command, and the trap's
 # `rm -rf ""` cleans up nothing. Guard the variable before anything uses it as
 # a path, and check the copy — a partial tree fails the two rows below and
 # misattributes the failure to the read-error branches.
-inject_parent="$(mktemp -d)"
-if [ -z "$inject_parent" ] || [ ! -d "$inject_parent" ]; then
-  echo "SELFTEST SKIP: mktemp -d produced no usable directory — the two read-error branches were not exercised by this run."
-  skipped=1
+if ! inject_parent="$(selftest_tmpdir)"; then
+  selftest_skip "mktemp -d produced no usable directory — the two read-error branches were not exercised by this run."
 else
 trap 'chmod -R u+rwX "$inject_parent" 2>/dev/null; rm -rf "$inject_parent"' EXIT
 inject_root="$inject_parent/broken"
@@ -203,18 +239,19 @@ clean_root="$inject_parent/clean"
 if ! mkdir -p "$inject_root" "$clean_root" ||
    ! cp -R "$fixtures/." "$inject_root/" ||
    ! cp -R "$clean_fixtures/." "$clean_root/"; then
-  echo "SELFTEST SKIP: could not copy the fixture trees into $inject_parent — the two read-error branches were not exercised by this run."
-  skipped=1
+  selftest_skip "could not copy the fixture trees into $inject_parent — the two read-error branches were not exercised by this run."
 else
 unreadable="$inject_root/src/broken-links/references/real-reference.md"
 clean_unreadable="$clean_root/src/clean-skill/references/note.md"
-chmod 000 "$unreadable" "$clean_unreadable"
-if cat "$unreadable" >/dev/null 2>&1 || cat "$clean_unreadable" >/dev/null 2>&1; then
+# chmod's own status is read: a renamed fixture would otherwise fall through
+# to the readability test below and be reported as a dead read-error branch.
+if ! chmod 000 "$unreadable" "$clean_unreadable" 2>/dev/null; then
+  selftest_fail "chmod 000 failed on $unreadable or $clean_unreadable — a fixture was renamed or removed; update the two paths here rather than reading the rows below as a dead branch"
+elif cat "$unreadable" >/dev/null 2>&1 || cat "$clean_unreadable" >/dev/null 2>&1; then
   # Running as root, or on a filesystem that ignores the mode. Not a
   # regression, but the branches below went unexercised and the closing line
   # must not claim otherwise.
-  echo "SELFTEST SKIP: $unreadable is still readable after chmod 000 (running as root, or a filesystem that ignores modes) — the two read-error branches were not exercised by this run."
-  skipped=1
+  selftest_skip "$unreadable is still readable after chmod 000 (running as root, or a filesystem that ignores modes) — the two read-error branches were not exercised by this run."
 else
   inject_output=$(LINT_ROOT="$inject_root" bash scripts/lint-skills.sh 2>&1)
   inject_expect() {
@@ -230,11 +267,7 @@ else
   # catches first. The clean root exits 0 until this one mode is broken, so its
   # exit 1 is the read error's alone.
   clean_output=$(LINT_ROOT="$clean_root" bash scripts/lint-skills.sh 2>&1)
-  clean_status=$?
-  if [ "$clean_status" -ne 1 ]; then
-    echo "SELFTEST FAIL: lint exited $clean_status against an otherwise-clean tree holding one unreadable file; a read error on its own must force exit 1"
-    fail=1
-  fi
+  expect_rc "the lint against an otherwise-clean tree holding one unreadable file (a read error on its own must force exit 1)" 1 $?
   expect_in "$clean_output" "the reference-link extractor read-error did not fire on an otherwise-clean tree" "src/clean-skill/references/note.md — the reference-link extractor errored"
   expect_in "$clean_output" "the Depends: citation read-error did not fire on an otherwise-clean tree" "Depends: names 'clean-skill' but src/clean-skill/ could not be read"
 fi
@@ -258,20 +291,12 @@ if [ "$fail" -ne 0 ]; then
     echo "Linter output against the injected clean root was:"
     printf '%s\n' "$clean_output"
   fi
-elif [ "$skipped" -eq 0 ]; then
-  echo "OK: lint self-test clean — every fixture failure fired, every exempt form stayed quiet, and both read-error branches fired on an unreadable file."
-else
-  echo "SELFTEST PARTIAL: clean on the fixture tree — every fixture failure fired and every exempt form stayed quiet — but the two read-error branches were not exercised; see the SKIP line above. A run that ends here has not graded them."
 fi
 
-# Three statuses, not two. 1 is a real failure; 2 is "nothing failed, and two
-# branches went ungraded" — a distinct code because the only automated consumer,
-# scripts/git-hooks/post-merge, discards stdout and reads the status alone, so a
-# partial that exits 0 is indistinguishable from a whole clean to the one caller
-# that most needs to tell them apart.
-if [ "$fail" -ne 0 ]; then
-  exit 1
-elif [ "$skipped" -ne 0 ]; then
-  exit 2
-fi
-exit 0
+# Three statuses, not two — selftest_close's contract: 1 is a real failure; 2
+# is "nothing failed, and two branches went ungraded", a distinct code because
+# the only automated consumer, scripts/git-hooks/post-merge, discards stdout
+# and reads the status alone.
+selftest_close \
+  "lint self-test clean — every fixture failure fired, every exempt form stayed quiet, and both read-error branches fired on an unreadable file." \
+  "clean on the fixture tree — every fixture failure fired and every exempt form stayed quiet — but the two read-error branches were not exercised; see the SKIP line above. A run that ends here has not graded them."

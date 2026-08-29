@@ -77,7 +77,7 @@
 #     case-sensitive one. The sibling-group check below covers the same
 #     ground for the paths registered there.
 #
-# scripts/lint-selftest.sh runs this file against a deliberately-bad fixture
+# scripts/lint-skills-selftest.sh runs this file against a deliberately-bad fixture
 # tree and fails if any check stops firing (or starts firing on the exempt
 # forms). Run it after changing a check here.
 #   - Platform-true spec limits (ADR-0030): `name` <= 64 chars and no angle
@@ -93,7 +93,8 @@
 #     gracefully ("Never gate inside a model-invoked skill"); its body and
 #     references must not carry the phrase.
 #   - Scope: the skill checks walk src/*/SKILL.md (and references beneath);
-#     the global-rules checks below walk global/rules/. The repo-local skills
+#     the global-rules checks below walk global/rules/, the hook-selftest
+#     check global/hooks/, the script-selftest check scripts/. The repo-local skills
 #     under .claude/skills/ are deliberately outside both walks: they never hoist, so the router-coverage
 #     and requires checks would demand mentions that do not belong, and they
 #     legitimately cite this repo's paths. Their size and frontmatter are the
@@ -111,6 +112,27 @@
 #     200-line cap and the ADR-citation ban above also run over global/rules/,
 #     since those files are hoisted into ~/.claude/rules/ the same way skills
 #     are hoisted.
+#   - Single-line description (CLAUDE.md § Linting; write-skill "Writing the
+#     description"): `description:` is a plain scalar on its own line. A block
+#     indicator (`>`, `|`, with any chomping or indentation suffix) is the
+#     whole value a one-line reader sees, and a plain scalar continued on an
+#     indented next line loses its tail — every consumer here reads one line.
+#   - Re-attach byte WARN (write-skill § Size constraints): a SKILL.md over
+#     15,000 bytes draws a WARN, never a FAIL — the platform figure it converts
+#     is dated in the block below. Reference files are not measured: they are
+#     read on demand, never re-attached.
+#   - Hook selftest (CLAUDE.md § Linting: "one selftest per hook, which
+#     `lint-skills.sh` enforces"): every global/hooks/*.sh whose header carries
+#     an `# Install note:` line — the marker install.sh and post-merge derive
+#     the hook roster from, so all three answer "what is a hook" the same way —
+#     has an executable global/hooks/<name>-selftest.sh beside it. A file with
+#     no marker is a library or a selftest and owes nothing.
+#   - Script selftest (ADR-0068: every selftest is `<script>-selftest.sh`):
+#     every scripts/<name>.sh that is not itself a selftest, a `*-lib.sh`, or
+#     one of the two installers (install.sh, setup-hooks.sh) has an executable
+#     scripts/<name>-selftest.sh beside it, so a gate landing without one is
+#     named here rather than silently ungated. scripts/git-hooks/ is the git
+#     hooks' directory and post-merge derives its roster there.
 #   - Router coverage (CLAUDE.md "Keep the router honest"): every skill under
 #     src/ must appear as a backticked code-span (`name` or `/name`) in
 #     src/which-skill/SKILL.md. Requiring the backtick keeps incidental prose
@@ -118,10 +140,54 @@
 #     silently omit a skill. Stale-routing accuracy stays editorial. README.md
 #     is held to the same coverage rule — its skill map is a second router.
 #
-# Exit code 0 if clean, 1 if any check fails. List all failures, don't bail
-# on first hit.
+# Limits this file enforces that are not this repo's own, with where each
+# was verified and when — a cap attributed to a platform is re-checked at the
+# spec text, not recalled (re-verify and re-date these when a release moves):
+#   - `name` <= 64 chars, `description` <= 1024 chars, non-empty: the Agent
+#     Skills specification (agentskills.io/specification, frontmatter table),
+#     verified 2026-08-29; Claude Code shares both (ADR-0030).
+#   - 5,000 tokens per re-attached skill inside a 25,000-token budget after
+#     auto-compaction: code.claude.com/docs/en/skills, "Auto-compaction
+#     carries invoked skills forward within a token budget … keeping the first
+#     5,000 tokens of each", verified 2026-08-29. The WARN below converts it to
+#     bytes at 3 bytes/token, measured 2026-08-29 on this repo's four largest
+#     bodies through `claude -p` usage deltas (2.97–3.10 bytes/token; the
+#     earlier 4-bytes/token estimate undercounted by a quarter).
+#   - The 200-line caps are this repo's own (write-skill § Size constraints), a
+#     loaded-context proxy, not a platform limit.
+#
+# Usage: scripts/lint-skills.sh [--help]. No other argument is accepted;
+# LINT_ROOT=<dir> points the whole sweep at another tree (the selftest's
+# fixture roots). Exit 0 clean, 1 if any check FAILs (every failure is listed;
+# no bail on first hit), 2 if LINT_ROOT names no directory (nothing checked),
+# 3 on an unknown argument. WARN lines never change the exit code.
 
 set -uo pipefail
+
+usage() {
+  cat <<'USAGE'
+Usage: scripts/lint-skills.sh [--help]
+
+Lints src/*/SKILL.md, their references, global/rules/, global/hooks/ (one selftest per
+hook), scripts/ (one selftest per script), and the two routers against the conventions in
+src/write-skill/SKILL.md. The header of this file lists every check and what each does
+not reach. Takes no argument but --help.
+
+  LINT_ROOT=<dir>   point the whole sweep at another tree; unset in normal use
+                    (scripts/lint-skills-selftest.sh sets it to the fixture roots)
+
+Exit codes: 0 clean · 1 at least one FAIL · 2 LINT_ROOT is not a directory (nothing
+checked) · 3 usage error. WARN lines never change the exit code.
+USAGE
+}
+if [ $# -gt 1 ]; then
+  echo "lint-skills.sh: got $# arguments — this script takes no argument but --help" >&2; exit 3
+fi
+case "${1:-}" in
+  "") [ $# -eq 0 ] || { echo "lint-skills.sh: an empty argument — this script takes no argument but --help" >&2; exit 3; } ;;
+  -h|--help) usage; exit 0 ;;
+  *) echo "lint-skills.sh: unknown argument '$1' — this script takes no argument but --help" >&2; exit 3 ;;
+esac
 
 repo_root="$(cd "$(dirname "$0")/.." && pwd)"
 
@@ -135,12 +201,15 @@ FENCE_AWK='FNR == 1 { fence = 0 }
 fence { next }
 '
 
-# LINT_ROOT points the whole sweep at another tree, so scripts/lint-selftest.sh
+# LINT_ROOT points the whole sweep at another tree, so scripts/lint-skills-selftest.sh
 # can run every check below against a fixture repo whose failures are known in
 # advance. Unset in normal use, which lints this repo.
 scan_root="$repo_root"
 if [ -n "${LINT_ROOT:-}" ]; then
-  scan_root="$(cd "$repo_root" && cd "$LINT_ROOT" && pwd)"
+  if ! scan_root="$(cd "$repo_root" && cd "$LINT_ROOT" 2>/dev/null && pwd)"; then
+    echo "lint-skills.sh: LINT_ROOT='$LINT_ROOT' is not a directory (relative to $repo_root) — nothing checked" >&2
+    exit 2
+  fi
 fi
 cd "$scan_root"
 
@@ -281,6 +350,35 @@ for f in src/*/SKILL.md; do
     continue
   fi
 
+  # (see header) Re-attach bound, as bytes. A WARN, not a FAIL: the cap is the
+  # platform's and moves with it; what the author owes is ordering — the rules
+  # a body cannot afford to lose sit early — or a smaller body. Measured before
+  # the description checks so a body with a broken description is still measured.
+  bytes=$(wc -c < "$f" | tr -d ' ')
+  if [ "$bytes" -gt 15000 ]; then
+    echo "WARN: $f is $bytes bytes (~$((bytes / 3)) tokens at 3 bytes/token) — past the 5,000-token re-attach bound Claude Code keeps per skill after auto-compaction, so its tail is what a re-attach drops; put its hard stops and close-out steps above its long sections, or move detail into references/"
+  fi
+
+  # Single-line scalar (see header): frontmatter_value reads one line, and so
+  # does every consumer that truncates. A block indicator — `>` or `|` with
+  # any chomping, indentation, or comment suffix — is the whole value it would
+  # read; a plain scalar continued on an indented line loses its tail.
+  case "$desc" in
+    '>'* | '|'*)
+      echo "FAIL: $f description is a YAML block scalar ('$desc') — read one line at a time, the description is the indicator alone; write the value on the 'description:' line itself"
+      fail=1
+      continue
+      ;;
+  esac
+  if awk '/^---$/ { c++; next }
+          c == 1 && found && /^[[:space:]]+[^[:space:]]/ { hit = 1; exit }
+          c == 1 && found { exit }
+          c == 1 && /^description:/ { found = 1 }
+          END { exit !hit }' "$f"; then
+    echo "FAIL: $f description continues onto an indented next line — only its first line is read, so the rest is silently dropped; write the value on one line"
+    fail=1
+  fi
+
   len=${#desc}
   if [ "$len" -gt 1024 ]; then
     echo "FAIL: $f description exceeds 1024 chars ($len) — trim triggers; collapse synonym branches"
@@ -387,7 +485,7 @@ sibling_groups=(
 
 # The registry above names this repo's own paths, so byte-identity runs only
 # against this repo. Under LINT_ROOT every group would report as missing and
-# drown the fixture's real failures; lint-selftest.sh states this gap rather
+# drown the fixture's real failures; lint-skills-selftest.sh states this gap rather
 # than implying it covered the check.
 if [ -z "${LINT_ROOT:-}" ]; then
   for group in "${sibling_groups[@]}"; do
@@ -545,6 +643,47 @@ for f in global/rules/*.md; do
     fail=1
   fi
 done
+
+# Every hook has a selftest (CLAUDE.md § Linting: "one selftest per hook, which
+# `lint-skills.sh` enforces"): a hook is a global/hooks/*.sh whose header
+# carries `# Install note:` — the marker install.sh and post-merge derive the
+# roster from — and each has an executable global/hooks/<name>-selftest.sh.
+# A fourth hook landing without one is the drift this replaces the
+# counted-by-hand "three hooks, three selftests" line with.
+if [ -d global/hooks ]; then
+  for h in global/hooks/*.sh; do
+    [ -f "$h" ] || continue
+    grep -q '^# Install note: ' "$h" 2>/dev/null || continue
+    st="${h%.sh}-selftest.sh"
+    if [ ! -f "$st" ]; then
+      echo "FAIL: $h carries an '# Install note:' header, so it is a hook, and has no selftest — write $st (source global/hooks/selftest-lib.sh; every hook's rules are proven by a selftest that mutates them)"
+      fail=1
+    elif [ ! -x "$st" ]; then
+      echo "FAIL: $st is not executable — chmod +x it, so 'bash' is not the only way it runs and the roster can be run as a set"
+      fail=1
+    fi
+  done
+fi
+
+# Every script has a selftest (see header): scripts/<name>.sh that is not a
+# selftest, a library, or an installer has an executable
+# scripts/<name>-selftest.sh. post-merge and sweep-corpus derive their gate
+# rosters from that pairing, so a script landing without one is named here
+# rather than left outside every automated run.
+if [ -d scripts ]; then
+  for sc in scripts/*.sh; do
+    [ -f "$sc" ] || continue
+    case "$sc" in *-selftest.sh | *-lib.sh | scripts/install.sh | scripts/setup-hooks.sh) continue ;; esac
+    st="${sc%.sh}-selftest.sh"
+    if [ ! -f "$st" ]; then
+      echo "FAIL: $sc has no selftest — write $st (source scripts/selftest-lib.sh; every script in scripts/ is graded by a selftest that runs it against a fixture), or name the file *-lib.sh if it is a library"
+      fail=1
+    elif [ ! -x "$st" ]; then
+      echo "FAIL: $st is not executable — chmod +x it, so 'bash' is not the only way it runs and the roster can be run as a set"
+      fail=1
+    fi
+  done
+fi
 
 # Router coverage (see header); the trailing class keeps a name from
 # matching inside a longer slug (`adr` never matches `backfill-adrs`).

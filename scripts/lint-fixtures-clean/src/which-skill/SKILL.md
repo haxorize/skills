@@ -6,4 +6,4 @@ disable-model-invocation: true
 
 # Which skill
 
-`clean-skill` is the only skill here.
+`clean-skill` and `near-cap` are the skills here.
