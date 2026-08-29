@@ -1,5 +1,7 @@
 # `tdd` promoted to global with active-skill finalization nudge
 
+> **Amended by [ADR-0017](0017-build-path-and-implement-cluster.md):** the finalization nudge becomes "invoke `feedback-loops`", the single source of truth for the mechanical close-out across every build path, and the forked per-project `tdd` skills retire as their stack steps move to convention skills.
+
 ## Context
 
 Per-repo `tdd` skills in `a11y-health-api` and `a11y-health-ui` mirrored each other in shape (Plan → Tracer bullet → RED/GREEN → Refactor → Lint+typecheck → Update docs) but each carried stack-specific epicycles. API had Alembic migration generation as Step 5; UI had a unit-vs-e2e tracer-bullet fork, a `src/components/ui/` lift-to-primitives refactor cue, and a manual `pnpm dev` browser-check nudge. Maintaining two near-identical skills with divergent tails is overhead that scales linearly with the number of stacks the user works in.

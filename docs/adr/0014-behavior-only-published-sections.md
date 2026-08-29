@@ -1,5 +1,7 @@
 # Behavior-only content in published work items
 
+> **Amended by [ADR-0044](0044-work-item-shape-extracted-behavior.md):** the blanket ban on implementation names in a published item is softened once — a stable invocation surface (a script name, CLI command, or endpoint) may be named in a verification clause, because those are contracts rather than the internals the drift argument protects; internal field, type, and file names stay banned everywhere.
+
 ## Context
 
 The publishing skills (`to-feature`, `to-story`, `to-tasks`, `to-bug`) produce work items that are filed before implementation begins and must remain accurate throughout. Synthesis from a rich grilling session naturally surfaces implementation-specific language — file paths, function signatures, query field names, type names — that reflects the current codebase rather than the feature's purpose. An issue that references `src/auth/session.ts` is stale the moment that path changes, actively misleading the implementer rather than specifying intent.

@@ -1,5 +1,7 @@
 # Self-contained skill bundles with duplicated format references
 
+> **Amended by [ADR-0016](0016-behavior-skills-declared-deps-relaxed-atomicity.md):** the portable unit is now "skill + declared deps" — a skill installs with the model-invoked disciplines its `requires:` line names — while the format-doc duplication this record decided is unchanged.
+
 ## Context
 
 Several skills reference shared format docs — `domain-format.md` is needed by both `grill-and-record` (writing DOMAIN.md inline during grilling) and `harden-domain` (writing DOMAIN.md from a sweep); `adr-format.md` is needed by `grill-and-record`, `backfill-adrs`, and the standalone `adr` skill. The same need recurred for the **naming-drift queue**: its definition (lifecycle, storage, entry format) is shared by the four `to-X` publishing skills (`to-bug`, `to-feature`, `to-story`, `to-tasks`). It recurred again for **tracker resolution**: the three-mode flow (Declared / Bootstrap-on-ask / No-repo CLI-only) plus required-fields rule is byte-identical across those same four skills. (`from-work-item` resolves a tracker too, but as a reader — different wording, no publish, no title prefix — so it carries its own inline version and is not part of the group.) Skills are symlinked individually into `~/.claude/skills/` from this repo; users routinely install one or two skills without cloning the whole tree.
