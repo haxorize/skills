@@ -14,13 +14,19 @@
 # form, the unlinked prose form, and the second of two links on one line; a
 # pointer below the first heading; an amend link to a missing file; a bold form
 # naming a number nobody claims; an empty Revisit line in both forms; a settled
-# deferral with no entry, and one whose only entry is `<date>-2`. Quiet: a
+# deferral with no entry, and one whose only entry is `<date>-2`; a corrected
+# Consequences bullet in both of those shapes; a plain cross-reference to a
+# record that does not exist, and the second FAIL a dangling supersession link
+# and a dangling amend link each draw from that same check. Quiet: a
 # well-formed link-form pair, the `[ADR N]` space form, a pair whose numbers are
 # padded differently on each side, a bold-form pair with its pointer, a
 # bystander's `## Amendments` entry naming an amender and a target that carries
 # no pointer at all (the exemption is load-bearing: delete it and this fires),
 # an inline Revisit line with text, a heading-form Revisit with a paragraph,
-# the `, later` and ` — title.` settled-entry openers, the unnumbered README,
+# the `, later` and ` — title.` settled-entry openers, both of those openers
+# on a corrected Consequences bullet, a `corrected:` marker outside
+# `## Consequences`, a cross-reference that resolves beside a relative path, an
+# outbound URL and the `[ADR N](N-slug.md)` placeholder, the unnumbered README,
 # and — in the clean tree — a well-formed supersession pair. Run it after
 # changing a check.
 set -uo pipefail
@@ -52,6 +58,14 @@ expect "revisit inline empty" "9011-revisit-empty.md (line 5) has a 'Revisit whe
 expect "revisit heading empty" "9012-revisit-heading-empty.md has a '## Revisit when:' heading with no paragraph under it"
 expect "settled deferral without its amendment" "9013-settled-no-amendment.md (line 7) marks a Deferred line settled by Amendments 2026-01-01"
 expect "settled deferral (date-suffix entry is not a match)" "9013-settled-no-amendment.md (line 8) marks a Deferred line settled by Amendments 2026-07-07"
+expect "corrected consequence without its amendment" "9038-corrected-no-amendment.md (line 7) marks a Consequences bullet corrected by Amendments 2026-01-01"
+expect "corrected consequence (date-suffix entry is not a match)" "9038-corrected-no-amendment.md (line 8) marks a Consequences bullet corrected by Amendments 2026-07-07"
+expect "cross-reference to a record that does not exist" "9040-xref-dangling.md (line 3) links to 9099-does-not-exist.md, and no such file is in"
+# The overlap is deliberate and pinned here: a dangling supersession or amend
+# link is also a dangling citation, and each draws its own FAIL naming its own
+# repair. Neither of these lines can come from the check that owns that file.
+expect "cross-reference (a dangling supersession link is also one)" "9004-superseded-dangling.md (line 6) links to 9098-upper-case-does-not-exist.md"
+expect "cross-reference (a dangling amend link is also one)" "9018-amender-dangling-link.md (line 3) links to 9099-does-not-exist.md"
 
 reject "forward pointer (well-formed pair)" "9015-well-formed-target.md carries no forward pointer"
 reject "forward pointer (first of two links)" "9023-two-links-first-target.md carries no forward pointer"
@@ -67,13 +81,22 @@ reject "forward pointer (bystander amender)" "9035-third-party-amender.md"
 # after the date and a title inside the bold after a dash.
 reject "revisit inline with text, and both settled-entry forms" "9016-revisit-and-settled-ok.md"
 reject "revisit heading with paragraph" "9017-revisit-heading-ok.md"
+# 9039 carries a `corrected:` marker before its first heading whose date no
+# entry claims: the only way that line appears here is the `## Consequences`
+# anchoring being gone. 9041 carries the three link forms the check exempts —
+# a path out of the directory, an outbound URL, and the format file's own
+# `[ADR N](N-slug.md)` placeholder.
+reject "corrected consequence (both entry forms, and the section anchoring)" "9039-corrected-ok.md"
+reject "cross-reference (resolves, beside the exempt link forms)" "9041-xref-ok.md"
 reject "unnumbered README" "README.md"
 expect_rc "the lint against the fixture tree" 1 "$status"
 # The count of `FAIL: `-prefixed lines is pinned: a new firing on a quiet
 # form, a check that starts double-reporting, or a message that loses the
 # prefix the family shares shows up here even if no substring above moves.
+# Three of the 21 are the cross-reference check's deliberate overlap with the
+# supersession and amend link checks, asserted by name above.
 nfail=$(printf '%s\n' "$output" | grep -c '^FAIL: ')
-[ "$nfail" -eq 15 ] || selftest_fail "expected exactly 15 FAIL lines against the fixture tree, got $nfail"
+[ "$nfail" -eq 21 ] || selftest_fail "expected exactly 21 FAIL lines against the fixture tree, got $nfail"
 
 clean_out=$(bash scripts/lint-adrs.sh "$clean" 2>&1); clean_status=$?
 if [ "$clean_status" -ne 0 ]; then

@@ -29,17 +29,34 @@
 #     <date>` points at an `## Amendments` entry in the same file whose bold
 #     opener starts with that date — `- **<date>** —`, `- **<date>, later**`,
 #     and `- **<date> — title.**` all match; `<date>-2` does not.
+#   - Corrected consequences: a `## Consequences` line marked `— corrected: see
+#     Amendments <date>` points at an `## Amendments` entry in the same file
+#     whose bold opener starts with that date, on the same reading as the
+#     settled-deferral check above. adr-format.md gives Consequences the marker
+#     the Deferred convention already had: an amendment never rewrites the
+#     bullet it corrects, so the bullet carries the pointer forward instead.
+#   - Cross-references: every `[…](NNNN-….md)` link a record makes — the plain
+#     ADR-to-ADR citation, not only the supersession and amend forms the two
+#     checks above read — names a file that exists.
 #   Scope, so a pass is not read as more than it is: an amend mention is read
 #   on one line, and only where the word `amends` sits directly before the
 #   `[ADR`, `ADR-N`, or `**` token (`amends its ADR 22` is another repo's
-#   record and is not read); a settled line is read only inside `## Deferred`;
-#   the pointer's placement is checked and its wording is not — nothing here
-#   judges whether a pointer's summary is true.
+#   record and is not read); a settled line is read only inside `## Deferred`
+#   and a corrected line only inside `## Consequences`; the pointer's placement
+#   is checked and its wording is not — nothing here judges whether a pointer's
+#   summary is true, or whether a resolving cross-reference cites the record the
+#   sentence around it means. The cross-reference check reads `](NNNN-….md)`
+#   targets only, resolved against the linted directory: a relative path, an
+#   anchor, an outbound URL, and every link in an unnumbered file such as a
+#   README are outside it, and no link anywhere else in the repo is read — this
+#   walks the linted directory alone. A dangling supersession or amend link is
+#   also a dangling cross-reference and draws a FAIL from both checks, each
+#   naming its own repair.
 #
 # The shape, as the named functions below. One producer reads a record into
 # rows; one consumer runs a check over them; a check is a function taking
 # `<file> <fields…>`:
-#   read_rows <file> <kind>          the four row kinds and their field layout
+#   read_rows <file> <kind>          the six row kinds and their field layout
 #   for_rows <file> <kind> <check>   the only reader of the tab layout
 #     check_supersession             the successor exists and links back
 #     check_forward_pointer          the amended record carries the pointer
@@ -48,6 +65,9 @@
 #                                    this is a `say_`, not a `check_`)
 #     check_revisit_heading          a `## Revisit when` section has a paragraph
 #     check_settled_deferral         a settled line points at a dated amendment
+#     check_corrected_consequence    a corrected bullet points at a dated
+#                                    amendment
+#     check_xref_target              an ADR-to-ADR link names a file that exists
 #   Every FAIL goes through say_fail, so the prefix and the exit status cannot
 #   disagree. A check that never ran is never reported as a clean one: an
 #   unknown kind, a producer that errored, and a dispatch naming a function
@@ -142,7 +162,7 @@ body_lines() {
 
 # The one producer every check reads: the rows of one record, of one kind,
 # as tab-joined fields. A check is a function taking `<file> <fields…>`, and
-# for_rows below is the only reader of the tab layout, so a fifth check is a
+# for_rows below is the only reader of the tab layout, so a further check is a
 # kind here and a function below — never another copy of the read loop with
 # its own idea of which field is which. Field layout per kind:
 #   superseded   lineno  target_n  target_f   every `superseded by [ADR-N](file)`
@@ -155,6 +175,13 @@ body_lines() {
 #                                             with nothing after the colon
 #   settled      lineno  date                 every `## Deferred` line marked
 #                                             `settled: see Amendments <date>`
+#   corrected    lineno  date                 every `## Consequences` line marked
+#                                             `corrected: see Amendments <date>`
+#   xref         lineno  target_f             every `](NNNN-….md)` link target in
+#                                             the record, once per distinct
+#                                             target, at the line it first
+#                                             appears — a record citing one
+#                                             dead file eight times is one fix
 # Returns 0 whether or not the record has rows of this kind — most records have
 # none of most kinds, and that is the answer, not a failure. Non-zero is
 # reserved for a producer that could not do its job: 2 where a reader errored
@@ -228,6 +255,22 @@ read_rows() {
         in_def { print NR "\t" $0 }' "$f" \
         | sed -nE 's/^([0-9]+)\t.*settled: see Amendments ([0-9]{4}-[0-9]{2}-[0-9]{2}).*$/\1\t\2/p'
       [ $? -eq 0 ] || return 2
+      ;;
+    corrected)
+      awk '
+        /^## Consequences/ { in_con = 1; next }
+        /^## / { in_con = 0 }
+        in_con { print NR "\t" $0 }' "$f" \
+        | sed -nE 's/^([0-9]+)\t.*corrected: see Amendments ([0-9]{4}-[0-9]{2}-[0-9]{2}).*$/\1\t\2/p'
+      [ $? -eq 0 ] || return 2
+      ;;
+    xref)
+      # One row per distinct target, keeping the line it first appears on.
+      grep -noE '\]\([0-9]{4}-[^)]*\.md\)' "$f" \
+        | sed -E 's/^([0-9]+):\]\((.*)\)$/\1\t\2/' \
+        | awk -F'\t' '!seen[$2]++'
+      rc=${PIPESTATUS[0]}
+      [ "$rc" -le 1 ] || return 2
       ;;
     *) echo "lint-adrs.sh: read_rows: unknown kind '$2'" >&2; return 3 ;;
   esac
@@ -331,6 +374,29 @@ check_settled_deferral() {
   fi
 }
 
+# Corrected Consequences bullets point at a dated amendment in the same file.
+# The Deferred marker's twin: adr-format.md gives a bullet a later amendment
+# corrects a trailing `— corrected: see Amendments <date>` rather than a rewrite,
+# so the pointer is the only thing standing between a reader who stops at
+# Consequences and a figure the record itself has since moved.
+check_corrected_consequence() {
+  local f=$1 lineno=$2 date=$3
+  if ! grep -qE "^- \*\*$date([^0-9-]|$)" "$f"; then
+    say_fail "$f (line $lineno) marks a Consequences bullet corrected by Amendments $date, but no '- **$date' entry exists under ## Amendments — fix the date, or write the amendment"
+  fi
+}
+
+# Cross-references resolve: a plain `[ADR-N](N-slug.md)` citation names a file
+# that exists. The two checks above read the supersession and amend forms only,
+# so before this the ordinary citation — the corpus's most common link by far —
+# was the one link nothing graded.
+check_xref_target() {
+  local f=$1 lineno=$2 target_f=$3
+  if [ ! -f "$target_f" ]; then
+    say_fail "$f (line $lineno) links to $target_f, and no such file is in $dir — fix the link's filename against the record it means, or write that record"
+  fi
+}
+
 # The pairing, the direction for_rows cannot see: a kind read_rows defines and
 # nobody dispatches is a check that silently does not run. Both lists are read
 # out of this file, so adding a kind without a caller fails here rather than
@@ -353,6 +419,8 @@ for f in "${records[@]}"; do
   for_rows "$f" revisit say_revisit_inline_empty
   check_revisit_heading "$f"
   for_rows "$f" settled check_settled_deferral
+  for_rows "$f" corrected check_corrected_consequence
+  for_rows "$f" xref check_xref_target
 done
 
 if [ "$fail" -eq 0 ]; then
