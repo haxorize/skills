@@ -246,6 +246,7 @@ Ubiquitous-language glossary for the entire skills repo. Covers the areas of wor
 | **Seam** | The place where an Interface lives — where behavior can be altered without editing in place | Boundary (clashes with DDD's Bounded context) |
 | **Adapter** | A concrete thing satisfying an Interface at a Seam | Driver, Plugin |
 | **Port** | An Interface at a Seam designed for swapping Adapters | — |
+| **Model seam** | The Seam at which a language model gets exactly one contained judgment behind a typed Interface — defined input, defined output shape, a defined fallback — while the code keeps control flow, identity, validation, merges, and the accept on any write to user-owned data | LLM integration (vague), AI layer |
 | **Leverage** | The behavior callers obtain from a small Interface | — |
 | **Locality** | The concentration of change, bugs, and knowledge inside a Module | Cohesion (different sense) |
 | **Deletion test** | The thought experiment of deleting a Module to judge whether complexity vanishes (Pass-through) or reappears across callers (earns its keep) — it cuts both ways: before deleting, name why the thing exists (git blame, ADRs); a small helper can earn its keep by naming a concept | — |
