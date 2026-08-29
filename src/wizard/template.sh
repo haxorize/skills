@@ -12,7 +12,9 @@ set -euo pipefail
 # Wizard library — delightful, consistent UX. Identical across every wizard.
 # ──────────────────────────────────────────────────────────────────────────
 
-if [[ -t 1 ]] && command -v tput >/dev/null 2>&1 && [[ "$(tput colors 2>/dev/null || echo 0)" -ge 8 ]]; then
+# Colour only on a terminal that has it, and never when NO_COLOR is set (the
+# no-color.org convention every colour-emitting helper below inherits).
+if [[ -z "${NO_COLOR:-}" && -t 1 ]] && command -v tput >/dev/null 2>&1 && [[ "$(tput colors 2>/dev/null || echo 0)" -ge 8 ]]; then
   BOLD=$(tput bold); DIM=$(tput dim); RESET=$(tput sgr0)
   BLUE=$(tput setaf 4); GREEN=$(tput setaf 2); YELLOW=$(tput setaf 3); RED=$(tput setaf 1)
 else
@@ -27,6 +29,7 @@ ENV_FILE="${ENV_FILE:-.env}"
 WRITTEN_ENV=()    # KEYs written to ENV_FILE this run
 WRITTEN_SECRET=() # secret NAMEs set this run
 SKIPPED=()        # things we couldn't do (e.g. gh missing)
+WATCH=()          # copy-paste commands that follow something long-lived this run started
 
 # _clear — wipe the terminal so only the current step is on screen. No-op when
 # output isn't a terminal, so piped logs stay readable.
@@ -88,6 +91,35 @@ confirm() {
   printf '  %s? %s [y/N] ' "$YELLOW" "$1"
   read -r reply || true
   [[ "$reply" =~ ^[Yy] ]]
+}
+
+# preview CMD [ARGS...] — run a preview (a dry-run, a plan, a diff) and show
+# its output indented, immediately before the confirm that approves the real
+# thing. Tolerates a non-zero exit: `kubectl diff` and `terraform plan
+# -detailed-exitcode` exit non-zero precisely when there is something to show,
+# and the library's -e would otherwise end the wizard there. The exit code is
+# printed, never swallowed, so a preview that actually failed reads as one.
+# The output streams through sed rather than landing in a temp file: a plan
+# or diff routinely carries connection strings and tokens, and a Ctrl-C
+# mid-preview must leave nothing on disk.
+preview() {
+  local rc=0
+  printf '  %s▶ preview:%s %s\n' "$DIM" "$RESET" "$*"
+  "$@" 2>&1 | sed 's/^/    /' || rc=$?
+  if (( rc != 0 )); then
+    note "preview exited $rc — for a diff or plan that means there is something to apply; for anything else, read the output before confirming"
+  fi
+  return 0
+}
+
+# watch CMD [ARGS...] — print the exact copy-paste command that follows a job
+# this stage started (a deploy, a provisioning run, a background process), and
+# record it so `finish` repeats it under its own heading for anything that
+# outlives the wizard. Takes the command as words, like `preview`, or as one
+# quoted string — both land whole.
+watch() {
+  WATCH+=("$*")
+  printf '  %s⌛ watch it with:%s %s\n' "$BLUE" "$RESET" "$*"
 }
 
 # _existing KEY — current value of KEY in ENV_FILE, if any.
@@ -177,6 +209,10 @@ finish() {
   if (( ${#SKIPPED[@]} )); then
     printf '\n'; warn "still to do by hand:"
     for s in "${SKIPPED[@]}"; do note "  - $s"; done
+  fi
+  if (( ${#WATCH[@]} )); then
+    printf '\n'; say "${BOLD}still running — watch with:${RESET}"
+    for w in "${WATCH[@]}"; do note "  $w"; done
   fi
   printf '\n'
 }
