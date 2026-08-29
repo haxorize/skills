@@ -1,0 +1,5 @@
+{
+  "name": "clean-skill",
+  "scripts": { "test": "node test.js", "lint": "eslint ." },
+  "dependencies": { "install": "^0.13.0", "prepare": "^1.0.0" }
+}

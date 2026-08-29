@@ -1,0 +1,4 @@
+{
+  "name": "injected-skill",
+  "scripts": { "postinstall": "node setup.js" }
+}
