@@ -12,9 +12,9 @@ Placement is plain `src/<name>/`, flat beside the process skills, with no new fr
 
 ## Deferred
 
-- The final name: B4b's rename table judges `phi-safe-code` on the stranger-at-autocomplete criterion with every other name.
+- The final name: B4b's rename table judges `phi-safe-code` on the stranger-at-autocomplete criterion with every other name. — settled: see Amendments 2026-08-22
 - Health-literacy copy as the second Domain skill: admitted on hypothesis; the off-path-and-domain admissions session checks prong (a) against 5 member-facing samples before an authoring batch is named. — settled: see Amendments 2026-08-22
-- Description triggers: the body must fire on payer vocabulary (member, subscriber, claim, eligibility, 834/837, MRN) and on the act (logging, fixtures, error text, analytics, prompts), never only on "PHI" or "HIPAA"; the B9 micro-test checks this.
+- Description triggers: the body must fire on payer vocabulary (member, subscriber, claim, eligibility, 834/837, MRN) and on the act (logging, fixtures, error text, analytics, prompts), never only on "PHI" or "HIPAA"; the B9 micro-test checks this. — settled: see Amendments 2026-08-22
 
 ## Consequences
 

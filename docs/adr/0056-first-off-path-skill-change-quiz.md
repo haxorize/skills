@@ -12,8 +12,8 @@ Admitting the skill admits the class, and that is the part reversal cannot undo 
 
 ## Deferred
 
-- The final name: B4b's rename table judges `change-quiz` with every other name.
-- Whether `ship` names it: decided when B4c lands the folds.
+- The final name: B4b's rename table judges `change-quiz` with every other name. — settled: see Amendments 2026-08-22
+- Whether `ship` names it: decided when B4c lands the folds. — settled: see Amendments 2026-08-29
 
 ## Consequences
 
@@ -24,3 +24,4 @@ Admitting the skill admits the class, and that is the part reversal cannot undo 
 
 - **2026-08-22** — The final name is `merge-quiz`, judged in [ADR-0057](0057-rename-table-and-discipline-skill-term.md)'s table: the quiz is the gating half and "before merging" is the moment this record names. The B4c build creates `src/merge-quiz/`; the name `change-quiz` above is the working name as cited at the time.
 - **2026-08-27** — [ADR-0063](0063-team-fit-test-replaces-retire-on-zero-window.md) removes the retire-on-zero window from every **Skill**, this one included, and the three body sites the head banner names are superseded rather than rewritten. A second Off-path admission now argues from the Team-fit test — its own named moment and role — and never from this skill's fire or pass counts, which are evidence for a case and never the verdict. The `merge-quiz` admission itself stands: its moment is an engineer merging a change they did not watch being built, and its role is that engineer.
+- **2026-08-29** — `ship` does name it, and in the form the body's second paragraph allowed: `src/ship/SKILL.md:46` reads "for a change the human did not watch being built, suggest `/merge-quiz` before they approve it (user-invoked; suggest, never require)". The mention landed with the skill itself in the B4c build (`4bd098a`), not as a later fold, which is why no amendment recorded it at the time and the Deferred line sat open through seven batches. The slash form is correct here rather than a defect: the target is user-invoked, so the text names what the human types and carries no **Load gate** ([ADR-0066](0066-skill-tool-form-replaces-slash-for-model-fired-invocations.md)). Nothing in `ship`'s own flow depends on the quiz having run.

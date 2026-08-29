@@ -38,7 +38,7 @@ Both halves of the skill were measured before it landed. **The description was p
 
 ## Deferred
 
-- ~~Whether the verification half — checklists with one row per observable claim, run against the live product — belongs in this skill or in `validate-behavior`.~~ **Closed 2026-08-27, against the merge** — see the third amendment above. What remains open is not the ownership but whether `validate-behavior`'s preconditions are worth their cost; that is a Team-fit question about that skill, recorded on its own record, not this one.
+- Whether the verification half — checklists with one row per observable claim, run against the live product — belongs in this skill or in `validate-behavior`. What remains open is not the ownership but whether `validate-behavior`'s preconditions are worth their cost; that is a Team-fit question about that skill, recorded on its own record, not this one. — settled: see Amendments 2026-08-27
 - Whether a repo with no `DOMAIN.md` should be told to build one first or allowed a local terms section. Settled by the first such repo.
 - The `verified` bar has not been under real pressure. Neither wind-tunnel agent had a running instance, so marking a document `verified` was impossible rather than merely unearned; what was shown is that the bar holds when verification cannot happen, not that it holds when it is only inconvenient. Settled by a run against a product that can actually be brought up.
 
