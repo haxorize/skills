@@ -1,6 +1,6 @@
 ---
 name: quoted-dep
-description: Fixture whose only Skill-tool and slash mentions are quoted, parenthesised or fenced, plus the two slash forms that are correct unmasked — and all must stay quiet.
+description: Fixture whose only Skill-tool and slash mentions are quoted, parenthesised or fenced, plus the two slash forms that are correct unmasked — and all must stay quiet; it also quotes "walk the tree", the phrase the two shared-trigger fixtures share, and a user-invoked description is never read for that check.
 disable-model-invocation: true
 ---
 

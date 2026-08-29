@@ -1,6 +1,6 @@
 ---
 name: near-cap
-description: A well-formed body sitting just under the 15,000-byte re-attach WARN. Use when the byte-size check needs a body that must draw no WARN.
+description: A well-formed body sitting just under the 15,000-byte re-attach WARN. Use when the byte-size check needs a body that must draw no WARN, to `pin the bound`.
 ---
 
 # Near the cap

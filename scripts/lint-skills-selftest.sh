@@ -12,8 +12,9 @@
 # exit 0; and then throwaway copies of both with one file's mode broken, because
 # the two read-error branches cannot be reached from a committed fixture. The
 # clean root is what lets an exit-status assertion mean anything: in the
-# wrong-on-purpose tree, roughly twenty deliberate violations force exit 1 no
-# matter what the read error does.
+# wrong-on-purpose tree the deliberate violations force exit 1 no matter what
+# the read error does — the count is pinned below, in one place, rather than
+# restated here where it would drift every time a check is added.
 #
 # Run it after changing any check in lint-skills.sh.
 #
@@ -55,13 +56,21 @@
 # block scalar, a literal one with an indentation indicator, a continued plain
 # scalar), the re-attach byte-size WARN (fires on the oversize fixture, draws
 # no FAIL, stays silent on the clean root, and stays silent on the clean
-# root's near-cap body 49 bytes under the bound — so the threshold is pinned
+# root's near-cap body under the bound — so the threshold is pinned
 # from below as well as above), the hook-selftest check (a marked hook with no
 # selftest, one whose selftest lacks the exec bit, an unmarked file that must
 # stay quiet whatever its name, and a *-lib.sh), the script-selftest check
 # (a script with no selftest, one whose selftest lacks the exec bit, and the
-# quiet forms: a *-lib.sh and install.sh), the pinned FAIL count against the
-# broken tree (a check that begins false-positiving on a fixture reds here
+# quiet forms: a *-lib.sh and install.sh), the shared-trigger-phrase check (two
+# model-invoked descriptions carrying one phrase in different cases, in both
+# quote styles, and inside a whole-value YAML double-quoted scalar fire once as
+# one line naming all three; a user-invoked description carrying the same
+# phrase is not read, a disambiguating "Not for…" tail quoting it stays quiet,
+# and in the clean root one description quoting a phrase twice, with the
+# user-invoked router quoting it too, draws nothing — and every one of those
+# fixture properties is asserted present, so weakening a fixture reds this run
+# rather than retiring a row), the
+# pinned FAIL count against the broken tree (a check that begins false-positiving on a fixture reds here
 # even when no substring row names it), and argument handling (--help runs
 # nothing and exits 0, an unknown argument, two arguments, and an empty
 # argument run nothing and exit 3, a LINT_ROOT that is not a directory runs
@@ -140,6 +149,12 @@ expect "hook selftest (missing)" "global/hooks/orphan-hook.sh carries an '# Inst
 expect "hook selftest (not executable)" "global/hooks/unexec-hook-selftest.sh is not executable"
 expect "script selftest (missing)" "scripts/orphan-tool.sh has no selftest — write scripts/orphan-tool-selftest.sh"
 expect "script selftest (not executable)" "scripts/unexec-tool-selftest.sh is not executable"
+# One line for all the carriers, not one per skill: the phrase is the unit. The
+# three fixtures carry it in straight quotes, in curly quotes and another case,
+# and inside a whole-value YAML double-quoted scalar, so this row pins the
+# comparison as case-insensitive, the curly-quote branch as read, the quoted
+# scalar as unwrapped and unescaped, and the rendering of more than two carriers.
+expect "shared trigger phrase" "src/shared-trigger-curly/SKILL.md src/shared-trigger-scalar/SKILL.md src/shared-trigger-straight/SKILL.md carry the same quoted trigger phrase \"walk the tree\""
 
 reject "reference-link resolution" "references/real-reference.md"
 reject "reference-link resolution" "references/exempt-single.md"
@@ -157,6 +172,14 @@ reject "global-rule Depends (early citation, long tail behind it)" "global/rules
 # Skill-tool form and the slash form, plus the two slash forms that are correct unmasked
 # (a user-invoked skill, a built-in). Drop a mask or invert either slash guard and it fires.
 reject "two-way requires and slash-on-model-invoked (quoted, parenthesised and fenced forms)" "src/quoted-dep/SKILL.md"
+# quoted-dep also quotes "walk the tree": it is user-invoked, so the shared-phrase check
+# must not read it. The reject above already grades that — a widened check that reads
+# user-invoked descriptions names src/quoted-dep/SKILL.md in the phrase line and reds it.
+# The disambiguating tail is the other quiet form: shared-trigger-not-for quotes the same
+# phrase inside a "Not for…" clause, which routes a reader *away* from the sibling that
+# owns it — the style write-skill prescribes and this repo uses. A check that reads past
+# the trigger half names it here and reds this row.
+reject "shared trigger phrase (disambiguating \"Not for…\" tail)" "src/shared-trigger-not-for/SKILL.md carry"
 # The WARN is a warning: the oversize body must draw no FAIL line of its own.
 reject "re-attach byte-size WARN does not FAIL" "FAIL: src/oversize-body/SKILL.md"
 reject "hook selftest (library exempt)" "global/hooks/quiet-lib.sh"
@@ -180,7 +203,37 @@ expect_rc "the lint against the fixture tree" 1 "$status"
 # The count of FAIL lines is pinned: a check that begins firing on a fixture
 # it should leave alone reds here even when no substring row names the line.
 nfail=$(printf '%s\n' "$output" | grep -c '^FAIL: ')
-[ "$nfail" -eq 28 ] || selftest_fail "expected exactly 28 FAIL lines against the fixture tree, got $nfail"
+[ "$nfail" -eq 29 ] || selftest_fail "expected exactly 29 FAIL lines against the fixture tree, got $nfail"
+# The shared-trigger-phrase fixtures are pinned by property, as near_bytes and
+# bulk_bytes are below: every row above them asserts a FAIL that appears or a
+# FAIL that does not, and each of those readings is silently satisfied by a
+# fixture whose phrase someone deleted. What the check is graded on is the
+# phrases themselves, so they are asserted to still be there — an edit that
+# weakens one fails here, naming the fixture, instead of turning a row into a
+# no-op nothing reads.
+phrase_pin() {
+  local f=$1 what=$2 pattern=$3
+  if [ ! -f "$f" ]; then
+    selftest_fail "$f is missing — it carries $what for the shared-trigger-phrase check; restore it rather than reading the rows above as still graded"
+  elif ! grep -q "^description:.*$pattern" "$f"; then
+    selftest_fail "$f no longer carries $what in its description — the shared-trigger-phrase rows above stopped grading it; put it back rather than deleting the assertion"
+  fi
+}
+phrase_pin "$fixtures/src/shared-trigger-straight/SKILL.md" "the shared phrase in straight double quotes" '"walk the tree"'
+phrase_pin "$fixtures/src/shared-trigger-curly/SKILL.md" "the shared phrase in curly quotes and another case (the only place the curly branch of the extractor and the case fold are exercised)" '“Walk The Tree”'
+phrase_pin "$fixtures/src/shared-trigger-scalar/SKILL.md" "the shared phrase escaped inside a whole-value YAML double-quoted scalar (the only place the unwrap-and-unescape path is exercised)" ' ".*\\"walk the tree\\"'
+phrase_pin "$fixtures/src/shared-trigger-not-for/SKILL.md" "the shared phrase inside a disambiguating \"Not for…\" tail, which must stay quiet" 'Not for.*"walk the tree"'
+phrase_pin "$fixtures/src/quoted-dep/SKILL.md" "the shared phrase in a user-invoked description, which must never be read" '"walk the tree"'
+phrase_pin "$clean_fixtures/src/clean-skill/SKILL.md" "one phrase quoted twice, which is not a duplicate" '"do the thing".*"do the thing"'
+phrase_pin "$clean_fixtures/src/which-skill/SKILL.md" "clean-skill's phrase in a user-invoked description, which must never be read" '"do the thing"'
+# The backticked span is the clean root's quiet form for "only double-quoted
+# spans are compared": two model-invoked descriptions share it, so widening the
+# extractor's alternation to backticks turns this root red — which is what makes
+# the exemption an assertion rather than a sentence in a header.
+for capped in clean-skill near-cap; do
+  phrase_pin "$clean_fixtures/src/$capped/SKILL.md" "the backticked span two model-invoked descriptions share, which only-double-quoted-spans must leave quiet" '`pin the bound`'
+done
+
 # The near-cap body is measured: the clean root holds one 49 bytes under the
 # bound (asserted below to draw no WARN), and this pins that it is really there.
 near_bytes=$(wc -c < "$clean_fixtures/src/near-cap/SKILL.md" | tr -d ' ')
