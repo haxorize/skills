@@ -36,22 +36,45 @@
 #   the pointer's placement is checked and its wording is not — nothing here
 #   judges whether a pointer's summary is true.
 #
+# The shape, as the named functions below. One producer reads a record into
+# rows; one consumer runs a check over them; a check is a function taking
+# `<file> <fields…>`:
+#   read_rows <file> <kind>          the four row kinds and their field layout
+#   for_rows <file> <kind> <check>   the only reader of the tab layout
+#     check_supersession             the successor exists and links back
+#     check_forward_pointer          the amended record carries the pointer
+#     say_revisit_inline_empty       every empty inline `Revisit when:` row
+#                                    (the condition is the producer's grep, so
+#                                    this is a `say_`, not a `check_`)
+#     check_revisit_heading          a `## Revisit when` section has a paragraph
+#     check_settled_deferral         a settled line points at a dated amendment
+#   Every FAIL goes through say_fail, so the prefix and the exit status cannot
+#   disagree. A check that never ran is never reported as a clean one: an
+#   unknown kind, a producer that errored, and a dispatch naming a function
+#   that does not exist each exit 4 rather than yielding an empty row set.
+#
 # Usage:
-#   scripts/lint-adrs.sh [DIR] [--help]      DIR defaults to docs/adr
+#   scripts/lint-adrs.sh [DIR] [-h|--help]   DIR defaults to docs/adr
 # Example:
 #   bash scripts/lint-adrs.sh                 # the repo's own records
 #   bash scripts/lint-adrs.sh scripts/lint-fixtures/adr && echo unexpected
 #
 # Exit codes: 0 clean · 1 at least one FAIL · 2 nothing to check (DIR is
-# missing or holds no `NNNN-*.md`) · 3 usage error. Every FAIL names the fix.
+# missing or holds no `NNNN-*.md`) · 3 usage error · 4 a check never ran, so
+# this run is not a verdict on anything. Every FAIL names the fix.
 # scripts/lint-adrs-selftest.sh runs this against scripts/lint-fixtures/adr/
 # (wrong on purpose) and scripts/lint-fixtures-clean/adr/ (right on purpose).
 
 set -uo pipefail
 
+# This file's own path, resolved before any `cd`: the header roster --help
+# prints and the kind-pairing guard below both read it, and a relative $0 stops
+# resolving the moment the script chdirs into the directory it is linting.
+self="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
+
 # --help prints the header above: line 2 to the first blank line, so a header
 # edit never leaves the help truncated mid-sentence.
-usage() { sed -n '2,/^$/p' "$0" | sed '$d' | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '2,/^$/p' "$self" | sed '$d' | sed 's/^# \{0,1\}//'; }
 
 dir=""; dir_set=0
 while [ $# -gt 0 ]; do
@@ -117,112 +140,219 @@ body_lines() {
     !in_log { print NR "\t" $0 }' "$1"
 }
 
-for f in "${records[@]}"; do
-  me_re=$(num_re "$f")
-  me_n=$(num_val "$f")
-  f_re=$(re_lit "$f")
-
-  # Supersession, both directions. Every link on every line.
-  while IFS=$'\t' read -r lineno target_n target_f; do
-    [ -z "$target_n" ] && continue
-    if [ ! -f "$target_f" ]; then
-      say_fail "$f (line $lineno) is superseded by [ADR-$target_n]($target_f), which does not exist — fix the link, or write the successor"
-      continue
-    fi
-    if ! grep -qE "\[$me_re\]\($f_re\)" "$target_f"; then
-      say_fail "$f is superseded by $target_f, but $target_f never links back to it — add \`[ADR-$(printf '%04d' "$me_n")]($f)\` where the successor names what it replaces"
-    fi
-  done < <(grep -n -ioE 'superseded by \[ADR[- ]?[0-9]+\]\([^)]+\)' "$f" \
-    | sed -nE 's/^([0-9]+):[Ss][Uu][Pp][Ee][Rr][Ss][Ee][Dd][Ee][Dd] [Bb][Yy] \[ADR[- ]?([0-9]+)\]\(([^)]+)\)$/\1\t\2\t\3/p')
-
-  # Forward pointers. Every amend mention outside the `## Amendments` log.
-  while IFS=$'\t' read -r lineno target_n target_f; do
-    [ -z "$target_n" ] && continue
-    if [ -z "$target_f" ]; then
-      if ! target_f=$(file_of "$target_n"); then
-        say_fail "$f (line $lineno) amends ADR-$target_n, and no record claims number $target_n — fix the number"
-        continue
-      fi
-    elif [ ! -f "$target_f" ]; then
-      say_fail "$f (line $lineno) amends [ADR-$target_n]($target_f), which does not exist — fix the link"
-      continue
-    fi
-    # The pointer must sit above the target's first `## ` heading.
-    first_h=$(grep -n -m1 '^## ' "$target_f" | cut -d: -f1)
-    ptr=$(grep -n -E "\*\*Amended by \[$me_re\]\($f_re\)" "$target_f" | head -1 | cut -d: -f1)
-    if [ -z "$ptr" ] || { [ -n "$first_h" ] && [ "$ptr" -gt "$first_h" ]; }; then
-      say_fail "$f amends $target_f, but $target_f carries no forward pointer above its first heading — add \`> **Amended by [ADR-$(printf '%04d' "$me_n")]($f):** <what moved>\` at the top of $target_f (adr-format.md: linked both ways)"
-    fi
-  done < <(body_lines "$f" | awk -F'\t' '
-      {
-        lineno = $1; line = $0; sub(/^[0-9]+\t/, "", line)
-        # Link form: amends [ADR-N](file), then every further [ADR-M](file)
-        # link inside the same clause (`… **and [ADR-M](file)** …`).
-        rest = line
-        while (match(rest, /[Aa]mends \[ADR[- ]?[0-9]+\]\([^)]+\)/)) {
-          clause = substr(rest, RSTART + 7); rest = substr(rest, RSTART + RLENGTH)
-          if (match(clause, /[.;:]( |$)/)) clause = substr(clause, 1, RSTART)
-          while (match(clause, /\[ADR[- ]?[0-9]+\]\([^)]+\)/)) {
-            seg = substr(clause, RSTART, RLENGTH); clause = substr(clause, RSTART + RLENGTH)
+# The one producer every check reads: the rows of one record, of one kind,
+# as tab-joined fields. A check is a function taking `<file> <fields…>`, and
+# for_rows below is the only reader of the tab layout, so a fifth check is a
+# kind here and a function below — never another copy of the read loop with
+# its own idea of which field is which. Field layout per kind:
+#   superseded   lineno  target_n  target_f   every `superseded by [ADR-N](file)`
+#                                             link, any case, anywhere in the file
+#   amends       lineno  target_n  target_f   every amend mention outside the
+#                                             `## Amendments` log, one row per
+#                                             target number; target_f is empty
+#                                             for the bold and unlinked prose forms
+#   revisit      lineno                       every inline `Revisit when:` line
+#                                             with nothing after the colon
+#   settled      lineno  date                 every `## Deferred` line marked
+#                                             `settled: see Amendments <date>`
+# Returns 0 whether or not the record has rows of this kind — most records have
+# none of most kinds, and that is the answer, not a failure. Non-zero is
+# reserved for a producer that could not do its job: 2 where a reader errored
+# (an unreadable file, a dying grep), 3 for a kind this function does not
+# define. for_rows treats both as fatal, because a check that never ran must
+# not be indistinguishable from a check that found nothing.
+read_rows() {
+  local f=$1 rc
+  case "$2" in
+    superseded)
+      grep -n -ioE 'superseded by \[ADR[- ]?[0-9]+\]\([^)]+\)' "$f" \
+        | sed -nE 's/^([0-9]+):[Ss][Uu][Pp][Ee][Rr][Ss][Ee][Dd][Ee][Dd] [Bb][Yy] \[ADR[- ]?([0-9]+)\]\(([^)]+)\)$/\1\t\2\t\3/p'
+      rc=${PIPESTATUS[0]}
+      [ "$rc" -le 1 ] || return 2   # grep 1 is "no such line here"; 2+ is a read failure
+      ;;
+    amends)
+      body_lines "$f" | awk -F'\t' '
+        {
+          lineno = $1; line = $0; sub(/^[0-9]+\t/, "", line)
+          # Link form: amends [ADR-N](file), then every further [ADR-M](file)
+          # link inside the same clause (`… **and [ADR-M](file)** …`).
+          rest = line
+          while (match(rest, /[Aa]mends \[ADR[- ]?[0-9]+\]\([^)]+\)/)) {
+            clause = substr(rest, RSTART + 7); rest = substr(rest, RSTART + RLENGTH)
+            if (match(clause, /[.;:]( |$)/)) clause = substr(clause, 1, RSTART)
+            while (match(clause, /\[ADR[- ]?[0-9]+\]\([^)]+\)/)) {
+              seg = substr(clause, RSTART, RLENGTH); clause = substr(clause, RSTART + RLENGTH)
+              emit(lineno, seg)
+            }
+          }
+          # Bold form: **Amends ADR-N:** or **Amends ADR-N.**
+          rest = line
+          while (match(rest, /\*\*Amends ADR-?[0-9]+[:.]/)) {
+            seg = substr(rest, RSTART, RLENGTH); rest = substr(rest, RSTART + RLENGTH)
             emit(lineno, seg)
           }
-        }
-        # Bold form: **Amends ADR-N:** or **Amends ADR-N.**
-        rest = line
-        while (match(rest, /\*\*Amends ADR-?[0-9]+[:.]/)) {
-          seg = substr(rest, RSTART, RLENGTH); rest = substr(rest, RSTART + RLENGTH)
-          emit(lineno, seg)
-        }
-        # Unlinked prose form: amends ADR-N, and a list `ADR-N, ADR-M and ADR-P`
-        # up to the end of the clause.
-        rest = line
-        while (match(rest, /[Aa]mends ADR-[0-9]+/)) {
-          clause = substr(rest, RSTART); rest = substr(rest, RSTART + RLENGTH)
-          if (match(clause, /[.;:]( |$)/)) clause = substr(clause, 1, RSTART)
-          while (match(clause, /ADR-[0-9]+/)) {
-            seg = substr(clause, RSTART, RLENGTH); clause = substr(clause, RSTART + RLENGTH)
-            emit(lineno, seg)
+          # Unlinked prose form: amends ADR-N, and a list `ADR-N, ADR-M and ADR-P`
+          # up to the end of the clause.
+          rest = line
+          while (match(rest, /[Aa]mends ADR-[0-9]+/)) {
+            clause = substr(rest, RSTART); rest = substr(rest, RSTART + RLENGTH)
+            if (match(clause, /[.;:]( |$)/)) clause = substr(clause, 1, RSTART)
+            while (match(clause, /ADR-[0-9]+/)) {
+              seg = substr(clause, RSTART, RLENGTH); clause = substr(clause, RSTART + RLENGTH)
+              emit(lineno, seg)
+            }
           }
         }
-      }
-      # emit runs its own match(), so every caller advances its cursor before
-      # calling — RSTART/RLENGTH are globals.
-      function emit(ln, seg,    n, fl) {
-        n = seg; sub(/^.*ADR[- ]?/, "", n); sub(/[^0-9].*$/, "", n)
-        fl = ""
-        if (match(seg, /\]\([^)]+\)/)) { fl = substr(seg, RSTART + 2, RLENGTH - 3) }
-        key = n
-        if (key in seen) return
-        seen[key] = 1
-        print ln "\t" n "\t" fl
-      }')
+        # emit runs its own match(), so every caller advances its cursor before
+        # calling — RSTART/RLENGTH are globals.
+        function emit(ln, seg,    n, fl) {
+          n = seg; sub(/^.*ADR[- ]?/, "", n); sub(/[^0-9].*$/, "", n)
+          fl = ""
+          if (match(seg, /\]\([^)]+\)/)) { fl = substr(seg, RSTART + 2, RLENGTH - 3) }
+          key = n
+          if (key in seen) return
+          seen[key] = 1
+          print ln "\t" n "\t" fl
+        }'
+      [ $? -eq 0 ] || return 2
+      ;;
+    revisit)
+      grep -nE '^(- )?(\*\*)?Revisit when:?(\*\*)?:?[[:space:]]*$' "$f" | cut -d: -f1
+      rc=${PIPESTATUS[0]}
+      [ "$rc" -le 1 ] || return 2
+      ;;
+    settled)
+      awk '
+        /^## Deferred/ { in_def = 1; next }
+        /^## / { in_def = 0 }
+        in_def { print NR "\t" $0 }' "$f" \
+        | sed -nE 's/^([0-9]+)\t.*settled: see Amendments ([0-9]{4}-[0-9]{2}-[0-9]{2}).*$/\1\t\2/p'
+      [ $? -eq 0 ] || return 2
+      ;;
+    *) echo "lint-adrs.sh: read_rows: unknown kind '$2'" >&2; return 3 ;;
+  esac
+  return 0
+}
 
-  # Revisit when: inline form, then heading form.
-  while IFS= read -r lineno; do
-    [ -z "$lineno" ] && continue
-    say_fail "$f (line $lineno) has a 'Revisit when:' line with nothing after the colon — name the assumption or trigger on that line, or drop the line"
-  done < <(grep -nE '^(- )?(\*\*)?Revisit when:?(\*\*)?:?[[:space:]]*$' "$f" | cut -d: -f1)
-  if grep -qE '^## Revisit when' "$f"; then
-    if ! awk '
-        /^## Revisit when/ { in_sec = 1; next }
-        in_sec && /^#/ { exit }
-        in_sec && NF { found = 1; exit }
-        END { exit !found }' "$f"; then
-      say_fail "$f has a '## Revisit when:' heading with no paragraph under it — name the assumption or trigger, or drop the section"
-    fi
+# Run one check over every row of one kind: `for_rows <file> <kind> <check>`
+# calls `<check> <file> <fields…>` once per row.
+#
+# Three ways this could report a clean file it never read, each closed here
+# rather than left to look like "no rows, so no violations" — the failure mode
+# a lint gate degrades into:
+#   - the check name is not a function (a typo in the call below);
+#   - the kind is not one read_rows defines, so it returns 3;
+#   - the producer died mid-stream (an unreadable file, a dying grep).
+# The rows are collected before any check runs so the producer's status can be
+# read at all: inside `done < <(…)` it is the *loop's* status that survives,
+# and read_rows' return value is unobservable.
+#
+# The layout is three fields by construction: every kind above fits, and a
+# fourth would arrive silently tab-joined onto the third, so a row that carries
+# one is a hard error rather than a blob handed to a check.
+for_rows() {
+  local f=$1 kind=$2 check=$3 rows a b c d
+  if ! declare -f "$check" >/dev/null 2>&1; then
+    echo "lint-adrs.sh: for_rows: '$check' is not a function — the $kind rows of $f were never checked" >&2
+    exit 4
   fi
-
-  # Settled deferrals point at a dated amendment in the same file.
-  while IFS=$'\t' read -r lineno date; do
-    [ -z "$date" ] && continue
-    if ! grep -qE "^- \*\*$date([^0-9-]|$)" "$f"; then
-      say_fail "$f (line $lineno) marks a Deferred line settled by Amendments $date, but no '- **$date' entry exists under ## Amendments — fix the date, or write the amendment"
+  if ! rows=$(read_rows "$f" "$kind"); then
+    echo "lint-adrs.sh: read_rows failed for kind '$kind' on $f — those rows were never checked; this is not a clean result" >&2
+    exit 4
+  fi
+  [ -n "$rows" ] || return 0
+  while IFS=$'\t' read -r a b c d; do
+    if [ -n "$d" ]; then
+      echo "lint-adrs.sh: read_rows emitted a four-field '$kind' row for $f — for_rows reads three; widen both together" >&2
+      exit 4
     fi
-  done < <(awk '
-      /^## Deferred/ { in_def = 1; next }
-      /^## / { in_def = 0 }
-      in_def { print NR "\t" $0 }' "$f" \
-    | sed -nE 's/^([0-9]+)\t.*settled: see Amendments ([0-9]{4}-[0-9]{2}-[0-9]{2}).*$/\1\t\2/p')
+    "$check" "$f" "$a" "$b" "$c"
+  done <<<"$rows"
+}
+
+# Supersession, both directions: the successor exists and links back.
+check_supersession() {
+  local f=$1 lineno=$2 target_n=$3 target_f=$4
+  if [ ! -f "$target_f" ]; then
+    say_fail "$f (line $lineno) is superseded by [ADR-$target_n]($target_f), which does not exist — fix the link, or write the successor"
+    return
+  fi
+  if ! grep -qE "\[$(num_re "$f")\]\($(re_lit "$f")\)" "$target_f"; then
+    say_fail "$f is superseded by $target_f, but $target_f never links back to it — add \`[ADR-$(printf '%04d' "$(num_val "$f")")]($f)\` where the successor names what it replaces"
+  fi
+}
+
+# Forward pointers: the amended record exists and carries the pointer above
+# its first `## ` heading.
+check_forward_pointer() {
+  local f=$1 lineno=$2 target_n=$3 target_f=$4 first_h ptr
+  if [ -z "$target_f" ]; then
+    if ! target_f=$(file_of "$target_n"); then
+      say_fail "$f (line $lineno) amends ADR-$target_n, and no record claims number $target_n — fix the number"
+      return
+    fi
+  elif [ ! -f "$target_f" ]; then
+    say_fail "$f (line $lineno) amends [ADR-$target_n]($target_f), which does not exist — fix the link"
+    return
+  fi
+  first_h=$(grep -n -m1 '^## ' "$target_f" | cut -d: -f1)
+  ptr=$(grep -n -E "\*\*Amended by \[$(num_re "$f")\]\($(re_lit "$f")\)" "$target_f" | head -1 | cut -d: -f1)
+  if [ -z "$ptr" ] || { [ -n "$first_h" ] && [ "$ptr" -gt "$first_h" ]; }; then
+    say_fail "$f amends $target_f, but $target_f carries no forward pointer above its first heading — add \`> **Amended by [ADR-$(printf '%04d' "$(num_val "$f")")]($f):** <what moved>\` at the top of $target_f (adr-format.md: linked both ways)"
+  fi
+}
+
+# Revisit when: the inline form carries text after the colon (one row per
+# empty line), and the heading form is followed by a non-empty paragraph.
+# Named `say_` rather than `check_`: every check_* here runs its own test, and
+# this one cannot — the condition is the `revisit` producer's grep, and each row
+# it yields is already a violation. One prefix, one contract.
+say_revisit_inline_empty() {
+  local f=$1 lineno=$2
+  say_fail "$f (line $lineno) has a 'Revisit when:' line with nothing after the colon — name the assumption or trigger on that line, or drop the line"
+}
+check_revisit_heading() {
+  local f=$1
+  grep -qE '^## Revisit when' "$f" || return 0
+  if ! awk '
+      /^## Revisit when/ { in_sec = 1; next }
+      in_sec && /^#/ { exit }
+      in_sec && NF { found = 1; exit }
+      END { exit !found }' "$f"; then
+    say_fail "$f has a '## Revisit when:' heading with no paragraph under it — name the assumption or trigger, or drop the section"
+  fi
+}
+
+# Settled deferrals point at a dated amendment in the same file.
+check_settled_deferral() {
+  local f=$1 lineno=$2 date=$3
+  if ! grep -qE "^- \*\*$date([^0-9-]|$)" "$f"; then
+    say_fail "$f (line $lineno) marks a Deferred line settled by Amendments $date, but no '- **$date' entry exists under ## Amendments — fix the date, or write the amendment"
+  fi
+}
+
+# The pairing, the direction for_rows cannot see: a kind read_rows defines and
+# nobody dispatches is a check that silently does not run. Both lists are read
+# out of this file, so adding a kind without a caller fails here rather than
+# passing quietly.
+kinds=$(sed -n '/^read_rows() {/,/^}/p' "$self" | sed -nE 's/^    ([a-z]+)\)$/\1/p')
+if [ -z "$kinds" ]; then
+  echo "lint-adrs.sh: could not read read_rows' kinds out of $self — the dispatch pairing was not checked; this run is not a verdict" >&2
+  exit 4
+fi
+for kind in $kinds; do
+  grep -q "for_rows \"\$f\" $kind " "$self" || {
+    echo "lint-adrs.sh: read_rows defines the kind '$kind' and no for_rows call reads it — that check never runs; dispatch it or drop the case" >&2
+    exit 4
+  }
+done
+
+for f in "${records[@]}"; do
+  for_rows "$f" superseded check_supersession
+  for_rows "$f" amends check_forward_pointer
+  for_rows "$f" revisit say_revisit_inline_empty
+  check_revisit_heading "$f"
+  for_rows "$f" settled check_settled_deferral
 done
 
 if [ "$fail" -eq 0 ]; then
