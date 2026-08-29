@@ -1,0 +1,7 @@
+# ADR fixture
+
+`scripts/lint-adrs-selftest.sh` points `scripts/lint-adrs.sh` at this directory. Every numbered file exists to make one check fire or to prove one exempt form stays quiet; `README.md` is the one unnumbered file the linter must leave alone. Numbers start at 9001 so a citation search for a live record's number never lands here.
+
+Firing: `9001` twice (duplicate number); `9002`→`9003` (successor never links back); `9004` (two dangling supersession links, one in capitals); `9005`→`9006`, `9007`→`9008` (bold form), `9009`→`9010` (pointer below the first heading), `9019`→`9020` (unlinked prose form), `9021`→`9022` (the second of two links on one line); `9018` (amend link to a missing file); `9037` (bold form naming a number nobody claims); `9011` and `9012` (empty Revisit line, inline and heading form); `9013` (two settled lines with no matching entry — one date absent, one present only as `<date>-2`).
+
+Quiet: `9014`→`9015` (link form, pointer present), `9021`→`9023` (the first of two links), `9024`→`9025` (the `[ADR N]` space form), `9030`→`9031` (padding differs on both sides), `9032`→`9033` (bold form, pointer present), `9034` (a bystander's `## Amendments` entry naming `9035` amending `9036`, which carries no pointer — the log exemption is what keeps it quiet), `9016` (inline Revisit with text; two settled entries, `, later` and ` — title.`), `9017` (heading-form Revisit with a paragraph).
