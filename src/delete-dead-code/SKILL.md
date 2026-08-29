@@ -22,9 +22,9 @@ Dead-code deletion is destructive and unforgiving of a wrong call. Say so and st
 
 ### 1. Detect
 
-Find dead-code candidates with the repo's own tooling — the detector that already knows this stack. A JS/TS repo has `knip` (its predecessors `ts-prune` and `depcheck` are maintenance-only and point at it); a Python repo has `vulture`; a Rust build warns on dead code; many languages have a linter that flags unused symbols. Use what the repo has rather than a fixed tool list, and read `package.json` scripts / the build config to find it. Where no detector exists, fall back to grep: for each exported symbol, search the tree for references — grep finds direct references only; anything reached dynamically (a string-built import, reflection, a config-named handler) is CAUTION by default.
+Find dead-code candidates with the repo's own tooling — the detector that already knows this stack. A JS/TS repo has `knip` (its predecessors `ts-prune` and `depcheck` are maintenance-only and point at it); a Python repo has `vulture`; a Rust build warns on dead code; many languages have a linter that flags unused symbols. Use what the repo has rather than a fixed tool list, and read `package.json` scripts / the build config to find it. A detector's false positive you can name — an entry point, a plugin, a path alias it did not know about — is a tooling finding: report it (step 4) and fix it in the detector's config, committed on its own before the first deletion so the tree step 3 relies on stays clean, never an ignore line that hides the next real hit; a hit you cannot explain is not a false positive but CAUTION (step 2). Where no detector exists, fall back to grep: for each exported symbol, search the tree for references — grep finds direct references only; anything reached dynamically (a string-built import, reflection, a config-named handler) is CAUTION by default.
 
-List candidates; don't touch anything yet.
+List candidates, including two the detectors miss: the other arm of a feature flag pinned at one value in every environment, and a markdown file nothing links to, written by an agent in one commit and never edited by a person. Both tier DANGER (step 2). Don't touch anything yet.
 
 ### 2. Tier by deletion risk
 
@@ -32,7 +32,7 @@ Every candidate gets a tier before anything is removed — the tier decides the 
 
 - **SAFE** — unused local symbols, unreferenced private files, dependencies no source imports. Static analysis and a grep both come back empty; the suite, not the grep, is the arbiter (step 3).
 - **CAUTION** — anything a static tool can miss: dynamic imports, reflection, string-keyed dispatch, framework conventions that wire by filename — and anything the sweep cannot explain: code half-wired for work in flight, a symbol whose purpose you cannot state. Confirm by hand before touching; what stays unexplained stays CAUTION, surfaced and not deleted.
-- **DANGER** — public API, a published export, anything a consumer outside this repo could call. "Unused *in this repo*" is not "unused." Do not delete on the sweep's authority; surface it and let the user decide.
+- **DANGER** — public API, a published export, anything a consumer outside this repo could call — and the two candidates the detectors miss: a pinned flag's other arm, which whoever owns the flag can flip back, and an orphan doc, which a person may be reading from a bookmark. "Unused *in this repo*" is not "unused." Do not delete on the sweep's authority; surface it and let the user decide.
 
 ### 3. Delete one at a time, verified
 
@@ -44,9 +44,11 @@ Work SAFE first, and within it one deletion at a time. For each:
 
 One-at-a-time is what makes a failure attributable: a batch that goes red hides which deletion broke it. Only after every SAFE item is verified do the confirmed CAUTION items, same loop. DANGER items are never deleted here — they are reported.
 
+After each tier's pass, re-run the detector: a deletion exposes the layer beneath it. What the re-run adds is tiered (step 2) and joins that tier's queue before the next tier starts; the pass ends when a re-run adds nothing.
+
 ### 4. Report
 
-State what was removed, tier by tier; what was re-tiered when the suite caught it; and every DANGER candidate left in place for the user's call. The deletions are the change, and staging is not committing: landing them follows the normal `committing` discipline on the user's ask.
+State what was removed, tier by tier; what was re-tiered when the suite caught it; every DANGER candidate left in place for the user's call; and any tooling finding from step 1. The deletions are the change, and staging is not committing: landing them follows the normal `committing` discipline on the user's ask.
 
 ## Notes
 

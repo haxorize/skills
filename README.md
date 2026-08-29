@@ -84,7 +84,7 @@ The route most work travels: **`/grill-me`** → **`/to-feature` / `/to-story` /
 ### Crossing sessions & prototyping
 
 - **`handoff`** — Fork the current conversation: into a handoff document a fresh session picks up, or straight to a background agent when the work should continue unattended. The doc lands in the landing zone `handoff` defines (`claude-handoffs/` under the temp dir), stamped with the head it observed, and references durable artifacts rather than duplicating them; `review-changes` and `from-ticket latest` pick the newest up without a path.
-- **`prototype`** — Build a throwaway prototype to answer a design question — a shareable single-file HTML demo for state/logic questions, or several radically different UI variations toggleable from one route.
+- **`prototype`** — Build a throwaway prototype to answer a design question — a shareable single-file HTML demo for state/logic questions, several radically different UI variations toggleable from one route, or a stress page — one component rendered in every state real content puts it in, side by side.
 
 ### Learning
 

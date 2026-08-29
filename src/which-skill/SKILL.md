@@ -39,7 +39,7 @@ The two are different jobs on the same first day: **`/onboard-repo`** wires the 
 
 ## Detours off the main flow
 
-- **A question needs a runnable answer** (state, business logic, a UI you have to see) → detour through a prototype, bridged by `/handoff` in both directions: **`/handoff`** out → open a fresh session → **`/prototype`** to answer it with throwaway code → **`/handoff`** the *answer* back, and reference it from the original thread.
+- **A question needs a runnable answer** (state, business logic, a UI you have to see, a component that has to survive real content — the stress branch) → detour through a prototype, bridged by `/handoff` in both directions: **`/handoff`** out → open a fresh session → **`/prototype`** to answer it with throwaway code → **`/handoff`** the *answer* back, and reference it from the original thread.
 - **A hard bug or unexplained failure mid-build** → the `diagnosing-bugs` discipline takes over (it fires on its own; `implement` reaches for it on an unplanned red). It greps the repo's `docs/solutions/` store for past matches on the way in; when an expensive diagnosis closes, `capturing-learnings` offers to capture the solved problem there. File a found defect with **`/to-bug`**.
 - **A merge or rebase conflicts** → the `resolving-merge-conflicts` discipline handles it in place.
 - **A procedure only a human can perform** (credentials, third-party dashboards, a cutover) → **`/wizard`** generates a stage-by-stage bash wizard that drives them through it — or runs the same interview step-by-step in chat when a script isn't wanted — capturing what they copy back.

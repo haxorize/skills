@@ -30,7 +30,7 @@ Three kinds of evidence make a criterion checkable: a test, a command, or a conc
 
 Each criterion is independently verifiable: one criterion, one check, passable without the others. A criterion that names a command also names which outcome is the failure — the exit code, or the line that must or must not appear — because a command with no stated failing direction settles nothing: the reader runs it and guesses.
 
-Every stated limit implies its negative path — a cap implies a defined at-and-over-limit behavior (rejection, clamp, or truncation) and what the user observes when it fires. Derive those criteria; they never volunteer themselves.
+Every stated limit implies its negative path — a cap implies a defined at-and-over-limit behavior (rejection, clamp, or truncation) and what the user observes when it fires. Every flow with a middle implies its interrupted path — the user abandons it and comes back — and the state the item promises on return is a criterion, "no effect" included; the families of interruption are `product-description`'s interrupt taxonomy, never a list re-spelled here. Derive those criteria; they never volunteer themselves.
 
 When no clean check exists, propose the most honest binary validator you can state rather than leaving a TBD — a placeholder defers the decision to whoever is least equipped to make it.
 

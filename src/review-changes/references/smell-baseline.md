@@ -1,6 +1,6 @@
 # Smell baseline
 
-The catalog the smell-baseline lens matches against the diff: the fixed Fowler set (*Refactoring*, ch. 3) plus a fail-fast error-handling family. Two rules bind it:
+The catalog the smell-baseline lens matches against the diff: the fixed Fowler set (*Refactoring*, ch. 3), a fail-fast error-handling family, and one comment row after them. Two rules bind it:
 
 - **The repo overrides.** A documented repo standard always wins; where it endorses something the baseline would flag, suppress the smell.
 - **Always a judgment call.** Each smell is a labeled heuristic ("possible Feature Envy"), never a hard violation.
@@ -26,3 +26,7 @@ Beyond the Fowler set, the lens carries a **fail-fast error-handling family** (h
 - **Ceremonial catch** — a catch that exists to satisfy lint or style without real handling. → delete it or make it handle; its cost is real-failure camouflage, not style.
 - **Cancelling side effect** — a handler whose later call undoes a state change an earlier call made (`setComposeMode(true)` then `selectThread(null)`, whose side effect resets the mode), so the final state is not what the control's label promises. → trace the handler's calls in order and check the end state against the promise; drop or reorder the cancelling call.
 - **Message-matched error** — control flow keyed on an error's message text rather than its code or stable identifier; wording, i18n, and library upgrades all break it silently. → match on the code/type, never the prose.
+
+One row after both families — Fowler's *Comments* smell, narrowed to the `+` side and Follow-up by default:
+
+- **Comment slop** — a comment carrying nothing a reader lacks: a tombstone (`// removed X`, `// no longer needed`), a restatement of the line beneath it, a framing comment (`// helper`, `// for clarity`), a callsite reference (`// used by Y`), a tracker reference (`// handles #123`). → delete it; a comment earns its line by saying why, never what.

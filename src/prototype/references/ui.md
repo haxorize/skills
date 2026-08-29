@@ -2,7 +2,7 @@
 
 Generate **several radically different UI variations** on a single route, switchable from a floating bottom bar. The user flips between variants in the browser, picks one (or steals bits from each), then throws the rest away.
 
-If the question is about logic/state rather than what something looks like — wrong branch. Use [logic.md](logic.md).
+If the question is about logic/state rather than what something looks like, or the direction is settled and the question is whether the component survives real content — wrong branch; the routing table is in [SKILL.md](../SKILL.md).
 
 ## When this is the right shape
 
@@ -51,7 +51,7 @@ Draft each variant. Hold each one to:
 - The project's component library / styling system (TailwindCSS, shadcn, MUI, plain CSS, whatever).
 - An exported component name that names the variant's **direction**, not its slot in the list — `QuietSettings`, `EditorialSettings`, `DenseSettings`, never `VariantA`. The URL key stays a letter so the switcher and the shareable link stay simple, but the label the user reads pairs the two (`B — Editorial`): a person holds "the editorial one" in their head for a week and cannot hold "option B" for an hour.
 
-Variants must be **structurally different** — different layout, different information hierarchy, different primary affordance, not just different colours. Three slightly-tweaked card grids isn't a UI prototype, it's wallpaper. Redrawing a too-similar draft takes explicit negative guidance — "do not use a card grid" — because the second attempt drifts back to the first shape without it.
+Variants must be **structurally different** — different layout, different information hierarchy, different primary affordance, not just different colours. Three slightly-tweaked card grids isn't a UI prototype, it's wallpaper. Redrawing a too-similar draft takes explicit negative guidance — "do not use a card grid" — because the second attempt drifts back to the first shape without it. When the divergence axis is hierarchy or density, draft the variants first in greyscale, so hue cannot stand in for hierarchy, and redraw the finalists in the project's real styling before step 5 — the user picks among real renderings, never among sketches.
 
 ### 3. Wire them together
 

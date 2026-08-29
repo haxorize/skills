@@ -11,7 +11,7 @@ Because it's one file with nothing to install, you can hand it to a non-develope
 - "I want to feel out what the API should look like before writing it."
 - Anything where the user wants to **press buttons and watch state change**.
 
-If the question is "what should this look like" — wrong branch. Use [ui.md](ui.md).
+If the question is "what should this look like" or "does this survive real content" — wrong branch; the routing table is in [SKILL.md](../SKILL.md).
 
 ## Process
 

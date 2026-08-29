@@ -58,7 +58,7 @@ If a Story or Task issue exists, pull acceptance criteria from it. If not, brief
 - What interface changes are needed (route, endpoint, component, hook, query, model)
 - Which behaviors to test, and the seam each is tested at — naming seams up front aims testing effort at critical paths instead of every edge case (prioritize with the user)
 - Whether the slice is inner-loop testable, outer-loop testable, or both
-- Whether any behavior here carries a law a property test states better than examples do — a roundtrip (`decode(encode(x))` returns `x`), a conservation rule (the totals before and after a split or transfer agree), parse/format stability (`parse(format(x))` returns `x`), an ordering or idempotence rule, a bound that must hold for every input. Answer it either way rather than leaving it unasked; most slices don't have one, and the ones that do are exactly where examples miss
+- Whether any behavior here carries a law a property test states better than examples do — a roundtrip (`decode(encode(x))` returns `x`), a conservation rule (the totals before and after a split or transfer agree), parse/format stability (`parse(format(x))` returns `x`), an ordering or idempotence rule, a bound that must hold for every input — and a guarantee a docstring, README, or comment on the touched code claims ("idempotent", "acknowledged writes survive failover") is another source: the test states the claim, and the doc's assertion is not evidence it holds. Answer it either way rather than leaving it unasked; most slices don't have one, and the ones that do are exactly where examples miss
 - Opportunities for deep modules
 
 Confirm the plan with the user before writing any code.
@@ -87,15 +87,15 @@ After all tests pass, review the implementation before calling the cycle done:
 - Simplify where the accumulated implementation reveals a cleaner design
 - Fix the names the change made wrong: a name that stops matching its behavior misleads every later search. Follow the naming discipline over what the slice exported, renamed, or moved — call the Skill tool with `discoverable-code` at the first such name if it isn't already live
 
-Run the test command after each refactor step. Never refactor while red.
+Run the test command after each refactor step. Never refactor while red. Where no test pins a path the refactor crosses, capture its output on a representative input before the first edit and diff it after the last — the diff is the claim's evidence; "should behave the same" is a hope.
 
 Then run `/simplify` to catch any remaining issues with reuse, quality, or efficiency. Fix anything it finds and re-run tests.
 
 ## Closing the cycle
 
-Before closing, run the **mutation check**: mentally mutate the production code — wrong constant or argument, wrong branch, missing side effect or state change, empty return, missing validation for zero/empty/nil/malformed input, an off-by-one at each stated limit (for a limit L, the inputs L−1, L, L+1 — "very small" and "very large" alone never cover a boundary) — and confirm at least one test fails for each realistic mutation. An uncaught mutation is a failing test, not a statistic: the behavior is unprotected, or the test tautological.
+Before closing, run the **mutation check**: mentally mutate the production code — wrong constant or argument, wrong branch, missing side effect or state change, empty return, missing validation for zero/empty/nil/malformed input, a member added to an enum, lookup table, or dispatch map the code switches on (a hand-copied case table stays green for it), an off-by-one at each stated limit (for a limit L, the inputs L−1, L, L+1 — "very small" and "very large" alone never cover a boundary) — and confirm at least one test fails for each realistic mutation. An uncaught mutation is a failing test, not a statistic: the behavior is unprotected, or the test tautological.
 
-The check itself is a suspect: a test that cannot fail reports green forever and is indistinguishable from a working one. For a load-bearing check, break the code for real once and watch it go red, then restore it and watch the green return — that red must be **content-caused**; a check that reds regardless proves only that it runs. And name what the suite cannot catch (the seam with no test, the behavior only eyeballed) rather than letting green imply total coverage.
+The check itself is a suspect: a test that cannot fail reports green forever and is indistinguishable from a working one. For a load-bearing check, break the code for real once and watch it go red, then restore it and watch the green return — that red must be **content-caused**; a check that reds regardless proves only that it runs. Record the production change that reds it beside the test — a docstring or a leading comment, one line per load-bearing test, never per test — so the break is read later instead of re-derived. And name what the suite cannot catch (the seam with no test, the behavior only eyeballed) rather than letting green imply total coverage.
 
 When the cycle's behaviors are built and refactored, close the loop: call the Skill tool with `feedback-loops` once to finalize mechanically. (Under `implement`, `implement` drives review and this close-the-loop pass; the nudge here keeps standalone `tdd` finishing cleanly on its own.)
 
