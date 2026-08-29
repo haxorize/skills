@@ -45,7 +45,7 @@ Every out-of-scope observation made mid-slice and deliberately left alone. Each 
 |---|---|---|
 | `src/api/scores.py:112` | N+1 query when brands exceed the page size | outside — not in AC1–AC3; fix touches the repository layer this slice does not own |
 
-**A row leaves this ledger resolved or dismissed, and says which.** Resolved means the observed problem is gone, with the evidence that shows it. Dismissed means it was judged not worth acting on, and the reason has to dispose of the observation itself — "the page size is fixed upstream, so the N+1 cannot fire" — never merely rank it below the work that shipped. A row that simply stops appearing reads as resolved, which is the one thing it is not.
+**A row leaves the completion-audit ledger resolved or dismissed, and says which.** Resolved means the observed problem is gone, with the evidence that shows it. Dismissed means it was judged not worth acting on, and the reason has to dispose of the observation itself — "the page size is fixed upstream, so the N+1 cannot fire" — never merely rank it below the work that shipped. A row that simply stops appearing reads as resolved, which is the one thing it is not.
 
 **State the zero case explicitly:** `0 parked; 3 ACs checked against tests/test_scores.py and the ticket body`. An empty section and a section that was never written look the same; the count with its source does not.
 
