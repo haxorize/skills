@@ -1,6 +1,6 @@
 ---
 name: discoverable-code
-description: Naming and placing code so a plain-text search finds it — identifiers as search queries, whole string literals, one definition site, a doc line the natural-language grep lands on. Use when naming or renaming an exported symbol, type, file, error message, event name, or flag, when moving code between files, when a search for a concept returns nothing or a wall of hits, when reviewing a diff for names the next session will not find, or when another skill needs the discoverability vocabulary.
+description: Naming and placing code so a plain-text search finds it — identifiers as search queries, whole string literals, one definition site, a doc line the natural-language grep lands on. Use when naming or renaming an exported symbol, type, file, error message, event name, or flag, when moving code between files, when a search for a concept returns nothing or a wall of hits, when the code deliberately leaves out something a reader would search for, when reviewing a diff for names the next session will not find, or when another skill needs the discoverability vocabulary.
 ---
 
 # Discoverable code
@@ -11,7 +11,7 @@ The rules below govern *findability*. How much behavior sits behind an interface
 
 ## Names are search queries
 
-- **Exported symbols get 2–4 words, at least one of them a domain word.** `diffUserObjects`, not `diff`; `queueEventForDispatch`, not `queue`. One-word exported names collide across a large repo far more often than three-word ones, and three words is where the curve flattens — take the shortest name that greps uniquely and put the rest in the doc line.
+- **Exported symbols get 2–4 words, at least one of them a domain word.** `diffUserObjects`, not `diff`; `queueEventForDispatch`, not `queue`. One-word exported names collide across a large repo far more often than three-word ones, and three words is where the curve flattens — take the shortest name that greps uniquely and put the rest in the doc line. In a language where the call site carries a qualifier — a Go package, a Python module — the qualifier is one of the words for the reader at the call site (`stripe.NewClient` reads as three, and `stripe.StripeClient` stutters), but the definition reads `func NewClient`, which a bare search reaches only through the package path; so the doc line on the definition carries the domain word the name dropped.
 - **Give a generic verb its object.** `sanitizeEmailHtml`, not `sanitize`; `validateSmtpConfig`, not `validateConfig`. Qualify as far as uniqueness needs, then stop.
 - **One definition site per symbol.** Never copy a function between files — move it and delete the original in the same change. A shared helper gets one concept-named home and is imported everywhere else.
 - **Put the disambiguating context in the symbol, not the folder.** The import that tells `users/diff.ts` from `orders/diff.ts` sits at the top of the file; the search hit is at line 300. Name it `diffUserObjects`.
@@ -32,6 +32,7 @@ The rules below govern *findability*. How much behavior sits behind an interface
 - **One searchable concept per file, and thin orchestrators.** The code answering "where is X done?" lives in a module named after X — the thing a reader would ask about, not the mechanism inside — never inline in a coordinator or service class. An orchestrator reads as a sequence of calls into well-named modules, each line one hop from the real implementation. Split until each question-sized concept has one home, then stop: a helper meaningful only inside one concept stays inline, and a file per tiny function scatters one answer across several reads.
 - **Put tests where the repo already puts them**, and where nothing settles it, beside the source (`foo.test.ts` next to `foo.ts`) so one search finds the behavior and its specification together. A house layout the rest of the suite follows beats a locally better one, the same way an existing naming convention does.
 - **Mark dead ends.** `@deprecated` on the old path, naming the new one, so the search hit that lands on it says so.
+- **Write the deliberate absence where its search would land.** When the code leaves out something a reader would search for — a retry, a cache, a validation step, a timeout the neighbouring modules have — one line in the module or doc comment says so, in the words the search would use: "no retry here on purpose; the caller owns backoff". A search finds code and never the absence of code, and a well-organised repo keeps offering the reader one more plausible place to look.
 
 ## Before the change lands
 
@@ -41,5 +42,6 @@ The rules below govern *findability*. How much behavior sits behind an interface
 4. Did anything change behavior, audience, or visibility without changing its name?
 5. Where code moved, is it gone from where it came from?
 6. Where something was renamed, does the old name search to zero, with every remaining hit named as deliberate?
+7. Where the change deliberately leaves out something a reader would search for, is the absence written where that search lands?
 
 A "no" here is a finding on the change, the same as a failing check.

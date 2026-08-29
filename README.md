@@ -36,7 +36,7 @@ The route most work travels: **`/grill-me`** → **`/to-feature` / `/to-story` /
 ### Charting
 
 - **`chart-course`** — Chart a foggy, multi-session effort as a shared map of decision tickets on the project's tracker, then work them one per session until the way is clear. The map ends where `to-feature` / `to-story` picks up. ADO: a map Feature with User Story tickets. GitHub: a map issue with sub-issue tickets.
-- **`ask-for-me`** — Turn a decision you can't answer alone into a Markdown questionnaire for the person who can — a brief interview about the send (who it goes to, what you need back), then a drafted document aimed at that gap. Pairs with a `chart-course` Errand when the blocker is someone else's knowledge.
+- **`ask-for-me`** — Turn a decision you can't answer alone into a Markdown questionnaire for the person who can — a brief interview about the send (who it goes to, what you need back, what silence decides), then a drafted document aimed at that gap. Pairs with a `chart-course` Errand when the blocker is someone else's knowledge.
 
 ### Publishing to a tracker
 
@@ -120,8 +120,8 @@ The route most work travels: **`/grill-me`** → **`/to-feature` / `/to-story` /
 
 ### Design
 
-- **`codebase-design`** — Shared vocabulary and principles for designing deep modules (module / interface / depth / seam / adapter); consumed by `improve-design`, `review-changes`, and `diagnosing-bugs`.
-- **`discoverable-code`** — Naming and placing code so a plain-text search finds it: identifiers as search queries, one definition site, whole string literals, unique error prefixes, a doc line the natural-language grep lands on. Findability where `codebase-design` covers depth; declared by `tdd`, `implement`, and `review-changes`.
+- **`codebase-design`** — Shared vocabulary and principles for designing deep modules (module / interface / depth / seam / adapter), the model seam (one contained judgment behind a typed interface; a model's write to user-owned data behind an accept), and the interface an agent-driven CLI must carry; consumed by `improve-design`, `review-changes`, and `diagnosing-bugs`.
+- **`discoverable-code`** — Naming and placing code so a plain-text search finds it: identifiers as search queries, one definition site, whole string literals, unique error prefixes, a doc line the natural-language grep lands on, a line where a deliberate absence would be searched for. Findability where `codebase-design` covers depth; declared by `tdd`, `implement`, and `review-changes`.
 
 ### Build & finalize
 

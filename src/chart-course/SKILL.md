@@ -30,6 +30,7 @@ Each ticket is a **Decision ticket** — the Charting sub-type, a child of the m
 - **Title marker (ADO):** every drafted title bakes in `Chart: ` so nobody scanning a board mistakes a question for a build-ready Story — mechanics in [references/chart-format.md](references/chart-format.md). On GitHub the labels carry this; skip the marker.
 - **Claim by assignment.** Before any work, assign the ticket to whoever is driving it. Assignment *is* the claim: an open, unassigned ticket is unclaimed, and concurrent sessions skip claimed ones.
 - **Blocking** uses the tracker's native dependency relations, so the frontier renders in the tracker's own UI. The **frontier** is the open, unblocked, unclaimed tickets — the edge of the known.
+- **A disagreement names what would settle it.** When two people answer a ticket's question differently, its `## Question` states both positions and the evidence that would decide between them — a measurement, a document, a person with the authority — so the ticket's next move is to fetch that evidence (an inline research subagent for a fact the repo or the web holds; an Errand when a person holds it), never to re-argue the positions.
 
 In everything the human reads, refer to the map and its tickets by **name**, never bare id — see [references/tracker-resolution.md](references/tracker-resolution.md). Map bodies, ticket bodies, and resolution comments are human-facing prose: call the Skill tool with `writing-for-humans` at the first draft if it isn't already live.
 

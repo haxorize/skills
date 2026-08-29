@@ -32,15 +32,16 @@ Pick the best term for each concept and list alternatives as aliases to avoid.
 
 ### 4. Write to `DOMAIN.md` via `domain-modeling`
 
-Call the Skill tool with `domain-modeling` to write the glossary to `DOMAIN.md` in the working directory — if you don't see a `Launching skill: domain-modeling` line, stop and call it again before continuing. It owns the output format and the multi-context rules; apply its checks to the swept terms as you write.
+Call the Skill tool with `domain-modeling` to write the glossary to `DOMAIN.md` in the working directory — if you don't see a `Launching skill: domain-modeling` line, stop and call it again before continuing. It owns the output format and the multi-context rules; apply its checks to the swept terms as you write. An entry the sweep inferred from usage, with no definition found in the code, is flagged under `Flagged ambiguities` as resting on a guess, so the next sweep knows which definitions rest on the code and which do not.
 
 ### 5. Output a summary
 
-Summarize the glossary inline in the conversation. Suggest: "Consider adding a reference to `DOMAIN.md` in CLAUDE.md so future sessions use these terms consistently."
+Summarize the glossary inline in the conversation, and list every entry the sweep retired or narrowed, each with why — a glossary that gets quietly smaller has lost something nobody chose to lose. Suggest: "Consider adding a reference to `DOMAIN.md` in CLAUDE.md so future sessions use these terms consistently."
 
 ## Rules
 
 - **Only domain terms.** Skip module/class names unless they have domain meaning. Skip generic programming concepts unless they have domain-specific meaning.
+- **Retire on evidence the concept is gone, never on a deleted symbol.** An entry outlives the code that implemented it; it is retired only when something replaced or removed the concept, and the entry names what did. A dropped synonym joins the surviving term's *Aliases to avoid* cell, and a retired term stays in the cell of the term that absorbed it, marked `(retired — <what removed it>)`.
 
 ## Re-running
 

@@ -31,12 +31,13 @@ In parallel, read project context and search prior work:
 - `docs/adr/` — recorded decisions you should not re-litigate; match candidates against them by concept, never by wording (proceed silently if absent)
 - Search the tracker for existing refactor work items (Search command above; terms: `improve-design`, `deepen`, `refactor`, `extract`, `absorb`). Read open ones fully — intent, not just title.
 - `git log --oneline -30` — recent structural changes (extract, move, rename, refactor)
+- `git log --since='6 months ago' --name-only --pretty=format: | grep -v '^$' | sort | uniq -c | sort -rn | head -15` — the files change keeps landing in; step 2's weighting reads this list rather than an impression of the log
 
 If an area was recently refactored, the bar for proposing another change is much higher. Ask: "Is this friction from an incomplete refactor, or from the refactor itself being wrong?" If incomplete, update the existing work item rather than filing new.
 
 ### 2. Explore organically
 
-**Scope before you scan — YAGNI.** Deepening a module pays off by making future changes to it easier, so weight the parts of the codebase where change keeps landing. If the user named a direction — a module, a subsystem, a pain point — take it. Otherwise walk back a good stretch of `git log --oneline` to find the hot spots — the files and areas that keep coming up — and let those paths pull attention first. Scattered changes with no hot spot → widen the net.
+**Scope before you scan — YAGNI.** Deepening a module pays off by making future changes to it easier, so weight the parts of the codebase where change keeps landing. If the user named a direction — a module, a subsystem, a pain point — take it. Otherwise take the hot spots from step 1's churn list — the files that keep coming up — and let those paths pull attention first. Scattered changes with no hot spot → widen the net.
 
 Use the Agent tool with subagent_type=Explore to navigate the codebase. Every Explore prompt carries the rules in [references/subagent-brief.md](references/subagent-brief.md) quoted, and its **Launch-failure classification** binds you: a slice whose explorer never launched is explored inline. Don't follow rigid heuristics — explore and note where you experience friction:
 

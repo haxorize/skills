@@ -1,6 +1,6 @@
 ---
 name: mine-skills
-description: Open a skill-mining round over external skill repos — clone, scan, inventory, read under the standing lenses, and write the ledger rows a grill can ratify. Repo-local to the skills repo.
+description: Open a skill-mining round over external skill repos — clone, scan, inventory, read under the standing lenses, re-check the prior round's parks, and write the ledger rows a grill can ratify. Repo-local to the skills repo.
 disable-model-invocation: true
 ---
 
@@ -10,7 +10,7 @@ The mining-round opener. It produces reports and ledger rows under `~/code/lib/_
 
 ## 1. Open the round
 
-Create `~/code/lib/_rounds/<YYYY-MM-DD>/` and read the previous round's `batch-plan*.md` tail first — the last order line and any "queue EMPTY" note say what is still owed. Write `briefing.md`: sources named, the lenses in force (**Team-fit**, which every candidate skill takes: a concrete moment in a product engineering team's work and the role who hits it, named in whatever record would admit it — fire counts are evidence for the case, never the verdict; D-first: friction observed in this user's transcripts before upstream parity; person-serving: the idea helps the person at the keyboard, not the agent's tidiness; off-path: a skill for a moment the main flow never reaches, on stakes rather than frequency, as two extra prongs on top of Team-fit; Gap-and-stakes as the extra bar for a Domain skill), and the standing reject classes, applied unread: orchestration and multi-agent machinery, vendor and stack packs, whole catalogs and registries, memory and loop machinery, anti-slop and humanizer packs (`writing-for-humans` covers the class), and any non-permissive licence for text (ideas only).
+Create `~/code/lib/_rounds/<YYYY-MM-DD>/` and read the previous round's `batch-plan*.md` tail first — the last order line and any "queue EMPTY" note say what is still owed — and its `ledger.md` PARK rows, which step 5 re-checks. Write `briefing.md`: sources named, the lenses in force (**Team-fit**, which every candidate skill takes: a concrete moment in a product engineering team's work and the role who hits it, named in whatever record would admit it — fire counts are evidence for the case, never the verdict; D-first: friction observed in this user's transcripts before upstream parity; person-serving: the idea helps the person at the keyboard, not the agent's tidiness; off-path: a skill for a moment the main flow never reaches, on stakes rather than frequency, as two extra prongs on top of Team-fit; Gap-and-stakes as the extra bar for a Domain skill), and the standing reject classes, applied unread: orchestration and multi-agent machinery, vendor and stack packs, whole catalogs and registries, memory and loop machinery, anti-slop and humanizer packs (`writing-for-humans` covers the class), and any non-permissive licence for text (ideas only).
 
 ## 2. Clone and scan
 
@@ -30,6 +30,8 @@ Three tests, in order, before a row is written:
 
 Then the **determinism hunt**: a judgment call the agent made every time across the round's transcripts is a rule to stop needing — a lint, a hook, a type — and is written up as that, not as prose.
 
+Friction read from the transcripts is graded before it is cited, in the row's `friction` cell. The signals that count are the user's corrections ("no, don't", "I said not to"), a revert of an edit the agent just made (`git checkout --` or `restore` on the file, or the user re-editing it), a repeated "no", and the same mistake twice in one session. Friction from a single session is written `single-instance`; a row that claims a pattern names a second session or transcript; "none; admitted on the off-path lens above" is the zero case. Each friction row names its failure class — instruction misunderstood, output shape, context lost, tool misused, constraint violated, or an edge case — so the fold that answers it is aimed at the cause and not the symptom. This stays prose because the round dirs sit outside the repo, where no lint reads them.
+
 ## 5. Write the rows
 
-One report per source (`mine-<date>-<source>.md`, the table shape of the previous round: idea, host/rule, friction, conflicts or prior veto, verdict), then the ledger rows (ADOPT / ADAPT / PARK with unpark condition / REJECT with covering rule) and a `reconcile.md` that places every ADOPT/ADAPT in a batch. End with the grill prompt: the recs file path and the order of questions. Never edit `src/` in this skill.
+One report per source (`mine-<date>-<source>.md`, the table shape of the previous round: idea, host/rule, friction, conflicts or prior veto, verdict), the park sweep (`park-sweep-<prior date>.md`, in this round's directory), then the ledger rows (ADOPT / ADAPT / PARK with unpark condition / REJECT with covering rule) and a `reconcile.md` that places every ADOPT/ADAPT in a batch. The park sweep marks every prior-round PARK met or unmet — its unpark condition checked against this round's evidence and the tree, the check stated per row — and a met park enters this round's reconcile as a row of its own, while an unmet one is re-recorded in this round's ledger with its unpark condition so the next round's sweep sees it; a park nobody re-checks is a decision deferred to nobody. End with the grill prompt: the recs file path and the order of questions. Never edit `src/` in this skill.

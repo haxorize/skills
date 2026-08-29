@@ -28,7 +28,7 @@ Out of scope comes in two flavors; say which: an adjacent capability that must n
 
 Three kinds of evidence make a criterion checkable: a test, a command, or a concrete manual procedure. A criterion naming none of them isn't acceptance criteria — "works correctly" is the classic; say what correct looks like, and what you would demo. A post-launch outcome metric or business KPI ("adoption doubles in Q3") names none of them either — it is a goal for the goal-bearing section, never a criterion; no implementer can close it.
 
-Each criterion is independently verifiable: one criterion, one check, passable without the others.
+Each criterion is independently verifiable: one criterion, one check, passable without the others. A criterion that names a command also names which outcome is the failure — the exit code, or the line that must or must not appear — because a command with no stated failing direction settles nothing: the reader runs it and guesses.
 
 Every stated limit implies its negative path — a cap implies a defined at-and-over-limit behavior (rejection, clamp, or truncation) and what the user observes when it fires. Derive those criteria; they never volunteer themselves.
 
@@ -41,7 +41,7 @@ Done conditions by work type:
 | Work type | The criteria must pin |
 |---|---|
 | Bug | Reproduction before fix — a check that fails before the change and passes after |
-| Performance | Metric, threshold, measurement method, run count — all four |
+| Performance | Metric, threshold, measurement method, run count, and the correctness criterion the optimisation must not break, stated as its own pass/fail criterion ("under 200 ms" *and* "no result dropped") — all five, because a bare number is met by losing what it measured |
 | Research or spike | The decision the work must enable, and the evidence standard that settles it |
 | Operations | The healthy end state, the observation window, the rollback trigger |
 
@@ -49,7 +49,7 @@ Done conditions by work type:
 
 Behavior and design intent, never internals: no file paths, no code snippets, no internal field or type names. Internals drift, and the item must stay accurate after the code is written.
 
-A verification clause may name a stable invocation surface — a script name, CLI command, or endpoint. Those are contracts, not internals. A tier's template may likewise declare evidence sections — a bug's repro and observed-behavior sections — where verbatim error text, stack traces, and URLs belong: evidence quoted from reality is not internals either.
+A verification clause may name a stable invocation surface — a script name, CLI command, or endpoint — and the exact line or exit code that marks its failure. Those are contracts, not internals. A tier's template may likewise declare evidence sections — a bug's repro and observed-behavior sections — where verbatim error text, stack traces, and URLs belong: evidence quoted from reality is not internals either. A regulation the body cites carries the rule's status — proposed, final, or in force — and its effective date beside the citation, so a proposed rule is never built as if it were in force.
 
 Every section must earn its place by driving a decision, and a section with nothing true to say is deleted, never kept as "N/A" scaffolding — except inside a template the target repo requires (a PR or issue template), where the template wins: answer `N/A` rather than deleting. A persona that shapes no requirement, a non-functional bullet of copied boilerplate ("must be scalable and secure") with no product-specific threshold, a vision sentence that could open any item in the category — that is **theater**: cut it, or sharpen it to bounds instead of adjectives. Flag it even when it is well-written theater.
 
