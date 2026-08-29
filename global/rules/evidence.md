@@ -1,6 +1,6 @@
 # Evidence travels with the claim
 
-Depends: `committing`, `review-changes`, `implement`, `receiving-review`, `address-findings`, `upgrade-deps`
+Depends: `committing`, `review-changes`, `implement`, `receiving-review`, `address-findings`, `upgrade-deps`, `handoff`
 Why not a hook or lint: most of these claims are chat output, which no gate reads; where one does land in a file a gate sees — a commit message, a review report — whether the evidence supports the claim is a judgment, not a shape a check can match.
 
 A self-report — a status line, a count, a "done", a "tests pass" — carries its evidence **in the same message**, or it carries the marker `UNVERIFIED:`. There is no third state; a confident sentence with no evidence and no marker is the failure.
