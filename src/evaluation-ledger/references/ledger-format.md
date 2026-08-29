@@ -17,6 +17,8 @@ Deadline: <yyyy-mm-dd> · For: <who reads the memo> · Opened: <yyyy-mm-dd> · L
 - Q2 — …
 
 ## Legend
+The opening words of the next line are a machine contract, not prose: `scripts/lint-skills.sh` finds this legend by matching `Status is exactly one of:` at the start of a line, and reads the vocabulary off that line's backticked spans. Reword the opener and the legend stops being found; add or drop a status and the rule below has to move with it. Both failures are FAILs rather than silences — the rule site pins this sentence and this sentence pins the rule site — but the linter cannot see a definition reworded in place, so that stays this file's to keep.
+
 Status is exactly one of: `marketed` — the claimant said it and nothing here confirmed it · `verified` — confirmed against this project by evidence that is not the claimant's, named in Evidence · `contradicted` — checked and found false, with what contradicted it in Evidence. A row past its Expires date is read as expired whatever its status says; a re-check renews the date.
 
 ## Findings

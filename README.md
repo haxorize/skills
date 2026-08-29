@@ -160,7 +160,7 @@ The first two are the same first day, different subject: `onboard-repo` wires th
 
 ## Repo-local skills
 
-`.claude/skills/` holds two skills that run only inside this repo and are never hoisted: **`mine-skills`** (the mining-round opener — clone, scan, inventory, read under the standing lenses, write the ledger rows a grill ratifies) and **`sweep-corpus`** (the scheduled health sweep — lint, the `doc-claims` check over the three documents that claim what the suite is, and the cross-reference and router checks — report-only against an additive `docs/health/open-findings.md`). They live outside `src/` because they name this repo's paths and procedure; `scripts/lint-skills.sh` does not scan them, and the router does not route to them.
+`.claude/skills/` holds two skills that run only inside this repo and are never hoisted: **`mine-skills`** (the mining-round opener — clone, scan, inventory, read under the standing lenses, write the ledger rows a grill ratifies) and **`sweep-corpus`** (the scheduled health sweep — lint, the `doc-claims` check over the three documents that claim what the suite is, and the cross-reference and router checks — report-only against an additive `docs/health/open-findings.md`). They live outside `src/` because they name this repo's paths and procedure; `scripts/lint-skills.sh` scans them for the slash-form sweep and the evaluation-ledger vocabulary check only — its frontmatter, size and reference-link passes skip them — and the router does not route to them.
 
 ## Conventions
 
