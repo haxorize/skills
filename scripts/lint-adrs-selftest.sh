@@ -14,8 +14,9 @@
 # form, the unlinked prose form, and the second of two links on one line; a
 # pointer below the first heading; an amend link to a missing file; a bold form
 # naming a number nobody claims; an empty Revisit line in both forms; a settled
-# deferral with no entry, and one whose only entry is `<date>-2`; a corrected
-# Consequences bullet in both of those shapes; a plain cross-reference to a
+# deferral with no entry, one whose only entry is `<date>-2`, and one whose
+# only entry sits under a heading other than `## Amendments`; a corrected
+# Consequences bullet in all three of those shapes; a plain cross-reference to a
 # record that does not exist, and the second FAIL a dangling supersession link
 # and a dangling amend link each draw from that same check. Quiet: a
 # well-formed link-form pair, the `[ADR N]` space form, a pair whose numbers are
@@ -58,8 +59,10 @@ expect "revisit inline empty" "9011-revisit-empty.md (line 5) has a 'Revisit whe
 expect "revisit heading empty" "9012-revisit-heading-empty.md has a '## Revisit when:' heading with no paragraph under it"
 expect "settled deferral without its amendment" "9013-settled-no-amendment.md (line 7) marks a Deferred line settled by Amendments 2026-01-01"
 expect "settled deferral (date-suffix entry is not a match)" "9013-settled-no-amendment.md (line 8) marks a Deferred line settled by Amendments 2026-07-07"
+expect "settled deferral (entry outside ## Amendments is not a match)" "9013-settled-no-amendment.md (line 9) marks a Deferred line settled by Amendments 2026-03-03"
 expect "corrected consequence without its amendment" "9038-corrected-no-amendment.md (line 7) marks a Consequences bullet corrected by Amendments 2026-01-01"
 expect "corrected consequence (date-suffix entry is not a match)" "9038-corrected-no-amendment.md (line 8) marks a Consequences bullet corrected by Amendments 2026-07-07"
+expect "corrected consequence (entry outside ## Amendments is not a match)" "9038-corrected-no-amendment.md (line 9) marks a Consequences bullet corrected by Amendments 2026-03-03"
 expect "cross-reference to a record that does not exist" "9040-xref-dangling.md (line 3) links to 9099-does-not-exist.md, and no such file is in"
 # The overlap is deliberate and pinned here: a dangling supersession or amend
 # link is also a dangling citation, and each draws its own FAIL naming its own
@@ -93,10 +96,10 @@ expect_rc "the lint against the fixture tree" 1 "$status"
 # The count of `FAIL: `-prefixed lines is pinned: a new firing on a quiet
 # form, a check that starts double-reporting, or a message that loses the
 # prefix the family shares shows up here even if no substring above moves.
-# Three of the 21 are the cross-reference check's deliberate overlap with the
+# Three of the 23 are the cross-reference check's deliberate overlap with the
 # supersession and amend link checks, asserted by name above.
 nfail=$(printf '%s\n' "$output" | grep -c '^FAIL: ')
-[ "$nfail" -eq 21 ] || selftest_fail "expected exactly 21 FAIL lines against the fixture tree, got $nfail"
+[ "$nfail" -eq 23 ] || selftest_fail "expected exactly 23 FAIL lines against the fixture tree, got $nfail"
 
 clean_out=$(bash scripts/lint-adrs.sh "$clean" 2>&1); clean_status=$?
 if [ "$clean_status" -ne 0 ]; then

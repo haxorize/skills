@@ -366,10 +366,22 @@ check_revisit_heading() {
   fi
 }
 
+# Both marker checks resolve their date against the ## Amendments section
+# alone: a dated bullet misfiled under another heading is exactly the drift
+# the markers exist to catch, so it must not satisfy the pointer.
+amendments_entry_exists() {
+  local f=$1 date=$2
+  awk -v d="$date" '
+    /^## Amendments[[:space:]]*$/ { insec = 1; next }
+    insec && /^## /               { insec = 0 }
+    insec && $0 ~ "^- \\*\\*" d "([^0-9-]|$)" { found = 1; exit }
+    END { exit !found }' "$f"
+}
+
 # Settled deferrals point at a dated amendment in the same file.
 check_settled_deferral() {
   local f=$1 lineno=$2 date=$3
-  if ! grep -qE "^- \*\*$date([^0-9-]|$)" "$f"; then
+  if ! amendments_entry_exists "$f" "$date"; then
     say_fail "$f (line $lineno) marks a Deferred line settled by Amendments $date, but no '- **$date' entry exists under ## Amendments — fix the date, or write the amendment"
   fi
 }
@@ -381,7 +393,7 @@ check_settled_deferral() {
 # Consequences and a figure the record itself has since moved.
 check_corrected_consequence() {
   local f=$1 lineno=$2 date=$3
-  if ! grep -qE "^- \*\*$date([^0-9-]|$)" "$f"; then
+  if ! amendments_entry_exists "$f" "$date"; then
     say_fail "$f (line $lineno) marks a Consequences bullet corrected by Amendments $date, but no '- **$date' entry exists under ## Amendments — fix the date, or write the amendment"
   fi
 }
