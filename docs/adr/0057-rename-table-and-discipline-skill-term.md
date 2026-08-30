@@ -1,5 +1,7 @@
 # One rename table over every skill name; the glossary term becomes Discipline skill
 
+> **Amended by [ADR-0077](0077-tightening-round-one-house-style.md):** the rename table takes any rename the tightening round makes, and the naming convention for new skills is recorded there.
+
 > **Amended by [ADR-0063](0063-team-fit-test-replaces-retire-on-zero-window.md):** the `validate-behavior` retire check this record scheduled (Deferred, and the amendments of 2026-08-26) is cancelled; skills are judged by the Team-fit test, not by a fire count. The rename table itself is unaffected.
 
 Status: accepted (2026-08-22)

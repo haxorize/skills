@@ -1,0 +1,80 @@
+# A tightening round brings every skill under one house style, one size cap, and one intake gate
+
+Status: accepted (2026-08-30)
+
+The suite reached 57 skills through 6 mining rounds that ported from 8 upstreams, and it reads like it: 37 bodies address "you", 16 address "the agent", 4 use the bare imperative; 20 bodies have a `## Workflow`, 6 use numbered step headings, 31 have neither; skills are named 4 different ways (453 backticked names, 215 slash forms, 41 `Call the Skill tool` clauses, 11 "the X skill"); 180 British spellings sit beside American ones; labels come in 3 families that nobody registered; 9 bodies and 2 references exceed the 15,000-byte re-attach bound that `write-skill` states and `scripts/lint-skills.sh` only warns on; and the 5 always-loaded rules total 15,863 bytes, of which about 2,000 are rationale lines arguing why each rule is not a hook. Every figure was measured on 2026-08-30 against tree `a5de2f9` plus the open round's working changes.
+
+We decided to run one **tightening round** — a mining-shaped round pointed inward — that settles the house style once, cuts what does not earn its load, merges or splits where seams blur, and then moves every mechanical convention into lint and every judgment convention into `write-skill`'s review checklist, so later mining rounds land ideas into a structure that pushes back. This record holds the grill's 31 answers, given by Nick on 2026-08-30; the plan and ledger live in `~/code/lib/_rounds/2026-08-30/`.
+
+The record clears the ADR gate on all three criteria. **Hard to reverse:** the American-spelling flip makes every later upstream diff of a British-sourced port noisier for good, the lint FAILs bind every later fold, and a merge or rename cannot be undone without a deprecation stub and a window. **Surprising without context:** a reader who finds British spelling corrected inside a byte-diffed port, a lint that fails on a heading's case, or a deleted rule sentence that reads sensible will ask why. **A real trade-off:** each decision below names the alternative that lost, and a rational team could have picked most of them.
+
+This amends [ADR-0073](0073-team-fit-mining-round.md) (its 15,000-byte WARN becomes a FAIL and extends to reference files), [ADR-0053](0053-global-rules-layer.md) (the rules layer gains a directory budget and an admission test), [ADR-0076](0076-claude-md-admits-triggers-and-contracts-only.md) (its "before it knows to look" test now governs `global/rules/` too), and [ADR-0057](0057-rename-table-and-discipline-skill-term.md) (the rename table takes any rename this round makes).
+
+## Scope and order
+
+The round has 5 subsystems and a fixed order. **Phase 0** lands the open mining round first (batches 10–20, 61 uncommitted paths on `a5de2f9`, one review cycle owed) and diffs all 30 ported skills against their upstreams from the swept points in ADR-0034, re-recording the swept point there, so every later edit starts from a clean `HEAD` and a known upstream. **Phase 1** is the finder: the `review-changes` lenses run over the whole repo, not a diff, and write the round's ledger. The batch families then run in this order: **B shape** (merge, split, retire, rename) → **C+D prune and relocate**, per skill cluster, one batch per cluster → **A mechanical** (spelling, case, naming, artifact names, sizes), last, locked by the new lint checks in the same batch. Shape runs before prune so nothing is polished and then folded; mechanical runs last so the lint that locks it never has to be re-run by hand. The alternative — spelling first, so every later diff is clean — lost because it makes every later `git blame` and upstream diff noisier than the flip already does.
+
+In scope: `src/`, `.claude/skills/` (the 2 repo-local skills load in every mining session, and a convention with a carve-out reads as optional), `global/rules/`, `DOMAIN.md`, `README.md`, `docs/lineage.md`. ADR bodies get the spelling flip and nothing else; a record is amended, never rewritten. `global/README.md` and `docs/pitch.md` get spelling and casing only — they load nowhere. Descriptions are frozen except for spelling and the 2 under-reaches the 2026-08-30 trigger test registered (`phi-safe-code`, `health-literacy`); any other description edit re-runs that skill's trigger test in the same batch, because a description is the one part of a model-invoked skill with a measured behavior.
+
+## Sizes
+
+The re-attach cut is 5,000 **tokens**, which is 15,000 bytes at the 3 bytes per token measured on this repo's largest bodies; a body under the cap is never cut, and the 25,000-token shared budget drops the oldest skill whole. So there is no "first N bytes" rule. The enforceable form is `write-skill`'s existing one: the gate and the hard stops sit on the first screen of every body, checked per body by the instruction-file lens. `check_reattach_bytes` in `scripts/lint-skills.sh` becomes a FAIL and extends to `references/*.md`, once every file is under the cap; a cap that warns drifts (`tell-catalog.md` grew 1,191 bytes in the last fold with nothing watching). No numeric target sits on `src/` totals — a percentage is a number to hit, and the cheapest way to hit it is to cut the rationalization rebuttals this record forbids cutting — but the before and after totals are reported under Consequences.
+
+Every relocation from a body to a reference carries, on its ledger row, the condition under which the reference is opened ("only when the repo has a tracker", "only on the update path"). A relocation whose condition is "always" is refused: that content stays inline or is cut, never disclosed, because a required-at-load reference costs what the inline text cost plus the pointer.
+
+## Pruning
+
+Two tiers. A deletion on a **mechanical ground** from `writing-for-agents`' list — duplicate, cache of the environment, scaffolding a lint already enforces, persuasion detritus, unobserved pitfall — lands on inspection. A deletion on the **no-op ground alone** keeps `DOMAIN.md`'s bar: review nominates, and only a micro-test control run confirms, batched at the round's end so it gates nothing else. The alternative of relaxing the bar for the round lost to the prune limit — a rebuttal to a named rationalization measurably degrades compliance when cut, and that is exactly the sentence an aggressive pass reads as fluff.
+
+## Shape
+
+The overlap lens nominates merges and splits with evidence; Nick decides per nomination in the shape batch. A merge is admitted on **trigger competition** — a realistic prompt would load both skills, and neither is a discipline with its own second consumer — never on shared prose, which is a duplication finding. A merge that would land over 15,000 bytes is a split in disguise and is refused on that ground alone. No rename is forced on a name that merely breaks the convention (`adr`, `wizard`, `handoff`, `ship`, `tdd`); a merge is the one moment a new name is free, and the naming lens may propose a better name for any skill, recorded in ADR-0057's table if taken. The convention for new names: a discipline skill is a gerund, a user-invoked skill is an imperative verb phrase, a domain skill is the domain noun.
+
+## House style
+
+- **Voice:** second-person imperative. "You" is allowed; "the agent", "Claude", and "the model" are never the addressee, because the reader is the agent and third person reads as description. A body may say "the agent" for a subagent it briefs. Finding, not lint.
+- **Skill references:** a user-invoked skill is written `/name`; a model-invoked skill is `` `name` ``; an actual invocation is always the `` Call the Skill tool with `name` `` clause; "the X skill" is never used. Lint gains the mirror of its slash-on-model-invoked check: a bare backticked name of a user-invoked skill fails.
+- **Headings:** H1 is the skill's display name in title case; H2s are sentence case. Lint.
+- **Skeleton by kind:** a user-invoked or orchestrator skill runs `[gate]` → `## Workflow` (numbered steps) → `## Notes`; a discipline or domain skill runs principle sections headed by their leading word and closes on `## Boundary` (what this skill is not, and which sibling owns it). `## References` leaves `write-skill`'s template — 0 bodies use it as a real section, and links sit where the branch fires. Finding, not lint: a lint that knows a discipline from an orchestrator encodes the invocation axis twice.
+- **Labels, 3 families, registered once in `DOMAIN.md` and reused:** a marker a grep, hook, or script matches is ALL-CAPS (`PASS`, `FAIL`, `WARN`, `UNVERIFIED:`, `UNVERIFIABLE`, `Measured-tree:`); a verdict on a human scale is a title-case word (`Keep`, `Retire`, `Adopt`); an inline evidence tag is lowercase in brackets (`[fact]`, `[inference]`). No skill coins a fourth family or a synonym for `FAIL`.
+- **Filenames a skill writes:** lowercase kebab, shortened where the name carries dead weight — `teach-me`'s workspace set becomes `mission.md`, `progress.md`, `resources.md`, `notes.md`, and `onboard-me`'s `KT-MAP.md` becomes `kt.md`. The platform names (`README.md`, `CLAUDE.md`, `AGENTS.md`, `SKILL.md`) and `DOMAIN.md` stay; `DOMAIN.md` earned its case by being the one file every skill looks for by name. No read-old-name window: the one workspace on disk (`~/learning/aeo-geo`, clean) is renamed in place with `git mv`.
+- **Landing-zone artifacts:** one shape, `<repo>-<date>-<slug>.<kind>.md`, owned by `handoff`'s "Where to write it"; the strays (`audit-skills-<date>.md`, `design-review-<timestamp>.html`, `questionnaire-<slug>.md`) are renamed. In-repo artifacts stay where their own records put them.
+- **Spelling:** American, everywhere in scope, with a word-list check in `lint-skills.sh` so it cannot come back. The cost — noisier diffs against British-sourced upstreams — is accepted.
+
+## The always-loaded rules
+
+`global/rules/` gets a directory budget of 8,000 bytes, enforced as a FAIL in `lint-skills.sh` on the `check_claude_md_bytes` precedent, and the admission test ADR-0076 gave `CLAUDE.md`: a sentence stays in a rule only if a session needs it before it knows to look. The first pass keeps `no-unasked-commits`, `recommend-and-proceed`, and `evidence.md`'s invariant plus the bullets no skill owns; `large-write-chunking` moves into `write-skill` and `handoff`, and the dash pipeline into `writing-for-humans`' reference, each leaving a one-line invariant behind or nothing. Every `Why not a hook or lint:` line moves to an ADR — about 2,000 bytes loaded every session to justify a decision to a reader who is not there. The mechanism bullets in `evidence.md` (counts, recall, `Measured-tree:`) move into the skills whose acts they describe (`committing`, `review-changes`, `handoff`), which each rule's `Depends:` line already names.
+
+## Must not become
+
+Three drifts are forbidden by name, because the round's own pressure invites each. A prune must not delete the rebuttal rows of a rationalization table because they read as persuasion; the prune limit above is the reason. A spelling or casing pass must not rewrite `DOMAIN.md` definition prose in passing; a definition changes only through `domain-modeling`, with the entry replaced whole. A relocation must not produce a reference the body then requires at load; the per-row condition above is the check. A fourth drift — ported bodies rewritten so far that they no longer diff meaningfully against upstream — is a cost the spelling decision already accepts, not a forbiddance.
+
+## The intake gate for later rounds
+
+Drift enters at the moment an idea is written into whichever body was open, so the round ends by moving the conventions to the 3 places a fold cannot miss. Mechanical conventions — spelling, heading case, reference form, size, artifact-name shape, the rules budget — live in `scripts/lint-skills.sh`, which the pre-commit hook runs on touched paths. Judgment conventions — voice, skeleton by kind, label families, the relocation condition — live as rows in `write-skill`'s `## Review checklist`, the single home, and `CLAUDE.md`'s `## Review lenses` block points the instruction-file lens at that checklist, so every skill-change review reports conformance row by row as it reports the pruning test now. A separate `docs/style.md` lost as a second place to drift from; `writing-for-agents` lost because it is repo-agnostic prose discipline and these are skill-structure conventions, which `write-skill` already owns and lint already cites. Every `mine-skills` ledger row gains a mandatory `lands as` cell naming the existing skill and section that takes the idea, or the Extraction and Team-fit tests it passed to become a new skill; a row with no home is `PARK` until placed.
+
+## Considered Options
+
+- **One `.review.md` per lens in the landing zone, then `/address-findings`** — rejected: a whole-repo review is hundreds of findings with no batching; the round mechanism already has the ledger, the batch discipline, and the deferrals register.
+- **Honor the micro-test bar for every deletion** — rejected as the sole path: most cuts fall under the mechanical grounds and need no experiment; the two-tier rule keeps the experiment where the prune limit bites.
+- **Rename every outlier now** (`adr`, `wizard`, `handoff`, `ship`, `tdd`, `explain`, `prototype`, `implement`) — rejected: each rename breaks a typed habit and costs a stub window, and the outliers are short nouns people already type.
+- **One heading skeleton for all 57** — rejected: a discipline skill has no workflow to number, and forcing one manufactures steps.
+- **ALL-CAPS for every label** — rejected: a bracket tag sits mid-sentence a dozen times per document, and caps there is noise.
+- **Bind the round's close to the GHE mirror sync** — rejected: the sync is owed from 2 rounds already and depends on the work machine; it stays the standing work-machine item.
+- **A `src/` byte ratchet** — rejected: it fires on a legitimate new skill and teaches people to ignore it.
+
+## Consequences
+
+- The baseline, measured 2026-08-30 on `a5de2f9` plus the open round's working changes: 57 skills, 569,555 bytes of `SKILL.md`, 88 reference and template files at 392,668 bytes, 15,863 bytes in `global/rules/`, 12,123 bytes in the 2 repo-local bodies. The round's closing amendment reports the same 5 figures after.
+- 9 bodies and 2 references must come under 15,000 bytes before `check_reattach_bytes` can fail: `review-changes` (24,152), `write-skill` (22,764), `diagnosing-bugs` (20,367), `phi-safe-code` (19,542), `which-skill` (18,906), `writing-for-humans` (17,464), `accessible-ui` (16,960), `health-literacy` (16,365), `rebuild-contract` (15,094); `writing-for-humans/references/tell-catalog.md` (17,463), `accessible-ui/references/patterns.md` (16,884).
+- `DOMAIN.md` gains entries for **Tightening round**, the 3 label families (**Status marker**, **Verdict scale**, **Evidence tag**), and the skeleton kinds, and its **Grounding** entry changes with the `MISSION.md` rename. They land in the round's first batch, after the open mining round commits, because `DOMAIN.md` is already modified in that round's working tree.
+- The open deferrals in `~/code/lib/_rounds/2026-08-29/reconcile.md` that fall inside this scope fold into this round's ledger: the F31 size relocations, `tell-catalog.md`'s unwatched size, D18's 3 bare script names, and the 2 description under-reaches.
+- Batches run sequentially, one session each with a handoff between; each ends at its `.review.md`, and `/address-findings` runs in a fresh session.
+
+## Deferred
+
+- The GHE mirror sync — the standing work-machine item; settled by the next hand-sync from the work machine.
+- Any rename the naming lens proposes and Nick takes — settled by an amendment to ADR-0057's table in the shape batch.
+- The no-op micro-test batch's results — settled by an amendment here naming the rules deleted and the rules kept as control-clean.
+
+Revisit when: a later round's first fold lands a convention this record did not name — the house style is incomplete, and the missing row goes into `write-skill`'s checklist before the fold is reviewed.
