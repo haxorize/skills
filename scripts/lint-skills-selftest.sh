@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Conventions for this tree: scripts/README.md
 # Prove scripts/lint-skills.sh still catches what it claims to catch.
 #
 # A lint gate degrades silently: the run stays green whether the rule holds or
@@ -77,7 +78,20 @@
 # selftest, one whose selftest lacks the exec bit, an unmarked file that must
 # stay quiet whatever its name, and a *-lib.sh), the script-selftest check
 # (a script with no selftest, one whose selftest lacks the exec bit, and the
-# quiet forms: a *-lib.sh and install.sh), the shared-trigger-phrase check (two
+# quiet forms: a *-lib.sh and install.sh), the same check over
+# scripts/git-hooks/ (a hook with no selftest — with the hook-shaped remedy —
+# one whose selftest lacks the exec bit, one that lacks the exec bit itself,
+# a shebang-less README that is not a hook and must stay quiet, and a paired
+# executable hook in the clean root that must stay quiet), the conventions
+# pointer (one script lacking it fires; a shebang-less library carrying it on
+# line 1, and every other fixture script carrying it on line 2, stay quiet),
+# the clean run's stderr (no "command not found"), the
+# CLAUDE.md byte WARN (fires on the oversize root fixture, draws no FAIL, and
+# stays silent on the clean root's near-cap CLAUDE.md under the bound, so that
+# threshold too is pinned from both sides), the root CLAUDE.md link check (the
+# fixture root's CLAUDE.md links to a missing target and fires naming the link
+# and its line; the clean root's CLAUDE.md carries a resolving link — pinned
+# present below — and stays quiet), the shared-trigger-phrase check (two
 # model-invoked descriptions carrying one phrase in different cases, in both
 # quote styles, and inside a whole-value YAML double-quoted scalar fire once as
 # one line naming all three; a user-invoked description carrying the same
@@ -244,6 +258,17 @@ expect "hook selftest (missing)" "global/hooks/orphan-hook.sh carries an '# Inst
 expect "hook selftest (not executable)" "global/hooks/unexec-hook-selftest.sh is not executable"
 expect "script selftest (missing)" "scripts/orphan-tool.sh has no selftest — write scripts/orphan-tool-selftest.sh"
 expect "script selftest (not executable)" "scripts/unexec-tool-selftest.sh is not executable"
+expect "git-hook selftest (missing)" "scripts/git-hooks/orphan-hook has no selftest — write scripts/git-hooks/orphan-hook-selftest.sh"
+# The remedy a git hook gets is one it can follow: no *-lib.sh rename (git
+# fixes the filename), and the tree named is scripts/git-hooks/.
+expect "git-hook selftest (missing, hook-shaped remedy)" "scripts/git-hooks/orphan-hook has no selftest — write scripts/git-hooks/orphan-hook-selftest.sh (source scripts/selftest-lib.sh; every git hook under scripts/git-hooks/"
+expect "git-hook selftest (not executable)" "scripts/git-hooks/unexec-hook-selftest.sh is not executable"
+expect "git hook itself not executable" "scripts/git-hooks/unexec-itself is not executable — chmod +x it"
+expect "conventions pointer (missing)" "scripts/no-pointer.sh does not open with '# Conventions for this tree: scripts/README.md'"
+expect "CLAUDE.md byte-size WARN" "WARN: CLAUDE.md is "
+# The root file goes through pass 2's link parser too; the line number is
+# pinned, as in the skill-tree link row above.
+expect "CLAUDE.md reference-link resolution" "CLAUDE.md links to 'docs/no-such-file.md' (line 78)"
 # One line for all the carriers, not one per skill: the phrase is the unit. The
 # three fixtures carry it in straight quotes, in curly quotes and another case,
 # and inside a whole-value YAML double-quoted scalar, so this row pins the
@@ -295,6 +320,26 @@ reject "two-way requires and slash-on-model-invoked (quoted, parenthesised and f
 reject "shared trigger phrase (disambiguating \"Not for…\" tail)" "src/shared-trigger-not-for/SKILL.md carry"
 # The WARN is a warning: the oversize body must draw no FAIL line of its own.
 reject "re-attach byte-size WARN does not FAIL" "FAIL: src/oversize-body/SKILL.md"
+# Pinned to the WARN's own shape ("… CLAUDE.md is <n> bytes"), because the
+# root file legitimately draws a link-check FAIL in this tree and a bare
+# "FAIL: CLAUDE.md" needle would read that correct line as the WARN failing.
+reject "CLAUDE.md byte-size WARN does not FAIL" "FAIL: CLAUDE.md is "
+# A selftest file under git-hooks is not itself held to the pairing.
+reject "git-hook selftest (the selftest file is exempt)" "scripts/git-hooks/unexec-hook-selftest.sh has no selftest"
+# A file under git-hooks with no shebang is not a hook: no pairing, no pointer.
+reject "git-hook selftest (no shebang, so not a hook)" "scripts/git-hooks/README.md"
+# A git hook's remedy never offers the *-lib.sh rename a hook cannot take.
+reject "git-hook selftest (script-shaped remedy on a hook)" "scripts/git-hooks/orphan-hook has no selftest — write scripts/git-hooks/orphan-hook-selftest.sh (source scripts/selftest-lib.sh; every scripts/*.sh"
+# The hook whose own mode is broken is otherwise paired, and the one whose
+# selftest's mode is broken is itself executable: each fires exactly its own
+# line, so the two checks cannot be merged with this run green.
+reject "git hook itself not executable (its selftest is fine)" "scripts/git-hooks/unexec-itself-selftest.sh is not executable"
+reject "git-hook selftest (the hook with an unexecutable selftest is itself executable)" "scripts/git-hooks/unexec-hook is not executable"
+# The pointer check fires on the one script that lacks the line and on nothing
+# else: every other fixture script carries it, so a matcher that widened past
+# "line 2 after a shebang, line 1 without one" reds here.
+reject "conventions pointer (a shebang-less library carrying it on line 1)" "scripts/quiet-lib.sh does not open with"
+reject "conventions pointer (no-pointer's own selftest carries it)" "scripts/no-pointer-selftest.sh does not open with"
 reject "hook selftest (library exempt)" "global/hooks/quiet-lib.sh"
 reject "hook selftest (no Install note, so not a hook)" "global/hooks/unmarked-helper.sh"
 reject "script selftest (library exempt)" "scripts/quiet-lib.sh"
@@ -316,7 +361,7 @@ expect_rc "the lint against the fixture tree" 1 "$status"
 # The count of FAIL lines is pinned: a check that begins firing on a fixture
 # it should leave alone reds here even when no substring row names the line.
 nfail=$(printf '%s\n' "$output" | grep -c '^FAIL: ')
-[ "$nfail" -eq 45 ] || selftest_fail "expected exactly 45 FAIL lines against the fixture tree, got $nfail"
+[ "$nfail" -eq 50 ] || selftest_fail "expected exactly 50 FAIL lines against the fixture tree, got $nfail"
 # The shared-trigger-phrase fixtures are pinned by property, as near_bytes and
 # bulk_bytes are below: every row above them asserts a FAIL that appears or a
 # FAIL that does not, and each of those readings is silently satisfied by a
@@ -352,6 +397,16 @@ done
 near_bytes=$(wc -c < "$clean_fixtures/src/near-cap/SKILL.md" | tr -d ' ')
 { [ "$near_bytes" -gt 14800 ] && [ "$near_bytes" -le 15000 ]; } || selftest_fail "src/near-cap/SKILL.md in the clean root is $near_bytes bytes; it must sit inside (14800, 15000] to pin the WARN threshold from below"
 
+# The clean root's CLAUDE.md sits just under its bound, so the WARN below is
+# pinned from below as well as above; this pins that the file is really there.
+claude_bytes=$(wc -c < "$clean_fixtures/CLAUDE.md" 2>/dev/null | tr -d ' ')
+{ [ -n "$claude_bytes" ] && [ "$claude_bytes" -gt 5800 ] && [ "$claude_bytes" -le 6000 ]; } || selftest_fail "CLAUDE.md in the clean root is ${claude_bytes:-absent} bytes; it must sit inside (5800, 6000] to pin the CLAUDE.md WARN threshold from below"
+
+# The clean root's CLAUDE.md also carries one resolving link, so the quiet
+# direction of the root link check is a form actually exercised (the clean
+# baseline's exit 0 below is what grades it); this pins that it is there.
+grep -q '](README.md)' "$clean_fixtures/CLAUDE.md" || selftest_fail "the clean root's CLAUDE.md no longer carries its '](README.md)' link — the CLAUDE.md link check's quiet direction went ungraded; put the link back rather than reading the clean baseline as covering it"
+
 # The clean root's baseline. Every later assertion against it reads "the thing
 # I broke caused this", and that reading is only sound while the untouched tree
 # exits 0 — so a violation drifting into scripts/lint-fixtures-clean/ must fail
@@ -364,8 +419,12 @@ fi
 # The clean root draws no WARN either: the byte-size warning fires on size alone,
 # and nothing there is near the bound.
 if printf '%s\n' "$clean_baseline" | grep -q '^WARN:'; then
-  selftest_fail "the clean fixture drew a WARN line; the byte-size warning fired on a body under the bound (near-cap sits 49 bytes under it)"
+  selftest_fail "the clean fixture drew a WARN line; a byte-size warning fired on a body under its bound (near-cap sits 49 bytes under the skill bound; the clean CLAUDE.md sits under the 6,000-byte one)"
 fi
+# And no shell noise: the baseline is captured with 2>&1, so a header line that
+# lost its `#` and ran as a command lands here as "command not found" — with
+# the linter still exiting 0, which is how one shipped on 2026-08-30.
+reject_in "$clean_baseline" "the clean run printed a shell error (a header line running as a command, or a call to an undefined function)" "command not found"
 
 # Argument handling, each direction: --help prints usage and runs no check;
 # an unknown argument exits 3 and runs no check; a LINT_ROOT that is not a
@@ -463,7 +522,8 @@ isolated_case "legend-reworded" 's/^Status is exactly one of:/A row stores exact
   "src/ledger-legend/references/legend-line.md" \
   "but no file defines the legend"
 # The rule phrase reworded — the same failure from the other end, and the half
-# CLAUDE.md's "its two definition sites agree" is asserting.
+# check_evaluation_ledger_rule_agreement asserts: the legend and the rule
+# define the same set, so losing either site is a FAIL, not a stand-down.
 isolated_case "rule-reworded" 's/\*\*Exactly one stored status\.\*\*/**Exactly one status is stored.**/' \
   "src/ledger-legend/SKILL.md" \
   "but no file states the stored-status rule"
@@ -509,8 +569,11 @@ clean_unreadable="$clean_root/src/clean-skill/references/note.md"
 clean_unreadable_in_legend_dir="$clean_root/src/ledger-legend/references/complete-consumer.md"
 # chmod's own status is read: a renamed fixture would otherwise fall through
 # to the readability test below and be reported as a dead read-error branch.
-if ! chmod 000 "$unreadable" "$clean_unreadable" "$clean_unreadable_in_legend_dir" 2>/dev/null; then
-  selftest_fail "chmod 000 failed on one of $unreadable, $clean_unreadable or $clean_unreadable_in_legend_dir — a fixture was renamed or removed; update the paths here rather than reading the rows below as a dead branch"
+# A fourth: the clean root's CLAUDE.md, so the byte WARN's read-error branch
+# says the count never ran rather than reading an empty count as under the bound.
+clean_unreadable_claude="$clean_root/CLAUDE.md"
+if ! chmod 000 "$unreadable" "$clean_unreadable" "$clean_unreadable_in_legend_dir" "$clean_unreadable_claude" 2>/dev/null; then
+  selftest_fail "chmod 000 failed on one of $unreadable, $clean_unreadable, $clean_unreadable_in_legend_dir or $clean_unreadable_claude — a fixture was renamed or removed; update the paths here rather than reading the rows below as a dead branch"
 elif cat "$unreadable" >/dev/null 2>&1 || cat "$clean_unreadable" >/dev/null 2>&1; then
   # Running as root, or on a filesystem that ignores the mode. Not a
   # regression, but the branches below went unexercised and the closing line
@@ -543,6 +606,7 @@ else
   expect_in "$clean_output" "the line-cap read-error did not fire on an otherwise-clean tree" "src/clean-skill/references/note.md could not be read for its line count"
   expect_in "$clean_output" "the evaluation-ledger anchor read-error did not fire on an otherwise-clean tree" "src/clean-skill/references/note.md could not be read for the evaluation ledger anchor"
   expect_in "$clean_output" "the evaluation-ledger status-token read-error did not fire on an unreadable file inside the legend's own skill" "src/ledger-legend/references/complete-consumer.md could not be read for evaluation ledger statuses"
+  expect_in "$clean_output" "the CLAUDE.md byte-count read-error did not fire on an unreadable root file" "CLAUDE.md could not be read for its byte count"
 fi
 fi
 fi

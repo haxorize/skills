@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Conventions for this tree: scripts/README.md
 # Prove scripts/git-hooks/commit-msg still catches what it claims to catch.
 #
 # A commit-msg hook degrades silently the same way a linter does: the commit

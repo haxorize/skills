@@ -1,0 +1,173 @@
+#!/usr/bin/env bash
+# Conventions for this tree: scripts/README.md
+set -uo pipefail
+
+# pre-commit runs the linter — and the selftest — a staged path answers to, so
+# "run the gate before committing" is enforced rather than remembered
+# (ADR-0076). The `Gate map:` lines below are the whole rule, and the one copy
+# setup-hooks.sh prints, so the banner cannot disagree with the case arms that
+# read the same map. Any other commit pays nothing.
+#
+# Gate map: lint-skills.sh when a staged path is under src/, global/, .claude/skills/ or scripts/, or is README.md, DOMAIN.md, CLAUDE.md or docs/lineage.md
+# Gate map: lint-adrs.sh when a staged path is under docs/adr/
+# Gate map: the -selftest.sh beside a staged scripts/*.sh or scripts/git-hooks/ hook, when it exists — every selftest when selftest-lib.sh is staged — each once; a red one blocks
+# Gate map: a stderr notice, never a block, when a staged src/<skill>/ path has a docs/lineage.md row — diff the upstream before a material edit
+#
+# The selftest map is derived, never kept: the pairing is scripts/README.md's
+# (scripts/<x>.sh or a git hook <h> is graded by the <x>-selftest.sh beside
+# it; a selftest, a *-lib.sh, install.sh and setup-hooks.sh owe none), and a
+# pairing that does not exist is lint-skills.sh's to name, not this hook's to
+# block on — so a selftest runs only when its file is there. A staged
+# selftest-lib.sh runs every selftest in both directories, since each sources
+# it. Each queued selftest runs once however many staged paths point at it,
+# through the same wrapper as the linters, so a 127 or a file that vanished
+# is named and any non-zero status blocks.
+#
+# The lineage notice is advisory: a staged path under src/<skill>/ whose
+# skill has a docs/lineage.md table row (a first cell carrying the backticked
+# name) gets one stderr line pointing there — CLAUDE.md's rule is to diff the
+# upstream before a material edit, and the commit touching the skill is the
+# moment that rule matters. Once per skill, never a block, and silence when
+# docs/lineage.md is absent.
+#
+# The linters read the WORKING TREE, not the index: an unstaged edit in a
+# linted file is checked too, and a violation staged and then fixed only in
+# the working tree passes. Partial staging is the case this misses; it is
+# named here rather than solved, because both linters walk directories and
+# take no file list.
+#
+# Any non-zero status from a linter blocks — its 2 (LINT_ROOT not a directory)
+# and 3 (usage) as much as its 1 — since a linter that did not run is not a
+# clean run; a linter that is missing, or exits 127, blocks with its own line.
+# By the same rule, an index this hook cannot read blocks: an empty index is
+# nothing to lint, and a `git diff` that failed is not an empty index. The
+# linters are resolved from the repo root, so the hook works from any cwd git
+# invokes it in. commit-bypass (global/hooks/) blocks the agent's Bash-tool
+# `--no-verify` once it is wired in settings.json — and it is fail-open by
+# design (ADR-0054), so a human at the keyboard, or a tokeniser miss, still
+# skips this hook; a red run here is fixed, not skipped, by discipline as much
+# as by mechanism.
+#
+# Enable with: bash scripts/setup-hooks.sh (points core.hooksPath here).
+# Selftest: scripts/git-hooks/pre-commit-selftest.sh.
+
+# A committer's shell may export LINT_ROOT from a fixture-debugging session;
+# the linters would then sweep that tree instead of this one.
+unset LINT_ROOT
+
+# A commit git is making to conclude a merge, revert, or cherry-pick is the
+# author's resolution of someone else's tree — rejecting it for a violation
+# they did not write strands the operation resolved but uncommitted, and
+# commit-bypass blocks the --no-verify that would rescue it. Git records each
+# of these as a file in the git dir, which is what this asks (the same test
+# commit-msg makes).
+git_dir="$(git rev-parse --git-dir 2>/dev/null || echo .git)"
+for state in MERGE_HEAD REVERT_HEAD CHERRY_PICK_HEAD; do
+  [ -e "$git_dir/$state" ] && exit 0
+done
+
+repo_root="$(git rev-parse --show-toplevel 2>/dev/null)" || {
+  echo "pre-commit: could not find the work tree (git rev-parse --show-toplevel failed)" >&2
+  exit 1
+}
+
+# NUL-delimited and rename-free: `-z` turns core.quotePath off, so a non-ASCII
+# path reaches the case arms unquoted, and `--no-renames` reports a rename as
+# its A and its D, so the path a rename removes from a linted tree is seen.
+# No --diff-filter: every staged entry, whatever its status letter, is a path
+# to classify. The list goes through a file because a NUL cannot live in a
+# shell variable.
+staged="$(mktemp 2>/dev/null)" || {
+  echo "pre-commit: could not create a temp file for the staged-path list" >&2
+  exit 1
+}
+trap 'rm -f "$staged"' EXIT
+git diff --cached --name-only -z --no-renames > "$staged" 2>/dev/null || {
+  echo "pre-commit: could not read the index (git diff --cached failed) — nothing was linted, so nothing is known to be clean" >&2
+  exit 1
+}
+[ -s "$staged" ] || exit 0
+
+run_skills=0
+run_adrs=0
+# The selftest queue: built in the walk, run after the linters. A
+# space-delimited list with a membership test — Darwin's bash 3.2 has no
+# associative arrays, and no path in either mapped directory carries a space.
+selftest_queue=" "
+queue_selftest() {
+  case "$selftest_queue" in *" $1 "*) return ;; esac
+  selftest_queue="$selftest_queue$1 "
+}
+# Skills already noticed for lineage, so two staged files under one skill
+# print one line.
+lineage_seen=" "
+while IFS= read -r -d '' p; do
+  case "$p" in
+    src/*|global/*|.claude/skills/*|scripts/*|README.md|DOMAIN.md|CLAUDE.md|docs/lineage.md) run_skills=1 ;;
+  esac
+  case "$p" in
+    docs/adr/*) run_adrs=1 ;;
+  esac
+  # The selftest map. Arms run most-specific first: in `case`, `*` matches
+  # `/`, so the git-hooks arms must come before scripts/*.sh, and the
+  # scripts/*/* exclusion keeps any other subdirectory out of the script rule.
+  case "$p" in
+    scripts/selftest-lib.sh)
+      for st in "$repo_root"/scripts/*-selftest.sh "$repo_root"/scripts/git-hooks/*-selftest.sh; do
+        [ -f "$st" ] && queue_selftest "${st#"$repo_root"/}"
+      done ;;
+    scripts/git-hooks/*-selftest.sh) ;;
+    scripts/git-hooks/*)
+      [ -f "$repo_root/$p-selftest.sh" ] && queue_selftest "$p-selftest.sh" ;;
+    scripts/*-selftest.sh | scripts/*-lib.sh | scripts/install.sh | scripts/setup-hooks.sh | scripts/*/*) ;;
+    scripts/*.sh)
+      [ -f "$repo_root/${p%.sh}-selftest.sh" ] && queue_selftest "${p%.sh}-selftest.sh" ;;
+  esac
+  # The lineage notice (see the header): one stderr line per staged skill
+  # with a row, and never a change to the exit status.
+  case "$p" in
+    src/*/*)
+      skill=${p#src/}; skill=${skill%%/*}
+      case "$lineage_seen" in
+        *" $skill "*) ;;
+        *)
+          lineage_seen="$lineage_seen$skill "
+          if [ -f "$repo_root/docs/lineage.md" ] &&
+             grep -Eq "^\|[^|]*\`$skill\`" "$repo_root/docs/lineage.md"; then
+            echo "pre-commit: src/$skill has an upstream — see docs/lineage.md before a material edit (ADR-0034 swept point)" >&2
+          fi ;;
+      esac ;;
+  esac
+done < "$staged"
+
+fail=0
+# run_linter <path under the repo root> — the linters and the queued selftests
+# all go through it: a missing gate and a 127 each get their own line, since
+# "a gate above is red" would point at output that never printed.
+run_linter() {
+  local rc=0
+  if [ ! -f "$repo_root/$1" ]; then
+    echo "pre-commit: $1 is missing from this checkout, so the gate for a staged path could not run" >&2
+    fail=1
+    return
+  fi
+  bash "$repo_root/$1" || rc=$?
+  if [ "$rc" -eq 127 ]; then
+    echo "pre-commit: $1 exited 127 — a command it needs was not found, so it did not run to completion" >&2
+  fi
+  [ "$rc" -eq 0 ] || fail=1
+}
+[ "$run_skills" -eq 1 ] && run_linter scripts/lint-skills.sh
+[ "$run_adrs" -eq 1 ] && run_linter scripts/lint-adrs.sh
+# The queued selftests, each once. A red selftest is a gate that failed, and
+# one that vanished between the queue and here, or exits 127, is named the
+# same way the linters are.
+for st in $selftest_queue; do
+  run_linter "$st"
+done
+
+if [ "$fail" -ne 0 ]; then
+  echo "pre-commit: FAIL — a gate above is red or did not run; fix it and commit again (rules: scripts/README.md)" >&2
+  exit 1
+fi
+exit 0

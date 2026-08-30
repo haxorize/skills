@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Conventions for this tree: scripts/README.md
 # Prove scripts/security.sh still flags what it claims to flag, and stays
 # quiet on a clean skill — per instance, not per rule. The rule roster is read
 # from the scanner itself, and the id count is pinned, so a rule deleted from

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Conventions for this tree: scripts/README.md
 # security.sh — heuristic scan of a skill directory for prompt-injection and
 # malicious patterns. Reports; never blocks, never deletes.
 #

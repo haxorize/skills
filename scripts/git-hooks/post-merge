@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Conventions for this tree: scripts/README.md
 set -euo pipefail
 
 # post-merge fires after any merge that updates the working tree — the merge
@@ -8,6 +9,8 @@ set -euo pipefail
 #
 # NOTE: git does not run post-merge on `git pull --rebase`. After a rebase pull,
 # run `bash scripts/install.sh` manually.
+#
+# Gate map: after a merging pull, names any pulled change under global/hooks/ or scripts/git-hooks/, runs every gate, then install.sh (re-hoist); not triggered by 'git pull --rebase'
 #
 # A post-merge hook cannot abort the merge: git ignores its exit code, so the
 # merge has already completed by the time this runs. A failed re-hoist must
@@ -20,12 +23,14 @@ repo_root="$(git rev-parse --show-toplevel)"
 
 # The settings.json snippet points at this checkout's global/hooks/ directly,
 # so a pulled commit that edits a hook changes the live PreToolUse check with
-# no re-consent. Name it, one line, so the change does not scroll past.
+# no re-consent — and core.hooksPath points at scripts/git-hooks/ the same
+# way, so a pulled edit to a git hook runs on the next commit, merge, or
+# message. Name either, one line, so the change does not scroll past.
 # ORIG_HEAD is the pre-merge tip only when the merge set it last; a reset or
 # rebase in between moves it, so the range can be stale — the line is a
 # prompt to look, never the audit itself. Captured once: a pipe into grep -q
 # under pipefail can misreport exactly when there is a change.
-hook_changes="$(git diff --name-only ORIG_HEAD HEAD -- global/hooks/ 2>/dev/null || true)"
+hook_changes="$(git diff --name-only ORIG_HEAD HEAD -- global/hooks/ scripts/git-hooks/ 2>/dev/null || true)"
 if [ -n "$hook_changes" ]; then
   echo "post-merge: NOTE hook behavior changed — this pull touched: $(printf '%s' "$hook_changes" | tr '\n' ' ')"
 fi

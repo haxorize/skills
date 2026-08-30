@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Conventions for this tree: scripts/README.md
 # Prove scripts/git-hooks/post-merge still runs every gate, reads all three
 # statuses, and reaches the re-hoist whatever the gates return.
 #
@@ -13,8 +14,10 @@
 # WARN, every gate after a failing one still runs (each fake gate leaves a
 # marker file), and the re-hoist line and the fake install.sh both run last.
 # Also graded: the roster is derived — a scripts/*-selftest.sh dropped into the
-# fake repo is run without this hook naming it — and the hook never runs the
-# real repo's gates (the markers are written only under the fake root).
+# fake repo is run without this hook naming it — the hook never runs the
+# real repo's gates (the markers are written only under the fake root), and
+# the pulled-hook NOTE names a change under global/hooks/ and one under
+# scripts/git-hooks/, and nothing outside them.
 #
 # Run it after changing the hook. post-merge itself sweeps this directory for
 # *-selftest.sh, so this file is on its own roster.
@@ -61,6 +64,25 @@ for m in lint-skills.sh lint-adrs.sh partial-selftest.sh clean-selftest.sh commi
   [ -f "$fake/marks/$m" ] || selftest_fail "$m never ran — the hook stopped before it (a failing gate ended the loop, or the roster no longer derives it)"
 done
 reject_in "$out" "the hook ran against the real repo's gates" "$repo_root/scripts"
+
+# The pulled-hook NOTE names a change under either hook directory: two commits,
+# ORIG_HEAD set to the first as a merge would leave it, one file edited under
+# each directory in the second. A path list that dropped either directory
+# reds its row; the untouched gates draw no NOTE.
+fake_git() { git -C "$fake" -c user.email=selftest@example.invalid -c user.name=selftest -c commit.gpgsign=false "$@"; }
+fake_git add -A >/dev/null 2>&1 && fake_git commit -q -m "base" || selftest_fail "could not make the base commit in the fake repo; the NOTE rows below cannot be trusted"
+printf '# edited\n' >> "$fake/global/hooks/paired.sh"
+printf '# edited\n' >> "$fake/scripts/git-hooks/commit-msg-selftest.sh"
+printf '# edited\n' >> "$fake/scripts/lint-adrs.sh"
+fake_git add -A >/dev/null 2>&1 && fake_git commit -q -m "pulled" || selftest_fail "could not make the second commit in the fake repo; the NOTE rows below cannot be trusted"
+fake_git update-ref ORIG_HEAD HEAD~1
+out=$( cd "$fake" && bash "$hook" 2>&1 ); rc=$?
+expect_rc "the hook after a merge that edited a hook in each directory" 0 "$rc"
+note_line=$(printf '%s\n' "$out" | grep 'post-merge: NOTE hook behavior changed' || true)
+[ -n "$note_line" ] || selftest_fail "a pulled edit under the hook directories was not announced — expected a line containing: post-merge: NOTE hook behavior changed"
+expect_in "$note_line" "the NOTE did not name the global/hooks/ file" "global/hooks/paired.sh"
+expect_in "$note_line" "the NOTE did not name the scripts/git-hooks/ file" "scripts/git-hooks/commit-msg-selftest.sh"
+reject_in "$note_line" "the NOTE named a file outside the two hook directories" "scripts/lint-adrs.sh"
 
 selftest_close \
   "post-merge self-test clean — every gate ran whatever the one before it returned, all three statuses drew their line, the derived rosters reached a dropped-in selftest and a hook with none, and the re-hoist ran last." \

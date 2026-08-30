@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Conventions for this tree: scripts/README.md
 # Prove scripts/skill-usage.sh counts the shapes it claims to count and leaves
 # alone the shapes it claims to ignore, against scripts/lint-fixtures/usage/.
 #

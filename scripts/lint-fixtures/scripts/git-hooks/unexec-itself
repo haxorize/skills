@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Conventions for this tree: scripts/README.md
+# Fixture git hook without its own exec bit; its selftest is executable, so only the hook-mode check must flag it.
+exit 0

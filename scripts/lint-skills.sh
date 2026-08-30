@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
-# Lint skill files against repo conventions encoded in src/write-skill/SKILL.md:
+# Conventions for this tree: scripts/README.md
+# Lint the skill tree against the conventions in src/write-skill/SKILL.md, and
+# the trees beside it — global/rules/, global/hooks/, scripts/ and
+# scripts/git-hooks/, and the root CLAUDE.md — against the rules each cites:
 #   - SKILL.md and references/*.md must be <= 200 lines.
 #   - Frontmatter `description:` must be <= 1024 chars and contain no unquoted
 #     `: ` separator (use em-dashes — GitHub's strict YAML preview chokes on
@@ -98,9 +101,10 @@
 #     references must not carry the phrase.
 #   - Scope: the skill checks walk src/*/SKILL.md (and references beneath);
 #     the global-rules checks below walk global/rules/, the hook-selftest
-#     check global/hooks/, the script-selftest check scripts/ (only that
-#     directory: a skill-private script under .claude/skills/*/scripts/ is
-#     walked by no check here and owes no selftest). The repo-local
+#     check global/hooks/, the script-selftest check scripts/ and
+#     scripts/git-hooks/ (only those two directories: a skill-private script
+#     under .claude/skills/*/scripts/ is walked by no check here and owes no
+#     selftest). The repo-local
 #     skills under .claude/skills/, and DOMAIN.md and README.md, are in pass
 #     2's walk for the slash sweep and the evaluation-ledger consumer sweep
 #     and for nothing else: the hoisting, size, frontmatter, ADR-citation,
@@ -108,7 +112,9 @@
 #     hoist, so the router-coverage and requires checks would demand mentions
 #     that do not belong, and they legitimately cite this repo's paths. Their
 #     size and frontmatter are the author's to keep; a pass here says nothing
-#     about those. CLAUDE.md is in no walk at all.
+#     about those. CLAUDE.md is read by two checks — its byte WARN, and the
+#     reference-link resolution pass 4 points at the root file — and by
+#     nothing else.
 #   - Global rules (ADR-0053): every global/rules/*.md carries a `Depends:`
 #     line naming at least one existing skill under src/ — the admission rule
 #     in global/README.md (only rules a skill depends on). A rule with no
@@ -122,8 +128,8 @@
 #     200-line cap and the ADR-citation ban above also run over global/rules/,
 #     since those files are hoisted into ~/.claude/rules/ the same way skills
 #     are hoisted.
-#   - Single-line description (CLAUDE.md § Linting; write-skill "Writing the
-#     description"): `description:` is a plain scalar on its own line. A block
+#   - Single-line description (write-skill "Frontmatter pitfalls": the
+#     `description:` value sits on its own line): a plain scalar. A block
 #     indicator (`>`, `|`, with any chomping or indentation suffix) is the
 #     whole value a one-line reader sees, and a plain scalar continued on an
 #     indented next line loses its tail — every consumer here reads one line.
@@ -152,18 +158,40 @@
 #     15,000 bytes draws a WARN, never a FAIL — the platform figure it converts
 #     is dated in the block below. Reference files are not measured: they are
 #     read on demand, never re-attached.
-#   - Hook selftest (CLAUDE.md § Linting: "one selftest per hook, which
-#     `lint-skills.sh` enforces"): every global/hooks/*.sh whose header carries
+#   - CLAUDE.md byte WARN (ADR-0076): a CLAUDE.md at the root over 6,000
+#     bytes draws a WARN, never a FAIL — a round bound roughly 2.4 times the
+#     2,471 bytes the 2026-08-30 cut left it at and just over a third of the
+#     16,672 it cut from, so a regrowth is named on every run before it is a
+#     problem. Only the root file is measured; a nested CLAUDE.md is not
+#     walked, and a root with none draws nothing. The same root file also goes
+#     through check_reference_links — pass 2's parser reused, not a second
+#     extractor — because ADR-0076 left CLAUDE.md as triggers and pointers,
+#     and a pointer to a missing file silently loads nothing: a relative .md
+#     link naming no file is a FAIL naming the link and the target, under
+#     pass 2's stated scope and exemptions.
+#   - Hook selftest (global/README.md § Hooks: "Each hook has a `*-selftest.sh`
+#     beside it"): every global/hooks/*.sh whose header carries
 #     an `# Install note:` line — the marker install.sh and post-merge derive
 #     the hook roster from, so all three answer "what is a hook" the same way —
 #     has an executable global/hooks/<name>-selftest.sh beside it. A file with
 #     no marker is a library or a selftest and owes nothing.
 #   - Script selftest (ADR-0068: every selftest is `<script>-selftest.sh`):
 #     every scripts/<name>.sh that is not itself a selftest, a `*-lib.sh`, or
-#     one of the two installers (install.sh, setup-hooks.sh) has an executable
-#     scripts/<name>-selftest.sh beside it, so a gate landing without one is
-#     named here rather than silently ungated. scripts/git-hooks/ is the git
-#     hooks' directory and post-merge derives its roster there.
+#     one of the two installers (install.sh, setup-hooks.sh, by basename) has
+#     an executable scripts/<name>-selftest.sh beside it, so a gate landing
+#     without one is named here rather than silently ungated. Under
+#     scripts/git-hooks/ a file is a git hook when its first line is a shebang
+#     (a README or a sample there is not walked); each git hook carries no
+#     .sh, is held to the same pairing, and must itself be executable, since
+#     git skips a hook without the exec bit silently (ADR-0076); post-merge
+#     derives its roster from both directories.
+#   - Conventions pointer (scripts/README.md is the tree's rule file): every
+#     file those two walks visit — scripts/*.sh, and every git hook and
+#     selftest under scripts/git-hooks/ — carries the line
+#     `# Conventions for this tree: scripts/README.md` as line 2 when line 1
+#     is a shebang, and as line 1 otherwise (a sourced library has no
+#     shebang), so an agent that opens the script instead of CLAUDE.md is
+#     pointed at the rules that bind it.
 #   - Evaluation ledger statuses (ADR-0071; DOMAIN.md's Evaluation-ledger row):
 #     one file defines the legend, the body's stored-status rule defines the
 #     same three, and any other file naming two of the three names all three.
@@ -183,7 +211,8 @@
 #     reword that leaves no legend or no rule site is a FAIL in this repo
 #     rather than a silent stand-down, and each anchor sentence carries a note
 #     in its own file saying it is load-bearing.
-#   - Router coverage (CLAUDE.md "Keep the router honest"): every skill under
+#   - Router coverage (CLAUDE.md § Adding, renaming, or removing a skill:
+#     update both in the same change): every skill under
 #     src/ must appear as a backticked code-span (`name` or `/name`) in
 #     src/which-skill/SKILL.md. Requiring the backtick keeps incidental prose
 #     (the gerund "grilling") from satisfying the check, so the router can't
@@ -248,7 +277,13 @@
 #   Pass 4 — the other trees, each read once:
 #     check_global_rule        Depends: resolves, and each dependant cites back
 #     check_hook_selftest      every hook has an executable selftest
-#     check_script_selftest    every script has an executable selftest
+#     check_script_selftest    every script, and every git hook, has an
+#                              executable selftest, and opens with the
+#                              conventions pointer; a git hook is executable
+#     check_claude_md_bytes    the 6,000-byte CLAUDE.md WARN
+#     check_reference_links    every relative .md link in the root CLAUDE.md
+#                              resolves (pass 2's parser, pointed at the
+#                              root file)
 #   Every FAIL goes through say_fail, so the prefix and the exit status
 #   cannot disagree; a WARN is printed directly and never touches the status.
 #
@@ -266,9 +301,11 @@ usage() {
   cat <<'USAGE'
 Usage: scripts/lint-skills.sh [--help]
 
-Lints src/*/SKILL.md, their references, global/rules/, global/hooks/ (one selftest per
-hook), scripts/ (one selftest per script), and the two routers against the conventions in
-src/write-skill/SKILL.md. Takes no argument but --help.
+Lints src/*/SKILL.md and their references against src/write-skill/SKILL.md, and
+global/rules/, global/hooks/ (one selftest per hook), scripts/ and scripts/git-hooks/
+(one selftest per script or hook, and the conventions pointer), CLAUDE.md's size and
+its relative links, and the two routers against the rules each cites. Takes no
+argument but --help.
 
   LINT_ROOT=<dir>   point the whole sweep at another tree; unset in normal use
                     (scripts/lint-skills-selftest.sh sets it to the fixture roots)
@@ -429,12 +466,32 @@ done
 # platform's and moves with it; what the author owes is ordering — the rules
 # a body cannot afford to lose sit early — or a smaller body. Measured before
 # the description checks so a body with a broken description is still measured.
-check_reattach_bytes() {
-  local f=$1 bytes
-  bytes=$(wc -c < "$f" | tr -d ' ')
-  if [ "$bytes" -gt 15000 ]; then
-    echo "WARN: $f is $bytes bytes (~$((bytes / 3)) tokens at 3 bytes/token) — past the 5,000-token re-attach bound Claude Code keeps per skill after auto-compaction, so its tail is what a re-attach drops; put its hard stops and close-out steps above its long sections, or move detail into references/"
+# warn_bytes <file> <limit> <tail>: the one shape both byte WARNs share — a
+# count, a bound, a WARN that never touches `fail`. A file that cannot be
+# counted is a FAIL, not a silent pass: an empty count would otherwise skip
+# the comparison and read as under the bound.
+warn_bytes() {
+  local f=$1 limit=$2 tail=$3 bytes
+  bytes=$(wc -c < "$f" 2>/dev/null | tr -d ' ')
+  if [ -z "$bytes" ]; then
+    say_fail "$f could not be read for its byte count — the $limit-byte WARN did not run on it"
+    return
   fi
+  if [ "$bytes" -gt "$limit" ]; then
+    echo "WARN: $f is $bytes bytes — $tail"
+  fi
+}
+
+check_reattach_bytes() {
+  warn_bytes "$1" 15000 "past the 5,000-token re-attach bound (at 3 bytes/token) Claude Code keeps per skill after auto-compaction, so its tail is what a re-attach drops; put its hard stops and close-out steps above its long sections, or move detail into references/"
+}
+
+# (see header) CLAUDE.md byte WARN. A WARN, not a FAIL, on the re-attach
+# precedent: the number is a regrowth alarm, not a platform cap, and a commit
+# whose growth is legitimate is not blocked by it — only named. Called once,
+# at the end of pass 4, on the root file when there is one.
+check_claude_md_bytes() {
+  warn_bytes "$1" 6000 "past the 6,000-byte bound ADR-0076 set for the always-loaded file; keep only triggers and contracts here, and move the rest behind a pointer (docs/lineage.md, scripts/README.md, an ADR)"
 }
 
 # Single-line scalar (see header): frontmatter_value reads one line, and so
@@ -594,10 +651,10 @@ check_requires_two_way() {
 check_router_coverage() {
   local name=$1 router="src/which-skill/SKILL.md" readme="README.md"
   if [ "$name" != "which-skill" ] && ! grep -qE "\`/?${name}([^a-z0-9-]|$)" <<<"$router_text"; then
-    say_fail "$router has no backticked mention of skill '$name' — route it or list it as standalone (CLAUDE.md: 'Keep the router honest')"
+    say_fail "$router has no backticked mention of skill '$name' — route it or list it as standalone (CLAUDE.md § Adding, renaming, or removing a skill: update it and README.md's skill map in the same change)"
   fi
   if ! grep -qE "\`/?${name}([^a-z0-9-]|$)" <<<"$readme_text"; then
-    say_fail "$readme has no backticked mention of skill '$name' — list it in the README skill map (CLAUDE.md: 'Keep the router honest')"
+    say_fail "$readme has no backticked mention of skill '$name' — list it in the README skill map (CLAUDE.md § Adding, renaming, or removing a skill: update it and src/which-skill/SKILL.md in the same change)"
   fi
 }
 
@@ -1209,8 +1266,8 @@ for f in global/rules/*.md; do
   check_global_rule "$f"
 done
 
-# Every hook has a selftest (CLAUDE.md § Linting: "one selftest per hook, which
-# `lint-skills.sh` enforces"): a hook is a global/hooks/*.sh whose header
+# Every hook has a selftest (global/README.md § Hooks: "Each hook has a
+# `*-selftest.sh` beside it"): a hook is a global/hooks/*.sh whose header
 # carries `# Install note:` — the marker install.sh and post-merge derive the
 # roster from — and each has an executable global/hooks/<name>-selftest.sh.
 # A fourth hook landing without one is the drift this replaces the
@@ -1238,15 +1295,45 @@ check_hook_selftest() {
   require_selftest "$h" hook "carries an '# Install note:' header, so it is a hook, and has no selftest" "(source global/hooks/selftest-lib.sh; every hook's rules are proven by a selftest that mutates them)"
 }
 
+# Conventions pointer (see header): the line every file under scripts/ and
+# scripts/git-hooks/ opens with, at line 2 after a shebang and line 1 without
+# one. Read with head so a file that cannot be read says so rather than
+# reading as a file without the line.
+conventions_line='# Conventions for this tree: scripts/README.md'
+check_conventions_pointer() {
+  local f=$1 opening l1 l2
+  if ! opening=$(head -n 2 "$f" 2>/dev/null); then
+    say_fail "$f could not be read for its conventions pointer — that check did not run on it"
+    return
+  fi
+  l1=$(printf '%s\n' "$opening" | sed -n 1p)
+  l2=$(printf '%s\n' "$opening" | sed -n 2p)
+  case "$l1" in '#!'*) [ "$l2" = "$conventions_line" ] && return 0 ;; *) [ "$l1" = "$conventions_line" ] && return 0 ;; esac
+  say_fail "$f does not open with '$conventions_line' (line 2 after a shebang, line 1 without one) — add it, so an agent that opens the file instead of CLAUDE.md is pointed at the rules that bind it"
+}
+
 # Every script has a selftest (see header): scripts/<name>.sh that is not a
 # selftest, a library, or an installer has an executable
 # scripts/<name>-selftest.sh. post-merge and sweep-corpus derive their gate
 # rosters from that pairing, so a script landing without one is named here
-# rather than left outside every automated run.
+# rather than left outside every automated run. The same function grades the
+# git hooks — check_hook_selftest is global/hooks/ only — with the remedy a
+# hook can follow: its filename is git's, so `*-lib.sh` is no escape, and it
+# must carry the exec bit itself or git skips it silently.
 check_script_selftest() {
   local sc=$1
-  case "$sc" in *-selftest.sh | *-lib.sh | scripts/install.sh | scripts/setup-hooks.sh) return 0 ;; esac
-  require_selftest "$sc" script "has no selftest" "(source scripts/selftest-lib.sh; every script in scripts/ is graded by a selftest that runs it against a fixture), or name the file *-lib.sh if it is a library"
+  check_conventions_pointer "$sc"
+  case "$sc" in *-selftest.sh | *-lib.sh) return 0 ;; esac
+  case "${sc##*/}" in install.sh | setup-hooks.sh) return 0 ;; esac
+  case "$sc" in
+    scripts/git-hooks/*)
+      [ -x "$sc" ] || say_fail "$sc is not executable — chmod +x it; git runs a hook under core.hooksPath only when it carries the exec bit, and skips it silently otherwise"
+      require_selftest "$sc" "git hook" "has no selftest" "(source scripts/selftest-lib.sh; every git hook under scripts/git-hooks/ is graded by a selftest that runs it against a throwaway repo)"
+      ;;
+    *)
+      require_selftest "$sc" script "has no selftest" "(source scripts/selftest-lib.sh; every scripts/*.sh is graded by a selftest that runs it against a fixture), or name the file *-lib.sh if it is a library"
+      ;;
+  esac
 }
 
 if [ -d global/hooks ]; then
@@ -1258,6 +1345,26 @@ if [ -d scripts ]; then
   for sc in scripts/*.sh; do
     [ -f "$sc" ] && check_script_selftest "$sc"
   done
+fi
+# The git hooks walk: check_script_selftest grades these too (check_hook_selftest
+# is global/hooks/ only). What makes a file here a hook is derived, not listed:
+# its first line is a shebang, the way `# Install note:` marks a PreToolUse
+# hook — so a README, a .gitignore or a *.sample beside the hooks is not held
+# to the pairing, and the next hook needs no roster edit.
+if [ -d scripts/git-hooks ]; then
+  for sc in scripts/git-hooks/*; do
+    [ -f "$sc" ] || continue
+    case "$(head -n 1 "$sc" 2>/dev/null)" in '#!'*) check_script_selftest "$sc" ;; esac
+  done
+fi
+
+if [ -f CLAUDE.md ]; then
+  check_claude_md_bytes CLAUDE.md
+  # ADR-0076 left the root file as triggers and pointers; a pointer to a
+  # missing file silently loads nothing, so the root file gets the same link
+  # check every shipped markdown file gets — pass 2's parser, reused rather
+  # than a second extractor, so the two cannot disagree about scope.
+  check_reference_links CLAUDE.md
 fi
 
 if [ "$fail" -eq 0 ]; then

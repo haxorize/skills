@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Conventions for this tree: scripts/README.md
 # Prove src/wizard/template.sh's library still does what src/wizard/SKILL.md
 # says it does. The template is copied verbatim into every generated wizard,
 # so a helper that breaks here breaks every future wizard and is found by a

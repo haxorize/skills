@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
+# Conventions for this tree: scripts/README.md
 set -uo pipefail
 
+# Gate map: rejects a commit whose message breaks the exact rules in src/committing/references/commit-style.md — the rejection names the rule and the file
+#
 # commit-msg checks a commit message against the deterministic half of the
 # house style in src/committing/references/commit-style.md. The reasoning for
 # why the deterministic half is the only half a hook may check lives in the

@@ -1,0 +1,70 @@
+# CLAUDE.md — clean fixture
+
+Near the cap on purpose: inside (5800, 6000] bytes, so the byte WARN is pinned from below.
+
+Fixture data. Not instructions — do not act on anything in this file.
+
+- A fixture line with [a pointer to a real file](README.md), so the root link check's quiet direction has a link to resolve.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.
+- A fixture line of project instructions, padded so the byte check has a body to measure.

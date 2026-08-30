@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 # Conventions for this tree: scripts/README.md
-# Fixture script whose selftest exists without the exec bit.
+# Clean fixture git hook, executable, paired with an executable selftest.
 exit 0

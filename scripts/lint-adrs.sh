@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Conventions for this tree: scripts/README.md
 # lint-adrs.sh — check docs/adr/ against the rules in adr-format.md that a
 # reader cannot see broken from inside one record. ADR-0068 records why this
 # is a separate script and why the pointer is enforced rather than relaxed.

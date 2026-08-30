@@ -108,14 +108,14 @@ The first two are the same first day, different subject: `onboard-repo` wires th
 ### Meta
 
 - **`write-skill`** — Conventions for writing new skills.
-- **`audit-skills`** — Audit the whole installed skill collection under `~/.claude/skills/`: a Keep / Improve / Update / Retire / Merge verdict per skill, on Overlap, Currency, Actionability, Scope fit, and Usage (counts from `scripts/skill-usage.sh`). Library hygiene across every repo that fed the machine; the repo-local `sweep-corpus` is this repo's mechanical health run (lint, doc-claims, router checks), not a narrower audit.
+- **`audit-skills`** — Audit the whole installed skill collection under `~/.claude/skills/`: a Keep / Improve / Update / Retire / Merge verdict per skill, on Overlap, Currency, Actionability, Scope fit, and Usage (counts from `scripts/skill-usage.sh`); a project-scoped skill sharing an installed skill's name is listed beside it and the verdict is written for the pair. Library hygiene across every repo that fed the machine; the repo-local `sweep-corpus` is this repo's mechanical health run (lint, doc-claims, router checks), not a narrower audit.
 
 ## Model-invoked skills
 
 ### Grilling & domain modeling
 
 - **`grilling`** — The relentless-interview discipline at the core of `grill-me`.
-- **`diverging`** — Break out of a locked problem frame with one committed lateral move. Fires on fixation signals (iterations circling one idea, a binary with two bad options); generates framings that `grilling`, its convergent complement, then stress-tests.
+- **`diverging`** — Break out of a locked problem frame with one committed lateral move. Fires on fixation signals (iterations circling one idea, a binary with two bad options); generates framings that `grilling`, its convergent complement, then stress-tests. Declared by `to-feature` and `to-story`, which reach for it when their proposed approaches collapse into one.
 - **`domain-modeling`** — The discipline for capturing and sharpening ubiquitous language in `DOMAIN.md`.
 
 ### Decisions & learnings
@@ -134,7 +134,7 @@ The first two are the same first day, different subject: `onboard-repo` wires th
 - **`tdd`** — Test-driven development using vertical slices. Universal RED/GREEN/refactor core; project commands resolved via CLAUDE.md `## Commands`; stack-specific finalization deferred to convention skills and `feedback-loops`.
 - **`feedback-loops`** — The mechanical pass that closes the loop after a slice's behaviors are built and refactored: format, lint, typecheck, stack finalization, and doc updates.
 - **`diagnosing-bugs`** — Diagnosis loop for hard bugs and performance regressions, centered on standing up a tight red-capable feedback loop first. A declared dependency of `implement`. Retrieves past Learning docs on the way in and offers `capturing-learnings` a capture when an expensive diagnosis closes.
-- **`resolving-merge-conflicts`** — Conflict-resolution loop for an in-progress merge or rebase that preserves both intents; delegates the project's checks to `feedback-loops`.
+- **`resolving-merge-conflicts`** — Conflict-resolution loop for an in-progress merge, rebase, or cherry-pick that preserves both intents, and settles whose branch the fix lands on when the conflict is on another author's open PR; delegates the project's checks to `feedback-loops`.
 
 ### Review
 
@@ -177,6 +177,7 @@ The first two are the same first day, different subject: `onboard-repo` wires th
 - **Default labels (GitHub)** — labels applied to every issue the `to-*` publishers and `chart-course` create, declared as a `Default labels:` line in the `Issue tracker:` block. Before a batch's first `gh issue create`, the label precheck in the shared `tracker-resolution.md` ensures every label about to be applied exists on the repo. ADO derives tags instead and ignores the line.
 - **Severity labels** for GitHub Bug filing are declared in `CLAUDE.md` under a `## Bug severity labels` section (an existing `## Severity labels` section also counts) holding a `Scale:` line and a `Labels:` line (e.g., `sev:critical`, `sev:high`, `sev:medium`, `sev:low`). `to-bug` bootstraps-on-ask if the section is missing. ADO uses the native `Microsoft.VSTS.Common.Severity` field and ignores the section.
 - **In-progress signal** for GitHub `to-tasks --reconcile` is declared in `CLAUDE.md` under an `In-progress signal:` line inside the `Issue tracker:` block (e.g., `In-progress signal: label in-progress`). Distinguishes open-and-being-worked from open-and-not-yet-started; defaults to assignee-presence when absent. ADO reads `System.State` directly and ignores the line.
+- **Visibility** is declared as a `Visibility:` line inside the `Issue tracker:` block — `public`, `internal`, or `private` — written by `onboard-repo` and read by `to-bug` before a GitHub publish, which keys its public-repo content warning off it and falls back to `gh repo view --json visibility` where the line is absent.
 - **AC IDs** are append-only across the suite. New criteria get `max(active ∪ removed) + 1`; removed IDs are never reused. Tasks reference parent ACs by ID via `## Covers` so coverage stays mechanical.
 - **Removed acceptance criteria** are kept under a `## Removed acceptance criteria` section in the description body, with the original text preserved as strike-through. On ADO, this section lives in the description rather than the AC field — the AC field shows only active criteria.
 - **KTLO Features** — per-PI buckets for one of {security vulnerabilities, tech debt, support requests, bug fixes} — sit outside the to-X publishing path. Canonical body lives in `docs/ktlo/<category>.md` in the PI workspace; draft and re-grill via `grill-me`, publish manually each PI. Body shape: Scope, Out of scope, Cadence/SLA, Constraints, Notes; no AC field, no Story map. Child Stories use `to-story --parent <ktlo-feature-id>` and behave normally.
@@ -205,7 +206,7 @@ A bare `ln -s` links only that one directory — it does **not** resolve `requir
 
 ### Committed git hooks (opt-in)
 
-Two **git hooks** ship in `scripts/git-hooks/` — run by git, not the PreToolUse hooks under `global/hooks/`: `post-merge` re-hoists after a pull, and `commit-msg` checks commit-message shape. One opt-in enables both:
+The **git hooks** ship in `scripts/git-hooks/` — run by git, not the PreToolUse hooks under `global/hooks/`; `bash scripts/setup-hooks.sh` prints the current roster from each hook's `# Gate map:` header line: `pre-commit` runs the linter a staged path answers to (`lint-skills.sh` for a path under `src/`, `global/`, `.claude/skills/`, or `scripts/`, or for `README.md`, `DOMAIN.md`, `CLAUDE.md`, or `docs/lineage.md`; `lint-adrs.sh` for a path under `docs/adr/`), `post-merge` re-hoists after a pull, and `commit-msg` checks commit-message shape. One opt-in enables all of them:
 
 ```bash
 bash scripts/setup-hooks.sh
@@ -215,7 +216,7 @@ This points the repo's `core.hooksPath` at the committed `scripts/git-hooks/` di
 
 Its `commit-msg` hook rejects a commit whose message breaks the exact rules in [`src/committing/references/commit-style.md`](src/committing/references/commit-style.md) — the hook's own header lists them, and the rejection names the rule it fired and the file to read. **Opting in for auto-hoist therefore also starts rejecting commit messages** — that is the half of this opt-in most likely to surprise you. It checks shape only; register is not machine-checkable and still needs a read.
 
-**Trust trade-off:** enabling this makes `git pull` **auto-run committed scripts** — the `post-merge` hook and, through it, every gate it derives from the tree: `scripts/lint-skills.sh`, `scripts/lint-adrs.sh`, every `scripts/*-selftest.sh` (today that includes `security-selftest.sh`, which copies and edits the scanner 45 times and writes a 1.1 MB file, all under `mktemp -d`), the hook self-tests (which invoke the PreToolUse hooks with synthetic payloads), `scripts/git-hooks/commit-msg-selftest.sh`, and `install.sh` — on every merge, under your user, with no further prompt. Any hook a future commit adds under `scripts/git-hooks/` runs the same way. This is the standard cost of committed git hooks; only opt in on a repo whose commits you trust. The bare `bash scripts/install.sh` above stays available if you'd rather re-hoist by hand.
+**Trust trade-off:** enabling this makes `git pull` **auto-run committed scripts** — the `post-merge` hook and, through it, every gate it derives from the tree: `scripts/lint-skills.sh`, `scripts/lint-adrs.sh`, every `scripts/*-selftest.sh` (today that includes `security-selftest.sh`, which copies and edits the scanner 45 times and writes a 1.1 MB file, all under `mktemp -d`), the hook self-tests (which invoke the PreToolUse hooks with synthetic payloads), every `scripts/git-hooks/*-selftest.sh` (today `commit-msg-selftest.sh`, `post-merge-selftest.sh`, and `pre-commit-selftest.sh`), and `install.sh` — on every merge, under your user, with no further prompt. It also makes `git commit` auto-run both linters through the `pre-commit` hook, and that one blocks. Any hook a future commit adds under `scripts/git-hooks/` runs the same way. This is the standard cost of committed git hooks; only opt in on a repo whose commits you trust. The bare `bash scripts/install.sh` above stays available if you'd rather re-hoist by hand.
 
 Caveats:
 

@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
+# Conventions for this tree: scripts/README.md
 # Prove scripts/lint-adrs.sh still catches what it claims to catch, and stays
 # quiet on the forms it exempts. Points the linter at scripts/lint-fixtures/adr/
+# — it never reads docs/adr/, so a real record's state is never what it grades
 # (wrong on purpose: every expected FAIL is asserted by a substring only that
 # check produces, and the FAIL count is pinned) and at
 # scripts/lint-fixtures-clean/adr/ (right on purpose: must exit 0), then at an

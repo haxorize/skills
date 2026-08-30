@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Conventions for this tree: scripts/README.md
 set -euo pipefail
 
 SKILLS_DIR="$(cd "$(dirname "$0")/../src" && pwd)"

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Conventions for this tree: scripts/README.md
 # skill-usage.sh — per skill, how often a human typed it and how often the
 # model loaded it, read from the two files that record each, never recalled.
 #

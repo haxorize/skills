@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 # Conventions for this tree: scripts/README.md
-# Fixture script whose selftest exists without the exec bit.
+# Fixture selftest for unexec-hook, deliberately not executable.
 exit 0
