@@ -18,7 +18,7 @@ Ad-hoc drafting is the right path when the repo has no pipeline, the item target
 
 ## The goal
 
-Reject activity-shaped goals — "make progress on", "keep investigating", "improve", "look into", "work on X". Each must sharpen into an outcome a reader can verify happened; a goal that can't be sharpened marks an item not ready to file — surface the gap as an Ambiguity block and ask, instead of filing.
+Reject activity-shaped goals — "make progress on", "keep investigating", "improve", "look into", "work on X". Each must sharpen into an outcome a reader can verify happened; a goal that can't be sharpened marks an item not ready to file — surface the gap as an Ambiguity block and ask, instead of filing. Reject too a solution stated as the problem — "the problem is we don't have a cache" has already decided what to build; the goal names what the user cannot do today, and the cache is one approach to it, weighed where the item weighs approaches.
 
 A complete goal carries five elements: the outcome, its subject, how it will be verified, what's in scope, and — wherever ambiguity would matter — what's out of scope.
 
@@ -28,9 +28,9 @@ Out of scope comes in two flavors; say which: an adjacent capability that must n
 
 Three kinds of evidence make a criterion checkable: a test, a command, or a concrete manual procedure. A criterion naming none of them isn't acceptance criteria — "works correctly" is the classic; say what correct looks like, and what you would demo. A post-launch outcome metric or business KPI ("adoption doubles in Q3") names none of them either — it is a goal for the goal-bearing section, never a criterion; no implementer can close it.
 
-Each criterion is independently verifiable: one criterion, one check, passable without the others. A criterion that names a command also names which outcome is the failure — the exit code, or the line that must or must not appear — because a command with no stated failing direction settles nothing: the reader runs it and guesses.
+Each criterion is independently verifiable: one criterion, one check, passable without the others. A criterion that names a command also names which outcome is the failure — the exit code, or the line that must or must not appear — because a command with no stated failing direction settles nothing: the reader runs it and guesses. A criterion sits where its evidence lives: a child settles only what its own slice can show, and an outcome only the composed result shows — a regression gate, an end-to-end flow — is the parent's criterion, stated once; a child that claims it carries a check nothing in its slice can settle, and a copy in every child is slower and weaker evidence than the one check that observes the whole.
 
-Every stated limit implies its negative path — a cap implies a defined at-and-over-limit behavior (rejection, clamp, or truncation) and what the user observes when it fires. Every flow with a middle implies its interrupted path — the user abandons it and comes back — and the state the item promises on return is a criterion, "no effect" included; the families of interruption are `product-description`'s interrupt taxonomy, never a list re-spelled here. Derive those criteria; they never volunteer themselves.
+Every stated limit implies its negative path — a cap implies a defined at-and-over-limit behavior (rejection, clamp, or truncation) and what the user observes when it fires. Every flow with a middle implies its interrupted path — the user abandons it and comes back — and the state the item promises on return is a criterion, "no effect" included; the families of interruption are `product-description`'s interrupt taxonomy, never a list re-spelled here. Every surface that renders a collection implies its empty state and its first run — what a list, a dashboard, or a search page shows on day one is a criterion, and the one most often missed; the shapes are `product-description`'s edge cases, never re-spelled here. Derive those criteria; they never volunteer themselves.
 
 When no clean check exists, propose the most honest binary validator you can state rather than leaving a TBD — a placeholder defers the decision to whoever is least equipped to make it.
 
@@ -44,6 +44,8 @@ Done conditions by work type:
 | Performance | Metric, threshold, measurement method, run count, and the correctness criterion the optimisation must not break, stated as its own pass/fail criterion ("under 200 ms" *and* "no result dropped") — all five, because a bare number is met by losing what it measured |
 | Research or spike | The decision the work must enable, and the evidence standard that settles it |
 | Operations | The healthy end state, the observation window, the rollback trigger |
+
+Close the section by reading its criteria once as a set against the goal: if every criterion could pass and the goal still go unmet, the gap names the missing criterion; if two settle the same fact, one goes. The publishers check that children cover the criteria; nothing but this read checks that the criteria cover the goal.
 
 ## What the body may name
 
@@ -70,7 +72,7 @@ The **readiness gate**, applied to a single item or a decomposed suite as a whol
 
 HITL whenever product judgment, credentials, stakeholder negotiation, design review, release authority, or an unapproved one-way door remains in the work — the reason names which.
 
-An AFK item also carries a **stop condition**: the trip-wire that ends unattended grinding — the result, obstacle, or spent effort that means stop and ask instead of pressing on. Where specific mid-work decisions are foreseeable, list them as **Ask-first triggers** — the decisions that halt unattended work for approval the moment they arise (a schema change, a new dependency, a contract choice): the stop condition bounds effort, ask-first triggers bound authority.
+An AFK item also carries a **stop condition**: the trip-wire that ends unattended grinding — the result, obstacle, or spent effort that means stop and ask instead of pressing on. Where specific mid-work decisions are foreseeable, list them as **Ask-first triggers** — the decisions that halt unattended work for approval the moment they arise (a schema change, a new dependency, a contract choice): the stop condition bounds effort, ask-first triggers bound authority. A sub-problem inside the work whose crude answer is fixed in advance, so it cannot consume the item, is a third scoping decision, stated beside these: the stop condition ends a grind after it has started and an ask-first trigger bounds who decides, but only this names the sub-problem before anyone reaches it.
 
 Reversibility is rated on the decision, not the task's difficulty: a genuine one-way door is falsifiable — you can name the migration, the destructive operation, or the broken contract that makes undo expensive — and when you can't, rate it reversible; gating everything "just in case" produces the checkpoint fatigue that gets all gates skipped. Removing the irreversibility (a seam, a versioned contract) lets the item run AFK.
 
@@ -78,7 +80,7 @@ Reversibility is rated on the decision, not the task's difficulty: a genuine one
 
 Size by structure, never hours: one item is one deliverable, independently verifiable, demoable on its own. Where the repo maps a Story to one PR and a Task to one commit, size to that grain.
 
-Too big announces itself as an "and" in the title or criteria that can't be checked independently — split it. Too small to demo alone — merge it upward into its parent rather than filing it.
+Too big announces itself as an "and" in the title, or a bundling verb there — *manage*, *handle*, *maintain*, *support* — that hides one: split it. Criteria that can't be checked independently are the same signal: split. Split by outcome, never by step: a multi-step workflow sliced one step per item looks vertical, since each step touches every layer, and delivers nothing until the last step lands; the first slice runs the whole workflow at its crudest, and later slices add the intermediate steps. Too small to demo alone — merge it upward into its parent rather than filing it.
 
 Watch the **scope-reduction vocabulary** in a draft — "v1", "for now", "hardcoded", "placeholder", "will be wired later". Each either names deferred work that lands explicitly in out-of-scope or a follow-up item, or it quietly under-delivers the decision the item claims to implement. The only resolutions are deliver fully or propose a split; a body can cite its parent decision and still deliver a fraction of it.
 

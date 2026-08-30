@@ -1,6 +1,6 @@
 ---
 name: resolving-merge-conflicts
-description: Conflict-resolution loop for an in-progress git merge, rebase, or cherry-pick. Use when you land in a conflicted merge, rebase, or cherry-pick mid-task, or the user asks to resolve merge conflicts.
+description: Conflict-resolution loop for an in-progress git merge, rebase, or cherry-pick. Use when you land in a conflicted merge, rebase, or cherry-pick mid-task, when a merge to main has left someone else's open PR conflicted, or the user asks to resolve merge conflicts.
 requires: feedback-loops
 ---
 
@@ -10,7 +10,7 @@ Resolve an in-progress merge or rebase **without losing intent**. Always resolve
 
 ## 1. See the current state
 
-Inspect the merge/rebase: `git status`, the list of conflicting files, and the relevant history on both sides (`git log --oneline --left-right <theirs>...<ours>`). Know what's being merged into what, and which way a rebase is replaying commits. Enumerate every conflict with `git diff --name-only --diff-filter=U` — it lists every unmerged path, including the **marker-less** ones: a modify/delete or rename/delete writes no `<<<<<<<` into any file (`git status` shows it as `UD`/`DU`, "deleted by them"), so a grep for markers alone misses it. `git ls-files -u` shows which stages each path has, which tells a modify/delete from a content conflict.
+Inspect the merge/rebase: `git status`, the list of conflicting files, and the relevant history on both sides (`git log --oneline --left-right <theirs>...<ours>`). Know what's being merged into what, which way a rebase is replaying commits, and **whose branch the conflict is on**: another author's open PR stays theirs, so where the conflict came from something we merged, the fix is ours to make on their branch, with their PR and their authorship left as they were. Pushing to a branch we do not own is an outward act, asked first; where the push is refused (a fork without maintainer edits), open the resolution on our own branch and say in their PR which branch carries it — merging ours is what closes theirs; opening it closes nothing. Enumerate every conflict with `git diff --name-only --diff-filter=U` — it lists every unmerged path, including the **marker-less** ones: a modify/delete or rename/delete writes no `<<<<<<<` into any file (`git status` shows it as `UD`/`DU`, "deleted by them"), so a grep for markers alone misses it. `git ls-files -u` shows which stages each path has, which tells a modify/delete from a content conflict.
 
 ## 2. Find the primary sources for each conflict
 

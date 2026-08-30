@@ -2,7 +2,7 @@
 name: to-feature
 description: Synthesize the current conversation into a Feature-level (PRD-shaped) artifact and publish it to the project's tracker — for scope large enough to need multiple stories underneath. For single-feature scope, reach for `to-story` instead. ADO — creates a Feature work item under a parent Epic. GitHub — creates an issue with a feature/PRD template.
 disable-model-invocation: true
-requires: writing-for-humans, work-item-shape
+requires: writing-for-humans, work-item-shape, diverging
 ---
 
 # To Feature
@@ -42,11 +42,11 @@ What areas are touched, what are the major sub-features. Check with the user tha
 
 ### 5. Propose 2-3 approaches with trade-offs
 
-Lead with a recommendation. This is a pre-publication direction check, not interviewing. If the user pushes back, revise the sketch and re-propose; do not interview through it. Skip only when there's genuinely one defensible shape (rare; force yourself to think of two).
+Lead with a recommendation. This is a pre-publication direction check, not interviewing. If the user pushes back, revise the sketch and re-propose; do not interview through it. Skip only when there's genuinely one defensible shape (rare; force yourself to think of two). Distinct means the sketches trade off different things, not wear different dress: when two of the set collapse into one on inspection, the set holds one approach fewer than it claims, and that collapse is the fixation `diverging` breaks — call the Skill tool with `diverging` before re-proposing, and only then.
 
 ### 6. Decompose into Stories
 
-Decompose the chosen approach into Stories. For each Story capture: title, one-paragraph scope, the parent Feature acceptance criteria it covers, and any shared names (route paths, model names, query keys) it touches. Build a dependency graph between Stories. Quiz the user once — walk through the list, gather corrections, and finalize before drafting. Resolve scope disputes before moving on.
+Decompose the chosen approach into Stories. For each Story capture: title, one-paragraph scope, the parent Feature acceptance criteria it covers, and any shared names (route paths, model names, query keys) it touches. Build a dependency graph between Stories. Two Stories that would carry the same benefit are one outcome split by action — re-cut them by outcome before the quiz. Quiz the user once — walk through the list, gather corrections, name any Story the split has exposed as work nobody needs and cut it before it reaches the map (coverage says a Story is mapped, never that it should exist), and finalize before drafting. Resolve scope disputes before moving on.
 
 **Admission test:** a Story earns a map slot only when its scope can be stated precisely *now* (blocked-but-sharp is fine); scope you can only gesture at stays as prose in the Feature body until it sharpens into an emergent Story — never a placeholder.
 

@@ -85,17 +85,61 @@ pause() {
   read -r _ || true
 }
 
-# confirm "question" — y/N gate; returns success on yes.
-confirm() {
-  local reply=""
-  printf '  %s? %s [y/N] ' "$YELLOW" "$1"
+# _prompt "text" — the one prompt line both confirm gates share: the question
+# in colour, the colour closed before the human types, then one line read into
+# $reply (EOF reads as an empty reply, so no answer is a no).
+_prompt() {
+  printf '  %s? %s%s ' "$YELLOW" "$1" "$RESET"
   read -r reply || true
-  [[ "$reply" =~ ^[Yy] ]]
+}
+
+# confirm "question" — y/N gate for a step the wizard can undo; returns
+# success on a y or Y. Anything else — including EOF — prints the abort line
+# and returns 1, which ends a bare call under the library's -e with no
+# summary: call it as `if confirm …; then …; else finish; exit 0; fi`. A
+# second argument is a bug in the wizard, never a token gate — the
+# irreversible gate is confirm_token: it names the call on stderr and
+# returns 2.
+confirm() {
+  if [ "$#" -ne 1 ]; then
+    printf '  %s✗ confirm "%s" was given a token — the irreversible gate is confirm_token%s\n' "$RED" "${1:-}" "$RESET" >&2
+    return 2
+  fi
+  local reply=""
+  _prompt "$1 [y/N]"
+  [[ "$reply" =~ ^[Yy] ]] && return 0
+  say "Aborted — that step was not run."
+  return 1
+}
+
+# confirm_token "question" TOKEN — gate for the one act the wizard cannot
+# undo (a cutover, a purge, a deletion): the human types TOKEN back —
+# surrounding whitespace is ignored, case is not, and a `\r` from a CRLF
+# paste is a no — and a `y` does not pass, because a wizard that has asked
+# [y/N] at every stage has taught the hand to type y. An empty or missing
+# TOKEN is a bug in the wizard (a value no stage captured), never a request
+# for the y/N gate: it names the call on stderr and returns 2. On no it
+# prints the abort line and returns 1, which ends a bare call under the
+# library's -e with no summary — so call it as
+# `if confirm_token …; then …; else finish; exit 0; fi`.
+confirm_token() {
+  if [ "$#" -lt 2 ] || [[ -z "$2" ]]; then
+    printf '  %s✗ confirm_token "%s" was given an empty token — no stage captured it%s\n' "$RED" "${1:-}" "$RESET" >&2
+    return 2
+  fi
+  local reply=""
+  _prompt "$1 — type $2 to proceed:"
+  [[ "$reply" == "$2" ]] && return 0
+  say "Aborted — that step was not run."
+  return 1
 }
 
 # preview CMD [ARGS...] — run a preview (a dry-run, a plan, a diff) and show
 # its output indented, immediately before the confirm that approves the real
-# thing. Tolerates a non-zero exit: `kubectl diff` and `terraform plan
+# thing. A preview is a snapshot the apply re-derives: after any change to its
+# inputs — an edit, a pull, another stage's write — run it again before
+# confirming, because the apply never reuses the preview's output and a stale
+# one approves something else. Tolerates a non-zero exit: `kubectl diff` and `terraform plan
 # -detailed-exitcode` exit non-zero precisely when there is something to show,
 # and the library's -e would otherwise end the wizard there. The exit code is
 # printed, never swallowed, so a preview that actually failed reads as one.

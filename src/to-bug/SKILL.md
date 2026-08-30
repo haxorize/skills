@@ -76,13 +76,13 @@ Then run the **Cold-reader pass** from the `work-item-shape` discipline: the col
 
 ### 7. Public-repo warning (GitHub only)
 
-Before publishing on GitHub, check repo visibility:
+Before publishing on GitHub, read repo visibility from the host:
 
 ```bash
 gh repo view --json visibility --jq '.visibility'
 ```
 
-If the repo is `PUBLIC`, scan the rendered body and repro steps for terms suggesting non-public content. Match case-insensitive against this keyword list:
+Only where `gh` cannot answer (not authenticated to this host) fall back to the `Visibility:` line in `CLAUDE.md`'s `Issue tracker:` block, where `onboard-repo` wrote one — the line was written once and can go stale; the host cannot. `PUBLIC` from `gh` (`public` on the line) runs the scan below; `INTERNAL` and `PRIVATE` (`internal`, `private`) do not, and the check ends here. Scan the rendered body and repro steps for terms suggesting non-public content. Match case-insensitive against this keyword list:
 
 - `customer`, `production`, `prod-`, `internal`, `corp`
 - `credential`, `password`, `secret`, `api[_-]?key`

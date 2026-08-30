@@ -2,7 +2,7 @@
 
 Not the built-in `/security-review`, which reviews a branch's diff: this is the authoring check for a *skill's text* — instructions an agent will execute with tools, a shell, and whatever arguments or files reach it. Step 5 of `write-skill` says which skills have a surface; a format doc, template, or router has none.
 
-Where the skills repo's `scripts/security.sh --path <dir>` is at hand, run it first — from another project as `"$(dirname "$(dirname "$(readlink ~/.claude/skills/write-skill)")")"/scripts/security.sh`, since the skills are symlinked in and a bare `scripts/` resolves only from that repo's root; `--help` names the rule classes it owns. The checks below are what a scanner cannot see.
+Where the skills repo's `scripts/security.sh --path <dir>` is at hand, run it first — from another project as `"$(dirname "$(dirname "$(readlink ~/.claude/skills/write-skill)")")"/scripts/security.sh --path <dir>`, since the skills are symlinked in and a bare `scripts/` resolves only from that repo's root; `--help` names the rule classes it owns. The checks below are what a scanner cannot see.
 
 Each check is a **FAIL / WARN / PASS** rubric. Report a FAIL as a Blocker and a WARN as a Follow-up.
 

@@ -33,7 +33,7 @@ Every document carries all eight sections in this order, a foundation included. 
 # The <feature>
 
 ## Summary
-One paragraph of what it is, then where it lives, how it is reached, what shows it is active, and whether it is available in restricted states.
+One paragraph of what it is, then where it lives, every way it is reached — a toolbar button, a keyboard shortcut, a CLI verb, each named — what shows it is active, and whether it is available in restricted states.
 
 ## The simple case
 The common path in prose, no variants. Where the user lands afterwards.
@@ -65,7 +65,7 @@ The interrupt taxonomy's five fixed rows, labelled in the first column, then two
 One bold-led paragraph per cross-cutting concern, fixed order. "No interaction" still gets its line.
 
 ## Edge cases
-Limits, boundaries, nesting, repeated invocation, empty states, and started one way but finished another.
+Limits, boundaries, nesting, repeated invocation, empty states, first run, and started one way but finished another.
 
 ## Open questions and verification
 What was read from code but not confirmed by hand, and what looks like a defect, stated as one.

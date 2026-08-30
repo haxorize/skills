@@ -21,7 +21,11 @@
 # cannot carry a comment (a manifest, a binary, bytecode, UTF-16) are graded
 # from NO_COMMENT_TABLE below instead, and every finding in such a file must
 # match a row. clean-skill/ is right on purpose: the benign neighbour of each
-# rule, sitting near its threshold, and any finding there is a red. Every
+# rule, sitting near its threshold, and any finding there is a red.
+# review-only-skill/ holds one MEDIUM instance and nothing HIGH, so it grades
+# REVIEW and never RISK: the exit-code rows grade --fail-on's review threshold
+# apart from its risk one against it, and the annotation grader never walks
+# it. Every
 # rule id but the two runtime ones must have at least one graded instance on
 # the injected side — a clean-side `ok:` proves a neighbour is quiet, never
 # that the rule fires. The expectation count is pinned exactly, so a fixture
@@ -33,8 +37,8 @@
 #
 # Then the mutation table: copies of the scanner with one pattern narrowed (an
 # alternative dropped) or widened (a boundary loosened), each of which must
-# leave the grading red on the instance the row names — the CLAUDE.md §
-# Linting rule that a check lands with a mutation that reds its selftest in
+# leave the grading red on the instance the row names — the scripts/README.md
+# rule that a check lands with a mutation that reds its selftest in
 # both directions. Before this table, cutting _DROP_HOSTS from ~20 host
 # patterns to one left this script green. A mutation whose edit matches
 # nothing prints a SKIP and the run ends PARTIAL, so a reworded pattern
@@ -56,7 +60,9 @@
 # (a file over the size cap) and scan-error (a file the scanner cannot open)
 # — on the same throwaway copy, the second skipped, and the run PARTIAL,
 # where chmod 000 does not take; every member of the scanner's CONFUSABLE
-# table having a fixture instance; --json parsing as JSON; and the exit codes.
+# table having a fixture instance; --json parsing as JSON; and the exit codes,
+# --fail-on's 4 at both thresholds included, with its two mutation rows (the
+# review threshold read as risk; the flag parsed and ignored) in the table.
 #
 # Last, every shipped skill under src/ must PASS. That row grades the corpus,
 # not the scanner: a red there is a skill body that acquired a flagged phrase,
@@ -383,10 +389,28 @@ mutation "dlexec-no-tee"        's/\|\\\|\\s\*tee\\b//g'                        
 mutation "ignore-no-disregard"  's/ignore\|disregard\|forget/ignore|forget/'                     "narrowing: inj-ignore loses disregard" "inj-ignore did not fire"
 mutation "hidden-no-zwj"        's/\|\[\\x20-\\x7e\]\[\\u200c\\u200d\]\+\[\\x20-\\x7e\]//'         "narrowing: uni-hidden loses the joiner-between-ASCII form" "uni-hidden did not fire"
 mutation "firsthit-only"        's/for m in rule\.rx\.finditer\(text\):/for m in [rule.rx.search(text)] if rule.rx.search(text) else []:/' "narrowing: report_each reports the first hit only, the pre-2026-08-29 shape" "did not fire"
+# mutation_exit <name> <perl expression> <what the edit does> <threshold> <dir> <rc>:
+# the --fail-on rows' mutations. The graded expectation is an exit code, not
+# the fixture grading, so the row runs the mutant with the flag and reds when
+# it still exits <rc> — the code the real scanner earns in the exit-code rows
+# below — meaning no row down there would catch the edit.
+mutation_exit() {
+  local mut="$mut_parent/$1.sh"
+  cp scripts/security.sh "$mut" || { selftest_skip "could not copy the scanner for mutation '$1' — that row was not exercised."; return 0; }
+  perl -0pi -e "$2 or die" "$mut" 2>/dev/null || {
+    selftest_skip "the edit for mutation '$1' matched nothing in scripts/security.sh — the pattern was reworded, so that row was not exercised. Fix the expression rather than reading the row as still graded."
+    return 0
+  }
+  bash "$mut" --fail-on "$4" --path "$5" >/dev/null 2>&1
+  local rc=$?
+  [ "$rc" -ne "$6" ] || selftest_fail "mutation '$1' ($3) left --fail-on $4 over $5 exiting $6, the real scanner's code — no exit-code row catches it"
+}
+mutation_exit "failon-review-as-risk" 's/FAIL_ON == "review" and \(risk or review\)/FAIL_ON == "review" and risk/' "narrowing: --fail-on review read as risk, so a REVIEW verdict slips the gate" review "$fx/review-only-skill" 4
+mutation_exit "failon-ignored"        's/EXIT_CODE = 4 if/EXIT_CODE = 0 if/' "narrowing: the flag parsed and ignored, so every completed scan exits 0" risk "$fx/injected-skill" 4
 # The row count, pinned beside the rule count: a rule that lands without its
 # two rows is a deliberate edit here, not an omission.
-nmut=$(grep -c '^mutation "' "$0")
-[ "$nmut" -eq 45 ] || selftest_fail "counted $nmut mutation rows in $0, not the pinned 45 — a row was added (raise the pin) or lost"
+nmut=$(grep -cE '^mutation(_exit)? "' "$0")
+[ "$nmut" -eq 47 ] || selftest_fail "counted $nmut mutation rows in $0, not the pinned 47 — a row was added (raise the pin) or lost"
 fi
 
 if tmp="$(selftest_tmpdir)"; then
@@ -454,6 +478,21 @@ help_out=$(bash scripts/security.sh --help 2>&1); expect_rc "--help" 0 $?
 expect_in "$help_out" "--help printed no Usage: line" "Usage:"
 expect_in "$help_out" "--help lost the tail of its header (the last header line is missing)" "scripts/security-selftest.sh runs it against scripts/lint-fixtures/security/."
 reject_in "$help_out" "--help ran a scan" "Scanned:"
+
+# --fail-on: ADR-0075's deferred gate. Without the flag the verdicts never
+# move the exit code — the injected fixture's plain scan above already earns
+# its 0 — and with the flag a verdict at or past the threshold exits 4, so
+# `security.sh --fail-on risk --path X && install` can refuse. The summary
+# line still prints on a 4.
+[ -d "$fx/review-only-skill" ] || selftest_fail "fixture $fx/review-only-skill is missing — the --fail-on review threshold has nothing to grade"
+fo=$(bash scripts/security.sh --fail-on risk --path "$fx/injected-skill" 2>/dev/null); expect_rc "--fail-on risk over the RISK fixture" 4 $?
+expect_in "$fo" "--fail-on's 4 lost the summary line" "Scanned: 1 | RISK: 1 | REVIEW: 0 | PASS: 0"
+fo=$(bash scripts/security.sh --fail-on review --path "$fx/review-only-skill" 2>/dev/null); expect_rc "--fail-on review over the REVIEW-only fixture" 4 $?
+expect_in "$fo" "the review-only fixture did not grade REVIEW" "[REVIEW] review-only-skill"
+bash scripts/security.sh --fail-on risk --path "$fx/review-only-skill" >/dev/null 2>&1; expect_rc "--fail-on risk over the REVIEW-only fixture (REVIEW sits under the risk threshold)" 0 $?
+bash scripts/security.sh --fail-on review --path "$fx/clean-skill" >/dev/null 2>&1; expect_rc "--fail-on review over the PASS fixture" 0 $?
+bash scripts/security.sh --fail-on bogus --path "$fx/clean-skill" >/dev/null 2>&1; expect_rc "--fail-on with a value that is neither risk nor review" 3 $?
+bash scripts/security.sh --fail-on >/dev/null 2>&1; expect_rc "--fail-on with no value" 3 $?
 
 # The shipped corpus. Counted the way --each enumerates (three globs, so a
 # dot-named child counts too), so the two cannot disagree on what a directory

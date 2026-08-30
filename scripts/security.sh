@@ -109,15 +109,23 @@
 #   security.sh --path <dir> [--path <dir> ...]   # one verdict per directory
 #   security.sh --json ...                         # machine-readable
 #   security.sh --each <parent>                    # every child directory of <parent>
+#   security.sh --fail-on risk|review ...          # non-zero exit at or past the threshold
 # Example:
 #   bash scripts/security.sh --path ~/code/lib/some-skill
 #
 # stdout carries the verdicts and findings alone; the advisory line and
 # every error go to stderr.
-# Exit codes: 0 scanned (whatever the verdicts) · 1 the scanner crashed (no
-# findings were produced; the traceback is on stderr) · 2 nothing scanned (a
-# --path that is not a directory) · 3 usage error (no target, an unknown
-# option, python3 missing, a path holding a tab or newline).
+# Exit codes: 0 scanned (whatever the verdicts, unless --fail-on turned them
+# into the status) · 1 the scanner crashed (no findings were produced; the
+# traceback is on stderr) · 2 nothing scanned (a --path that is not a
+# directory) · 3 usage error (no target, an unknown option, a --fail-on value
+# other than risk or review, python3 missing, a path holding a tab or newline)
+# · 4 the --fail-on threshold was met: with risk, some scanned target graded
+# RISK; with review, some target graded REVIEW or RISK. The scan still
+# completed and the summary and findings still printed — the flag only turns
+# the verdict into a status a caller can gate on
+# (`security.sh --fail-on risk --path X && install`); without it the verdicts
+# never move the exit code.
 # Needs bash 3.2+ and python3; no network, nothing installed.
 # scripts/security-selftest.sh runs it against scripts/lint-fixtures/security/.
 
@@ -128,6 +136,7 @@ set -euo pipefail
 usage() { sed -n '2,/^$/p' "$0" | sed '$d' | sed 's/^# \{0,1\}//'; }
 
 JSON_OUTPUT=false
+FAIL_ON=""
 TARGETS_TSV=$(mktemp -t security-scan.XXXXXX)
 trap 'rm -f "$TARGETS_TSV"' EXIT
 
@@ -153,6 +162,13 @@ while [ $# -gt 0 ]; do
       # Three globs, so a dot-named child (bash 3.2 has no dotglob) is scanned too.
       for d in "$2"/* "$2"/.[!.]* "$2"/..?*; do [ -d "$d" ] && add_target "$d"; done
       shift 2 ;;
+    --fail-on)
+      [ $# -ge 2 ] || { echo "ERROR: --fail-on needs a threshold: risk or review — run with --help" >&2; exit 3; }
+      case "$2" in
+        risk|review) FAIL_ON="$2" ;;
+        *) echo "ERROR: --fail-on takes risk or review, not: $2 — run with --help for the flags" >&2; exit 3 ;;
+      esac
+      shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) echo "ERROR: unknown option: $1 — run with --help for the flags" >&2; exit 3 ;;
   esac
@@ -164,7 +180,7 @@ if [ ! -s "$TARGETS_TSV" ]; then
 fi
 command -v python3 >/dev/null 2>&1 || { echo "ERROR: python3 required — install it; the scanner is a python program driven from bash" >&2; exit 3; }
 
-export TARGETS_TSV JSON_OUTPUT
+export TARGETS_TSV JSON_OUTPUT FAIL_ON
 
 python3 <<'PYEOF'
 import base64
@@ -177,6 +193,7 @@ import unicodedata
 from collections import namedtuple
 
 JSON_OUTPUT = os.environ.get("JSON_OUTPUT", "false") == "true"
+FAIL_ON = os.environ.get("FAIL_ON", "")
 TARGETS = os.environ.get("TARGETS_TSV", "")
 
 MD_EXT = {".md", ".markdown", ".txt"}
@@ -579,10 +596,14 @@ results.sort(key=lambda s: ({"RISK": 0, "REVIEW": 1, "PASS": 2}[s["verdict"]], s
 risk = [s for s in results if s["verdict"] == "RISK"]
 review = [s for s in results if s["verdict"] == "REVIEW"]
 
+# --fail-on's gate: the one place the verdicts reach the exit code. Both output
+# paths exit through EXIT_CODE, so the summary and findings always print first.
+EXIT_CODE = 4 if (FAIL_ON == "risk" and risk) or (FAIL_ON == "review" and (risk or review)) else 0
+
 if JSON_OUTPUT:
     print(json.dumps({"scanned": len(results), "risk": len(risk), "review": len(review),
                       "passed": len(results) - len(risk) - len(review), "skills": results}, indent=2))
-    sys.exit(0)
+    sys.exit(EXIT_CODE)
 
 print("Findings are heuristics: read the file before trusting the directory; nothing is blocked or deleted.", file=sys.stderr)
 print(f"Scanned: {len(results)} | RISK: {len(risk)} | REVIEW: {len(review)} | PASS: {len(results)-len(risk)-len(review)}")
@@ -609,4 +630,5 @@ for s in risk + review:
     print()
 if not risk and not review:
     print("No suspicious patterns found.")
+sys.exit(EXIT_CODE)
 PYEOF

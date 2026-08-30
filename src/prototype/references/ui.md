@@ -49,7 +49,7 @@ Draft each variant. Hold each one to:
 
 - The page's purpose and the data it has access to.
 - The project's component library / styling system (TailwindCSS, shadcn, MUI, plain CSS, whatever).
-- An exported component name that names the variant's **direction**, not its slot in the list — `QuietSettings`, `EditorialSettings`, `DenseSettings`, never `VariantA`. The URL key stays a letter so the switcher and the shareable link stay simple, but the label the user reads pairs the two (`B — Editorial`): a person holds "the editorial one" in their head for a week and cannot hold "option B" for an hour.
+- An exported component name that names the variant's **direction**, not its slot in the list — `BroadsheetSettings`, `WristbandSettings`, `LedgerSettings`, never `VariantA` — and the direction itself is a named referent, not a stack of adjectives: a broadsheet front page, a hospital wristband, a bank statement, a terminal, each carrying its own constraints, where "modern, clean, trustworthy" evokes nothing specific and every variant drifts to the centre of what those words mean. The URL key stays a letter so the switcher and the shareable link stay simple, but the label the user reads pairs the two (`B — Wristband`): a person holds "the wristband one" in their head for a week and cannot hold "option B" for an hour.
 
 Variants must be **structurally different** — different layout, different information hierarchy, different primary affordance, not just different colours. Three slightly-tweaked card grids isn't a UI prototype, it's wallpaper. Redrawing a too-similar draft takes explicit negative guidance — "do not use a card grid" — because the second attempt drifts back to the first shape without it. When the divergence axis is hierarchy or density, draft the variants first in greyscale, so hue cannot stand in for hierarchy, and redraw the finalists in the project's real styling before step 5 — the user picks among real renderings, never among sketches.
 
@@ -62,9 +62,9 @@ Create a single switcher component on the route:
 const variant = searchParams.get('variant') ?? 'A';
 return (
   <>
-    {variant === 'A' && <QuietSettings {...data} />}
-    {variant === 'B' && <EditorialSettings {...data} />}
-    {variant === 'C' && <DenseSettings {...data} />}
+    {variant === 'A' && <BroadsheetSettings {...data} />}
+    {variant === 'B' && <WristbandSettings {...data} />}
+    {variant === 'C' && <LedgerSettings {...data} />}
     <PrototypeSwitcher variants={['A','B','C']} current={variant} />
   </>
 );
@@ -79,7 +79,7 @@ For sub-shape B (new page): the throwaway route created above (per the project's
 A small fixed-position bar at the bottom-centre of the screen with three pieces:
 
 - **Left arrow** — cycles to the previous variant (wraps around).
-- **Variant label** — shows the current variant key and its direction name: `B — Editorial`.
+- **Variant label** — shows the current variant key and its direction name: `B — Wristband`.
 - **Right arrow** — cycles forward (wraps around).
 
 Behaviour:

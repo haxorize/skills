@@ -2,7 +2,7 @@
 name: to-story
 description: Synthesize the current conversation into a Story-level (single-feature spec) artifact and publish it to the project's tracker — most workflows start here. For scope that needs multiple stories beneath it, reach for `to-feature` instead. ADO — creates a User Story under a parent Feature. GitHub — creates an issue with a story-shaped template.
 disable-model-invocation: true
-requires: writing-for-humans, work-item-shape
+requires: writing-for-humans, work-item-shape, diverging
 ---
 
 # To Story
@@ -44,7 +44,7 @@ Modules to build or modify. Look for opportunities to extract deep modules. Chec
 
 ### 5. Propose 2-3 approaches with trade-offs
 
-Lead with a recommendation. Present it once; if the user pushes back, revise and re-present once. Do not loop — exhaustive trade-off exploration belongs in `grill-me`. Skip only when there's genuinely one defensible shape (rare; force yourself to think of two).
+Lead with a recommendation. Present it once; if the user pushes back, revise and re-present once. Do not loop — exhaustive trade-off exploration belongs in `grill-me`. Skip only when there's genuinely one defensible shape (rare; force yourself to think of two). The second approach has to earn its place: one that differs from the first only in dress, and collapses into it on inspection, leaves you with one — that collapse is the fixation `diverging` breaks, so call the Skill tool with `diverging` before re-proposing, and not before.
 
 ### 6. Draft the story
 
@@ -71,7 +71,7 @@ Before showing the user, check:
 - On ADO: the **two-field split** holds (step 6) — acceptance bullets are their own artifact
 - `## Layers touched` populated for each layer (`none` is a valid value; missing layers are not)
 - **Naming drift** vs. the parent's story map (where `Hierarchy: required`) — `work-item-shape`'s rule, surfaced before publish
-- User-story line matches step 6 classification (Connextra for user-facing, absent otherwise)
+- User-story line matches step 6 classification (Connextra for user-facing, absent otherwise); its "so that" carries a motivation the "I want" does not restate
 - Documentation obligations, for stories that alter architecture or domain terms: ADR to write or amend, architecture-doc sections that go stale, glossary entries — each pinned as its own AC so a reviewer can't merge without them
 
 Then run the **Cold-reader pass** from the `work-item-shape` discipline: the cold reader gets only the drafted body and answers "what would you build?".

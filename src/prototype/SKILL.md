@@ -30,6 +30,8 @@ If the question is genuinely ambiguous and the user isn't reachable, default to 
 
 ## When done
 
+Before any branch hands its page over, self-check the render — the check `improve-design` § *Self-check the render before presenting* runs on its own report — because a silently mis-rendered page spends the user's turn, not yours.
+
 Two things come out of a finished prototype: the **answer** (the verdict plus the question it settled) and the **prototype itself** — the runnable evidence the answer came from. Capture both.
 
 For the prototype: with no tests and no maintenance story it doesn't belong on the main branch, but that's not a reason to delete it. Commit it to a throwaway branch (`prototype/<name>`), push, and leave a context pointer to the branch wherever the question came from — the work item that prompted it, or the handoff answer. Absorbing a validated reducer or UI direction into the real module keeps the *decision*; the branch keeps the *evidence*, one click away for anyone who wants to re-run it.

@@ -40,6 +40,8 @@ The search is a judgment call; when unsure, prefer a new record — the expensiv
 <1-3 sentences: what was the context, what did we decide, and why. Mention the rejected alternatives if their rejection wasn't obvious.>
 ```
 
+Where the decision fixes a value a check enforces — a cap, a count, a threshold, a vocabulary — the body names the check and where it lives (the script and function, the lint rule, the CI job), never the value alone, so the change that moves the value finds the record it amends; a record that states only the value leaves the check as the authority and itself as a comment on it.
+
 ## Optional sections
 
 Only when they add real value, not for completeness:

@@ -24,7 +24,7 @@ It does not build, refactor, or review. Arrive here with the work already green 
 
 ### 2. Propose the commit split
 
-Commits land in **lineage order — rationale before implementation**, so a reviewer meets the *why* before the *what*. The project states its own order in `CLAUDE.md` where it has one (a decision record before the code it shapes; a schema before its consumers). One Task = one commit is the common case, not the ceiling — a change touching a decision record, a skill, and a glossary is three commits in that order.
+Commits land in **lineage order — rationale before implementation**, so a reviewer meets the *why* before the *what*. The project states its own order in `CLAUDE.md` where it has one (a decision record before the code it shapes; a schema before its consumers). Where the record quotes its own implementation — a count, a command's output, a behaviour the same change produces — the pair is one commit: a record false at the commit that carries it serves nobody, and a claim carrying its evidence outranks the reading order. One Task = one commit is the common case, not the ceiling — a change touching a decision record, a skill, and a glossary is three commits in that order.
 
 Two more principles shape the split:
 
