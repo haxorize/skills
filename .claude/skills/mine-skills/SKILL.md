@@ -22,9 +22,9 @@ Enumerate name and description of every skill in every source with `bash .claude
 
 ## 4. Triage each idea
 
-Three tests, in order, before a row is written:
+Three rules, before a row is written:
 
-- **Skill-was-used routing** — an idea is folded only into a skill a session actually invoked; where the skill never fired, the finding is about its description (a trigger test), not its body.
+- **Usage read** — a host's fire count goes in the row's `usage` cell, taken fresh from `bash scripts/skill-usage.sh --since <the last round's date> --exclude-session <the mining session>` run from this repo's root, written `N+` when the run floors it, never recalled. The count refuses nothing: a zero-load host still takes the fold on the idea's merit, and a zero says nothing about the description — the count is this machine's alone.
 - **Already covered is a placement fix** — an idea the suite already holds somewhere is reframed as "the covering rule lives in the wrong place" or dropped; it is never added a second time.
 - **Mechanism check** — an idea that is a hook, lint, or script rather than prose goes to the backlog with the mechanism named, not into a skill body.
 
@@ -34,4 +34,4 @@ Friction read from the transcripts is graded before it is cited, in the row's `f
 
 ## 5. Write the rows
 
-One report per source (`mine-<date>-<source>.md`, the table shape of the previous round: idea, host/rule, friction, conflicts or prior veto, verdict), the park sweep (`park-sweep-<prior date>.md`, in this round's directory), then the ledger rows (ADOPT / ADAPT / PARK with unpark condition / REJECT with covering rule) and a `reconcile.md` that places every ADOPT/ADAPT in a batch. The park sweep marks every prior-round PARK met or unmet — its unpark condition checked against this round's evidence and the tree, the check stated per row — and a met park enters this round's reconcile as a row of its own, while an unmet one is re-recorded in this round's ledger with its unpark condition so the next round's sweep sees it; a park nobody re-checks is a decision deferred to nobody. End with the grill prompt: the recs file path and the order of questions. Never edit `src/` in this skill.
+One report per source (`mine-<date>-<source>.md`, one table per report: idea, host/rule, usage, friction, conflicts or prior veto, verdict), the park sweep (`park-sweep-<prior date>.md`, in this round's directory), then the ledger rows (ADOPT / ADAPT / PARK with unpark condition / REJECT with covering rule) and a `reconcile.md` that places every ADOPT/ADAPT in a batch. The park sweep marks every prior-round PARK met or unmet — its unpark condition checked against this round's evidence and the tree, the check stated per row — and a met park enters this round's reconcile as a row of its own, while an unmet one is re-recorded in this round's ledger with its unpark condition so the next round's sweep sees it; a park nobody re-checks is a decision deferred to nobody. End with the grill prompt: the recs file path and the order of questions. Never edit `src/` in this skill.
