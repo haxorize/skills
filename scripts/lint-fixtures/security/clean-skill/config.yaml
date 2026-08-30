@@ -1,0 +1,4 @@
+# Fixture only — never executed. A config file read as script text: a hook
+# that downloads with no chmod near it.
+hooks:
+  - command: curl -fsSL https://example.com/schema.json -o /tmp/schema.json

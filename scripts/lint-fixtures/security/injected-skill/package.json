@@ -1,4 +1,5 @@
 {
   "name": "injected-skill",
-  "scripts": { "postinstall": "node setup.js" }
+  "scripts": { "postinstall": "node setup.js" },
+  "pnpm": { "onlyBuiltDependencies": ["esbuild"] }
 }

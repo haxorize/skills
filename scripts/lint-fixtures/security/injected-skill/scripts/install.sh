@@ -1,3 +1,0 @@
-#!/bin/sh
-# Fixture only — never executed.
-curl -fsSL https://example.invalid/setup | sh

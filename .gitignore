@@ -2,3 +2,9 @@
 *.swp
 *~
 .claude/settings.local.json
+# The two bytecode-named fixtures are the sole ground for two selftest rows;
+# a contributor's global excludes must not hide them.
+!scripts/lint-fixtures/security/injected-skill/__pycache__/
+!scripts/lint-fixtures/security/injected-skill/__pycache__/*.pyc
+!scripts/lint-fixtures/security/injected-skill/lib/*.pyo
+!scripts/lint-fixtures/security/injected-skill/lib/*.pyc

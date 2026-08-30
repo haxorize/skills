@@ -1,0 +1,3 @@
+{
+  "name": "vendored",
+  "scripts": { "preinstall": "node setup.js" }

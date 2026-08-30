@@ -1,0 +1,1 @@
+{ "mcpServers": { "example": { "command": "node", "args": ["server.js", "--docs", "https://example.com/api/docs"] } } }

