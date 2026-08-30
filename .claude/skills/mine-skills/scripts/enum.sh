@@ -8,13 +8,14 @@ CMD_PRUNE=( "${SKILL_PRUNE[@]}" -o -name references -o -name reference -o -name 
 desc_of() { # print description from frontmatter, else first heading, else first nonblank body line; CRLF-safe, UTF-8-safe
   local f="$1" d
   d=$(tr -d '\r' < "$f" | awk 'NR==1&&$0!="---"{exit} NR>1&&$0=="---"{exit} NR>1{print}' | awk '
-    /^description:[[:space:]]*[>|]?[[:space:]]*$/ {m=1; next}
+    /^description:[[:space:]]*([>|][^[:space:]#]*)?[[:space:]]*(#.*)?$/ {m=1; next}
     /^description:/ {sub(/^description:[[:space:]]*/,""); print; exit}
     m && /^[[:space:]]+/ {sub(/^[[:space:]]+/,""); printf "%s ", $0; next}
+    m && /^[[:space:]]*$/ {next}
     m {exit}')
   if [ -z "$d" ]; then d=$(tr -d '\r' < "$f" | grep -m1 -E '^#' | sed 's/^#* *//'); fi
   if [ -z "$d" ]; then d=$(tr -d '\r' < "$f" | awk 'NR==1&&$0=="---"{fm=1; next} fm&&$0=="---"{fm=0; next} fm{next} /^[[:space:]]*$/{next} {print; exit}'); fi
-  printf '%s' "$d" | sed -e 's/\\"/"/g' -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'$/\1/" | tr '\t' ' ' | cut -c1-300 | iconv -c -f UTF-8 -t UTF-8
+  printf '%s' "$d" | sed -e 's/[[:space:]]*$//' -e 's/\\"/"/g' -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'$/\1/" | tr '\t' ' ' | cut -c1-300 | iconv -c -f UTF-8 -t UTF-8
 }
 for src in "$LIB"/*/; do
   s=$(basename "$src"); [[ "$s" =~ $SKIP ]] && continue
