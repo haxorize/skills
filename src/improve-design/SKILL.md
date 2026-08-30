@@ -52,7 +52,7 @@ Done when you've swept **every top-level module/area**, not just the first frict
 
 ### 3. Vet, then consolidate and present candidates
 
-**Vet first** per [references/finding-discipline.md](references/finding-discipline.md), which covers the over-report, the drop classes, the vet's context-asymmetry default, and the **bidirectional** ADR/`DOMAIN.md` read. When a candidate warrants *reopening* an ADR, mark it clearly (e.g., _"contradicts a recorded ADR — but worth reopening because…"_) and only when the friction justifies it.
+**Vet first** per [references/finding-discipline.md](references/finding-discipline.md), which covers the over-report, the drop classes, the advisory, the vet's context-asymmetry default, and the **bidirectional** ADR/`DOMAIN.md` read. When a candidate warrants *reopening* an ADR, mark it clearly (e.g., _"contradicts a recorded ADR — but worth reopening because…"_) and only when the friction justifies it.
 
 Group surviving findings into coherent candidates — don't present overlapping or sub-issues separately. **Cross-reference against existing work items found in step 1.** If a candidate overlaps with an existing work item, say so explicitly — propose updating that one rather than filing a new one.
 
@@ -67,7 +67,7 @@ Each candidate, **ordered by leverage** (see the reference), carries:
 
 Write each candidate self-contained — a reader who hasn't seen the codebase should understand it from the report alone. Don't propose interfaces yet — that comes after the user picks a candidate.
 
-Close the list with what was **vetted and not proposed**: one line each for the frictions you looked at and dropped, naming the drop class from the reference that killed each one (a noise shape that dissolved on a close read, by-design, imported rigor, owned elsewhere). Without that section the report reads as a wishlist rather than a survey, and the next run re-proposes what this one already dismissed.
+Close the list with what was **vetted and not proposed**: one line each for the frictions you looked at and dropped, naming the drop class from the reference that killed each one (a noise shape that dissolved on a close read, by-design, imported rigor, owned elsewhere) — and one line each for the advisories, the candidates that are true and break nothing if left alone. Without that section the report reads as a wishlist rather than a survey, and the next run re-proposes what this one already dismissed.
 
 **Present via the HTML report.** Render the candidates as a self-contained HTML file per [references/html-report.md](references/html-report.md) — full per-candidate detail plus the before/after deepening visuals. Write it to the OS temp dir (resolve `$TMPDIR`, falling back to `/tmp`, or `%TEMP%` on Windows) as `design-review-<timestamp>.html` so each run is fresh and nothing lands in the repo; open it (`open` on macOS, `xdg-open` on Linux, `start` on Windows) and tell the user the absolute path. The report is **frozen at pick-time** — don't regenerate it as the design evolves later. **Zero surviving candidates**: skip the report and say so inline. **One or more**: write the report.
 

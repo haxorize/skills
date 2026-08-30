@@ -8,7 +8,7 @@ argument-hint: "[path to a review report — default: the newest for this repo]"
 
 # Address Findings
 
-One pass over a review report: every finding gets a disposition, nothing is deferred silently, and the pass ends with a ledger rather than another review. The judgment per finding — verify the claim, route by what it indicts, push back with reasons, when to stop — is the `receiving-review` discipline's; this skill owns the pass and the table. Call the Skill tool with `receiving-review` now: if you don't see a `Launching skill: receiving-review` line, stop and call it again.
+One pass over a review report: every finding gets a disposition, nothing is deferred silently, and the pass ends with a ledger rather than another review. An advisory — the ID-less item `review-changes` lists under a lens — is read, not dispositioned: it is outside the `F<n>` count by construction, and the author acts on it or not. The judgment per finding — verify the claim, route by what it indicts, push back with reasons, when to stop — is the `receiving-review` discipline's; this skill owns the pass and the table. Call the Skill tool with `receiving-review` now: if you don't see a `Launching skill: receiving-review` line, stop and call it again.
 
 ## 1. Resolve the report
 

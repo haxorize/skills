@@ -26,7 +26,7 @@ Three rules, before a row is written:
 
 - **Usage read** — a host's fire count goes in the row's `usage` cell, taken fresh from `bash scripts/skill-usage.sh --since <the last round's date> --exclude-session <the mining session>` run from this repo's root, written `N+` when the run floors it, never recalled. The count refuses nothing: a zero-load host still takes the fold on the idea's merit, and a zero says nothing about the description — the count is this machine's alone.
 - **Already covered is a placement fix** — an idea the suite already holds somewhere is reframed as "the covering rule lives in the wrong place" or dropped; it is never added a second time.
-- **Mechanism check** — an idea that is a hook, lint, or script rather than prose goes to the backlog with the mechanism named, not into a skill body.
+- **Mechanism check** — an idea that is a hook, lint, or script rather than prose goes to the ledger as a PARK backlog row with the mechanism named, not into a skill body. The row names its control before the mechanism is built, in two halves: the count `global/README.md`'s `Why not a hook or lint:` key defines, which would show the *prose* failing; and an estimate, marked as one, of what the mechanism could *cost* — a saving bought by blinding the model to something it needed (a compressed output whose answer is gone, a gate that refuses the whole document) is a loss, not a win.
 
 Then the **determinism hunt**: a judgment call the agent made every time across the round's transcripts is a rule to stop needing — a lint, a hook, a type — and is written up as that, not as prose.
 

@@ -1,5 +1,7 @@
 # A `global/` layer of rules that fire with no skill loaded
 
+> **Amended by [ADR-0075](0075-transcript-sourced-mining-round.md):** the admission rule's "states why a hook or lint cannot do its job" is decided by a count over a stated window of the artifacts the rule governs — the count-based control on `global/README.md`'s key — and § Why rules and not hooks reads narrower: a hook can see most of the surfaces, at a precision that makes it useless.
+
 Two rules failed in the measured window while existing as text: "no em dashes in outbound prose" (a memory entry) and "commits go through `/ship`" (the ship skill's premise). Both failed the same way. A skill's rule binds only while the skill is loaded, and a memory entry binds only while it is recalled; the failures happened in turns where neither held. The work machine, where most of them happened, cannot pull this repo's memory file at all. The fixes the round adopted for the trust cluster, the evidence rule, the recommend-and-proceed bins, the no-unasked-commits rule, and large-write chunking, all share this property: they govern chat output and ad-hoc turns, which is exactly where no skill is in force.
 
 ## Decision

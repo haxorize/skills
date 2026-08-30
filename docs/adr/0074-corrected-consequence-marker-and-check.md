@@ -14,10 +14,14 @@ The decision is the user's, taken on an escalation out of the 2026-08-29 batch-1
 
 ## Consequences
 
-- Two bullets carry the marker — `grep -rn "— corrected: see Amendments" docs/adr/` returns `0072:24` and `0007:25`, beside this record's own mentions of the marker's text. A correcting amendment now owes a third, and the two that exist are the precedent it copies.
+- Two bullets carry the marker — `grep -rn "— corrected: see Amendments" docs/adr/` returns `0072:24` and `0007:25`, beside this record's own mentions of the marker's text. A correcting amendment now owes a third, and the two that exist are the precedent it copies. — corrected: see Amendments 2026-08-30
 - The check grades the pointer's presence and its date, never whether the correction is right or whether an uncorrected bullet should have been marked. A record whose Consequences went stale and whose author noticed nothing still passes.
 - The marker's scope is `## Consequences`, deliberately: body and `## Deferred` prose a later amendment overtakes stays unmarked and is corrected by the amendment log alone — [ADR-0065](0065-product-description-model-invoked-not-onboard-me-phase-0.md)'s improvised "(superseded — see Amendments)" notes are the ancestor this scope declines to standardise. The accepted cost is a reader caught mid-body by a sentence the log has overtaken.
 - `check_xref_target` landed in the same commit and takes no record of its own. Grading that a `](NNNN-*.md)` link resolves to a file enforces a rule nobody disputes, and ADR-0068 owns the linter's existence and scope. It is named here so a reader who finds the two checks landing together, and a record behind only `check_corrected_consequence`, knows the second omission was deliberate.
 - The convention lives in three byte-identical `adr-format.md` copies under `src/adr/`, `src/grill-me/` and `src/backfill-adrs/`, registered in `sibling_groups`. Changing the wording moves all three or fails `check_sibling_identity`.
 
 Revisit when: an amendment corrects only part of a Consequences bullet, so one trailing marker cannot say which half is superseded — the case the single-marker form was not designed to carry.
+
+## Amendments
+
+- **2026-08-30 — the revisit case arrived, and the marker takes a tail.** [ADR-0075](0075-transcript-sourced-mining-round.md)'s Consequences bullet on `evidence.md`'s bullet count was corrected in one half (the count) and reaffirmed in the other (the review's per-bullet read), and its marker reads `— corrected: see Amendments 2026-08-30 (batch 2, then the fix pass): 19 bullets …` — the date, then in parentheses which entry of a many-entry date, then what is superseded. That tail is the form for a partial correction, and for a date carrying several amendments; `check_corrected_consequence` reads the date alone and grades nothing after it, which is what lets the tail exist without a linter change. The count above went stale the same day: `grep -rn '— corrected: see Amendments' docs/adr/` now finds the marker on four bullets outside this record — `0007:25`, `0072:24`, `0075:64` and `0075:67` — and on this record's own first Consequences bullet, which this entry corrects.

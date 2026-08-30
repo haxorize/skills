@@ -57,7 +57,7 @@ skill-name/
 
 When the same correction recurs in the same shape across sessions, the rule is the suspect, not the wielder: find where its argument goes wrong for that case and write the exception into the rule there, rather than restating the rule louder.
 
-Scripts are **black boxes**: they exist to be *run*, not read — don't ingest a large helper into context unless running it first proved a custom variant necessary. The signal to bundle one: repeated runs of the skill independently writing the same helper.
+Scripts are **black boxes**: they exist to be *run*, not read — don't ingest a large helper into context unless running it first proved a custom variant necessary. The signal to bundle one: repeated runs of the skill independently writing the same helper. A body that tells the agent to run a script living in this repo rather than in the skill's own `scripts/` (`scripts/security.sh`) states how a session in another project reaches it: the skills are symlinked into `~/.claude/skills/`, so `readlink ~/.claude/skills/<name>` names the skill's directory inside the owning repo (`…/skills/src/<name>` — the repo root is two levels up), and the invocation is written from that root — a bare `scripts/…` resolves only from this repo's root.
 
 ## Skills that keep state across sessions
 
@@ -106,7 +106,7 @@ The description is the skill's top-level **context pointer** — its wording dec
 - **Reference files**: ≤200 lines each. Split by topic, not arbitrarily.
 - **The caps measure loaded context, not file bytes** — lint's line count is the proxy. Extracting prose into a reference the body then tells the agent to always read shrinks the file without shrinking what loads — that games the cap, it doesn't satisfy it. A pointer the body marks as required is followed at load, before the first step runs, so a disclosed always-read reference costs what the inline text cost plus the pointer, and only a reference some branches never open shrinks what loads. And a cap is never raised because content is approaching it — past the cap, cut or restructure.
 - **Over the cap: relocate verbatim, then edit.** Move the over-cap section — one some branches never reach, per the on-demand test above — into a reference byte-for-byte first, check that every pre-split heading lands exactly once across body and fragments, and only then edit in place — a cut-and-rewrite in one motion leaves nothing to diff the rewrite against.
-- **Description**: ≤1024 chars, and no angle brackets (`<` or `>`) — the platform chokes on them, so replace placeholder text like `<topic>` before shipping.
+- **Description**: ≤1024 chars, and no angle brackets (`<` or `>`) — the platform chokes on them, so replace placeholder text like `<topic>` before shipping. When the cap binds, routing surface is never traded for anything else. The cut comes from the non-trigger half first: the synonyms *Writing the description* already bans, then the what-it-is preamble shortened to a clause (that section asks for it, not for its length); at zero headroom, with no preamble left, from each branch's own wording — a shorter phrase for the same branch. A distinct trigger branch is the last thing cut, and a `Not for…` tail is routing, not padding.
 - **Name**: ≤64 chars.
 - **One line per paragraph/bullet** — soft-wrap, no hard newlines mid-paragraph (let the editor wrap). The cap is line-based, so a "line" should be a unit of content, not an artifact of wrapping; hard-wrapping inflates the count and renders identically. Code fences, tables, and YAML frontmatter keep their own line breaks.
 
@@ -133,4 +133,5 @@ Frontmatter parses as strict YAML. The `description:` value sits on its own line
 - [ ] No generic best-practices the model already knows (no-op check)
 - [ ] Encodes project-specific decisions, not textbook knowledge
 - [ ] Concrete examples from the actual codebase
-- [ ] Any lint rule added with the skill states its fix in the failure message — a gate that withholds the remedy is a maintainer round-trip — and a false positive gets treated as a rule bug, not a nuisance
+- [ ] A script the body runs from this repo rather than the skill's own `scripts/` is invoked from the `readlink` path, never bare; a description at its cap was cut from the non-trigger half first
+- [ ] Any lint rule added with the skill states its fix in the failure message, computed when the check runs so it is still right after the tree moves (a gate that withholds the remedy is a maintainer round-trip); anchors an exemption to shape (inside a function named `terminateNow` *and* basename `cli-exit.cts`), never to a path and line that rot when code moves; and treats a false positive as a rule bug, not a nuisance

@@ -7,16 +7,16 @@ A skill's rule binds only while the skill is loaded. The rules in `rules/` gover
 **`global/` holds only rules a skill depends on.** Each `rules/*.md` file carries two lines near its top, and lint checks the first:
 
 - `Depends:` — the skills in `src/` that depend on this rule and cite it instead of restating it, in the forms `scripts/lint-skills.sh`'s header names; lint checks both that each name resolves and that the named skill carries the citation. A rule with no depending skill leaves the directory.
-- `Why not a hook or lint:` — what the rule checks that no mechanism can see. A rule a hook *could* enforce belongs in `hooks/`, not here.
+- `Why not a hook or lint:` — what the rule checks that no mechanism can see. A rule a hook *could* enforce belongs in `hooks/`, not here. The line is decided by a count, never by a judgment that prose "should hold": over the artifacts the rule governs — the commits, writes, questions, or drafts of a stated window of at least 30 days — how many a mechanism would have fired on and how many of those were the failure, stated on the line with the window and the corpus, so a rule held by prose alone is caught dying by the history it was supposed to shape, since each artifact looks normal on its own. This is the count-based control, and it decides one rung: whether a rule stays prose *here*, over history. `src/writing-for-agents/references/predictability.md`'s control run — a micro-test showing the prose missing a failure before the rung above prose is built — decides whether a *skill's* prose rule binds at all; different evidence for different rungs, and a rule reaching `global/` has both behind it.
 
 Without this gate the directory becomes a second CLAUDE.md, and every rule here is paid for on every turn the user spends anywhere.
 
 The five rules (each file's `Depends:` line is the one list of its dependants):
 
-- [`evidence.md`](rules/evidence.md) — evidence in the same message as the claim, `UNVERIFIED:` for anything not re-checked, counts re-measured at write time.
+- [`evidence.md`](rules/evidence.md) — evidence in the same message as the claim, `UNVERIFIED:` for anything not re-checked, counts re-measured at write time, a `Measured-tree:` line on a generated report, a deferral written into a durable record.
 - [`recommend-and-proceed.md`](rules/recommend-and-proceed.md) — three bins for a question: fact, judgment, preference or outward act.
 - [`no-unasked-commits.md`](rules/no-unasked-commits.md) — no commit, push, tracker write, message, or loop without an ask or a `Landing:` pre-authorisation.
-- [`large-write-chunking.md`](rules/large-write-chunking.md) — per-section writes with a resume pointer; a truncated artifact is discarded, never shown.
+- [`large-write-chunking.md`](rules/large-write-chunking.md) — per-section writes with a resume pointer; another run's marker stops the write; a truncated artifact is discarded, never shown.
 - [`outbound-dash-sweep.md`](rules/outbound-dash-sweep.md) — a message drafted as the user ends on one grep for dashes and tool residue; a hit means the draft is not done.
 
 ## Hooks
