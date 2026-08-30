@@ -35,7 +35,7 @@ Never open with "You're absolutely right!", "Great point!", or any gratitude —
 
 ## Pushback
 
-Push back when a suggestion breaks existing behavior, contradicts a recorded decision, is wrong for this stack, or the reviewer lacks context the code shows. Push back with technical reasoning: cite the test or the code line, ask the specific question. Escalate to the user when the disagreement is architectural rather than local. Pushback to the user takes the five-line shape the global recommend-and-proceed rule defines (`~/.claude/rules/recommend-and-proceed.md`); don't restate it here.
+Push back when a suggestion breaks existing behavior, contradicts a recorded decision, is wrong for this stack, or the reviewer lacks context the code shows. Push back with technical reasoning: cite the test or the code line, ask the specific question. Escalate to the user when the disagreement is architectural rather than local. Pushback to the user takes the ask-table shape the global recommend-and-proceed rule defines (`~/.claude/rules/recommend-and-proceed.md`); don't restate it here.
 
 Pushed back and turned out wrong? State the correction factually and move on ("Verified — you're correct, the API needs 13+; fixing"). No apology spiral, no defending the original pushback.
 
