@@ -33,18 +33,22 @@ skipped=0
 selftest_fail() { echo "SELFTEST FAIL: $1"; fail=1; }
 selftest_skip() { echo "SELFTEST SKIP: $1"; skipped=1; }
 
+# The haystack reaches grep as a here-string, never through a pipe: under
+# `pipefail`, `grep -q` exiting at its first match sends SIGPIPE to the writer
+# once the haystack outgrows the pipe buffer (~64 KB), and a matching
+# pipeline returns 141 — every expectation would fail, naming the wrong cause.
 expect_in() {
-  if ! printf '%s\n' "$1" | grep -qF -- "$3"; then
+  if ! grep -qF -- "$3" <<< "$1"; then
     selftest_fail "$2 — expected a line containing: $3"
   fi
 }
 reject_in() {
-  if printf '%s\n' "$1" | grep -qF -- "$3"; then
+  if grep -qF -- "$3" <<< "$1"; then
     selftest_fail "$2 — found a line containing: $3"
   fi
 }
 expect_row() {
-  if ! printf '%s\n' "$1" | grep -qxF -- "$3"; then
+  if ! grep -qxF -- "$3" <<< "$1"; then
     selftest_fail "$2 — expected the row: $3"
   fi
 }
