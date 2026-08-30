@@ -98,7 +98,9 @@
 #     references must not carry the phrase.
 #   - Scope: the skill checks walk src/*/SKILL.md (and references beneath);
 #     the global-rules checks below walk global/rules/, the hook-selftest
-#     check global/hooks/, the script-selftest check scripts/. The repo-local
+#     check global/hooks/, the script-selftest check scripts/ (only that
+#     directory: a skill-private script under .claude/skills/*/scripts/ is
+#     walked by no check here and owes no selftest). The repo-local
 #     skills under .claude/skills/, and DOMAIN.md and README.md, are in pass
 #     2's walk for the slash sweep and the evaluation-ledger consumer sweep
 #     and for nothing else: the hoisting, size, frontmatter, ADR-citation,
