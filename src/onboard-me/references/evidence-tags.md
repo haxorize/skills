@@ -2,7 +2,7 @@
 
 Every claim this session records carries exactly one of these. They are the difference between a document a successor can act on and one they have to re-verify, and the whole method rests on keeping what was read apart from what was guessed apart from what a person said.
 
-This file is byte-identical across `onboard-me`, `offboard-me`, and `rebuild-contract`, so a tag means the same thing in a KT map, a handover register, and a rebuild contract's trail. Each skill's body names what it does with a tag in its own artifact; nothing here is skill-specific.
+This file is byte-identical across `onboard-me`, `offboard-engineer`, and `rebuild-contract`, so a tag means the same thing in a KT map, an offboarding register, and a rebuild contract's trail. Each skill's body names what it does with a tag in its own artifact; nothing here is skill-specific.
 
 - **[fact]** — verified against the source and cited: `path/to/file.ts:42`, a commit hash, a test name, a config value, a migration. **No citation, no fact.** And never transcribe a secret to make one: a key, token, password, or connection string is recorded as its kind and its location, never its value, and a live one found in a repo is a finding to raise with the human.
 - **[inference]** — a deduction, with the evidence it rests on named. Most claims start life here. An inference that is never confirmed stays an inference; promoting one silently is the failure every rule above exists to prevent.

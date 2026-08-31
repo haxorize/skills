@@ -71,7 +71,7 @@ Branch on the detected type. Each branch loads the artifact, its parent context,
 - **Parent Feature** (if linked): title and Problem / Goals. Bugs may be parentless — skip silently.
 - **`## Layers touched`** from the Bug body. Drives ADR match.
 
-**Comments (all types).** Published bodies deliberately omit design specifics, so when no ADR records an interface sketch or a rejected alternative, a comment on the ticket is often its only durable home (`improve-design` files its sketch as a comment when the user declines an ADR; humans leave them too). A cold start that skips comments loads the behavioral spec but misses the concrete design record it's meant to implement against.
+**Comments (all types).** Published bodies deliberately omit design specifics, so when no ADR records an interface sketch or a rejected alternative, a comment on the ticket is often its only durable home (`review-architecture` files its sketch as a comment when the user declines an ADR; humans leave them too). A cold start that skips comments loads the behavioral spec but misses the concrete design record it's meant to implement against.
 
 - **GitHub:** comments arrived with the step 2 fetch (`comments` field). No extra call.
 - **ADO:** comments need their own call, since `az boards work-item show` never returns them at any `--expand` level: `az devops invoke --area wit --resource comments --route-parameters project="{Project}" workItemId={id} --api-version 7.1-preview` (comment text is HTML; if the org rejects the bare version, append the preview revision the error names, and follow `continuationToken` paging if present). If the call still errors, report comments as unavailable and continue — never fail the load over them.

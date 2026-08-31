@@ -33,8 +33,8 @@ The instruction-file lens in this repo also runs a **pruning test** against the 
 Landing:
 - Branch policy: trunk
 - PR required: no
-- Push pre-authorised: yes
-- Ticket close pre-authorised: no (no tracker)
+- Push pre-authorized: yes
+- Ticket close pre-authorized: no (no tracker)
 - Review required: yes
 - Defect policy: fix, don't file
 

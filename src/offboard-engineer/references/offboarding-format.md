@@ -1,6 +1,6 @@
-# Writing `handover.md`
+# Writing `offboarding.md`
 
-Read this at `stop`, before the handover's first line. Build it from `00-risk-register.md` and `01-capture.md`, never from memory. It is long, so it lands section by section under the global large-write-chunking rule (`~/.claude/rules/large-write-chunking.md`) — the spine below is the section order, and a section that came back cut is rewritten whole rather than appended to.
+Read this at `stop`, before the record's first line. Build it from `00-risk-register.md` and `01-capture.md`, never from memory. It is long, so it lands section by section under the global large-write-chunking rule (`~/.claude/rules/large-write-chunking.md`) — the spine below is the section order, and a section that came back cut is rewritten whole rather than appended to.
 
 ## 1. The inversion that governs everything here
 
@@ -10,7 +10,7 @@ A document that explains a system puts its unknowns near the end, because its po
 
 Thin coverage is **normal, not a failure**: this skill runs against a deadline that does not renew, and reaching `stop` with open items is the expected ending. Do not refuse to synthesize because the register is not empty; state the coverage plainly at the top and carry on. Report it as five numbers taken from the register, one per section — **answered · deferred · unrecoverable · open · conflicts** — the most honest summary of the session that exists. The last two are the ones every other handover omits, and they are why this one can be trusted.
 
-One floor. Where **no human answers were captured at all** — a scan-only run, or the already-left mode — what you have is a question list, not a handover, and its title and opening line say so. A register of unanswered questions formatted as a handover is believed by someone who was not in the room.
+One floor. Where **no human answers were captured at all** — a scan-only run, or the already-left mode — what you have is a question list, not an offboarding record, and its title and opening line say so. A register of unanswered questions formatted as a record is believed by someone who was not in the room.
 
 ## 3. The confidence filter
 
@@ -25,7 +25,7 @@ One floor. Where **no human answers were captured at all** — a scan-only run, 
 Fixed. Sections 1 and 2 go first even when they are short — especially when they are short, since a two-line "gone for good" section is a two-line warning that would otherwise cost someone a week. Section 6's failed-experiment list is the cheapest thing in the document to write and the most expensive to rediscover; it is never trimmed for length.
 
 ```markdown
-# Handover — <system or area> · <departing name>
+# Offboarding record — <system or area> · <departing name>
 Coverage: N answered · N deferred · N unrecoverable · N open · N conflicts · session <date>, commit <hash>. Citations are line numbers at that commit.
 
 1. Gone for good                            ← every [unknown]: what nobody, the author included, could explain, and who was asked

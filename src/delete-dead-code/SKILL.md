@@ -9,7 +9,7 @@ requires: feedback-loops
 
 Dead code is code nothing reaches: an unused export, a file no import names, a dependency no source pulls in, a branch no input takes. This is the whole-repo sweep that removes it, run deliberately, when the user asks for it.
 
-The boundary is what makes it a distinct skill. `implement` **parks** pre-existing dead code and removes only what its own slice orphaned. `improve-design` is **read-only** — it reports friction, it never deletes. `/simplify` works the **changed** code in a diff, not the whole tree. None of them removes the dead code that was already there before this session. That gap is this skill's whole job.
+The boundary is what makes it a distinct skill. `implement` **parks** pre-existing dead code and removes only what its own slice orphaned. `review-architecture` is **read-only** — it reports friction, it never deletes. `/simplify` works the **changed** code in a diff, not the whole tree. None of them removes the dead code that was already there before this session. That gap is this skill's whole job.
 
 ## When not to run
 

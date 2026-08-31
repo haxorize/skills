@@ -30,7 +30,7 @@ If the question is genuinely ambiguous and the user isn't reachable, default to 
 
 ## When done
 
-Before any branch hands its page over, self-check the render — the check `improve-design` § *Self-check the render before presenting* runs on its own report — because a silently mis-rendered page spends the user's turn, not yours.
+Before any branch hands its page over, self-check the render — the check `review-architecture` § *Self-check the render before presenting* runs on its own report — because a silently mis-rendered page spends the user's turn, not yours.
 
 Two things come out of a finished prototype: the **answer** (the verdict plus the question it settled) and the **prototype itself** — the runnable evidence the answer came from. Capture both.
 

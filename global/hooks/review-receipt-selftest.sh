@@ -23,7 +23,7 @@ export TZ=UTC                  # `touch -t` is local time; the commit dates belo
 export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null
 export GIT_AUTHOR_NAME=t GIT_AUTHOR_EMAIL=t@t GIT_COMMITTER_NAME=t GIT_COMMITTER_EMAIL=t@t
 
-GATED_LINES='# repo\n\n## Landing\n\nLanding:\n- Branch policy: trunk\n- Push pre-authorised: yes\n- Review required: yes\n'
+GATED_LINES='# repo\n\n## Landing\n\nLanding:\n- Branch policy: trunk\n- Push pre-authorized: yes\n- Review required: yes\n'
 # mkrepo <name> <CLAUDE.md printf-format>: a clone with its own bare remote, upstream set, one
 # unpushed commit dated 2026-01-01T12:00Z (epoch 1767268800) so receipts can be placed before,
 # at, or after it.

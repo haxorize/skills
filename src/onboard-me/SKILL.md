@@ -48,7 +48,7 @@ An existing description is evidence like any other file, and evidence of what so
 
 ## Tag every claim
 
-This is what makes the session worth trusting. Keep what you verified separate from what you are guessing: every claim in the map carries exactly one of **[fact]**, **[inference]**, **[unknown]**, **[human]**, **[conflict]**. Read [references/evidence-tags.md](references/evidence-tags.md) for all five — it is the one definition, shared byte-identical with `offboard-me` and `rebuild-contract`, and it carries the never-transcribe-a-secret rule this map needs most, since the map lands outside the repo and outside its `.gitignore`.
+This is what makes the session worth trusting. Keep what you verified separate from what you are guessing: every claim in the map carries exactly one of **[fact]**, **[inference]**, **[unknown]**, **[human]**, **[conflict]**. Read [references/evidence-tags.md](references/evidence-tags.md) for all five — it is the one definition, shared byte-identical with `offboard-engineer` and `rebuild-contract`, and it carries the never-transcribe-a-secret rule this map needs most, since the map lands outside the repo and outside its `.gitignore`.
 
 The **[unknown]**s are this map's dark part and the reason the next step is obvious; naming them is the work, not a failure. A **[conflict]** — the engineer's account against the code — is recorded with both sides rather than resolved, and is worth more than either side alone.
 

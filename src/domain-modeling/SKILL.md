@@ -17,6 +17,8 @@ This is the *active* discipline — challenging terms, inventing edge-case scena
 - **Update `DOMAIN.md` inline (don't batch).** When a term is named or a definition shifts, write to `DOMAIN.md` right then — including `Relationships` the moment a cardinality or boundary becomes clear. When the shift invalidates something the entry already says, **replace** the invalidated text — never leave the obsolete statement standing beside its correction. `DOMAIN.md` is a glossary and nothing else: keep it free of implementation detail, spec, or scratch notes. Definition prose follows the human-facing register — call the Skill tool with `writing-for-humans` at the first write if it isn't already live.
 - **Offer ADRs sparingly.** Only when the decision passes the **ADR gate** in `adr`; recording is that standalone skill's job.
 
+This is the bare discipline. Two orchestrators drive it: `/sweep-domain` runs the deliberate whole-repo sweep when the vocabulary has drifted, and `/grill-me` captures terminology inline as a grill runs — both are user-invoked, so suggest them rather than loading them.
+
 ## DOMAIN.md
 
 Use the format in [references/domain-format.md](references/domain-format.md) — definition style, table grouping, the first-class `Relationships` section, the example dialogue, and `Flagged ambiguities` all live there. Lazily create `DOMAIN.md` at the repo root if missing — only once there is a term to write.

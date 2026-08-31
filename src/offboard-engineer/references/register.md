@@ -19,16 +19,16 @@ Ordered by how fast the knowledge decays and how badly its loss hurts, never by 
 ## Where the record lives
 
 ```
-docs/handover/<departing-slug>-<yyyy-mm-dd>/
+docs/offboarding/<departing-slug>-<yyyy-mm-dd>/
 ├── 00-risk-register.md   ← the live register: every item and its state, updated every turn
 ├── 01-capture.md         ← the Q&A by area, tagged, hedges intact
-└── handover.md           ← the successor document, written only at `stop`
+└── offboarding.md        ← the successor document, written only at `stop`
 ```
 
 A repo outlives any one departure, so each capture is namespaced by the departing engineer's name, lowercased with spaces to hyphens — a slug you derive, never the argument as typed — and the date the session started; a second departure next year does not overwrite the first. There is no index file: the directory is the list. **Before creating the folder, say that it will hold named contacts, the locations of access, and exactly where production is fragile, and wait** — a team may want it gitignored or elsewhere, and where the human names another directory, write there instead. **Stamp every file** one line under its heading with the commit (`git rev-parse --short HEAD`) and the date, noting that citations are line numbers at that commit; with no `.git`, stamp the date alone, say so, and say that the scan is leaning on code-shape signals with no history behind them.
 
 **`00-risk-register.md` is the source of truth**, in five sections in this order — **Unrecoverable** (`[unknown]`, who was asked, a suggested next step), **Conflicts** (both sides, unresolved), **Open** (rank, category, `file:line`, why it is a risk), **Deferred** (why it was parked, by whom), **Closed** (an anchor into `01-capture.md`) — with the first two on top because they are the two things a successor must see on day one and the two things every other handover leaves out. The section an item sits in **is** its state, and the three the ladder calls closed are **Closed** (*answered*), **Deferred** (*deferred*) and **Unrecoverable** (*unrecoverable*); **Open** and **Conflicts** are the two that are not.
 
-The register opens with a marker naming the rung in progress and the budget remaining, so a resumed session knows where the walk stopped from the disk alone; there is no separate progress file, because every item carries its own state. At `stop` the marker is **rewritten, never removed** — to a closed line naming the date, the coverage numbers, and whether anything is still out with `/ask-for-me`. A later session reopens **that same folder** by the departing engineer's name rather than starting a second one: answers arriving after `stop` are captured, the register updated, and `handover.md` rewritten from it and re-stamped, with the new date added to its closing line.
+The register opens with a marker naming the rung in progress and the budget remaining, so a resumed session knows where the walk stopped from the disk alone; there is no separate progress file, because every item carries its own state. At `stop` the marker is **rewritten, never removed** — to a closed line naming the date, the coverage numbers, and whether anything is still out with `/ask-for-me`. A later session reopens **that same folder** by the departing engineer's name rather than starting a second one: answers arriving after `stop` are captured, the register updated, and `offboarding.md` rewritten from it and re-stamped, with the new date added to its closing line.
 
 **Resuming:** read the register; where the stamp's commit differs from `git rev-parse --short HEAD`, say so in the first turn and re-verify the citations you build on before asking about them — and where the departing engineer is no longer reachable to confirm a drifted reading, flag that in the register rather than trusting the old citation.

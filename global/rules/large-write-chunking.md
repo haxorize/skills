@@ -1,6 +1,6 @@
 # Large writes land in sections
 
-Depends: `handoff`, `to-feature`, `to-story`, `to-tasks`, `to-bug`, `chart-course`, `writing-for-humans`, `audit-skills`, `offboard-me`, `rebuild-contract`, `evaluation-ledger`
+Depends: `handoff`, `to-feature`, `to-story`, `to-tasks`, `to-bug`, `chart-course`, `writing-for-humans`, `audit-skills`, `offboard-engineer`, `rebuild-contract`, `evaluation-ledger`
 Why not a hook or lint: a hook sees the write after it has already been truncated, and cannot see the chat message that was cut mid-section — over the 30 days to 2026-08-30, the transcripts under `~/.claude/projects/` hold 430 `Write` calls and no truncated one (429 end in a newline; the other is an 11-character placeholder), so a size threshold has no failure to key on and refuses whole documents.
 
 A single oversized write — one tool call carrying a whole document, one chat message carrying a whole report — truncates silently, and a truncated artifact shown as finished is the worst outcome: it reads as done and is not.

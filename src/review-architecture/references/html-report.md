@@ -1,6 +1,6 @@
 # The HTML candidate report
 
-How `improve-design` Step 3 renders vetted deepening candidates as a self-contained HTML file. This identity is **frozen** — designed once and reused every run. Don't redesign it per scan; fill the scaffold with this run's candidates. The conversation still carries the terse ordered list for the pick; this file is the rich, visual record the user reads.
+How `review-architecture` Step 3 renders vetted deepening candidates as a self-contained HTML file. This identity is **frozen** — designed once and reused every run. Don't redesign it per scan; fill the scaffold with this run's candidates. The conversation still carries the terse ordered list for the pick; this file is the rich, visual record the user reads.
 
 ## Identity — "structural section drawing"
 

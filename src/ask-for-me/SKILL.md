@@ -24,3 +24,7 @@ Turn something the user can't answer alone into a **discovery questionnaire** â€
 ## Pairing with chart-course
 
 When a `chart-course` decision ticket is blocked on knowledge someone outside the effort holds, an **Errand** ticket can resolve through this skill: the questionnaire is the checklist handed to the human, and the filled-in answers become the Errand's resolution, linked as an asset.
+
+## Pairing with offboard-engineer
+
+When an `offboard-engineer` capture ends with register items the departing engineer will answer in writing, those items and their offered readings arrive pasted in as the subject â€” raw material, not an input format. Run the interview as ever: step 1 usually collapses to a confirmation (the recipient is the departing engineer, and the register already says what silence leaves unrecoverable), and the pasted items become step 2's list of what must come back. The filled-in returns go to that skill's register through its `start`, not through step 4 here.

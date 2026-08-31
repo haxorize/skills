@@ -1,11 +1,11 @@
 ---
-name: improve-design
-description: Read-only design-quality review of a codebase — surface architectural friction and propose deeper, cleaner module interfaces as a prioritized, vetted report.
+name: review-architecture
+description: Read-only architecture review of a codebase — surface architectural friction and propose deeper, cleaner module interfaces as a prioritized, vetted report.
 disable-model-invocation: true
 requires: codebase-design, grilling, writing-for-humans
 ---
 
-# Improve Design
+# Review Architecture
 
 This is an **advisory, read-only** pass: it explores, ranks findings, and files recommendations — it never mutates code (execution is `implement`'s job, and `/simplify` mutates so it lives in the build beat, not here). Run it periodically — every few days, or after a burst of feature work — to catch design drift before it compounds. The output is a **prioritized, vetted report** a human reads, not a pile of speculative refactors. Whole-codebase scope is what distinguishes it from `review-changes`, which runs the same vet + finding-format disciplines against a single diff.
 
@@ -29,7 +29,7 @@ In parallel, read project context and search prior work:
 
 - `DOMAIN.md` — domain vocabulary for candidate descriptions ("the billing rollup module," not "the AggregatorService")
 - `docs/adr/` — recorded decisions you should not re-litigate; match candidates against them by concept, never by wording (proceed silently if absent)
-- Search the tracker for existing refactor work items (Search command above; terms: `improve-design`, `deepen`, `refactor`, `extract`, `absorb`). Read open ones fully — intent, not just title.
+- Search the tracker for existing refactor work items (Search command above; terms: `review-architecture`, `improve-design` (this skill's pre-2026-08-30 name, still on old tickets), `deepen`, `refactor`, `extract`, `absorb`). Read open ones fully — intent, not just title.
 - `git log --oneline -30` — recent structural changes (extract, move, rename, refactor)
 - `git log --since='6 months ago' --name-only --pretty=format: | grep -v '^$' | sort | uniq -c | sort -rn | head -15` — the files change keeps landing in; step 2's weighting reads this list rather than an impression of the log
 - The repo's reachability detector where it has one (`knip` in a JS/TS repo, named in `package.json` scripts) — read here as a shape signal and never as a deletion list, which is `delete-dead-code`'s use of the same output: a module most of whose exports nothing outside it reaches is an interface nobody crosses, and a cluster of files that reach each other freely and are reached from outside through one narrow entry point is a seam that already exists and has no name. Both feed step 2's candidates; neither is a finding on its own.

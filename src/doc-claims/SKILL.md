@@ -9,6 +9,8 @@ A **claim** is a checkable assertion a document makes about something outside it
 
 Read the prose directly for meaning. There are no claim markers, no annotation DSL, no structured comments to key on: the thing being checked is the thing the human reads, and any scheme that checks a parallel annotation instead checks the wrong artifact.
 
+This is the bare judgment. One orchestrator layers on top: `/verify-docs` chooses which documents to check, ranks the verdicts that come back, and offers the fixes — it is user-invoked, so suggest it when the ask is a sweep over many documents rather than a judgment of one.
+
 ## Extract the claims
 
 Go through the prose and write down every assertion that could be false. Include the ones carried by example code, by a table, and by a heading. Exclude what makes no factual claim about anything outside the document — intent, rationale, and register have nothing to check, and a document made only of those is reported as having no claims rather than passed.

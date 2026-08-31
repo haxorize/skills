@@ -14,11 +14,11 @@ It never proposes a commit split. A change that needs several commits in lineage
 
 Commit, push, a tracker write, a message, a loop: each is an outward act, and the global rule `~/.claude/rules/no-unasked-commits.md` governs all of them. That rule has one owner; it is not restated here.
 
-Read `CLAUDE.md` for a `Landing:` block before the first act. Its six lines are `Branch policy:` (`trunk` or `branch-per-ticket`, with a naming pattern where the repo has one), `PR required:`, `Push pre-authorised:`, `Ticket close pre-authorised:`, `Review required:` (each `yes`/`no`; `yes` gates the push on a review receipt whose `Reviewed-tree:` stamp matches the tree being pushed, and the "reviewed" row below is the claim), and `Defect policy:` (default `fix, don't file`). An act the key pre-authorises proceeds on the ask that started the work; every other act asks first, with a recommendation, under `~/.claude/rules/recommend-and-proceed.md`. No block means nothing is pre-authorised, and a missing `Review required:` line means `no`.
+Read `CLAUDE.md` for a `Landing:` block before the first act. Its six lines are `Branch policy:` (`trunk` or `branch-per-ticket`, with a naming pattern where the repo has one), `PR required:`, `Push pre-authorized:`, `Ticket close pre-authorized:`, `Review required:` (each `yes`/`no`; `yes` gates the push on a review receipt whose `Reviewed-tree:` stamp matches the tree being pushed, and the "reviewed" row below is the claim), and `Defect policy:` (default `fix, don't file`). An act the key pre-authorizes proceeds on the ask that started the work; every other act asks first, with a recommendation, under `~/.claude/rules/recommend-and-proceed.md`. No block means nothing is pre-authorized, and a missing `Review required:` line means `no`.
 
 `git status` and `git diff` before anything is staged, on either path: untracked or unstaged files that belong to the change are surfaced now, not discovered after the commit. In a `Review required: yes` repo the unit is the whole reviewed tree, not the change: anything that does not belong to it is deleted or gitignored *before* the review, never deselected at staging time, because a partial commit is a different tree and the push is refused — and re-stamping to clear that block silently blesses whatever else was sitting there.
 
-**Auth pre-flight, before the commit.** When a push or a tracker write is asked or pre-authorised, confirm the credential is live before the commit exists (`gh auth status`, `az account show`, `git push --dry-run` — a read of the remote, not a push, and permitted on that basis). A push that fails on auth after the commit is a change described as landed that is not; the pre-flight makes that failure happen before the claim exists.
+**Auth pre-flight, before the commit.** When a push or a tracker write is asked or pre-authorized, confirm the credential is live before the commit exists (`gh auth status`, `az account show`, `git push --dry-run` — a read of the remote, not a push, and permitted on that basis). A push that fails on auth after the commit is a change described as landed that is not; the pre-flight makes that failure happen before the claim exists.
 
 **A command that succeeded silently is not re-run to see output.** `git push` and `gh issue close` print little on success; read the exit status, or verify the effect (`git status -sb` shows the branch up to date; `gh issue view` shows `CLOSED`). Re-running a mutating command to watch it is a second mutation.
 
@@ -64,8 +64,8 @@ For a change that is one attributable claim and needs no approver, land it in on
 
 1. Read the tree (`git status`, `git diff`, as above).
 2. Draft the subject and body against the diff, applying the claims rule per sentence.
-3. Stage and commit. The message, like every closing comment and PR body, goes through a file — `git commit -F <file>`, `gh ... --body-file`, `az ... --description @<file>` — never inline through shell interpolation, which mangles quotes and backticks and truncates silently. Push only if asked or pre-authorised; say which.
-4. Close or tick the ticket only if asked or pre-authorised, and only with the word the completion audit supports.
+3. Stage and commit. The message, like every closing comment and PR body, goes through a file — `git commit -F <file>`, `gh ... --body-file`, `az ... --description @<file>` — never inline through shell interpolation, which mangles quotes and backticks and truncates silently. Push only if asked or pre-authorized; say which.
+4. Close or tick the ticket only if asked or pre-authorized, and only with the word the completion audit supports.
 5. Report what happened, in one block: SHA, pushed or not, ticket state as read back.
 
 Work that never went through `/implement` — docs, skills, config, a synced library — is most of what lands here; the fast path does not require an audit to exist, only a claim to be checked.

@@ -58,7 +58,7 @@ Its second half is **not** conditional. Behavior that comes from the stack rathe
 
 Collapsing the two into one produces a contract that is confident and wrong: an obligation stated with no evidence behind it reads exactly like one with evidence.
 
-- **Evidence** — **[fact]**, **[inference]**, **[unknown]**, **[human]**, **[conflict]**, defined once in [references/evidence-tags.md](references/evidence-tags.md), shared byte-identical with `onboard-me` and `offboard-me`. Read it before the first trail write. Here a **[conflict]** is usually the tests against the code, and it is carried into the contract's *Suspect behaviors* rather than resolved.
+- **Evidence** — **[fact]**, **[inference]**, **[unknown]**, **[human]**, **[conflict]**, defined once in [references/evidence-tags.md](references/evidence-tags.md), shared byte-identical with `onboard-me` and `offboard-engineer`. Read it before the first trail write. Here a **[conflict]** is usually the tests against the code, and it is carried into the contract's *Suspect behaviors* rather than resolved.
 - **Obligation.** **[contract]** — must be reproduced; the default for anything boundary-visible. **[incidental]** — real behavior, free to differ; say so out loud, because silence reads as contract. **[suspect]** — looks like a bug, and is still contract if anything outside can see it. **[undefined]** — genuinely unspecified or arbitrary, the reimplementer's to choose.
 
 The trail carries both axes. The contract carries obligation only.

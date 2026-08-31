@@ -13,7 +13,7 @@ Before materially editing anything in the first table, diff its upstream — mai
 | `write-skill` | mattpocock/skills | `writing-great-skills`, renamed upstream to `writing-for-agents` at `1fc6573`, so `write-skill` and the ported `writing-for-agents` diff the same directory | MIT | ADR-0040 |
 | `review-changes` | mattpocock/skills | `review` | MIT | ADR-0034 |
 | `which-skill` | mattpocock/skills | `ask-matt` | MIT | ADR-0034 |
-| `improve-design` | mattpocock/skills | `improve-codebase-architecture` | MIT | ADR-0034 |
+| `review-architecture` (until 2026-08-30 `improve-design`) | mattpocock/skills | `improve-codebase-architecture` | MIT | ADR-0034 |
 | `teach-me` | mattpocock/skills | `teach` | MIT | ADR-0034 |
 | `chart-course` | mattpocock/skills | `wayfinder` | MIT | ADR-0028 |
 | `ask-for-me` | mattpocock/skills | `to-questionnaire` | MIT | ADR-0034 |
@@ -28,7 +28,7 @@ Before materially editing anything in the first table, diff its upstream — mai
 | `discoverable-code` | dmmulroy/dotfiles | `write-discoverable-code`, under `home/.agents/skills/` (modem-dev/skills is a byte-identical mirror, never diffed) | none stated | ADR-0050 |
 | `onboard-me` | nitfolio-nirvajna-skills | fog-of-war map, evidence tags, stage ladder, read-only boundary | MIT | ADR-0064 |
 | `rebuild-contract` | nitfolio-nirvajna-skills | observer-and-fidelity boundary, inclusion test, two tag axes, behavior index, stable IDs, scope-down rule, section spine, self-audit | MIT | ADR-0069 |
-| `offboard-me` | nitfolio-nirvajna-skills | inversion, SCAN → RANK → ASK loop, five evidence tags, seven-rung ladder, five-section register, eleven signals | MIT | ADR-0070 |
+| `offboard-engineer` (until 2026-08-30 `offboard-me`) | nitfolio-nirvajna-skills | inversion, SCAN → RANK → ASK loop, five evidence tags, seven-rung ladder, five-section register, eleven signals | MIT | ADR-0070 |
 | `scripts/security.sh` — hex blob, drop site, download-then-exec, minified line, `.npmrc`, install-time manifest hook, compiled binary, remote instructions | openhonest/honest-skills | the sweep skill's pattern list; diff its patterns, not a skill body | Apache-2.0 | ADR-0073 |
 | `scripts/security.sh` — `sh-imds`, `sh-agentcfg`, `sh-persist`, `sh-noverify`, `sh-envdump`, `uni-confusable`, `bin-bytecode` | nvidia/skillspector and DataDog/guarddog | their pattern classes; the homoglyph table is the scanner's own | Apache-2.0 | ADR-0075 |
 

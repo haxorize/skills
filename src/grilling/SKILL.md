@@ -45,4 +45,4 @@ This is the bare discipline — no document side effects. One orchestrator layer
 
 - `grill-me` runs this loop and, where the project keeps a `DOMAIN.md` or ADR log, captures terminology and durable decisions as it goes (`DOMAIN.md` updates, opportunistic ADRs); `grill-me --plain` runs the loop and nothing else.
 
-Other skills reach for grilling at a natural "pressure-test this before committing" moment — e.g. `improve-design` offers it before filing a refactor.
+Other skills reach for grilling at a natural "pressure-test this before committing" moment — e.g. `review-architecture` offers it before filing a refactor.
