@@ -14,67 +14,23 @@ Use this when publishing a User Story to Azure DevOps via `az boards work-item c
 | State | `System.State` | From CLAUDE.md `Default state:` (typically `New`) | `--fields "System.State=..."` |
 | Parent (Feature) | (relation) | From `--parent <feature-id>` arg | post-create: `az boards work-item relation add --id <new-story-id> --relation-type Parent --target-id <feature-id>` |
 
-Before first publish against a new ADO project, verify the field shape once: run `az boards work-item show --id <existing-story-id> --output json --query 'fields'` and confirm the reference names above are present.
+Before first publish against a new ADO project, verify the field shape once per [ado-html-transport.md](ado-html-transport.md).
 
-## Description (markdown body — converted to HTML before publishing)
+## Description
 
-Author the body as Markdown. Lead with the Connextra user-story line for user-facing stories; omit it for non-user-facing stories (see `to-story` SKILL.md step 6 for the classification rule).
+Author the body as Markdown from the skeleton in [story-body.md](story-body.md), then append the removed-criteria record at the end (the AC bullets themselves are a separate field, never a body section):
 
 ```markdown
-**User story:** As a [role], I want [goal] so that [benefit].
-
-## Problem
-
-What user-facing pain or behavior gap motivates this story. One paragraph. Use canonical terms from `DOMAIN.md`.
-
-## User-facing behavior
-
-What the user sees / can do once this ships. Concrete, observable. If the change is invisible to users (refactor, infra), describe the developer-facing or operational behavior instead.
-
-## Modules touched
-
-- `<module name>` — what changes here, what the deepening direction is if any
-- `<module name>` — what changes here
-
-Use module names from `DOMAIN.md` where applicable, not file paths.
-
-## Layers touched
-
-Which integration layers the Story crosses. Drives `from-ticket` cold-start and Task slicing. Describe the behavioral change at each layer in one phrase; mark absent layers `none`. No file paths, no function names, no code snippets.
-
-- **Data:** schema/migration/seed work expected (or `none`)
-- **Backend:** endpoints/handlers/services (or `none`)
-- **Client:** generated client / hooks / state (or `none`)
-- **UI:** components / routes / forms (or `none`)
-- **Tests:** interface / integration coverage expected (or `none`)
-
-## Approach
-
-The approach the team agreed on. State the design direction and key tradeoffs in plain language. Reference existing ADRs the approach respects. No code snippets, no file paths, no specific field or type names.
-
-## Tests
-
-What gets tested at which seam. Use module names from `DOMAIN.md`, not file paths.
-
-- `<module>` — interface tests for X behavior
-- `<module>` — integration test covering Y end-to-end
-
-## Out of scope
-
-What this story explicitly does not include (so reviewers don't expand scope).
-
 ## Removed acceptance criteria
-
-History of ACs that were active in the AC field and have since been retired. Strike-through, removal date, one-line reason. Omit the heading if nothing has been removed.
 
 - ~~**AC3:** Original criterion text~~ — removed 2026-05-01: reason in one line
 ```
 
+The record shape and the append-only rule are in [ac-ids.md](ac-ids.md); omit the heading if nothing has been removed.
+
 ## Acceptance Criteria (ADO field)
 
-Author as Markdown bullets, converted to HTML before publishing.
-
-Use typed prefixes (`**AC1:**`, `**AC2:**`) so child Tasks can reference them by ID via `Covers: AC1, AC3` lines. IDs are append-only — when an AC is removed, its ID moves to `## Removed acceptance criteria` in the description body (not this field) and is never reused; the next added AC takes the next unused integer.
+Author as Markdown bullets with typed, append-only IDs per [ac-ids.md](ac-ids.md), converted to HTML before publishing:
 
 ```markdown
 - **AC1:** Specific, testable outcome 1
@@ -82,16 +38,13 @@ Use typed prefixes (`**AC1:**`, `**AC2:**`) so child Tasks can reference them by
 - **AC4:** Specific, testable outcome 4
 ```
 
-The example skips `AC3` to show the gap preserved on removal.
+The example skips `AC3` for the reason [ac-ids.md](ac-ids.md) gives.
 
-## Markdown → HTML conversion
+## Create call
 
-ADO rich-text fields (Description, Acceptance Criteria) render HTML by default; Markdown rendering is an opt-in per-org setting. To stay portable, convert at publish time:
+Convert each artifact per [ado-html-transport.md](ado-html-transport.md), then:
 
 ```bash
-pandoc -f markdown -t html description.md > description.html
-pandoc -f markdown -t html acceptance.md > acceptance.html
-
 az boards work-item create \
   --type "User Story" \
   --title "$TITLE" \
@@ -103,17 +56,6 @@ az boards work-item create \
   --area "$AREA_PATH" \
   --iteration "$ITERATION"
 ```
-
-`$TAGS` is the derived tag set — see [work-item-tags.md](work-item-tags.md); omit the `System.Tags` pair when no tags derive. Also assign `TITLE` in single quotes (`TITLE='…'`, an apostrophe inside written `'\''`) — the title is the one value that still crosses the shell, and a backtick or `$` inside double quotes is expanded there. `@<file>` transport and its read-back are in [publishing.md](publishing.md) `## Transport safety`.
-
-Or, if `pandoc` is not available, a Python one-liner:
-
-```bash
-python3 -c "import sys, markdown; print(markdown.markdown(sys.stdin.read()))" < description.md > description.html
-python3 -c "import sys, markdown; print(markdown.markdown(sys.stdin.read()))" < acceptance.md > acceptance.html
-```
-
-If neither `pandoc` nor the Python `markdown` module is present, stop and ask for one to be installed — never publish raw Markdown into an HTML-rendering field.
 
 ## Notes
 

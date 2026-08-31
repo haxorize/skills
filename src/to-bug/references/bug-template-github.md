@@ -2,65 +2,28 @@
 
 Use this body when publishing a Bug-shaped issue to GitHub via `gh issue create`. The title is set on the command line. GitHub has no native Bug type — apply the `bug` label and a severity label.
 
+Assemble the body from the skeleton in [bug-body.md](bug-body.md): lead with a `## Repro` section (the skeleton's repro-steps block, headed), then the skeleton sections, then the `## Parent` section below at the end.
+
 ```markdown
-## Repro
-
-Numbered steps to reproduce. Be precise about inputs, environments, and the observed failure.
-
-1. Sign in as `<role>` at `<environment URL>`.
-2. Navigate to `<page or route>`.
-3. Perform `<specific action>` with `<input or payload>`.
-4. Observe `<actual outcome>` instead of `<expected outcome>`.
-
-## Expected behavior
-
-What should happen. One paragraph or short bullet list. Use canonical terms from `DOMAIN.md`.
-
-## Actual behavior
-
-What happens instead. Concrete, observable. Include error messages, stack traces, or screenshots inline.
-
-## Scope of impact
-
-Who is affected and how broadly.
-
-- **Users affected:** all / segment description / single tenant / specific account
-- **Frequency:** every request / intermittent (estimate) / specific trigger only
-- **Workaround:** none / steps if one exists
-- **First seen:** version / commit / date
-
-## Regression risk
-
-Whether this bug indicates a regression and what the fix may destabilize.
-
-- **Regression?** yes (last known good: <version/date>) / no / unknown
-- **Adjacent surfaces at risk:** modules or behaviors the fix could touch unexpectedly
-
-## Layers touched
-
-Which integration layers the fix is expected to cross. Drives `from-ticket` cold-start when the Bug is loaded for implementation. Describe the behavioral change at each layer in one phrase; mark absent layers `none`. No file paths, no function names, no code snippets.
-
-- **Data:** schema/migration/seed work expected (or `none`)
-- **Backend:** endpoints/handlers/services (or `none`)
-- **Client:** generated client / hooks / state (or `none`)
-- **UI:** components / routes / forms (or `none`)
-- **Tests:** interface / integration coverage to add (or `none`)
-
 ## Parent
-
-If filed under a parent Feature, include this line in the issue body:
 
 Parent: #<issue-number>
 ```
+
+Omit `## Parent` if parentless.
 
 ## Labels
 
 Two label categories apply:
 
 - **Type:** `bug` — applied unconditionally by `to-bug` on GitHub.
-- **Severity:** one of the labels declared in CLAUDE.md's severity-labels block — the `## Severity labels` or `## Bug severity labels` section (e.g., `sev:critical`, `sev:high`, `sev:medium`, `sev:low`).
+- **Severity:** one of the labels declared in CLAUDE.md's severity-labels block — a `## Bug severity labels` section (the canonical heading; an existing `## Severity labels` section also counts) holding a `Scale:` line and a `Labels:` line.
 
-If neither section exists, `to-bug` bootstraps one on ask — see SKILL step 4 (Resolve severity) for the procedure.
+If no such section exists under either name, bootstrap on ask:
+
+- Ask the user for the team's severity scale (default offer: `critical, high, medium, low` mapping to labels `sev:critical`, `sev:high`, `sev:medium`, `sev:low`).
+- Preview an appended `## Bug severity labels` section (`- Scale:` and `- Labels:` lines); write to CLAUDE.md on confirmation. **Always append, never overwrite** — and never append when a section under either name already exists.
+- In no-repo CLI-only mode, save the resolved scale to memory keyed by tracker context (e.g., `Severity labels — work-backlog`).
 
 ## Severity definitions (default)
 

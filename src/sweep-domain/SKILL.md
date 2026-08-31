@@ -7,7 +7,7 @@ requires: domain-modeling
 
 # Sweep Domain
 
-This is the **deliberate sweep mode** — a focused one-shot pass to refresh the glossary. The glossary-writing discipline itself belongs to the `domain-modeling` discipline; this skill drives a sweep over it. Inline updates during a grilling session are owned by `grill-me`.
+This is the **deliberate sweep mode** — a focused one-shot pass to refresh the glossary. The glossary-writing discipline itself belongs to the `domain-modeling` discipline; this skill drives a sweep over it.
 
 ## Workflow
 

@@ -1172,6 +1172,8 @@ sibling_groups=(
   "src/to-bug/references/github-sub-issues.md|src/to-story/references/github-sub-issues.md|src/to-tasks/references/github-sub-issues.md|src/chart-course/references/github-sub-issues.md"
   "src/to-bug/references/work-item-tags.md|src/to-feature/references/work-item-tags.md|src/to-story/references/work-item-tags.md|src/to-tasks/references/work-item-tags.md|src/chart-course/references/work-item-tags.md"
   "src/implement/references/completion-audit.md|src/handoff/references/completion-audit.md|src/committing/references/completion-audit.md"
+  "src/to-feature/references/ado-html-transport.md|src/to-story/references/ado-html-transport.md|src/to-tasks/references/ado-html-transport.md|src/to-bug/references/ado-html-transport.md|src/chart-course/references/ado-html-transport.md"
+  "src/to-feature/references/ac-ids.md|src/to-story/references/ac-ids.md"
 )
 
 # The registry above names this repo's own paths, so byte-identity runs only
@@ -1191,7 +1193,7 @@ check_sibling_identity() {
       if [ ! -f "$other" ]; then
         say_fail "sibling reference $other is missing"
       elif ! cmp -s "$ref" "$other"; then
-        say_fail "$other drifted from $ref (per ADR-0007 these must stay byte-identical)"
+        say_fail "$other drifted from $ref (per ADR-0007 these must stay byte-identical) — copy $ref over it, or, if the divergence is deliberate, split the file under a distinct name and drop it from \`sibling_groups\` in scripts/lint-skills.sh"
       fi
     done
   done

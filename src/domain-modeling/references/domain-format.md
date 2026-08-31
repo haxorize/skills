@@ -64,6 +64,8 @@ This repo spans multiple bounded contexts. Each context has its own `DOMAIN.md`.
 
 Each nested `DOMAIN.md` follows the format above. Cross-context terms (terms that mean different things in different contexts) get an explicit note in `Flagged ambiguities` of each context.
 
+When a repo declares contexts this way, infer which context the topic belongs to from the conversation — ask if unclear — and update that context's nested `DOMAIN.md`, not the root index.
+
 ## Cross-repo siblings
 
 For cross-repo setups (e.g., separate API and UI repos under one product), each repo's `DOMAIN.md` is self-contained. Cross-reference the sibling in prose at the bottom:

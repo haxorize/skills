@@ -12,7 +12,7 @@ That record ruled that the slash marks a reference as *invoked*: "slash every re
 
 **Which form a new ADR uses.** Records already written keep their text — `adr-format.md` says amendments never rewrite the original, so the 15 old-form sites under `docs/adr/` stay as they are and `lint-skills.sh` does not walk the directory. A **new** record names a skill in plain backticks: an ADR is read by a person and fires nothing. Only a command that person would actually type is slashed.
 
-**What earns a `requires:` declaration.** A reference that will *fire* the skill earns it — a Skill-tool call, a lazy load, or a gated offer awaiting consent, which is why five peers all declare `adr` for an offer they never fire unprompted. A pure statement of the register the prose answers to, which never fires anything, does not; that is the rule behind `ship` dropping `writing-for-humans` while keeping `committing`, which carries it transitively.
+**What earns a `requires:` declaration.** A reference that will *fire* the skill earns it — a Skill-tool call, a lazy load, or a gated offer awaiting consent, which is why six peers all declare `adr` for an offer they never fire unprompted. A pure statement of the register the prose answers to, which never fires anything, does not; that is the rule behind `ship` dropping `writing-for-humans` while keeping `committing`, which carries it transitively.
 
 ## Consequences
 

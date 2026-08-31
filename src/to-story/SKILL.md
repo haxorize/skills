@@ -21,7 +21,7 @@ Call the Skill tool with `writing-for-humans`, then again with `work-item-shape`
 
 ### 1. Resolve tracker
 
-Resolve the tracker in one of three modes — **Declared**, **Bootstrap-on-ask**, or **No-repo CLI-only**. See [references/tracker-resolution.md](references/tracker-resolution.md) for each mode's behavior and the required fields.
+Resolve the tracker per [references/tracker-resolution.md](references/tracker-resolution.md).
 
 Title prefix: if the tracker block declares a generic `Title prefix:`, prepend it (with a trailing space) to the drafted title before publishing. A `Feature title prefix:` line is Feature-only — it never applies to a Story.
 
@@ -44,7 +44,7 @@ Modules to build or modify. Look for opportunities to extract deep modules. Chec
 
 ### 5. Propose 2-3 approaches with trade-offs
 
-Lead with a recommendation. Present it once; if the user pushes back, revise and re-present once. Do not loop — exhaustive trade-off exploration belongs in `grill-me`. Skip only when there's genuinely one defensible shape (rare; force yourself to think of two). The second approach has to earn its place: one that differs from the first only in dress, and collapses into it on inspection, leaves you with one — that collapse is the fixation `diverging` breaks, so call the Skill tool with `diverging` before re-proposing, and not before.
+Lead with a recommendation. This is a pre-publication direction check, not interviewing: present it once; if the user pushes back, revise and re-present once — do not loop, exhaustive trade-off exploration belongs in `grill-me`. Skip only when there's genuinely one defensible shape (rare; force yourself to think of two). Distinct means the sketches trade off different things, not wear different dress: when two of the set collapse into one on inspection, the set holds one approach fewer than it claims, and that collapse is the fixation `diverging` breaks — call the Skill tool with `diverging` before re-proposing, and only then.
 
 ### 6. Draft the story
 
@@ -85,11 +85,11 @@ Iterate until approved.
 The **Publish gate** in [references/publishing.md](references/publishing.md) holds first.
 
 - **GitHub:** `gh issue create --title "..." --body-file <draft>` with default labels from CLAUDE.md. Parent linking via template `Parent: #N` reference if `--parent` was provided. **Before creating the issue,** run the label precheck in [references/publishing.md](references/publishing.md). If a parent Feature was resolved, add the new issue as a native sub-issue of it after create — see [references/github-sub-issues.md](references/github-sub-issues.md).
-- **ADO:** The **two-field split** lands as two flags on one `az boards work-item create` call — the body into `System.Description` via `--description`, the acceptance bullets into `Microsoft.VSTS.Common.AcceptanceCriteria` via `--fields`. Both expect HTML: convert each artifact on its own, write each to a file, and pass the path with the CLI's `@` prefix (`--description @description.html`, `--fields "Microsoft.VSTS.Common.AcceptanceCriteria=@acceptance.html"`) so the content never crosses the shell. See [references/story-template-ado.md](references/story-template-ado.md) for the conversion command. Parent linking via `az boards work-item relation add --id <new-story-id> --relation-type Parent --target-id <feature-id>`. Merge `System.Tags` into the create call's `--fields` — see [references/work-item-tags.md](references/work-item-tags.md).
+- **ADO:** publish with the create call in [references/story-template-ado.md](references/story-template-ado.md) — the **two-field split**, body into `System.Description` and acceptance bullets into `Microsoft.VSTS.Common.AcceptanceCriteria`, each converted on its own per the template. Parent linking via `az boards work-item relation add --id <new-story-id> --relation-type Parent --target-id <feature-id>`. Merge `System.Tags` into the create call's `--fields` — see [references/work-item-tags.md](references/work-item-tags.md).
 
-If a required CLAUDE.md field is missing, fail fast with a clear "add this to CLAUDE.md" message. A create call blocked on auth or policy follows `## When the write is blocked` in [references/publishing.md](references/publishing.md) — don't loop on auth. Apply the **transport safety** rules in [references/publishing.md](references/publishing.md) to every create and retry.
+Missing required CLAUDE.md fields, writes blocked on auth or policy (don't loop on auth), and **transport safety** on every create and retry all follow [references/publishing.md](references/publishing.md) — `## When a required field is missing`, `## When the write is blocked`, `## Transport safety`.
 
-**Read the AC field back before reporting the Story written (ADO)** — on any create or patch carrying acceptance criteria, update mode included. `az boards work-item show <story-id> --output json --query 'fields."Microsoft.VSTS.Common.AcceptanceCriteria"'` returns the stored value. Empty or null means the criteria landed in the body instead of the field — patch it with `az boards work-item update --id <story-id> --fields "Microsoft.VSTS.Common.AcceptanceCriteria=@/absolute/path/acceptance.html"` and strip them from the description. A value beginning with `@` means the HTML file was not at the path the command named (the CLI passes an unopenable path through as the literal) — fix the path, never re-run the same command. A Story whose criteria are buried in the description looks written and isn't queryable.
+**Read the AC field back before reporting the Story written (ADO)** — on any create or patch carrying acceptance criteria, update mode included. The read-back and its fix are in [references/publishing.md](references/publishing.md) `## Transport safety`.
 
 ### 10. Update parent's story map (where `Hierarchy: required`)
 
@@ -103,8 +103,8 @@ Native dependency relations are an ADO feature, so this step runs only on ADO �
 
 ## Update mode
 
-`--update <story-id>` patches an existing Story in place. See [references/update-mode.md](references/update-mode.md) for cold-start commands, AC ID handling rules, self-review checks, re-snapshot prompt, reconcile prompt, and patch commands.
+`--update <story-id>` patches an existing Story in place. See [references/update-mode.md](references/story-update-mode.md) for cold-start commands, AC ID handling rules, self-review checks, re-snapshot prompt, reconcile prompt, and patch commands.
 
 ## Naming drift
 
-On publish or an `--update` patch, run `work-item-shape`'s **Naming drift** rule against siblings (Stories under the same parent Feature, Tasks under this Story); the immediate fix it offers is the sibling's `--update`.
+On publish or an `--update` patch, run `work-item-shape`'s **Naming drift** rule against siblings (Stories under the same parent Feature, Tasks under this Story).

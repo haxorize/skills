@@ -34,9 +34,9 @@ No tracker block means commit-message and code-only inference — the sweep neve
 
 Evidence order: the PR or work-item thread first, then in-repo comments, TODOs, and test names, then `git log -S` on the changed string. Code is never evidence of its own intent — what it does is not why it was chosen.
 
-### 4. Apply the ADR gate
+### 4. Dedupe against existing ADRs, then apply the gate
 
-Apply the three-criteria gate per [references/adr-format.md](references/adr-format.md). Reject any candidate that fails.
+Read the existing ADR log first and search it for a record that already owns each candidate's ground — this runs **before** the gate, because the gate's outcome means different things depending on what you find. A candidate the log already records is done — skip it. One that only refines an existing record follows the amend-or-write-new rule in [references/adr-format.md](references/adr-format.md) instead of getting a new number. Only a candidate no record owns is rejected when it fails the three-criteria gate per the same reference.
 
 Then verify the **decision**, not just the history: before recording a decision as standing, confirm its mechanism still exists in the tree (the files, symbols, or checks it names resolve), the work that carried it closed as *completed* (closed-as-not-planned means the decision was dropped, not decided), no material part stayed unshipped, and no later decision superseded it. A decision that fails this check is recorded as history with its outcome named, or not at all — never as a standing decision. An existing ADR whose named mechanism no longer resolves is reported **STALE**, with three dispositions for the user to pick: re-confirm (a dated amendment), supersede, or a dated waiver naming the trigger that would reopen it; an ADR carrying a `Revisit when:` line is checked against that line too.
 
@@ -44,7 +44,7 @@ Then verify the **decision**, not just the history: before recording a decision 
 
 Walk through each candidate one at a time:
 
-- **Title** — the proposed slug (format per the reference)
+- **Title** — the proposed slug for a new record; for a refining candidate, the record it amends and the amendment's one-line heading (format per the reference)
 - **Why it qualifies** — which of the three criteria it meets
 - **Rationale source** — commit / PR / work item / file
 
@@ -60,5 +60,4 @@ Once the candidate list is exhausted, stop. Don't keep mining for more.
 
 ## Notes
 
-- **Dedupe against existing ADRs.** Read the existing log first. A candidate the log already records is done — skip it; one that only refines an existing record follows the amend-or-write-new rule in the shared format doc instead of getting a new number.
 - **Prefer fewer high-quality ADRs.** If a candidate borderline-qualifies, drop it.

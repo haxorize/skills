@@ -30,10 +30,10 @@ Parse:
 
 ### Patch
 
-- **ADO:** convert Markdown → HTML to a file, then `az boards work-item update --id <task-id> --description @<file>`. Tasks have no AC field; do not pass `Microsoft.VSTS.Common.AcceptanceCriteria`.
+- **ADO:** convert Markdown → HTML (using the pandoc or Python one-liner from [ado-html-transport.md](ado-html-transport.md)) to a file, then `az boards work-item update --id <task-id> --description @<file>`. Tasks have no AC field; do not pass `Microsoft.VSTS.Common.AcceptanceCriteria`.
 - **GitHub:** `gh issue edit <task-number> --body-file <draft>`.
 
-The naming-drift check in SKILL.md runs against the sibling Task titles fetched at cold-start.
+The naming-drift check runs here against the sibling Task titles fetched at cold-start — SKILL.md states it for publish; `--update` never publishes, so this is the update path's own statement of it.
 
 ## Reconcile mode
 
@@ -42,8 +42,8 @@ The naming-drift check in SKILL.md runs against the sibling Task titles fetched 
 ### Cold-start
 
 - Fetch the parent Story:
-  - **ADO:** `az boards work-item show <story-id> --output json --expand relations` — `System.Description`, `Microsoft.VSTS.Common.AcceptanceCriteria`, and child Task relations (`System.LinkTypes.Hierarchy-Forward`).
-  - **GitHub:** `gh issue view <story-number> --json body,title`. Children are issues whose body contains `Parent: #<story-number>` — find via `gh search issues "in:body Parent: #<story-number>" --json number,title,body,state,assignees,labels`.
+  - **ADO:** `az boards work-item show <story-id> --output json --expand relations` — `System.Description`, `Microsoft.VSTS.Common.AcceptanceCriteria`, and child Task relations (`System.LinkTypes.Hierarchy-Forward`). Check the type first: refuse a Bug parent and explain — `--reconcile` does not apply to Bugs (the fix is the slice); refuse Feature, Epic, and Task parents the same way.
+  - **GitHub:** `gh issue view <story-number> --json body,title,labels`. Refuse a `bug`-labeled parent the same way. Children are issues whose body contains `Parent: #<story-number>` — find via `gh search issues "in:body Parent: #<story-number>" --json number,title,body,state,assignees,labels`.
 - Parse **active AC IDs** from the AC field (ADO) or `## Acceptance criteria` section (GitHub), and **removed AC IDs** from `## Removed acceptance criteria` in the description body (not the AC field on ADO).
 - Pull DOMAIN.md and surface terms changed since the Story's last revision — terminology drift is a leading indicator that Tasks are stale.
 - On GitHub, read the **In-progress signal** from CLAUDE.md's `Issue tracker:` block — see `### In-progress signal (GitHub)` below. ADO ignores the signal; state is read directly from `System.State`.
@@ -63,6 +63,8 @@ For each active AC ID on the parent:
 
 - **Covered** — at least one Healthy Task or Stale Task references it.
 - **Uncovered** — no Task references it. Propose: add a new Task slice, or update an existing Task's `## Covers`.
+
+**Legacy parents without AC IDs fall back to fuzzy synthesis.** When the parent's criteria carry no `**ACn:**` prefixes, or child Tasks predate `## Covers` lines, don't bucket every Task Unknown and every criterion Uncovered — match Tasks to criteria by content, present the fuzzy mapping as proposals for the user to confirm, and offer to rewrite the parent's ACs with typed IDs (via `to-story --update`) so the next reconcile diffs mechanically.
 
 ### State-aware proposals
 

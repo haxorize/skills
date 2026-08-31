@@ -18,7 +18,7 @@ The alternative was the ledger's D2: delete `grill-and-record` outright and let 
 ## Consequences
 
 - `grill-me` gains `requires: grilling, domain-modeling, writing-for-humans` and a load gate on `domain-modeling` that fires only when recording is on.
-- The router, README, `DOMAIN.md`'s Orchestrator-skill row, and the eight skills that named it now name `grill-me` alone; `CLAUDE.md`'s upstream list keeps `grill-and-record` (grill-with-docs) as the lineage the stub still carries.
+- The router, README, `DOMAIN.md`'s Orchestrator-skill row, and the eight skills that named it now name `grill-me` alone; `CLAUDE.md`'s upstream list keeps `grill-and-record` (grill-with-docs) as the lineage the stub still carries. — corrected: see Amendments 2026-08-26
 
 ## Amendments
 

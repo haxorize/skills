@@ -12,6 +12,8 @@ This discipline owns what a good work-item body *is* — any tier (Feature, Stor
 
 When the ask names a tier a publisher owns — "file a story", "create a feature", "break this into tasks", "write up this bug" — and the repo is wired for the pipeline (`CLAUDE.md` carries an `Issue tracker:` block), stop and name the publisher: `/to-feature`, `/to-story`, `/to-tasks`, or `/to-bug`. An ask that names no tier — "file an issue for this" — routes the same way in a wired repo: infer the tier from the work's shape (a defect is a Bug, one deliverable is a Story, sub-work under a story is Tasks) and name that publisher.
 
+Repos `onboard-repo` wires carry the **routing policy line** in `CLAUDE.md`'s `Issue tracker:` block, which says the same thing to a session that never loads this skill. It reinforces this gate and never replaces it: the gate binds on the work's shape whether or not the line is there, and repos wired before 2026-08-31 do not carry it.
+
 Say what ad-hoc drafting would skip — parent reconciliation against the story map, `Covers:` wiring, tags, the per-tier template, update modes — and wait. A published lookalike is worse than nothing: it looks done, and the pipeline's bookkeeping never hears about it.
 
 Ad-hoc drafting is the right path when the repo has no pipeline, the item targets someone else's repo, or the user declines the publisher. Every rule below still binds there — including that the parent question ("what does this hang under?") is answered or explicitly scoped out, never skipped. Ad-hoc prose also follows the human-facing register — call the Skill tool with `writing-for-humans` at the first write if it isn't already live (under a publisher, the publisher has already run it).
@@ -96,7 +98,7 @@ When more than 5 blocks accumulate, triage which ones escalate by impact: **scop
 
 ## The Cold-reader pass
 
-Self-review can't catch author blindness — after drafting, you see what you meant, not what you wrote. Before an item publishes, send it through a reader with none:
+Self-review sees what you meant, not what you wrote — before an item publishes, send it through a reader with no prior context:
 
 - Spawn one fresh-context subagent — the cold reader, briefed per [references/subagent-brief.md](references/subagent-brief.md). It gets only what a cold reader of the published artifact would see — the calling skill names the exact input; ad-hoc, it is the drafted body alone — never this conversation.
 - It answers the calling skill's question — "what would you build?", or for a bug, "what's broken, and how do I reproduce it?"; ad-hoc, the question matching the inferred tier. Alongside the answer it names ambiguities in Ambiguity-block shape and any context it had to assume.

@@ -2,46 +2,20 @@
 
 Use this body when publishing a Task-shaped child of a Story parent to GitHub via `gh issue create`. The title is set on the command line; this is the body.
 
+Assemble the body from the skeleton in [task-body.md](task-body.md), appending the two GitHub-only sections below at the end.
+
 ```markdown
-## Slice
-
-One sentence describing what this thin vertical slice delivers end-to-end. Use canonical terms from `DOMAIN.md`.
-
-## Layers touched
-
-Describe the behavioral change at each layer in one phrase. No file paths, no function names, no code snippets.
-
-- **Data:** schema/migration/seed changes (or "none")
-- **Backend:** endpoints/handlers/services (or "none")
-- **Client:** generated client / hooks / state (or "none")
-- **UI:** components / routes / forms (or "none")
-- **Tests:** interface tests / integration tests added (or "none")
-
-## Covers
-
-Parent Story AC IDs this Task verifies. Comma-separated, no quotes. Used by `to-tasks --reconcile` to detect stale references mechanically when parent ACs change.
-
-Covers: AC1, AC3
-
-## Mode
-
-**HITL** or **AFK**. One word, then a short reason. The call follows the `work-item-shape` readiness gate: AFK only when all four predicates hold; a HITL reason names what remains for the human.
-
-An AFK Task adds one more line — its stop condition: the result, obstacle, or spent effort that means stop unattended work and ask.
-
 ## Blocked by
-
-If this slice depends on another slice or a sibling-repo change, list it here. Use real issue numbers if blockers were filed first (`to-tasks` publishes in dependency order so real IDs are available).
 
 - Blocked by: #<issue-number> — what specifically must land first
 - Blocked by: ../<sibling-repo> — contract change required (file there first)
-
-If unblocked, omit this section.
 
 ## Parent
 
 Parent: #<issue-number>
 ```
+
+GitHub has no native blocker relation, so both in-project and sibling-repo blockers are body text. Use real issue numbers if blockers were filed first (`to-tasks` publishes in dependency order so real IDs are available). If unblocked, omit the `## Blocked by` section.
 
 ## Notes
 

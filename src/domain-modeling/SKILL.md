@@ -1,12 +1,12 @@
 ---
 name: domain-modeling
 description: The active discipline for building and sharpening a project's domain model. Use when terminology needs to be pinned down, when a vague or overloaded term surfaces, or when conversation and code disagree about what a concept means. Don't invoke this just to read DOMAIN.md for vocabulary — consult the file directly; reach for this only when the model itself is changing.
-requires: writing-for-humans
+requires: writing-for-humans, adr
 ---
 
 # Domain Modeling
 
-This is the *active* discipline — challenging terms, inventing edge-case scenarios, and writing the glossary down the moment it crystallizes. Merely *reading* `DOMAIN.md` for vocabulary is not this skill — that's a one-line habit any skill can do. Reach for this when you are *changing* the model, not just consuming it.
+This is the *active* discipline — challenging terms, inventing edge-case scenarios, and writing the glossary down the moment it crystallizes.
 
 ## During the work
 
@@ -21,8 +21,4 @@ This is the bare discipline. Orchestrators drive it: `/sweep-domain` runs the de
 
 ## DOMAIN.md
 
-Use the format in [references/domain-format.md](references/domain-format.md) — definition style, table grouping, the first-class `Relationships` section, the example dialogue, and `Flagged ambiguities` all live there. Lazily create `DOMAIN.md` at the repo root if missing — only once there is a term to write.
-
-## Multi-context repos
-
-If the repo declares multiple bounded contexts (root `DOMAIN.md` lists `## Contexts` with links to nested `DOMAIN.md` files), infer which context the topic belongs to from the conversation. If unclear, ask. Update the nested `DOMAIN.md` for that context, not the root.
+Use the format in [references/domain-format.md](references/domain-format.md) — definition style, table grouping, the first-class `Relationships` section, the example dialogue, `Flagged ambiguities`, and the multi-context rules all live there. Lazily create `DOMAIN.md` at the repo root if missing — only once there is a term to write.

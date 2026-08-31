@@ -12,38 +12,22 @@ The file location, numbering, amend-or-write-new rule, default template, optiona
 
 ## When to write an ADR
 
-The **ADR gate** has three criteria (full statement in the reference) — **hard to reverse**, **surprising without context**, **the result of a real trade-off**. All three must hold.
-
-### What qualifies
-
-- **Architectural shape** — "transactional rollback for test isolation," "append-only audit log model"
-- **Technology choices that carry lock-in** — toolchain, framework, database, deployment target
-- **Module ownership and scope decisions** — what each module owns, what it doesn't
-- **Deliberate deviations from the obvious path** — anything where a reasonable reader would assume the opposite (e.g., BIGINT PKs instead of UUIDs, deferred JSONB by access pattern)
-- **Constraints not visible in the code** — compliance, partner contracts, organizational requirements
-- **Rejected alternatives when the rejection is non-obvious** — record what you considered and why you didn't pick it, otherwise someone will suggest it again later
-
-### What doesn't qualify
-
-- Bug fixes (commit messages own this)
-- Reversible style choices (CLAUDE.md or formatter config own this)
-- Personal-preference workflow choices (memory file owns this)
-- Routine feature additions (PR descriptions own this)
+The **ADR gate** has three criteria (full statement, with worked examples of what qualifies and what doesn't, in the reference) — **hard to reverse**, **surprising without context**, **the result of a real trade-off**. All three must hold; open the reference's examples when the gate's outcome on the candidate isn't obvious from the criteria alone.
 
 ## Workflow
 
 ### 1. Check for an owning record
 
-Search the ADR directory for a record that already owns this ground, per the amend-or-write-new rule in [references/adr-format.md](references/adr-format.md). This runs **before** the gate, because the gate's outcome means different things depending on what you find.
+Search the ADR directory for a record that already owns this ground, per the amend-or-write-new rule. This runs **before** the gate, because the gate's outcome means different things depending on what you find.
 
 ### 2. Apply the gate
 
-Apply the gate per [references/adr-format.md](references/adr-format.md). With an owning record in hand, the gate picks the amendment form per the reference. With none, a failing gate means stop — don't write the ADR, and tell the user why. Say which case you're in before writing anything.
+With an owning record in hand, the gate picks the amendment form per the reference. With none, a failing gate means stop — don't write the ADR, and tell the user why. Say which case you're in before writing anything.
 
 ### 3. Draft
 
-Number, slug, and draft per [references/adr-format.md](references/adr-format.md); default form is 1-3 sentences, and optional sections are added only when they earn their place. Rationale prose follows the ADR-rationale register — call the Skill tool with `writing-for-humans` at the first write if it isn't already live.
+Number, slug, and draft per the reference. Rationale prose follows the ADR-rationale register — call the Skill tool with `writing-for-humans` at the first write if it isn't already live.
 
 ### 4. Show and save
 
-Show the draft to the user. Once approved, save it into the scheme the preflight resolved — `docs/adr/<NNNN>-<slug>.md` by default.
+Show the draft to the user. Once approved, save it into the scheme the preflight resolved — `docs/adr/<NNNN>-<slug>.md` by default. When step 1 found an owning record and the new content earned its own number, also add the forward pointer at the amended record's top — the write isn't done until both files changed.

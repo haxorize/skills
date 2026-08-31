@@ -1,6 +1,6 @@
 # WCAG 2.2 success criteria, levels A and AA
 
-One row per criterion: number, name, level. Nothing else lives here — a technique, a note, or an explanation added to a row is the digest this file exists not to be. A WCAG 2.2 criterion absent from this list is AAA. Cap: 55 rows, one per criterion; the list grows only when the standard does.
+One row per criterion: number, name, level. Beyond this header, nothing else lives here — a technique, a note, or an explanation added to a row is the digest this file exists not to be. A WCAG 2.2 criterion absent from this list is AAA, and AAA is AAA: naming an AAA criterion as the reason a change fails AA, or folding AAA items into an AA sign-off, misstates the target both ways. Cap: 55 rows, one per criterion; the list grows only when the standard does.
 
 | SC | Name | Level |
 | --- | --- | --- |

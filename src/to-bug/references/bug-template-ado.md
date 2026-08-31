@@ -10,66 +10,17 @@ Use this when publishing a Bug work item to Azure DevOps via `az boards work-ite
 | Description | `System.Description` | Body markdown converted to HTML | `--description @<file>` |
 | Repro Steps | `Microsoft.VSTS.TCM.ReproSteps` | Repro markdown converted to HTML | `--fields "Microsoft.VSTS.TCM.ReproSteps=@<file>"` |
 | Severity | `Microsoft.VSTS.Common.Severity` | One of `1 - Critical`, `2 - High`, `3 - Medium`, `4 - Low` | `--fields "Microsoft.VSTS.Common.Severity=..."` |
-| System Info | `Microsoft.VSTS.TCM.SystemInfo` | Environment details (optional) | `--fields "Microsoft.VSTS.TCM.SystemInfo=@<file>"` |
 | Area Path | `System.AreaPath` | From CLAUDE.md `Area path:` | `--area` |
 | Iteration Path | `System.IterationPath` | From CLAUDE.md `Iteration:` | `--iteration` |
 | State | `System.State` | From CLAUDE.md `Default state:` (typically `New`) | `--fields "System.State=..."` |
+| System Info | `Microsoft.VSTS.TCM.SystemInfo` | Environment details (optional) | `--fields "Microsoft.VSTS.TCM.SystemInfo=@<file>"` |
 | Parent (Feature, optional) | (relation) | From `--parent <feature-id>` arg | post-create: `az boards work-item relation add --id <bug-id> --relation-type Parent --target-id <feature-id>` |
 
-Before first publish against a new ADO project, verify the field shape once: run `az boards work-item show --id <existing-bug-id> --output json --query 'fields'` and confirm the reference names above are present.
+Before first publish against a new ADO project, verify the field shape once per [ado-html-transport.md](ado-html-transport.md).
 
-## Description (markdown body — converted to HTML before publishing)
+## Description
 
-The body holds the bug shape minus the repro steps (which live in the dedicated `Microsoft.VSTS.TCM.ReproSteps` field):
-
-```markdown
-## Expected behavior
-
-What should happen. One paragraph or short bullet list. Use canonical terms from `DOMAIN.md`.
-
-## Actual behavior
-
-What happens instead. Concrete, observable. Include error messages, stack traces, or screenshots inline.
-
-## Scope of impact
-
-Who is affected and how broadly.
-
-- **Users affected:** all / segment description / single tenant / specific account
-- **Frequency:** every request / intermittent (estimate) / specific trigger only
-- **Workaround:** none / steps if one exists
-- **First seen:** version / commit / date
-
-## Regression risk
-
-Whether this bug indicates a regression and what the fix may destabilize.
-
-- **Regression?** yes (last known good: <version/date>) / no / unknown
-- **Adjacent surfaces at risk:** modules or behaviors the fix could touch unexpectedly
-
-## Layers touched
-
-Which integration layers the fix is expected to cross. Drives `from-ticket` cold-start when the Bug is loaded for implementation. Describe the behavioral change at each layer in one phrase; mark absent layers `none`. No file paths, no function names, no code snippets.
-
-- **Data:** schema/migration/seed work expected (or `none`)
-- **Backend:** endpoints/handlers/services (or `none`)
-- **Client:** generated client / hooks / state (or `none`)
-- **UI:** components / routes / forms (or `none`)
-- **Tests:** interface / integration coverage to add (or `none`)
-```
-
-## Repro Steps (ADO field)
-
-Author the repro steps as a Markdown numbered list, converted to HTML before publishing:
-
-```markdown
-1. Sign in as `<role>` at `<environment URL>`.
-2. Navigate to `<page or route>`.
-3. Perform `<specific action>` with `<input or payload>`.
-4. Observe `<actual outcome>` instead of `<expected outcome>`.
-```
-
-Be precise about inputs, environments, and the observed failure.
+Author the body as Markdown from the skeleton in [bug-body.md](bug-body.md) — every skeleton section except the repro, which lives in the dedicated `Microsoft.VSTS.TCM.ReproSteps` field (authored per the skeleton's repro-steps block, converted to HTML on its own).
 
 ## Severity defaults
 
@@ -80,14 +31,11 @@ Used when CLAUDE.md declares no `## Severity definitions` section:
 - **3 - Medium** — broken non-core flow, or core flow with a workaround.
 - **4 - Low** — cosmetic, edge-case, or minor inconvenience.
 
-## Markdown → HTML conversion
+## Create call
 
-ADO rich-text fields render HTML by default; Markdown rendering is an opt-in per-org setting. To stay portable, convert at publish time:
+Convert each artifact per [ado-html-transport.md](ado-html-transport.md), then:
 
 ```bash
-pandoc -f markdown -t html description.md > description.html
-pandoc -f markdown -t html repro.md > repro.html
-
 az boards work-item create \
   --type "Bug" \
   --title "$TITLE" \
@@ -100,17 +48,6 @@ az boards work-item create \
   --area "$AREA_PATH" \
   --iteration "$ITERATION"
 ```
-
-`$TAGS` is the derived tag set — see [work-item-tags.md](work-item-tags.md); omit the `System.Tags` pair when no tags derive. Also assign `TITLE` in single quotes (`TITLE='…'`, an apostrophe inside written `'\''`) — the title is the one value that still crosses the shell, and a backtick or `$` inside double quotes is expanded there. `@<file>` transport and its read-back are in [publishing.md](publishing.md) `## Transport safety`.
-
-Or, if `pandoc` is not available, a Python one-liner:
-
-```bash
-python3 -c "import sys, markdown; print(markdown.markdown(sys.stdin.read()))" < description.md > description.html
-python3 -c "import sys, markdown; print(markdown.markdown(sys.stdin.read()))" < repro.md > repro.html
-```
-
-If neither `pandoc` nor the Python `markdown` module is present, stop and ask for one to be installed — never publish raw Markdown into an HTML-rendering field.
 
 ## Notes
 

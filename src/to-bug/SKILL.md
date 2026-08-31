@@ -7,7 +7,7 @@ requires: writing-for-humans, work-item-shape
 
 # To Bug
 
-No interviewing — synthesis only. Run `/grill-me` first if repro, scope, or regression context is thin.
+No interviewing — this is a synthesis-only skill. Run `/grill-me` first if context is thin.
 
 Bugs are *not* parented under Stories — the fix is the slice. They can be filed parentless or attached to a Feature directly.
 
@@ -21,7 +21,7 @@ This tier's evidence sections are `## Repro`, `## Expected behavior`, and `## Ac
 
 ### 1. Resolve tracker
 
-Resolve the tracker in one of three modes — **Declared**, **Bootstrap-on-ask**, or **No-repo CLI-only**. See [references/tracker-resolution.md](references/tracker-resolution.md) for each mode's behavior and the required fields.
+Resolve the tracker per [references/tracker-resolution.md](references/tracker-resolution.md).
 
 Title prefix: if the tracker block declares `Title prefix:`, prepend it (with a trailing space) to the drafted title before publishing.
 
@@ -44,10 +44,7 @@ Look at the modules implicated by the actual behavior. Use canonical terms from 
 Pick the severity from conversation context. If unclear, prompt the user with the team's severity scale.
 
 - **ADO:** values are `1 - Critical` / `2 - High` / `3 - Medium` / `4 - Low`. Use the team's `## Severity definitions` section in CLAUDE.md if present; otherwise the ADO defaults.
-- **GitHub:** values come from CLAUDE.md's severity-labels block — a `## Bug severity labels` section (the canonical heading; an existing `## Severity labels` section also counts) holding a `Scale:` line and a `Labels:` line. If no such section exists, run the bootstrap-on-ask flow:
-  - Ask the user for the team's severity scale (default offer: `critical, high, medium, low` mapping to labels `sev:critical`, `sev:high`, `sev:medium`, `sev:low`).
-  - Preview an appended `## Bug severity labels` section (`- Scale:` and `- Labels:` lines); write to CLAUDE.md on confirmation. **Always append, never overwrite** — and never append when a section under either name already exists.
-  - In no-repo CLI-only mode, save the resolved scale to memory keyed by tracker context (e.g., `Severity labels — work-backlog`).
+- **GitHub:** values come from CLAUDE.md's severity-labels block — a `## Bug severity labels` section (the canonical heading; an existing `## Severity labels` section also counts) holding a `Scale:` line and a `Labels:` line. If no such section exists, run the bootstrap-on-ask flow in [references/bug-template-github.md](references/bug-template-github.md) `## Labels`.
 
 ### 5. Draft the bug
 
@@ -82,15 +79,7 @@ Before publishing on GitHub, read repo visibility from the host:
 gh repo view --json visibility --jq '.visibility'
 ```
 
-Only where `gh` cannot answer (not authenticated to this host) fall back to the `Visibility:` line in `CLAUDE.md`'s `Issue tracker:` block, where `onboard-repo` wrote one — the line was written once and can go stale; the host cannot. `PUBLIC` from `gh` (`public` on the line) runs the scan below; `INTERNAL` and `PRIVATE` (`internal`, `private`) do not, and the check ends here. Scan the rendered body and repro steps for terms suggesting non-public content. Match case-insensitive against this keyword list:
-
-- `customer`, `production`, `prod-`, `internal`, `corp`
-- `credential`, `password`, `secret`, `api[_-]?key`
-- The literal token `Bearer ` (with trailing space — auth-header prefix)
-- The literal prefix `-----BEGIN` (PEM-encoded key marker)
-- Hostname shapes: `*.internal.*`, `*.corp.*`
-
-On match, surface the matched terms and ask the user to confirm or abort. **Never block** — sometimes the term is benign (e.g., the word "customer" in a public-facing app description). The warning is informational; the user decides.
+Only where `gh` cannot answer (not authenticated to this host) fall back to the `Visibility:` line in `CLAUDE.md`'s `Issue tracker:` block, where `onboard-repo` wrote one — the line was written once and can go stale; the host cannot. Then, on `PUBLIC` (`public` on the line), run the keyword scan in [references/public-repo-scan.md](references/public-repo-scan.md) — it warns and asks, never blocks. `INTERNAL` and `PRIVATE` (`internal`, `private`) end the check here.
 
 ADO instances are typically internal; this check is silently skipped on ADO.
 
@@ -103,32 +92,12 @@ Iterate until approved.
 The **Publish gate** in [references/publishing.md](references/publishing.md) holds first.
 
 - **GitHub:** `gh issue create --title "..." --body-file <draft>` with `--label bug --label <severity-label>` plus any default labels from CLAUDE.md. Parent linking via template `Parent: #N` reference if `--parent` was provided. **Before creating the issue,** run the label precheck in [references/publishing.md](references/publishing.md) — the labels about to be applied here are `bug`, the chosen severity label, and any `Default labels:`. If `--parent` was provided, add the new issue as a native sub-issue of the parent Feature after create — see [references/github-sub-issues.md](references/github-sub-issues.md).
-- **ADO:** `az boards work-item create --type "Bug" --title "..." --description @description.html` with project / area path / iteration / state from CLAUDE.md, plus `--fields "Microsoft.VSTS.TCM.ReproSteps=@repro.html" "Microsoft.VSTS.Common.Severity=<n - Label>"`. Both rich-text fields expect HTML — convert each Markdown source to a file and pass its path with the `@` prefix. If `--parent` was provided, link via `az boards work-item relation add --id <bug-id> --relation-type Parent --target-id <feature-id>` after the create call. Merge `System.Tags` into the create call's `--fields` — see [references/work-item-tags.md](references/work-item-tags.md).
+- **ADO:** publish with the create call in [references/bug-template-ado.md](references/bug-template-ado.md) — description and repro steps into their two rich-text fields, severity from step 4, project / area path / iteration / state from CLAUDE.md, each artifact converted on its own per the template. If `--parent` was provided, link via `az boards work-item relation add --id <bug-id> --relation-type Parent --target-id <feature-id>` after the create call. Merge `System.Tags` into the create call's `--fields` — see [references/work-item-tags.md](references/work-item-tags.md).
 
-If a required CLAUDE.md field is missing, fail fast with a clear "add this to CLAUDE.md" message. A create call blocked on auth or policy follows `## When the write is blocked` in [references/publishing.md](references/publishing.md) — don't loop on auth. Apply the **transport safety** rules in [references/publishing.md](references/publishing.md) to every create and retry.
+Missing required CLAUDE.md fields, writes blocked on auth or policy (don't loop on auth), and **transport safety** on every create and retry all follow [references/publishing.md](references/publishing.md) — `## When a required field is missing`, `## When the write is blocked`, `## Transport safety`.
+
+On publish, run `work-item-shape`'s **Naming drift** rule against sibling items under the parent Feature (skip when parentless).
 
 ## Update mode
 
-`--update <bug-id>` short-circuits the create flow and patches an existing Bug in place. Skips tracker resolution (uses the Bug's existing project), parent resolution (already linked or parentless), and severity resolution (already set; surface as cold-start context, prompt only on explicit change). Codebase exploration runs only when the proposed change expands the implicated layers.
-
-### Cold-start
-
-Fetch the current Bug body, repro steps, severity, and parent (if any):
-
-- **ADO:** `az boards work-item show <bug-id> --output json --expand relations` — pull `System.Description`, `Microsoft.VSTS.TCM.ReproSteps`, `Microsoft.VSTS.Common.Severity`, `System.State`, and the parent relation (`System.LinkTypes.Hierarchy-Reverse`).
-- **GitHub:** `gh issue view <issue-number> --json body,title,labels,state`. Severity is read from the `sev:*` label; type confirmed by the `bug` label.
-
-### Self-review (in `--update` mode)
-
-Re-run all step 6 checks. The public-repo warning (step 7) re-runs if the body or repro changed and the tracker is GitHub.
-
-### Patch
-
-- **ADO:** convert Markdown → HTML for description and repro, each to a file, then `az boards work-item update --id <bug-id> --description @description.html --fields "Microsoft.VSTS.TCM.ReproSteps=@repro.html"`. When severity changed, add `"Microsoft.VSTS.Common.Severity=<n - Label>"` inside the same `--fields` list — never a second `--fields` flag, which replaces the first.
-- **GitHub:** `gh issue edit <issue-number> --body-file <draft>`. Severity-label changes are applied via `gh issue edit --remove-label <old> --add-label <new>` only if explicitly changed.
-
-State is never transitioned by `to-bug --update` — that's the team's process on the board.
-
-### Naming drift
-
-Run `work-item-shape`'s **Naming drift** rule over the patch; the immediate fix it offers is the sibling's `--update`.
+`--update <bug-id>` patches an existing Bug in place. See [references/bug-update-mode.md](references/bug-update-mode.md) for what the mode skips, cold-start commands, self-review, patch commands, the no-state-transition rule, and naming drift.

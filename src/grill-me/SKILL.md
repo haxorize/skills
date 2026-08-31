@@ -20,8 +20,8 @@ Before the first question, check the working directory for `DOMAIN.md` or an ADR
 
 Use [references/adr-format.md](references/adr-format.md) as the single source of truth for the inline write — path, numbering, the amend-or-write-new search, and the template all live there. The standalone `adr` skill stays reserved for outside-grill use — a deliberate single record after a code review, mid-implementation, and the like — and follows the same format doc, so inline and standalone records land in one shared sequence.
 
-The standalone path's other rules bind inline as well. Before writing, check for an **owning record** — the amend-or-write-new rule in the format doc decides whether this is a new file or a dated amendment; run the search before the write, not after a duplicate exists. Write the rationale prose in the human-facing register — call the Skill tool with `writing-for-humans` at the first write if it isn't already live.
+The standalone path's other rules bind inline as well: the owning-record search before a new number (the amend-or-write-new rule above), the forward pointer a superseding record owes, and the human-facing register for the rationale prose — call the Skill tool with `writing-for-humans` at the first write if it isn't already live.
 
 ## Answers overwrite, they don't accumulate
 
-When a round's answer invalidates something an artifact under revision already says — a plan paragraph or a draft body — **replace** the invalidated statement where it stands; never append the correction beside it and leave the contradiction for a later reader.
+When a round's answer invalidates something an artifact under revision already says — a plan paragraph or a draft body — **replace** it where it stands, never append the correction beside it — the same move `domain-modeling` makes on a `DOMAIN.md` entry, stated here for every artifact this skill revises.

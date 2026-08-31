@@ -1,11 +1,11 @@
 ---
 name: writing-for-humans
-description: Writing conventions for human-facing prose — ticket and work-item bodies, docs and READMEs, ADR rationale, session summaries, incident reports, release notes, error messages, and outbound messages drafted for the user. Use when writing or editing prose whose job is to be understood by a person, when auditing a draft for AI tells, or when picking the register for an artifact. Not for agent-consumed instruction files (`writing-for-agents` owns those) and not for code.
+description: Writing conventions for human-facing prose — ticket and work-item bodies, docs and READMEs, ADR rationale, session summaries, incident reports, release notes, error messages, outbound messages drafted for the user, and the narration, publish confirmations, and reports the user reads in the terminal. Use when writing or editing prose whose job is to be understood by a person, when narrating work or confirming a publish back to the user, when auditing a draft for AI tells, or when picking the register for an artifact. Not for agent-consumed instruction files (`writing-for-agents` owns those) and not for code.
 ---
 
 # Writing for Humans
 
-Human-facing prose exists to be **understood** — that is the boundary with `writing-for-agents`, which owns documents that exist to be *obeyed* (skill bodies, CLAUDE.md, references). The test is the document's function, not its reader: agents read ADRs too, but they read them the way a human does, for comprehension. Rationale, tickets, definitions, and summaries live here.
+Human-facing prose exists to be **understood** — that is the boundary with `writing-for-agents`, which owns documents that exist to be *obeyed* (skill bodies, CLAUDE.md, references). The test is the prose's function, not its reader: agents read ADRs too, but they read them the way a human does, for comprehension. Rationale, tickets, definitions, summaries, and the prose a run addresses to the user live here.
 
 Serve the reader, never the detector. Don't try to make text score as human-written, and don't guess whether a text was AI-written — detectors guess; a named pattern with a quoted line is evidence the reader can check. The AI tells this skill hunts are banned because they are *clarity* failures, not because of who tends to produce them.
 
@@ -41,6 +41,11 @@ Admit a row only with a named typist — the role that writes the artifact, and 
 | Outbound as the user — email, Teams message, memo, proposal, questionnaire | The user's own voice, matched from a writing sample they supply, with their own sentences kept over composed ones; **no em dashes, none**, and the full tell catalog swept at maximum strictness. The rules are in [references/outbound-as-the-user.md](references/outbound-as-the-user.md) — open it before drafting |
 
 **The dash sweep** is the mandatory last step on an outbound draft; the global rule `~/.claude/rules/outbound-dash-sweep.md` owns it and fires with no skill loaded.
+
+## Referring to work items
+
+In anything the human reads — narration, publish confirmations, reports — a work item goes by its **title**, the ID and link riding inside (`[Rate-limit login](url) (#42)`), never by a bare ID: a wall of `#42, #43, #44` is illegible.
+
 
 This discipline deletes persuasion by design. Marketing, brand, and campaign copy are out of scope — say so and offer to apply it to the factual parts only.
 

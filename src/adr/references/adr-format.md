@@ -62,7 +62,25 @@ Before writing, confirm out loud which of the three criteria the decision meets,
 2. **Surprising without context** — a future reader (or AFK agent) will look at the code and wonder "why did they do it this way?"
 3. **Result of a real trade-off** — there were genuine alternatives and one was picked for specific reasons. Probe this one with the **opposite test**: state the rejected alternative as a decision of its own, and check that a rational team could have picked it. The opposite is the alternative someone argued for, never the claim negated — "validate at the handler" against "validate at the boundary and trust callers inward" is a trade-off two teams really do split on, while "we chose to write the feature" has no opposite anyone would defend, and describes the work rather than deciding anything.
 
-If any one is missing, do not write the ADR — stop and tell the user why.
+If any one is missing and no record owns the ground, do not write the ADR — stop and tell the user why. With an owning record, a failing gate routes to the in-place amendment per `## Amend or write new`, not to a stop.
+
+Worked examples, for when the gate's outcome on a candidate isn't obvious from the criteria alone.
+
+What qualifies:
+
+- **Architectural shape** — "transactional rollback for test isolation," "append-only audit log model"
+- **Technology choices that carry lock-in** — toolchain, framework, database, deployment target
+- **Module ownership and scope decisions** — what each module owns, what it doesn't
+- **Deliberate deviations from the obvious path** — anything where a reasonable reader would assume the opposite (e.g., BIGINT PKs instead of UUIDs, deferred JSONB by access pattern)
+- **Constraints not visible in the code** — compliance, partner contracts, organizational requirements
+- **Rejected alternatives when the rejection is non-obvious** — record what you considered and why you didn't pick it, otherwise someone will suggest it again later
+
+What doesn't qualify:
+
+- Bug fixes (commit messages own this)
+- Reversible style choices (CLAUDE.md or formatter config own this)
+- Personal-preference workflow choices (memory file owns this)
+- Routine feature additions (PR descriptions own this)
 
 ## Rejections are decisions
 

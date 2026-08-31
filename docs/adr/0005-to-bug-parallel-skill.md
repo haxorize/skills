@@ -8,7 +8,7 @@ The existing creation skills (`to-feature`, `to-story`, `to-tasks`) target the F
 
 Add `to-bug` as a parallel skill alongside the existing creation trio, with `--update <bug-id>` as a maintenance mode (per ADR-0003). The skill follows the same dispatch pattern as the rest of the suite (CLAUDE.md `Issue tracker:` block; per-tracker templates):
 
-- **`bug-template-ado.md`** — maps to ADO's first-class Bug work-item type. Body sections: Repro / Expected / Actual / Scope of impact / Regression risk. Custom fields: `Microsoft.VSTS.Common.Severity`, `Microsoft.VSTS.TCM.ReproSteps`. Native Bug state machine (with resolution reasons: Fixed / Duplicate / Won't Fix / Deferred / By Design).
+- **`bug-template-ado.md`** — maps to ADO's first-class Bug work-item type. Body sections: Repro / Expected / Actual / Scope of impact / Regression risk. Custom fields: `Microsoft.VSTS.Common.Severity`, `Microsoft.VSTS.TCM.ReproSteps`. Native Bug state machine (with resolution reasons: Fixed / Duplicate / Won't Fix / Deferred / By Design). — amended: see Amendments 2026-08-31
 - **`bug-template-github.md`** — GitHub has no Bug type. Body holds the same sections as Markdown (no field mapping). Apply `bug` label. Severity goes via labels per a `Severity labels:` block in CLAUDE.md.
 
 Bugs typically skip the Task layer — the fix *is* the slice. `to-tasks --reconcile` does not apply to Bug parents. `from-work-item` (ADR-0004) accepts Bug IDs and uses a Bug-shaped load.
@@ -32,3 +32,4 @@ GitHub bug filings on public repositories are detected via `gh repo view --json 
 ## Amendments
 
 - **2026-08-23** — The GitHub severity-labels lookup moves from a `Severity labels:` key block to a Markdown section: `to-bug` reads a `## Bug severity labels` section (the canonical heading, and what the bootstrap now writes) holding `Scale:` and `Labels:` lines, and also accepts an existing `## Severity labels` section, so repos bootstrapped under the key form keep working once their block is reheaded rather than being re-bootstrapped. `README.md`, `DOMAIN.md`, and the two bug templates carry the section form; ADR-0011's mention of the key form stands as written.
+- **2026-08-31** — The state-machine clause above is narrowed to description: `bug-template-ado.md` names ADO's native state machine as context and maps no resolution-reason field, because `to-bug --update` never transitions state (that's the team's process on the board) and no flow in the suite writes a resolution reason. The 2026-08-30 tightening round's ADR-conformance lens (ledger row AC-37) found the mapping ruled here implemented nowhere; the record over-specified, and the template's scope is the field mapping it actually publishes.

@@ -17,12 +17,10 @@ Parse:
 
 ## AC ID handling on revision
 
-AC IDs are append-only across the active list and `## Removed acceptance criteria`:
+ID mechanics — append-only, next unused integer, the removed-criteria record — are [ac-ids.md](ac-ids.md)'s. The revision-specific rule:
 
 - **Edit-in-place** keeps the same AC ID. Default for wordsmithing or tightening.
-- **Substantive change** (semantics shift, not wording): prompt the user — edit-in-place (keep ID) or remove+add. Remove+add moves the old AC to `## Removed acceptance criteria` with strike-through, the removal date, and a one-line reason. The new AC takes the next unused integer past `max(active ∪ removed)`.
-- **New AC** always takes the next unused integer.
-- **Removed AC** moves to `## Removed acceptance criteria` (description body, not the AC field). Never reuse its ID; never renumber gaps.
+- **Substantive change** (semantics shift, not wording): prompt the user — edit-in-place (keep ID) or remove+add per the ID mechanics.
 
 ## Self-review
 
@@ -43,7 +41,7 @@ If the update adds or removes ACs, changes the module list, or reshapes layers, 
 
 ## Patch
 
-- **ADO:** Convert Markdown → HTML per step 9 (each artifact to a file, its path passed as `@<file>`). Always patch the title — scope changes that trigger `--update` frequently invalidate the prior title:
+- **ADO:** Convert Markdown → HTML using the pandoc or Python one-liner from [ado-html-transport.md](ado-html-transport.md) (each artifact to a file, its path passed as `@<file>`). Always patch the title — scope changes that trigger `--update` frequently invalidate the prior title:
   ```bash
   az boards work-item update --id <story-id> \
     --title "<updated-title>" \

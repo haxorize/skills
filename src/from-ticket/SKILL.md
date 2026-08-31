@@ -1,6 +1,7 @@
 ---
 name: from-ticket
 description: Cold-start loader that pulls a published ticket back into the conversation as implementation context. Auto-detects Task / Story / Bug from the tracker and loads the right context for that type, then hands off for implementation. Refuses Feature / Epic IDs (containers aren't tickets — decompose first).
+requires: writing-for-humans
 disable-model-invocation: true
 ---
 
@@ -12,7 +13,7 @@ Detects the work-item type and loads the right shape; hands off to `implement` o
 
 ### 1. Resolve tracker
 
-Resolve the tracker in one of three modes — **Declared**, **Bootstrap-on-ask**, or **No-repo CLI-only**. See [references/tracker-resolution.md](references/tracker-resolution.md) for each mode's behavior and the required fields.
+Resolve the tracker per [references/tracker-resolution.md](references/tracker-resolution.md), in **Declared** mode only — a reader never bootstraps: with no tracker block, ask which tracker holds the ticket for this load and write nothing (a publisher run bootstraps the block).
 
 If the user passed a tracker URL instead of a bare ID, infer the tracker from the URL host and proceed. If they passed `latest`, take the ID from the newest handoff for this repo in the landing zone `handoff` defines (its "Where to write it" section fixes the directory and the handoff filename; `handoff` names work items with their ID attached) and say which file and ID you resolved before loading.
 
@@ -40,41 +41,12 @@ Do not load any context; do not hand off. This is the loader's only refusal — 
 
 ### 4. Load by type
 
-Branch on the detected type. Each branch loads the artifact, its parent context, and the project knowledge needed to implement.
-
-#### Task
-
-- **Task body:**
-  - **ADO:** `az boards work-item show <task-id> --output json --expand relations` — `System.Description`, the parent Story relation (`System.LinkTypes.Hierarchy-Reverse`), and in-project blocker relations (`System.LinkTypes.Dependency-Reverse` = Predecessor blockers; `System.LinkTypes.Dependency-Forward` = Successor dependents).
-  - **GitHub:** body already fetched; resolve parent via the `Parent: #N` line.
-- **Blockers** — surface what must land first, from both sources:
-  - **In-project:** ADO reads the `Predecessor` relations above; GitHub reads the `Blocked by: #N` lines in the Task body (GitHub has no native blocker relation — these stay as body text). Resolve each blocker ID to its title (one `gh issue view <n> --json title` / `az boards work-item show <id>` per blocker) — the summary reports blockers by name.
-  - **Sibling-repo:** both trackers read the `## Blocked by` body annotation (`Blocked by: ../<repo>`). ADO relations carry only in-project deps — sibling-repo blockers live in the body annotation on either tracker.
-- **Parent Story:** fetch description + AC field. Filter active ACs to those listed in the Task's `## Covers` line — the rest aren't this Task's concern.
-- **Parent Feature (one level up):** fetch title, Problem / Goals, and the story map's `### Naming consistency` section — broader context plus the canonical shared names (a deferred sibling rename surfaces here), not implementation guidance.
-- **`## Layers touched`** from the Task body. Drives ADR match below.
-
-#### Story
-
-- **Story body:**
-  - **ADO:** `az boards work-item show <story-id> --output json --expand relations` — `System.Description`, `Microsoft.VSTS.Common.AcceptanceCriteria`, the parent Feature relation, and dependency relations (blockers as `System.LinkTypes.Dependency-Reverse`, dependents as `System.LinkTypes.Dependency-Forward`). Surface blocker Stories as cold-start context.
-  - **GitHub:** body already fetched; resolve parent via the `Parent: #N` line.
-- **All active ACs:** load the full AC list. The Story-level loader does not filter by `## Covers` — there's no per-Task narrowing yet.
-- **Parent Feature:** title, Problem / Goals, and the story map's `### Naming consistency` section — the canonical shared names; a deferred sibling rename surfaces here.
-- **`## Layers touched`** from the Story body. Drives ADR match.
-
-#### Bug
-
-- **Bug body:**
-  - **ADO:** `az boards work-item show <bug-id> --output json --expand relations` — `System.Description`, `Microsoft.VSTS.TCM.ReproSteps`, `Microsoft.VSTS.Common.Severity`, `System.State`, and the parent relation if present.
-  - **GitHub:** body already fetched; severity from `sev:*` label; parent from `Parent: #N` if present.
-- **Parent Feature** (if linked): title and Problem / Goals. Bugs may be parentless — skip silently.
-- **`## Layers touched`** from the Bug body. Drives ADR match.
+Branch on the detected type — the branches are mutually exclusive, so open only the detected type's section in [references/load-by-type.md](references/load-by-type.md). Each branch loads the artifact (body, and per type: blockers, parent context, active ACs), and its `## Layers touched` drives the ADR match in step 6.
 
 **Comments (all types).** Published bodies deliberately omit design specifics, so when no ADR records an interface sketch or a rejected alternative, a comment on the ticket is often its only durable home (`review-architecture` files its sketch as a comment when the user declines an ADR; humans leave them too). A cold start that skips comments loads the behavioral spec but misses the concrete design record it's meant to implement against.
 
 - **GitHub:** comments arrived with the step 2 fetch (`comments` field). No extra call.
-- **ADO:** comments need their own call, since `az boards work-item show` never returns them at any `--expand` level: `az devops invoke --area wit --resource comments --route-parameters project="{Project}" workItemId={id} --api-version 7.1-preview` (comment text is HTML; if the org rejects the bare version, append the preview revision the error names, and follow `continuationToken` paging if present). If the call still errors, report comments as unavailable and continue — never fail the load over them.
+- **ADO:** comments need their own call — the invocation, its HTML payload, and its never-fail-the-load error handling are in [references/load-by-type.md](references/load-by-type.md) `## ADO comments fetch (all types)`.
 
 Triage what came back: surface **design-record comments** (interface sketches, rejected shapes, grill/design decisions — typically fenced code plus rationale) in full as implementation context, alongside the body's ACs. List other comments one line each (author, date, gist) — status chatter and review back-and-forth are context the user can pull on, not part of the load. A ticket with no comments skips this silently.
 
@@ -106,7 +78,8 @@ Do not block. The user decides whether the layer mismatch is intentional (cross-
 
 ### 8. Hand off
 
-Present a concise summary of what was loaded:
+Present a concise summary of what was loaded. The summary names every work item by its title with the ID riding inside, never by a bare ID — call the Skill tool with `writing-for-humans` before writing it if it isn't already live; if you don't see a `Launching skill: writing-for-humans` line, stop and call it again.
+
 
 ```text
 Loaded {type} #{ID}: "{title}"
@@ -126,4 +99,4 @@ The skill itself doesn't build — it loads context and stops. Both are user-inv
 
 ## Notes
 
-- `from-ticket` does not modify the ticket or any sibling work item. The only file write is an appended `## Issue tracker` block to `CLAUDE.md` when the Bootstrap-on-ask flow runs. Revisions to tickets go through `to-story --update` / `to-tasks --update` / `to-bug --update`.
+- `from-ticket` does not modify the ticket or any sibling work item, and writes no files — it resolves the tracker in Declared mode only and never bootstraps a block. Revisions to tickets go through `to-story --update` / `to-tasks --update` / `to-bug --update`.

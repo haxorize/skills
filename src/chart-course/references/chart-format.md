@@ -47,6 +47,8 @@ Chart-type: <grilling | prototype | research | errand>
 <the decision or investigation this ticket resolves>
 ```
 
+When two people answer a ticket's question differently, its `## Question` states both positions and the evidence that would decide between them — a measurement, a document, a person with the authority — so the ticket's next move is to fetch that evidence (an inline research subagent for a fact the repo or the web holds; an Errand when a person holds it), never to re-argue the positions.
+
 The answer never lives in the body — it arrives as a **resolution comment** when the ticket closes:
 
 ```markdown
@@ -59,9 +61,9 @@ Assets: <links to any prototype, document, or branch produced — linked, never 
 
 ## ADO body handling
 
-ADO description and comment fields expect HTML. Write the converted HTML to a file and pass its path with the CLI's `@` prefix (`--description @<file>`) — the content never crosses the shell; the commands are in [chart-tracker-ops.md](chart-tracker-ops.md) and the read-back in [publishing.md](publishing.md) `## Transport safety`.
+ADO description and comment fields expect HTML. Convert with the pandoc or Python one-liner in [ado-html-transport.md](ado-html-transport.md), write the result to a file, and pass its path with the CLI's `@` prefix (`--description @<file>`) — the content never crosses the shell; the create calls are in [chart-tracker-ops.md](chart-tracker-ops.md) and the read-back in [publishing.md](publishing.md) `## Transport safety`.
 
 ## Titles
 
-- **ADO:** bake `Chart: ` into the drafted title, then apply the CLAUDE.md tracker block's prefix resolution on top — for the map Feature, `Feature title prefix:` falling back to `Title prefix:`; for tickets, `Title prefix:`. Result: `[App] Chart: <question>`.
+- **ADO — the `Chart:` title marker.** Bake `Chart: ` into every drafted title, so nobody scanning a board mistakes a question for a build-ready Story, then apply the CLAUDE.md tracker block's prefix resolution on top — for the map Feature, `Feature title prefix:` falling back to `Title prefix:`; for tickets, `Title prefix:`. Result: `[App] Chart: <question>`.
 - **GitHub:** no marker — the `chart:*` labels carry the typing.
