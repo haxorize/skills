@@ -54,7 +54,7 @@ If the user can't decompose yet, confirm explicitly and skip to step 7. The publ
 
 ### 7. Draft the feature
 
-The draft *file* follows the global `large-write-chunking` rule; the tracker sees the body only at publish.
+The draft *file* lands per section under the mechanics `handoff` § Where to write it owns (`~/.claude/skills/handoff/SKILL.md`); the tracker sees the body only at publish.
 
 Use the appropriate template:
 - GitHub: [references/feature-template-github.md](references/feature-template-github.md)

@@ -40,7 +40,7 @@ Admit a row only with a named typist — the role that writes the artifact, and 
 | Weekly status note to a manager (any engineer, weekly) | Progress, not activity; every next step dated or marked undated; opens with what last week's note said would happen and whether it did |
 | Outbound as the user — email, Teams message, memo, proposal, questionnaire | The user's own voice, matched from a writing sample they supply, with their own sentences kept over composed ones; **no em dashes, none**, and the full tell catalog swept at maximum strictness. The rules are in [references/outbound-as-the-user.md](references/outbound-as-the-user.md) — open it before drafting |
 
-**The dash sweep** is the mandatory last step on an outbound draft; the global rule `~/.claude/rules/outbound-dash-sweep.md` owns it and fires with no skill loaded.
+**The dash sweep** is the mandatory last step on an outbound draft; the global rule `~/.claude/rules/outbound-dash-sweep.md` owns it and fires with no skill loaded, and the pipeline it runs is in [references/outbound-as-the-user.md](references/outbound-as-the-user.md) § The dash sweep.
 
 ## Referring to work items
 
@@ -82,7 +82,7 @@ Either mode: if the text already complies, say so and stop — don't churn compl
 
 ## Long documents
 
-A document longer than a few screens is written the way the global large-write rule (`~/.claude/rules/large-write-chunking.md`) prescribes.
+A document longer than a few screens lands section by section under the mechanics `handoff` § Where to write it owns (`~/.claude/skills/handoff/SKILL.md`) — where the global large-write rule (`~/.claude/rules/large-write-chunking.md`) forwards, keeping only its own gate: a truncated artifact is discarded, never shown.
 
 ## The tell catalog
 

@@ -32,7 +32,7 @@ The teaching rules for every lesson, quiz, and session. Content comes from `RESO
 
 ## Retrieval warm-up
 
-1. Build the due queue from `PROGRESS.md` — intervals and flags are defined in [workspace-format.md](workspace-format.md) — confident-wrong and hint-bottomed concepts first.
+1. Build the due queue from `PROGRESS.md` — the review-interval ladder and the flags are defined in the skill body's § After every lesson, which is always in context — confident-wrong and hint-bottomed concepts first.
 2. Free recall before anything else: "What do you remember about X?" — bracketed by a confidence rating before and after. No re-teaching yet.
 3. Map the recall: accurate / missing / misconceived. Teach only the gaps, in terms of the learner's own words.
 4. Warm-start a blank: pull adjacent knowledge → invite a wrong guess → ask a framing question → offer a cross-domain contrast, in that order.

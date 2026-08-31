@@ -30,11 +30,11 @@ If the question is genuinely ambiguous and the user isn't reachable, default to 
 
 ## When done
 
-Before any branch hands its page over, self-check the render — the check `review-architecture` § *Self-check the render before presenting* runs on its own report — because a silently mis-rendered page spends the user's turn, not yours.
+Before any branch hands its page over, self-check the render, because a silently mis-rendered page spends the user's turn, not yours: screenshot the page headless and read the PNG; fix any black box, invisible label, or illegible cell and re-render, at most three times; where a defect survives the third render, say so, **name the defect**, and present it rather than blocking; where no headless browser is available, say so and present unverified rather than blocking. That is `review-architecture` § Before you present: self-check the render's rule, stated here because this skill's branches never load that file.
 
 Two things come out of a finished prototype: the **answer** (the verdict plus the question it settled) and the **prototype itself** — the runnable evidence the answer came from. Capture both.
 
-For the prototype: with no tests and no maintenance story it doesn't belong on the main branch, but that's not a reason to delete it. Commit it to a throwaway branch (`prototype/<name>`), push, and leave a context pointer to the branch wherever the question came from — the work item that prompted it, or the handoff answer. Absorbing a validated reducer or UI direction into the real module keeps the *decision*; the branch keeps the *evidence*, one click away for anyone who wants to re-run it.
+For the prototype: with no tests and no maintenance story it doesn't belong on the main branch, but that's not a reason to delete it. A commit to a throwaway branch (`prototype/<name>`) plus a push is an outward act: queue it and offer it in the turn that reports the prototype done, per the global rule `~/.claude/rules/no-unasked-commits.md`, and once made, leave a context pointer to the branch wherever the question came from — the work item that prompted it, or the handoff answer. Absorbing a validated reducer or UI direction into the real module keeps the *decision*; the branch keeps the *evidence*, one click away for anyone who wants to re-run it.
 
 For the answer, this is a natural delegation boundary — delegate rather than inline:
 
@@ -45,4 +45,4 @@ If the user is around, that capture is a quick conversation. If not, leave the a
 
 ## Pairing with handoff
 
-A prototype is often a **detour** out of a main thread: a question came up that needs a runnable answer. `handoff` is the bridge in both directions — `/handoff` out of the full thread, open a fresh session, `/prototype` here to answer the question, then `/handoff` the *answer* (not the code) back to the original thread. See `handoff` for the fork-vs-`/compact` distinction.
+A prototype is often a **detour** out of a main thread. `handoff` is the bridge both ways: `/handoff` out, `/prototype` in a fresh session, then `/handoff` the *answer* (not the code) back — the fork-vs-`/compact` distinction is `handoff`'s to explain.

@@ -9,7 +9,7 @@ An agent session produces work faster than it produces evidence that the work is
 The mechanism is three layers, each catching what the softer one misses:
 
 - **Skills** hold the workflows and disciplines: how to stress-test a plan, publish a ticket an agent can execute, build a slice, review a diff, and land a change with every claim checked against evidence.
-- **Global rules** ([`global/rules/`](global/rules/)) bind on every turn, with no skill loaded — evidence travels with the claim, no unasked commits, recommend-and-proceed, chunked large writes, the outbound dash sweep.
+- **Global rules** ([`global/rules/`](global/rules/)) bind on every turn, with no skill loaded — evidence travels with the claim, no unasked commits, recommend-and-proceed, the truncated-artifact invariant, the outbound dash sweep.
 - **Hooks** ([`global/hooks/`](global/hooks/)) mechanically refuse the failures a script can see before a tool call runs: an in-place mass edit, a hook-bypassing git flag, a push with no matching review receipt.
 
 Decisions live in [`docs/adr/`](docs/adr/), so the why survives the session that decided it. [`docs/pitch.md`](docs/pitch.md) is the one-page version for a team deciding whether to adopt, with the on-ramp.
@@ -81,7 +81,7 @@ The first two are the same first day, different subject: `onboard-repo` wires th
 
 ### Codebase health
 
-- **`review-architecture`** — Read-only architecture review of the whole codebase: surfaces architectural friction and proposes deeper module interfaces as a prioritized, vetted report.
+- **`review-architecture`** — Read-only architecture review of the whole codebase: surfaces architectural friction and proposes deeper module interfaces as a prioritized, vetted report. Declares `adr`, so a rejected candidate's load-bearing reason gets recorded where the next review would re-propose it.
 - **`sweep-domain`** — Sweep the codebase to refresh `DOMAIN.md`. Deliberate sweep mode (inline domain capture during grilling lives in `grill-me`).
 - **`backfill-adrs`** — Sweep recent git history for un-recorded architectural decisions and write the ones that pass the gate.
 - **`verify-docs`** — Check whether a document's claims still hold, against the code and tests it describes, the running product it describes, or the sources a derived document was distilled from, with per-claim verdicts and fixes. An `evaluation-ledger` is one of the documents it sweeps: a row past its Expires date is STALE. The prose-drift sibling of `sweep-domain` (vocabulary) and `backfill-adrs` (decisions).
@@ -89,7 +89,7 @@ The first two are the same first day, different subject: `onboard-repo` wires th
 
 ### Crossing sessions & prototyping
 
-- **`handoff`** — Fork the current conversation: into a handoff document a fresh session picks up, or straight to a background agent when the work should continue unattended. The doc lands in the landing zone `handoff` defines (`claude-handoffs/` under the temp dir), stamped with the head it observed, and references durable artifacts rather than duplicating them; `review-changes` and `from-ticket latest` pick the newest up without a path.
+- **`handoff`** — Fork the current conversation: into a handoff document a fresh session picks up, or straight to a background agent when the work should continue unattended. The doc lands in the landing zone `handoff` defines (`claude-handoffs/` under the temp dir), stamped with the head it observed, and references durable artifacts rather than duplicating them; `review-changes` and `from-ticket latest` pick the newest up without a path. Its § Where to write it also owns the per-section write mechanics every multi-section document in the suite runs — an audit, an offboarding record, a rebuild contract, an evaluation memo, a work-item draft.
 - **`prototype`** — Build a throwaway prototype to answer a design question — a shareable single-file HTML demo for state/logic questions, several radically different UI variations toggleable from one route, or a stress page — one component rendered in every state real content puts it in, side by side.
 
 ### Learning
@@ -160,7 +160,7 @@ The first two are the same first day, different subject: `onboard-repo` wires th
 
 ## Repo-local skills
 
-`.claude/skills/` holds two skills that run only inside this repo and are never hoisted: **`mine-skills`** (the mining-round opener — clone, scan, inventory, read under the standing lenses, write the ledger rows a grill ratifies) and **`sweep-corpus`** (the scheduled health sweep — lint, the `doc-claims` check over the three documents that claim what the suite is, and the cross-reference and router checks — report-only against an additive `docs/health/open-findings.md`). They live outside `src/` because they name this repo's paths and procedure; `scripts/lint-skills.sh` scans them for the slash-form sweep and the evaluation-ledger vocabulary check only — its frontmatter, size and reference-link passes skip them — and the router does not route to them.
+`.claude/skills/` holds two skills that run only inside this repo and are never hoisted: **`mine-skills`** (the mining-round opener — clone, scan, and inventory the repo sources and the transcript corpus, read under the standing lenses, re-check the prior round's parks, and write the ledger rows a grill ratifies) and **`sweep-corpus`** (the scheduled health sweep — lint, the `doc-claims` check over the four documents that claim what the suite is, and the cross-reference and router checks — report-only against an additive `docs/health/open-findings.md`). They live outside `src/` because they name this repo's paths and procedure; `scripts/lint-skills.sh` scans them for the slash-form sweep and the evaluation-ledger vocabulary check only — its frontmatter, size and reference-link passes skip them — and the router does not route to them.
 
 ## Conventions
 
@@ -185,7 +185,7 @@ The first two are the same first day, different subject: `onboard-repo` wires th
 
 ## Global rules and hooks
 
-[`global/`](global/README.md) holds the rules that must hold when no skill is loaded — evidence in the same message as the claim, the three-bin recommend-and-proceed gate, no unasked commits, per-section large writes, the dash sweep on every outbound draft — and the hooks — `rename-safety`, `commit-bypass`, `review-receipt`; every `global/hooks/*.sh` carrying an `# Install note:` header, each with a selftest `lint-skills.sh` demands — for the class of failure a hook can see: a tool call whose shape, or whose precondition on disk, is wrong before it runs. Admission is strict: a rule lives there only while a skill under `src/` depends on it, named in its `Depends:` line, and lint checks both that the name resolves and that the skill cites the rule; a hook's header names its dependant, unchecked. `install.sh` symlinks the rules into `~/.claude/rules/` and **prints** the `settings.json` hook snippet; it never edits `settings.json` or `~/.claude/CLAUDE.md`. Each hook's contract and the live-checkout caveat are in `global/README.md`.
+[`global/`](global/README.md) holds the rules that must hold when no skill is loaded — evidence beside the claim, the three-bin recommend-and-proceed gate, no unasked commits, the truncated-artifact invariant (the per-section file mechanics live in `handoff` § Where to write it), the dash sweep on every outbound draft — and the hooks — `rename-safety`, `commit-bypass`, `review-receipt`; every `global/hooks/*.sh` carrying an `# Install note:` header, each with a selftest `lint-skills.sh` demands — for the class of failure a hook can see: a tool call whose shape, or whose precondition on disk, is wrong before it runs. Admission is strict: a rule lives there only while a skill under `src/` depends on it, named in its `Depends:` line, and lint checks both that the name resolves and that the skill cites the rule; a hook's header names its dependant, unchecked. `install.sh` symlinks the rules into `~/.claude/rules/` and **prints** the `settings.json` hook snippet; it never edits `settings.json` or `~/.claude/CLAUDE.md`. Each hook's contract and the live-checkout caveat are in `global/README.md`.
 
 ## Install
 

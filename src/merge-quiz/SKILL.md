@@ -32,4 +32,4 @@ Grade each answer right, wrong, or partial against the key, and say which. A mis
 
 ## 4. The result
 
-One line: `merge-quiz: passed (7/7, round 1)`, `passed (6/8, round 2)`, or `failed after 2 rounds — split recommended: <why>`. It lands in the handoff when this session writes one, or as a line beside the completion audit the build session left, so the skill's window counts passes, not fires. The approval itself stays the reader's act; this skill never merges, comments on, or approves anything.
+One line: `merge-quiz: passed (7/7, round 1)`, `passed (6/8, round 2)`, or `failed after 2 rounds — split recommended: <why>`. It lands in the handoff when this session writes one, or as a line beside the completion audit the build session left. The approval itself stays the reader's act; this skill never merges, comments on, or approves anything.

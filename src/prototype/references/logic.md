@@ -50,8 +50,6 @@ Capture the answer as `prototype`'s "When done" section describes.
 
 ## Anti-patterns
 
-- **Don't add tests.** A prototype that needs tests is no longer a prototype.
-- **Don't wire it to a real database.** State lives in memory; reload resets the world.
 - **Don't generalise.** No "what if we wanted to support X later." The prototype answers one question.
 - **Don't blur the logic and the shell together.** If the reducer references the DOM, it's no longer portable — keep the shell a thin skin over a pure module.
 - **Don't let the labels drift into code-speak.** `"Cancel subscription"`, not `"dispatch(CANCEL_SUB)"` — the moment a domain expert needs a translator, the demo stopped doing its job.

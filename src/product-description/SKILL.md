@@ -90,26 +90,20 @@ Call the Skill tool with `writing-for-humans` at the first write if it isn't alr
 - **Called with `--seed`, build the seed and stop.** The seed is the four axes in the README, the pilot document, the foundations, and the planned-areas list — nothing else. A caller that wants only this passes `--seed`; without it, build the whole set. The bound is the argument, never a guess about who called: a delegated call must never silently commit its caller to a full document set, and a direct ask must not be truncated because the model supposes it was delegated.
 - **Build the set in sequence, not all at once.** One small feature with a real interaction first, iterated until it is right, because every later document copies it; then the foundations; then the hardest area, after reading all of its state handling and deciding in the README which document owns which state.
 - **A document written from a careful read is `drafted`, not `verified`.** The read is how a description gets written; it is not how one gets confirmed.
-- **Rebuild the index from the directory rather than editing it.** List `docs/product-description/`, read each document's footer for its state, and write the table from that. An index maintained by hand is the one claim in the set nobody thinks to check.
-- **Fanning out to subagents, one document each, is offered and confirmed before it runs, never launched unasked.** Brief each per [references/subagent-brief.md](references/subagent-brief.md), with one override stated in the brief you write: that file's return contract is for a fan-out that reports, and these agents build — each **writes its single document to disk** and returns only its path and what it could not settle, never findings for you to rank. Every other rule in it binds unchanged, the secret-value and tagged-location rules included. Each gets the README, the skeleton, the pilot document, and the relevant foundation, works at that same depth, and touches nothing else. Review each against the foundations' numbers before marking it `drafted`.
+- **Rebuild the index from the directory rather than editing it** — list `docs/product-description/`, read each document's footer for its state, and write the table from that. A hand-edited index is the one claim in the set nobody thinks to check.
+- **Fanning out to subagents, one document each, is offered and confirmed before it runs, never launched unasked.** On a yes, brief and review them per [references/drafting-fan-out.md](references/drafting-fan-out.md).
 
 ## When the set is drafted: the consistency pass
 
-One word for one thing across every document, and every term of art in `DOMAIN.md`. No behavior described in two places — one document owns it, the others link. Every relative link resolves — run this from the repo root and the pass is clean only when it prints nothing:
-
-```
-find docs/product-description -name '*.md' | while read -r f; do grep -oE ']\([^)#][^)]*\)' "$f" | tr -d ']()' | while read -r l; do [ -e "$(dirname "$f")/${l%%#*}" ] || echo "$f -> $l"; done; done
-```
-
-The same interrupt rows and the same cross-cutting order in every document. The README's structure and coverage index match what is on disk.
+Run it per [references/verification-pass.md](references/verification-pass.md) § The consistency pass, which owns what the pass checks and the command it runs.
 
 ## When the product can be run
 
-Verification turns a `drafted` document into a `verified` one, and its checklist shape, priorities, and running order are in [references/verification-pass.md](references/verification-pass.md). Read it when a pass is actually going to run — a drafted set with no way to run the product stops at `drafted` and says so.
+Verification turns a `drafted` document into a `verified` one, and its checklist shape, priorities, and running order are in [references/verification-pass.md](references/verification-pass.md). Read its § The checklist onward when a pass is actually going to run — a drafted set with no way to run the product stops at `drafted` and says so. That gate is this section's only; the consistency pass and the bug-triage entry shape in the same file have their own conditions and run whether or not the product can be brought up.
 
 ## When a document turns up a defect
 
-Collect it in `docs/product-description/bug-triage.md`, one entry per root cause, deduplicated: where the user meets it, what happens against what was expected, how to reproduce it, the cause in the code with file and line, and whether it needs a fix or a product call. The document itself still states the behavior as it is, with the suspected defect under Open questions — triage is the separate record, never a correction written into the description.
+Collect it in `docs/product-description/bug-triage.md`, in the entry shape [references/verification-pass.md](references/verification-pass.md) § The bug-triage entry gives. The document itself still states the behavior as it is, with the suspected defect under Open questions — triage is the separate record, never a correction written into the description.
 
 ## Boundary
 

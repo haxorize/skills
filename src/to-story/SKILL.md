@@ -48,7 +48,7 @@ Lead with a recommendation. This is a pre-publication direction check, not inter
 
 ### 6. Draft the story
 
-The draft *file* follows the global `large-write-chunking` rule; the tracker sees the body only at publish.
+The draft *file* lands per section under the mechanics `handoff` § Where to write it owns (`~/.claude/skills/handoff/SKILL.md`); the tracker sees the body only at publish.
 
 Classify the story as user-facing (has a real user role with a stated goal) or non-user-facing (refactor, infra, observability, dependency upgrade, security hardening). User-facing stories lead the body with a Connextra user-story line (`**User story:** As a [role], I want [goal] so that [benefit].`); non-user-facing stories omit it and describe the developer-facing or operational outcome in `## User-facing behavior` instead.
 

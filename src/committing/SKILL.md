@@ -39,6 +39,10 @@ Every assertion written into a commit message, closing comment, PR body, or end-
 | "blocked by X" | the command's verbatim error output, quoted; a familiar-looking failure is not evidence of its familiar cause |
 | any count | re-measured now, per the evidence rule |
 
+**A check parses the way its consumer parses.** A hit on a pattern you spelled shows only that the search finds your spelling: read the artifact as its consumer reads it (`git interpret-trailers`, not `grep '^Co-Authored-By:'`, for a trailer — the grep misses a folded continuation line and a trailer block the parser rejects for a blank line above it), or the check is green exactly where the hole is.
+
+**Recall check: a summary of a change enumerates its commits.** Run `git log <base>..HEAD --oneline` and confirm every commit appears somewhere in the summary; a commit the summary does not reflect was missed, and the miss is reported, not absorbed. This binds any summary of a change — a commit body, a PR body, a session summary, a handoff, a status note — not only the PR-body section `commit-style.md` states it under.
+
 **A claim you cannot check does not get written.** Drop it, or write the weaker claim the evidence supports. Evidence you cannot obtain, a capture that never landed, a system you cannot reach, gets its own line marked `UNVERIFIABLE`, named as the global evidence rule in `~/.claude/rules/` requires; it never launders into a pass.
 
 The pressure is predictable: the work is at its end, the change is green, the summary reads plausibly. Plausible is not checked.

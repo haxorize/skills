@@ -1,6 +1,6 @@
 # Lesson design
 
-The visual and structural system for lessons and cheat sheets. A lesson should be beautiful — the learner returns to these — and every lesson in a workspace should read as one course, not a pile of one-offs.
+The visual and structural system for lessons and cheat sheets. Every lesson in a workspace should read as one course, not a pile of one-offs — the learner returns to these.
 
 ## One identity per workspace
 

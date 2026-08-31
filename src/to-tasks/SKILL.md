@@ -54,7 +54,7 @@ If the work isn't already grounded in the conversation, explore the touched modu
 
 ### 5. Draft vertical slices
 
-The draft *file* follows the global `large-write-chunking` rule; the tracker sees the body only at publish.
+The draft *file* lands per section under the mechanics `handoff` § Where to write it owns (`~/.claude/skills/handoff/SKILL.md`); the tracker sees the body only at publish.
 
 Each slice is one Task. Prefer many thin Tasks over few thick ones.
 

@@ -1,6 +1,6 @@
-# The register and the ladder
+# The register, the ladder, and the runs without the engineer
 
-Read this before the first register write, and again on a resume. `00-risk-register.md` is the live artifact of the whole run; this file is its layout, its states, and how far down the ladder a budget reaches.
+Read this at the consent turn, before the first register write, again on a resume, and again at `stop`. `00-risk-register.md` is the live artifact of the whole run; this file is its layout, its states, how far down the ladder a budget reaches, and — in § Without the departing engineer — the three situations in which the normal capture does not happen at all. The consent turn is the earliest of those gates: a run refused there never reaches a register write, so a reader who waits for one has already passed the turn where the refusal had to be made.
 
 ## The ladder
 
@@ -32,3 +32,13 @@ A repo outlives any one departure, so each capture is namespaced by the departin
 The register opens with a marker naming the rung in progress and the budget remaining, so a resumed session knows where the walk stopped from the disk alone; there is no separate progress file, because every item carries its own state. At `stop` the marker is **rewritten, never removed** — to a closed line naming the date, the coverage numbers, and whether anything is still out with `/ask-for-me`. A later session reopens **that same folder** by the departing engineer's name rather than starting a second one: answers arriving after `stop` are captured, the register updated, and `offboarding.md` rewritten from it and re-stamped, with the new date added to its closing line.
 
 **Resuming:** read the register; where the stamp's commit differs from `git rev-parse --short HEAD`, say so in the first turn and re-verify the citations you build on before asking about them — and where the departing engineer is no longer reachable to confirm a drifted reading, flag that in the register rather than trusting the old citation.
+
+## Without the departing engineer
+
+Three situations end up here, none of them a normal capture.
+
+**No unattended run.** A skill that reads a codebase can run its whole ladder alone, because the repo holds the answers. Here the human is the data source, so an unattended run is not a *faster* version of this skill — it is a different and worse one, producing an agenda that looks like a capture. That is why the body's remedy is an offer rather than a degraded run.
+
+**When they have already left.** Run the scan, produce the register, and mark every item `[unknown]` with "author unavailable" against it. The output is a map of what the organization lost and where it is exposed — the input to deciding what to reverse-engineer first. Its title and first line say that nobody answered any of it.
+
+**The async tail.** Where the session ends with items the departing engineer will answer in writing rather than in the room — the budget ran out, or the answer needs a file they have and you do not — say so at `stop` and suggest they run `/ask-for-me`, pasting those register items and their readings in as the subject. That skill interviews from scratch and has no intake, so the items are its raw material, not its input format; a user-invoked skill cannot be loaded on their behalf either way. Note in the register which items went out, and say that the questionnaire's deadline decides nothing here: an item still unanswered stays **Open**, never *unrecoverable*. The filled-in answers come back through `start` on the same folder, tagged `[human]` like any other.

@@ -2,7 +2,7 @@
 name: review-architecture
 description: Read-only architecture review of a codebase — surface architectural friction and propose deeper, cleaner module interfaces as a prioritized, vetted report.
 disable-model-invocation: true
-requires: codebase-design, grilling, writing-for-humans
+requires: codebase-design, grilling, writing-for-humans, adr
 ---
 
 # Review Architecture
@@ -11,9 +11,9 @@ This is an **advisory, read-only** pass: it explores, ranks findings, and files 
 
 ## Design vocabulary
 
-This skill speaks the `codebase-design` vocabulary — **module**, **interface**, **implementation**, **depth** (deep/shallow), **seam**, **adapter**, **leverage**, **locality** — and its principles (the deletion test, "the interface is the test surface," "one adapter = hypothetical seam, two = real," internal-seams-are-private). Call the Skill tool with `codebase-design` for the full definitions — this whole pass *is* the application of its vocabulary and principles, so if you don't see a `Launching skill: codebase-design` line, stop and call it again before continuing. Use those terms exactly in every suggestion; don't drift into "component," "service," "API," or "boundary."
+This skill speaks the `codebase-design` vocabulary and applies its principles. Call the Skill tool with `codebase-design` for the definitions — this whole pass *is* the application of them, so if you don't see a `Launching skill: codebase-design` line, stop and call it again before continuing. Use its terms exactly in every suggestion; don't drift into "component," "service," "API," or "boundary."
 
-When framing a candidate, classify its dependencies using `codebase-design`'s **dependency categories** (in-process / local-substitutable / remote-but-owned / true-external) — the category determines how the deepened module is tested across its seam, and whether a port is justified. Tests at the deepened interface replace the old shallow-module tests; delete them, don't layer.
+When framing a candidate, classify its dependencies using `codebase-design`'s **dependency categories** (in-process / local-substitutable / remote-but-owned / true-external) — the category determines how the deepened module is tested across its seam, and whether a port is justified. Tests at the deepened interface replace the old shallow-module tests; delete them, don't layer — a filed story that names the replaced tests and leaves them in place is the layering this forbids.
 
 ## Work item tracker
 
@@ -70,9 +70,7 @@ Write each candidate self-contained — a reader who hasn't seen the codebase sh
 
 Close the list with what was **vetted and not proposed**: one line each for the frictions you looked at and dropped, naming the drop class from the reference that killed each one (a noise shape that dissolved on a close read, by-design, imported rigor, owned elsewhere) — and one line each for the advisories, the candidates that are true and break nothing if left alone. Without that section the report reads as a wishlist rather than a survey, and the next run re-proposes what this one already dismissed.
 
-**Present via the HTML report.** Render the candidates as a self-contained HTML file per [references/html-report.md](references/html-report.md) — full per-candidate detail plus the before/after deepening visuals. Write it to the OS temp dir (resolve `$TMPDIR`, falling back to `/tmp`, or `%TEMP%` on Windows) as `design-review-<timestamp>.html` so each run is fresh and nothing lands in the repo; open it (`open` on macOS, `xdg-open` on Linux, `start` on Windows) and tell the user the absolute path. The report is **frozen at pick-time** — don't regenerate it as the design evolves later. **Zero surviving candidates**: skip the report and say so inline. **One or more**: write the report.
-
-**Self-check the render before presenting.** The report's failure modes are *silent* — bad CSS still parses, it just renders wrong (SVG `background` paints black, unfilled `<text>` vanishes, a `.card` + deep-fill cascade collision leaves light text on white). Screenshot the file headless (`<chrome> --headless --screenshot=<png> --window-size=1000,2400 file://<path>`) and **read the PNG**; fix any black box, invisible label, or illegible card and re-render — at most three times. If the third re-render still shows a defect, say so, name the defect, and present it rather than blocking. If no headless browser is available, say so and present unverified rather than blocking.
+**Present via the HTML report.** Render the candidates as a self-contained HTML file per [references/html-report.md](references/html-report.md) — full per-candidate detail plus the before/after deepening visuals — written to the OS temp dir and self-checked before presenting, per that file's § Writing and opening the file and § Before you present: self-check the render, and tell the user the absolute path. The report is **frozen at pick-time** — don't regenerate it as the design evolves later. **Zero surviving candidates**: skip the report and say so inline. **One or more**: write the report.
 
 Then, in the conversation, give a **terse ordered list** for the pick and the transcript record — one line per candidate: number, title, leverage-tier + confidence chips, and a one-sentence problem. Ask: "Which of these would you like to explore?"
 
@@ -119,9 +117,4 @@ Before filing, check whether `DOMAIN.md` contains the recommended module's name.
 
 Once the user approves, suggest running **`/to-story`** to synthesize and publish the Story — it owns the single issue template, tracker dispatch, and hierarchy handling. If the design was never grilled — the step 6 offer was skipped rather than declined — run a short grill first — call the Skill tool with `grilling`.
 
-Review-architecture context to carry into the synthesis:
-
-- to-story's publication constraints bar interface signatures and rejected alternatives from the story body, so give them a durable home: if the grill produced no ADR, offer to record one via `adr` before filing; failing that, attach the interface sketch as a comment on the filed story afterward — call the Skill tool with `writing-for-humans` at that write if it isn't already live. Have `## Approach` reference that ADR — even one recorded just now in this session.
-- Name, at module level, which existing shallow-module tests the new interface tests replace (step 6 lists them), so the story's `## Tests` section captures the cleanup as well as the new coverage.
-- If step 1 found an existing work item covering this candidate, suggest `/to-story --update <id>` (or add a comment via [references/tracker-dispatch.md](references/tracker-dispatch.md)) rather than filing a duplicate.
-- State the candidate's **success bar** in the story — the future change this deepening makes easier, and how you'd tell — and the keep-or-revert rule beside it: an executed refactor that doesn't clear its stated bar is a revert, not a keep. **Neutral is a revert** — sunk cost never argues for keeping, and kept complexity that bought nothing is paid for forever.
+Open [references/story-synthesis-context.md](references/story-synthesis-context.md) and carry the review's context into the synthesis: the durable home for interface signatures (an ADR via `adr`, or a story comment written with `writing-for-humans`), the replaced-tests list, the `--update` path for an existing item, and the success bar with its keep-or-revert rule — under which **neutral is a revert**, since sunk cost never argues for keeping.

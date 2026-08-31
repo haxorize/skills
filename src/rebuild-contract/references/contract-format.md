@@ -1,6 +1,6 @@
 # Writing `contract.md`
 
-Read this at `stop`, before the contract's first line. Build from the trail, never from memory. It is the longest document this suite writes, so it lands section by section under the global large-write-chunking rule (`~/.claude/rules/large-write-chunking.md`) — the spine below is the section order, the in-progress marker on `01-behavior-index.md` is the resume pointer, and a section that came back cut is rewritten whole rather than appended to.
+Read this at `stop`, before the contract's first line. **Call the Skill tool with `writing-for-humans` now, before writing anything** — the contract is prose a reimplementer reads, and loading the prose skill after the prose is on disk is loading it too late; where it does not load, say so and write the contract plainly rather than skipping the write. Build from the trail, never from memory. It is the longest document this suite writes, so it lands section by section under the mechanics `handoff` § Where to write it owns (`~/.claude/skills/handoff/SKILL.md`) — the spine below is the section order, the in-progress marker on `01-behavior-index.md` is the resume pointer, and a section that came back cut is rewritten whole rather than appended to.
 
 ## 1. The coverage check, which can refuse
 
@@ -105,4 +105,6 @@ This converts the contract into an acceptance suite someone can work through and
 
 ## 9. Stamp and announce
 
-The contract carries the same commit-and-date stamp as the trail, as provenance rather than citation support: which snapshot of which system it describes is the one thing a reimplementer needs to check whether the world moved underneath them. Then rewrite the in-progress marker in `01-behavior-index.md` to a closed line — the date, the four coverage numbers, and any entry still `deferred` or `unknown` — rather than removing it, so a later session extending the contract reopens this folder rather than starting a second one. Announce as the body's `stop` says.
+The contract carries the same commit-and-date stamp as the trail, as provenance rather than citation support: which snapshot of which system it describes is the one thing a reimplementer needs to check whether the world moved underneath them. Then rewrite the in-progress marker in `01-behavior-index.md` to a closed line — the date, the four coverage numbers, and any entry still `deferred` or `unknown` — rather than removing it, so a later session extending the contract reopens this folder rather than starting a second one.
+
+Then announce the path, the four coverage numbers, the audit line, and the two sections that decide how far the rest can be trusted — *Suspect behaviors* and *Coverage & open questions* — and say what the contract is not: a description of how the current system is built.

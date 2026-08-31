@@ -38,9 +38,7 @@ Per-concept review state — the input to every session, updated after every les
 - <concept> — <last question asked> — <where it got stuck>
 ```
 
-- Review intervals expand 1d → 3d → 7d → 21d on success; a miss shrinks one step and resets the streak.
-- Flags worth tracking: `confident-wrong` (high confidence, wrong answer), `hint-bottomed` (the ladder reached bottom-out), `misconception: <name>` (from a mapped distractor).
-- Open threads are concepts parked by the frustration rule or left unresolved at session end.
+- Open threads are concepts parked by the frustration rule or left unresolved at session end; the review-interval and flag rules live in the skill body's § After every lesson.
 
 ## NOTES.md
 

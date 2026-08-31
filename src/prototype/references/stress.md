@@ -38,7 +38,7 @@ Interaction states — focus, hover, disabled, selected — and colour schemes a
 
 ### 2. Build the page
 
-A grid: content states down, container states across, one cell per pair — a labelled container at the column's width holding the component with the row's fixture. The defects this page exists to find live at the pairs — an unbreakable string in a 320 px cell, forty rows squeezed by a greedy sibling — so the grid is the whole product, never one axis at a time. Every cell is visible without interaction; the comparison across cells is the point, so no tabs and no switcher. Side by side means one page, not one viewport: the wide column scrolls.
+A grid: content states down, container states across, one cell per pair — a labelled container at the column's width holding the component with the row's fixture. The defects this page exists to find live at the pairs — an unbreakable string in a 320 px cell, forty rows squeezed by a greedy sibling — so the grid is the whole product, never one axis at a time. Every cell is visible without interaction; the comparison across cells is the point, so no tabs and no switcher. Side by side means one page, not one viewport: the wide column scrolls. The page is one load — a state added later is added to the same grid — and it asserts nothing: a page that asserts is a test suite, and belongs in one.
 
 Mount it as a throwaway route under the routing convention the project already uses, named so it is obviously a prototype, gated out of production builds (`process.env.NODE_ENV !== 'production'` or the project's equivalent), and reached under the command the project already uses to run the app. The route is deleted at step 5.
 
@@ -57,11 +57,3 @@ Shortening the fixture until the cell looks right is the classic non-fix. The fi
 ### 5. Capture the answer
 
 As `prototype`'s "When done" section describes: the states that broke and what was decided, with the page on the prototype branch; then delete the route from the working branch. A snapshot test per state pair that mattered is the natural next step — that is `tdd`'s work, not this page's.
-
-## Anti-patterns
-
-- **Lorem ipsum, or fixtures trimmed to fit.** The content is the test.
-- **A switcher.** States that can only be seen one at a time cannot be compared.
-- **Assertions.** A page that asserts is a test suite, and belongs in one.
-- **Fixing the fixture.** See step 4.
-- **One state per commit.** The page is one load; a state added later is added to the same grid.

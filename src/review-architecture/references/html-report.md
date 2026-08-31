@@ -87,6 +87,10 @@ Type (Google Fonts via CDN): **Archivo** for display/headings (structural, wide 
 </html>
 ```
 
+## Writing and opening the file
+
+Write the report to the OS temp dir (resolve `$TMPDIR`, falling back to `/tmp`, or `%TEMP%` on Windows) as `design-review-<timestamp>.html` so each run is fresh and nothing lands in the repo; open it (`open` on macOS, `xdg-open` on Linux, `start` on Windows) and tell the user the absolute path.
+
 ## Header
 
 Report title (`Architecture review — {{repo}}`), date, and a compact **legend** that teaches the visual language in one glance — and *is itself* a depth-rectangle key: narrow-top dark box = deep module, wide-top pale box = shallow module, dashed line = seam, red arrow = leakage, amber box = ADR warning. No intro paragraph; straight into candidates.
@@ -123,3 +127,7 @@ One larger **`.card-deep`** after the candidates — the recommendation literall
 ## Tone
 
 Plain English, concise — but the architectural nouns come straight from `codebase-design`: **module, interface, implementation, depth, deep, shallow, seam, adapter, leverage, locality**. Never substitute component/service (module), API (interface), or boundary (seam). The vet, finding format, and leverage ranking are unchanged — see [finding-discipline.md](finding-discipline.md); this file only changes how the vetted findings are *rendered*.
+
+## Before you present: self-check the render
+
+The report's failure modes are *silent* — bad CSS still parses, it just renders wrong (SVG `background` paints black, unfilled `<text>` vanishes, a `.card` + deep-fill cascade collision leaves light text on white). Screenshot the file headless (`<chrome> --headless --screenshot=<png> --window-size=1000,2400 file://<path>`) and **read the PNG**; fix any black box, invisible label, or illegible card and re-render — at most three times. If the third re-render still shows a defect, say so, name the defect, and present it rather than blocking. If no headless browser is available, say so and present unverified rather than blocking.

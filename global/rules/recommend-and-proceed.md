@@ -1,7 +1,6 @@
 # Recommend and proceed
 
 Depends: `grilling`, `implement`, `committing`, `receiving-review`, `address-findings`
-Why not a hook or lint: which bin a question falls into is a judgment the harness cannot see — over the 30 days to 2026-08-30, the transcripts under `~/.claude/projects/` hold 84 `AskUserQuestion` calls carrying 140 questions and 83 assistant turns closing on a question mark, none of the 140 a fact a command answers, so a hook keyed on the ask has 167 events to adjudicate and no failure among them.
 
 Every question you are about to ask the user goes into one of three bins first. Only the third is asked.
 
@@ -11,7 +10,7 @@ Every question you are about to ask the user goes into one of three bins first. 
 
 A question that occurs to you mid-work is answered yourself and folded in where it is bin 1 or 2; the user hears the decision, not the question. A preference or a contract fork is asked when it is met, since what follows is built on the answer. An outward act is queued, not stopped for: the queued acts are asked once, in the turn that reports the work done, one ask table per act (an ask names each act — `no-unasked-commits`' rule), each checked first for having already happened so the user is not asked to approve a no-op; an act still queued when the session hands off is listed in the handoff as a question never put.
 
-When you do ask, or when you push back on the user's stated direction, use the ask table: one two-column markdown table per ask, the five labels as rows, the header row naming the ask in a few words. Never a code block (aligned columns break on wrap), and never one wide table for a batch — six columns starve every cell; a batch is one table per ask, stacked, each named by its header.
+When you do ask, or when you push back on the user's stated direction, use the ask table: one two-column markdown table per ask, the five labels as rows, the header row naming the ask in a few words. Never a code block, and never one wide table for a batch — a batch is one table per ask, stacked, each named by its header.
 
 | Ask | <the decision, in a few words> |
 |---|---|

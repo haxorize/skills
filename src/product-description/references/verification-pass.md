@@ -1,6 +1,14 @@
-# Verification
+# Verification and set close
 
-Verification is the pass that moves a document from `drafted` to `verified`: someone brings the product up and checks what the document says against what it does.
+Open this for any of three things, which have three different conditions: the **consistency pass**, run once at every set close whether or not the product can be run; the **verification pass**, run when someone can bring the product up, which is the only thing that moves a document from `drafted` to `verified`; and the **bug-triage entry shape**, needed wherever a defect is found, drafting included.
+
+## The consistency pass
+
+Run once at set close, never on `--seed`. One word for one thing across every document, and every term of art in `DOMAIN.md`. No behavior described in two places — one document owns it, the others link. The same interrupt rows and the same cross-cutting order in every document. The README's structure and coverage index match what is on disk. Every relative link resolves — run this from the repo root, and the pass is clean only when it prints nothing:
+
+```
+find docs/product-description -name '*.md' | while read -r f; do grep -oE ']\([^)#][^)]*\)' "$f" | tr -d ']()' | grep -v '^[a-z][a-z0-9+.-]*://' | while read -r l; do [ -e "$(dirname "$f")/${l%%#*}" ] || echo "$f -> $l"; done; done
+```
 
 ## The checklist
 
@@ -32,6 +40,10 @@ One checklist file per cluster of documents, written under `docs/product-descrip
 Run `P1` first, then `P2`, then `P3`. Record every result as it happens rather than at the end. A `blocked` row names what blocked it — the concrete prerequisite (a role, an entitlement, an OS, external state, or that the pass did not reach it) and the route attempted — and a prerequisite the document never mentioned is itself a finding against the document, fixed there like a `fail` of the second kind below.
 
 **A `fail` has two possible meanings and the row says which**: the product is wrong, or the document is wrong. Send the first to `docs/product-description/bug-triage.md`; fix the second in the document and re-run the row.
+
+## The bug-triage entry
+
+Needed wherever a defect is found — during drafting as readily as during a verification run. One entry per root cause, deduplicated: where the user meets it, what happens against what was expected, how to reproduce it, the cause in the code with file and line, and whether it needs a fix or a product call.
 
 ## Who can mark what
 

@@ -12,6 +12,8 @@ T="$(mktemp -u)"; GIT_INDEX_FILE="$T" git read-tree HEAD 2>/dev/null; GIT_INDEX_
 
 Uncommitted and untracked non-ignored files count, and the real index and every open file are untouched. The stamp is one line, exactly `Reviewed-tree: <40-hex>`.
 
+**A producer outside a review writes the same hash as `Measured-tree:`.** A handoff, an `audit-skills` run, a `sweep-corpus` health report — anything the global evidence rule sends here for the one-liner — labels the line `Measured-tree:` and never `Reviewed-tree:`, which belongs to a review and to the receipt hook that reads it. Everything below about comparing against a reviewed commit is a review's business: a `Measured-tree:` producer has no reviewed target, so the committed-work substitution in the next paragraph does not apply to it — it stamps the working tree with the one-liner above, always.
+
 **Committed work is stamped `git rev-parse <target>^{tree}` instead** — a landed commit, or a change whose edits were already committed when the review read them. The one-liner is wrong there: it folds in uncommitted dirt the review never saw, so it can never equal the reviewed commit's tree. Read the report's header for which target it names before comparing, or a stamp taken the other way reads as drift that never happened.
 
 ## Re-stamping after a fix pass

@@ -21,10 +21,6 @@ Turn something the user can't answer alone into a **discovery questionnaire** �
 
 4. **Check the returns.** When the user brings the filled-in questionnaire back, check every question got an answer before treating the send as resolved — follow up on just the missed ones, never silently default them — the default step 1 recorded fires only when nothing came back at all. Done when every question has an answer or a named follow-up.
 
-## Pairing with chart-course
+## Notes
 
-When a `chart-course` decision ticket is blocked on knowledge someone outside the effort holds, an **Errand** ticket can resolve through this skill: the questionnaire is the checklist handed to the human, and the filled-in answers become the Errand's resolution, linked as an asset.
-
-## Pairing with offboard-engineer
-
-When an `offboard-engineer` capture ends with register items the departing engineer will answer in writing, those items and their offered readings arrive pasted in as the subject — raw material, not an input format. Run the interview as ever: step 1 knows its recipient already (the departing engineer) but still has to settle what silence decides, because the register has no deadline in it and an unanswered item is left Open, not Unrecoverable; and the pasted items become step 2's list of what must come back. Step 4 runs unchanged when the answers return — the returns are checked here for completeness first, then carried into that skill's register through its `start`.
+Raw material pasted in as the subject — a caller's register items with their offered readings, a blocked decision ticket's open questions — changes nothing about the workflow: grill the send as ever, even when step 1 already knows its recipient, and let the pasted material feed step 2's list of what must come back. One thing does change: where the pasted items carry no deadline of their own, what silence decides may be **nothing — the item stays open**. Step 1 mandates a silence default, not a consequence; a record that keeps an unanswered item Open is not overridden by a questionnaire asserting one, and asserting one hands the recipient a document the record does not honor. A skill that pairs with this one states the pairing on its own side; this body names no callers.

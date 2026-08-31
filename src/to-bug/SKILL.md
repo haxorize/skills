@@ -48,7 +48,7 @@ Pick the severity from conversation context. If unclear, prompt the user with th
 
 ### 5. Draft the bug
 
-The draft *file* follows the global `large-write-chunking` rule; the tracker sees the body only at publish.
+The draft *file* lands per section under the mechanics `handoff` § Where to write it owns (`~/.claude/skills/handoff/SKILL.md`); the tracker sees the body only at publish.
 
 Use the appropriate template:
 - GitHub: [references/bug-template-github.md](references/bug-template-github.md)

@@ -1,6 +1,6 @@
 # Writing `offboarding.md`
 
-Read this at `stop`, before the record's first line. Build it from `00-risk-register.md` and `01-capture.md`, never from memory. It is long, so it lands section by section under the global large-write-chunking rule (`~/.claude/rules/large-write-chunking.md`) — the spine below is the section order, and a section that came back cut is rewritten whole rather than appended to.
+Read this at `stop`, before the record's first line. Build it from `00-risk-register.md` and `01-capture.md`, never from memory. It is long, so it lands section by section under the mechanics `handoff` § Where to write it owns (`~/.claude/skills/handoff/SKILL.md`) — the spine below is the section order, and a section that came back cut is rewritten whole rather than appended to.
 
 ## 1. The inversion that governs everything here
 

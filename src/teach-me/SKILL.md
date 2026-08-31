@@ -82,7 +82,7 @@ A **learning record** is a dated, numbered insight record in `learning-records/`
 
 ## After every lesson
 
-1. Update `PROGRESS.md` — concepts touched, quiz outcomes with confidence pairs, misconceptions observed, open threads.
+1. Update `PROGRESS.md` — concepts touched, quiz outcomes with confidence pairs, misconceptions observed, open threads. Review intervals expand 1d → 3d → 7d → 21d on success; a miss shrinks one step and resets the streak. Flag `confident-wrong` (high confidence, wrong answer), `hint-bottomed` (the ladder reached bottom-out), and `misconception: <name>` (from a mapped distractor) as they occur. Those three are the closed set — a fourth flag is a change to this skill, not a judgment call in a session.
 2. Offer (don't push) a learning record where the gate is met.
 3. Distill or update a cheat sheet if the lesson produced reference-shaped material (syntax, a process, a decision table).
 4. Record any expressed teaching preference in `NOTES.md`.

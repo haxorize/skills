@@ -1,5 +1,7 @@
 # The ledger file
 
+Read this before the first row, and again at `stop` — § Resuming and closing out carries the closed line `stop` writes, which a session that resumes and immediately closes would otherwise never reach.
+
 One file per evaluation, `docs/evaluation/<slug>/ledger.md`. It is read by people with no skill loaded and swept by `doc-claims`, so it carries its own legend. Build it from the template below; keep the sections in this order.
 
 ## The template
@@ -63,6 +65,8 @@ Rows print in ID order, which is the order added, so a row citing another cites 
 | A project fact (`us`) | Six months, or the date a planned change would move it |
 | Anything else | The evaluation's deadline |
 
-## Resuming
+## Resuming and closing out
+
+At `stop`, the in-progress marker is **rewritten, never removed** — to a closed line naming the date, the four counts per candidate, and whether a memo exists — so a session weeks later reopens this ledger rather than starting a second one; a removed marker is the one state a resume cannot tell from an abandoned evaluation.
 
 Where the ledger's `Last session` is more than a release cycle old, expect the sweep's first list to be long, and say so before the user adds material on top of expired rows.

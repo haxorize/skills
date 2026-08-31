@@ -3,6 +3,8 @@
 export LC_ALL=en_US.UTF-8
 LIB="${1:-$HOME/code/lib}"
 SKIP="${2:-^_rounds}"   # regex of directory names to skip (pass sources already reported)
+UNPARSED_F="$(mktemp)" || { echo "enum.sh: mktemp failed; cannot track unparsed entries" >&2; exit 3; }
+trap 'rm -f "$UNPARSED_F"' EXIT   # entries desc_of could not parse; counted to stderr at exit (ADR-0075: the enumerator reports its own blind spot)
 SKILL_PRUNE=( -name node_modules -o -name .git -o -name docs )   # docs/<lang>/ holds translated copies of the same skills
 CMD_PRUNE=( "${SKILL_PRUNE[@]}" -o -name references -o -name reference -o -name examples -o -name templates -o -name assets -o -name scripts )
 desc_of() { # print description from frontmatter, else first heading, else first nonblank body line; CRLF-safe, UTF-8-safe
@@ -29,6 +31,12 @@ for src in "$LIB"/*/; do
       skill.md) name=$(basename "$(dirname "$f")");;
       *) name=$(basename "$f" .md);;
     esac
-    printf '%s\t%s\t%s\t%s\n' "$s" "$rel" "$name" "$(desc_of "$f")"
+    d="$(desc_of "$f")"
+    [ -n "$d" ] || printf '%s\n' "$f" >> "$UNPARSED_F"
+    printf '%s\t%s\t%s\t%s\n' "$s" "$rel" "$name" "$d"
   done
 done
+UNPARSED_N=$(wc -l < "$UNPARSED_F" | tr -d ' ')
+echo "enum.sh: $UNPARSED_N entries with no parsable description" >&2
+# 2 is the taxonomy's "not everything checked": rows went out with an empty description field.
+[ "$UNPARSED_N" -eq 0 ] || exit 2

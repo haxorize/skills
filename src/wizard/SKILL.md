@@ -47,8 +47,8 @@ The secret/variable helpers speak `gh`, and when `gh` is missing or unauthentica
 - `bash -n <script>`; run `shellcheck` if available.
 - `chmod +x <script>`.
 - Don't run it end-to-end yourself — it opens browsers and blocks on human input. Trace it statically instead: every value from step 1 is captured and lands where step 1 said, and every `set_secret` name exactly matches a secret reference in CI.
-- If it's a repeatable setup path, commit it and link it from the README so the next person runs the script instead of asking an agent.
+- If it's a repeatable setup path, it belongs in the repo with a README link, so the next person runs the script instead of asking an agent. The commit is an outward act: queue it and offer it in the turn that reports the wizard done, per the global rule `~/.claude/rules/no-unasked-commits.md`.
 
 ## The chat fallback
 
-When a script is the wrong medium — no machine to run it where the human is, a procedure only a few steps long, or steps that will be discovered as you go — run the same discipline in chat instead: still steps the human *performs*, which is what separates this from `/ask-for-me`, a questionnaire for knowledge they hold. Keep the canonical checklist internally, complete and uncapped. Present **one atomic human step per message** with its full detail; after each completed step, show the remaining items as a headline-only list — a few glanceable words each, no commands, URLs, or values (detail appears only when an item becomes the current step). Before every reply, re-audit the visible list against the internal checklist, and cap the visible list at 8 items by merging far-off steps into phase-level headlines.
+When a script is the wrong medium — no machine to run it where the human is, a procedure only a few steps long, or steps that will be discovered as you go — run the same discipline in chat instead, per [references/chat-fallback.md](references/chat-fallback.md): one atomic human step per message, a headline-only remainder list, re-audited every reply.
