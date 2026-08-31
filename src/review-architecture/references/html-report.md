@@ -30,7 +30,7 @@ Type (Google Fonts via CDN): **Archivo** for display/headings (structural, wide 
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Design review — {{repo}}</title>
+    <title>Architecture review — {{repo}}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -89,7 +89,7 @@ Type (Google Fonts via CDN): **Archivo** for display/headings (structural, wide 
 
 ## Header
 
-Report title (`Design review — {{repo}}`), date, and a compact **legend** that teaches the visual language in one glance — and *is itself* a depth-rectangle key: narrow-top dark box = deep module, wide-top pale box = shallow module, dashed line = seam, red arrow = leakage, amber box = ADR warning. No intro paragraph; straight into candidates.
+Report title (`Architecture review — {{repo}}`), date, and a compact **legend** that teaches the visual language in one glance — and *is itself* a depth-rectangle key: narrow-top dark box = deep module, wide-top pale box = shallow module, dashed line = seam, red arrow = leakage, amber box = ADR warning. No intro paragraph; straight into candidates.
 
 ## Candidate card
 

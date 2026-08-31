@@ -76,7 +76,7 @@ Close the list with what was **vetted and not proposed**: one line each for the 
 
 Then, in the conversation, give a **terse ordered list** for the pick and the transcript record — one line per candidate: number, title, leverage-tier + confidence chips, and a one-sentence problem. Ask: "Which of these would you like to explore?"
 
-If the user rejects a candidate with a **load-bearing reason** — a reason a future explorer would need in order to avoid re-suggesting the same refactor — offer to invoke the `adr` skill to record it. The test: would the next architectural review re-propose this without the ADR? Skip ephemeral reasons ("not worth it right now") and self-evident ones.
+If the user rejects a candidate with a **load-bearing reason** — a reason a future explorer would need in order to avoid re-suggesting the same refactor — offer to invoke `adr` to record it. The test: would the next architectural review re-propose this without the ADR? Skip ephemeral reasons ("not worth it right now") and self-evident ones.
 
 ### 4. User picks a candidate
 
@@ -119,9 +119,9 @@ Before filing, check whether `DOMAIN.md` contains the recommended module's name.
 
 Once the user approves, suggest running **`/to-story`** to synthesize and publish the Story — it owns the single issue template, tracker dispatch, and hierarchy handling. If the design was never grilled — the step 6 offer was skipped rather than declined — run a short grill first — call the Skill tool with `grilling`.
 
-Improve-design context to carry into the synthesis:
+Review-architecture context to carry into the synthesis:
 
-- to-story's publication constraints bar interface signatures and rejected alternatives from the story body, so give them a durable home: if the grill produced no ADR, offer to record one via the `adr` skill before filing; failing that, attach the interface sketch as a comment on the filed story afterward — call the Skill tool with `writing-for-humans` at that write if it isn't already live. Have `## Approach` reference that ADR — even one recorded just now in this session.
+- to-story's publication constraints bar interface signatures and rejected alternatives from the story body, so give them a durable home: if the grill produced no ADR, offer to record one via `adr` before filing; failing that, attach the interface sketch as a comment on the filed story afterward — call the Skill tool with `writing-for-humans` at that write if it isn't already live. Have `## Approach` reference that ADR — even one recorded just now in this session.
 - Name, at module level, which existing shallow-module tests the new interface tests replace (step 6 lists them), so the story's `## Tests` section captures the cleanup as well as the new coverage.
 - If step 1 found an existing work item covering this candidate, suggest `/to-story --update <id>` (or add a comment via [references/tracker-dispatch.md](references/tracker-dispatch.md)) rather than filing a duplicate.
 - State the candidate's **success bar** in the story — the future change this deepening makes easier, and how you'd tell — and the keep-or-revert rule beside it: an executed refactor that doesn't clear its stated bar is a revert, not a keep. **Neutral is a revert** — sunk cost never argues for keeping, and kept complexity that bought nothing is paid for forever.

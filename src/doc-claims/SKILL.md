@@ -9,7 +9,7 @@ A **claim** is a checkable assertion a document makes about something outside it
 
 Read the prose directly for meaning. There are no claim markers, no annotation DSL, no structured comments to key on: the thing being checked is the thing the human reads, and any scheme that checks a parallel annotation instead checks the wrong artifact.
 
-This is the bare judgment. One orchestrator layers on top: `/verify-docs` chooses which documents to check, ranks the verdicts that come back, and offers the fixes — it is user-invoked, so suggest it when the ask is a sweep over many documents rather than a judgment of one.
+This is the bare judgment. Orchestrators layer on top and choose which documents to check: `/verify-docs` ranks the verdicts that come back and offers the fixes, and where a repo keeps its own scheduled sweep — this one's `sweep-corpus`, over the three documents that claim what the suite is — that sweep is another. Both are user-invoked, so suggest them when the ask is a sweep over many documents rather than a judgment of one.
 
 ## Extract the claims
 

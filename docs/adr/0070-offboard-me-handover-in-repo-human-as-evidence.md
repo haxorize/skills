@@ -2,6 +2,8 @@
 
 Status: accepted (2026-08-29)
 
+> **Amended by [ADR-0057](0057-rename-table-and-discipline-skill-term.md):** the skill is `offboard-engineer` as of 2026-08-30, and its artifact lives under `docs/offboarding/`, not `docs/handover/`. The name and path decisions below stand as this record made them — an ADR is the record as it landed, and a renamed name is never backfilled.
+
 The 2026-08-27 round parked `offboard-me` (N1b.25) as a new-skill candidate — "high stakes, rare, absent from the evidence" — beside the three other knowledge-transfer candidates the [Team-fit test](0063-team-fit-test-replaces-retire-on-zero-window.md) later admitted on the moment rather than the count. This record admits it: a user-invoked skill that captures what leaves with an engineer who is leaving, by scanning the repo for what only they can answer and then interviewing them, one area per turn, with the reading offered first. **Nick decided to admit the skill and kept the name**, as the Team-fit test requires the record to state.
 
 The moment is a **recurring** one, and the record is written for the recurrence rather than for a date. It is the Team-fit row's own example — *a lead losing an engineer*: "X leaves Friday, capture what they know". The role is the lead or engineer inheriting the code. What makes the moment costly is that the knowledge leaving is exactly the part the departing person no longer knows is unusual — the constant nothing derives, the deploy step that needs a human, the experiment that already failed — so "write a handover doc" produces a tour of what the code already shows, and the successor finds the rest at 3am.

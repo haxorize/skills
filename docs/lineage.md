@@ -4,6 +4,8 @@ A row here is a skill or scanner rule with a lineage other than local original. 
 
 Before materially editing anything in the first table, diff its upstream — main *and* unmerged branches — from the swept point recorded against that upstream in [ADR-0034](adr/0034-branch-mining-lineage-or-dormant-main.md)'s amendment ledger (the newest entry for an upstream supersedes the rest), and fold in or consciously reject what changed there. Clones live under `~/code/lib/<owner>-<repo>` on the machine that mined them; the licence column is read from each clone's licence file.
 
+**A renamed skill keeps its old name in the ADRs that recorded it.** An ADR is the record as it landed and amendments never rewrite it, so a decision record naming a retired skill or path is history, not a stale reference — the `(until <date> <old-name>)` annotation in the Local column below is how a reader joins the two. What a rename *does* owe the record is a `> **Amended by [ADR-NNNN](…)** ` pointer above the first heading of every ADR whose decision it reversed, which is what `scripts/lint-adrs.sh`'s `check_forward_pointer` looks for and cannot see when the amending entry sits inside the amending record's own `## Amendments` log.
+
 ## Ported — diff before editing
 
 | Local | Upstream | Name there | Licence | Record |

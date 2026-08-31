@@ -1,4 +1,4 @@
-# Improve Design — Tracker dispatch
+# Review architecture — Tracker dispatch
 
 CLI commands for step 1 (search) and step 7 (comments) — creating or rewriting work items is `to-story`'s job, with its own dispatch. Use the tracker resolved per [tracker-resolution.md](tracker-resolution.md).
 

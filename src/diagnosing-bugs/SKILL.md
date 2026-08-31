@@ -1,7 +1,7 @@
 ---
 name: diagnosing-bugs
 description: Diagnosis loop for hard bugs and performance regressions. Use when the user says "diagnose"/"debug this", reports something broken, a flaky test, or a performance regression, when a CI failure needs triage (one branch red, many branches red, or a sporadic flake), or when a build turns up an unplanned failure you can't quickly explain.
-requires: codebase-design, adr, capturing-learnings
+requires: adr, capturing-learnings
 ---
 
 # Diagnosing Bugs

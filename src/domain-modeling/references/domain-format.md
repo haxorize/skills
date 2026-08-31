@@ -44,7 +44,7 @@ Use this structure when writing `DOMAIN.md`.
 - Group terms into multiple tables when natural clusters emerge (by subdomain, lifecycle, or actor). One table is fine if all terms belong to a single cohesive domain — don't force groupings.
 - Use **bold** for term names in `Relationships` and `Flagged ambiguities` sections.
 - Keep the example dialogue to 3-5 **Dev**/**Domain expert** exchanges that clarify boundaries between related concepts.
-- Definitions: one sentence, present tense, define what the term IS — not what it does.
+- Definitions: present tense, defining what the term IS — not what it does. Open on the definition in one sentence; further sentences earn their place only by discriminating the term from a neighbour, recording a scope the name does not carry, or naming the authority that settles it. A definition that has grown past that is a sign the entry is carrying spec or process detail that belongs elsewhere.
 
 ## Multi-context repos
 
