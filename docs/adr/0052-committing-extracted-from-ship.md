@@ -1,5 +1,7 @@
 # Extract `committing` from `ship`
 
+> **Amended by [ADR-0067](0067-commit-msg-hook-checks-shape-not-register.md):** narrowed — this record held that a model-invoked description was the only mechanism reaching a commit made with no skill loaded; the `commit-msg` hook is a second one.
+
 `ship` held the rules for landing a change honestly: the claims rule, the closing-comment contract, closure verification, and the blocked-action protocol. It is user-invoked, so those rules ran only when someone typed `/ship`, which happened 17 times in the measured window. The ask that actually lands most work, "commit and push", "close #N", "commit what we have", appeared in 104 prompts and reached none of it. The same window holds the failures those rules exist to prevent: a closing comment that claimed user approval no turn had given, a partial slice that auto-closed its ticket, a rename that silently no-op'd and went unreported.
 
 ## Decision
