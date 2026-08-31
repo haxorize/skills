@@ -9,7 +9,7 @@ The invocation axis is a trade between two costs:
 - **Context load** — what a **model-invoked** skill costs the *agent*: its description sits in the context window every turn, spending tokens and attention whether or not it fires. The brake on adding more model-invoked skills.
 - **Cognitive load** — what a **user-invoked** skill costs the *human*: they are the index that must remember it exists and when to reach for it. The brake on adding more user-invoked skills.
 
-Model-invocation buys agent-discoverability (and reach by other skills) at a permanent context-load cost. User-invocation pays zero context load but spends cognitive load. Pick model-invocation only when the agent must reach the skill on its own, or another skill must reach it. When user-invoked skills multiply past what a person can hold in their head, the cure is a **router skill** — one user-invoked skill that names the others and when to reach for each (this repo's is `which-skill`).
+The decision rule lives where the classification is made — `write-skill` § Invocation axis. When user-invoked skills multiply past what a person can hold in their head, the cure is a **router skill** — one user-invoked skill that names the others and when to reach for each (this repo's is `which-skill`).
 
 ## Vocabulary
 
@@ -59,4 +59,4 @@ Use these to diagnose a skill that isn't behaving:
 - **Duplication** — the same meaning in more than one place. Costs maintenance and tokens, and inflates a meaning's prominence on the ladder past its real rank. The accidental inverse of a leading word (which repeats a *token* on purpose, never the meaning).
 - **Sediment** — stale layers that settle because adding feels safe and removing feels risky. The default fate of any skill without a pruning discipline.
 - **Sprawl** — a skill simply too long, even when every line is live and unique. The cure is the ladder: disclose reference behind pointers, split by branch or sequence so each path carries only what it needs.
-- **No-op** — a line the model already obeys by default, so you pay load to say nothing. A weak leading word (*be thorough* when the agent already is) is a no-op; the fix is a stronger word (*relentless*), not a different technique.
+- **No-op** — the pruning ground (the main skill owns it); the diagnosable case here is a weak leading word (*be thorough* when the agent already is) — the fix is a stronger word (*relentless*), not a different technique.

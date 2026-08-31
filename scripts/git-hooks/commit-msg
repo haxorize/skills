@@ -12,8 +12,10 @@ set -uo pipefail
 # WHAT IT CANNOT CHECK, and must never be read as covering: whether the subject
 # is one logical change, whether the body's "why" was non-obvious enough to
 # need writing, the register, and every entry in writing-for-humans'
-# tell-catalog.md. Those need a reader. A green run here is a claim about
-# shape, never about prose — do not prune commit-style.md against it.
+# tell-catalog.md — and its tell-catalog-shipping.md, which holds the commit
+# and PR family, the tells nearest this gate and the ones it reads least.
+# Those need a reader. A green run here is a claim about shape, never about
+# prose — do not prune commit-style.md against it.
 #
 # Blocks on the exact rules. Warns on the imperative-opener check, which is a
 # wordlist heuristic and will not always be right.

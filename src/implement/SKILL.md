@@ -24,7 +24,7 @@ Decide how the slice is built, and say which path you picked and why:
 
 When it's genuinely ambiguous (some testable behavior, some glue), it is a judgment under the global recommend-and-proceed rule (`~/.claude/rules/recommend-and-proceed.md`): pick the testable path, say so, and proceed.
 
-The choice ratchets one way. Complexity that surfaces mid-slice **upgrades** the path — glue that turns out to carry a rule becomes a testable slice, and its tests get written from that point. Nothing downgrades: a testable slice doesn't become "just glue" because the tests are proving to be work. Mid-slice doubt therefore resolves upward on its own, with no round-trip to the user: reaching for the lighter label in order to skip the heavier path is itself the doubt. Doubt at the pick resolves the same way — testable, said, proceeded with — so no doubt about the path goes to the user.
+The choice ratchets one way. Complexity that surfaces mid-slice **upgrades** the path — glue that turns out to carry a rule becomes a testable slice, and its tests get written from that point. Nothing downgrades: a testable slice doesn't become "just glue" because the tests are proving to be work. Mid-slice doubt therefore resolves upward on its own, with no round-trip to the user: reaching for the lighter label in order to skip the heavier path is itself the doubt.
 
 ## Build
 
@@ -43,9 +43,9 @@ Out-of-scope observations made mid-slice — a smell, a missing test, a refactor
 
 ## Close the loop
 
-Call the Skill tool with `feedback-loops` when the slice's behaviors are built and refactored — if you don't see a `Launching skill: feedback-loops` line, stop and call it again. It is the mechanical finalize, and this is the slice's one run: when `tdd` runs under `implement`, it defers the close-the-loop pass here.
+`feedback-loops` is the mechanical finalize, and the slice gets one run of it. On the testable path `tdd` makes that run itself as it closes its cycle — that run *is* this pass, so don't repeat it here. Otherwise, once the slice's behaviors are built and refactored, call the Skill tool with `feedback-loops` yourself; if you don't see a `Launching skill: feedback-loops` line, stop and call it again.
 
-Then run the **completion audit** against the loaded ticket: treat done as unproven, derive the requirements from the acceptance criteria the slice covers, name the authoritative evidence per requirement, and inspect it at matching scope — a narrow check never supports a broad claim, and a green suite counts only after confirming it exercises that criterion. The audit proves completion rather than failing to find remaining work. Write it in the form of [references/completion-audit.md](references/completion-audit.md) — one row per acceptance criterion, `| AC | Status | Evidence |`, status one of `DONE` / `PARTIAL` / `NOT DONE` / `CHANGED` / `UNVERIFIABLE`, every row with an evidence line; then the beat ledger, the parked ledger with its zero case stated, the judgment-calls list tagged user's / inferred / my call, and the completion line. `handoff` carries it verbatim and `committing` reads it to choose the closing word. Filling it:
+Then run the **completion audit** against the loaded ticket: treat done as unproven, derive the requirements from the acceptance criteria the slice covers, name the authoritative evidence per requirement, and inspect it at matching scope — a narrow check never supports a broad claim, and a green suite counts only after confirming it exercises that criterion. The audit proves completion rather than failing to find remaining work. Write it in the form [references/completion-audit.md](references/completion-audit.md) defines — open the form and follow it; it owns the table, the statuses, the ledgers, and the completion line. `handoff` carries the audit verbatim and `committing` reads it to choose the closing word. Filling it:
 
 - **Every row is held to the global evidence rule** (`~/.claude/rules/evidence.md`); a row whose evidence is the user's approval cites the turn. The statuses, `UNVERIFIABLE` for evidence outside the repo, and the quiet-narrowing tripwire are the form's — run the tripwire before any row is written `DONE`.
 - **Judgment calls are the unsure choices *and* the confident defaults** picked where the ticket was silent — the sort order, the helper, the endpoint kept alive. The form's reversibility test decides inclusion; each entry is a review prompt the user can act on while the context is live, and nothing else in the flow makes these visible.
@@ -67,5 +67,4 @@ Once the slice is reviewed and findings are addressed, it lands: a one-commit ch
 
 ## Notes
 
-- `implement` is the hand-off target of `from-ticket`: load the slice, then build it here.
 - Convention skills are project-local and named in the project's CLAUDE.md `## Convention skills`. This skill never names a stack (`fastapi`, `database`); `tdd` and `feedback-loops` discover the relevant convention skills by role for the layer the slice touches.

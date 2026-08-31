@@ -35,14 +35,14 @@ Every finding carries a **stable ID** (`F<n>`, assigned once in report order; a 
 
 ## Anchored confidence
 
-Confidence is a **behavioral anchor** the reporter can honestly self-apply, never a free-floating gradient (models can't calibrate an undefined scale — everything clusters in the vague middle):
+Confidence is a **behavioral anchor** the reporter can honestly self-apply, never a free-floating gradient (you can't calibrate an undefined scale — everything clusters in the vague middle):
 
 - **LOW** — re-read, but the concern stays speculative: whether it bites depends on inputs, timing, or usage that couldn't be confirmed from here.
 - **MED** — confirmed real on a close read, but impact is judgment-dependent (maintainability, a risk needing particular conditions).
 - **HIGH** — will bite in practice, verifiable from the cited code itself: a definitive logic error, a type mismatch, a broken invariant.
 
-**The quote gate:** a HIGH finding's evidence must open with the **verbatim motivating line** plus its `file:line` — the line where the defect shows, not a premise reasoned from (a defect spanning lines, like a type mismatch between declaration and use, quotes the line where it breaks). A finding whose triggering line cannot be quoted steps down to MED — no exceptions the reporter grants itself.
+**The quote gate:** a HIGH finding's evidence must open with the **verbatim motivating line** plus its `file:line` — the line where the defect shows, not a premise reasoned from (a defect spanning lines, like a type mismatch between declaration and use, quotes the line where it breaks). A finding whose triggering line cannot be quoted steps down to MED — no exceptions the reporter grants itself. And the quote is read from the file at write time, never carried forward from notes — line numbers and counts drift as fixes land, so a citation written from memory is wrong exactly when the report is about to be acted on.
 
 **Reading is not running.** The quote proves what the code says, never what it does: a claim about how a framework, runtime, or library behaves on the cited line is an inference, however careful, and caps at MED until something executes it — a test, a repro, an observed render.
 
-**Agreement is not evidence.** Independent readings of the same code share its framing and the model's priors, so they fail together — N reports of a claim are one correlated guess counted N times, and the wrong ones quote as fluently as the right ones. Confidence rises only on evidence a finding *produced* rather than read: an executed repro, a test run, an observed runtime.
+**Agreement is not evidence.** Independent readings of the same code share its framing and your own priors, so they fail together — N reports of a claim are one correlated guess counted N times, and the wrong ones quote as fluently as the right ones. Confidence rises only on evidence a finding *produced* rather than read: an executed repro, a test run, an observed runtime.

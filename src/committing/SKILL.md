@@ -12,7 +12,7 @@ It never proposes a commit split. A change that needs several commits in lineage
 
 ## Before any outward act
 
-Commit, push, a tracker write, a message, a loop: each is an outward act, and the global rule `~/.claude/rules/no-unasked-commits.md` governs all of them. That rule has one owner; it is not restated here.
+Commit, push, a tracker write, a message, a loop: each is an outward act, and the global rule `~/.claude/rules/no-unasked-commits.md` governs all of them.
 
 Read `CLAUDE.md` for a `Landing:` block before the first act. Its six lines are `Branch policy:` (`trunk` or `branch-per-ticket`, with a naming pattern where the repo has one), `PR required:`, `Push pre-authorized:`, `Ticket close pre-authorized:`, `Review required:` (each `yes`/`no`; `yes` gates the push on a review receipt whose `Reviewed-tree:` stamp matches the tree being pushed, and the "reviewed" row below is the claim), and `Defect policy:` (default `fix, don't file`). An act the key pre-authorizes proceeds on the ask that started the work; every other act asks first, with a recommendation, under `~/.claude/rules/recommend-and-proceed.md`. No block means nothing is pre-authorized, and a missing `Review required:` line means `no`. A block written before 2026-08-30 spells the two middle keys `pre-authorised`; read those the same way — the key was renamed, not retired, and no regex parses it.
 
@@ -32,7 +32,7 @@ Every assertion written into a commit message, closing comment, PR body, or end-
 | "no contract change", "test-only", "no production code" | the diff, file by file, not from memory |
 | "reviewed" | in a `Review required: yes` repo, the `review-changes` report the `review-receipt` hook accepts — one whose `Reviewed-tree:` stamp equals the tree being pushed (its header is the contract — a subagent review that wrote no file, a handoff, and a stamp typed in by hand rather than written by `review-changes` or `address-findings`, are not it; the hook cannot tell the last from a real one, which is why this row exists), and there is no skip phrase: the only skip is the user pushing from their own terminal, so a refusal is a blocked action to report; elsewhere a review report or handoff path in this conversation, or the user's exact skip phrase; in a `Review required: yes` repo the tree stamp is what decides, so the claim is "reviewed at tree `<12-hex>`" and HEAD sitting N commits past the head stamp on that same tree is the prescribed order, not staleness; elsewhere, if the report carries a reviewed-head stamp and HEAD has moved past it, the claim is "reviewed at `<sha>`, N commits since" — silence on review is a stop, never an assumed yes |
 | "the user approved" / "as agreed" | the turn where they said it; quote it. A fabricated approval is the failure this row exists for |
-| "closes N" / "fixes N" / "done" | the ticket body, re-read now, and the completion audit (below) |
+| "closes N" / "fixes N" / "done" | the ticket body, re-read now, and the completion audit — the closing word follows [references/ticket-closure.md](references/ticket-closure.md) |
 | "works" / "done" for a change whose effect is live — a tracker write, a deploy, an outbound call | the live path exercised in this session, or the claim carries `UNVERIFIED: live path`; a unit or fixture run is evidence for the code, never for the effect it was standing in for |
 | "I ran X" for any step | whether it ran in this session; inspection is not execution. A result CI will produce is written as the expectation the reviewer checks the run against, in words that cannot be read as output you saw; tests added and never run say they are unrun; a result someone else recorded is attributed to them, never restated as yours |
 | a screenshot, recording, or image cited as evidence | the file was opened and its contents are stated in the claim, not its filename |
@@ -43,20 +43,9 @@ Every assertion written into a commit message, closing comment, PR body, or end-
 
 The pressure is predictable: the work is at its end, the change is green, the summary reads plausibly. Plausible is not checked.
 
-## The completion audit decides the closing word
-
-A ticket closes on a clean remainder, not on a push. Read the completion audit from the session (`implement` writes it at close, `handoff` carries it; its form is [references/completion-audit.md](references/completion-audit.md)) before choosing the closing keyword — start from its completion line, where only the bare `complete` shape can yield `Closes`, then re-derive the word from the table:
-
-- Every acceptance criterion `DONE` with evidence, zero parked items against the ticket: `Closes #N`.
-- Anything `PARTIAL`, `NOT DONE`, `CHANGED`, or `UNVERIFIABLE`, or a parked item the ticket owns: `Refs #N`, with the remainder named in the closing comment. A partial slice that auto-closed its ticket is the failure this rule answers.
-- The issue is already closed: `Refs #N`. A closing keyword against a closed issue reopens nothing and confuses the timeline. Check the issue's state before choosing the word.
-- No audit in the conversation: run the check yourself in that form against the ticket's acceptance criteria, at matching scope, and say that you did.
-
-Tick only what the audit evidenced. A checked box is a claim like any other.
-
 ## The closing comment
 
-It states: what landed, with the commit SHAs or the PR link; the change's status, every claim checked per the rule above; the remainder, anything deliberately not done or descoped, named plainly rather than left to be discovered; and a closure claim made only after re-reading the ticket's actual state. A closing comment that only says "done" fails every element at once. Register and wording follow the human-facing register — call the Skill tool with `writing-for-humans` before the first message or comment, if it isn't already live; the subject and body shape follow [references/commit-style.md](references/commit-style.md).
+It states: what landed, with the commit SHAs or the PR link; the change's status, every claim checked per the rule above; the remainder, anything deliberately not done or descoped, named plainly rather than left to be discovered; and a closure claim made only after re-reading the ticket's actual state — the closing word, and the read-back that verifies it, follow [references/ticket-closure.md](references/ticket-closure.md). A ticket ID is used exactly as provided — never invented, normalized, or guessed — wherever it appears: commit message, branch name, closing comment. A closing comment that only says "done" fails every element at once. Register and wording follow the human-facing register — call the Skill tool with `writing-for-humans` before the first message or comment, if it isn't already live; the subject and body shape follow [references/commit-style.md](references/commit-style.md).
 
 ## The one-commit fast path
 
@@ -65,30 +54,14 @@ For a change that is one attributable claim and needs no approver, land it in on
 1. Read the tree (`git status`, `git diff`, as above).
 2. Draft the subject and body against the diff, applying the claims rule per sentence.
 3. Stage and commit. The message, like every closing comment and PR body, goes through a file — `git commit -F <file>`, `gh ... --body-file`, `az ... --description @<file>` — never inline through shell interpolation, which mangles quotes and backticks and truncates silently. Push only if asked or pre-authorized; say which.
-4. Close or tick the ticket only if asked or pre-authorized, and only with the word the completion audit supports.
+4. Close or tick the ticket only if asked or pre-authorized, and only with the word the completion audit supports ([references/ticket-closure.md](references/ticket-closure.md)).
 5. Report what happened, in one block: SHA, pushed or not, ticket state as read back.
 
 Work that never went through `/implement` — docs, skills, config, a synced library — is most of what lands here; the fast path does not require an audit to exist, only a claim to be checked.
 
-## Verify the closure you claim
-
-After the change lands, read the ticket's actual state before reporting it closed. A closing keyword can close an issue on push to the default branch, and some projects transition a work item on PR completion, but both are configuration, not physics, and neither fires when the keyword never made it into the message. "Closed" is the closing comment's final element, and it is read back, not inferred.
-
 ## When an action is blocked
 
-Sandboxes, credential policies, and permission classifiers block outward actions routinely. When a command fails for an environmental reason (auth, sandbox, policy, network):
-
-1. **Stop that step.** Do not retry variants, switch protocols, or find another way through. A blocked action is a decision the environment already made, not an error to route around.
-2. **Record it as a claim:** "blocked by X" carries the verbatim error, per the claims rule.
-3. **Continue with what isn't blocked.**
-4. **A blocked tracker write lands as a file**, frontmatter carrying the create fields, and the manual-commands block carries the one command that consumes it (`--body-file` / `--description @file`) — the shape the publishers' `publishing.md` sibling gives under `## When the write is blocked`; for a close or a comment, the frontmatter carries the item ID and the command is the update call.
-5. **End with one manual-commands block.** Every command the human must run by hand, copy-pasteable, with its directory, gathered at the end of the report, never scattered through it. Not a description of what to do; the command.
-
-**A rejected commit message is not a blocked action.** A `commit-msg` hook rejecting your message is the one exception to rule 1: nothing in the environment refused you, and the thing at fault is a message you wrote and can rewrite. Read the rule the rejection names, fix the message, and commit again — reporting "blocked by commit-msg" and stopping leaves the change staged and unlanded for the user to finish by hand. Rewriting the *message* is the whole remedy; `--no-verify` and unsetting `core.hooksPath` are not, and `commit-bypass` refuses the first.
-
-**When you believe the check itself is wrong**, that is a finding, not an obstacle to route around: say which rule fired, on which line, and why the message is right — then stop and let the user decide. Do not disable the hook to get past it, and do not damage a correct message to satisfy an incorrect rule.
-
-Report what actually happened: what landed, what's staged, what's waiting on a manual step. A change that is committed but unpushed gets described that way, never as shipped.
+When a commit, push, or tracker write fails for an environmental reason (auth, sandbox, policy, network), or a `commit-msg` hook rejects the message, open [references/blocked-actions.md](references/blocked-actions.md) and follow it. Never `--no-verify`.
 
 ## Notes
 

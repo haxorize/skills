@@ -26,7 +26,7 @@ Read [`scripts/README.md`](scripts/README.md) first. The `pre-commit` git hook r
 
 ## Review lenses
 
-The instruction-file lens in this repo also runs a **pruning test** against the pruning grounds in [`src/writing-for-agents/SKILL.md`](src/writing-for-agents/SKILL.md): for every rule the diff adds or edits, report keep / condense / move / delete, with the covering rule named for anything but keep (the rule elsewhere that already says it, or the reason nothing does). A skill-change review that never reports this ran the lens on another repo's terms.
+The instruction-file lens in this repo also runs a **pruning test** against the pruning grounds in [`src/writing-for-agents/SKILL.md`](src/writing-for-agents/SKILL.md): for every rule the diff adds or edits, report keep / condense / move / delete, with the covering rule named for anything but keep (the rule elsewhere that already says it, or the reason nothing does). A skill-change review that never reports this ran the lens on another repo's terms. The same lens also reports, row by row, conformance with the house-style rows in [`src/write-skill/SKILL.md`](src/write-skill/SKILL.md)'s `## Review checklist` — the single home of the judgment conventions (voice, spine, label families, relocation condition, table shape).
 
 ## Landing
 

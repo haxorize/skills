@@ -25,9 +25,9 @@ Resolve the project's check commands from its `CLAUDE.md` `## Commands` section.
 - **Format** — apply the project's formatter.
 - **Lint** — run the linter; fix what it flags.
 - **Typecheck** — run the type checker; fix what it flags.
-
-A failing check is fixed in the code. Editing the check's config, adding an ignore or a suppression comment, or lowering a threshold is a scope change the user asked for, or it does not happen.
 - **Test** — re-run the test command after any fix above, to confirm nothing broke. A green run is spent the moment it completes — never re-run for reassurance without an intervening change. **Zero ran is not green**: a filter that selected nothing (`pytest -k`, `vitest -t`, a path that no longer exists) exits clean and proves only that the runner started, so the count of tests that ran is part of the evidence, and a count of zero is a red.
+
+A failing check is fixed in the code — this binds all four. Editing the check's config, adding an ignore or a suppression comment, or lowering a threshold is a scope change the user asked for, or it does not happen.
 
 If `## Commands` is missing or incomplete, infer the commands from the project's config (package scripts, Makefile, tool config) and note what you ran.
 
@@ -41,7 +41,7 @@ Run the loop's format, lint, and typecheck commands, then the test re-run the lo
 
 ### 2. Stack-specific finalization
 
-Some changes need mechanical follow-on work that's specific to the stack — a database migration after a model change, a regenerated client after a schema change, a rebuilt lockfile after a dependency change. Don't hardcode these: **discover and invoke the project's convention skills by role** and apply whatever finalization they own for the layer this change touched. A model change with a `database` convention skill present means its migration step runs here.
+Some changes need mechanical follow-on work that's specific to the stack — a database migration after a model change, a regenerated client after a schema change, a rebuilt lockfile after a dependency change. Don't hardcode these: **discover and invoke the project's convention skills by role** — the project lists them by name in its `CLAUDE.md` `## Convention skills` section, as § What "the loop" is resolves `## Commands` — and apply whatever finalization they own for the layer this change touched. A model change with a `database` convention skill present means its migration step runs here.
 
 This is where silent gaps hide — a model change that ships without its migration looks done but isn't. If the relevant convention skill exists, its finalization is not optional.
 

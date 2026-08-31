@@ -15,12 +15,12 @@ It does not build, refactor, or review. Arrive here with the work already green 
 
 ### 1. Resolve the ground
 
-- **Host and tracker** — resolve the tracker per [references/tracker-resolution.md](references/tracker-resolution.md) in **Declared** mode only — a repo with no tracker block takes the no-tracker path below, never Bootstrap-on-ask. GitHub uses `gh`; Azure DevOps uses `az repos` for PRs and `az boards` for work items, and needs `Organization:` and `Project:` from the same file. A repo with no tracker (some tooling and docs repos) ships commits and a PR, and closes nothing — that's a normal path, not a missing configuration.
+- **Host and tracker** — resolve the tracker per [references/tracker-resolution.md](references/tracker-resolution.md) in **Declared** mode only — a repo with no tracker block takes the no-tracker path below, never Bootstrap-on-ask. GitHub uses `gh`; Azure DevOps mechanics are [references/ado.md](references/ado.md). A repo with no tracker (some tooling and docs repos) ships commits and a PR, and closes nothing — that's a normal path, not a missing configuration.
 - **Landing key** — `committing` reads the `Landing:` block; where it settles the approver question, take its answer.
 - **Approver** — does another person have to sign off? This one answer decides the shape of everything below. Azure DevOps enforces it (a PR needs an approving reviewer); a GitHub repo may enforce it through branch protection or team convention; a solo repo often requires nobody. Read the host and `CLAUDE.md`, and ask when neither settles it — **an approver means a branch and a PR, no approver means the change lands on the trunk directly.**
 - **Base** — on a branch, the merge-base with the trunk; on the trunk itself, `origin/<trunk>`. Resolve the diff as `git diff <base>...HEAD` (three-dot) plus `git log <base>..HEAD --oneline`.
-- **Ticket** — from the argument, the branch name, or the PR body. No pointer means no closing comment; don't invent one. An ID is used exactly as provided — never invented, normalized, or guessed — wherever it appears: commit message, branch name, closing comment.
-- **Branch** — only when a PR is coming. Name it `<ticket-number>-<slug>` (`128-latest-scores-brand-scope`), created before anything is staged; a repo declaring its own pattern in `CLAUDE.md` overrides that. With no approver there is no branch — manufacturing one to merge your own PR is ceremony, not review.
+- **Ticket** — from the argument, the branch name, or the PR body. No pointer means no closing comment; don't invent one. The ID gate — used exactly as provided, wherever it appears — is `committing`'s.
+- **Branch** — only when a PR is coming ([references/pr-path.md](references/pr-path.md) carries the naming); with no approver there is no branch.
 
 ### 2. Propose the commit split
 
@@ -35,7 +35,7 @@ Show the proposed split — which files, which message, in which order — and l
 
 ### 3. Draft the prose
 
-Write the commit messages, the PR body, and the closing comment under `committing`'s claims rule, sentence by sentence — the rule, the closing-comment contract, the house commit style, and the `writing-for-humans` register are all that skill's; the project's declared style wins wherever they disagree.
+Write the commit messages, the PR body, and the closing comment under `committing`'s claims rule, sentence by sentence.
 
 ### 4. Execute, one step at a time
 
@@ -43,13 +43,7 @@ Stage, commit, push, close the ticket — each an outward act under `committing`
 
 **With no approver, that is the entire path.** Commits land on the trunk and push; there is no branch, no PR, no merge. With no PR body, the commit messages and the closing comment are the only prose carrying the change's claims.
 
-**With an approver, a PR carries it.** Never merge a PR the human hasn't seen — and for a change the human did not watch being built, suggest `/merge-quiz` before they approve it (user-invoked; suggest, never require).
-
-- **Link the work item.** On Azure DevOps this is an explicit relation and it is *required*, not decoration: pass `--work-items` when creating the PR. A PR that completes without it strands the work item, and no later comment repairs the link. On GitHub the link is textual — a closing keyword in the PR body, and only when the issue is still open. The closing word — `Closes`, or `Refs` against a partial remainder or an already-closed issue — is `committing`'s decision.
-- **Approval is someone else's act.** Open the PR, set the reviewers (from `CLAUDE.md` where the project declares them; ask when it doesn't, and never guess a name — on ADO, marking them *required* is a second call, below), and **stop there**. Don't wait, poll, or nudge. Report the PR as open and awaiting approval, because that's what it is.
-- **Required vs. optional reviewers (ADO).** `az repos pr create --reviewers` adds reviewers as *optional*. Promote declared reviewers to required immediately after create, before reporting the PR open: `az repos pr reviewer add --id <pr-id> --reviewers "<team>" --required` (the flag is `--required`, not `--required true` or `--is-required`). Verify with `az repos pr reviewer list` that `isRequired` is `true`.
-
-This is why the skill is **re-enterable**: run it again once approval lands and it completes the merge and closure from the state it finds. That approval routinely arrives in a different session than the one that opened the PR. Closure is verified, and blocked acts are reported, the way `committing` says.
+**With an approver, a PR carries it** — open [references/pr-path.md](references/pr-path.md) and follow it, including on a re-entry that finds a PR already open. Never merge a PR the human hasn't seen.
 
 ## Notes
 

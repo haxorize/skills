@@ -12,7 +12,7 @@ This holds whoever produced the findings. A report from your own self-review is 
 
 ## The response loop
 
-1. **Read** the complete feedback without reacting. If an unsubmitted draft review of yours exists on the PR, stop and say so before anything else — replies posted under a pending review are absorbed into it silently (GitHub: `gh api repos/{owner}/{repo}/pulls/{n}/reviews --jq '.[] | select(.state=="PENDING")'`; ADO has no draft-review state, so the check is GitHub-only).
+1. **Read** the complete feedback without reacting. Findings that arrived as PR review comments follow [references/pr-threads.md](references/pr-threads.md), whose draft-review check runs before anything else.
 2. **Restate** each requirement in your own words — or ask what it means.
 3. **Verify** each claim against the codebase before agreeing: does the flagged problem actually exist? Is there a reason the current implementation looks this way (check `docs/adr/` — a behavior an ADR records as deliberate is not a bug)? A multi-claim comment is verified claim by claim — one false sub-claim never dismisses the thread, and a finding is never rejected because a related finding was rejected. A finding the user already declined in an earlier round is not new: cite that disposition rather than re-verifying it, unless the user reopened it.
 4. **Evaluate** — technically sound *for this codebase*? Does the suggestion break existing behavior, or the platforms/versions this project supports?
@@ -35,7 +35,7 @@ Never open with "You're absolutely right!", "Great point!", or any gratitude —
 
 ## Pushback
 
-Push back when a suggestion breaks existing behavior, contradicts a recorded decision, is wrong for this stack, or the reviewer lacks context the code shows. Push back with technical reasoning: cite the test or the code line, ask the specific question. Escalate to the user when the disagreement is architectural rather than local. Pushback to the user takes the ask-table shape the global recommend-and-proceed rule defines (`~/.claude/rules/recommend-and-proceed.md`); don't restate it here.
+Push back when a suggestion breaks existing behavior, contradicts a recorded decision, is wrong for this stack, or the reviewer lacks context the code shows. Push back with technical reasoning: cite the test or the code line, ask the specific question. Escalate to the user when the disagreement is architectural rather than local. Pushback to the user takes the ask-table shape the global recommend-and-proceed rule defines (`~/.claude/rules/recommend-and-proceed.md`).
 
 Pushed back and turned out wrong? State the correction factually and move on ("Verified — you're correct, the API needs 13+; fixing"). No apology spiral, no defending the original pushback.
 
@@ -55,12 +55,4 @@ When a reviewer wants something "implemented properly" (a fuller endpoint, more 
 
 ## Replying on the review's own threads
 
-When the findings arrived as PR review comments, every comment gets an outcome reply — no silent ignores; an unanswered thread reads as a finding dropped, to humans and to the bots that re-raise it. Replies are outbound tracker prose: call the Skill tool with `writing-for-humans` before the first reply if it isn't already live, and apply its commit-and-PR register; every claim in a reply is governed by the global evidence rule (`~/.claude/rules/evidence.md`).
-
-Enumerate the open threads by command before the sweep, and re-run the same command after it — "every thread answered" is a claim, and the list it was checked against is its evidence (GitHub: `gh api graphql` over `reviewThreads { isResolved isOutdated comments }`, since the REST comment list cannot show resolved state; ADO: `az repos pr` has no thread subcommand, so use the REST route — `az devops invoke --area git --resource pullRequestThreads --route-parameters project=<project> repositoryId=<repo-id> pullRequestId=<n> --api-version 7.1 --query 'value[?status!=`closed` && status!=`fixed`]'`).
-
-- **A fix** replies "Fixed in `<hash>` — <what changed>", citing the commit that actually contains the fix — posted only once that hash is on the remote, never before: a reply citing an unpushed commit is a dead link and a "shipped" claim. Leave the thread open: verifying the fix is the reviewer's move, not yours.
-- **A won't-fix** replies with the technical reason (the pushback, written down), and may resolve the thread — the reply itself closes the question.
-- **Already addressed** replies with when and how, and may resolve.
-
-Resolve a thread only when your reply legitimately closes it. Resolving a thread whose fix nobody has verified is the performative agreement of buttons.
+When the findings arrived as PR review comments, open [references/pr-threads.md](references/pr-threads.md) before the first reply and follow it — replies are outbound tracker prose, so have `writing-for-humans` live before writing one. Every comment gets an outcome reply; no silent ignores.

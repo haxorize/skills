@@ -128,8 +128,9 @@
 #     200-line cap and the ADR-citation ban above also run over global/rules/,
 #     since those files are hoisted into ~/.claude/rules/ the same way skills
 #     are hoisted.
-#   - Single-line description (write-skill "Frontmatter pitfalls": the
-#     `description:` value sits on its own line): a plain scalar. A block
+#   - Single-line description (write-skill references/descriptions.md
+#     "Frontmatter pitfalls": the `description:` value sits on its own
+#     line): a plain scalar. A block
 #     indicator (`>`, `|`, with any chomping or indentation suffix) is the
 #     whole value a one-line reader sees, and a plain scalar continued on an
 #     indented next line loses its tail — every consumer here reads one line.
@@ -1167,6 +1168,7 @@ sibling_groups=(
   "src/to-bug/references/publishing.md|src/to-feature/references/publishing.md|src/to-story/references/publishing.md|src/to-tasks/references/publishing.md|src/chart-course/references/publishing.md"
   "src/review-changes/references/subagent-brief.md|src/review-architecture/references/subagent-brief.md|src/chart-course/references/subagent-brief.md|src/handoff/references/subagent-brief.md|src/work-item-shape/references/subagent-brief.md|src/adoption-verdict/references/subagent-brief.md|src/product-description/references/subagent-brief.md"
   "src/review-architecture/references/finding-discipline.md|src/review-changes/references/finding-discipline.md"
+  "src/review-changes/references/tree-stamp.md|src/address-findings/references/tree-stamp.md"
   "src/to-bug/references/github-sub-issues.md|src/to-story/references/github-sub-issues.md|src/to-tasks/references/github-sub-issues.md|src/chart-course/references/github-sub-issues.md"
   "src/to-bug/references/work-item-tags.md|src/to-feature/references/work-item-tags.md|src/to-story/references/work-item-tags.md|src/to-tasks/references/work-item-tags.md|src/chart-course/references/work-item-tags.md"
   "src/implement/references/completion-audit.md|src/handoff/references/completion-audit.md|src/committing/references/completion-audit.md"

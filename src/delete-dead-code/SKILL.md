@@ -9,7 +9,7 @@ requires: feedback-loops
 
 Dead code is code nothing reaches: an unused export, a file no import names, a dependency no source pulls in, a branch no input takes. This is the whole-repo sweep that removes it, run deliberately, when the user asks for it.
 
-The boundary is what makes it a distinct skill. `implement` **parks** pre-existing dead code and removes only what its own slice orphaned. `review-architecture` is **read-only** — it reports friction, it never deletes. `/simplify` works the **changed** code in a diff, not the whole tree. None of them removes the dead code that was already there before this session. That gap is this skill's whole job.
+`implement` **parks** pre-existing dead code and removes only what its own slice orphaned. `review-architecture` is **read-only** — it reports friction, it never deletes. `/simplify` works the **changed** code in a diff, not the whole tree. None of them removes the dead code that was already there before this session.
 
 ## When not to run
 
@@ -52,4 +52,4 @@ State what was removed, tier by tier; what was re-tiered when the suite caught i
 
 ## Notes
 
-- A found *defect* mid-sweep (a live bug, not dead code) is parked, never fixed inline — the repo's `Landing:` defect policy says what happens to it, as in `implement`.
+- A found *defect* mid-sweep (a live bug, not dead code) is parked, never fixed inline — the sweep's own rule. Filing the parked item is the user's ask, and the `Landing:` defect policy in `CLAUDE.md` says what a found defect does by default, as in `implement`.

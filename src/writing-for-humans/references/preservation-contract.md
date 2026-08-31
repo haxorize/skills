@@ -1,0 +1,6 @@
+# The preservation contract — rewrite rules
+
+Read this only in Edit mode, when rewriting prose someone else already wrote; a fresh draft has no source sentence to preserve, and Detect mode names patterns without rewriting.
+
+- **Modality is content.** A hedge, a scope word, a modal verb ("may", "usually", "in most cases", "on the paths we tested") is part of the claim, not decoration on it. Tense carries content on the same terms: a perfect form ("has completed and still holds the lock") states that the result is live now, which the simple past drops. Cutting one promotes a qualified statement into a flat assertion — a rewrite of the fact, and usually a false one. So thinning a hedge stack to the catalog's one-qualifier maximum is a rewrite decision, not a tidy: keep the qualifier carrying the real uncertainty, never whichever one reads shortest.
+- **Logical scope is content too.** A rewrite keeps a trigger a trigger, never the only trigger ("do X if Y" does not say Y is the only case for X); a prerequisite a prerequisite, never a cause; "required" short of "sufficient"; "not tested" short of "wrong"; "has not started" short of "in progress"; and a scoped condition ("only under load") scoped, never widened to "always". Each of these promotions reads cleaner than the source and claims more than it did.

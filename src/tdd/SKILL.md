@@ -14,11 +14,11 @@ Before writing a test body, name the break it catches: the production change tha
 
 Test the contract your code makes at its boundaries — the route you register, the query you emit — never the framework's own mechanics upstream of it; when upstream behavior genuinely surprised you, write one narrow characterization test naming the assumption. Scripts and configs are tested by running them against controlled inputs and asserting outputs or exit codes — asserting their text contains a line proves only that the source is the source. An elapsed-time assertion in a unit test measures the host machine, not your code — assert ordering or completion there; a performance criterion runs under its recorded measurement method, not the inner loop.
 
-When the behavior's own acceptance criterion carries a **temporal quantifier** — "after N attempts", "subsequent", "over time", "converges", "adapts" — the defect lives in the trajectory, and step-wise given-X-return-Y tests cannot see it. Write a closed-loop test over the real surface for at least twice the subject's feedback period, asserting the claimed convergence, the fixed point (correct history produces no correction), and boundedness under an oscillating history.
+When the behavior's own acceptance criterion carries a **temporal quantifier** — "after N attempts", "subsequent", "over time", "converges", "adapts" — the defect lives in the trajectory, and step-wise given-X-return-Y tests cannot see it: write the closed-loop test per [references/doubles.md](references/doubles.md) § Temporal acceptance criteria.
 
-Shape the seam so a double can be specific: a dependency exposed as named operations (`fetchInvoice(id)`, `cancelSubscription(id)`) is doubled per operation with a per-case fixture, while one exposed as a generic transport (`request(url, options)`) forces every test to stub a URL matcher, and every double in the suite ends up the same undifferentiated shape. Where the seam is yours to choose, choose the named one. Before mocking a dependency, run the behavior against the real implementation once to observe what actually crosses the seam — then mock minimally, at that seam, reproducing the complete structure that crossed it — a partial mock fails silently when downstream code reads an omitted field: the test passes while integration breaks. When arguments, call counts, or ordering are part of the contract, assert them — a fake that accepts anything verifies nothing; give each branch (success, error, malformed) its own fixture, so the wrong branch cannot satisfy the expectation. A method only tests use belongs in test utilities, never on the production class. The mock itself earns no assertions — a mock assertion passes when the mock is present and fails when it's absent, saying nothing about the component. When mock setup outgrows the test logic, unmock: switch to an integration test with real components.
+When a test needs a **double** at a dependency seam, open [references/doubles.md](references/doubles.md) § Doubling at a seam before writing it — the seam's shape, what to observe before mocking, and what a double may never assert are all there.
 
-For test fixtures and patterns, see your project's testing skill(s). For conventions on the layer you're touching (endpoint shape, component composition, schema design, etc.), consult the matching convention skill.
+For test fixtures and patterns, see your project's testing skill(s). For conventions on the layer you're touching (endpoint shape, component composition, schema design, etc.), consult the matching convention skill — the project lists them by role in its `CLAUDE.md` `## Convention skills` section.
 
 ## Code written before its test
 
@@ -36,16 +36,6 @@ Production code that got ahead of its failing test gets **deleted** — not kept
 ## Slice vertically, never horizontally
 
 A **Vertical slice** cuts through every layer it touches to deliver one whole behavior, end to end. The **anti-pattern** is the horizontal slice — building a whole layer across many behaviors before any of them works end to end. Horizontal work has nothing to run until the last layer lands.
-
-```
-HORIZONTAL (wrong)                 VERTICAL (right)
-build a layer at a time            build a behavior at a time
-                                   slice 1   slice 2   slice 3
-  UI      ████████████              UI    █  │   █    │   █
-  API     ████████████              API   █  │   █    │   █
-  Data    ████████████              Data  █  │   █    │   █
-  └ nothing runs until the end      └ each slice runs end-to-end
-```
 
 Build the first slice as a **Tracer bullet** — the thinnest path that touches every layer and proves the whole thing connects — then add behavior by behavior, each its own red/green step.
 
@@ -76,8 +66,6 @@ For each remaining behavior:
 1. **RED**: Write one test for the next behavior. Name the oracle the assertion uses — a specified value, a derived property, or (weakest) "it does not crash"; crash-only is never the silent default — if it is genuinely the best available, say so and why. Run the test command — confirm it fails for the right reason.
 2. **GREEN**: Write minimal code to pass. Run the test command — confirm it passes. Minimal narrows the code, never the behavior under test: passing means making the *requested* behavior true, not a substitute that trips the quiet-narrowing tripwire (`DOMAIN.md`); redefining success around what already passes is the failure, not a strategy.
 
-Rule: don't anticipate future tests — write only enough code for the test in front of you. (Philosophy already sets the rest: one test at a time, behavior through the public interface, not implementation.)
-
 ### 4. Refactor
 
 After all tests pass, review the implementation before calling the cycle done:
@@ -97,9 +85,6 @@ Before closing, run the **mutation check**: mentally mutate the production code 
 
 The check itself is a suspect: a test that cannot fail reports green forever and is indistinguishable from a working one. For a load-bearing check, break the code for real once and watch it go red, then restore it and watch the green return — that red must be **content-caused**; a check that reds regardless proves only that it runs. Record the production change that reds it beside the test — a docstring or a leading comment, one line per load-bearing test, never per test — so the break is read later instead of re-derived. And name what the suite cannot catch (the seam with no test, the behavior only eyeballed) rather than letting green imply total coverage.
 
-When the cycle's behaviors are built and refactored, close the loop: call the Skill tool with `feedback-loops` once to finalize mechanically. (Under `implement`, `implement` drives review and this close-the-loop pass; the nudge here keeps standalone `tdd` finishing cleanly on its own.)
+When the cycle's behaviors are built and refactored, close the loop: call the Skill tool with `feedback-loops` once to finalize mechanically.
 
-Tests prove code-correctness, not feature-correctness. When the slice touched behavior no test actually ran — a UI flow, an external integration, a real ingest — name it before declaring done and take one of two branches; the failure here is closing the cycle with the gap unnamed because the suite is green.
-
-- **Eyeball it** — run the project's dev command, exercise the path, and say in the close what you saw and what you did not.
-- **Offer `/validate-behavior`** where being wrong is expensive. It is source-blind against a contract fixed before the run, so it catches a product that only *reports* success — which the person who just wrote the code cannot catch by looking. Say what it costs, so they can judge rather than be sold: a contract written first by someone who is not the checker, and a session sharing none of this one's context. It is user-invoked, so this is a suggestion they act on, never a load.
+Tests prove code-correctness, not feature-correctness. When the slice touched behavior no test actually ran — a UI flow, an external integration, a real ingest — name it before declaring done and take one of the two branches in [references/untested-at-close.md](references/untested-at-close.md) (eyeball it, or offer `/validate-behavior`); the failure here is closing the cycle with the gap unnamed because the suite is green.
