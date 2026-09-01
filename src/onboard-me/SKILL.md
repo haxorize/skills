@@ -12,7 +12,7 @@ A new engineer opens a repo nobody has walked them through, and should not have 
 
 The product is not a summary of the code. It is a **KT map** — the part that is lit, the part that is still dark, and which dark part is worth lighting next. A session that quietly paints over the dark part has failed even when every sentence in it is true.
 
-The map is prose a person reads: call the Skill tool with `writing-for-humans` before the first write to it — if you did not just see a `Launching skill: writing-for-humans` line, stop and call it again.
+The map is prose a person reads: call the Skill tool with `writing-for-humans` at that write if it isn't already live.
 
 Two ways in:
 

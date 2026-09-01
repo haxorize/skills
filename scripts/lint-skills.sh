@@ -228,15 +228,12 @@
 #     total is the unit, never a single file.
 #   - British spellings (ADR-0077 § House style): a word list, over src/**,
 #     .claude/skills/**, global/rules/, global/README.md, DOMAIN.md, README.md,
-#     CLAUDE.md and docs/** — the one check here whose scope runs past the
-#     skill tree, because a British form in an ADR is the same drift. Code
-#     spans and URLs are stripped first, so a machine-matched literal or a
-#     state value (`order.cancelled`) is not prose to spell. global/hooks/ and
-#     scripts/ are outside every caller: `tokeniser error` is a breadcrumb
-#     three selftests grep for, so that tree keeps the British form on purpose
-#     and only the prose describing it flipped. The word list IS the check —
-#     a form absent from it passes, which is why it is spelled out rather than
-#     derived from an `-ise` rule that would fire on `precise`.
+#     CLAUDE.md, docs/** and the prose READMEs under scripts/ — the one check
+#     here whose scope runs past the skill tree, because a British form in an
+#     ADR is the same drift. What it strips, what it excludes and why the list
+#     is spelled out are stated ONCE, at check_spelling; a rationale written
+#     here as well made widening the check three prose edits, and the copy
+#     furthest from the code is the one a reader is least likely to open.
 #   - Heading case (ADR-0077 § House style): a SKILL.md H1 is the skill's
 #     display name in title case; every H2 is sentence case. Mid-heading
 #     capitals that are legitimate and not chased: an acronym, a token
@@ -245,7 +242,7 @@
 #     clause opened by an em dash or a colon starts a new sentence, which is
 #     the shape every numbered step here takes. global/rules/ is not walked:
 #     a rule file's H1 is a sentence-case proposition, not a display name.
-#   - Skill-reference form (ADR-0077 § Amendments 2026-08-30, which narrowed
+#   - Invocation form (ADR-0077 § Amendments 2026-08-30, which narrowed
 #     the flat rule): the bare backtick stays licensed for vocabulary, a
 #     boundary statement, an already-loaded skill's rules, and a gated offer,
 #     and no scan can tell those from a suggestion — so this grades the two
@@ -311,8 +308,15 @@
 #     loaded-context proxy, not a platform limit.
 #
 # The checks, as the named functions below, grouped by the pass that reads
-# for them. Each pass reads its files once; a check is one function, so a new
-# check is a function and a call, never a new walk over the same glob:
+# for them. A check is one function, so a new check is a function and a call.
+# Cost model, stated so it can be checked rather than assumed: pass 2 opens
+# each walked file once for the body checks and once for the whole house-style
+# set (house_style_checks strips fences once and hands the numbered stream to
+# all six), and pass 3's reference checks then run per-reference greps over
+# the owning skill's directory. Pass 4 is a second, separate walk over a
+# different glob — docs/**, global/README.md and the prose READMEs, which no
+# other pass reads. Measured 2026-08-31 over 225 files: ~25s, against ~12s
+# before the six house-style checks landed.
 #   Pass 0 — read before any check runs, so no check's answer depends on how
 #   far the pass that asks it has got: the user-invoked set (name_is_user_invoked,
 #   the single predicate for that question) and both routers' text.
@@ -333,8 +337,8 @@
 #                              descriptions (reported once, after the loop
 #                              has read every description)
 #   Pass 2 — every shipped markdown file, read once: src/**, global/rules/
-#   (the body checks), and for the slash sweep also .claude/skills/**,
-#   DOMAIN.md, README.md:
+#   (the body checks), and for the slash sweep AND the whole house-style set
+#   also .claude/skills/**, DOMAIN.md, README.md:
 #     check_line_cap           <= 200 lines
 #     check_adr_citation       no `ADR-<digit>` token
 #     check_html_transport     no HTML through the shell
@@ -344,7 +348,7 @@
 #     check_spelling           no British form outside a code span
 #     check_heading_case       SKILL.md H1 title case, every H2 sentence case
 #                              (not global/rules/, whose H1 is a proposition)
-#     check_reference_form     no "the X skill"; `/name` at a suggestion site
+#     check_invocation_form     no "the X skill"; `/name` at a suggestion site
 #     check_artifact_names     a written filename is lowercase with dashes
 #     check_labels             every ALL-CAPS label registered in DOMAIN.md
 #     check_section_pointers   every `§ Name` names a heading its target has
@@ -553,14 +557,40 @@ done
 # since Darwin's bash 3.2 has no associative arrays, and both are empty when
 # there is no DOMAIN.md — a tree without one registers nothing, so the checks
 # that read them fall back to their own name lists rather than to silence.
+# label_tokens reads a stream on stdin and prints the ALL-CAPS label tokens in
+# it, one per line. It is called from BOTH sides of the one contract — pass 0
+# building the registry out of DOMAIN.md, and check_labels extracting
+# candidates from a body — because the two are halves of a single question,
+# "what counts as a label", and the pipeline written twice had already drifted
+# once (the registry copy ran without the fence strip, so a token inside a
+# fenced example registered globally while the same token inside a fence in a
+# body was invisible). Fences are stripped on both sides now.
+label_tokens() {
+  grep -oE '`[[:upper:]][[:upper:][:digit:] _:+-]{1,20}`|\*\*[[:upper:]][[:upper:][:digit:] _:+-]{1,20}\*\*' \
+    | tr -d '`*' | sed -e 's/[[:space:]]*$//' -e 's/[.:!?]$//' | sort -u
+}
+
 registered_labels="|"
 domain_terms=" "
 if [ -f DOMAIN.md ]; then
-  registered_labels="|$(grep -oE '`[[:upper:]][[:upper:][:digit:] _:+-]{1,20}`|\*\*[[:upper:]][[:upper:][:digit:] _:+-]{1,20}\*\*' DOMAIN.md \
-    | tr -d '`*' | sed -e 's/[[:space:]]*$//' -e 's/:$//' | sort -u | tr '\n' '|')"
+  # Only the two rows that ARE the registry, not the whole file. Mined from
+  # every span in the document, DOMAIN's own NEGATIVE examples registered the
+  # tokens their sentences ban — `BLOCKED` among them, the one FAIL-family
+  # synonym the Status-marker row names and forbids.
+  registered_labels="|$(awk "$FENCE_AWK"'{ print }' DOMAIN.md \
+    | grep -E '^\| \*\*(Status marker|Verdict scale)\*\* \|' \
+    | label_tokens | tr '\n' '|')"
   domain_terms=" $(grep -oE '^\| \*\*[^*]+\*\*' DOMAIN.md | sed -e 's/^| \*\*//' -e 's/\*\*$//' \
     | tr ' ' '\n' | grep -E '^[[:upper:]]' | tr -d '`,()' | sort -u | tr '\n' ' ')"
 fi
+# The ordering constraint, made checkable instead of documented. check_labels
+# and check_heading_case both read registries built HERE and take neither in
+# their signature; called before this point — by a refactor, or by a selftest
+# exercising one check alone — they return a plausible WRONG answer (an empty
+# registry reads as "nothing is registered") rather than erroring. The
+# sentinel turns that into the case the exit-code taxonomy already has a
+# status for: a check that never ran.
+domain_registries_loaded=1
 
 # ---------------------------------------------------------------------------
 # Pass 1 — every skill's frontmatter and its own body, read once each.
@@ -978,23 +1008,79 @@ check_slash_form() {
 # Code spans and URLs are stripped first, because a state value, an
 # identifier, or a vendor path is not this repo's prose to spell —
 # `order.cancelled` in a contract example stays. global/hooks/ and scripts/
-# are outside every caller on purpose: `tokeniser error` is a machine-matched
-# breadcrumb three selftests grep for, so that tree keeps the British form
-# while the prose describing it does not.
-british_words='behaviour|behaviours|colour|colours|coloured|favour|favours|favoured|favourite|labour|honour|humour|neighbour|neighbours|rumour|endeavour|flavour|centre|centres|fibre|litre|metre|metres|theatre|licence|licences|defence|offence|pretence|analyse|analysed|analyses|analysing|paralyse|organise|organised|organises|organising|organisation|recognise|recognised|recognises|recognising|prioritise|prioritised|prioritises|prioritising|summarise|summarised|summarises|summarising|synthesise|synthesised|synthesises|synthesising|minimise|minimised|minimises|minimising|maximise|maximised|maximises|maximising|normalise|normalised|normalises|normalising|serialise|serialised|serialises|serialising|initialise|initialised|initialises|initialising|utilise|utilised|utilises|utilising|categorise|categorised|categorises|categorising|emphasise|emphasised|emphasises|emphasising|apologise|apologised|apologises|apologising|optimise|optimised|optimises|optimising|optimisation|specialise|specialised|standardise|standardised|generalise|generalised|formalise|formalised|realise|realised|realises|realising|criticise|criticised|memorise|memorised|characterise|characterised|itemise|itemised|harmonise|harmonised|tokenise|tokenised|tokenises|tokenising|tokeniser|tokenisation|cancelled|cancelling|modelling|labelling|labelled|travelled|travelling|signalled|fulfil|fulfilment|enrolment|instalment|whilst|amongst|grey|artefact|artefacts|sceptic|sceptical|scepticism|programme|programmes|judgement|judgements|acknowledgement|acknowledgements|storey|draught|practise|practised|enquire|enquiry'
+# shell are outside every caller on purpose, and the exclusion is the WHOLE
+# tree rather than one word: those files carry machine-matched literals in
+# every position a code span cannot mark — a `hook_allow "tokeniser error"`
+# breadcrumb three selftests grep for, a fixture path (`neighbours.sh`), a
+# probe label, an expectation needle — so telling this repo's prose from a
+# string some other file must match, line by line in shell, is what the
+# exclusion buys out of. The consequence is that ordinary prose in those
+# trees keeps its British forms too; ADR-0077's flip is repo-wide with these
+# two trees excluded, not with one word excluded. The prose READMEs under
+# scripts/ are NOT excluded — they hold no literals — and are walked in
+# pass 4.
+# The deliberate British forms in this tree, named in one greppable place —
+# `grep -n deliberate_british scripts/lint-skills.sh` reaches the roster, and
+# each entry says which consumer requires the form. This is a ROSTER, not a
+# pattern: nothing reads it at runtime. It exists because a code span is
+# indistinguishable from an ordinary path, so a hand-flipped literal inside one
+# has no gate — which is how `licences.tsv` and a recorded `honours` regex were
+# corrupted by a sweep that lint could never have caught.
+#   tokeniser        global/hooks/*.sh, hook-lib.py — `hook_allow "tokeniser
+#                    error"`, matched by three selftests
+#   neighbours.sh    scripts/lint-fixtures*/security/**, a fixture path four
+#                    security-selftest mutation rows name by string
+#   cancelled        an `order.cancelled` contract example — someone else's
+#                    state value, not this repo's prose
+#   pre-authorised   src/committing/SKILL.md, README.md, docs/adr/0077 — the
+#                    PRE-RENAME `Landing:` key, named so a repo still carrying
+#                    it has a documented reader
+#   licences.tsv     docs/adr/00{34,64,65,69,70,75} — a real path under
+#                    ~/code/lib/_rounds/, outside this repo's naming scope
+# A line may also carry `<!-- spelling-exempt: word -->`, which exempts exactly
+# the words it names on exactly that line. Use it where the deliberate form
+# cannot sit in a code span; the roster above is where the reason goes.
+british_words='behaviour|behaviours|colour|colours|coloured|favour|favours|favoured|favourite|labour|honour|humour|neighbour|neighbours|rumour|endeavour|flavour|centre|centres|fibre|litre|metre|metres|theatre|licence|licences|defence|offence|pretence|analyse|analysed|analysing|paralyse|organise|organised|organises|organising|organisation|recognise|recognised|recognises|recognising|prioritise|prioritised|prioritises|prioritising|summarise|summarised|summarises|summarising|synthesise|synthesised|synthesises|synthesising|minimise|minimised|minimises|minimising|maximise|maximised|maximises|maximising|normalise|normalised|normalises|normalising|serialise|serialised|serialises|serialising|initialise|initialised|initialises|initialising|utilise|utilised|utilises|utilising|categorise|categorised|categorises|categorising|emphasise|emphasised|emphasises|emphasising|apologise|apologised|apologises|apologising|optimise|optimised|optimises|optimising|optimisation|specialise|specialised|standardise|standardised|generalise|generalised|formalise|formalised|realise|realised|realises|realising|criticise|criticised|memorise|memorised|characterise|characterised|itemise|itemised|harmonise|harmonised|tokenise|tokenised|tokenises|tokenising|tokeniser|tokenisation|cancelled|cancelling|modelling|labelling|labelled|travelled|travelling|signalled|fulfil|fulfilment|enrolment|instalment|whilst|amongst|grey|artefact|artefacts|sceptic|sceptical|scepticism|programme|programmes|judgement|judgements|acknowledgement|acknowledgements|storey|draught|practise|practised|enquire|enquiry|authorise|authorised|authorises|authorising|authorisation|authorisations|neighbouring|neighbourhood|neighbourhoods|catalogue|catalogues|catalogued|cataloguing|generalises|generalising|generalisation|generalisations|standardises|standardising|standardisation|honours|honoured|honouring|honourable|flavours|flavoured|flavouring|favourable|favourably|favourites|labours|laboured|labouring|humours|rumours|endeavours|endeavoured|endeavouring|fibres|litres|defences|offences|pretences|organisations|optimisations|specialises|specialising|specialisation|formalises|formalising|criticises|criticising|memorises|memorising|characterises|characterising|itemises|itemising|harmonises|harmonising|realisation|realisations|prioritisation|categorisation|normalisation|serialisation|initialisation|utilisation|minimisation|maximisation|summarisation|paralysed|paralyses|paralysing|modelled|signalling|fulfils|enrolments|instalments|judgemental|draughts|sceptics|storeys|enquires|enquired|enquiries|practises|practising|tokenisers|behavioural|behaviourally|colourful|colouring|manoeuvre|manoeuvres|manoeuvring|mould|moulds|moulded|counselling|counsellor|counsellors|centred|centring|licenced'
 check_spelling() {
-  local f=$1 hits badlines words
-  hits=$(awk "$FENCE_AWK"'{ print FNR ":" $0 }' "$f" \
-    | sed -e 's/`[^`]*`//g' -e 's#https\{0,1\}://[^ )]*##g' \
-    | grep -iwE "($british_words)") || true
+  local f=$1 scan=${2-} hits badlines words
+  [ -n "${2+set}" ] || scan=$(awk "$FENCE_AWK"'{ print FNR ":" $0 }' "$f")
+  # One awk with the list in a HASH, not a 260-alternative `grep -iwE` plus a
+  # `sed` per file. The alternation was the single most expensive thing in the
+  # sweep — measured at ~8s of a 36s run over 225 files — because an ERE that
+  # wide is matched alternative by alternative against every line, where a hash
+  # lookup per word is constant. Word boundaries are grep's: a run of
+  # [A-Za-z0-9_]. Emits `<line>:<word as written>`.
+  hits=$(printf '%s\n' "$scan" | awk -v list="$british_words" '
+    BEGIN { n = split(list, w, "|"); for (i = 1; i <= n; i++) bad[tolower(w[i])] = 1 }
+    {
+      line = $0
+      # An inline exemption, read BEFORE the strips so it survives them:
+      # `<!-- spelling-exempt: colour-blind -->` exempts exactly the words it
+      # names, on exactly that line. A deliberate British form that cannot sit
+      # in a code span is otherwise indistinguishable from a missed one.
+      delete ok
+      if (match(line, /spelling-exempt:[^>]*/)) {
+        e = substr(line, RSTART + length("spelling-exempt:"), RLENGTH - length("spelling-exempt:"))
+        gsub(/-->/, "", e)
+        ne = split(e, ew, /[^A-Za-z0-9_]+/)
+        for (i = 1; i <= ne; i++) if (ew[i] != "") ok[tolower(ew[i])] = 1
+      }
+      gsub(/`[^`]*`/, "", line)                     # a literal is not this repo prose to spell
+      gsub(/https?:\/\/[^ )]*/, "", line)           # nor is a vendor URL
+      lno = line; sub(/:.*/, "", lno)
+      body = line; sub(/^[0-9]*:/, "", body)
+      n2 = split(body, toks, /[^A-Za-z0-9_]+/)
+      for (i = 1; i <= n2; i++) if (toks[i] != "" && tolower(toks[i]) in bad && !(tolower(toks[i]) in ok)) print lno ":" toks[i]
+    }
+  ') || true
   if [ -n "$hits" ]; then
-    badlines=$(linenos "$hits")
-    words=$(printf '%s\n' "$hits" | grep -oiwE "($british_words)" | sort -fu | tr '\n' ' ')
-    say_fail "$f uses a British spelling (line(s) ${badlines}— ${words}) — this repo writes the American form; flip the word, or put it in a code span if it is a machine-matched literal"
+    badlines=$(printf '%s\n' "$hits" | cut -d: -f1 | sort -un | tr '\n' ' ')
+    words=$(printf '%s\n' "$hits" | cut -d: -f2- | sort -fu | tr '\n' ' ')
+    say_fail "$f uses a British spelling (line(s) ${badlines}— ${words}) — this repo writes the American form, so take one of three exits: flip the word; put it in a code span if it is a machine-matched literal; or, where it is deliberate and cannot sit in a span, mark the line \`<!-- spelling-exempt: WORD -->\` and add it to the deliberate_british roster in scripts/lint-skills.sh with the consumer that requires it"
   fi
 }
 
-# (see header) Skill-reference form. The bare backtick stays licensed for the
+# (see header) Invocation form. The bare backtick stays licensed for the
 # classes write-skill names — vocabulary, a boundary statement, an
 # already-loaded skill's rules, a gated offer — and no scan can tell those
 # from a suggestion, so this check grades the two forms banned outright
@@ -1007,19 +1093,22 @@ check_spelling() {
 # invisible here, and the licensed classes are graded by nobody. The verb list
 # is the check.
 invocation_verbs='run|runs|running|suggest|suggests|suggesting|offer|offers|offering|type|types|typing|invoke|invokes|invoking'
-check_reference_form() {
-  local f=$1 scan hits badlines named
-  scan=$(awk "$FENCE_AWK"'{ print FNR ":" $0 }' "$f")
-  for named in $(printf '%s\n' "$scan" | grep -oE 'the `?[a-z][a-z0-9-]+`? skill([^a-z]|$)' | sed -e 's/^the //' -e 's/ skill.*$//' | tr -d '`' | sort -u); do
+check_invocation_form() {
+  local f=$1 scan=${2-} hits badlines named
+  [ -n "${2+set}" ] || scan=$(awk "$FENCE_AWK"'{ print FNR ":" $0 }' "$f")
+  # -i on `the`, because a sentence-initial "The `adr` skill is loaded." is the
+  # most likely place to write the banned form and a case-sensitive arm could
+  # not see it. The second arm already had it.
+  for named in $(printf '%s\n' "$scan" | grep -oiE 'the `?[a-z][a-z0-9-]+`? skill([^a-z]|$)' | sed -e 's/^[Tt]he //' -e 's/ skill.*$//' | tr -d '`' | sort -u); do
     [ -f "src/$named/SKILL.md" ] || continue
-    hits=$(printf '%s\n' "$scan" | grep -E "the \`?$named\`? skill([^a-z]|\$)") || true
+    hits=$(printf '%s\n' "$scan" | grep -iE "the \`?$named\`? skill([^a-z]|\$)") || true
     badlines=$(linenos "$hits")
-    say_fail "$f writes \"the $named skill\" (line(s) ${badlines}) — a skill is named, never described as one; write the bare backticked name, or \`/$named\` where a human types it"
+    say_fail "$f breaks the invocation form: it writes \"the $named skill\" (line(s) ${badlines}) — a skill is named, never described as one; write the bare backticked name, or \`/$named\` where a human types it"
   done
   for named in $(printf '%s\n' "$scan" | grep -oiE "($invocation_verbs) \`[a-z0-9-]+\`" | grep -oE '`[a-z0-9-]+`$' | tr -d '`' | sort -u); do
     [ -f "src/$named/SKILL.md" ] || continue
     name_is_user_invoked "$named" || continue
-    say_fail "$f suggests \`$named\` at an invocation site, but '$named' is user-invoked — write \`/$named\`, the form the human types (write-skill: \`/<name>\` only where a human types it)"
+    say_fail "$f breaks the invocation form: it suggests \`$named\` at an invocation site, but '$named' is user-invoked — write \`/$named\`, the form the human types (write-skill: \`/<name>\` only where a human types it)"
   done
 }
 
@@ -1030,23 +1119,37 @@ check_reference_form() {
 # Scope: a backticked token ending in a document extension this repo's skills
 # write (.md, .html, .csv, .txt) — a source file in the user's project takes
 # that ecosystem's convention (`PrototypeSwitcher.tsx`) and is not read here.
+# A token carrying a directory component is graded on its BASENAME, so
+# `docs/notes/Progress_Log.md` is read and `docs/ADR/notes.md` is not. A
+# `<placeholder>` span is dropped before the case test for the same reason a
+# runtime-built path is not read — `<NNNN>-<slug>.md` names no file.
 # A filename in prose without
 # backticks, and a path built at runtime from a variable, are not read.
 artifact_name_exempt='README.md|CLAUDE.md|AGENTS.md|SKILL.md|DOMAIN.md|MEMORY.md'
 check_artifact_names() {
-  local f=$1 hits badlines names
-  hits=$(awk "$FENCE_AWK"'
+  local f=$1 scan=${2-} hits badlines names
+  [ -n "${2+set}" ] || scan=$(awk "$FENCE_AWK"'{ print FNR ":" $0 }' "$f")
+  hits=$(printf '%s\n' "$scan" | awk '
     {
-      line = $0
-      while (match(line, /`[A-Za-z0-9_.<>-]+`/)) {
+      n = $0; sub(/:.*/, "", n)
+      line = $0; sub(/^[0-9]*:/, "", line)
+      while (match(line, /`[~\/A-Za-z0-9_.<>-]+`/)) {
         tok = substr(line, RSTART + 1, RLENGTH - 2)
         line = substr(line, RSTART + RLENGTH)
         if (tok !~ /\.(md|html|csv|txt)$/) continue   # a document this repo writes, not a source file
-        if (tok !~ /[A-Z_]/) continue
-        print FNR ":" tok
+        # The token class carries `/` and `~` because this repo names the
+        # artifacts a run writes as PATHS far more often than as bare
+        # basenames (`docs/solutions/<slug>.md`, `references/<name>.md`).
+        # Only the basename is graded: the directories a path runs through are
+        # not names this check governs.
+        base = tok
+        sub(/.*\//, "", base)
+        gsub(/<[^>]*>/, "", base)                    # a `<placeholder>` is filled at runtime, not a name
+        if (base !~ /[A-Z_]/) continue
+        print n ":" base
       }
     }
-  ' "$f" | grep -vE ":($artifact_name_exempt)$") || true
+  ' | grep -vE ":($artifact_name_exempt)$") || true
   if [ -n "$hits" ]; then
     badlines=$(linenos "$hits")
     names=$(printf '%s\n' "$hits" | cut -d: -f2- | sort -u | tr '\n' ' ')
@@ -1058,6 +1161,10 @@ check_artifact_names() {
 # a status marker, and DOMAIN.md's Status-marker row is where the family is
 # registered — so a token neither registered there nor on the list below is a
 # marker coined in a body, which is the drift that row bans.
+# Two forms are read, because the suite writes markers both ways: a bold or
+# backticked span anywhere in the prose, and a BARE token standing alone in a
+# table cell — `| **AC1** | DONE | …`, which is how every canonical status
+# table in the suite writes one, and which a typography-only scan cannot see.
 # What is not a marker by FORM: a single letter (an option label, a column
 # key), a token carrying a digit (an identifier —
 # `AC1`, `P2`, `L-04`) or an underscore (a shell or environment name —
@@ -1066,12 +1173,42 @@ check_artifact_names() {
 # from somewhere else (a GitHub visibility, a confirm token, a template
 # marker). DOMAIN.md is not scanned: every token in it is registered by
 # sitting there.
-known_caps=' ADO ADR AC ID UI UD DU SQL CI PR HTML CSS CSV TSV API URL CLI OS PHI PII WCAG NPI EOB SMS FHIR MRN HIPAA BAA VPAT ACR AT KT MCP SDK TDD YAML JSON HEAD README CONTRIBUTING ORDER BY SELECT DROP DELETE UPDATE INSERT WHERE CONTAINS TRUNCATE AND OR NOT NULL TITLE TODO STAGES CUTOVER PUBLIC INTERNAL PRIVATE SKIPPED CLOSED YELLOW BREAKING CHANGE YYYY-MM-DD '
+# Stated scope, so a green run is not read wider than it is: a marker carrying
+# a digit or an underscore is skipped by the two FORM rules above, and one
+# bare in ordinary prose (not in a table cell) is not read at all — an
+# unrestricted bare-CAPS scan over prose would need an exemption list longer
+# than the family it guards.
+known_caps=' ADO ADR AC ID UI UD DU SQL CI PR HTML CSS CSV TSV API URL CLI OS PHI PII WCAG NPI EOB SMS FHIR MRN HIPAA BAA VPAT ACR AT KT MCP SDK TDD YAML JSON HEAD README CONTRIBUTING ORDER BY SELECT DROP DELETE UPDATE INSERT WHERE CONTAINS TRUNCATE AND OR NOT NULL TITLE TODO STAGES CUTOVER PUBLIC INTERNAL PRIVATE SKIPPED CLOSED YELLOW BREAKING CHANGE YYYY-MM-DD HHMMSS HTTP HTTPS JWT REST XML PDF PNG SVG ARIA DOM LLM RAG GDPR ICD CPT SSN ZIP TTY UTF URI UUID RFC WCAG2 AA AAA SC SCAMPER OCR CRLF DNS TLS SSH JS TS '
+# A table cell whose WHOLE content is an ALL-CAPS token, bare. Anchored on the
+# cell boundaries so an ALL-CAPS word inside a sentence in a cell is not read.
+bare_cell_labels() {
+  awk '
+    { sub(/^[0-9]*:/, "") }
+    /^[[:space:]]*\|/ {
+      n = split($0, cells, "|")
+      for (i = 2; i <= n; i++) {
+        cell = cells[i]
+        gsub(/^[[:space:]]+|[[:space:]]+$/, "", cell)
+        sub(/[.:!?]$/, "", cell)
+        if (cell ~ /^[[:upper:]][[:upper:][:digit:] _+-]*$/ && length(cell) > 1) print cell
+      }
+    }
+  ' | sort -u
+}
+
 check_labels() {
-  local f=$1 tokens tok
-  tokens=$(awk "$FENCE_AWK"'{ print }' "$f" \
-    | grep -oE '`[[:upper:]][[:upper:][:digit:] _:+-]{1,20}`|\*\*[[:upper:]][[:upper:][:digit:] _:+-]{1,20}\*\*' \
-    | tr -d '`*' | sed -e 's/[[:space:]]*$//' -e 's/:$//' | sort -u) || true
+  local f=$1 scan=${2-} tokens tok
+  # DOMAIN.md registers by sitting there; grading it against itself would make
+  # every negative example a violation. The exemption lives in the check that
+  # owns it, not in the classifier arms that call it.
+  case "$f" in DOMAIN.md | */DOMAIN.md) return 0 ;; esac
+  if [ "${domain_registries_loaded:-0}" != 1 ]; then
+    say_fail "check_labels ran on $f before pass 0 built the DOMAIN.md registries — with an empty registry every label reads as unregistered, so this is a check that did not run, not a verdict on the file"
+    return
+  fi
+  [ -n "${2+set}" ] || scan=$(awk "$FENCE_AWK"'{ print FNR ":" $0 }' "$f")
+  tokens=$( { printf '%s\n' "$scan" | label_tokens
+              printf '%s\n' "$scan" | bare_cell_labels; } | sort -u ) || true
   [ -z "$tokens" ] && return 0
   while IFS= read -r tok; do
     [ -z "$tok" ] && continue
@@ -1079,7 +1216,7 @@ check_labels() {
     [ "${#tok}" -lt 2 ] && continue
     case "$registered_labels" in *"|$tok|"*) continue ;; esac
     case "$known_caps" in *" $tok "*) continue ;; esac
-    say_fail "$f uses the ALL-CAPS label '$tok', which DOMAIN.md's Status-marker row does not register — register it there with the skill that owns it, or write it in prose; a marker nobody registered is one no consumer can match"
+    say_fail "$f uses the ALL-CAPS label '$tok', which is in none of the three places a label may come from — take one of three exits: register it in DOMAIN.md's Status-marker or Verdict-scale row with the skill that owns it; add it to known_caps in scripts/lint-skills.sh if it is an acronym or a literal quoted from elsewhere; or write it in prose. A marker nobody registered is one no consumer can match"
   done <<< "$tokens"
 }
 
@@ -1105,7 +1242,7 @@ title_case_small=' a an the and or nor but for of to in on at by as vs with from
 # every lowercase letter from `b` on — the H1 test silently passed every
 # lowercase word until this was written as a class.
 heading_case_candidates() {
-  awk "$FENCE_AWK"'
+  awk '
     function emit(lineno, heading, clause,   n, parts, i, probe, next_word) {
       n = split(clause, parts, " ")
       i = 1
@@ -1123,30 +1260,53 @@ heading_case_candidates() {
         print lineno "\t" heading "\t" probe
       }
     }
-    /^## / {
-      heading = substr($0, 4)
+    {
+      lno = $0; sub(/:.*/, "", lno)
+      raw = $0; sub(/^[0-9]*:/, "", raw)
+    }
+    raw ~ /^## / {
+      heading = substr(raw, 4)
       stripped = heading
       gsub(/`[^`]*`/, "", stripped)             # a backticked span is a literal, not prose
       gsub(/ — /, "\n", stripped)               # an em-dash clause opens a new sentence
       gsub(/: /, "\n", stripped)                # so does a colon
       n = split(stripped, clauses, "\n")
-      for (c = 1; c <= n; c++) emit(FNR, heading, clauses[c])
+      for (c = 1; c <= n; c++) emit(lno, heading, clauses[c])
     }
-  ' "$1"
+  '
 }
 
 check_heading_case() {
-  local f=$1 h1 w first bad hits lineno heading probe
-  if [ ! -r "$f" ]; then
-    say_fail "$f could not be read — the heading-case check did not run on it; this is not a verdict on its headings"
+  local f=$1 scan=${2-} h1 w first bad hits lineno heading probe
+  [ -n "${2+set}" ] || scan=$(awk "$FENCE_AWK"'{ print FNR ":" $0 }' "$f")
+  # The two exemptions live here rather than in the classifier arms that call
+  # it: a rule file's H1 is a sentence-case proposition and not a display name
+  # (write-skill's spine row), so the H1 half would fail every file under
+  # global/rules/ and the H2 half has nothing to grade; CLAUDE.md's H1 is the
+  # repo's name, not a display name on that axis. Held in the caller, these
+  # were two facts a caller had to know, spelled out at six call sites.
+  case "$f" in
+    global/rules/* | */global/rules/*) return 0 ;;
+    CLAUDE.md | */CLAUDE.md) return 0 ;;
+  esac
+  if [ "${domain_registries_loaded:-0}" != 1 ]; then
+    say_fail "check_heading_case ran on $f before pass 0 built the DOMAIN.md registries — with an empty proper-noun set every registered term reads as a violation, so this is a check that did not run, not a verdict on its headings"
     return
   fi
+  # No read guard here: house_style_checks is this check's only caller and
+  # guards the whole set once. A second guard would be dead code, and a dead
+  # guard that a selftest asserts on is worse than none.
   case "$f" in
     */SKILL.md)
-      h1=$(awk "$FENCE_AWK"'/^# / { sub(/^# /, ""); print; exit }' "$f")
+      h1=$(printf '%s\n' "$scan" | awk '{ sub(/^[0-9]*:/, "") } /^# / { sub(/^# /, ""); print; exit }')
       if [ -n "$h1" ]; then
         first=1; bad=""
-        for w in $h1; do
+        # Quoted expansion: `for w in $h1` word-split AND glob-expanded the
+        # title against the scan root, so a bracketed word vanished and a `*`
+        # became every file in the directory.
+        local -a h1_words=()
+        read -ra h1_words <<< "$h1"
+        for w in "${h1_words[@]}"; do
           # Wrapping punctuation is not part of the word: a display name
           # carrying a parenthetical ("Ask for Me (Fixture)") is still title
           # case, and testing the bracket instead of the letter failed every
@@ -1162,24 +1322,32 @@ check_heading_case() {
       fi
       ;;
   esac
-  hits=$(heading_case_candidates "$f")
+  hits=$(printf '%s\n' "$scan" | heading_case_candidates)
   [ -z "$hits" ] && return 0
   # One FAIL per heading, not per word: three capitals in one heading are one
   # edit, and three lines for it is three times the noise for the same fix.
   # The grouping runs on a sorted stream, so the accumulator only ever holds
   # the heading it is still reading.
   local at="" seen_heading="" seen_words=""
+  # The flush is written once and called twice — from the loop body and after
+  # it — because a remedy edited in one of two verbatim copies is the classic
+  # way a fix half-lands.
+  heading_case_flush() {
+    [ -n "$seen_words" ] || return 0
+    say_fail "$f H2 '$seen_heading' (line $at) capitalizes${seen_words} mid-heading — an H2 is sentence case, so take one of three exits: lowercase the word; add it to proper_nouns in scripts/lint-skills.sh if it is a proper noun or product name; or register it in DOMAIN.md if it is a term this repo defines"
+  }
   while IFS=$'\t' read -r lineno heading probe; do
     [ -z "$probe" ] && continue
     case "$proper_nouns" in *" $probe "*) continue ;; esac
     case "$domain_terms" in *" $probe "*) continue ;; esac
     if [ "$lineno" != "$at" ]; then
-      [ -n "$seen_words" ] && say_fail "$f H2 '$seen_heading' (line $at) capitalizes${seen_words} mid-heading — an H2 is sentence case; lowercase the word, or register the proper noun in DOMAIN.md"
+      heading_case_flush
       at=$lineno; seen_heading=$heading; seen_words=""
     fi
     seen_words="$seen_words '$probe'"
   done <<< "$hits"
-  [ -n "$seen_words" ] && say_fail "$f H2 '$seen_heading' (line $at) capitalizes${seen_words} mid-heading — an H2 is sentence case; lowercase the word, or register the proper noun in DOMAIN.md"
+  heading_case_flush
+  unset -f heading_case_flush
   return 0
 }
 
@@ -1191,24 +1359,32 @@ check_heading_case() {
 # path, or a backticked skill name (whose target is that skill's SKILL.md,
 # the form F9's fix introduced). A `§ 4` naming a section of the file it sits
 # in has no target and is not read.
-# The name is matched as a PREFIX of a heading, because a citation runs on
-# into the sentence ("§ Where to write it owns the shape"); that is also the
+# The match is a prefix test in EITHER direction, because a citation is
+# written both ways: it runs on into the sentence ("§ Where to write it owns
+# the shape", longer than the heading) and it abbreviates a long heading
+# ("§ Obligation rulings" for "## Obligation rulings: what goes in, what stays
+# behind", shorter than it). Requiring one direction alone made a heading
+# carrying a `,` `;` `.` or `)` impossible to cite correctly, because the
+# run-on cut truncated the citation at the same character. That is also the
 # check's limit — a heading that is a prefix of a longer sibling can be cited
 # by the shorter name and pass.
+# Not graded: a `§` whose target is named only as "that file" earlier in the
+# sentence, and a `§` naming a section of the file it sits in.
 section_pointer_candidates() {
-  awk "$FENCE_AWK"'
+  awk '
     {
-      rest = $0
+      lno = $0; sub(/:.*/, "", lno)
+      rest = $0; sub(/^[0-9]*:/, "", rest)
       while ((i = index(rest, "§")) > 0) {
         before = substr(rest, 1, i - 1)
         rest = substr(rest, i + length("§"))
         name = rest
         sub(/^ /, "", name)
         if (name !~ /^[[:upper:]]/) continue
-        print FNR "\t" before "\t" name
+        print lno "\t" before "\t" name
       }
     }
-  ' "$1"
+  '
 }
 
 # The four target forms, as variables rather than inline patterns: a `~` at the
@@ -1219,17 +1395,18 @@ section_link_re='\]\(([^)]+\.md)\)$'
 section_skills_re='~/\.claude/skills/([a-z0-9-]+)/([A-Za-z0-9/._-]+)`?$'
 section_rules_re='~/\.claude/rules/([a-z0-9-]+\.md)`?$'
 section_name_re='`([a-z][a-z0-9-]+)`$'
+# The fourth form puts the target AFTER the citation — "§ Media and free text
+# in [references/media-and-free-text.md](…)". Resolving only from the text
+# before the `§` skipped it, and it is the dominant form in the tree.
+section_after_re='^(.+) in \[[^]]*\]\(([^)]+\.md)\)'
 check_section_pointers() {
-  local f=$1 dir cands lineno before name tail target heading found
+  local f=$1 scan=${2-} dir cands lineno before name tail target heading found
+  [ -n "${2+set}" ] || scan=$(awk "$FENCE_AWK"'{ print FNR ":" $0 }' "$f")
   dir=$(dirname "$f")
-  cands=$(section_pointer_candidates "$f")
+  cands=$(printf '%s\n' "$scan" | section_pointer_candidates)
   [ -z "$cands" ] && return 0
+  local short headings
   while IFS=$'\t' read -r lineno before name; do
-    [ -z "$name" ] && continue
-    # The citation runs on into its sentence, so the name is cut at the first
-    # sentence end or closing paren — both of which a heading may not contain,
-    # and neither of which the prefix match below needs.
-    name=$(printf '%s' "$name" | sed -e 's/\. .*$//' -e 's/[.,;)].*$//' -e 's/[[:space:]]*$//')
     [ -z "$name" ] && continue
     tail=$(printf '%s' "$before" | sed -E 's/[[:space:]—-]+$//')
     target=""
@@ -1241,20 +1418,46 @@ check_section_pointers() {
       target="global/rules/${BASH_REMATCH[1]}"
     elif [[ "$tail" =~ $section_name_re ]]; then
       [ -f "src/${BASH_REMATCH[1]}/SKILL.md" ] && target="src/${BASH_REMATCH[1]}/SKILL.md"
+    elif [[ "$name" =~ $section_after_re ]]; then
+      name="${BASH_REMATCH[1]}"
+      target="$dir/${BASH_REMATCH[2]%%#*}"
     fi
     [ -z "$target" ] && continue
+    # The citation runs on into its sentence, so it is cut at the first
+    # sentence end; `short` cuts harder, at a comma or a closing paren, and is
+    # tried only as a fallback — a heading may legitimately carry either.
+    name=$(printf '%s' "$name" | sed -e 's/\. .*$//' -e 's/[[:space:]]*$//' -e 's/\.$//')
+    [ -z "$name" ] && continue
+    short=$(printf '%s' "$name" | sed -e 's/[,;)].*$//' -e 's/[[:space:]]*$//')
     if [ ! -f "$target" ]; then
       say_fail "$f cites '§ ${name}' (line $lineno) in $target, which is not a file — fix the path or the pointer; check_reference_links reads only the parenthesised half, so a pointer like this one is graded nowhere else"
       continue
     fi
     found=no
+    headings=""
     while IFS= read -r heading; do
       heading=${heading#\#}; while [ "${heading#\#}" != "$heading" ]; do heading=${heading#\#}; done
       heading=${heading# }
       [ -z "$heading" ] && continue
+      # A step number is a POSITION, not a name: `### 5. The topic glossary` is
+      # cited as `§ The topic glossary`, and must stay citable when the section
+      # is renumbered — which is the drift that broke the one `<skill>:<line>`
+      # citation in the tree. Both forms are accepted.
+      headings="$headings'$heading', "
       case "$name" in "$heading"*) found=yes; break ;; esac
+      case "$heading" in "$name"*) found=yes; break ;; esac
+      heading=$(printf '%s' "$heading" | sed -e 's/^[0-9]\{1,3\}\. *//')
+      [ -z "$heading" ] && continue
+      # Either direction: the citation may run past the heading or abbreviate it.
+      case "$name" in "$heading"*) found=yes; break ;; esac
+      case "$heading" in "$name"*) found=yes; break ;; esac
+      case "$short" in "$heading"*) found=yes; break ;; esac
+      case "$heading" in "$short"*) found=yes; break ;; esac
     done <<< "$(grep -E '^#{1,6} ' "$target")"
-    [ "$found" = no ] && say_fail "$f cites '§ ${name}' (line $lineno), and $target carries no heading by that name — rename the pointer to the heading, or the heading back; the pointer resolves to a file that loads and a section that is not there"
+    # The headings were read to do the match, so the remedy names them rather
+    # than telling the maintainer to rename the pointer to a heading it does
+    # not print.
+    [ "$found" = no ] && say_fail "$f cites '§ ${name}' (line $lineno), and $target carries no heading by that name — rename the pointer to one of ${headings%, }, or rename the heading back; the pointer resolves to a file that loads and a section that is not there"
   done <<< "$cands"
 }
 
@@ -1286,23 +1489,36 @@ body_checks() {
   check_reference_links "$1"
 }
 
-# The house-style checks, named once for the same reason. Heading case is
-# NOT in here: it is the one of the five a class can legitimately be exempt
-# from (global/rules/), so each arm names it or does not, in the open.
+# The house-style checks, named once for the same reason — all SIX of them,
+# heading case included. Each of the three exemptions now sits in the check
+# that owns it (check_labels skips DOMAIN.md, check_heading_case skips
+# global/rules/ and CLAUDE.md), so every caller is the same single call and
+# no caller has to know which cell its class drops. Spelling them out per arm
+# had already cost the DOMAIN.md arm its read guard, 200 lines after the
+# comment forbidding exactly that.
 house_style_checks() {
-  # One read guard for the five, on the taxonomy's terms: a file that cannot be
+  # One read guard for the six, on the taxonomy's terms: a file that cannot be
   # read is a set of checks that never ran, which is a different claim from a
-  # file that passed them. Without it an unreadable file drew five awk errors
+  # file that passed them. Without it an unreadable file drew six awk errors
   # on stderr and a clean line on stdout.
   if [ ! -r "$1" ]; then
-    say_fail "$1 could not be read — the house-style checks (spelling, reference form, artifact names, labels, section pointers) did not run on it; this is not a verdict on the file"
+    say_fail "$1 could not be read — the house-style checks (spelling, invocation form, artifact names, labels, section pointers, heading case) did not run on it; this is not a verdict on the file"
     return
   fi
-  check_spelling "$1"
-  check_reference_form "$1"
-  check_artifact_names "$1"
-  check_labels "$1"
-  check_section_pointers "$1"
+  # The fence strip runs ONCE per file, here, and the numbered stream goes to
+  # all six. Six checks each opening the file and stripping the same fences was
+  # six awk processes per file across a 225-file walk, and `--help`'s "each
+  # pass reads its files once" was false the moment the fifth landed. The
+  # stream is `<line number>:<text>`, fenced lines dropped, so every check
+  # still reports the ORIGINAL line number.
+  local scan
+  scan=$(awk "$FENCE_AWK"'{ print FNR ":" $0 }' "$1")
+  check_spelling "$1" "$scan"
+  check_invocation_form "$1" "$scan"
+  check_artifact_names "$1" "$scan"
+  check_labels "$1" "$scan"
+  check_section_pointers "$1" "$scan"
+  check_heading_case "$1" "$scan"
 }
 
 # One classifier, and it is exhaustive because the last arm says so rather
@@ -1324,10 +1540,8 @@ while IFS= read -r f; do
     global/rules/*)
       # Hoisted prose. Body checks and the house-style checks, and
       # deliberately no slash sweep: a rule file addresses the model directly
-      # and names no skill as a command. Deliberately no heading case either:
-      # a rule file's H1 is a sentence-case proposition, not a display name
-      # (write-skill's spine row says so), so the H1 half would fail every
-      # file here and the H2 half has nothing to grade.
+      # and names no skill as a command. Heading case is in the house-style
+      # set and exempts this class itself.
       body_checks "$f"
       house_style_checks "$f"
       ;;
@@ -1335,7 +1549,6 @@ while IFS= read -r f; do
       # A skill's own SKILL.md or a reference beneath it. Everything.
       body_checks "$f"
       house_style_checks "$f"
-      check_heading_case "$f"
       case "$f" in */SKILL.md) : ;; *) check_reference_bytes "$f" ;; esac
       owner=${f#src/}; owner=${owner%%/*}
       if [ -f "src/$owner/SKILL.md" ] && ! name_is_user_invoked "$owner"; then
@@ -1347,7 +1560,6 @@ while IFS= read -r f; do
       # Depth one under src/: no owning skill, so no load gate to apply.
       body_checks "$f"
       house_style_checks "$f"
-      check_heading_case "$f"
       check_slash_form "$f"
       ;;
     .claude/skills/*)
@@ -1356,26 +1568,20 @@ while IFS= read -r f; do
       # is). Its frontmatter is still the author's (see header Scope).
       check_slash_form "$f"
       house_style_checks "$f"
-      check_heading_case "$f"
       check_reference_bytes "$f"
       ;;
     DOMAIN.md)
-      # The glossary. Swept for the slash form and the house style, minus
-      # check_labels: every ALL-CAPS token here is registered by sitting here,
-      # so grading it against itself asserts nothing.
+      # The glossary. Swept for the slash form and the house style; the label
+      # check exempts this file itself, because every ALL-CAPS token here is
+      # registered by sitting here.
       check_slash_form "$f"
-      check_spelling "$f"
-      check_reference_form "$f"
-      check_artifact_names "$f"
-      check_section_pointers "$f"
-      check_heading_case "$f"
+      house_style_checks "$f"
       ;;
     README.md)
       # The second router. The slash form and the house style; its size and
       # frontmatter are the author's (see header Scope).
       check_slash_form "$f"
       house_style_checks "$f"
-      check_heading_case "$f"
       ;;
     *)
       say_fail "walk_shipped_md emitted $f and no classifier arm claims it — add an arm naming that class's whole check set, or drop the tree from the walk; an unclaimed file would otherwise be graded by nothing"
@@ -1681,6 +1887,10 @@ check_sibling_membership() {
 check_reference_orphans() {
   local files=$1 r owner rel base orphan_scan_roots
   orphan_scan_roots="src"
+  # global/ and the three root files are scan roots because a reference cited
+  # ONLY from global/rules/ or from CLAUDE.md/DOMAIN.md/README.md would
+  # otherwise read as an orphan. Each is graded: see the orphan rows in
+  # scripts/lint-skills-selftest.sh.
   [ -d global ] && orphan_scan_roots="$orphan_scan_roots global"
   [ -d .claude/skills ] && orphan_scan_roots="$orphan_scan_roots .claude/skills"
   for r in DOMAIN.md README.md CLAUDE.md; do [ -f "$r" ] && orphan_scan_roots="$orphan_scan_roots $r"; done
@@ -1689,8 +1899,14 @@ check_reference_orphans() {
     owner=${r#src/}; owner=${owner%%/*}
     rel=${r#src/$owner/}
     base=${r##*/}
+    # An anchored pointer — `](references/foo.md#a-heading)` — is a link.
+    # check_reference_links explicitly accepts `.md#`, so a fixed-string match
+    # on the closing paren made the fix for one check a violation of the
+    # other: a correct anchored link read as "linked from nowhere".
     grep -rqF -- "]($rel)" "src/$owner" && continue
+    grep -rqF -- "]($rel#" "src/$owner" && continue
     grep -rqF -- "]($base)" "src/$owner" && continue
+    grep -rqF -- "]($base#" "src/$owner" && continue
     grep -rqF -- "~/.claude/skills/$owner/$rel" $orphan_scan_roots 2>/dev/null && continue
     say_fail "$r is linked from nowhere — every reference is opened by a caller that names the condition; add the pointer in src/$owner/SKILL.md, or delete the file (write-skill: a reference nobody opens is content that left a body and arrived nowhere)"
   done <<< "$files"
@@ -1753,15 +1969,21 @@ check_global_rule() {
 # any one file's — a FAIL, unlike the two byte WARNs above, because this bound
 # is this repo's own ruling rather than a platform figure that moves under it.
 check_rules_bytes() {
-  local bytes
+  local bytes r one
   [ -d global/rules ] || return 0
-  bytes=$(cat global/rules/*.md 2>/dev/null | wc -c | tr -d ' ')
-  if [ -z "$bytes" ]; then
-    say_fail "global/rules/ could not be read for its byte total — the 12,000-byte budget did not run"
-    return
-  fi
+  set -- global/rules/*.md
+  [ $# -gt 0 ] || return 0
+  bytes=0
+  for r in "$@"; do
+    one=$(wc -c < "$r" | tr -d ' ')
+    if [ -z "$one" ]; then
+      say_fail "$r could not be read for its byte total — the 12,000-byte budget did not run, so global/rules/ is unmeasured rather than under budget; fix the file's permissions and rerun"
+      return
+    fi
+    bytes=$((bytes + one))
+  done
   if [ "$bytes" -gt 12000 ]; then
-    say_fail "global/rules/ totals $bytes bytes, over the 12,000-byte budget for the always-loaded layer — cut a rule, move one behind a skill that opens it, or make the case for a new floor in an ADR amendment; every byte here is paid on every turn of every session"
+    say_fail "global/rules/ totals $bytes bytes, over the 12,000-byte budget for the always-loaded layer — cut a rule, move one behind a skill that opens it, or make the case for a new ceiling in an ADR amendment; every byte here is paid on every turn of every session"
   fi
 }
 check_rules_bytes
@@ -1862,12 +2084,23 @@ if [ -d scripts/git-hooks ]; then
   done
 fi
 
-# The spelling-only trees. docs/ and global/README.md are read by people
-# rather than loaded as instructions, so no other check here walks them — but
-# a British form in an ADR is the same drift as one in a body, and this is the
-# one check whose scope ADR-0077 wrote wider than the skill tree. A separate
-# walk because it is a separate glob: nothing else reads these files.
-for f in docs/*.md docs/adr/*.md global/README.md; do
+# The spelling-only trees. docs/, the prose READMEs and global/README.md are
+# read by people rather than loaded as instructions, so no other check here
+# walks them — but a British form in an ADR is the same drift as one in a
+# body, and this is the one check whose scope ADR-0077 wrote wider than the
+# skill tree. A separate walk because it is a separate glob: nothing else
+# reads these files. `find docs` rather than two enumerated levels, because
+# the header states the scope as `docs/**` and `capturing-learnings` writes to
+# `docs/solutions/`, which a two-level glob would never reach. The prose
+# READMEs under scripts/ are here and not in the scripts/ exclusion above:
+# the exclusion buys out of separating prose from machine-matched literal
+# inside shell, and a README carries no literals. The two FIXTURE READMEs are
+# NOT in this glob: each is a fixture whose job is to carry a violation for a
+# LINT_ROOT run, so walking them from the repo's own run would report the
+# fixture's deliberate instance as this repo's defect.
+{ [ -d docs ] && find docs -type f -name '*.md'
+  printf '%s\n' global/README.md scripts/README.md
+} | sort -u | while IFS= read -r f; do
   [ -f "$f" ] && check_spelling "$f"
 done
 
@@ -1879,8 +2112,8 @@ if [ -f CLAUDE.md ]; then
   # than a second extractor, so the two cannot disagree about scope.
   check_reference_links CLAUDE.md
   # The root file is an instruction file like any other: it names skills, cites
-  # sections, and is written in this repo's prose. Heading case is left off —
-  # its H1 is the repo's name, not a display name on the axis above.
+  # sections, and is written in this repo's prose. Heading case is in the set
+  # and exempts this file itself.
   house_style_checks CLAUDE.md
 fi
 

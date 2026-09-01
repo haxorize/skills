@@ -1,6 +1,6 @@
 ---
 name: resolving-merge-conflicts
-description: Conflict-resolution loop for an in-progress git merge, rebase, or cherry-pick. Use when you land in a conflicted merge, rebase, or cherry-pick mid-task, when a merge to main has left someone else's open PR conflicted, or the user asks to resolve merge conflicts.
+description: Conflict-resolution loop for an in-progress git merge, rebase, cherry-pick, or revert. Use when you land in a conflicted merge, rebase, cherry-pick, or revert mid-task, when a merge to main has left someone else's open PR conflicted, or the user asks to resolve merge conflicts.
 requires: feedback-loops
 ---
 
@@ -39,4 +39,4 @@ Run `git diff --check HEAD` before staging (bare `git diff --check` skips files 
 
 ## Boundary
 
-This skill resolves the conflict and nothing beyond it: resolution combines what the two sides intended and never redesigns, so a right answer that is neither side is a finding raised to the user, and the work it implies is a work item shaped by `work-item-shape`. Landing the resolved merge — the commit, the push, the ticket — is `committing`'s. Judging the resolved code is `review-changes`', and a check that stays red for a reason the merge did not cause is `diagnosing-bugs`'.
+This skill resolves the conflict and nothing beyond it: the work a raised finding implies is a work item shaped by `work-item-shape`. Landing the resolved merge — the commit, the push, the ticket — is `committing`'s. Judging the resolved code is `review-changes`', and a check that stays red for a reason the merge did not cause is `diagnosing-bugs`'.

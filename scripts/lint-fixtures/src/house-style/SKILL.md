@@ -33,3 +33,18 @@ that widens names that path and reds a reject row by path.
 
 That heading is the H2 violation: three words capitalized mid-heading where the
 convention is sentence case.
+
+## Labels the registry must not admit
+
+Appended below every numbered assertion above, so adding an instance here moves no
+line the selftest names.
+
+- A banned synonym named in `DOMAIN.md`'s own Status-marker row: that row registers the
+  family and must not register the token its own sentence bans — the row reads
+  `FIXTUREBANNED`.
+- A marker written the way the suite actually writes one, bare and alone in a table
+  cell, in neither the registry nor the acronym list:
+
+| Criterion | Status |
+|---|---|
+| **AC1** | BARECOINED |

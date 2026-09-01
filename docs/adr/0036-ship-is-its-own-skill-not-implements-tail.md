@@ -14,7 +14,7 @@ The main flow ended at a step nothing owned — `which-skill` listed "6. Ship." 
 
 ## Amendments
 
-- **2026-08-31** — the carve-out above is repaired in `write-skill`'s `cross-skill-wiring.md`, reasoning from execution: a built-in cannot fail to load but can fail to run, and it emits no load line for a gate to watch, so a body that fires one names the artifact the run leaves and treats the step as run only with that artifact in hand. The gate stays refused for built-ins; what replaces it is an evidence check, which is the shape the "claimed a step ran that never ran" failure actually takes.
-
 - **2026-08-08** — ADR-0045 amends the second consequence: commit-message and PR-body style no longer stays per-repo. `ship` now applies a house style by default, overridden only by a convention the consuming repo *explicitly declares*; the "say so once" gap-naming behavior retires with it. The claims discipline recorded here is unchanged.
 - **2026-08-21** — [ADR-0052](0052-committing-extracted-from-ship.md) moves the claims rule, the closing-comment contract, the blocked-action protocol, and a one-commit fast path to the model-invoked `committing`, which `ship` requires; `ship` keeps the split and PR path. "Ship owns the claims discipline" above now reads as `ship` inheriting it through that dependency, and the house style the 2026-08-08 entry gave `ship` is `committing`'s.
+
+- **2026-08-31** — the carve-out above is repaired in `write-skill`'s `cross-skill-wiring.md`, reasoning from execution: a built-in cannot fail to load but can fail to run, and it emits no load line for a gate to watch, so a body that fires one names the artifact the run leaves and treats the step as run only with that artifact in hand. The gate stays refused for built-ins; what replaces it is an evidence check, which is the shape the "claimed a step ran that never ran" failure actually takes.

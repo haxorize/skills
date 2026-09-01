@@ -13,4 +13,9 @@ and a wrapped rule would silently contribute only its first fragment.
 
 That set disagrees with the legend under references/ on its third member, which is the
 whole point of this fixture.
-\nThe references beneath this skill are pointed at from here, so the orphan check\ngrades its one deliberate orphan and not this tree's whole reference set:\n\n- [legend-line](references/legend-line.md)\n- [unanchored-in-legend-dir](references/unanchored-in-legend-dir.md)\n
+
+The references beneath this skill are pointed at from here, so the orphan check
+grades its one deliberate orphan and not this tree's whole reference set:
+
+- [legend-line](references/legend-line.md)
+- [unanchored-in-legend-dir](references/unanchored-in-legend-dir.md)

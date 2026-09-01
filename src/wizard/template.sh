@@ -30,6 +30,7 @@ WRITTEN_ENV=()    # KEYs written to ENV_FILE this run
 WRITTEN_SECRET=() # secret NAMEs set this run
 SKIPPED=()        # things we couldn't do (e.g. gh missing)
 WATCH=()          # copy-paste commands that follow something long-lived this run started
+STOPPED=0         # set to 1 by a declined confirm/confirm_token, read by finish
 
 # _clear — wipe the terminal so only the current step is on screen. No-op when
 # output isn't a terminal, so piped logs stay readable.
@@ -96,7 +97,9 @@ _prompt() {
 # confirm "question" — y/N gate for a step the wizard can undo; returns
 # success on a y or Y. Anything else — including EOF — prints the abort line
 # and returns 1, which ends a bare call under the library's -e with no
-# summary: call it as `if confirm …; then …; else finish; exit 0; fi`. A
+# summary: call it as `if confirm …; then …; else finish stopped; exit 0; fi`.
+# The `stopped` is what keeps the summary from reporting a setup that did not
+# happen. A
 # second argument is a bug in the wizard, never a token gate — the
 # irreversible gate is confirm_token: it names the call on stderr and
 # returns 2.
@@ -108,6 +111,7 @@ confirm() {
   local reply=""
   _prompt "$1 [y/N]"
   [[ "$reply" =~ ^[Yy] ]] && return 0
+  STOPPED=1
   say "Aborted — that step was not run."
   return 1
 }
@@ -121,7 +125,9 @@ confirm() {
 # for the y/N gate: it names the call on stderr and returns 2. On no it
 # prints the abort line and returns 1, which ends a bare call under the
 # library's -e with no summary — so call it as
-# `if confirm_token …; then …; else finish; exit 0; fi`.
+# `if confirm_token …; then …; else finish stopped; exit 0; fi`, where the
+# `stopped` is what keeps the summary from reporting a setup that did not
+# happen.
 confirm_token() {
   if [ "$#" -lt 2 ] || [[ -z "$2" ]]; then
     printf '  %s✗ confirm_token "%s" was given an empty token — no stage captured it%s\n' "$RED" "${1:-}" "$RESET" >&2
@@ -130,6 +136,7 @@ confirm_token() {
   local reply=""
   _prompt "$1 — type $2 to proceed:"
   [[ "$reply" == "$2" ]] && return 0
+  STOPPED=1
   say "Aborted — that step was not run."
   return 1
 }
@@ -246,10 +253,21 @@ set_var() {
 
 # finish [stopped] — clear, then a closing summary of everything configured.
 # Pass `stopped` when a declined gate ended the wizard early, so the summary
-# doesn't claim a setup that didn't happen.
+# doesn't claim a setup that didn't happen. The only accepted argument is that
+# word: `finish stoped`, `finish --stopped` and `finish aborted` all used to
+# take the success branch and print "✓ Setup complete" after a declined
+# irreversible gate, which is the one thing this function must never do — so a
+# malformed call names itself on stderr and returns 2, as both confirm gates
+# already do. A declined `confirm`/`confirm_token` ALSO sets STOPPED=1, which
+# covers the call that forgets the word; the argument stays the documented
+# form because a gate read through a pipe runs in a subshell and cannot set it.
 finish() {
+  if [ "$#" -gt 1 ] || { [ "$#" -eq 1 ] && [ "$1" != stopped ]; }; then
+    printf '  %s✗ finish was given "%s" — the only argument it takes is the word stopped%s\n' "$RED" "$*" "$RESET" >&2
+    return 2
+  fi
   _clear
-  if [[ ${1:-} == stopped ]]; then
+  if [[ ${1:-} == stopped || ${STOPPED:-0} == 1 ]]; then
     printf '\n%s%s  ▪ Setup stopped — nothing further was changed%s\n' "$BOLD" "$YELLOW" "$RESET"
   else
     printf '\n%s%s  ✓ Setup complete%s\n' "$BOLD" "$GREEN" "$RESET"

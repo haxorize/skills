@@ -33,7 +33,7 @@ One numbered round, only the gaps from step 1:
 
 Preview every block, then write on confirmation. A block or file that already exists is left exactly as it is and reported as skipped, even where it disagrees with the interview — the user edits it; this skill does not. Append to `CLAUDE.md` (create a minimal one when absent); never reorder or rewrite what is there.
 
-- `## Issue tracker` — the `Issue tracker:` block the publishers read: the tracker name; the `Visibility:` line; for ADO, the four fields from step 2; optional default labels; and the routing policy line, verbatim: "Work items are created only through the `to-*` publishers (`/to-feature`, `/to-story`, `/to-tasks`, `/to-bug`) — never drafted and pushed with raw `gh`/`az` calls. On a casual ask ('file a story'), name the right publisher and stop."
+- `## Issue tracker` — the `Issue tracker:` block the publishers read: the tracker name; the `Visibility:` line; for ADO, the five fields from step 2 (`Organization:`, `Project:`, `Area path:`, `Iteration:`, `PI label:`); optional default labels; and the routing policy line, verbatim: "Work items are created only through the `to-*` publishers (`/to-feature`, `/to-story`, `/to-tasks`, `/to-bug`) — never drafted and pushed with raw `gh`/`az` calls. On a casual ask ('file a story'), name the right publisher and stop."
 - `## Landing` — the `Landing:` block, six lines.
 - `## Commands` — only the commands step 2 admitted, each preceded by the question it answers.
 - `## Convention skills` — role → skill name, one line each.

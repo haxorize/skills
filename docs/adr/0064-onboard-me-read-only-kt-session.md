@@ -1,6 +1,6 @@
 # `onboard-me` admitted: a read-only KT session over a repo, delegating the product description
 
-Status: accepted (2026-08-27)
+Status: accepted (2026-08-27) — the workspace filenames below were renamed by [ADR-0077](0077-tightening-round-one-house-style.md): `KT-MAP.md` is now `kt.md`, and `teach-me`'s `MISSION.md` is now `mission.md`. The body stays as it landed; read the names through that rename.
 
 The 2026-08-27 round surfaced four knowledge-transfer candidates sharing one shape — `describe-product` (N1a.53), `onboard-me` (N1b.22), `offboard-me` (N1b.25), `rebuild-me` (N1b.28) — every one user-invoked, high-stakes, and parked in the ledger for want of a second consumer. The [Team-fit test](0063-team-fit-test-replaces-retire-on-zero-window.md) admits them on the moment rather than the count. This record covers `onboard-me`, a user-invoked skill that runs a knowledge-transfer session over a repo the person does not know: evidence-tagged findings, an honest map of what is still dark, one rung per turn, and each topic worth going deeper on handed to `/teach-me`. It reads the repo and never changes it.
 
@@ -33,7 +33,7 @@ The split between the two is subject, not role: `onboard-me` maps the inside, ho
 
 ## Sources
 
-Written from two methods, in local prose, never from either upstream's templates or wording. `nitfolio-nirvajna-skills` at `c842141` (**MIT**) supplied the KT session: the fog-of-war map, evidence tags, the stage ladder with a completion criterion per rung, and the read-only boundary. The product description's own sources are ADR-0065's. The 2026-08-27 batch plan attributes a NONE-STATED license to nitfolio; `~/code/lib/_rounds/2026-08-27/licenses.tsv:52` records nitfolio as **MIT**, and the NONE-STATED sources are the `steveruizok` gists, so the constraint binds those instead.
+Written from two methods, in local prose, never from either upstream's templates or wording. `nitfolio-nirvajna-skills` at `c842141` (**MIT**) supplied the KT session: the fog-of-war map, evidence tags, the stage ladder with a completion criterion per rung, and the read-only boundary. The product description's own sources are ADR-0065's. The 2026-08-27 batch plan attributes a NONE-STATED license to nitfolio; `~/code/lib/_rounds/2026-08-27/licences.tsv:52` records nitfolio as **MIT**, and the NONE-STATED sources are the `steveruizok` gists, so the constraint binds those instead.
 
 A secrets prohibition was drafted for this skill and **cut on evidence**. Two fresh-context controls under combined time, authority and social pressure — the second with the escape hatch closed — both refused to inline live credentials unprompted, and `testing-skills.md` reads a clean control as proof the wording is a no-op. The controls were agents in this harness carrying the user's global rules, which is the scope of the finding.
 

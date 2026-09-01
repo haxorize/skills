@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # Mine Skills
 
-The mining-round opener. It produces reports and ledger rows under `~/code/lib/_rounds/<date>/`; it adopts nothing — adoption is the grill's (`/grill-me` over the recs) and the fold batch's — and it **never edits `src/`**.
+The mining-round opener. It produces reports and ledger rows under `~/code/lib/_rounds/<date>/`; it adopts nothing — adoption is the grill's (`/grill-me` over the recs) and the fold batch's — and it **never edits `src/`**. A round is a **Mining round** or a **Tightening round** and never both: this skill opens the first kind, which reads outward for material to admit. An inward pass over this repo's own house style, size caps, pruning and merges is the other kind, opened by hand from its own plan — the two share `~/code/lib/_rounds/<date>/` and nothing else, so `briefing.md` names which kind the round is in its first line.
 
 ## Workflow
 

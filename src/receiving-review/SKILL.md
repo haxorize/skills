@@ -6,7 +6,7 @@ requires: writing-for-humans
 
 # Receiving Review
 
-Review feedback is a set of claims to verify, not orders to follow or occasions for gratitude. Technical correctness over social comfort. Three stops bound the pass and each is stated in full below: clarify every unclear item before implementing any of them; stop and hand the call back when the fix work would exceed roughly 2× the original change; and stop when the pass has accepted nothing, since a review with zero accepted findings is a reading failure before it is a review failure.
+Review feedback is a set of claims to verify, not orders to follow or occasions for gratitude. Technical correctness over social comfort. Two stops bound the pass, and a tripwire sits inside it; each is stated in full below. The stops: clarify every unclear item before implementing any of them, and hand the call back when the fix work would exceed roughly 2× the original change. The tripwire: a pass that has accepted nothing re-examines its strongest finding before it responds — a review with zero accepted findings is a reading failure before it is a review failure — and then continues.
 
 This holds whoever produced the findings. A report from your own self-review is not pre-verified because it came from your side of the desk — subagent findings are claims like any other. Inline threads, review bodies, and top-level PR comments are judged alike; a claim is not weaker for arriving outside a thread. An advisory — an item a `review-changes` report lists under a lens with no `F<n>` — is a claim like the rest and is verified the same way; it asks for no reply and takes no disposition, and the author acts on it or leaves it.
 

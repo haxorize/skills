@@ -7,8 +7,6 @@ description: Naming and placing code so a plain-text search finds it — identif
 
 An agent finds code by searching for strings and reading a small window around each hit. It has no hover text, no jump-to-definition, and no memory of last session's tour of the repo. So every identifier is a **search query**, every log line is a query someone will paste back, and a name that greps to 40 hits costs the same reads as a name that greps to none. Write so one search resolves the question.
 
-The rules below govern *findability*.
-
 ## Names are search queries
 
 - **Exported symbols get 2–4 words, at least one of them a domain word.** `diffUserObjects`, not `diff`; `queueEventForDispatch`, not `queue`. One-word exported names collide across a large repo far more often than three-word ones, and three words is where the curve flattens — take the shortest name that greps uniquely and put the rest in the doc line. In a language where the call site carries a qualifier — a Go package, a Python module — the qualifier is one of the words for the reader at the call site (`stripe.NewClient` reads as three, and `stripe.StripeClient` stutters), but the definition reads `func NewClient`, which a bare search reaches only through the package path; so the doc line on the definition carries the domain word the name dropped.

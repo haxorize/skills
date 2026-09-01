@@ -19,13 +19,17 @@ file under `global/rules/` goes through that arm and is graded by all four body 
 token and HTML through the shell, and it also carries the retired slash form of a
 model-invoked name under a *Must stay quiet* heading, because `global/rules/` is the
 one class the slash sweep deliberately skips and an exemption nobody exercises is not an
-exemption. `.claude/skills/repo-local/` is the only repo-local skill, and the slash sweep
-is the only check that reaches it — `lint-fixtures-clean/.claude/skills/repo-local/`
+exemption. `.claude/skills/repo-local/` is the only repo-local skill; the slash sweep, the whole
+house-style set and the loaded-file byte WARN reach it, and it carries an instance of
+each — the retired slash form, a British spelling, and an oversize
+`references/oversize.md` — because each of those three cells could be deleted from that
+arm with the selftest green. `lint-fixtures-clean/.claude/skills/repo-local/`
 is its quiet half, naming a user-invoked skill and a built-in. `src/broken-links/references/load-gated.md`
 carries a load gate in a *reference* file under a model-invoked owner, the half of that
 check no `SKILL.md` fixture can reach. `src/stray-note.md` is a markdown file at depth
 one under `src/` with no owning `SKILL.md` beside it — the only input that arm has — and
-it fires on an ADR token; `lint-fixtures-clean/src/stray-note.md` is its quiet half. The
+it fires on an ADR token and on a British spelling, the body-check and house-style halves
+of that arm; `lint-fixtures-clean/src/stray-note.md` is its quiet half. The
 last two in this root are `DOMAIN.md` and this file, described in the closing paragraph,
 whose quiet half is `lint-fixtures-clean/DOMAIN.md`.
 
@@ -53,11 +57,18 @@ The four `src/shared-trigger-*/` skills are the shared-trigger-phrase check's gr
 
 `security/injected-skill/` and `security/clean-skill/` are `scripts/security-selftest.sh`'s fixture, and they grade themselves: every instance carries an annotation on the line before it — `# ruleid: <id>` (`//` in JavaScript, `<!-- -->` in markdown, several ids space-separated when one line draws several rules) names the rule the next non-blank line must draw, and `# ok: <id>` names the rule it must not. The injected side is wrong on purpose and carries one annotated instance per *alternative* of every rule the scanner names — each drop-site host, each credential-store and home-path form, each download form paired with each mode change, each member of the homoglyph table, each script extension under `scripts/ext/` — in a file named for the rule (`scripts/sh-imds.sh`; an alternative that only reads plausibly in another language takes that extension with the same stem, `sh-noverify.js`); a file that cannot carry a comment (a manifest, a fake ELF under `bin/`, the two bytecode-named files, a UTF-16 file) is graded from the selftest's `NO_COMMENT_TABLE` instead, and every finding in such a file must match a row. The clean side is right on purpose: the benign neighbor of each rule, sitting near its threshold (a download with the chmod six lines away against the five-line window, a 190-char hex hash against the 200 floor, a regex range and a Cyrillic word beside an escape against the homoglyph rule), and any finding there is a red. The selftest pins the expectation count exactly, so adding or removing an instance is a deliberate edit there; the selftest's header states what the grading does not cover. Nothing in either runs, and no file carries the executable bit.
 
-`src/house-style/` (the skill `house-style`) carries the house-style checks' ground: one firing instance of each — the descriptive "the X skill" form, a suggestion site naming a user-invoked skill bare, an artifact filename with an uppercase letter and an underscore, an ALL-CAPS label this tree's `DOMAIN.md` never registered, a `§` pointer into a file that carries no such heading, and a title-cased H2 — and beside each the neighbor that must stay quiet: a model-invoked name at the same suggestion site, a repo-convention filename, a registered label, a pointer that resolves, a British form inside a code span, and two headings whose mid-word capitals are an acronym and a numbered label. `src/broken-links/references/orphaned.md` is the orphan check's whole input, and every other reference in this tree is linked from its owner so that check grades one file rather than the tree.
+`src/house-style/` (the skill `house-style`) carries the house-style checks' ground: one firing instance of each — the descriptive "the X skill" form, a suggestion site naming a user-invoked skill bare, an artifact filename with an uppercase letter and an underscore, an ALL-CAPS label this tree's `DOMAIN.md` never registered, a `§` pointer into a file that carries no such heading, and a title-cased H2 — and beside each the neighbor that must stay quiet: a model-invoked name at the same suggestion site, a repo-convention filename, a registered label, a pointer that resolves, a British form inside a code span, and two headings whose mid-word capitals are an acronym and a numbered label. `src/broken-links/references/orphaned.md` is the orphan check's whole input, and every other reference in this tree is linked from its owner so that check grades one file rather than the tree. `src/house-style/references/cited-from-global.md` is the exception, and deliberately so: its only pointer is an installed-path citation in `global/rules/body-checked.md`, which is what grades `global` among `orphan_scan_roots`.
+
+`docs/adr/0001-fixture-record.md`, `docs/solutions/nested-note.md` and `global/README.md` are pass 4's ground — the spelling-only walk, whose scope ADR-0077 wrote wider than the skill tree. Emptying that loop's header left every root green before they existed, and the nested one is what makes `find docs` rather than two enumerated levels an assertion. `lint-fixtures-clean/` carries the quiet half of the first and third.
 
 Edit these fixtures only to add coverage. Weakening one to make the self-test pass is the
 failure the self-test exists to catch.
 
-`README.md` and `DOMAIN.md` are in the walk for the slash sweep and nothing else, and
-each carries one retired slash form so that class is graded rather than assumed: this
-line writes `/fixture-discipline`, a model-invoked name, and must fire.
+`README.md` and `DOMAIN.md` are in the walk for the slash sweep AND the whole
+house-style set, and each carries one instance of both so those cells are graded rather
+than assumed: this line writes `/fixture-discipline`, a model-invoked name, and must
+fire, and the closing paragraph carries a British form for the house-style half.
+
+Deleting `house_style_checks` from the `README.md` arm used to leave the selftest green:
+the slash form above was the only graded cell. So: the run normalises this row before it
+lands.

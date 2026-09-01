@@ -18,7 +18,11 @@ quietly greener lint run.
 
 ## Must stay quiet
 
-A resolvable link is not a finding: [real reference](references/real-reference.md)\n\nThe load-gate fixture beneath this skill is pointed at from here, so only\n[references/orphaned.md](references/does-not-exist.md) is left unlinked — see\n[the gated reference](references/load-gated.md).
+A resolvable link is not a finding: [real reference](references/real-reference.md)
+
+The load-gate fixture beneath this skill is pointed at from here, so only
+`references/orphaned.md` is left unlinked — see
+[the gated reference](references/load-gated.md).
 
 A dependant of a global rule that cites it by stem is not a finding either: the global
 `well-formed` rule.

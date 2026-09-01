@@ -18,7 +18,7 @@ Check [`docs/lineage.md`](docs/lineage.md) first.
 
 ## Adding, renaming, or removing a skill, or changing how one fits the flows
 
-Update [`src/which-skill/SKILL.md`](src/which-skill/SKILL.md) and `README.md`'s skill map in the same change; a new caller relation or a new `requires:` edge counts as a change to how a skill fits. A skill under `.claude/skills/` updates the README map only — the router covers the hoisted suite, and neither repo-local skill has an entry there. Lint catches a missing mention, never a wrong blurb.
+Update [`src/which-skill/SKILL.md`](src/which-skill/SKILL.md) and `README.md`'s skill map in the same change; a new caller relation or a new `requires:` edge counts as a change to how a skill fits. A skill under `.claude/skills/` updates the README map only — the router covers the hoisted suite. Lint catches a missing mention, never a wrong blurb.
 
 ## Touching a script or hook
 

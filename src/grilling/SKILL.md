@@ -9,7 +9,7 @@ description: The relentless-interview discipline for stress-testing a plan, deci
 
 Map the topic as a **decision tree** — every decision branches into the decisions that hang off it — and work it in **rounds**. The **frontier** is every decision whose prerequisites are already settled: the questions you can ask *now* without guessing at answers you haven't heard yet. Ask the whole frontier in one round, then wait. Answers reshape the tree — settled decisions push the frontier outward — so recompute it and ask the next round. A question whose answer depends on another question still open in this round belongs to a *later* round, not this one. When decisions chain, the frontier narrows by itself — a one-question round is the tree saying the next decision gates everything else, not a failure to batch.
 
-The loop is not done when the questions run out. Three gates close it, each stated in full below: the **closure sweep** over the standing categories, the **pre-mortem**, and the **false-yes gate** that refuses a non-answer as a decision. A grill that skipped them is unresolved, whatever it concluded.
+The loop is not done when the questions run out. Three gates close it, each stated in full below: the **closure sweep** over the standing categories, the **pre-mortem**, and the **false yes** that refuses a non-answer as a decision. A grill that skipped them is unresolved, whatever it concluded.
 
 Before descending, assess scope: if the topic spans multiple independent subsystems, don't spend rounds refining details of a piece that needs decomposition first — grill the split itself (what are the pieces, how do they relate, which goes first), then descend into the first piece.
 

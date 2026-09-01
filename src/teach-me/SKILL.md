@@ -68,7 +68,7 @@ A **lesson** is one self-contained HTML file in `lessons/`, teaching exactly one
 
 - Read [references/pedagogy.md](references/pedagogy.md) (teaching moves, quizzes, warm-up) and [references/lesson-design.md](references/lesson-design.md) (visual system, anatomy, `assets/` components) before authoring any lesson.
 - The graded quiz is conducted by you in conversation, not embedded in the lesson; only you can run the dialogic moves and log outcomes to `progress.md`.
-- Open the finished lesson for the user — `open` on macOS, `xdg-open` on Linux, `start` on Windows — against `<root>/<slug>/lessons/NNNN-<slug>.html`, the workspace and not the session's cwd.
+- Open the finished lesson for the user — `open` on macOS, `xdg-open` on Linux, `start` on Windows — against `<root>/<slug>/lessons/<NNNN>-<slug>.html`, the workspace and not the session's cwd.
 
 Lessons are point-in-time consumables — date-stamped, never edited after the fact, never maintained as code or sources move on. Cheat sheets are the revisited artifact, re-verified only when a new lesson touches them.
 

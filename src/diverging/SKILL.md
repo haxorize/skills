@@ -28,7 +28,7 @@ Match the stuck-pattern to the move. When unsure, default to **Reframe**.
 | **Generator keeps returning near-duplicates** | Random stimulus |
 | **Obvious answer is wrong but you can't see past it** | Provocation (Po) |
 | **Iterating on an existing artifact** | SCAMPER |
-| Stuck on "how do we make X succeed?" | **Inversion** |
+| **Stuck on "how do we make X succeed?"** | Inversion |
 | **Problem defined entirely in one domain's vocabulary** | Perspective shift |
 | **Every solution is blocked by a constraint** | Constraint play |
 | **Two known examples, no theory of the space between/beyond them** | Family traversal |

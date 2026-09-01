@@ -62,7 +62,7 @@ Reject a unit that fails validation — the claim in an 837, the member record i
 ## The repo and the conversation
 
 - **The conversation is private; the repo is not.** Never write a member named in a chat turn, a support thread, or a pasted log anywhere durable: not a commit message, branch name, PR or work-item body, test name, comment, screenshot, or terminal excerpt in a report. Reproduce the case with a synthetic record and refer to the real one by ticket number.
-- **A PHI value already landed where it should not be is an incident, not a typo** — in published history, a running log, a store, a ticket. Raise it through the project's incident path before touching it: a quiet delete destroys the evidence of scope, and the retention window is the owner's call. Never run your own amend, tip-edit, or force-push — the steps: [references/history-incident.md](references/history-incident.md).
+- **A PHI value already landed where it should not be is an incident, not a typo** — in published history, a running log, a store, a ticket. Raise it through the project's incident path before touching it: a quiet delete destroys the evidence of scope, and the retention window is the owner's call. That holds on every one of the four surfaces, and it is the whole instruction on three of them: do not delete the log lines, purge the rows, or edit the ticket — report, and let the owner decide what is retained and what is scrubbed. **Published history is the one surface with a procedure**, because rewriting it obliges everyone who cloned: never run your own amend, tip-edit, or force-push, and take the steps in [references/history-incident.md](references/history-incident.md).
 
 ## External sinks and the BAA gate
 

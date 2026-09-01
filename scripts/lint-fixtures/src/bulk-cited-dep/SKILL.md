@@ -16,4 +16,10 @@ reference file repeats the citation on its own third line, so the match lands ea
 whichever file the directory walk yields first. Three files rather than one because a
 reference file caps at 200 lines and the tail has to outrun a Linux pipe's fixed 64 KiB,
 not just a macOS pipe's initial 16 KiB; `scripts/lint-skills-selftest.sh` asserts that length.
-\nThe references beneath this skill are pointed at from here, so the orphan check\ngrades its one deliberate orphan and not this tree's whole reference set:\n\n- [bulk](references/bulk.md)\n- [bulk-two](references/bulk-two.md)\n- [bulk-three](references/bulk-three.md)\n
+
+The references beneath this skill are pointed at from here, so the orphan check
+grades its one deliberate orphan and not this tree's whole reference set:
+
+- [bulk](references/bulk.md)
+- [bulk-two](references/bulk-two.md)
+- [bulk-three](references/bulk-three.md)

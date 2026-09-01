@@ -61,7 +61,7 @@
 # quiet), heading case (a SKILL.md H1 not in title case, and an H2 with three
 # mid-heading capitals, fire; an acronym, a word whose number is the next
 # token, a word carrying its own digit, and an em-dash clause opening after a
-# numbered label all stay quiet), skill-reference form (the descriptive "the X
+# numbered label all stay quiet), invocation form (the descriptive "the X
 # skill" and a bare user-invoked name at a suggestion site fire; a model-invoked
 # name at the same site stays quiet), artifact filenames (an uppercase name and
 # an underscored one fire in one line whose rendered list is pinned; a
@@ -147,14 +147,13 @@
 # and the classifier's unclaimed-file arm — walk_shipped_md emits only the
 # classes the arms above it claim, so no fixture can produce a path that
 # reaches its say_fail; it guards a tree added to the walk without an arm, and
-# has no input to grade it with. Nor is the pass-4 spelling walk over docs/**
-# and global/README.md covered: neither fixture root carries those trees, so no
-# fixture can reach that loop and only the repo's own run exercises it. And the
-# word list, the acronym-and-literal list, and the proper-noun list are each
-# graded on ONE member — a word or a name dropped from any of the three stops
-# being checked with this run green. Several checks can be disabled outright
-# with this run still green; this list is the authority on which, and
-# lint-skills.sh's own header states what its scans never reach at all.
+# has no input to grade it with. The FIVE name lists inside the checks are
+# graded by property rather than by member, because a member row grades one
+# word and says nothing about the other 259: british_words, known_caps,
+# proper_nouns, invocation_verbs and artifact_name_exempt each carry a
+# member-count pin below, so a word silently dropped from any of them fails
+# here naming the list. What a count pin does NOT buy: which member went, or
+# that a member still has a fixture instance behind it.
 #
 # What the covered list buys, stated no larger than it is: those shapes cannot
 # stop grading without this script saying so. It was measured, not assumed —
@@ -304,15 +303,41 @@ expect "hook selftest (not executable)" "global/hooks/unexec-hook-selftest.sh is
 # references/quiet-forms.md — a file of its own, so a check that widens names
 # that path and reds a reject row by name rather than by line number.
 expect "British spelling" "src/house-style/SKILL.md uses a British spelling"
+# Pass 4's own walk — a separate loop over a separate glob, which nothing
+# reached before: emptying its `for` header left 65/0/0, green everywhere,
+# because neither fixture root carried docs/ or global/README.md and the repo's
+# own docs/ is already clean. One row per arm of the glob, and the nested one
+# is what makes `find docs` rather than two enumerated levels an assertion.
+expect "British spelling (pass 4: docs/adr)" "docs/adr/0001-fixture-record.md uses a British spelling"
+expect "British spelling (pass 4: nested under docs/, which a two-level glob misses)" "docs/solutions/nested-note.md uses a British spelling"
+expect "British spelling (pass 4: global/README.md)" "global/README.md uses a British spelling"
+# One house-style instance per classifier CLASS. Every other house-style fixture
+# sits in one class — a skill body — so `house_style_checks` could be deleted
+# from five of the six arms with this file green, and check_reference_bytes from
+# the .claude/skills/ arm as well. These are the inputs those arms never had.
+expect "house style on a global rule" "global/rules/body-checked.md uses a British spelling"
+expect "house style at depth one under src/" "src/stray-note.md uses a British spelling"
+expect "house style on a repo-local skill" ".claude/skills/repo-local/SKILL.md uses a British spelling"
+expect "house style on DOMAIN.md" "DOMAIN.md uses a British spelling"
+expect "house style on README.md" "README.md uses a British spelling"
+expect "loaded-file byte WARN on a repo-local reference" ".claude/skills/repo-local/references/oversize.md is 21327 bytes"
 expect "heading case (SKILL.md H1 not in title case)" "src/broken-links/SKILL.md H1 'Broken links (fixture)' is not in title case"
 expect "heading case (H2 not in sentence case)" "src/house-style/SKILL.md H2 'The Cold Reader Pass' (line 32) capitalizes 'Cold' 'Reader' 'Pass'"
-expect "skill-reference form (the descriptive form)" "src/house-style/SKILL.md writes \"the fixture-discipline skill\""
-expect "skill-reference form (a bare name at a suggestion site)" "src/house-style/SKILL.md suggests \`quoted-dep\` at an invocation site"
+expect "invocation form (the descriptive form)" "src/house-style/SKILL.md breaks the invocation form: it writes \"the fixture-discipline skill\""
+expect "invocation form (a bare name at a suggestion site)" "src/house-style/SKILL.md breaks the invocation form: it suggests \`quoted-dep\` at an invocation site"
 # Both alternatives of the artifact-name pattern in one line, so dropping
 # either the uppercase or the underscore half changes the rendered list.
 expect "artifact filenames (uppercase and underscore)" "— Notes.md Progress_Log.md run_log.md ) — a file a run writes is lowercase with dashes"
 expect "label family (an unregistered token in bold)" "uses the ALL-CAPS label 'BLOCKEDX'"
 expect "label family (an unregistered token in backticks)" "uses the ALL-CAPS label 'COINED'"
+# The registry is mined from DOMAIN.md's Status-marker and Verdict-scale rows and
+# nowhere else. Mined from the whole file, a banned synonym written in the
+# admitted typography inside the row that bans it registers itself, and this row
+# goes quiet — which is exactly what happened to `BLOCKED`.
+expect "label family (a banned synonym named in the registry row)" "uses the ALL-CAPS label 'FIXTUREBANNED'"
+# A marker bare in a table cell is the form every canonical status table in the
+# suite actually uses; a typography-only scan cannot see it.
+expect "label family (a bare marker alone in a table cell)" "uses the ALL-CAPS label 'BARECOINED'"
 # One row per form the section-pointer check resolves a target from: dropping
 # an arm otherwise leaves the other three firing and the selftest green.
 expect "section pointers (inline link)" "src/house-style/SKILL.md cites '§ No Such Heading is where it lands' (line 25), and src/house-style/references/quiet-forms.md carries no heading by that name"
@@ -407,7 +432,7 @@ reject "git-hook selftest (the hook with an unexecutable selftest is itself exec
 # names a substring only a WIDENED check could produce — the neighbour itself,
 # never the file, because one expect row above legitimately names
 # quiet-forms.md as the TARGET of the broken pointer.
-reject "skill-reference form (a model-invoked name at a suggestion site)" "suggests \`fixture-discipline\`"
+reject "invocation form (a model-invoked name at a suggestion site)" "suggests \`fixture-discipline\`"
 reject "artifact filenames (a repo-convention name is exempt)" "— README.md ) — a file a run writes"
 reject "label family (a label registered in DOMAIN.md)" "label 'FIXTUREPASS'"
 reject "British spelling (a form inside a code span)" "— cancelled )"
@@ -439,8 +464,13 @@ fi
 expect_rc "the lint against the fixture tree" 1 "$status"
 # The count of FAIL lines is pinned: a check that begins firing on a fixture
 # it should leave alone reds here even when no substring row names the line.
+# Last moved 2026-08-31: −1 (`broken-links`' "Must stay quiet" section carried an
+# accidental second broken link, which the old 65 had baked in), +2 (the two new
+# label rows), +3 (the pass-4 walk, which no fixture reached before), +5 (one
+# house-style instance per classifier class). A count that moves is read before
+# it is re-pinned.
 nfail=$(printf '%s\n' "$output" | grep -c '^FAIL: ')
-[ "$nfail" -eq 65 ] || selftest_fail "expected exactly 65 FAIL lines against the fixture tree, got $nfail"
+[ "$nfail" -eq 74 ] || selftest_fail "expected exactly 74 FAIL lines against the fixture tree, got $nfail"
 # The shared-trigger-phrase fixtures are pinned by property, as near_bytes and
 # bulk_bytes are below: every row above them asserts a FAIL that appears or a
 # FAIL that does not, and each of those readings is silently satisfied by a
@@ -448,14 +478,28 @@ nfail=$(printf '%s\n' "$output" | grep -c '^FAIL: ')
 # phrases themselves, so they are asserted to still be there — an edit that
 # weakens one fails here, naming the fixture, instead of turning a row into a
 # no-op nothing reads.
-phrase_pin() {
-  local f=$1 what=$2 pattern=$3
+# One pin, two matchers. phrase_pin and quiet_pin had the same signature and
+# near-identical FAIL wording, differing only in whether the needle is anchored
+# to a `description:` line (a regex) or matched literally anywhere in the file
+# — which made the wording two things to fix, in a file whose library states
+# its charter as "a failing line pasted into a search finds one definition".
+# `mode` is `description` or `literal`; `owner` names the check set the pin
+# serves, so the two FAIL lines still read differently to a human.
+pin() {  # mode, owner, file, what, pattern
+  local mode=$1 owner=$2 f=$3 what=$4 pattern=$5
   if [ ! -f "$f" ]; then
-    selftest_fail "$f is missing — it carries $what for the shared-trigger-phrase check; restore it rather than reading the rows above as still graded"
-  elif ! grep -q "^description:.*$pattern" "$f"; then
-    selftest_fail "$f no longer carries $what in its description — the shared-trigger-phrase rows above stopped grading it; put it back rather than deleting the assertion"
+    selftest_fail "$f is missing — it carries $what for $owner; restore it rather than reading the rows above as still graded"
+    return
   fi
+  case $mode in
+    description) grep -q "^description:.*$pattern" "$f" && return
+                 selftest_fail "$f no longer carries $what in its description — the $owner rows above stopped grading it; put it back rather than deleting the assertion" ;;
+    literal)     grep -qF -- "$pattern" "$f" && return
+                 selftest_fail "$f no longer carries $what — the $owner row above stopped grading it; put it back rather than deleting the assertion" ;;
+    *)           selftest_fail "pin called with mode '$mode', which is neither 'description' nor 'literal' — the row did not run" ;;
+  esac
 }
+phrase_pin() { pin description "the shared-trigger-phrase check" "$1" "$2" "$3"; }
 phrase_pin "$fixtures/src/shared-trigger-straight/SKILL.md" "the shared phrase in straight double quotes" '"walk the tree"'
 phrase_pin "$fixtures/src/shared-trigger-curly/SKILL.md" "the shared phrase in curly quotes and another case (the only place the curly branch of the extractor and the case fold are exercised)" '“Walk The Tree”'
 phrase_pin "$fixtures/src/shared-trigger-scalar/SKILL.md" "the shared phrase escaped inside a whole-value YAML double-quoted scalar (the only place the unwrap-and-unescape path is exercised)" ' ".*\\"walk the tree\\"'
@@ -463,6 +507,29 @@ phrase_pin "$fixtures/src/shared-trigger-not-for/SKILL.md" "the shared phrase in
 phrase_pin "$fixtures/src/quoted-dep/SKILL.md" "the shared phrase in a user-invoked description, which must never be read" '"walk the tree"'
 phrase_pin "$clean_fixtures/src/clean-skill/SKILL.md" "one phrase quoted twice, which is not a duplicate" '"do the thing".*"do the thing"'
 phrase_pin "$clean_fixtures/src/which-skill/SKILL.md" "clean-skill's phrase in a user-invoked description, which must never be read" '"do the thing"'
+
+# The five name lists inside lint-skills.sh, pinned by MEMBER COUNT. A fixture
+# row grades one member and says nothing about the rest: replacing
+# british_words entirely with four words left this file green, emptying
+# known_caps moved one line, and emptying proper_nouns moved nothing at all.
+# The count is the property that changes when a word is dropped, whichever word
+# it is. It is not a substitute for a fixture instance — it says a member left,
+# never which — so a moved count is read before it is re-pinned.
+list_pin() {  # variable name, expected member count, separator
+  local var=$1 want=$2 sep=$3 got
+  got=$(grep -cE "^${var}='" scripts/lint-skills.sh)
+  if [ "$got" -ne 1 ]; then
+    selftest_fail "expected exactly one \`${var}=\` assignment in scripts/lint-skills.sh, found $got — the count pin below cannot say which one it measured"
+    return
+  fi
+  got=$(sed -n "s/^${var}='\\(.*\\)'$/\\1/p" scripts/lint-skills.sh | tr "$sep" '\n' | grep -c '[^[:space:]]')
+  [ "$got" -eq "$want" ] || selftest_fail "${var} carries $got members, pinned at $want — a name added or dropped there changes what the whole tree is graded on, and no fixture row would have said so. Re-measure, land a fixture instance for anything added, then move this number."
+}
+list_pin british_words 260 '|'
+list_pin known_caps 102 ' '
+list_pin proper_nouns 20 ' '
+list_pin invocation_verbs 15 '|'
+list_pin artifact_name_exempt 6 '|' 
 # The backticked span is the clean root's quiet form for "only double-quoted
 # spans are compared": two model-invoked descriptions share it, so widening the
 # extractor's alternation to backticks turns this root red — which is what makes
@@ -471,22 +538,26 @@ phrase_pin "$clean_fixtures/src/which-skill/SKILL.md" "clean-skill's phrase in a
 # same reason: every reject row above is satisfied by a fixture whose quiet
 # line someone deleted, so the lines themselves are asserted present. The
 # firing instances need no pin — an expect row that stops matching says so.
-quiet_pin() {
-  local f=$1 what=$2 pattern=$3
-  if [ ! -f "$f" ]; then
-    selftest_fail "$f is missing — it carries $what for the house-style checks; restore it rather than reading the reject rows above as still graded"
-  elif ! grep -qF -- "$pattern" "$f"; then
-    selftest_fail "$f no longer carries $what — the reject row above stopped grading it; put it back rather than deleting the assertion"
-  fi
-}
+quiet_pin() { pin literal "the house-style checks" "$1" "$2" "$3"; }
 quiet="$fixtures/src/house-style/references/quiet-forms.md"
 quiet_pin "$quiet" "a model-invoked name at a suggestion site" 'run `fixture-discipline` first'
 quiet_pin "$quiet" "a repo-convention filename the artifact-name shape exempts" 'the artifact-name shape: `README.md`'
 quiet_pin "$quiet" "a label this tree registers" '**FIXTUREPASS**'
 quiet_pin "$quiet" "a British form inside a code span" 'an order in `cancelled`'
 quiet_pin "$quiet" "a British form inside a URL" 'https://example.invalid/docs/behaviour'
+# The inline exemption plan §5 specified and the batch did not build. A code
+# span is indistinguishable from an ordinary path, so a deliberate British form
+# that cannot sit in one had no way to say so — which is what let a sweep flip
+# `licences.tsv` and a recorded `honours` regex with lint green.
+quiet_pin "$quiet" "a deliberate British form marked with the inline spelling exemption" '<!-- spelling-exempt: normalises -->'
 quiet_pin "$quiet" "a section pointer that resolves" '[the sibling note](sibling-note.md) § The sibling half'
 quiet_pin "$quiet" "an acronym mid-heading" '## The HTML half'
+# check_reference_orphans' `global` scan root. Deleting the line that adds it left
+# this file green: the installed-path arm was graded only from src/, so a
+# reference cited solely from a hoisted rule would have started reading as an
+# orphan with nothing noticing. The pin holds the citation in place; the FAIL
+# count above is what moves when the scan root goes.
+quiet_pin "$fixtures/global/rules/body-checked.md" "the installed-path citation that is a src/ reference's ONLY pointer, and lives in the global/ scan root" '`~/.claude/skills/house-style/references/cited-from-global.md`' 
 quiet_pin "$quiet" "an em-dash clause opening after a numbered label" '## Phase 2 — Reproduce the thing'
 quiet_pin "$quiet" "a label whose number is the next token" '## The adversary pass (Tier 2/3)'
 quiet_pin "$quiet" "an identifier carrying its own digit" '## The Sprint2 window'
@@ -583,18 +654,28 @@ else
 # pattern a loud SKIP: perl -0pi rewrites the file unchanged and exits 0 when
 # nothing matched, so without it a renamed fixture would surface downstream as
 # "the check did not fire" and blame the check for a fixture problem.
-isolated_case() {  # a fifth argument, when given, is a second required substring
+# The eleven lines both isolated helpers share, named once: copy the clean root,
+# apply the one edit, run the lint against it. They were byte-identical, and a
+# skip message or a copy flag fixed in one of two copies is the shape
+# scripts/selftest-lib.sh exists to prevent.
+# Sets isolated_out and isolated_rc; returns 1 when the row could not be run.
+isolated_run() {  # name, perl expression, file
   local root="$isolated_parent/$1"
   mkdir -p "$root" && cp -R "$clean_fixtures/." "$root/" || {
     selftest_skip "could not copy the clean tree for the '$1' case — that row was not exercised."
-    return 0
+    return 1
   }
   perl -0pi -e "$2 or die" "$root/$3" 2>/dev/null || {
     selftest_skip "the edit for the '$1' case matched nothing in $3 — the fixture was renamed or reworded, so that row was not exercised. Fix the pattern rather than reading the row as still graded."
-    return 0
+    return 1
   }
-  local out rc
-  out=$(LINT_ROOT="$root" bash scripts/lint-skills.sh 2>&1); rc=$?
+  isolated_out=$(LINT_ROOT="$root" bash scripts/lint-skills.sh 2>&1); isolated_rc=$?
+  return 0
+}
+
+isolated_case() {  # a fifth argument, when given, is a second required substring
+  isolated_run "$1" "$2" "$3" || return 0
+  local out=$isolated_out rc=$isolated_rc
   expect_in "$out" "the ledger check did not fire in the isolated '$1' root" "$4"
   [ -n "${5:-}" ] && expect_in "$out" "the isolated '$1' root did not carry its second required line" "$5"
   expect_rc "the lint against the isolated '$1' root" 1 "$rc"
@@ -650,7 +731,7 @@ isolated_case "rules-budget" 's/\z/"\n" . ("padding that carries the rules direc
 # root and reds here.
 isolated_case "label-unregistered" 's/`FIXTUREPASS` and //' \
   "DOMAIN.md" \
-  "uses the ALL-CAPS label 'FIXTUREPASS', which DOMAIN.md's Status-marker row does not register"
+  "uses the ALL-CAPS label 'FIXTUREPASS', which is in none of the three places a label may come from"
 isolated_case "proper-noun-unregistered" 's/\*\*Cold-reader pass\*\*/**Fresh-eyes read**/' \
   "DOMAIN.md" \
   "capitalizes 'Cold-reader' mid-heading"
@@ -660,17 +741,8 @@ isolated_case "proper-noun-unregistered" 's/\*\*Cold-reader pass\*\*/**Fresh-eye
 # the assertion that the line appears AND that the root still exits 0. A WARN
 # that started FAILing would pass the substring row and red here.
 isolated_warn_case() {  # name, perl expression, file, expected substring
-  local root="$isolated_parent/$1"
-  mkdir -p "$root" && cp -R "$clean_fixtures/." "$root/" || {
-    selftest_skip "could not copy the clean tree for the '$1' case — that row was not exercised."
-    return 0
-  }
-  perl -0pi -e "$2 or die" "$root/$3" 2>/dev/null || {
-    selftest_skip "the edit for the '$1' case matched nothing in $3 — the fixture was renamed or reworded, so that row was not exercised. Fix the pattern rather than reading the row as still graded."
-    return 0
-  }
-  local out rc
-  out=$(LINT_ROOT="$root" bash scripts/lint-skills.sh 2>&1); rc=$?
+  isolated_run "$1" "$2" "$3" || return 0
+  local out=$isolated_out rc=$isolated_rc
   expect_in "$out" "the WARN did not fire in the isolated '$1' root" "$4"
   reject_in "$out" "the '$1' WARN was rendered as a FAIL" "FAIL: $4"
   expect_rc "the lint against the isolated '$1' root" 0 "$rc"
@@ -738,12 +810,12 @@ else
   # status 1. Without these rows either could be deleted with this run green.
   inject_expect "line-cap read-error" "src/broken-links/references/real-reference.md could not be read for its line count"
   inject_expect "evaluation-ledger anchor read-error" "src/broken-links/references/real-reference.md could not be read for the evaluation ledger anchor"
-  # The two guards the house-style set and the heading-case check carry, for
-  # the same reason: five awk programs on an unreadable file printed errors on
+  # ONE guard for the whole house-style set, heading case included, for the
+  # same reason: six awk programs on an unreadable file printed errors on
   # stderr and nothing on stdout, which reads from outside exactly like a file
-  # that passed all five.
-  inject_expect "house-style read-error" "src/broken-links/references/real-reference.md could not be read — the house-style checks"
-  inject_expect "heading-case read-error" "src/broken-links/references/real-reference.md could not be read — the heading-case check"
+  # that passed all six. The message names all six, so a check dropped from
+  # the set is visible here and not only in the classifier.
+  inject_expect "house-style read-error" "src/broken-links/references/real-reference.md could not be read — the house-style checks (spelling, invocation form, artifact names, labels, section pointers, heading case)"
 
   # The same injection against the clean root, which is what makes an exit-status
   # assertion mean anything. Asserting exit 1 against the broken tree is vacuous:

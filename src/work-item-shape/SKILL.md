@@ -84,7 +84,7 @@ Size by structure, never hours: one item is one deliverable, independently verif
 
 Too big announces itself as an "and" in the title, or a bundling verb there — *manage*, *handle*, *maintain*, *support* — that hides one: split it. Criteria that can't be checked independently are the same signal: split. Split by outcome, never by step: a multi-step workflow sliced one step per item looks vertical, since each step touches every layer, and delivers nothing until the last step lands; the first slice runs the whole workflow at its crudest, and later slices add the intermediate steps. Too small to demo alone — merge it upward into its parent rather than filing it.
 
-Watch the **scope-reduction vocabulary** — the surface **scope drift** shows on, in a redraft as much as a first draft — — "v1", "for now", "hardcoded", "placeholder", "will be wired later". Each either names deferred work that lands explicitly in out-of-scope or a follow-up item, or it quietly under-delivers the decision the item claims to implement. The only resolutions are deliver fully or propose a split; a body can cite its parent decision and still deliver a fraction of it.
+Watch the **scope-reduction vocabulary** — the surface **scope drift** shows on, in a redraft as much as a first draft — "v1", "for now", "hardcoded", "placeholder", "will be wired later". Each either names deferred work that lands explicitly in out-of-scope or a follow-up item, or it quietly under-delivers the decision the item claims to implement. The only resolutions are deliver fully or propose a split; a body can cite its parent decision and still deliver a fraction of it.
 
 ## Naming drift
 
@@ -108,4 +108,4 @@ When the pass (or any self-review) works from checklist items, the items test th
 
 ## Boundary
 
-This discipline shapes the body; it never files it. The `to-*` publishers own how one enters a tracker — templates, parent reconciliation, tags, update modes — so when both apply, shape here and publish there, and a tier-named ask routes to its publisher rather than to a lookalike drafted here. A body carrying a `Chart-type:` line is a `chart-course` decision ticket — a question, not a deliverable — and follows chart-format, not the goal and criteria rules above. Loading an item that already exists on a tracker is `/from-ticket`'s, and building what the item asks for is `implement`'s.
+This discipline shapes the body; it never files it. The `to-*` publishers own how one enters a tracker — templates, parent reconciliation, tags, update modes — so when both apply, shape here and publish there, and a tier-named ask routes to its publisher rather than to a lookalike drafted here. A body carrying a `Chart-type:` line is a `chart-course` decision ticket — a question, not a deliverable — and follows chart-format, not the goal and criteria rules above. Loading an item that already exists on a tracker is `from-ticket`'s, and building what the item asks for is `implement`'s.

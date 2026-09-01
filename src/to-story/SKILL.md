@@ -103,7 +103,7 @@ Native dependency relations are an ADO feature, so this step runs only on ADO â€
 
 ## Update mode
 
-`--update <story-id>` patches an existing Story in place. See [references/update-mode.md](references/story-update-mode.md) for cold-start commands, AC ID handling rules, self-review checks, re-snapshot prompt, reconcile prompt, and patch commands.
+`--update <story-id>` patches an existing Story in place. See [references/story-update-mode.md](references/story-update-mode.md) for cold-start commands, AC ID handling rules, self-review checks, re-snapshot prompt, reconcile prompt, and patch commands.
 
 ## Naming drift
 

@@ -76,13 +76,11 @@ One area per turn, then stop and wait — a person with limited time handed six 
 
 [references/register.md](references/register.md) holds the seven rungs with a completion criterion each, the folder layout, the stamp, the five register sections and which three of them are the closed states, and how a resume — including one after `stop` — reopens the same folder. Read it before the first register write and again on a resume; the rungs and their criteria are there, not here.
 
-## Notes
-
-### The human's controls
+### 8. The human's controls
 
 State the menu once, then end each turn with the assessment, one proposal, and the two or three controls that fit the moment: `start` (begin, or resume — match by the name given this turn where more than one register is open), `continue` (take the area just proposed), `deeper` (stay on the current area for one more ask rather than moving on — never a license to open a second area in the turn), `park` (matters, no time — recorded as deferred, still open where the successor will find it), `skip` (not a real concern — their dismissal is recorded as the answer, so the item closes as *answered*, not as a hole), `no idea` (the honest close — recorded as unrecoverable with no follow-up push), `jump to <area>` (leave this area and take that one next), `budget <time>` (re-plan how far the register reaches), `why` (the scan evidence behind the current ask), `summarize` (the register's five counts and what is still open, written to no file), `pause`, `stop`.
 
-### `pause` and `stop`
+### 9. `pause` and `stop`
 
 **pause** — a bookmark, not a save: the register is already current. Restate where things stand, what is still open, and how much of the budget remains, and do not write `offboarding.md`.
 
@@ -90,6 +88,6 @@ State the menu once, then end each turn with the assessment, one proposal, and t
 
 **stop** — write `offboarding.md`. Before its first line, read [references/offboarding-format.md](references/offboarding-format.md) and follow it: the coverage check and its one floor, the confidence filter that keeps every hedge, the fixed section spine that puts what nobody knows first, the stamp, the departing engineer's last word, and the three things the document never holds. The record is prose a successor reads: call the Skill tool with `writing-for-humans` at that write if it isn't already live. Then announce the path, the five coverage numbers — answered, deferred, unrecoverable, open, conflicts — and point at the first section, which is what the successor reads before anything else. Expect `stop` to arrive with items open or conflicted; that is the normal ending, not a failure, and the last two numbers are what say so.
 
-### Boundary
+## Boundary
 
 `onboard-me` is the successor's session, not this one: it maps the inside of a repo for the person learning it. Nothing wires the two — a successor who has this record can read its `[unknown]`s into that session themselves, but `onboard-me` takes no offboarding record as input. `ask-for-me` is the async tail — a questionnaire for one person to fill in alone — where this skill is the live interview with the repo doing the asking. `rebuild-contract` fixes what a system must survive a rewrite; a departure changes nothing about the system, only about who understands it. What the successor should *change* is a work item, shaped by `work-item-shape`, never a line in the record.

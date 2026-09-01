@@ -15,7 +15,7 @@ Every `scripts/<name>.sh` and `scripts/git-hooks/<name>` that is not a selftest,
 
 ## The exit-code taxonomy
 
-Every script under `scripts/` and every hook under `scripts/git-hooks/` renders one of five statuses, and `DOMAIN.md` registers them under this name:
+Every script under `scripts/`, every hook under `scripts/git-hooks/`, and every hook selftest under `global/hooks/` renders one of five statuses, and `DOMAIN.md` registers them under this name (`sweep-corpus` reads `exit=` off all three trees):
 
 - **0** — clean.
 - **1** — at least one `FAIL`.
@@ -29,7 +29,7 @@ A `WARN` never moves the status. `scripts/git-hooks/post-merge` and `sweep-corpu
 
 The `Why not a hook or lint:` line in the ten `scripts/lint-fixtures*/global/rules/*.md` fixtures is **inert filler** — no check parses it (`grep -c 'Why not a hook' scripts/lint-skills.sh` → 0), and the real rule files stopped carrying it on 2026-08-31, when the control moved into ADR-0053's amendments. Each fixture's line says what that fixture is for, which is why it stays; do not copy the key into a new rule file.
 
-A new or edited check in any `scripts/*.sh` gate lands with a fixture instance that fires and a mutation that reds its selftest, both ways. Narrowing: an alternative dropped from the pattern, and the instance that stops firing turns the selftest red. Widening: a boundary loosened, and the clean neighbour that starts firing turns it red. So a fixture carries one graded instance per alternative, not one per rule, and the selftest carries the mutation table. Nothing mechanical covers this: the selftest-pairing check proves a selftest exists, never that it can fail — `security-selftest.sh` graded one instance per rule until 2026-08-29, and cutting `_DROP_HOSTS` from twenty-odd host patterns to one left it green.
+A new or edited check in any `scripts/*.sh` gate lands with a fixture instance that fires and a mutation that reds its selftest, both ways. Narrowing: an alternative dropped from the pattern, and the instance that stops firing turns the selftest red. Widening: a boundary loosened, and the clean neighbor that starts firing turns it red. So a fixture carries one graded instance per alternative, not one per rule, and the selftest carries the mutation table. Nothing mechanical covers this: the selftest-pairing check proves a selftest exists, never that it can fail — `security-selftest.sh` graded one instance per rule until 2026-08-29, and cutting `_DROP_HOSTS` from twenty-odd host patterns to one left it green.
 
 ## Landing a change here
 

@@ -32,3 +32,6 @@ chase either — the number sits outside it rather than inside.
 ## The Sprint2 window
 
 A word carrying its own digit is an identifier, and identifiers are not recased.
+
+A deliberate British form that cannot sit in a code span, marked inline: the run
+normalises this row before it lands. <!-- spelling-exempt: normalises -->

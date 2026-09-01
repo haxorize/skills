@@ -44,4 +44,4 @@ This discipline does not verify the tests themselves — bad tests produce a con
 
 ## Boundary
 
-This discipline judges what a document claims; it never rewrites the document. Updating docs the change in hand just made stale is `feedback-loops`' close, and drafting the prose is `writing-for-humans`'. It is not a merge gate: the verdicts are fallible and run as a triggered review, never as CI. Flipping a product description from `drafted` to `verified` stays `product-description`'s verification pass, which owns the footer this skill's verdicts inform.
+This discipline judges what a document claims; it never rewrites the document. Updating docs the change in hand just made stale is `feedback-loops`' close, and drafting the prose is `writing-for-humans`'. Flipping a product description from `drafted` to `verified` stays `product-description`'s verification pass, which owns the footer this skill's verdicts inform.

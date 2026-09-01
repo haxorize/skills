@@ -20,3 +20,16 @@ The slash sweep does not read this class, and that exemption is graded rather th
 assumed: `/fixture-discipline` names a model-invoked skill and would fire from any
 other file in the walk. If it ever fires from here, the classifier has folded the
 rule class into the default arm.
+
+## The house-style set on a rule file
+
+Appended below every line the selftest names, so no assertion moves. Deleting
+`house_style_checks` from the `global/rules/*` arm used to leave the selftest green:
+the four body checks were graded here and the six house-style checks were not.
+
+A British form in hoisted prose, which a rule file may no more carry than a skill:
+the run normalises this row before it lands.
+
+A reference in another skill, cited from a hoisted rule by installed path and from
+nowhere else: `~/.claude/skills/house-style/references/cited-from-global.md`. That
+citation is the only thing keeping it out of the orphan report.

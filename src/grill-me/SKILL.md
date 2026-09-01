@@ -28,6 +28,8 @@ Use [references/adr-format.md](references/adr-format.md) as the single source of
 
 When a round's answer invalidates something an artifact under revision already says — a plan paragraph or a draft body — **replace** it where it stands, never append the correction beside it — the same move `domain-modeling` makes on a `DOMAIN.md` entry, stated here for every artifact this skill revises.
 
-## Notes
+### 4. The rules that bind at every write
 
 The standalone path's other rules bind inline as well: the owning-record search before a new number (the amend-or-write-new rule above), the forward pointer a superseding record owes, and the human-facing register for the rationale prose — call the Skill tool with `writing-for-humans` at the first write if it isn't already live.
+
+## Notes

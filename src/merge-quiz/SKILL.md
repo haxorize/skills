@@ -34,4 +34,4 @@ Grade each answer right, wrong, or partial against the key, and say which. A mis
 
 ### 4. The result
 
-One line: `merge-quiz: passed (7/7, round 1)`, `passed (6/8, round 2)`, or `failed after 2 rounds — split recommended: <why>`. It lands in the handoff doc's completion audit when this session writes one; with no handoff to write, it is reported in the session and nowhere else — this skill creates no artifact of its own.
+One line: `merge-quiz: passed (7/7, round 1)`, `passed (6/8, round 2)`, or `failed after 2 rounds — split recommended: <why>`. It lands in the handoff doc when this session writes one, or as a line beside the completion audit the build session left; with neither — the skill's own stated case, a reader who was not here for the build — it is reported in the session and nowhere else. This skill creates no artifact of its own.

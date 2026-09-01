@@ -6,7 +6,7 @@ requires: feedback-loops, discoverable-code
 
 # Test-Driven Development
 
-Build a slice test-first: one vertical slice at a time, RED before GREEN, and production code that got ahead of its failing test deleted rather than retro-tested. A ticket still sitting on the tracker is loaded by `/from-ticket` first — suggest it and stop, rather than cold-starting the cycle from an ID; a story or task already in context starts here.
+Build a slice test-first: one vertical slice at a time, RED before GREEN, and production code that got ahead of its failing test deleted rather than retro-tested.
 
 ## Philosophy
 
@@ -89,6 +89,8 @@ The check itself is a suspect: a test that cannot fail reports green forever and
 
 When the cycle's behaviors are built and refactored, close the loop: call the Skill tool with `feedback-loops` once to finalize mechanically.
 
+Tests prove code-correctness, not feature-correctness. When the slice touched behavior no test actually ran — a UI flow, an external integration, a real ingest — name it before declaring done and take one of the two branches in [references/untested-at-close.md](references/untested-at-close.md) (eyeball it, or offer `/validate-behavior`); the failure here is closing the cycle with the gap unnamed because the suite is green. Proving the change works in the running app is `validate-behavior`'s, and judging whether an existing suite tests the right things is `audit-tests`'. The mechanical close — lint, format, typecheck, docs — is `feedback-loops`', called at the end of the cycle rather than restated here.
+
+
 ## Boundary
 
-Tests prove code-correctness, not feature-correctness. When the slice touched behavior no test actually ran — a UI flow, an external integration, a real ingest — name it before declaring done and take one of the two branches in [references/untested-at-close.md](references/untested-at-close.md) (eyeball it, or offer `/validate-behavior`); the failure here is closing the cycle with the gap unnamed because the suite is green. Proving the change works in the running app is `validate-behavior`'s, and judging whether an existing suite tests the right things is `audit-tests`'. The mechanical close — lint, format, typecheck, docs — is `feedback-loops`', called at the end of the cycle rather than restated here.

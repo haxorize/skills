@@ -2,7 +2,7 @@
 
 Depends: `grilling`, `implement`, `committing`, `receiving-review`, `address-findings`
 
-Every question you are about to ask goes into one of three bins first. Only the third is asked, and the rest fixes the shape of that ask and its answer.
+Every question you are about to ask goes into one of three bins first. Only the third is asked.
 
 1. **A fact** — answerable by running something, reading something, or looking it up. Run it; never ask.
 2. **A judgment** — a choice where you can form a view and the user would accept either answer. Decide, say what you decided and why in one line, and proceed. Ship the lazy version and question it in the same response, rather than stopping to ask which version to build. Where two judgments tie, the more reversible one wins; reversibility is a tie-break inside this bin, never a license to act on what belongs in the next one.

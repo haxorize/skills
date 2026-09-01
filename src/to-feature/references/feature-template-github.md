@@ -30,4 +30,4 @@ Parent: #<issue-number>
 
 - Default labels are applied via CLI flags from the `Issue tracker:` block in CLAUDE.md.
 - Use checkboxes in `Stories underneath` so the parent issue auto-tracks completion as child stories close.
-- For projects with `Hierarchy: required` set in CLAUDE.md, `to-feature` embeds a story-map block in the body's `Stories underneath` section. The ADO template carries the block structure; `to-feature` SKILL.md step 10 describes it only on its ADO path.
+- For projects with `Hierarchy: required` set in CLAUDE.md, `to-feature` embeds a story-map block at the bottom of the body **in place of** `Stories underneath` — the two are alternatives, never nested: without hierarchy the `Stories underneath` checklist stands in for the map (`to-feature` SKILL.md step 2). The ADO template carries the block structure, in its own `## Story Decomposition` section; `to-feature` SKILL.md step 6 describes it only on its ADO path.

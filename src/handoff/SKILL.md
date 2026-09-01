@@ -7,27 +7,29 @@ argument-hint: "What will the next session be used for?"
 
 # Handoff
 
-This skill **forks** the conversation — you don't continue in place. It has two exits: write the doc for a fresh interactive session (the default), or hand straight off to a background agent (on request). Its § Where to write it also carries a contract wider than this skill: the landing zone every pickup reads, and the per-section write mechanics nine other documents and the global `large-write-chunking` rule point at.
+This skill **forks** the conversation — you don't continue in place. It has two exits: write the doc for a fresh interactive session (the default), or hand straight off to a background agent (on request). Its § Where to write it also carries a contract wider than this skill: the landing zone every pickup reads, and the per-section write mechanics the global `large-write-chunking` rule and every other document that cites this section point at.
 
 If the user passed an argument, treat it as a description of what the next session will focus on and tailor the doc to that.
 
 **Redact before the first write.** Strip API keys, passwords, tokens, and any personally identifiable information out of everything that lands in the doc or the agent's brief — a background agent's brief is unrecoverable once it is running, so the strip happens before the launch, not after.
 
-## Workflow
+## Where to write it
 
-### Where to write it
+This section defines two things, and is the only place either is defined: the **landing zone** and the filename shape every cross-session artifact takes, which every pickup points here for rather than spelling its own glob; and the **per-section file mechanics** that every multi-section document in the suite runs, which the global `large-write-chunking` rule and every document citing this section point here for. Editing either contract reaches well past this skill, and `grep -rl 'Where to write it' src global .claude *.md` is the blast radius — a count written here instead goes stale the first time someone cites the section.
 
-This section defines two things, and is the only place either is defined: the **landing zone** and the filename shape every cross-session artifact takes, which every pickup points here for rather than spelling its own glob; and the **per-section file mechanics** that every multi-section document in the suite runs, which nine other documents and the global `large-write-chunking` rule point here for. Editing either contract reaches well past this skill.
+One filename shape, `<repo>-<date>-<slug>.<kind>.<ext>`, and **a handoff is the one kind with no kind segment at all**:
 
-One fixed **landing zone**: `claude-handoffs/` under the platform temp dir (`$TMPDIR` on macOS, `/tmp` on Linux, `%TEMP%` on Windows; `mkdir -p` it). One filename shape, `<repo>-<date>-<slug>.<kind>.<ext>`, with the kind segment dropped for a handoff:
-
-- a handoff: `<repo>-<date>-<slug>.md`
+- a handoff: `<repo>-<date>-<slug>.md` — **no kind segment**
 - a `review-changes` report: `<repo>-<date>-<slug>.review.md`
-- an `audit-skills` working file: `<repo>-<date>-<slug>.audit.md`
+- an `audit-skills` working file: `skills-<date>-<slug>.audit.md`
 - an `ask-for-me` questionnaire: `<repo>-<date>-<slug>.questionnaire.md`
-- a `review-architecture` report: `<repo>-<date>-<slug>.design-review.html`
+- a `review-architecture` report: `<repo>-<date>-<slug>-<HHMMSS>.design-review.html`
 
-where `<repo>` is the basename of `git rev-parse --show-toplevel`, `<date>` is `YYYY-MM-DD`, and `<slug>` names the focus. A new kind takes a new segment here rather than a name of its own shape. The `.review.md` suffix is what keeps "the newest handoff" from resolving to a report and "the newest report" from resolving to a handoff slugged `pre-review`. A handoff is throwaway — the durable content lives in the artifacts the doc points at — and the fixed names are what let `/review-changes` and `/from-ticket latest` pick up the newest handoff, and `/address-findings` the newest report, without a pasted path.
+where `<date>` is `YYYY-MM-DD`, `<slug>` names the focus, and `<repo>` is the basename of `git rev-parse --show-toplevel` — except for the `.audit.md` kind, whose subject is the installed skill suite rather than a repo and which therefore takes the fixed word `skills`, so two audits run from different working directories resolve to the same name. The `.design-review.html` kind additionally carries the run's time (`HHMMSS`) at the end of its slug, because that report is timestamped per run and frozen at pick-time, and a date alone would let a second run overwrite the first. A new kind takes a new segment here rather than a name of its own shape.
+
+**Picking one up: a handoff is the file with no kind segment.** Match `<repo>-<date>-<slug>.md` where `<slug>` carries no `.`; that is the positive rule, and it is what keeps "the newest handoff" from resolving to a report, an audit working file, or a questionnaire, all three of which are `.md` files sharing the same prefix. A handoff is throwaway — the durable content lives in the artifacts the doc points at — and the fixed names are what let `/review-changes` and `/from-ticket latest` pick up the newest handoff, and `/address-findings` the newest report, without a pasted path.
+
+One fixed **landing zone**, `claude-handoffs/` under the platform temp dir (`$TMPDIR` on macOS, `/tmp` on Linux, `%TEMP%` on Windows; `mkdir -p` it), for the first three kinds. The other two share the shape and land elsewhere, which is stated here rather than left to be discovered from the two skills: an `ask-for-me` questionnaire lands **in the current directory**, because it is handed to a person rather than picked up by a later session, and a `review-architecture` report lands in the **temp root**, not `claude-handoffs/`, because nothing globs for it — it is opened once, by path, in the session that wrote it.
 
 This section also owns the **per-section file mechanics** the global `large-write-chunking` rule (`~/.claude/rules/large-write-chunking.md`) points here for — for a long handoff and for every other multi-section document a skill writes (an audit, an offboarding record, a rebuild contract, an evaluation memo, a work-item draft). The trigger is observable: a document with more than three planned sections, or any of those kinds, lands this way rather than in one write.
 
@@ -38,11 +40,13 @@ This section also owns the **per-section file mechanics** the global `large-writ
 
 **Escape hatch:** if the user names a path or asks for a durable target, honor it. Only then does the doc land in the workspace.
 
-### Handing off to a background agent
+## Workflow
 
-When the user asks for the work continued **unattended** rather than picked up in a fresh interactive session, don't save a doc — launch a background agent seeded with the handoff as its prompt. Seed the prompt with explicit boundaries — **don't push, merge, close work items, or post to external services unless the handoff says to** — because an unattended agent inherits none of this conversation's implicit ones. The invocation, the rest of the boundary seeding, and the three disciplines to seed are in [references/background-agent.md](references/background-agent.md). The redaction rule below matters doubly on this path — the handoff becomes the launched agent's prompt verbatim.
+### 1. Hand off, or write the doc
 
-### What goes in it
+When the user asks for the work continued **unattended** rather than picked up in a fresh interactive session, don't save a doc — launch a background agent seeded with the handoff as its prompt. Seed the prompt with explicit boundaries — **don't push, merge, close work items, or post to external services unless the handoff says to** — because an unattended agent inherits none of this conversation's implicit ones. The invocation, the rest of the boundary seeding, and the three disciplines to seed are in [references/background-agent.md](references/background-agent.md). The redaction rule at the top of this body matters doubly on this path — the handoff becomes the launched agent's prompt verbatim.
+
+### 2. What goes in it
 
 - **The goal** — what the next session is trying to achieve (sharpened by the argument, if given).
 - **Open questions and unkept promises** — swept from the transcript before anything below is written — the transcript, never the diff, which cannot show what was said: questions this session put to the user, or queued to ask under the recommend-and-proceed rule and never put, that no later turn answered, listed once, oldest first, each with its recommendation (the conversation moving on to another topic is not an answer); and commitments made and not kept ("said a regression test would be added — none written") or claims relied on but never checked, one line each, an unchecked claim carrying the `UNVERIFIED:` marker the global rule `~/.claude/rules/evidence.md` defines. They live here and never as parked-ledger rows — that ledger is `implement`'s, and `committing` counts it. A deferral is different: each one names the durable record it went into (that rule's *A deferral names where it now lives*), and one written nowhere else is listed here as `UNVERIFIED:` uncaptured — on the background-agent path, in the seeded prompt's same section, which the launched agent writes into the record before anything else. Re-read the later turns first so nothing quietly handled afterward is reported as open, and state the zero case: "no unanswered questions, no unkept promises".

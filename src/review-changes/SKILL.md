@@ -15,7 +15,7 @@ It closes on a ranked per-lens report written to the landing zone and stamped `R
 
 ### 1. Resolve the target, fail fast
 
-**No argument** means the newest handoff for this repo in the landing zone `handoff` defines (its "Where to write it" section fixes the directory and the two filenames; a handoff is the `.md` that is not a `.review.md`). Say which file you picked. With no handoff there, review the local change; and when the tree is clean and no commit was named, **stop and ask which commit** rather than reviewing `HEAD` silently — the one target this skill must never pick on its own.
+**No argument** means the newest handoff for this repo in the landing zone `handoff` defines (its "Where to write it" section fixes the directory and the filename shape; a handoff is the one kind with **no kind segment** — `<repo>-<date>-<slug>.md` whose slug carries no `.`, which is what separates it from the `.review.md`, `.audit.md` and `.questionnaire.md` files sharing the same prefix). Say which file you picked. With no handoff there, review the local change; and when the tree is clean and no commit was named, **stop and ask which commit** rather than reviewing `HEAD` silently — the one target this skill must never pick on its own.
 
 Four target modes — same three-dot, merge-base diff machinery against a different ref:
 

@@ -10,7 +10,7 @@ Admission is decided by the `Why not a hook or lint:` control, recorded per rule
 
 Without this gate the directory becomes a second CLAUDE.md, and every rule here is paid for on every turn the user spends anywhere.
 
-The five rules (each file's `Depends:` line names the skills lint checks cite back — it is the forward list, not a census: `evidence.md` names 8 while 43 skills cite it, and `recommend-and-proceed.md` names 5 while 11 do, four of them overriding its bin 1 outright. For the dependants of a rule, grep its filename across `src/` and `.claude/skills/`):
+The five rules (each file's `Depends:` line names the skills lint checks cite back — it is the forward list, not a census: `evidence.md` names 8 on that line while more files cite it, and `recommend-and-proceed.md` names 5 while more do, three of them overriding its bin 1 outright. The figures are not written here, because a census in prose beside the grep that computes it is a number the reader cannot re-derive from the instruction they were just given — for the dependants of a rule, run `grep -rl <filename> src/ .claude/skills/`):
 
 - [`evidence.md`](rules/evidence.md) — evidence beside the claim, `UNVERIFIED:` for anything not re-checked and `UNVERIFIABLE` for a check this session cannot run, counts re-measured at write time, a `Measured-tree:` line on a generated report, a deferral written into a durable record.
 - [`recommend-and-proceed.md`](rules/recommend-and-proceed.md) — three bins for a question: fact, judgment, preference or outward act.

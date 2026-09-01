@@ -140,6 +140,38 @@ probe "finish empty" 'finish; echo "finished rc=$?"'
 expect_rc "finish with nothing recorded under set -u" 0 "$rc"
 expect_in "$out" "finish with nothing recorded did not complete" "finished rc=0"
 reject_in "$out" "finish printed the still-running heading with nothing watched" "still running"
+# The stopped path. Deleting the branch and always printing "Setup complete"
+# used to leave this file green — which is the one failure the branch exists to
+# prevent: a summary claiming a setup that a declined irreversible gate stopped.
+probe "finish stopped" 'finish stopped; echo "after rc=$?"'
+expect_in "$out" "finish stopped did not report a stop" "Setup stopped"
+reject_in "$out" "finish stopped printed the success line" "Setup complete"
+expect_in "$out" "finish stopped did not return 0" "after rc=0"
+probe "finish complete" 'finish; echo "after rc=$?"'
+expect_in "$out" "a bare finish did not report a complete setup" "Setup complete"
+reject_in "$out" "a bare finish reported a stop" "Setup stopped"
+# A declined gate in the same shell also sets STOPPED, so the call that forgets
+# the word still reports honestly. Not piped: a pipeline runs the gate in a
+# subshell, which is why the argument stays the documented form.
+probe "finish after a declined gate in-shell" 'printf "n\n" > "$TMPDIR/a"; if confirm "go" < "$TMPDIR/a"; then :; else finish; fi'
+expect_in "$out" "a declined confirm left finish reporting a complete setup" "Setup stopped"
+reject_in "$out" "a declined confirm left the success line" "Setup complete"
+# Every other argument is a named bug, never the success branch: `finish stoped`
+# and `finish aborted` both printed the completion line.
+probe "finish misspelled argument" 'finish stoped; echo "not reached"'
+expect_rc "finish given a misspelled argument" 2 "$rc"
+expect_in "$out" "a misspelled finish argument was not named on stderr" "finish was given"
+reject_in "$out" "a misspelled finish argument did not end the wizard under -e" "not reached"
+reject_in "$out" "a misspelled finish argument took the success branch" "Setup complete"
+reject_in "$out" "a misspelled finish argument took the stopped branch" "Setup stopped"
+
+# open_url's `else false` arm. The old `warn` sat inside `{ … } >/dev/null 2>&1`,
+# so it was silenced AND returned 0, suppressing the outer `|| warn`: a machine
+# with no browser opener reported an open that never happened. Reverting
+# `else false` to the swallowed warn leaves this row red.
+probe "open_url with no opener" 'PATH=/nonexistent-for-this-probe open_url "https://example.invalid/x"'
+expect_in "$out" "open_url did not warn when no opener was available" "couldn't open a browser"
+expect_in "$out" "open_url's warning dropped the URL the human must visit" "https://example.invalid/x"
 
 probe "write_env" 'write_env KEY one; write_env KEY two; write_env OTHER x; cat "$ENV_FILE"'
 expect_rc "write_env" 0 "$rc"
@@ -151,5 +183,5 @@ out=$(cd "$tmp" && NO_COLOR=1 bash -c ". '$lib'; printf '[%s%s%s%s]' \"\$BOLD\" 
 [ "$out" = "[]" ] || selftest_fail "NO_COLOR=1 left a colour variable set: $out"
 
 selftest_close \
-  "wizard-template self-test clean — the library parses and sources, preview streams and tolerates a non-zero exit with no temp file, confirm reads y/N and confirm_token an exact token, refusing every near miss, an empty or missing token, the other gate's arity, and a silent decline, watch records whole commands and finish repeats them, write_env upserts, NO_COLOR is honoured." \
+  "wizard-template self-test clean — the library parses and sources, preview streams and tolerates a non-zero exit with no temp file, confirm reads y/N and confirm_token an exact token, refusing every near miss, an empty or missing token, the other gate's arity, and a silent decline, a declined gate makes finish report a stop and a passed one does not, a misspelled finish argument is a named bug rather than the success branch, open_url warns when no opener is available, watch records whole commands and finish repeats them, write_env upserts, NO_COLOR is honoured." \
   "wizard-template self-test parsed the file and ran nothing else; see the SKIP line above."

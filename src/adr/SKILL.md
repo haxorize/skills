@@ -34,4 +34,4 @@ Show the draft to the user. Once approved, save it into the scheme the preflight
 
 ## Boundary
 
-This skill records one fresh decision. Recovering decisions the history already made is `/backfill-adrs`, which sweeps git log and quizzes the candidate list before anything is written. A decision settled inside a grill is recorded inline by `/grill-me` rather than here, so the loop is not interrupted — the format doc is the same one, and both paths land in one shared sequence. What a term means is `domain-modeling`'s, and what the decision obliges someone to build is a work item shaped by `work-item-shape`.
+This skill records one fresh decision. Recovering decisions the history already made is `backfill-adrs`, which sweeps git log and quizzes the candidate list before anything is written. A decision settled inside a grill is recorded inline by `/grill-me` rather than here, so the loop is not interrupted — the format doc is the same one, and both paths land in one shared sequence. What a term means is `domain-modeling`'s, and what the decision obliges someone to build is a work item shaped by `work-item-shape`.

@@ -47,7 +47,7 @@ Order by **exclusivity × cost**, never by how interesting the code is.
 - **Exclusivity** — how likely this knowledge exists nowhere else. *High*: only recent author, nothing documented, no test explains it. *Medium*: shared authorship but dominant, or a stale doc exists. *Low*: several active authors, or well covered by tests and comments.
 - **Cost if lost** — what it does to whoever inherits it. *High*: touches money, auth, data integrity, or production stability; on a deadline; or wrong silently rather than loudly. *Medium*: real debugging time. *Low*: annoying to rediscover, cheap once you do.
 
-Anything high × high goes to the top regardless of category; below that, prefer the ladder's order, because in-flight work expires and old landmines do not. Two adjustments: **promote silence** — a loud failure (a crash, a page) teaches the successor eventually, a silent one (wrong numbers, dropped records, a retry that quietly gives up) never does, so a silent risk outranks a loud one of the same size; **demote what a test already documents** — where a test asserts the behavior and names why, the knowledge is captured, so spend the human's time elsewhere.
+Anything *High* × *High* goes to the top regardless of category; below that, prefer the ladder's order, because in-flight work expires and old landmines do not. Two adjustments: **promote silence** — a loud failure (a crash, a page) teaches the successor eventually, a silent one (wrong numbers, dropped records, a retry that quietly gives up) never does, so a silent risk outranks a loud one of the same size; **demote what a test already documents** — where a test asserts the behavior and names why, the knowledge is captured, so spend the human's time elsewhere.
 
 | Signal | Rung |
 | --- | --- |

@@ -89,7 +89,7 @@ Type (Google Fonts via CDN): **Archivo** for display/headings (structural, wide 
 
 ## Writing and opening the file
 
-Write the report to the OS temp dir (resolve `$TMPDIR`, falling back to `/tmp`, or `%TEMP%` on Windows) as `<repo>-<date>-<slug>.design-review.html` (the shape `handoff` § Where to write it owns) so each run is fresh and nothing lands in the repo; open it (`open` on macOS, `xdg-open` on Linux, `start` on Windows) and tell the user the absolute path.
+Write the report to the OS temp dir (resolve `$TMPDIR`, falling back to `/tmp`, or `%TEMP%` on Windows) as `<repo>-<date>-<slug>-<HHMMSS>.design-review.html` (the shape `handoff` § Where to write it owns, whose slug for this kind carries the run's time) so each run is fresh — the report is timestamped per run and frozen at pick-time, and a date alone would let a second run on the same repo overwrite the first — and nothing lands in the repo; open it (`open` on macOS, `xdg-open` on Linux, `start` on Windows) and tell the user the absolute path.
 
 ## Header
 

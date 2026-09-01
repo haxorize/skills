@@ -16,6 +16,8 @@ Each step below ends at a clean tree with the suite green, and the run is one co
 
 ## Workflow
 
+Every count and every "suite green" this run reports is bound by the global evidence rule (`~/.claude/rules/evidence.md`) — the command and its output travel with the claim, in the step that makes it and in the closing table.
+
 ### 1. Discover
 
 List what is outdated and what is flagged, with the tool the repo already uses — `npm outdated` / `npm audit`, `pip list --outdated` / `pip-audit` (or `uv lock --upgrade --dry-run`), `dotnet list package --outdated` / `--vulnerable` / `--deprecated`. A package is classed once: security-flagged, major, below-major. Then by exposure: dev-only (type packages, test frameworks, formatters) updates freely; libraries the code calls directly and SDKs for third-party services get the changelog read; the build toolchain (the runtime, the compiler, the bundler, the SDK itself) gets the most caution, because breakage there reaches every output. Deferred bumps from a previous run resurface here from `docs/deps-deferred.md` with their review-by date.
@@ -51,7 +53,3 @@ The lockfile is part of the change: committed with the manifest, installed from 
 ### 5. Close
 
 One table: package, from → to, class, verdict, what the suite did. Deferred packages carry a reason and a review-by date, written one line each to `docs/deps-deferred.md` in the target repo so the next run's step 1 greps them back. The commit body names what the upgrade changes for a caller and what was verified, never the list of bumps — the `writing-for-humans` commit family's "Bumped dependencies" pair is the shape to avoid and the one to write.
-
-## Notes
-
-Every count and every "suite green" this run reports is bound by the global evidence rule (`~/.claude/rules/evidence.md`) — the command and its output travel with the claim, in the step that makes it and in the closing table.

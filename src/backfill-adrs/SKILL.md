@@ -21,7 +21,7 @@ Default suggestion: **last 90 days OR last 200 commits, whichever is shorter**. 
 git log --oneline --since="<date>" | head -<n>
 ```
 
-For each commit that smells like a design choice (new module, new dependency, schema change, infra change, test-strategy change), capture the SHA and one-line subject. Code shapes are candidates beside the log smells: a defensive check that looks unnecessary, a magic constant, a compatibility workaround, a boundary that does not follow from the domain. A candidate resolved from code alone carries an `[inferred]` or `[unknown]` label on its rationale; it is never recorded as confirmed.
+For each commit that smells like a design choice (new module, new dependency, schema change, infra change, test-strategy change), capture the SHA and one-line subject. Code shapes are candidates beside the log smells: a defensive check that looks unnecessary, a magic constant, a compatibility workaround, a boundary that does not follow from the domain. A candidate resolved from code alone carries an `[inference]` or `[unknown]` label on its rationale — the registered Evidence tags, never a coined synonym; it is never recorded as confirmed.
 
 ### 3. Follow PR / work-item references via tracker dispatch
 

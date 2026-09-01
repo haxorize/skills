@@ -43,7 +43,7 @@ Use this structure when writing `DOMAIN.md`.
 
 - Group terms into multiple tables when natural clusters emerge (by subdomain, lifecycle, or actor). One table is fine if all terms belong to a single cohesive domain — don't force groupings.
 - Use **bold** for term names in `Relationships` and `Flagged ambiguities` sections.
-- `Flagged ambiguities` carries two kinds of entry: a word used for two distinct concepts, and a **provenance flag** — an entry inferred from usage with no definition found in the code, marked as resting on a guess so a later sweep can tell which definitions the code backs and which it does not.
+- `Flagged ambiguities` carries two kinds of entry: a word used for two distinct concepts, and an entry inferred from usage with no definition found in the code, which carries the registered Evidence tag `[inference]` on its line so a later sweep can tell which definitions the code backs and which rest on a reading of usage.
 - Keep the example dialogue to 3-5 **Dev**/**Domain expert** exchanges that clarify boundaries between related concepts.
 - Definitions: present tense, defining what the term IS — not what it does. Open on the definition in one sentence; further sentences earn their place only by discriminating the term from a neighbor, recording a scope the name does not carry, or naming the authority that settles it. A definition that has grown past that is a sign the entry is carrying spec or process detail that belongs elsewhere.
 

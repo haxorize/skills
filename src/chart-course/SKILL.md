@@ -9,7 +9,7 @@ requires: grilling, domain-modeling, writing-for-humans
 
 A loose idea has arrived — too big for one agent session, and wrapped in fog: the way from here to the **destination** isn't visible yet. Charting a course is about finding that way, not charging at the destination. This skill builds a **Chart** — a shared map on the project's tracker — whose children are **decision tickets**: questions whose resolution is a decision, not slices of a build to execute. Work them one at a time until the way is clear.
 
-Three stops bind every run and each is stated in full below: one ticket per session, no more; every claim in a published body is rechecked against the tracker before it goes out; and the **Publish gate** holds before any create call.
+Three stops bind every run and each is stated in full below: one ticket per session, no more; the session ends with a **claims recheck** of every assertion it wrote against the live tracker; and the **Publish gate** holds before any create call.
 
 The destination varies per effort, and naming it is the first act of charting — it shapes every ticket. It might be a spec to hand off, a decision to lock before planning starts, or a change made in place. The map is domain-agnostic — engineering work, course content, whatever fits the shape.
 
@@ -67,11 +67,11 @@ The **Publish gate** in [references/publishing.md](references/publishing.md) —
 
 End either mode with a **claims recheck**: before stopping, reread every assertion the session wrote — resolution comments, Decisions-so-far gists, facts later tickets depend on — against the live tracker and the linked assets, and fix what doesn't hold. The frontier the next session acts on is only as sound as those claims.
 
-### Chart the course
+### 1. Chart the course
 
 User invokes with a loose idea and no map exists yet — the once-per-effort mode. Resolve the tracker first ([references/tracker-resolution.md](references/tracker-resolution.md)), then run the steps in [references/charting-mode.md](references/charting-mode.md). Charting is one session's work; it hand-resolves nothing.
 
-### Work the chart
+### 2. Work the chart
 
 User invokes with the map (URL or id); a ticket is optional — without one, you pick the next decision, not the user.
 

@@ -51,14 +51,16 @@ Close with one row per finding, every `F<n>` in the report present, in ID order:
 | **F4** | ABANDON | started the rename, three call sites resist it without a contract change; reverted, tree clean, the contract change is a question for the user |
 
 - **FIXED** carries the hunk or SHA *and* a statement that the cited deficiency is gone — not that an edit was made. A fix that addresses the finding's line but not its claim is not FIXED: it is DEFERRED, with what remains named.
-- **DECLINED** carries a reason that disposes *that* claim, with the same verification read a FIXED row gets — the dismissal standard is the one the review itself was held to: a claim is disposed by the evidence that refutes it, never by its confidence or its author. Verifying before implementing is `receiving-review`'s, gated in step 1.
+- **DECLINED** carries a reason that disposes *that* claim, with the same verification read a FIXED row gets — the dismissal standard is `review-changes`' [finding-discipline.md](../review-changes/references/finding-discipline.md)'s — a claim is disposed by the evidence that refutes it, never by its confidence or its author. Verifying before implementing is `receiving-review`'s, gated in step 1.
 - **DEFERRED** is a proposal the human ratifies in the same message. The row names where the work would go; if they do not ratify, it is not deferred.
 - **ABANDON** is the visible form of "I tried and stopped": what was attempted, why it did not land, what state was left. A finding that is neither fixed nor explicitly disposed is this row, never an omission.
 
 Re-measure the count at write time — `grep -oE '\bF[0-9]+\b' <report> | sort -u | wc -l` against the rows you wrote — and state both numbers. The global evidence rule (`~/.claude/rules/evidence.md`) governs every claim in the table.
 
-## Notes
+### 5. Re-stamp the report
 
-**Re-stamp the report** whenever the tree now differs from the report's last stamp, per [references/tree-stamp.md](references/tree-stamp.md). The one exception is a PR-mode report: it carries no tree stamp and never gets one here, because a stamp minted against a tree that was not this machine's blesses whatever is sitting in the local one.
+**Re-stamp the report** whenever the tree now differs from the report's last stamp, per [references/tree-stamp.md](references/tree-stamp.md). This is the last step of the pass, not an aside: without it the `review-receipt` hook blocks the push of the tree the fixes made. The one exception is a PR-mode report: it carries no tree stamp and never gets one here, because a stamp minted against a tree that was not this machine's blesses whatever is sitting in the local one.
+
+### 6. Stop
 
 Stop. Landing is the user's ask: the `committing` discipline for one commit, `/ship` for a split or a PR — the usual exit after a long pass. When the findings arrived as PR review threads, `receiving-review`'s reply contract runs after the commit is on the remote, not before.

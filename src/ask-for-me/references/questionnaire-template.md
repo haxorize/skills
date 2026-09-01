@@ -2,7 +2,7 @@
 
 ## Filling the skeleton
 
-The block below is emitted as written, placeholders replaced. This section is guidance and never travels with it.
+The block below is emitted with every `<placeholder>` replaced by real content and every `<question-example>` block **deleted** — the example is a worked illustration for the author, and its specifics (the 200-requests-per-second reading) are invented. Two more things never travel with the emitted file: this section, and the `**Purpose:**` line's own text, which describes what to write there rather than being it.
 
 - **`## Context`** — One paragraph orienting a recipient who wasn't in the user's head. Enough to answer well, not a page.
 - **`## How to answer`** — Deadline and rough effort, and what happens if we hear nothing by then: "If we have no answer by <date>, we go ahead with <the default>." Partial answers and "I don't know" are useful. Flag anything you are unsure of rather than skipping it.
@@ -15,7 +15,7 @@ The block below is emitted as written, placeholders replaced. This section is gu
 
 # <Questionnaire title>
 
-**Purpose:** why this questionnaire exists and the decision riding on it.
+**Purpose:** <why this questionnaire exists and the decision riding on it>
 
 **From:** <the user>. **To:** <the recipient>. **How your answers will be used:** <where they go>.
 
@@ -31,7 +31,7 @@ The block below is emitted as written, placeholders replaced. This section is gu
 
 <the theme's questions, most important first, each with an answer stub beneath>
 
-<question-example>
+<question-example — an illustration for the author; delete this whole block, markers and all, before sending>
 ### We read the launch load as 200 requests per second, from the capacity doc; is that still the figure?
 
 _Why this matters: it decides whether we provision for burst traffic now or defer it._
