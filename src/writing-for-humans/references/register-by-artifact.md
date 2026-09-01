@@ -1,6 +1,6 @@
 # Register by artifact — the fat rows
 
-The register table in the skill body routes every artifact; this file holds the two rows whose rules outgrow a table cell. Open the section for the artifact at hand and no other.
+The register table in the skill body routes every artifact; this file holds the rows whose rules outgrow a table cell. Open the section for the artifact at hand and no other.
 
 ## README, and a guide (a how-to, a tutorial)
 
@@ -13,3 +13,9 @@ Same register as a ticket body, plus a first screen that answers four questions 
 Read this section only when writing or approving an error message or UX microcopy.
 
 Before writing or approving one, answer five questions: what happened; why, at the most honest level of detail the product knows; what was *not* affected, if anything needs reassurance; what the user can do now; what they can do if that fails. Unanswerable questions are a product gap, not a copy problem — route them out. Shape: outcome first, then cause, reassurance, next step, escape route. No blame, no "Oops", no exclamation marks — and remember specific ≠ clear: a message can name scopes and tokens and still leave the reader with no move.
+
+## Changelog entry, release note
+
+Read this section only when writing a changelog entry or a release note.
+
+Notable-to-users only: what a user of the product observes changed — never typo fixes or internal refactors ("Refactored internal code structure" is an entry about nothing). Order breaking changes → features → fixes; cite PRs (`#1234`), never commit SHAs; append to the unreleased section rather than rewriting released ones; match the file's declared format where one exists.

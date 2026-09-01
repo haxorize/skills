@@ -3,13 +3,14 @@
 # Prove scripts/install.sh's prune arms still remove what they claim to remove
 # and still leave alone what they claim to leave alone.
 #
-# Why this exists at all: install.sh was selftest-exempt, so `prune_stale` and
-# `link_rules`' prune loop — the only two places in this repo where a script
-# calls `rm` on something in the user's home — were graded by nothing. Both are
-# scoped by ownership (a DANGLING symlink whose target points under this
-# checkout's src/ or global/), and that scoping is one `case` arm each. Delete
-# either arm and the script starts removing links it does not own, silently,
-# on every merge — scripts/git-hooks/post-merge re-runs it.
+# Why this exists at all: install.sh was selftest-exempt, so `prune_owned` —
+# the one place in this repo where a script calls `rm` on something in the
+# user's home, called once for skills and once for rules — was graded by
+# nothing. It is scoped by ownership (a DANGLING symlink whose target points
+# under the owning prefix, this checkout's src/ or global/), and that scoping
+# is one `case` arm. Delete the arm and the script starts removing links it
+# does not own, silently, on every merge — scripts/git-hooks/post-merge
+# re-runs it.
 #
 # TARGET_ROOT is the seam that makes running the real installer safe, and it is
 # install.sh's declared input rather than a fact about it: every path that
@@ -22,41 +23,37 @@
 # the user's real ~/.claude/skills with every row still green.
 #
 # Graded, in both directions:
-#   - prune_stale removes a dangling link whose target is under src/;
+#   - prune_owned removes a dangling link whose target is under src/;
 #   - and leaves a dangling link pointing somewhere else (the deliberate
 #     find-skills -> .agents/skills/ case the header names), a REAL directory,
-#     and a link that still resolves;
-#   - link_rules' prune loop, the same four ways against global/;
-#   - the link arm: a skill absent from the target is linked, and the run is
-#     idempotent — a second run adds nothing and removes nothing;
+#     a link that still resolves, and a resolving link into ANOTHER checkout
+#     at a name this repo ships;
+#   - the rules call of prune_owned, the same five ways against global/;
+#   - the link arm: a skill absent from the target is linked, the run is
+#     idempotent — a second run adds nothing and removes nothing — and the
+#     skip message tells this checkout's link ("already linked") from a link
+#     into another checkout, which it names and leaves alone;
 #   - the `dep X -> Y` trace, against the frontmatter: every line it prints must
 #     name a skill X that really declares Y. That is the property `local` in
 #     link_skill protects — with those names global, the recursive call
 #     overwrites the caller's, and the caller's NEXT dep line attributes Y to
 #     whatever skill the recursion bottomed out on;
 #   - the FRESH install, against a HOME with nothing in it. That row grades the
-#     `[ -L "$link" ] || continue` guard, which reads as redundant beside the
-#     `[ -e ]` test after it and is not: `mkdir -p` creates an empty target,
-#     the unmatched `"$TARGET_DIR"/*` glob comes back as the literal string,
-#     both tests are false for it, `readlink` fails on it, and `set -e` aborts
-#     the installer before a single skill is linked. Measured 2026-09-01: with
-#     that line dropped a fresh install exits 1; with it, 0.
-#
-# One mutation is BEHAVIOR-PRESERVING and correctly green, named so a later
-# reader does not take the silence for a gap: dropping `[ -L "$link" ] ||
-# continue` from `link_rules`' prune loop changes nothing. Its twin in
-# prune_stale is load-bearing because the line after it is an ASSIGNMENT,
-# `target="$(readlink "$link")"`, whose non-zero status `set -e` reads; in
-# link_rules the same readlink sits in a `case` word, where a failed command
-# substitution is not a status bash checks. The guard is documentation there,
-# not control flow. Measured 2026-09-01 by mutation, both ways.
+#     `[ -L "$link" ] || continue` guard in prune_owned, which reads as
+#     redundant beside the `[ -e ]` test after it and is not: `mkdir -p`
+#     creates an empty target, the unmatched `"$target_dir"/*` glob comes back
+#     as the literal string, both tests are false for it, `readlink` fails on
+#     it in an ASSIGNMENT, and `set -e` aborts the installer before a single
+#     skill is linked. Measured 2026-09-01: with that line dropped a fresh
+#     install exits 1; with it, 0.
 #
 # NOT covered, so a clean run here is not a claim about them: which skills the
 # recursion reaches (the trace row above grades every line it prints, not that
 # the set of lines is complete), the hook-snippet block and its
-# `# Install note:` roster, and the WARN arms for a target that exists and is
-# not a symlink. Those are printing and traversal, not removal, and this
-# script was written for the removal.
+# `# Install note:` roster, the WARN arms for a target that exists and is not a
+# symlink, and prune_owned's empty-prefix abort (no call site can reach it from
+# outside the script, so there is no row to write). Those are printing and
+# traversal, not removal, and this script was written for the removal.
 set -uo pipefail
 
 repo_root="$(cd "$(dirname "$0")/.." && pwd)"
@@ -87,7 +84,12 @@ mkdir -p "$skills_target" "$rules_target" "$home/elsewhere"
 # still reads as graded.
 live_skill="$(basename "$(find "$skills_dir" -mindepth 1 -maxdepth 1 -type d | sort | head -1)")"
 live_rule="$(basename "$(find "$global_dir/rules" -maxdepth 1 -name '*.md' | sort | head -1)")"
-if [ -z "$live_skill" ] || [ -z "$live_rule" ]; then
+# A second real name of each kind, for the link at a name this repo ships
+# that points somewhere else: the link arm visits only names under src/ and
+# global/rules/, so the foreign `find-skills` link below never reaches it.
+taken_skill="$(basename "$(find "$skills_dir" -mindepth 1 -maxdepth 1 -type d | sort | sed -n 2p)")"
+taken_rule="$(basename "$(find "$global_dir/rules" -maxdepth 1 -name '*.md' | sort | sed -n 2p)")"
+if [ -z "$live_skill" ] || [ -z "$live_rule" ] || [ -z "$taken_skill" ] || [ -z "$taken_rule" ]; then
   # selftest_fail has set fail=1, so this close takes the silent exit-1 arm and
   # neither string prints; both are placeholders for a signature that requires
   # them. selftest_close exits on every path.
@@ -101,12 +103,20 @@ ln -s "$skills_dir/no-such-skill" "$skills_target/no-such-skill"
 ln -s "$home/elsewhere/foreign" "$skills_target/find-skills"
 ln -s "$skills_dir/$live_skill" "$skills_target/$live_skill"
 mkdir -p "$skills_target/a-real-directory"
+# A fifth shape, at a name this repo DOES ship: a symlink that resolves but
+# points at some other checkout's copy. Not ours to prune, not ours to
+# relink, and not "already linked" — that message is a claim about this
+# checkout's copy, and the installer used to make it for any symlink at all.
+ln -s "$home/elsewhere/other-checkout/$taken_skill" "$skills_target/$taken_skill"
+mkdir -p "$home/elsewhere/other-checkout/$taken_skill"
 
-# The same four in the rules target.
+# The same five in the rules target.
 ln -s "$global_dir/rules/no-such-rule.md" "$rules_target/no-such-rule.md"
 ln -s "$home/elsewhere/foreign.md" "$rules_target/foreign-rule.md"
 ln -s "$global_dir/rules/$live_rule" "$rules_target/$live_rule"
 mkdir -p "$rules_target/a-real-directory"
+ln -s "$home/elsewhere/other-checkout/$taken_rule" "$rules_target/$taken_rule"
+: > "$home/elsewhere/other-checkout/$taken_rule"
 
 out=$(TARGET_ROOT="$home" HOME="$home" bash scripts/install.sh 2>&1)
 rc=$?
@@ -121,33 +131,46 @@ expect_rc "the installer against a throwaway TARGET_ROOT" 0 "$rc"
   selftest_fail "the installer wrote no link under $skills_target — TARGET_ROOT did not reach install.sh's write paths, so the rows below grade a tree the installer never touched, and its rm loops ran somewhere this script cannot see"
 
 # --- the firing direction -------------------------------------------------
-expect_in "$out" "prune_stale did not remove the dangling link it owns" "prune no-such-skill (stale:"
+expect_in "$out" "prune_owned did not remove the dangling link it owns" "prune no-such-skill (stale:"
 if [ -L "$skills_target/no-such-skill" ] || [ -e "$skills_target/no-such-skill" ]; then
-  selftest_fail "prune_stale left $skills_target/no-such-skill in place — a dangling link into this checkout's src/ is the one thing that arm exists to remove"
+  selftest_fail "prune_owned left $skills_target/no-such-skill in place — a dangling link into this checkout's src/ is the one thing that arm exists to remove"
 fi
-expect_in "$out" "link_rules' prune loop did not remove the dangling rule link it owns" "prune rule no-such-rule.md (stale:"
+expect_in "$out" "prune_owned's rules call did not remove the dangling rule link it owns" "prune rule no-such-rule.md (stale:"
 if [ -L "$rules_target/no-such-rule.md" ]; then
-  selftest_fail "the rules prune loop left $rules_target/no-such-rule.md in place — a dangling link into this checkout's global/ is what that loop owns"
+  selftest_fail "prune_owned left $rules_target/no-such-rule.md in place — a dangling link into this checkout's global/ is what that call owns"
 fi
 
 # --- the quiet direction, which is the half that matters ------------------
 # Each of these is a link or a directory the script must not touch, and each
 # would be removed by a prune arm that dropped its ownership `case`.
 [ -L "$skills_target/find-skills" ] ||
-  selftest_fail "prune_stale removed $skills_target/find-skills, a DANGLING symlink pointing outside this checkout — that is the deliberate find-skills -> .agents/skills/ case install.sh's own header names, and removing it takes a link the user owns"
+  selftest_fail "prune_owned removed $skills_target/find-skills, a DANGLING symlink pointing outside this checkout — that is the deliberate find-skills -> .agents/skills/ case install.sh's own header names, and removing it takes a link the user owns"
 [ -L "$skills_target/$live_skill" ] ||
-  selftest_fail "prune_stale removed $skills_target/$live_skill, a link into src/ whose target still exists — the arm reads dangling links only"
+  selftest_fail "prune_owned removed $skills_target/$live_skill, a link into src/ whose target still exists — the arm reads dangling links only"
 [ -d "$skills_target/a-real-directory" ] && [ ! -L "$skills_target/a-real-directory" ] ||
-  selftest_fail "prune_stale removed or replaced $skills_target/a-real-directory, which is a real directory and not a symlink at all"
+  selftest_fail "prune_owned removed or replaced $skills_target/a-real-directory, which is a real directory and not a symlink at all"
 [ -L "$rules_target/foreign-rule.md" ] ||
-  selftest_fail "the rules prune loop removed $rules_target/foreign-rule.md, a dangling link pointing outside this checkout's global/"
+  selftest_fail "prune_owned removed $rules_target/foreign-rule.md, a dangling link pointing outside this checkout's global/"
 [ -L "$rules_target/$live_rule" ] ||
-  selftest_fail "the rules prune loop removed $rules_target/$live_rule, a link into global/rules/ whose target still exists"
+  selftest_fail "prune_owned removed $rules_target/$live_rule, a link into global/rules/ whose target still exists"
 [ -d "$rules_target/a-real-directory" ] && [ ! -L "$rules_target/a-real-directory" ] ||
-  selftest_fail "the rules prune loop removed or replaced $rules_target/a-real-directory, which is a real directory and not a symlink at all"
+  selftest_fail "prune_owned removed or replaced $rules_target/a-real-directory, which is a real directory and not a symlink at all"
 reject_in "$out" "a prune line named a path the script does not own" "prune find-skills"
 reject_in "$out" "a prune line named a real directory" "prune a-real-directory"
 reject_in "$out" "a rules prune line named a path the script does not own" "prune rule foreign-rule.md"
+
+# --- the skip message tells this checkout's link from a foreign one ---------
+# The link arm leaves any symlink at the name alone; what it SAYS has to be
+# true. A link into another checkout is reported as that, never as "already
+# linked", and it is still there afterwards, pointing where it pointed.
+expect_in "$out" "the installer did not report the foreign link at a shipped skill name as foreign" "skip  $taken_skill (a symlink to $home/elsewhere/other-checkout/$taken_skill, not this checkout's src/$taken_skill — left alone)"
+reject_in "$out" "the installer called a link into another checkout 'already linked'" "skip  $taken_skill (already linked)"
+[ "$(readlink "$skills_target/$taken_skill")" = "$home/elsewhere/other-checkout/$taken_skill" ] ||
+  selftest_fail "the installer replaced or removed $skills_target/$taken_skill, a resolving symlink into another checkout — the link arm relinks nothing that is already a symlink"
+expect_in "$out" "the installer did not report the foreign link at a shipped rule name as foreign" "skip  rule $taken_rule (a symlink to $home/elsewhere/other-checkout/$taken_rule, not this checkout's global/rules/$taken_rule — left alone)"
+reject_in "$out" "the installer called a rule link into another checkout 'already linked'" "skip  rule $taken_rule (already linked)"
+[ "$(readlink "$rules_target/$taken_rule")" = "$home/elsewhere/other-checkout/$taken_rule" ] ||
+  selftest_fail "the installer replaced or removed $rules_target/$taken_rule, a resolving symlink into another checkout"
 
 # --- the link arm, and idempotence ----------------------------------------
 # Every skill in src/ ends up linked, which is also what proves the run reached
@@ -155,6 +178,7 @@ reject_in "$out" "a rules prune line named a path the script does not own" "prun
 missing=""
 for d in "$skills_dir"/*/; do
   n="$(basename "$d")"
+  [ "$n" = "$taken_skill" ] && continue   # staged as a foreign link above, by design
   [ -L "$skills_target/$n" ] || missing="$missing $n"
 done
 [ -z "$missing" ] || selftest_fail "the installer left these skills unlinked in the throwaway HOME:$missing"
@@ -170,7 +194,7 @@ expect_in "$out2" "the second run did not report the already-linked skill as ski
 
 # The fresh install. A second throwaway HOME with nothing staged in it, which
 # is what a first `bash scripts/install.sh` on a new machine meets — and the
-# only shape that reaches the unmatched-glob path in either prune loop.
+# only shape that reaches the unmatched-glob path in either prune_owned call.
 if ! fresh="$(selftest_tmpdir)"; then
   selftest_skip "mktemp -d produced no second usable directory — the fresh-install row was not exercised."
 else

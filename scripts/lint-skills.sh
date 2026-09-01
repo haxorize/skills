@@ -114,7 +114,7 @@
 #     form, artifact names, labels, section pointers, heading case) and the
 #     evaluation-ledger consumer sweep, and for nothing else: the hoisting,
 #     frontmatter, ADR-citation, HTML-transport and reference-link checks do
-#     not read them, and a repo-local body draws the loaded-file byte WARN
+#     not read them, and a repo-local body draws the loaded-file byte FAIL
 #     because it is re-attached exactly as a hoisted one is. DOMAIN.md is the
 #     one file check_labels skips — it is where the labels are registered. They never
 #     hoist, so the router-coverage and requires checks would demand mentions
@@ -163,15 +163,16 @@
 #     other; leaving the wrapper on made every phrase in such a description
 #     miss its twin. The comparison is byte-based after a case fold, so it
 #     needs the UTF-8 ctype the probe below establishes.
-#   - Re-attach byte WARN (write-skill § Size constraints): a SKILL.md over
-#     15,000 bytes draws a WARN, never a FAIL — the platform figure it converts
-#     is dated in the block below. A reference file and a repo-local body draw
-#     the same WARN under check_reference_bytes, with the remedy each has: a
-#     reference is read whole when its pointer is followed, so an oversize one
-#     has a tail the run does not reach, and the fix is to split it at a
-#     heading rather than to move detail one tier down — there is no tier
-#     below a reference. Neither WARN moves the exit status, and the FAIL this
-#     bound will one day be cannot land while bodies sit over it.
+#   - Re-attach byte FAIL (write-skill § Size constraints): a SKILL.md over
+#     15,000 bytes is a FAIL — the platform figure it converts is dated in the
+#     block below. A reference file and a repo-local body draw the same FAIL
+#     under check_reference_bytes, with the remedy each has: a reference is
+#     read whole when its pointer is followed, so an oversize one has a tail
+#     the run does not reach, and the fix is to split it at a heading rather
+#     than to move detail one tier down — there is no tier below a reference.
+#     A WARN until Batch M-size of the 2026-08-30 tightening round brought the
+#     last eight bodies under (ADR-0077 § Sizes); it flipped 2026-09-01 with
+#     every body and reference under the bound.
 #   - CLAUDE.md byte WARN (ADR-0076): a CLAUDE.md at the root over 6,000
 #     bytes draws a WARN, never a FAIL — a round bound roughly 2.4 times the
 #     2,471 bytes the 2026-08-30 cut left it at and just over a third of the
@@ -304,7 +305,7 @@
 #   - 5,000 tokens per re-attached skill inside a 25,000-token budget after
 #     auto-compaction: code.claude.com/docs/en/skills, "Auto-compaction
 #     carries invoked skills forward within a token budget … keeping the first
-#     5,000 tokens of each", verified 2026-08-29. The WARN below converts it to
+#     5,000 tokens of each", verified 2026-08-29. The FAIL below converts it to
 #     bytes at 3 bytes/token, measured 2026-08-29 on this repo's four largest
 #     bodies through `claude -p` usage deltas (2.97–3.10 bytes/token; the
 #     earlier 4-bytes/token estimate undercounted by a quarter).
@@ -320,12 +321,21 @@
 # the owning skill's directory. Pass 4 is a second, separate walk over a
 # different glob — docs/**, global/README.md and the prose READMEs, which no
 # other pass reads. Measured 2026-08-31 over 225 files: ~25s, against ~12s
-# before the six house-style checks landed.
+# before the six house-style checks landed. Measured again 2026-09-01 over
+# 227 files, by pass, before Batch M-scripts: pass 0 0.2 s · pass 1 3.6 s ·
+# pass 2 20.9 s · pass 3 5.4 s · pass 4 1.6 s, 31.7 s in all; 28.3 s after
+# that batch's two cuts (the section-pointer forks, the ledger sweep's
+# per-file greps). Dropping any one pass-2 check saves 0.5-3.5 s — the
+# per-reference greps in check_reference_orphans, the cut the 2026-09-01
+# Batch A residue named, measured at 0 — so pass 2's floor is process count:
+# ten checks a file, each a few forks, over 227 files. A further cut is a
+# rewrite that merges the six house-style scans into one awk pass, not a
+# trim, and is not this file's next job unless the pre-commit gate is.
 #   Pass 0 — read before any check runs, so no check's answer depends on how
 #   far the pass that asks it has got: the user-invoked set (name_is_user_invoked,
 #   the single predicate for that question) and both routers' text.
 #   Pass 1 — every skill's frontmatter and its own body, src/*/SKILL.md:
-#     check_reattach_bytes     the 15,000-byte WARN
+#     check_reattach_bytes     the 15,000-byte FAIL
 #     check_name_field         present, <= 64 chars, mirrors the directory
 #     check_description_scalar present, on one line, no block indicator
 #     check_description_limits <= 1024 chars, no bare ': ' or ' #', no < >
@@ -357,9 +367,10 @@
 #     check_artifact_names     a written filename is lowercase with dashes
 #     check_labels             every ALL-CAPS label registered in DOMAIN.md
 #     check_section_pointers   every `§ Name` names a heading its target has
-#     check_reference_bytes    the 15,000-byte WARN over a loaded file
+#     check_reference_bytes    the 15,000-byte FAIL over a loaded file
 #   Pass 3 — cross-file contracts, read from pass 2's captured walk:
-#     check_sibling_identity   byte-identical copies (this repo only)
+#     check_sibling_identity   byte-identical copies (this repo, or the
+#                              groups LINT_SIBLING_GROUPS names)
 #     check_sibling_membership every PATH sharing a basename with another
 #                              skill's is listed in a sibling group
 #     check_reference_orphans  every reference is linked from somewhere
@@ -411,6 +422,12 @@ argument but --help.
 
   LINT_ROOT=<dir>   point the whole sweep at another tree; unset in normal use
                     (scripts/lint-skills-selftest.sh sets it to the fixture roots)
+  LINT_SIBLING_GROUPS='a|b c|d'
+                    replace the sibling-group registry with these groups (paths
+                    under the sweep root, `|` within a group, space between);
+                    unset in normal use, where the registry in this file names
+                    this repo's own paths. A value naming no group, or a group
+                    of one path, is a usage error (exit 3), not a quiet run
 
 USAGE
   sed -n '/^# The checks, as the named functions below/,/^#   Every FAIL goes through/p' "$0" \
@@ -424,8 +441,10 @@ file's header. scripts/lint-skills-selftest.sh's header names which checks it gr
 which it does not; a green selftest is not a claim about the rest.
 
 Exit codes: 0 clean · 1 at least one FAIL · 2 LINT_ROOT is not a directory (nothing
-checked) · 3 usage error (an unknown argument, an empty one, or more than one). WARN
-lines never change the exit code.
+checked) · 3 usage error (an unknown argument, an empty one, or more than one, or a
+LINT_SIBLING_GROUPS naming no group or a group of one path) · 4 a check never ran, so
+this run is not a verdict on anything — today the one cause is a failure flag under
+TMPDIR that could not be written. WARN lines never change the exit code.
 USAGE
 }
 if [ $# -gt 1 ]; then
@@ -438,6 +457,13 @@ case "${1:-}" in
 esac
 
 repo_root="$(cd "$(dirname "$0")/.." && pwd)"
+
+# The failure-flag mechanism, shared with scripts/lint-adrs.sh: the two carried
+# the same nine lines under the same names until 2026-09-01. A source that
+# fails is exit 4 — with no say_fail, no FAIL below could move the status.
+lint_lib="$repo_root/scripts/lint-lib.sh"
+# shellcheck source=scripts/lint-lib.sh
+. "$lint_lib" || { echo "lint-skills.sh: could not source $lint_lib, where say_fail and the failure flag live — no check below could have moved the exit status, so no run from here is a verdict" >&2; exit 4; }
 
 # The one fence-stripping awk fragment every text check starts with: a line
 # inside a ``` block is never read. `fence` resets per file so an unclosed
@@ -467,6 +493,10 @@ if [ -n "${LINT_ROOT:-}" ]; then
     exit 2
   fi
 fi
+# The failure flag's directory is made after the `cd` below, so a RELATIVE
+# TMPDIR must be absolutized here, while $PWD is still the caller's; the
+# reasoning is in scripts/lint-lib.sh's header.
+lint_absolutize_tmpdir
 cd "$scan_root"
 
 # The description caps below are character-based (<=1024 chars, no bare ': ' and no bare ' #' — both end an unquoted YAML scalar early).
@@ -500,8 +530,6 @@ case "${LC_ALL:-}${LC_CTYPE:-}" in
     ;;
 esac
 
-fail=0
-
 shopt -s nullglob
 
 # Print the value of a `<key>: value` line from frontmatter (block 1, between
@@ -518,13 +546,10 @@ frontmatter_value() {
   ' "$1"
 }
 
-# Prints a FAIL line and sets the exit status to 1; every failure goes through
-# here so the prefix the selftest counts and the status cannot disagree.
-# scripts/lint-adrs.sh carries the same three lines under the same name; the
-# two are kept in step by editorial discipline, not by a shared library —
-# five shared lines across two callers do not earn one (see also
-# scripts/selftest-lib.sh, which does).
-say_fail() { echo "FAIL: $1"; fail=1; }
+# say_fail, the failure flag, and why the status travels as a file rather than
+# a variable: scripts/lint-lib.sh's header, which scripts/lint-adrs.sh reads
+# too. Nothing below assigns a `fail` variable — there is none.
+lint_fail_flag_init lint-skills.sh
 
 # The line numbers of a `grep -n` result, space-separated, as every FAIL that
 # reports "line(s) …" renders them. Written once so the three callers cannot
@@ -606,37 +631,53 @@ domain_registries_loaded=1
 # Pass 1 — every skill's frontmatter and its own body, read once each.
 # ---------------------------------------------------------------------------
 
-# (see header) Re-attach bound, as bytes. A WARN, not a FAIL: the cap is the
-# platform's and moves with it; what the author owes is ordering — the rules
-# a body cannot afford to lose sit early — or a smaller body. Measured before
-# the description checks so a body with a broken description is still measured.
-# warn_bytes <file> <limit> <tail>: the one shape both byte WARNs share — a
-# count, a bound, a WARN that never touches `fail`. A file that cannot be
-# counted is a FAIL, not a silent pass: an empty count would otherwise skip
-# the comparison and read as under the bound.
-warn_bytes() {
-  local f=$1 limit=$2 tail=$3 bytes
+# (see header) Re-attach bound, as bytes. A FAIL: the cap is the platform's
+# and moves with it, but a body over it loses its tail on the first re-attach,
+# and a cap that only warns drifts (tell-catalog.md grew 1,191 bytes past it
+# with nothing watching). What the author owes is a smaller body — relocate
+# what some runs never reach, or cut. Measured before the description checks
+# so a body with a broken description is still measured.
+# bytes_bound <level> <file> <limit> <tail>: the one shape every byte bound
+# shares — a count, a bound, a line at the given level (FAIL goes through
+# say_fail and moves the exit status, WARN prints and never does). A file that
+# cannot be counted is a FAIL, not a silent pass: an empty count would
+# otherwise skip the comparison and read as under the bound. A level that is
+# neither is exit 4, checked before the count so a misspelling is caught on
+# every call and not only on the files that breach: a `*)` arm that printed
+# WARN would turn a mis-cased FAIL into a status-neutral line, which is the
+# defect this bound exists to catch.
+bytes_bound() {
+  local level=$1 f=$2 limit=$3 tail=$4 bytes
+  case "$level" in
+    FAIL|WARN) : ;;
+    *) echo "lint-skills.sh: bytes_bound called with level '$level' on $f — the only levels are FAIL and WARN; fix the caller" >&2; exit 4 ;;
+  esac
   bytes=$(wc -c < "$f" 2>/dev/null | tr -d ' ')
   if [ -z "$bytes" ]; then
-    say_fail "$f could not be read for its byte count — the $limit-byte WARN did not run on it"
+    say_fail "$f could not be read for its byte count — the $limit-byte $level did not run on it"
     return
   fi
   if [ "$bytes" -gt "$limit" ]; then
-    echo "WARN: $f is $bytes bytes — $tail"
+    case "$level" in
+      FAIL) say_fail "$f is $bytes bytes — $tail" ;;
+      WARN) echo "WARN: $f is $bytes bytes — $tail" ;;
+    esac
   fi
 }
+warn_bytes() { bytes_bound WARN "$@"; }
+fail_bytes() { bytes_bound FAIL "$@"; }
 
 check_reattach_bytes() {
-  warn_bytes "$1" 15000 "past the 5,000-token re-attach bound (at 3 bytes/token) Claude Code keeps per skill after auto-compaction, so its tail is what a re-attach drops; put its hard stops and close-out steps above its long sections, or move detail into references/"
+  fail_bytes "$1" 15000 "past the 5,000-token re-attach bound (at 3 bytes/token) Claude Code keeps per skill after auto-compaction, so its tail is what a re-attach drops; put its hard stops and close-out steps above its long sections, or move detail into references/"
 }
 
 # The same bound over a file that is read rather than re-attached: a reference
 # and a repo-local body are both loaded whole when their pointer is followed,
-# so the tail of an oversize one is what the run never reaches. A WARN on the
+# so the tail of an oversize one is what the run never reaches. A FAIL on the
 # same terms as the body's, with the remedy a reference has — split it, since
 # there is no third tier to move detail into.
 check_reference_bytes() {
-  warn_bytes "$1" 15000 "past the 5,000-token bound (at 3 bytes/token) a loaded file is read within, so its tail is what the run does not reach; split it at a heading into two references the caller opens on different conditions"
+  fail_bytes "$1" 15000 "past the 5,000-token bound (at 3 bytes/token) a loaded file is read within, so its tail is what the run does not reach; split it at a heading into two references the caller opens on different conditions"
 }
 
 # (see header) CLAUDE.md byte WARN. A WARN, not a FAIL, on the re-attach
@@ -865,7 +906,7 @@ for f in src/*/SKILL.md; do
   check_name_field "$f"
   # Only the checks that read the description's *value* are gated: where there
   # is no single-line value, check_description_scalar has said so and there is
-  # nothing to measure. Every check that does not read it — the byte WARN,
+  # nothing to measure. Every check that does not read it — the byte bound,
   # `name:`, requires: both ways, router coverage — runs regardless, so one
   # broken description cannot hide a second defect in the same file.
   if check_description_scalar "$f" "$desc"; then
@@ -1298,11 +1339,7 @@ title_case_small=' a an the and or nor but for of to in on at by as vs with from
 
 # (see header) Heading case, the H2 half. The clause split and the
 # already-capitalized tests run in awk, which emits one candidate word per
-# line; the shell filters those against the two name lists and reports. The
-# split is deliberate: a `while read` fed by a PIPE runs in a subshell, where
-# say_fail's `fail=1` dies with it and every FAIL it printed leaves the exit
-# status at 0 — the same trap the Depends: citation check carries a paragraph
-# about. Both loops below read from a here-string for that reason. The em dash
+# line; the shell filters those against the two name lists and reports. The em dash
 # is written as literal UTF-8 in the awk program rather than as a `\x` escape,
 # which this platform's awk does not read. Every capital test is
 # `[[:upper:]]`, never `[A-Z]`: the sweep runs under a UTF-8 ctype (the probe
@@ -1467,16 +1504,40 @@ section_name_re='`([a-z][a-z0-9-]+)`$'
 # in [references/media-and-free-text.md](…)". Resolving only from the text
 # before the `§` skipped it, and it is the dominant form in the tree.
 section_after_re='^(.+) in \[[^]]*\]\(([^)]+\.md)\)'
+# Right-trim, written once because check_section_pointers below trimmed the same
+# shape at three sites. The result lands in the global $rtrimmed rather than
+# coming back through a `$( )`: this runs per citation in one of the costlier
+# checks, a shell function is not a fork and a command substitution is.
+rtrim_space() {  # <string> -> $rtrimmed, trailing whitespace gone
+  rtrimmed=$1
+  while :; do case "$rtrimmed" in *[[:space:]]) rtrimmed=${rtrimmed%?} ;; *) break ;; esac; done
+}
+# The same, plus the dash a citation's lead-in ends on ("... — § The topic").
+rtrim_lead_in() {  # <string> -> $rtrimmed, trailing whitespace and dashes gone
+  rtrim_space "$1"
+  while :; do
+    case "$rtrimmed" in
+      *— | *-) rtrimmed=${rtrimmed%?}; rtrim_space "$rtrimmed" ;;
+      *) break ;;
+    esac
+  done
+}
+
 check_section_pointers() {
   local f=$1 scan=${2-} dir cands lineno before name tail target heading found
   [ -n "${2+set}" ] || scan=$(awk "$FENCE_AWK"'{ print FNR ":" $0 }' "$f")
-  dir=$(dirname "$f")
+  # Most files cite no section at all; a substring test costs no process.
+  case "$scan" in *§*) : ;; *) return 0 ;; esac
+  dir=${f%/*}; [ "$dir" = "$f" ] && dir=.
   cands=$(printf '%s\n' "$scan" | section_pointer_candidates)
   [ -z "$cands" ] && return 0
+  # Every trim below is a parameter expansion, not a `sed`: three forks per
+  # citation and one per heading of its target were most of this check's cost
+  # (about 3.5 s of a 32 s run, measured 2026-09-01 by dropping the check).
   local short headings
   while IFS=$'\t' read -r lineno before name; do
     [ -z "$name" ] && continue
-    tail=$(printf '%s' "$before" | sed -E 's/[[:space:]—-]+$//')
+    rtrim_lead_in "$before"; tail=$rtrimmed
     target=""
     if [[ "$tail" =~ $section_link_re ]]; then
       target="$dir/${BASH_REMATCH[1]%%#*}"
@@ -1494,9 +1555,11 @@ check_section_pointers() {
     # The citation runs on into its sentence, so it is cut at the first
     # sentence end; `short` cuts harder, at a comma or a closing paren, and is
     # tried only as a fallback — a heading may legitimately carry either.
-    name=$(printf '%s' "$name" | sed -e 's/\. .*$//' -e 's/[[:space:]]*$//' -e 's/\.$//')
+    name=${name%%. *}
+    rtrim_space "$name"; name=${rtrimmed%.}
     [ -z "$name" ] && continue
-    short=$(printf '%s' "$name" | sed -e 's/[,;)].*$//' -e 's/[[:space:]]*$//')
+    short=${name%%[,;)]*}
+    rtrim_space "$short"; short=$rtrimmed
     if [ ! -f "$target" ]; then
       say_fail "$f cites '§ ${name}' (line $lineno) in $target, which is not a file — fix the path or the pointer; check_reference_links reads only the parenthesised half, so a pointer like this one is graded nowhere else"
       continue
@@ -1514,7 +1577,7 @@ check_section_pointers() {
       headings="$headings'$heading', "
       case "$name" in "$heading"*) found=yes; break ;; esac
       case "$heading" in "$name"*) found=yes; break ;; esac
-      heading=$(printf '%s' "$heading" | sed -e 's/^[0-9]\{1,3\}\. *//')
+      [[ $heading =~ ^[0-9]{1,3}\.\ * ]] && heading=${heading:${#BASH_REMATCH[0]}}
       [ -z "$heading" ] && continue
       # Either direction: the citation may run past the heading or abbreviate it.
       case "$name" in "$heading"*) found=yes; break ;; esac
@@ -1632,7 +1695,7 @@ while IFS= read -r f; do
       ;;
     .claude/skills/*)
       # A repo-local skill: swept for the slash form, the house style, and the
-      # loaded-file byte WARN (it is re-attached exactly as a hoisted body
+      # loaded-file byte FAIL (it is re-attached exactly as a hoisted body
       # is). Its frontmatter is still the author's (see header Scope).
       check_slash_form "$f"
       house_style_checks "$f"
@@ -1726,21 +1789,37 @@ status_tokens_anywhere() {
   printf '%s\n' "$text" | mask_examples | grep -o '`[a-z][a-z-]*`' | tr -d '`' | sort -u || true
 }
 
-# -> every file in the walk carrying the legend line, one per line.
-evaluation_ledger_legend_files() {
-  local f
-  printf '%s\n' "$1" | while IFS= read -r f; do
-    grep -qE '^Status is exactly one of:' "$f" && echo "$f"
-  done
+# -> every file in the walk carrying the legend line, one per line. One grep
+# over the whole list, not one per file: the three ledger checks between them
+# asked this question five times per walk, and at a grep per file that was
+# about 1,100 processes and 4 s of a 32 s run (measured 2026-09-01). An
+# unreadable file is not listed AND is reported: the caller FAILs on return 2.
+files_carrying() {  # <walked list> <ERE> -> the files matching it; 2 if one could not be read
+  local errs
+  # grep's stdout (the matching paths) goes out on fd 3, which is this
+  # function's own stdout; its stderr is captured instead of discarded. A file
+  # grep could not open is a check that did not run on it, not a file with
+  # nothing to report — the swallowed status is what `2>/dev/null || true` used
+  # to hide, and what every caller below now reports. xargs adds no diagnostic
+  # of its own for grep's "no match" exit 1 (probed), so a non-empty capture is
+  # a read error and nothing else.
+  { errs=$(printf '%s\n' "$1" | tr '\n' '\0' | xargs -0 grep -lE -- "$2" 2>&1 1>&3); } 3>&1
+  if [ -n "$errs" ]; then
+    printf '%s\n' "$errs" >&2
+    return 2
+  fi
+  return 0
 }
 
-# -> every file in the walk carrying the body's stored-status rule.
-evaluation_ledger_rule_files() {
-  local f
-  printf '%s\n' "$1" | while IFS= read -r f; do
-    grep -qE 'Exactly one stored status' "$f" && echo "$f"
-  done
+# The shared FAIL for that return: the grep's own error lines are on stderr
+# above, so this names what was being looked for and why the silence would lie.
+ledger_walk_read_fail() {  # <what the grep was looking for>
+  say_fail "a file in the walk could not be read while looking for $1 (the grep error is on stderr above) — that check did not run on it, which is not the same as it having nothing to report"
 }
+evaluation_ledger_legend_files() { files_carrying "$1" '^Status is exactly one of:'; }
+
+# -> every file in the walk carrying the body's stored-status rule.
+evaluation_ledger_rule_files() { files_carrying "$1" 'Exactly one stored status'; }
 
 # -> "<legend file><TAB><status> <status> …" for the one file carrying the
 # legend line, or nothing. Every caller re-runs it rather than sharing state:
@@ -1763,7 +1842,9 @@ find_evaluation_ledger_legend() {
 check_evaluation_ledger_authority() {
   local walked_files=$1 legend_files rule_files legend_file statuses n
   legend_files=$(evaluation_ledger_legend_files "$walked_files")
+  [ $? -eq 2 ] && ledger_walk_read_fail "the evaluation ledger legend line"
   rule_files=$(evaluation_ledger_rule_files "$walked_files")
+  [ $? -eq 2 ] && ledger_walk_read_fail "the evaluation ledger stored-status rule"
   if [ -z "$legend_files" ]; then
     if [ -n "$rule_files" ]; then
       say_fail "an evaluation ledger stored-status rule exists ($(printf '%s' "$rule_files" | tr '\n' ' ' | sed 's/ $//')) but no file defines the legend — the line 'Status is exactly one of:' is the anchor all three ledger checks find their authority by, so rewording it turns them off rather than failing them; restore the line, or move the anchor in scripts/lint-skills.sh with it"
@@ -1855,19 +1936,21 @@ check_evaluation_ledger_consumers() {
     src/*) legend_owner=${legend_file#src/}; legend_owner="src/${legend_owner%%/*}" ;;
     *) legend_owner=$(dirname "$legend_file") ;;
   esac
-  # Process substitution, never a pipe: say_fail sets `fail` and a piped
-  # `while` runs in a subshell, so every failure here would be discarded and
-  # the gate would go green on a broken contract.
+  # The anchored set is one grep over the list; the loop then asks a string,
+  # not a process, per file. Two read guards, not one: the grep's own stderr
+  # (files_carrying's return 2) covers a file it could not open, and the `-r`
+  # test below names the file, since the grep's error names it only on stderr.
+  local anchored nl=$'\n'
+  anchored=$(files_carrying "$walked_files" "$evaluation_ledger_anchor_re")
+  [ $? -eq 2 ] && ledger_walk_read_fail "the evaluation ledger anchor"
   while IFS= read -r f; do
     case "$f" in
       "$legend_owner"/*) : ;;
       *)
-        grep -qE "$evaluation_ledger_anchor_re" "$f"
-        case $? in
-          0) : ;;
-          1) continue ;;
-          *) say_fail "$f could not be read for the evaluation ledger anchor — the vocabulary check did not run on it, which is not the same as it having nothing to report"; continue ;;
-        esac
+        if [ ! -r "$f" ]; then
+          say_fail "$f could not be read for the evaluation ledger anchor — the vocabulary check did not run on it, which is not the same as it having nothing to report"; continue
+        fi
+        case "$nl$anchored$nl" in *"$nl$f$nl"*) : ;; *) continue ;; esac
         ;;
     esac
     if ! hits=$(status_tokens_anywhere "$f"); then
@@ -1904,10 +1987,31 @@ sibling_groups=(
   "src/to-feature/references/ac-ids.md|src/to-story/references/ac-ids.md"
 )
 
-# The registry above names this repo's own paths, so byte-identity runs only
-# against this repo. Under LINT_ROOT every group would report as missing and
-# drown the fixture's real failures; lint-skills-selftest.sh states this gap rather
-# than implying it covered the check.
+# The registry above names this repo's own paths, so under LINT_ROOT every
+# group would report as missing and drown a fixture's real failures — which
+# left byte-identity ungraded and the membership check's "listed -> stay
+# quiet" branch reachable only from the real tree, at a whole lint run per
+# selftest. LINT_SIBLING_GROUPS replaces the registry for one run, so a
+# fixture root can list its own pairs and both checks run there; unset, the
+# registry stands and byte-identity runs against this repo alone.
+# A seam an agent drives is a seam that gets typed wrong, so both malformed
+# shapes are usage errors named before any check runs rather than silences: an
+# all-whitespace value parses to an empty array (which under bash 3.2's `set -u`
+# aborts the run with no FAIL and no OK line), and a group written with spaces
+# where `|` belongs is a one-path group that compares against nothing and runs
+# green.
+if [ -n "${LINT_SIBLING_GROUPS:-}" ]; then
+  read -r -a sibling_groups <<< "$LINT_SIBLING_GROUPS"
+  if [ "${#sibling_groups[@]}" -eq 0 ]; then
+    echo "lint-skills.sh: LINT_SIBLING_GROUPS is set but names no group — write each group as two or more paths joined by '|', groups separated by spaces, or unset it" >&2; exit 3
+  fi
+  for sibling_group in "${sibling_groups[@]}"; do
+    IFS='|' read -ra sibling_group_paths <<< "$sibling_group"
+    if [ "${#sibling_group_paths[@]}" -lt 2 ]; then
+      echo "lint-skills.sh: LINT_SIBLING_GROUPS group '$sibling_group' names one path — a group compares copies against each other, so join the paths within a group with '|' and separate groups with spaces" >&2; exit 3
+    fi
+  done
+fi
 check_sibling_identity() {
   local group files ref other
   for group in "${sibling_groups[@]}"; do
@@ -1955,7 +2059,7 @@ check_sibling_membership() {
   done <<< "$refs"
 }
 
-[ -z "${LINT_ROOT:-}" ] && check_sibling_identity
+if [ -z "${LINT_ROOT:-}" ] || [ -n "${LINT_SIBLING_GROUPS:-}" ]; then check_sibling_identity; fi
 
 # (see header) Orphaned references. check_reference_links validates a link's
 # target and never the other direction, so a reference file nothing points at
@@ -2051,8 +2155,9 @@ check_global_rule() {
 
 # (see header) The always-loaded budget. Every file under global/rules/ is
 # read on every turn, so the directory's TOTAL is the figure that matters, not
-# any one file's — a FAIL, unlike the two byte WARNs above, because this bound
-# is this repo's own ruling rather than a platform figure that moves under it.
+# any one file's — a FAIL, unlike the CLAUDE.md byte WARN above, because this
+# bound is this repo's own ruling rather than a platform figure that moves
+# under it.
 check_rules_bytes() {
   local bytes r one
   [ -d global/rules ] || return 0
@@ -2186,14 +2291,6 @@ fi
 # NOT in this glob: each is a fixture whose job is to carry a violation for a
 # LINT_ROOT run, so walking them from the repo's own run would report the
 # fixture's deliberate instance as this repo's defect.
-# Process substitution, never a pipe: a `while read` fed by a PIPE runs in a
-# subshell, where say_fail's `fail=1` dies with it — so every FAIL this walk
-# printed left the exit status at 0 and `OK: skill conventions clean.` printed
-# beside it. That is the trap check_heading_case and the ledger consumer sweep
-# each carry a paragraph about, and this walk shipped with it: it is the only
-# check that reads docs/**, so an ADR carrying a British form committed and
-# merged green past pre-commit and post-merge, both of which read the status
-# alone.
 while IFS= read -r f; do
   [ -f "$f" ] && check_spelling "$f"
 done < <({ [ -d docs ] && find docs -type f -name '*.md'
@@ -2330,7 +2427,6 @@ check_landing_key() {
 # NOT buy back is a legal-but-wrong value in a fixture — `Review required: no`
 # is well-formed vocabulary and no arm here fires on it; the property pins in
 # scripts/lint-skills-selftest.sh are what hold that line.
-# Process substitution, never a pipe: say_fail's `fail=1` dies in a subshell.
 while IFS= read -r claude_md; do
   [ -n "$claude_md" ] || continue
   check_landing_key "${claude_md#./}"
@@ -2349,8 +2445,8 @@ if [ -f CLAUDE.md ]; then
   house_style_checks CLAUDE.md
 fi
 
-if [ "$fail" -eq 0 ]; then
-  echo "OK: skill conventions clean."
-fi
-
-exit "$fail"
+# The one read of the flag, and the whole exit. There is no `fail` variable to
+# pair with it, on purpose: see scripts/lint-lib.sh's header.
+[ -e "$LINT_FAIL_FLAG" ] && exit 1
+echo "OK: skill conventions clean."
+exit 0

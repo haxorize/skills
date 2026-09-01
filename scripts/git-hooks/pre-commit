@@ -10,7 +10,7 @@ set -uo pipefail
 #
 # Gate map: lint-skills.sh when a staged path is under src/, global/, .claude/skills/ or scripts/, or is README.md, DOMAIN.md, CLAUDE.md or docs/lineage.md
 # Gate map: lint-adrs.sh when a staged path is under docs/adr/
-# Gate map: the -selftest.sh beside a staged scripts/*.sh or scripts/git-hooks/ hook, when it exists — every selftest when selftest-lib.sh is staged — each once; a red one blocks
+# Gate map: the -selftest.sh beside a staged scripts/*.sh or scripts/git-hooks/ hook, when it exists — every selftest when any scripts/*-lib.sh is staged — each once; a red one blocks
 # Gate map: a stderr notice, never a block, when a staged src/<skill>/ path has a docs/lineage.md row — diff the upstream before a material edit
 #
 # The selftest map is derived, never kept: the pairing is scripts/README.md's
@@ -18,8 +18,8 @@ set -uo pipefail
 # it; a selftest, a *-lib.sh and setup-hooks.sh owe none), and a
 # pairing that does not exist is lint-skills.sh's to name, not this hook's to
 # block on — so a selftest runs only when its file is there. A staged
-# selftest-lib.sh runs every selftest in both directories, since each sources
-# it. Each queued selftest runs once however many staged paths point at it,
+# scripts/*-lib.sh runs every selftest in both directories: a library cannot
+# know which scripts source it, so the safe queue is all of them. Each queued selftest runs once however many staged paths point at it,
 # through the same wrapper as the linters, so a 127 or a file that vanished
 # is named and any non-zero status blocks.
 #
@@ -112,14 +112,19 @@ while IFS= read -r -d '' p; do
   # `/`, so the git-hooks arms must come before scripts/*.sh, and the
   # scripts/*/* exclusion keeps any other subdirectory out of the script rule.
   case "$p" in
-    scripts/selftest-lib.sh)
-      for st in "$repo_root"/scripts/*-selftest.sh "$repo_root"/scripts/git-hooks/*-selftest.sh; do
-        [ -f "$st" ] && queue_selftest "${st#"$repo_root"/}"
-      done ;;
     scripts/git-hooks/*-selftest.sh) ;;
     scripts/git-hooks/*)
       [ -f "$repo_root/$p-selftest.sh" ] && queue_selftest "$p-selftest.sh" ;;
-    scripts/*-selftest.sh | scripts/*-lib.sh | scripts/setup-hooks.sh | scripts/*/*) ;;
+    scripts/*-lib.sh)
+      # A sourced library queues EVERY selftest, because a library cannot
+      # know its dependants: `selftest-lib.sh` backs the selftests and
+      # `lint-lib.sh` backs both linters, and the next one will back
+      # something else. Naming each library here is how lint-lib.sh landed
+      # able to break both linters with neither of their selftests queued.
+      for st in "$repo_root"/scripts/*-selftest.sh "$repo_root"/scripts/git-hooks/*-selftest.sh; do
+        [ -f "$st" ] && queue_selftest "${st#"$repo_root"/}"
+      done ;;
+    scripts/*-selftest.sh | scripts/setup-hooks.sh | scripts/*/*) ;;
     scripts/*.sh)
       [ -f "$repo_root/${p%.sh}-selftest.sh" ] && queue_selftest "${p%.sh}-selftest.sh" ;;
   esac

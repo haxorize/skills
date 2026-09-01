@@ -75,11 +75,10 @@
 # orphaned references (one unlinked file fires; the three forms that count as a
 # pointer — a path from the skill root, a basename from a sibling reference, and
 # the installed path cited from another skill — each stay quiet). The
-# always-loaded byte budget and the loaded-file byte WARN cannot be carried by a
+# always-loaded byte budget and the loaded-file byte FAIL cannot be carried by a
 # committed fixture without every root paying the bytes, so each takes an
-# isolated one-edit copy of the clean root: the budget row asserts the FAIL and
-# exit 1, the WARN row asserts the line, that it is NOT rendered as a FAIL, and
-# that the root still exits 0. Every quiet form above is asserted PRESENT in its
+# isolated one-edit copy of the clean root, and each row asserts the FAIL and
+# exit 1. Every quiet form above is asserted PRESENT in its
 # fixture by a `quiet_pin` row, so deleting one reds this run rather than
 # turning a reject row into a no-op. Both read guards are covered below with the
 # other read-error branches.
@@ -113,8 +112,8 @@
 # arm; the walk itself, through a CLAUDE.md below the root that no other check
 # reaches; the single-line-description check in three shapes (a folded
 # block scalar, a literal one with an indentation indicator, a continued plain
-# scalar), the re-attach byte-size WARN (fires on the oversize fixture, draws
-# no FAIL, stays silent on the clean root, and stays silent on the clean
+# scalar), the re-attach byte-size FAIL (fires on the oversize fixture, draws
+# no WARN, stays silent on the clean root, and stays silent on the clean
 # root's near-cap body under the bound — so the threshold is pinned
 # from below as well as above), the hook-selftest check (a marked hook with no
 # selftest, one whose selftest lacks the exec bit, an unmarked file that must
@@ -150,16 +149,36 @@
 # argument run nothing and exit 3, a LINT_ROOT that is not a directory runs
 # nothing and exits 2).
 #
+# The sibling checks are covered through LINT_SIBLING_GROUPS, the seam that
+# replaces the registry for one run (the registry names this repo's own paths,
+# so under LINT_ROOT nothing it lists exists): membership's firing half by the
+# two `ac-ids.md` copies under src/bulk-cited-dep/ and src/quoted-dep/ — a
+# basename the REAL registry groups, carried by two paths it does not list, so
+# the pre-2026-09-01 basename reading stays quiet on them and the path reading
+# fires twice (if `ac-ids.md` ever leaves sibling_groups those rows still fire
+# but stop discriminating the two readings, and both copies must be renamed to
+# another grouped basename then); membership's quiet half, byte-identity's
+# quiet and firing halves, and a group naming a missing file, each in a
+# throwaway copy of the clean root carrying a listed twin pair — until
+# 2026-09-01 the quiet half was graded by a whole lint run over the real tree,
+# about 30 s per selftest, and byte-identity by nothing. The exit status
+# travels as a file since the same date (say_fail touches it; the exit reads
+# it once), in scripts/lint-lib.sh, which scripts/lint-adrs.sh sources too,
+# graded by every exit-1 row here and by the unwritable-TMPDIR row,
+# which must exit 4 before any check runs. Ten mutations that day, nine red:
+# the flag never read, the flag-directory check dropped, the seam dropped, the listed
+# branch dropped, the ledger rule grep matching nothing, the section-pointer
+# fast path never passing, the citation's trailing-period trim dropped, the
+# heading step-number strip dropped (green until the numbered-heading
+# instance in the clean root's clean-skill landed), and the same flag read
+# dropped from lint-adrs.sh; the tenth — the pass-4 docs/** walk turned back
+# from a process substitution into a pipe — is green BY DESIGN, and is the only
+# pipe mutation run that day: now that the status travels as a file, a FAIL
+# raised inside the pipe's subshell still moves it, so the shape that used to
+# ship green while printing FAILs is behavior-preserving.
+#
 # NOT covered, so a clean run here is not a claim about them: the 200-line caps
-# (the read-error branch is graded, the cap itself is not), sibling
-# byte-identity (skipped under LINT_ROOT — the registry names this repo's own
-# paths; the MEMBERSHIP half beside it IS covered as of 2026-09-01, by the two
-# `ac-ids.md` copies under src/bulk-cited-dep/ and src/quoted-dep/ — a basename
-# the REAL registry groups, carried by two paths it does not list, so the
-# pre-2026-09-01 basename reading stays quiet on them and the path reading fires
-# twice; if `ac-ids.md` ever leaves sibling_groups those rows still fire but stop
-# discriminating the two readings, and both copies must be renamed to another
-# grouped basename then), description length, angle brackets, name/directory agreement, the
+# (the read-error branch is graded, the cap itself is not), description length, angle brackets, name/directory agreement, the
 # requires: resolution check (existence and model-invoked), router coverage,
 # and the classifier's unclaimed-file arm — walk_shipped_md emits only the
 # classes the arms above it claim, so no fixture can produce a path that
@@ -196,7 +215,9 @@
 # the one silent mutation, because the wrong-on-purpose root's first block
 # carries the bare header either way, so the check still runs and the in-loop
 # regex beside it is what decides which blocks it reads. The 30: each of the three ledger check calls
-# removed; the consumer sweep's process substitution turned into a pipe, its
+# removed; the consumer sweep's process substitution turned into a pipe (red then; since
+# 2026-09-01 the status travels as a file, that mutation is behavior-preserving,
+# and it is correctly green), its
 # `hits -ge 2` loosened to `-ge 1`, its `hits -eq 3` moved to `-eq 4`, its
 # legend-owner wholesale arm removed, and its mask_examples dropped; the
 # two-legends branch, the legend's arity-3 test, and the
@@ -209,9 +230,10 @@
 # body_checks one at a time; the line-cap, anchor-grep and status-token
 # read-error guards each removed; the empty-walk guard removed; and the
 # consumer-sweep-did-not-run note removed from the authority-failure path.
-# Turning the
-# process substitution into a here-string instead is behavior-preserving — no
-# subshell, so `fail=1` survives — and is correctly green.
+# Turning that
+# process substitution into a here-string instead is behavior-preserving too,
+# and correctly green: a here-string runs no subshell, and since 2026-09-01 the
+# status travels as a file, so neither shape can lose a FAIL.
 #
 # PARTIAL, and what it does and does not mean. Six sites can skip: three in the
 # isolated-roots block (no usable temp directory, a copy that fails, an edit
@@ -359,7 +381,7 @@ expect "two-way requires (unused)" "src/unused-dep/SKILL.md declares requires: '
 expect "single-line description (block scalar)" "src/folded-description/SKILL.md description is a YAML block scalar ('>-')"
 expect "single-line description (literal block scalar with indicators)" "src/literal-description/SKILL.md description is a YAML block scalar ('|2-')"
 expect "single-line description (continued line)" "src/continued-description/SKILL.md description continues onto an indented next line"
-expect "re-attach byte-size WARN" "WARN: src/oversize-body/SKILL.md is "
+expect "re-attach byte-size FAIL" "FAIL: src/oversize-body/SKILL.md is "
 expect "hook selftest (missing)" "global/hooks/orphan-hook.sh carries an '# Install note:' header, so it is a hook, and has no selftest — write global/hooks/orphan-hook-selftest.sh"
 expect "hook selftest (not executable)" "global/hooks/unexec-hook-selftest.sh is not executable"
 # The house-style checks (round plan §5, checks 2-9), each with its firing
@@ -384,7 +406,7 @@ expect "house style at depth one under src/" "src/stray-note.md uses a British s
 expect "house style on a repo-local skill" ".claude/skills/repo-local/SKILL.md uses a British spelling"
 expect "house style on DOMAIN.md" "DOMAIN.md uses a British spelling"
 expect "house style on README.md" "README.md uses a British spelling"
-expect "loaded-file byte WARN on a repo-local reference" ".claude/skills/repo-local/references/oversize.md is 21327 bytes"
+expect "loaded-file byte FAIL on a repo-local reference" "FAIL: .claude/skills/repo-local/references/oversize.md is 21327 bytes"
 expect "heading case (SKILL.md H1 not in title case)" "src/broken-links/SKILL.md H1 'Broken links (fixture)' is not in title case"
 expect "heading case (H2 not in sentence case)" "src/house-style/SKILL.md H2 'The Cold Reader Pass' (line 32) capitalizes 'Cold' 'Reader' 'Pass'"
 expect "invocation form (the descriptive form)" "src/house-style/SKILL.md breaks the invocation form: it writes \"the fixture-discipline skill\""
@@ -402,13 +424,18 @@ expect "label family (a banned synonym named in the registry row)" "uses the ALL
 # A marker bare in a table cell is the form every canonical status table in the
 # suite actually uses; a typography-only scan cannot see it.
 expect "label family (a bare marker alone in a table cell)" "uses the ALL-CAPS label 'BARECOINED'"
-# One row per form the section-pointer check resolves a target from: dropping
-# an arm otherwise leaves the other three firing and the selftest green.
+# One row per form the section-pointer check resolves a target from, and one
+# per alternative of the right-trim that eats the citation's lead-in: dropping
+# an arm otherwise leaves the others firing and the selftest green. The two
+# lead-in rows sit in the appended block at the end of that fixture, so nothing
+# above them moves their lines.
 expect "section pointers (inline link)" "src/house-style/SKILL.md cites '§ No Such Heading is where it lands' (line 25), and src/house-style/references/quiet-forms.md carries no heading by that name"
 expect "section pointers (backticked skill name)" "cites '§ No Such Section' (line 26), and src/fixture-discipline/SKILL.md carries no heading"
 expect "section pointers (a ~/.claude/skills/ path)" "cites '§ Missing Skill Section' (line 27), and src/fixture-discipline/SKILL.md carries no heading"
 expect "section pointers (a ~/.claude/rules/ path)" "cites '§ Missing Rule Section' (line 28), and global/rules/body-checked.md carries no heading"
 expect "section pointers (a target that is not a file)" "cites '§ Anything' (line 30) in src/fixture-discipline/references/gone.md, which is not a file"
+expect "section pointers (an em-dash lead-in before the citation)" "src/house-style/SKILL.md cites '§ No Such Dash Heading' (line 58), and src/house-style/references/quiet-forms.md carries no heading by that name"
+expect "section pointers (a hyphen lead-in before the citation)" "src/house-style/SKILL.md cites '§ No Such Hyphen Heading' (line 59), and src/house-style/references/quiet-forms.md carries no heading by that name"
 expect "orphaned references" "src/broken-links/references/orphaned.md is linked from nowhere"
 expect "script selftest (missing)" "scripts/orphan-tool.sh has no selftest — write scripts/orphan-tool-selftest.sh"
 expect "script selftest (not executable)" "scripts/unexec-tool-selftest.sh is not executable"
@@ -474,8 +501,9 @@ reject "two-way requires and slash-on-model-invoked (quoted, parenthesised and f
 # owns it — the style write-skill prescribes and this repo uses. A check that reads past
 # the trigger half names it here and reds this row.
 reject "shared trigger phrase (disambiguating \"Not for…\" tail)" "src/shared-trigger-not-for/SKILL.md carry"
-# The WARN is a warning: the oversize body must draw no FAIL line of its own.
-reject "re-attach byte-size WARN does not FAIL" "FAIL: src/oversize-body/SKILL.md"
+# The bound is a FAIL since Batch M-size (2026-09-01): the oversize body must
+# draw no WARN line, which would mean the flip was reverted.
+reject "re-attach byte-size bound is not a WARN" "WARN: src/oversize-body/SKILL.md"
 # Pinned to the WARN's own shape ("… CLAUDE.md is <n> bytes"), because the
 # root file legitimately draws a link-check FAIL in this tree and a bare
 # "FAIL: CLAUDE.md" needle would read that correct line as the WARN failing.
@@ -501,16 +529,60 @@ reject "git-hook selftest (the hook with an unexecutable selftest is itself exec
 expect "evaluation ledger consumers (the missing status is named, not an empty pair of backticks)" "fenced-third-status.md — it names 2 of the 3 and not \`contradicted\`"
 expect "sibling-group membership (a copy no group lists, first skill)" "src/bulk-cited-dep/references/ac-ids.md shares the reference basename 'ac-ids.md'"
 expect "sibling-group membership (a copy no group lists, second skill)" "src/quoted-dep/references/ac-ids.md shares the reference basename 'ac-ids.md'"
-# The quiet half of the same check, which no fixture root can reach:
-# sibling_groups names this repo's own src/ paths, so under LINT_ROOT nothing is
-# ever listed and the "listed -> stay quiet" branch is unreachable. Delete it and
-# every row above still fires, the FAIL count does not move, and the clean root
-# still exits 0 — while the real tree's pre-commit reds on all 51 grouped paths.
-# The only place the branch can be graded is the real tree, so this row runs the
-# linter there. It costs one full lint run; the assertion is scoped to this
-# check's own sentence, so an unrelated FAIL in the working tree does not red it.
-real_out=$(bash scripts/lint-skills.sh 2>&1)
-reject_in "$real_out" "a grouped sibling path FAILed the membership check in the real tree — the 'listed -> stay quiet' branch is what keeps sibling_groups from reporting its own members" "shares the reference basename"
+
+# One cleanup for every throwaway tree this script builds, installed before the
+# first one exists and never replaced. Bash keeps ONE EXIT trap, so a second
+# `trap ... EXIT` anywhere below silently replaces this one and every tree it
+# covers leaks; a new throwaway tree is added to the list here instead. The
+# three blocks below copy whole fixture trees and one of them breaks a file's
+# mode, so an interrupt or an `exit` added inside any of them would otherwise
+# leak them; the chmod runs first because a mode-broken directory resists rm.
+selftest_cleanup() {
+  local d
+  for d in "${sib_root:-}" "${isolated_parent:-}" "${inject_parent:-}"; do
+    [ -n "$d" ] || continue
+    chmod -R u+rwX "$d" 2>/dev/null
+    rm -rf "$d"
+  done
+  return 0
+}
+trap selftest_cleanup EXIT INT TERM
+
+# The quiet half of the same check, and byte-identity, through
+# LINT_SIBLING_GROUPS. A throwaway copy of the clean root gains a twin
+# reference under two skills, each linked from its body (so the orphan check
+# stays out of it), and the seam lists the pair: membership must stay quiet on
+# a listed path and identity must stay quiet on identical copies. One byte of
+# drift in one copy is then the firing half, and a group naming a file the
+# tree does not carry is the missing arm. Until 2026-09-01 the quiet half was
+# graded by running the whole linter over the REAL tree — the only root where
+# the registry's paths existed — at about 30 s per selftest run, and identity
+# was graded by nothing (`NOT covered` in this header). Delete the
+# "listed -> stay quiet" branch and the first row here reds; drop the seam
+# and identity never runs under LINT_ROOT, so the drift row reds.
+if sib_root="$(selftest_tmpdir)"; then
+  if cp -R "$clean_fixtures/." "$sib_root/" &&
+     cp "$sib_root/src/clean-skill/references/note.md" "$sib_root/src/clean-skill/references/twin.md" &&
+     cp "$sib_root/src/clean-skill/references/note.md" "$sib_root/src/ledger-legend/references/twin.md" &&
+     printf '\nRead [the twin](references/twin.md) as well.\n' >> "$sib_root/src/clean-skill/SKILL.md" &&
+     printf '\nRead [the twin](references/twin.md) as well.\n' >> "$sib_root/src/ledger-legend/SKILL.md"; then
+    sib_pair="src/clean-skill/references/twin.md|src/ledger-legend/references/twin.md"
+    sib_out=$(LINT_ROOT="$sib_root" LINT_SIBLING_GROUPS="$sib_pair" bash scripts/lint-skills.sh 2>&1); sib_rc=$?
+    expect_rc "the lint against the clean root with a listed, identical twin pair" 0 "$sib_rc"
+    reject_in "$sib_out" "sibling-group membership fired on a path the group lists — the 'listed -> stay quiet' branch is what keeps sibling_groups from reporting its own members" "shares the reference basename"
+    reject_in "$sib_out" "sibling byte-identity fired on two identical copies" "drifted from"
+    printf 'one more line\n' >> "$sib_root/src/ledger-legend/references/twin.md"
+    sib_out=$(LINT_ROOT="$sib_root" LINT_SIBLING_GROUPS="$sib_pair" bash scripts/lint-skills.sh 2>&1); sib_rc=$?
+    expect_rc "the lint against the same root after one twin drifted" 1 "$sib_rc"
+    expect_in "$sib_out" "sibling byte-identity did not fire on a drifted copy the group lists" "src/ledger-legend/references/twin.md drifted from src/clean-skill/references/twin.md"
+    sib_out=$(LINT_ROOT="$sib_root" LINT_SIBLING_GROUPS="$sib_pair|src/near-cap/references/twin.md" bash scripts/lint-skills.sh 2>&1)
+    expect_in "$sib_out" "a sibling group naming a file the tree does not carry did not fire" "sibling reference src/near-cap/references/twin.md is missing"
+  else
+    selftest_skip "could not stage the twin pair in a copy of the clean tree — the sibling rows were not exercised."
+  fi
+else
+  selftest_skip "mktemp -d produced no usable directory — the sibling rows were not exercised."
+fi
 
 # The quiet neighbour of each house-style check, one row per exemption. Each
 # names a substring only a WIDENED check could produce — the neighbour itself,
@@ -552,7 +624,13 @@ fi
 expect_rc "the lint against the fixture tree" 1 "$status"
 # The count of FAIL lines is pinned: a check that begins firing on a fixture
 # it should leave alone reds here even when no substring row names the line.
-# Last moved 2026-09-01 (Batch M-lint fix pass): 88. Seven of them are
+# Last moved 2026-09-01 (F24 fix): 95 — two section-pointer FAILs added, one
+# per lead-in alternative of the right-trim (`— ` and `- ` before the `§`), in
+# the appended block at the end of src/house-style/SKILL.md.
+# Before that, 2026-09-01 (Batch M-size): 93 — the two byte bounds flipped WARN
+# to FAIL: one on src/oversize-body/SKILL.md, one on the repo-local oversize.md,
+# and three on bulk-cited-dep's ~30 KB references, whose size the pipe-capacity
+# pin below requires. Seven of them are
 # check_landing_key: six on the root CLAUDE.md's three deliberately malformed
 # blocks, one on the packages/api file below it; one is the fixture install.sh, which owes a selftest; two are the dangling
 # slash-name arm, on `/no-such-command` and on the `/order-status` whose marker
@@ -562,7 +640,7 @@ expect_rc "the lint against the fixture tree" 1 "$status"
 # the consumer fixture whose third status sits only inside a fence. A count that
 # moves is read before it is re-pinned.
 nfail=$(printf '%s\n' "$output" | grep -c '^FAIL: ')
-[ "$nfail" -eq 88 ] || selftest_fail "expected exactly 88 FAIL lines against the fixture tree, got $nfail"
+[ "$nfail" -eq 95 ] || selftest_fail "expected exactly 95 FAIL lines against the fixture tree, got $nfail"
 # The shared-trigger-phrase fixtures are pinned by property, as near_bytes and
 # bulk_bytes are below: every row above them asserts a FAIL that appears or a
 # FAIL that does not, and each of those readings is silently satisfied by a
@@ -643,6 +721,10 @@ quiet_pin "$quiet" "a British form inside a URL" 'https://example.invalid/docs/b
 # `licences.tsv` and a recorded `honours` regex with lint green.
 quiet_pin "$quiet" "a deliberate British form marked with the inline spelling exemption" '<!-- spelling-exempt: normalises -->'
 quiet_pin "$quiet" "a section pointer that resolves" '[the sibling note](sibling-note.md) § The sibling half'
+quiet_pin "$clean_fixtures/src/clean-skill/SKILL.md" "a numbered heading cited without its number (the step-number strip)" '§ The numbered half'
+quiet_pin "$clean_fixtures/src/clean-skill/references/note.md" "the numbered heading that citation resolves to" '## 2. The numbered half'
+quiet_pin "$clean_fixtures/src/clean-skill/SKILL.md" "a citation whose name carries a comma (the short fallback)" '§ Sizes, and what they bind'
+quiet_pin "$clean_fixtures/src/clean-skill/references/note.md" "the heading only the comma cut reaches" '## Sizes and shapes'
 quiet_pin "$quiet" "an acronym mid-heading" '## The HTML half'
 # check_reference_orphans' `global` scan root. Deleting the line that adds it left
 # this file green: the installed-path arm was graded only from src/, so a
@@ -663,7 +745,7 @@ done
 # The near-cap body is measured: the clean root holds one 49 bytes under the
 # bound (asserted below to draw no WARN), and this pins that it is really there.
 near_bytes=$(wc -c < "$clean_fixtures/src/near-cap/SKILL.md" | tr -d ' ')
-{ [ "$near_bytes" -gt 14800 ] && [ "$near_bytes" -le 15000 ]; } || selftest_fail "src/near-cap/SKILL.md in the clean root is $near_bytes bytes; it must sit inside (14800, 15000] to pin the WARN threshold from below"
+{ [ "$near_bytes" -gt 14800 ] && [ "$near_bytes" -le 15000 ]; } || selftest_fail "src/near-cap/SKILL.md in the clean root is $near_bytes bytes; it must sit inside (14800, 15000] to pin the FAIL threshold from below"
 
 # The clean root's CLAUDE.md sits just under its bound, so the WARN below is
 # pinned from below as well as above; this pins that the file is really there.
@@ -700,10 +782,12 @@ if ! clean_baseline=$(LINT_ROOT="$clean_fixtures" bash scripts/lint-skills.sh 2>
   printf '%s\n' "$clean_baseline"
 fi
 
-# The clean root draws no WARN either: the byte-size warning fires on size alone,
-# and nothing there is near the bound.
+# The clean root draws no WARN either. The loaded-file bound is a FAIL, so the
+# only WARN this linter still emits is CLAUDE.md's 6,000-byte one; an over-bound
+# near-cap would FAIL here, caught by the exit-0 assertion above rather than by
+# this grep, which grades the CLAUDE.md bound alone.
 if printf '%s\n' "$clean_baseline" | grep -q '^WARN:'; then
-  selftest_fail "the clean fixture drew a WARN line; a byte-size warning fired on a body under its bound (near-cap sits 49 bytes under the skill bound; the clean CLAUDE.md sits under the 6,000-byte one)"
+  selftest_fail "the clean fixture drew a WARN line; the one WARN the linter emits is CLAUDE.md's 6,000-byte bound, and the clean root's CLAUDE.md sits under it"
 fi
 # And no shell noise: the baseline is captured with 2>&1, so a header line that
 # lost its `#` and ran as a command lands here as "command not found" — with
@@ -723,22 +807,18 @@ LINT_ROOT="$fixtures" bash scripts/lint-skills.sh --help --bogus >/dev/null 2>&1
 LINT_ROOT="$fixtures" bash scripts/lint-skills.sh "" >/dev/null 2>&1; expect_rc "an empty argument" 3 $?
 root_out=$(LINT_ROOT="$fixtures/does-not-exist" bash scripts/lint-skills.sh 2>&1); expect_rc "a LINT_ROOT that is not a directory" 2 $?
 printf '%s\n' "$root_out" | grep -qE '^(OK|FAIL|WARN):' && selftest_fail "a LINT_ROOT that is not a directory still ran the lint"
-
-# One cleanup for every throwaway tree this script builds, installed before the
-# first one exists and never replaced. Both blocks below copy whole fixture
-# trees and one of them breaks a file's mode, so an interrupt or an `exit` added
-# inside either would otherwise leak them; the chmod runs first because a
-# mode-broken directory resists rm.
-selftest_cleanup() {
-  local d
-  for d in "${isolated_parent:-}" "${inject_parent:-}"; do
-    [ -n "$d" ] || continue
-    chmod -R u+rwX "$d" 2>/dev/null
-    rm -rf "$d"
-  done
-  return 0
-}
-trap selftest_cleanup EXIT INT TERM
+# The failure flag is a file in a private `mktemp -d` directory under TMPDIR
+# (scripts/lint-lib.sh), and a directory that cannot be made is a run in which
+# no FAIL could have moved the status — exit 4, before any check, never a clean
+# 0 on a tree that is not. TMPDIR is passed RELATIVE on purpose: the linter
+# makes that directory after chdirring into the scan root, so the third row
+# asserts the ABSOLUTE path the caller's directory gives it — drop
+# lint_absolutize_tmpdir and the flag resolves under the scan root instead.
+# Darwin's mktemp ignores TMPDIR unless the template names it, so the template
+# lint-lib.sh spells out is what keeps this row reachable at all.
+flag_out=$(TMPDIR="$fixtures/does-not-exist" LINT_ROOT="$fixtures" bash scripts/lint-skills.sh 2>&1); expect_rc "an unwritable TMPDIR (the failure flag)" 4 $?
+printf '%s\n' "$flag_out" | grep -qE '^(OK|FAIL|WARN):' && selftest_fail "an unwritable TMPDIR still ran the lint — with no flag to write, every FAIL it printed left the status at 0"
+expect_in "$flag_out" "the unwritable-flag error did not name the absolute flag path — a relative TMPDIR was resolved after the chdir, so the flag would land under the scan root" "$PWD/$fixtures/does-not-exist/lint-skills."
 
 # ---------------------------------------------------------------------------
 # The evaluation-ledger checks, graded for their effect on the EXIT STATUS
@@ -884,20 +964,13 @@ isolated_quiet_case "landing-review-no" 's/^- Review required: yes$/- Review req
   "CLAUDE.md" \
   "Landing:"
 
-# The loaded-file byte WARN, which by construction cannot move the exit status
-# — so it takes its own helper: the same one-edit copy of the clean root, with
-# the assertion that the line appears AND that the root still exits 0. A WARN
-# that started FAILing would pass the substring row and red here.
-isolated_warn_case() {  # name, perl expression, file, expected substring
-  isolated_run "$1" "$2" "$3" || return 0
-  local out=$isolated_out rc=$isolated_rc
-  expect_in "$out" "the WARN did not fire in the isolated '$1' root" "$4"
-  reject_in "$out" "the '$1' WARN was rendered as a FAIL" "FAIL: $4"
-  expect_rc "the lint against the isolated '$1' root" 0 "$rc"
-}
-isolated_warn_case "oversize-reference" 's/\z/"\n" . ("padding that carries this reference past the loaded-file bound. " x 260) . "\n"/e' \
+# The loaded-file byte FAIL on a reference of a hoisted skill: the same
+# one-edit copy of the clean root, grown past the bound, must FAIL and exit 1.
+# The wrong-on-purpose root grades the repo-local arm (oversize.md) and the
+# body arm (oversize-body); this is the src/*/references/ arm.
+isolated_case "oversize-reference" 's/\z/"\n" . ("padding that carries this reference past the loaded-file bound. " x 260) . "\n"/e' \
   "src/clean-skill/references/note.md" \
-  "src/clean-skill/references/note.md is "
+  "FAIL: src/clean-skill/references/note.md is "
 fi
 
 # ---------------------------------------------------------------------------
@@ -978,6 +1051,13 @@ else
   expect_in "$clean_output" "the line-cap read-error did not fire on an otherwise-clean tree" "src/clean-skill/references/note.md could not be read for its line count"
   expect_in "$clean_output" "the evaluation-ledger anchor read-error did not fire on an otherwise-clean tree" "src/clean-skill/references/note.md could not be read for the evaluation ledger anchor"
   expect_in "$clean_output" "the evaluation-ledger status-token read-error did not fire on an unreadable file inside the legend's own skill" "src/ledger-legend/references/complete-consumer.md could not be read for evaluation ledger statuses"
+  # files_carrying's own read guard, one row per anchor it greps for. The three
+  # ledger checks share one grep over the whole walk, and its status used to be
+  # thrown away (`2>/dev/null || true`), so a file the grep could not open read
+  # as a file with nothing to report. Drop the stderr capture and all three red.
+  expect_in "$clean_output" "the ledger legend-line walk read-error did not fire on an unreadable file" "could not be read while looking for the evaluation ledger legend line"
+  expect_in "$clean_output" "the ledger stored-status-rule walk read-error did not fire on an unreadable file" "could not be read while looking for the evaluation ledger stored-status rule"
+  expect_in "$clean_output" "the ledger anchor walk read-error did not fire on an unreadable file" "could not be read while looking for the evaluation ledger anchor"
   expect_in "$clean_output" "the CLAUDE.md byte-count read-error did not fire on an unreadable root file" "CLAUDE.md could not be read for its byte count"
   # The Landing: key check's own guard, on the same unreadable root file. Its
   # first act is a grep, which fails on an unreadable file and would otherwise

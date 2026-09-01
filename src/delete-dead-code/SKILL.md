@@ -39,7 +39,7 @@ Every candidate gets a tier before anything is removed — the tier decides the 
 Work Safe first, and within it one deletion at a time. For each:
 
 1. Remove the one symbol, file, or dependency.
-2. Call the Skill tool with `feedback-loops` to run the suite (and the build, where the language needs a compile) — if you don't see a `Launching skill: feedback-loops` line, stop and call it again.
+2. Call the Skill tool with `feedback-loops` to run the suite (and the build, where the language needs a compile).
 3. Green → stage the deletion (`git add -A`) so the index is always the last kept state, and move on. Red → `git restore -- <paths>` (the worktree back to the index — the last kept state, never `HEAD`) and re-tier it as Caution; the red proves something reached it.
 
 One-at-a-time is what makes a failure attributable: a batch that goes red hides which deletion broke it. Only after every Safe item is verified do the confirmed Caution items, same loop. Danger items are never deleted here — they are reported.

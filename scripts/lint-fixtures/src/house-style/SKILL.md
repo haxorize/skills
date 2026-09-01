@@ -48,3 +48,12 @@ line the selftest names.
 | Criterion | Status |
 |---|---|
 | **AC1** | BARECOINED |
+
+## Section pointers whose lead-in ends on a dash
+
+Appended below every numbered assertion above for the same reason, and one per
+alternative of the right-trim that eats a citation's lead-in: dropping either arm takes
+exactly one of these silent and leaves the other red.
+
+- An em-dash lead-in: [the quiet forms](references/quiet-forms.md) — § No Such Dash Heading.
+- A hyphen lead-in: [the quiet forms](references/quiet-forms.md) - § No Such Hyphen Heading.

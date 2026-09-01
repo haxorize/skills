@@ -9,6 +9,7 @@ Every `scripts/<name>.sh` and `scripts/git-hooks/<name>` that is not a selftest,
 - After changing a script or hook, run its `-selftest.sh`.
 - After changing a check in `lint-skills.sh` or `lint-adrs.sh`, run that linter's selftest: a lint gate that quietly stopped matching looks identical to a repo with no violations. Each selftest's header names what it grades and what it does not, and that list is the authority.
 - After touching `scripts/selftest-lib.sh`, run every `scripts/*-selftest.sh` and every `scripts/git-hooks/*-selftest.sh` — each sources it.
+- After touching `scripts/lint-lib.sh`, run `lint-skills-selftest.sh` and `lint-adrs-selftest.sh` — both linters source it for `say_fail` and the failure flag, and `pre-commit`'s derived gate map queues no selftest for a `*-lib.sh`.
 - A file no gate walks is gated only by the selftest that runs it: touch such a file, run that selftest.
 
 `selftest-lib.sh`'s header defines a selftest's three outcomes and what each exit status means.
@@ -21,7 +22,7 @@ Every script under `scripts/`, every hook under `scripts/git-hooks/`, and every 
 - **1** — at least one `FAIL`.
 - **2** — nothing, or not everything, was checked: a linter over an empty tree, a selftest that left a branch unexercised (`SELFTEST PARTIAL`), a `skill-usage.sh` count carrying a `+` floor.
 - **3** — usage error.
-- **4** — a check never ran, so the run is not a verdict on anything: the script is broken, which is a different claim from the corpus being wrong.
+- **4** — a check never ran, so the run is not a verdict on anything: the script is broken, or the environment it needs is (an unwritable `TMPDIR` under the failure flag, say). Either fault is a different claim from the corpus being wrong.
 
 A `WARN` never moves the status. `scripts/git-hooks/post-merge` and `sweep-corpus` read the number alone, so the 2 is what tells a narrower clean from a whole one. A script states its own roster in `--help`; it does not restate this table. [ADR-0068](../docs/adr/0068-lint-adrs-enforces-two-way-pointers.md) set 0-3 and [ADR-0072](../docs/adr/0072-shared-trigger-phrase-check-and-never-ran-is-not-clean.md) added 4.
 

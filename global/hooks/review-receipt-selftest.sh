@@ -9,15 +9,19 @@
 # GATED_LINES are decoration, and the `noise` and `optoutroot` repos below make
 # that explicit — a block malformed in every other key still gates, and a block
 # well-formed throughout whose `Review required:` reads `no` does not. Nothing
-# here stages a MALFORMED `Review required:` line; a value the hook's pattern
-# does not match is the `planned` and `ticks` rows. Whether the other keys are
-# themselves well-formed is lint-skills.sh's check_landing_key, not this hook's.
+# here stages a MALFORMED `Review required:` line; the one value the hook's
+# pattern does not match is the `planned` row, whose `yes (planned)` fails the
+# pattern's end anchor. The `ticks` row is the other way round — a backticked
+# `yes` DOES match, and gates. Whether the other keys are themselves
+# well-formed is lint-skills.sh's check_landing_key, not this hook's.
 #
 # HOOK_SELFTEST_VERBOSE=1 shows each row's stderr. The run/expect helpers are
 # selftest-lib.sh beside this file; expect_quiet is the receipt path's own
-# check: "allowed because a stamp matched" and "allowed because something
-# failed open" are both rc=0, and only the match path exits without a
-# breadcrumb.
+# check: "allowed because a stamp matched", "allowed because the repo is not
+# opted in", and "allowed because something failed open" are all rc=0, and only
+# the first two exit without a breadcrumb — review-receipt.sh's own header
+# names both silent paths. So a row that must not be satisfied by a fail-open
+# is expect_quiet, never expect_allow.
 set -u
 here="$(cd "$(dirname "$0")" && pwd)"
 hook="$here/review-receipt.sh"
@@ -174,8 +178,14 @@ expect_block "$work/bold" "git push"                           "bold key"
 expect_block "$work/boldall" "git push"                        "bold line"
 expect_block "$work/boldval" "git push"                        "bold key and bold value"
 expect_block "$work/ticks" "git push"                          "backticked value"
-expect_allow "$work/planned" "git push"                        "'yes (planned)' is not yes"
-expect_allow "$work/fenced" "git push"                         "line inside a fence is not read"
+# expect_quiet, not expect_allow, for the same reason the optoutroot row below
+# gives: both rows take the silent not-opted-in exit, and a walk that failed
+# open would satisfy expect_allow while proving nothing about the read. They
+# reach it differently, which is why both are here: `planned`'s line IS read
+# and its value fails the pattern, while `fenced`'s line is stripped with its
+# code fence and never reaches the pattern at all.
+expect_quiet "$work/planned" "git push"                        "'yes (planned)' is not yes"
+expect_quiet "$work/fenced" "git push"                         "line inside a fence is not read"
 expect_block "$work/mono/pkg" "git push"                       "monorepo: root line gates a package dir"
 expect_block "$work/mono" "git push"                           "monorepo root"
 expect_allow "$work/mono/optout" "git push"                    "monorepo: nearest CLAUDE.md saying no opts a package out"

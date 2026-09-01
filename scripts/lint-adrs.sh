@@ -85,9 +85,10 @@
 #                                    amendment
 #     check_xref_target              an ADR-to-ADR link names a file that exists
 #   Every FAIL goes through say_fail, so the prefix and the exit status cannot
-#   disagree. A check that never ran is never reported as a clean one: an
-#   unknown kind, a producer that errored, and a dispatch naming a function
-#   that does not exist each exit 4 rather than yielding an empty row set.
+#   disagree. A check that never ran is never reported as a clean one: a
+#   failure flag under TMPDIR that cannot be written, an unknown kind, a
+#   producer that errored, and a dispatch naming a function that does not
+#   exist each exit 4 rather than yielding an empty row set.
 #
 # Usage:
 #   scripts/lint-adrs.sh [DIR] [-h|--help]   DIR defaults to docs/adr
@@ -107,6 +108,13 @@ set -uo pipefail
 # prints and the kind-pairing guard below both read it, and a relative $0 stops
 # resolving the moment the script chdirs into the directory it is linting.
 self="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
+
+# The failure-flag mechanism, shared with scripts/lint-skills.sh: the two
+# carried the same nine lines under the same names until 2026-09-01. A source
+# that fails is exit 4 — with no say_fail, no FAIL below could move the status.
+lint_lib="${self%/*}/lint-lib.sh"
+# shellcheck source=scripts/lint-lib.sh
+. "$lint_lib" || { echo "lint-adrs.sh: could not source $lint_lib, where say_fail and the failure flag live — no check below could have moved the exit status, so no run from here is a verdict" >&2; exit 4; }
 
 # --help prints the header above: line 2 to the first blank line, so a header
 # edit never leaves the help truncated mid-sentence.
@@ -131,6 +139,10 @@ if [ ! -d "$dir" ]; then
   echo "lint-adrs.sh: $dir is not a directory — nothing checked" >&2
   exit 2
 fi
+# The failure flag's directory is made after the `cd` below, so a RELATIVE
+# TMPDIR must be absolutized here, while $PWD is still the caller's; the
+# reasoning is in scripts/lint-lib.sh's header.
+lint_absolutize_tmpdir
 cd "$dir" || exit 2
 
 shopt -s nullglob
@@ -140,10 +152,10 @@ if [ "${#records[@]}" -eq 0 ]; then
   exit 2
 fi
 
-fail=0
-# Prints a FAIL line and sets the script's exit status to 1; every failure
-# message goes through here so the prefix and the status cannot disagree.
-say_fail() { echo "FAIL: $1"; fail=1; }
+# say_fail, the failure flag, and why the status travels as a file rather than
+# a variable: scripts/lint-lib.sh's header, which scripts/lint-skills.sh reads
+# too. Nothing below assigns a `fail` variable — there is none.
+lint_fail_flag_init lint-adrs.sh
 
 # Numbering.
 while read -r n count; do
@@ -503,7 +515,8 @@ for f in "${records[@]}"; do
   for_rows "$f" xref check_xref_target
 done
 
-if [ "$fail" -eq 0 ]; then
-  echo "OK: ${#records[@]} records in $dir drew no FAIL from the checks this script's header lists — see its Scope line for what a pass does not cover."
-fi
-exit "$fail"
+# The one read of the flag, and the whole exit. There is no `fail` variable to
+# pair with it, on purpose: see scripts/lint-lib.sh's header.
+[ -e "$LINT_FAIL_FLAG" ] && exit 1
+echo "OK: ${#records[@]} records in $dir drew no FAIL from the checks this script's header lists — see its Scope line for what a pass does not cover."
+exit 0

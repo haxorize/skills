@@ -83,15 +83,23 @@ for state in MERGE_HEAD REVERT_HEAD CHERRY_PICK_HEAD; do
 done
 
 # Git's own comment lines and the scissors block are not the message. The
-# comment character is configurable, so it is read rather than assumed; 'auto'
-# is treated as '#'. The pattern stops short of a doubled comment char —
-# stripping every '#' line would delete the markdown headings this hook exists
-# to reject. A level-one '# Summary' is the one ambiguous case and is treated
-# as a git comment, which is the safe way round: a stray comment must never
-# abort a commit. Note that a -m commit uses cleanup mode 'whitespace', which
-# strips no comments, so a body line opening '#' is dropped here and kept by
-# git — the one case where this hook sees less than git commits.
-comment_char="$(git config --get core.commentChar 2>/dev/null || true)"
+# comment string is configurable, so it is read rather than assumed; 'auto'
+# is treated as '#'. Git 2.45 made `core.commentString` an alias of
+# `core.commentChar` (`git help config`: "these two variables are aliases of
+# each other"), and the two share one slot: whichever git READ LAST wins,
+# whatever its name — measured 2026-09-01 on git 2.50.1 with `git stripspace
+# -s` under a local config carrying both in each order. `git config --get
+# core.commentChar` cannot see a value set under the other name, so this
+# reads both through one regexp and takes the last line, which is git's own
+# read order (system, global, local, worktree, command line). The pattern
+# stops short of a doubled comment string — stripping every '#' line would
+# delete the markdown headings this hook exists to reject. A level-one
+# '# Summary' is the one ambiguous case and is treated as a git comment,
+# which is the safe way round: a stray comment must never abort a commit.
+# Note that a -m commit uses cleanup mode 'whitespace', which strips no
+# comments, so a body line opening '#' is dropped here and kept by git — the
+# one case where this hook sees less than git commits.
+comment_char="$(git config --get-regexp '^core\.comment(char|string)$' 2>/dev/null | awk '{ v = $2 } END { print v }' || true)"
 case "$comment_char" in ''|auto) comment_char='#' ;; esac
 
 # A CR is stripped here so it cannot survive into the subject, where it would

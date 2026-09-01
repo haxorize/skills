@@ -14,6 +14,8 @@ Where the repo records a trust model — a threat-model doc, a security section 
 
 Call the Skill tool with `codebase-design` and apply its **diff-relative bar** (if you don't see a `Launching skill: codebase-design` line, stop and call it again — that skill holds the regression shapes the two questions that follow are decided by, and names this skill as one of the two that apply its bar): two-sided — "did this change make the local architecture worse?" and "did it miss a visibly simpler shape?"
 
+**Grading default.** A finding that trips the defensive bar (the diff actively regresses local architecture) defaults to **Blocker**; one that only trips the offensive bar (a missed simpler shape) defaults to **Follow-up**, with the simpler shape proposed. Taste never silently escalates to Blocker.
+
 ## Discoverability
 
 Call the Skill tool with `discoverable-code` and apply its before-the-change-lands checklist to the `+` side (if you don't see a `Launching skill: discoverable-code` line, stop and call it again — that checklist has to reach the finder prompt verbatim, and the subagent that runs it cannot load the skill for itself), carrying the checklist into the finder prompt rather than paraphrasing it.

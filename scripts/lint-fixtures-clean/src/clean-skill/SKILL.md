@@ -27,3 +27,7 @@ this heading and the `HTML` one below stay quiet.
 - A model-invoked skill at a suggestion site stays bare: run `clean-skill` again.
 - A pointer that resolves names a heading its target carries:
   [the note](references/note.md) § Note is where it lands.
+- A numbered heading is cited without its number:
+  [the note](references/note.md) § The numbered half is where a step lands.
+- A citation whose name carries a comma resolves through the comma cut alone:
+  [the note](references/note.md) § Sizes, and what they bind is where it lands.

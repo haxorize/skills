@@ -1,6 +1,6 @@
 # Target modes beyond uncommitted self-review
 
-Opened from §1 only when the target is a teammate's PR, an already-landed commit, a self-review whose changes are already committed, or a change with fix commits already on top. Self-review of *uncommitted* work stays inline in §1.
+Opened from §1 only when the target is a teammate's PR, an already-landed commit, a self-review whose changes are already committed, or a change with fix commits already on top — and from the Notes on **any re-review**, uncommitted work against `HEAD` included, for what a revision may withdraw (the last paragraph below). A first self-review of *uncommitted* work stays inline in §1.
 
 ## A teammate's PR
 
@@ -17,3 +17,5 @@ Audit a merged change; base = the commit's parent (or merge-base). The tree stam
 ## Fixes already on top of the change
 
 The base is a choice, so make it out loud: the pre-fix base reviews the whole change with its fixes folded in, while the fix commits alone review only what the last round produced. Both are legitimate targets; an unstated one isn't, because the reader can't tell reviewed-and-clean from never-looked-at. Name the base and the file set it covers in the report.
+
+A re-review withdraws a blocking finding only when the revision contains a concrete fix for the exact deficiency, or the original application of the criteria was mistaken — the author's disagreement alone never downgrades it.

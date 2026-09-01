@@ -1,6 +1,6 @@
 ---
 name: oversize-body
-description: A body past the re-attach bound, which the linter must WARN about and never FAIL. Use when the byte-size warning needs a fixture.
+description: A body past the re-attach bound, which the linter must FAIL and never merely WARN. Use when the byte-size FAIL needs a fixture.
 ---
 
 # Oversize Body (Fixture)

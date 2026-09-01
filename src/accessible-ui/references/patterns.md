@@ -1,6 +1,6 @@
 # Widget contracts the default output skips
 
-Each contract is what the widget must expose, the criteria it exercises, and the run that verifies it. The markup is illustrative — the project's component library supplies the real one, and the contract is what that component must satisfy. On a native platform the contract carries over and the call does not: each contract's native (SwiftUI/UIKit) line is in [native.md](native.md).
+Open a contract below only when the change builds or alters that widget — a chip, a field or its label, a live region, a dialog, a hover menu, a composite, a card, a table, a chart. Each contract is what the widget must expose, the criteria it exercises, and the run that verifies it. The markup is illustrative — the project's component library supplies the real one, and the contract is what that component must satisfy. On a native platform the contract carries over and the call does not: each contract's native (SwiftUI/UIKit) line is in [native.md](native.md).
 
 ## Toggle chip / filter pill (4.1.2, 2.1.1, 1.4.1, 1.4.11)
 
@@ -31,7 +31,7 @@ A region that is injected together with its text announces nothing in most scree
 
 ## Search box and every other field (1.3.1, 3.3.2, 4.1.2, 2.5.3, 1.3.5, 3.3.8)
 
-`placeholder` is not a label: it disappears on the first keystroke, fails contrast by default, and is not read as the name by every screen reader.
+`placeholder` is not a label: it disappears on the first keystroke, fails contrast by default, and is not read as the name by every screen reader. A name resting on `title` is not ARIA and fails a different way: it is the last resort of the name computation, spoken by most desktop screen readers and reaching neither touch nor most mobile ones, so a tree read shows a name the people likeliest to need it never get.
 
 ```html
 <label for="member-search">Search members</label>

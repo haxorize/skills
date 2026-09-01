@@ -158,6 +158,13 @@ expect_rc "a staged selftest (green linters)" 0 "$rc"
 stage "scripts/selftest-lib.sh"; run
 expect_rc "a staged selftest-lib.sh (green gates)" 0 "$rc"
 [ "$ran" = "lint-skills foo-selftest some-hook-selftest " ] || selftest_fail "a staged selftest-lib.sh: expected every stub selftest once ('lint-skills foo-selftest some-hook-selftest '), ran '$ran'"
+# Every scripts/*-lib.sh runs everything, not selftest-lib.sh alone: lint-lib.sh
+# backs both linters, and under the old arm a staged copy queued NOTHING, so the
+# file both linters source could land with neither selftest run. Narrow this arm
+# back to the literal selftest-lib.sh and this row reds.
+stage "scripts/lint-lib.sh"; run
+expect_rc "a staged lint-lib.sh (green gates)" 0 "$rc"
+[ "$ran" = "lint-skills foo-selftest some-hook-selftest " ] || selftest_fail "a staged lint-lib.sh: expected every stub selftest once ('lint-skills foo-selftest some-hook-selftest '), ran '$ran'"
 # Two paths, one selftest: foo.sh queues foo-selftest.sh directly, and
 # selftest-lib.sh queues it again through the run-everything rule; the dedupe
 # is what keeps it to one run.

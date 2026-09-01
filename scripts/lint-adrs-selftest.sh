@@ -32,7 +32,10 @@
 # `## Amendments` entry that quotes the marker with a date nothing claims, a cross-reference that resolves beside a relative path, an
 # outbound URL and the `[ADR N](N-slug.md)` placeholder, the unnumbered README,
 # and — in the clean tree — a well-formed supersession pair. Also graded, for
-# RESOLUTION and never for a verdict: the no-argument default.
+# RESOLUTION and never for a verdict: the no-argument default. The exit status
+# travels as a file under TMPDIR (2026-09-01), in scripts/lint-lib.sh, which
+# scripts/lint-skills.sh sources too; graded by every exit-1 row and by the
+# unwritable-TMPDIR row, which must exit 4 before any check runs.
 #
 # NOT covered, so a clean run here is not a claim about them: the number-value
 # reading (`0036` and `36` as one record) is graded only through the one
@@ -160,6 +163,18 @@ fi
 bash scripts/lint-adrs.sh --bogus >/dev/null 2>&1; expect_rc "an unknown flag" 3 $?
 bash scripts/lint-adrs.sh "" >/dev/null 2>&1; expect_rc "an empty directory argument" 3 $?
 bash scripts/lint-adrs.sh "$fx" "$clean" >/dev/null 2>&1; expect_rc "two directories" 3 $?
+# The failure flag is a file in a private `mktemp -d` directory under TMPDIR
+# (scripts/lint-lib.sh: say_fail touches the flag, the exit reads it once, so a
+# FAIL raised in a subshell still moves the status); a directory that cannot be
+# made is exit 4 before any check runs, never a clean 0. TMPDIR is passed
+# RELATIVE on purpose: the linter makes that directory after chdirring into the
+# record directory, so the third row asserts the ABSOLUTE path the caller's
+# directory gives it — drop lint_absolutize_tmpdir and the flag resolves under
+# docs/adr instead. Darwin's mktemp ignores TMPDIR unless the template names
+# it, so the template lint-lib.sh spells out is what keeps this row reachable.
+flag_out=$(TMPDIR="$fx/does-not-exist" bash scripts/lint-adrs.sh "$fx" 2>&1); expect_rc "an unwritable TMPDIR (the failure flag)" 4 $?
+printf '%s\n' "$flag_out" | grep -qE '^(OK|FAIL):' && selftest_fail "an unwritable TMPDIR still ran the lint — with no flag to write, every FAIL it printed left the status at 0"
+expect_in "$flag_out" "the unwritable-flag error did not name the absolute flag path — a relative TMPDIR was resolved after the chdir, so the flag would land under the linted directory" "$PWD/$fx/does-not-exist/lint-adrs."
 # The no-argument default (docs/adr, resolved from this file's own path) is the
 # form scripts/git-hooks/pre-commit calls, and every row above passes something:
 # a directory, an empty string, two directories, a flag, or --help. Graded for
@@ -182,5 +197,5 @@ if [ "$fail" -ne 0 ]; then
   echo; echo "Linter output against $fx was:"; printf '%s\n' "$output"
 fi
 selftest_close \
-  "lint-adrs self-test clean — every fixture failure fired, every exempt form stayed quiet, the clean tree exited 0, the no-argument default resolved, and the four exit codes hold." \
+  "lint-adrs self-test clean — every fixture failure fired, every exempt form stayed quiet, the clean tree exited 0, the no-argument default resolved, and all five exit codes hold." \
   "lint-adrs self-test clean on both fixture trees, but the two temp-directory exit-code rows were not exercised; see the SKIP line above."

@@ -83,7 +83,7 @@ Do not proceed until you have reproduced **and** minimized.
 
 ## Phase 3 — Hypothesize
 
-Before the first hypothesis, read the history of the files on the symptom's path — `git log --follow -p -- <path>` per file, `git log -S '<symptom>'`, `git blame` on the lines the loop implicates: a prior fix may have introduced or papered over this symptom, and history that explains the why is cheaper than re-guessing it; when the symptom sits on a shared symbol, name every production host of it, because the hypothesis space is theirs too. Then generate **3–5 ranked hypotheses** before testing any of them. Single-hypothesis generation anchors on the first plausible idea.
+Before the first hypothesis, read the history of the files on the symptom's path — `git log --follow -p -- <path>` per file, `git log -S '<symptom>'`, `git blame` on the lines the loop implicates: a prior fix may have introduced or papered over this symptom; when the symptom sits on a shared symbol, name every production host of it, because the hypothesis space is theirs too. Then generate **3–5 ranked hypotheses** before testing any of them. Single-hypothesis generation anchors on the first plausible idea.
 
 Each hypothesis must be **falsifiable**: state the prediction it makes.
 
@@ -95,7 +95,7 @@ Seed the list with any Learning-doc match from the exploration preamble — it c
 
 With the list ranked, **declare the edit boundary**: the narrowest directory in each layer that contains the files the leading hypotheses implicate there — or, when this loop runs under `implement`, the boundary `implement` already declared, which a hypothesis past it does not widen. The rule and its stop are `implement`'s: a fix that needs a file past the boundary asks Proceed (widen, with the reason) / Split (the outside part is its own change) / Rethink (the diagnosis is wrong), and the fix in Phase 5 is held to it.
 
-**Show the ranked list to the user before testing.** They often have domain knowledge that re-ranks instantly ("we just deployed a change to #3"), or know hypotheses they've already ruled out. Don't block on it — proceed with your ranking if the user is AFK.
+**Show the ranked list to the user before testing.** They often have domain knowledge that re-ranks instantly, or know hypotheses they've already ruled out. Don't block on it — proceed with your ranking if the user is AFK.
 
 ## Phase 4 — Instrument
 
@@ -107,7 +107,7 @@ Tool preference:
 2. **Targeted logs** at the boundaries that distinguish hypotheses.
 3. Never "log everything and grep".
 
-**Tag every debug log** with a unique prefix, e.g. `[DEBUG-a4f2]`. Cleanup at the end becomes a single grep. Untagged logs survive; tagged logs die.
+**Tag every debug log** with a unique prefix, e.g. `[DEBUG-a4f2]`. Cleanup at the end becomes a single grep.
 
 **Perf branch.** For a performance regression, instrument per [references/performance-regressions.md](references/performance-regressions.md): measure first, fix second.
 
@@ -117,7 +117,7 @@ Write the regression test **before the fix** — but only if there is a **correc
 
 A correct seam (in `codebase-design`'s sense — the place where a module's interface lives, where behavior can be altered without editing in place) is one where the test exercises the **real bug pattern** as it occurs at the call site. If the only available seam is too shallow — a single-caller test when the bug needs multiple callers, a unit test that can't replicate the chain that triggered the bug — a regression test there gives false confidence.
 
-**If no correct seam exists, that itself is the finding.** Note it. The module is too shallow, or the seam is in the wrong place, to lock this bug down — that's a `codebase-design` problem, not just a missing test. Flag it for the next phase.
+**If no correct seam exists, that itself is the finding** — a `codebase-design` problem, not just a missing test; note it for Phase 6.
 
 If a correct seam exists:
 
@@ -126,15 +126,13 @@ If a correct seam exists:
 3. Apply the fix.
 4. Watch it pass.
 5. Re-run the Phase 1 loop against the **original, un-minimized** scenario — a fix that satisfies the reduction need not fix the reported bug.
-6. **Revert-and-reconfirm**: revert the fix, re-run the loop, confirm the bug returns; reapply, confirm it is gone. If the bug does not return on revert, something else changed and the fix is unproven ("if you didn't fix it, it ain't fixed").
-
-Probe the fix's own boundary: the fix draws a predicate — a condition, a range, a match — so test the neighbor inputs just outside it. The bug that slips past a fix lives at the edge the fix drew, not at generic extremes.
+6. **Revert-and-reconfirm**: revert the fix, re-run the loop, confirm the bug returns; reapply, confirm it is gone. If the bug does not return on revert, something else changed and the fix is unproven.
 
 A green fix is not yet an accepted fix. Before accepting it, open [references/fix-acceptance.md](references/fix-acceptance.md) and run every test there — some of them reject a fix that is already green.
 
 A bug you diagnose but cannot fix now still earns a test — the **pinning test**: [references/hard-cases.md](references/hard-cases.md) § Diagnosed but not fixed.
 
-**Three strikes.** A failed fix is a falsified hypothesis — return to Phase 3. But after **three** failed fixes, stop treating it as hypothesis-testing: each fix revealing a new problem in a different place is the signature of a wrong architecture, not a wrong guess. Don't attempt fix #4 — step back to the architectural question (is the fix fighting the module's shape?) and raise it with the user before continuing. Recovery — fresh eyes, and what earns continuing past the cap — is in [references/hard-cases.md](references/hard-cases.md) § After three failed fixes.
+**Three strikes.** A failed fix is a falsified hypothesis — return to Phase 3. After **three** failed fixes, don't attempt a fourth: each fix revealing a new problem in a different place is the signature of a wrong architecture, not a wrong guess, so step back to the architectural question and raise it with the user before continuing. Recovery — fresh eyes, and what earns continuing past the cap — is in [references/hard-cases.md](references/hard-cases.md) § After three failed fixes.
 
 ## Phase 6 — Cleanup + post-mortem
 
@@ -147,11 +145,11 @@ Required before declaring done:
 - [ ] Sibling instances of the fixed bug's **class** swept within the change's scope — grep the pattern, check the other call sites; the second occurrence ships otherwise
 - [ ] The bug's extent counted — how many records, callers, or environments it reached — since the reported case is a sample, not the boundary (one record or 19,000 changes the severity and often the fix)
 - [ ] The hypothesis that turned out correct is stated in the commit / PR message — so the next debugger learns
-- [ ] The fix is described by **behavior and contract**, not file paths and line numbers — "best-practice violations affect the score the same as WCAG violations" stays valid through refactors; "fixed `services/score.py:142`" doesn't
+- [ ] The fix is described by **behavior and contract**, not file paths and line numbers, so it stays valid through refactors
 
-**Then ask: what would have prevented this bug?** Make the call **after** the fix is in, not before — you have more information now than when you started.
+**Then ask: what would have prevented this bug?** Make the call **after** the fix is in, not before.
 
-Walk that question as a why-chain, **one level at a time** — a single-shot chain produces renames, not explanations ("because the test was missing" restates the bug; name what let the test go missing). Dead-end causes — "the author forgot", "more review was needed", "time pressure" — are constants, not causes: name the structural check, default, or incentive that failed. By the third to fifth why you should be at process, defaults, or incentives, and there are usually several distinct root causes, not one — the change that introduced the bad state and the check that let it persist or propagate are usually both. The fix patches the instance; the chain is what fixes the class — that's what the branches below record.
+Walk that question as a why-chain, **one level at a time** — a single-shot chain produces renames, not explanations ("because the test was missing" restates the bug; name what let the test go missing). Dead-end causes — "the author forgot", "more review was needed", "time pressure" — are constants, not causes: name the structural check, default, or incentive that failed. By the third to fifth why you should be at process, defaults, or incentives, and there are usually several distinct root causes, not one — the change that introduced the bad state and the check that let it persist or propagate are usually both.
 
 - A why-chain landing on an **architectural cause** or an **unrecorded decision** takes its branch in [references/hard-cases.md](references/hard-cases.md) § Post-mortem branches — the second ends in a gated offer to record the decision via `adr`.
 - Call the Skill tool with `capturing-learnings` if it isn't already live, and run its capture gate (verified, expensive, recurrence-plausible), saying the result either way in the gate's own words: where it holds, offer to capture the solved problem as a Learning doc, so the next diagnosis of this symptom starts where this one ended.

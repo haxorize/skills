@@ -107,7 +107,7 @@ The first two are the same first day, different subject: `onboard-repo` wires th
 
 ### Meta
 
-- **`write-skill`** — Create or revise a skill: the invocation axis, package structure, the description, the size cap, cross-session state, and a skill-surface security review, then a pressure test from wording through simulated use. Declares `writing-for-agents`, which owns the prose conventions its bodies are written to, and carries the `## Review checklist` every skill-change review reports against.
+- **`write-skill`** — Create or revise a skill: the invocation axis, package structure, the description, the size cap, cross-session state, and a skill-surface security review, then a pressure test from wording through simulated use. Declares `writing-for-agents`, which owns the prose conventions its bodies are written to, and carries the review checklist (`references/review-checklist.md`) every skill-change review reports against.
 - **`audit-skills`** — Audit the whole installed skill collection under `~/.claude/skills/`: a Keep / Improve / Update / Retire / Merge verdict per skill, on Overlap, Currency, Actionability, Scope fit, and Usage (counts from `scripts/skill-usage.sh`); a project-scoped skill sharing an installed skill's name is listed beside it and the verdict is written for the pair. Library hygiene across every repo that fed the machine; the repo-local `sweep-corpus` is this repo's mechanical health run (lint, doc-claims, router checks), not a narrower audit.
 
 ## Model-invoked skills

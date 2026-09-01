@@ -80,7 +80,7 @@ Do not block. The user decides whether the layer mismatch is intentional (cross-
 
 ### 8. Hand off
 
-Present a concise summary of what was loaded. The summary names every work item by its title with the ID riding inside, never by a bare ID — call the Skill tool with `writing-for-humans` before writing it if it isn't already live; if you don't see a `Launching skill: writing-for-humans` line, stop and call it again.
+Present a concise summary of what was loaded. The summary names every work item by its title with the ID riding inside, never by a bare ID — call the Skill tool with `writing-for-humans` before writing it if it isn't already live.
 
 
 ```text

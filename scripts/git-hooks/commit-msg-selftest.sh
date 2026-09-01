@@ -27,8 +27,10 @@
 # imperative-opener warning), the body rules (blank separator, code fence,
 # markdown heading, the wrap cap and its boundary), the exemptions (an
 # in-progress merge/revert/cherry-pick, git's generated subject prefixes,
-# trailers, an unbreakable long token, git's own comments, a verbose diff, an
-# empty message), and the advisory lines. NOT covered, so a clean run here is
+# trailers, an unbreakable long token, git's own comments under each of the two
+# config names that set the comment string alone, under both names in each
+# order, and under a repo-local file overriding a global one, a verbose diff,
+# an empty message), and the advisory lines. NOT covered, so a clean run here is
 # not a claim about them: everything the hook's own header says it cannot
 # check — one-logical-change, whether the body was needed, register, and the
 # tell catalog. Those need a reader, and no fixture can stand in for one.
@@ -42,6 +44,13 @@ hook="$repo_root/scripts/git-hooks/commit-msg"
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 fail=0
+
+# The hook reads git config, so every row is graded against config this script
+# controls and nothing else: an /etc/gitconfig or a developer's ~/.gitconfig
+# carrying core.commentChar would otherwise red or green the comment rows for a
+# reason outside them. The comment-string rows below point GIT_CONFIG_GLOBAL at
+# their own throwaway file, one row at a time.
+export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null
 
 # The cap the hook enforces. Fixtures are built from it, so a row cannot drift
 # to the wrong length the way a hand-counted English sentence did.
@@ -249,6 +258,75 @@ reject_msg "heading survives the comment strip" "Add the hook
 ## Summary
 
 Text."                                                                "markdown heading"
+
+# The comment string is read under BOTH its names. Git 2.45 made
+# core.commentString an alias of core.commentChar, and `git config --get
+# core.commentChar` cannot see a value set under the other name — so a repo
+# that sets commentString had its comment lines stripped by the wrong
+# character: the `//` lines git drops tripped the wrap rule, and the `#` lines
+# git keeps were dropped here. $work is not a repository, so the config the
+# hook reads is the global file, pointed at a throwaway one for these rows
+# (GIT_CONFIG_GLOBAL, git >= 2.32); GIT_CONFIG_SYSTEM is /dev/null for the
+# whole run. Each row is over the cap on purpose: a comment line that is NOT
+# stripped trips the wrap rule. So the alone rows red a hook that reads one
+# name only — in either direction, since each pairs the stripped line with the
+# other character's line, which must survive — and the both-names rows red a
+# hook that takes the FIRST value rather than the last.
+#
+# Every `#` and `;` value below is QUOTED. An unquoted `#` or `;` opens a
+# comment in git's config syntax, so `commentChar = #` sets an empty value git
+# itself then refuses (`git stripspace -s` → "core.commentchar must have at
+# least one character"); a row written that way grades a state no commit can
+# reach and passes any hook that defaults an empty read back to '#'.
+cfg="$tmp/gitconfig"
+
+# commentString alone.
+printf '[core]\n\tcommentString = //\n' > "$cfg"
+GIT_CONFIG_GLOBAL="$cfg" allow_msg "commentString alone, '//' is the comment" "Add the commit-msg hook
+
+// Under commentString this line is a git comment, and it runs well past the seventy-two column cap."
+GIT_CONFIG_GLOBAL="$cfg" reject_msg "commentString alone, '#' is not the comment" "Add the commit-msg hook
+
+# Under commentString this line is NOT a comment, git keeps it, and it runs well past the cap." \
+  "exceeds $WRAP columns"
+
+# commentChar alone, with a value that is not the default. Left to the unset
+# default ('' → '#'), a hook that read commentString ONLY would still be green
+# on every commentChar claim, so the row has to set the name to something else.
+printf '[core]\n\tcommentChar = ";"\n' > "$cfg"
+GIT_CONFIG_GLOBAL="$cfg" allow_msg "commentChar alone, ';' is the comment" "Add the commit-msg hook
+
+; Under commentChar this line is a git comment, and it runs well past the seventy-two column cap."
+GIT_CONFIG_GLOBAL="$cfg" reject_msg "commentChar alone, '#' is not the comment" "Add the commit-msg hook
+
+# Under a commentChar of ';' this line is NOT a comment, git keeps it, and it runs past the cap." \
+  "exceeds $WRAP columns"
+
+# Both names set: the one git read LAST wins (measured with git stripspace -s
+# under a quoted config, 2026-09-01, git 2.50.1). The hook must agree with git,
+# in both orders. Each row hands the hook the LATER name's line: a hook that
+# took the first value, or one name always, leaves that line unstripped and
+# reds one of the two.
+printf '[core]\n\tcommentChar = "#"\n\tcommentString = //\n' > "$cfg"
+GIT_CONFIG_GLOBAL="$cfg" allow_msg "commentChar then commentString, git takes the later '//'" "Add the commit-msg hook
+
+// With commentString read after commentChar, this is the comment, and it runs well past the cap."
+printf '[core]\n\tcommentString = //\n\tcommentChar = "#"\n' > "$cfg"
+GIT_CONFIG_GLOBAL="$cfg" allow_msg "commentString then commentChar, git takes the later '#'" "Add the commit-msg hook
+
+# With commentChar read after commentString, this is the comment, and it runs well past the cap."
+
+# ...and the order git actually reads in is system, global, local: the local
+# file is last, so it wins over a global carrying the other name. Every real
+# commit takes that path; $work, not being a repository, cannot exercise it.
+cfgrepo="$tmp/cfgrepo"
+git init -q "$cfgrepo" 2>/dev/null
+git -C "$cfgrepo" config core.commentString '//'
+printf '[core]\n\tcommentChar = ";"\n' > "$cfg"
+GIT_CONFIG_GLOBAL="$cfg" allow_msg "local commentString beats a global commentChar" "Add the commit-msg hook
+
+// The local commentString is read after the global commentChar, so this is the comment, past the cap." \
+  "$cfgrepo"
 
 # The verbose diff a `git commit -v` message carries is below the scissors and
 # is not the message either.
