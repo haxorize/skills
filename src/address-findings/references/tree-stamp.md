@@ -10,7 +10,7 @@ A stamp of the working tree comes from a throwaway index, run at the repo root:
 T="$(mktemp -u)"; GIT_INDEX_FILE="$T" git read-tree HEAD 2>/dev/null; GIT_INDEX_FILE="$T" git add -A :/ && GIT_INDEX_FILE="$T" git write-tree; rm -f "$T"
 ```
 
-Uncommitted and untracked non-ignored files count, and the real index and every open file are untouched. The stamp is one line, exactly `Reviewed-tree: <40-hex>`.
+Uncommitted and untracked non-ignored files count, and the real index and every open file are untouched. The stamp is one line, exactly `Reviewed-tree: <40-hex>` — **nothing after the hash**, because the `review-receipt` hook's pattern anchors at end of line, so a stamp carrying an appended clause ("the tree as reviewed", a date, a note) is invisible to it and the push is refused against an older report.
 
 **A producer outside a review writes the same hash as `Measured-tree:`.** A handoff, an `audit-skills` run, a `sweep-corpus` health report — anything the global evidence rule sends here for the one-liner — labels the line `Measured-tree:` and never `Reviewed-tree:`, which belongs to a review and to the receipt hook that reads it. Everything below about comparing against a reviewed commit is a review's business: a `Measured-tree:` producer has no reviewed target, so the committed-work substitution in the next paragraph does not apply to it — it stamps the working tree with the one-liner above, always.
 
@@ -18,7 +18,7 @@ Uncommitted and untracked non-ignored files count, and the real index and every 
 
 ## Re-stamping after a fix pass
 
-When the pass changed any file, append one line to the report — `Reviewed-tree: <40-hex>` of the tree as it now stands — and close the pass with one line, `re-stamped: <12-hex>`. The stamp of the tree the fix pass produced is what lets the commit of it be pushed; the review's own stamp stays above it, and the disposition table is what certifies the difference between the two. The condition is the tree, not the edit count: re-stamp whenever the tree now differs from the report's last stamp — which includes a pass that declined everything but found the tree already drifted, and excludes a pass that changed nothing on a tree that still matches. The report itself lives outside the tree being hashed, so writing to it never triggers a re-stamp.
+When the pass changed any file, append one line to the report — `Reviewed-tree: <40-hex>` of the tree as it now stands, bare, with nothing after the hash — and close the pass with one line, `re-stamped: <12-hex>`. The stamp of the tree the fix pass produced is what lets the commit of it be pushed; the review's own stamp stays above it, and the disposition table is what certifies the difference between the two. The condition is the tree, not the edit count: re-stamp whenever the tree now differs from the report's last stamp — which includes a pass that declined everything but found the tree already drifted, and excludes a pass that changed nothing on a tree that still matches. The report itself lives outside the tree being hashed, so writing to it never triggers a re-stamp.
 
 **A report from PR mode carries no tree stamp and never gets one here:** the reviewed tree was not this machine's, and a receipt minted against it would bless whatever happens to be sitting in the local working tree.
 

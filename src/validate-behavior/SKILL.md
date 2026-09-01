@@ -12,9 +12,9 @@ Judge the **running** product — a web app, CLI, API, or generated artifact —
 
 The check's whole value is that it cannot be fooled by the code's story about itself. Three rules hold it:
 
-- **The contract precedes the run.** Read the behavior contract first; if none exists, write a short one from the user's request *before touching the target* ([references/contract-template.md](references/contract-template.md)). A contract written after observing the target describes what the target does, not what it should do. For legacy behavior with no request text, hand the template's derivation section to the user or a non-checking session — never derive the contract yourself — and treat a clause still marked `[NEEDS CLARIFICATION]` as BLOCKED until a human resolves it.
+- **The contract precedes the run.** Read the behavior contract first; if none exists, write a short one from the user's request *before touching the target* ([references/contract-template.md](references/contract-template.md)). A contract written after observing the target describes what the target does, not what it should do. For legacy behavior with no request text, hand the template's derivation section to the user or a non-checking session — never derive the contract yourself — and treat a clause still marked `[NEEDS CLARIFICATION]` as UNVERIFIABLE until a human resolves it.
 - **Never read the implementation.** No source files, diffs, tests, git history, implementation notes, or build internals. Interact only through user- or operator-visible surfaces: browser, CLI, API, generated files, public logs, screenshots, accessibility trees, documented runtime output.
-- **Implementation-looking evidence is contamination.** If continuing seems to require source access, stop and report the check as **BLOCKED on source-blindness** — name what you needed and why. A contaminated run is not a lower-confidence check; it is not this check at all.
+- **Implementation-looking evidence is contamination.** If continuing seems to require source access, stop and report the check as **UNVERIFIABLE on source-blindness** — name what you needed and why. A contaminated run is not a lower-confidence check; it is not this check at all.
 
 If the target must be started from the source checkout, have the user start it — or a separate agent session that shares none of your context — then validate without reading the checkout.
 
@@ -30,7 +30,7 @@ If the target must be started from the source checkout, have the user start it �
 
 Three rules cut across the steps:
 
-- **A shared instance is refused, never driven.** Where two instances cannot run side by side and the one running is the user's, refuse to drive it — report every clause that needed it BLOCKED on a shared instance — rather than share a session you could corrupt.
+- **A shared instance is refused, never driven.** Where two instances cannot run side by side and the one running is the user's, refuse to drive it — report every clause that needed it UNVERIFIABLE on a shared instance — rather than share a session you could corrupt.
 - **The probes are themselves suspects.** Before trusting an all-PASS first run, force one probe to fail — feed an input that violates the contract on purpose — and confirm it reports; that red must be **content-caused**, and a probe suite that cannot produce a FAIL is mis-specified, not reassuring.
 - **A dry-run or test mode is verified by observation, not by its name.** Watch the files, the network, and the git refs for what the mode claims to skip — some dry runs still touch the network or open a browser — because the check is for an absence, and no exit code reports one.
 
@@ -40,7 +40,7 @@ Every contract clause ends in exactly one state — the check isn't done while a
 
 - **PASS** — the observable behavior matches the clause, with evidence.
 - **FAIL** — observable behavior violates the clause, the task can't be completed, expected state is fake or static, or the target claims success the evidence doesn't corroborate.
-- **BLOCKED** — required runtime access, credentials, fixtures, or tools are missing (including blocked on source-blindness or on a shared instance) — nothing could be observed either way. A truncated or unreadable observation is BLOCKED for its clause, never a pass.
+- **UNVERIFIABLE** — required runtime access, credentials, fixtures, or tools are missing (including blocked on source-blindness or on a shared instance) — nothing could be observed either way. A truncated or unreadable observation is UNVERIFIABLE for its clause, never a pass.
 - **OUT OF SCOPE** — only when the contract explicitly excludes the behavior, or the clause turns on a product decision the user owns.
 
 Reject aesthetic, code-quality, and implementation-style concerns — those belong to the code-aware review family, and this skill can't see the code anyway.
@@ -49,4 +49,4 @@ A contract clause no visible surface can reach is fixed by a user-facing afforda
 
 ## Report
 
-A prose report: the access the run actually achieved, stated first — a live drive, or the tool that could not be called and what stood in for it — so a reader can tell a driven run from one that fell back to whatever the target printed, and never a silent downgrade (a fall-back to reading source is not a mode; it is BLOCKED on source-blindness); the target exercised and how it was reached; where the evidence lives; the contract used (file or inline); the per-clause verdict summary; each failure with reproduction steps and its evidence; the anti-cheat probes run and what they showed; remaining blockers. Findings cite contract clauses and observable steps, never code locations.
+A prose report: the access the run actually achieved, stated first — a live drive, or the tool that could not be called and what stood in for it — so a reader can tell a driven run from one that fell back to whatever the target printed, and never a silent downgrade (a fall-back to reading source is not a mode; it is UNVERIFIABLE on source-blindness); the target exercised and how it was reached; where the evidence lives; the contract used (file or inline); the per-clause verdict summary; each failure with reproduction steps and its evidence; the anti-cheat probes run and what they showed; remaining blockers. Findings cite contract clauses and observable steps, never code locations.

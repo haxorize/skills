@@ -14,7 +14,7 @@ It never proposes a commit split. A change that needs several commits in lineage
 
 Commit, push, a tracker write, a message, a loop: each is an outward act, and the global rule `~/.claude/rules/no-unasked-commits.md` governs all of them.
 
-Read `CLAUDE.md` for a `Landing:` block before the first act. Its six lines are `Branch policy:` (`trunk` or `branch-per-ticket`, with a naming pattern where the repo has one), `PR required:`, `Push pre-authorized:`, `Ticket close pre-authorized:`, `Review required:` (each `yes`/`no`; `yes` gates the push on a review receipt whose `Reviewed-tree:` stamp matches the tree being pushed, and the "reviewed" row below is the claim), and `Defect policy:` (default `fix, don't file`). An act the key pre-authorizes proceeds on the ask that started the work; every other act asks first, with a recommendation, under `~/.claude/rules/recommend-and-proceed.md`. No block means nothing is pre-authorized, and a missing `Review required:` line means `no`. A block written before 2026-08-30 spells the two middle keys `pre-authorised`; read those the same way — the key was renamed, not retired, and no regex parses it.
+Read `CLAUDE.md` for a `Landing:` block before the first act. Its six lines are `Branch policy:` (`trunk` or `branch-per-ticket`, with a naming pattern where the repo has one), `PR required:`, `Push pre-authorized:`, `Ticket close pre-authorized:`, `Review required:` (each `yes`/`no`; `yes` gates the push on a review receipt whose `Reviewed-tree:` stamp matches the tree being pushed, and the "reviewed" row below is the claim), and `Defect policy:` (default `fix, don't file`). An act the key pre-authorizes proceeds on the ask that started the work; every other act asks first, with a recommendation, under `~/.claude/rules/recommend-and-proceed.md`. No block means nothing is pre-authorized, and a missing `Review required:` line means `no`. A block written before 2026-08-30 spells the two middle keys `pre-authorized`; read those the same way — the key was renamed, not retired, and no regex parses it.
 
 `git status` and `git diff` before anything is staged, on either path: untracked or unstaged files that belong to the change are surfaced now, not discovered after the commit. In a `Review required: yes` repo the unit is the whole reviewed tree, not the change: anything that does not belong to it is deleted or gitignored *before* the review, never deselected at staging time, because a partial commit is a different tree and the push is refused — and re-stamping to clear that block silently blesses whatever else was sitting there.
 
@@ -28,16 +28,16 @@ Every assertion written into a commit message, closing comment, PR body, or end-
 
 | Claim | Checked against |
 |---|---|
-| "this change does X" / scope of any kind | the diff |
-| "no contract change", "test-only", "no production code" | the diff, file by file, not from memory |
-| "reviewed" | in a `Review required: yes` repo, the `review-changes` report the `review-receipt` hook accepts — one whose `Reviewed-tree:` stamp equals the tree being pushed (its header is the contract — a subagent review that wrote no file, a handoff, and a stamp typed in by hand rather than written by `review-changes` or `address-findings`, are not it; the hook cannot tell the last from a real one, which is why this row exists), and there is no skip phrase: the only skip is the user pushing from their own terminal, so a refusal is a blocked action to report; elsewhere a review report or handoff path in this conversation, or the user's exact skip phrase; in a `Review required: yes` repo the tree stamp is what decides, so the claim is "reviewed at tree `<12-hex>`" and HEAD sitting N commits past the head stamp on that same tree is the prescribed order, not staleness; elsewhere, if the report carries a reviewed-head stamp and HEAD has moved past it, the claim is "reviewed at `<sha>`, N commits since" — silence on review is a stop, never an assumed yes |
-| "the user approved" / "as agreed" | the turn where they said it; quote it. A fabricated approval is the failure this row exists for |
-| "closes N" / "fixes N" / "done" | the ticket body, re-read now, and the completion audit — the closing word follows [references/ticket-closure.md](references/ticket-closure.md) |
-| "works" / "done" for a change whose effect is live — a tracker write, a deploy, an outbound call | the live path exercised in this session, or the claim carries `UNVERIFIED: live path`; a unit or fixture run is evidence for the code, never for the effect it was standing in for |
-| "I ran X" for any step | whether it ran in this session; inspection is not execution. A result CI will produce is written as the expectation the reviewer checks the run against, in words that cannot be read as output you saw; tests added and never run say they are unrun; a result someone else recorded is attributed to them, never restated as yours |
-| a screenshot, recording, or image cited as evidence | the file was opened and its contents are stated in the claim, not its filename |
-| "blocked by X" | the command's verbatim error output, quoted; a familiar-looking failure is not evidence of its familiar cause |
-| any count | re-measured now, per the evidence rule |
+| **"this change does X" / scope of any kind** | the diff |
+| **"no contract change", "test-only", "no production code"** | the diff, file by file, not from memory |
+| **"reviewed"** | in a `Review required: yes` repo, the `review-changes` report the `review-receipt` hook accepts — one whose `Reviewed-tree:` stamp equals the tree being pushed (its header is the contract — a subagent review that wrote no file, a handoff, and a stamp typed in by hand rather than written by `review-changes` or `address-findings`, are not it; the hook cannot tell the last from a real one, which is why this row exists), and there is no skip phrase: the only skip is the user pushing from their own terminal, so a refusal is a blocked action to report; elsewhere a review report or handoff path in this conversation, or the user's exact skip phrase; in a `Review required: yes` repo the tree stamp is what decides, so the claim is "reviewed at tree `<12-hex>`" and HEAD sitting N commits past the head stamp on that same tree is the prescribed order, not staleness; elsewhere, if the report carries a reviewed-head stamp and HEAD has moved past it, the claim is "reviewed at `<sha>`, N commits since" — silence on review is a stop, never an assumed yes |
+| **"the user approved" / "as agreed"** | the turn where they said it; quote it. A fabricated approval is the failure this row exists for |
+| **"closes N" / "fixes N" / "done"** | the ticket body, re-read now, and the completion audit — the closing word follows [references/ticket-closure.md](references/ticket-closure.md) |
+| **"works" / "done" for a change whose effect is live — a tracker write, a deploy, an outbound call** | the live path exercised in this session, or the claim carries `UNVERIFIED: live path`; a unit or fixture run is evidence for the code, never for the effect it was standing in for |
+| **"I ran X" for any step** | whether it ran in this session; inspection is not execution. A result CI will produce is written as the expectation the reviewer checks the run against, in words that cannot be read as output you saw; tests added and never run say they are unrun; a result someone else recorded is attributed to them, never restated as yours |
+| **a screenshot, recording, or image cited as evidence** | the file was opened and its contents are stated in the claim, not its filename |
+| **"blocked by X"** | the command's verbatim error output, quoted; a familiar-looking failure is not evidence of its familiar cause |
+| **any count** | re-measured now, per the evidence rule |
 
 **A check parses the way its consumer parses.** A hit on a pattern you spelled shows only that the search finds your spelling: read the artifact as its consumer reads it (`git interpret-trailers`, not `grep '^Co-Authored-By:'`, for a trailer — the grep misses a folded continuation line and a trailer block the parser rejects for a blank line above it), or the check is green exactly where the hole is.
 
@@ -63,14 +63,14 @@ For a change that is one attributable claim and needs no approver, land it in on
 
 Work that never went through `/implement` — docs, skills, config, a synced library — is most of what lands here; the fast path does not require an audit to exist, only a claim to be checked.
 
+In a repo that ships a `commit-msg` git hook, most of the exact rules in [references/commit-style.md](references/commit-style.md) block at the commit: the message is rejected, the rejection names the rule and the file. The imperative-opener rule only **warns** — it is a wordlist heuristic — so a clean run is not evidence the subject passed it. The check is over shape only — it says nothing about register or the tell catalog, so a green run never stands in for the read. The status report step 5 ends with is governed by `~/.claude/rules/evidence.md`.
+
 ## When an action is blocked
 
 When a commit, push, or tracker write fails for an environmental reason (auth, sandbox, policy, network), or a `commit-msg` hook rejects the message, open [references/blocked-actions.md](references/blocked-actions.md) and follow it. Never `--no-verify`.
 
-## Notes
+The `commit-bypass` hook under `global/hooks/` is this protocol's mechanical half: a failing `pre-commit` git hook is a blocked action to report, never a reason for `--no-verify`, and the hook refuses the bypass shapes before they run. The `review-receipt` hook beside it is the "reviewed" row's mechanical half at the push.
 
-- The `commit-bypass` hook under `global/hooks/` is this protocol's mechanical half: a failing pre-commit hook is a blocked action to report, never a reason for `--no-verify`, and the hook refuses the bypass shapes before they run. The `review-receipt` hook beside it is the "reviewed" row's mechanical half at the push.
-- In a repo that ships a `commit-msg` git hook, the exact rules in `references/commit-style.md` are enforced at the commit: the message is rejected, the rejection names the rule and the file, and the check is over shape only — it says nothing about register or the tell catalog, so a green run never stands in for the read.
-- Merge conflicts on the way in are `resolving-merge-conflicts`' job.
-- Findings that surface while drafting are follow-ups, not this change's work. Land the change; name what you noticed. Filing them is `/to-bug`'s, and only on the user's ask — the `Landing:` defect policy defaults to "fix, don't file".
-- The status report this skill ends with is governed by `~/.claude/rules/evidence.md`.
+## Boundary
+
+This skill lands a change honestly; it does not decide what to build or judge what was built. Merge conflicts on the way in are `resolving-merge-conflicts`' job. Findings that surface while drafting are follow-ups, not this change's work — land the change, name what you noticed; filing them is `/to-bug`'s, and only on the user's ask, since the `Landing:` defect policy defaults to "fix, don't file". Proposing a commit split, or opening a PR, is `/ship`'s, which declares this skill for the landing itself; grading the diff before it lands is `/review-changes`'.

@@ -15,7 +15,7 @@ Bugs are *not* parented under Stories — the fix is the slice. They can be file
 
 Call the Skill tool with `writing-for-humans`, then again with `work-item-shape` — if you did not just see a `Launching skill: work-item-shape` line, stop and call it again. Every published sentence follows the first; the body's shape follows the second.
 
-This tier's evidence sections are `## Repro`, `## Expected behavior`, and `## Actual behavior`: exact error messages, stack traces, environment URLs, and observable route names belong there — `work-item-shape`'s internals rule covers the rest.
+This tier's evidence sections are `## Repro` (on ADO, the `Microsoft.VSTS.TCM.ReproSteps` field instead), `## Expected behavior`, and `## Actual behavior`: exact error messages, stack traces, environment URLs, and observable route names belong there — `work-item-shape`'s internals rule covers the rest.
 
 ## Workflow
 

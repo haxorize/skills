@@ -1,6 +1,6 @@
 # ADR format
 
-ADRs live in `docs/adr/<NNNN>-<slug>.md`. Create the directory lazily — only when the first ADR is written.
+ADRs live in the scheme the preflight below resolves — `docs/adr/<NNNN>-<slug>.md` by default. Create the directory lazily — only when the first ADR is written.
 
 ## Convention preflight
 
@@ -49,7 +49,7 @@ Only when they add real value, not for completeness:
 - **Status** frontmatter (`proposed | accepted | superseded by [ADR N](N-slug.md)`) — useful when revisiting
 - **Considered Options** — only when rejected alternatives are worth remembering in detail. The gate's third criterion guarantees an alternative was weighed, so when the section is omitted the rationale still names that alternative and why it lost, in a clause — a record with no alternative anywhere reads, years on, as a decision nobody compared. Where a record truly has none, it says which kind it is — *forced* (no alternative existed; name the constraint — such a record fails the gate's third criterion and is written only when the constraint itself is what the next reader needs, a mandated platform or a regulation) or *unexamined* (none was weighed, as in a backfill) — because a reader re-opening the decision treats the two differently
 - **Deferred** — the open questions the decision leaves standing, one line each naming the question and the artifact that settles it (a ticket, a later ADR, a measurement); omitted when nothing is open, never padded. A line later settled stays as written and gains a trailing `— settled: see Amendments <date>`, so a reader who stops at Deferred is not left with a stale open question
-- **Revisit when:** — one line naming the assumption or trigger that would falsify the decision (a load figure, a dependency's status, a team size); `backfill-adrs`' STALE sweep and the amendment step read it
+- **Revisit when:** — one line naming the assumption or trigger that would falsify the decision (a load figure, a dependency's status, a team size); `backfill-adrs`' STALE sweep reads it
 - **Consequences** — only when downstream effects are non-obvious. A bullet a later amendment corrects stays as written — amendments are additive and never rewrite — and gains a trailing `— corrected: see Amendments <date>`, so a reader who stops at Consequences is not left taking a superseded figure for the current one
 - **Body and table rows** — a bullet, row, or clause outside `## Deferred` and `## Consequences` that a later amendment narrows, extends, or supersedes stays as written and gains a trailing `— amended: see Amendments <date>`. This is the third and last of the pointer markers, and it exists because amendments never rewrite: without it a record's table keeps presenting a superseded count or a retired name with no way to flag it. The pointer is all it carries — an amendment's new normative text goes in `## Amendments`, never appended to the line it amends
 - **Amendments** — the dated log an in-place amendment appends to; created on the first amendment, never up front

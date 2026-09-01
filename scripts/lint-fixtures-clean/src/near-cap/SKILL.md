@@ -3,7 +3,7 @@ name: near-cap
 description: A well-formed body sitting just under the 15,000-byte re-attach WARN. Use when the byte-size check needs a body that must draw no WARN, to `pin the bound`.
 ---
 
-# Near the cap
+# Near the Cap
 
 The line below is filler that carries this body to just under 15,000 bytes, so a threshold that drifts low draws a WARN here and reds the clean root.
 

@@ -16,14 +16,14 @@ One checklist file per cluster of documents, written under `docs/product-descrip
 
 | Column | What goes in it |
 |---|---|
-| ID | Stable within the file, so a result can be cited later |
-| P | `P1`, `P2`, or `P3` — the priority below |
-| Needs | The state the product must be in — a role, a record, a flag, a network condition |
-| Claim | The sentence being checked, linked to the section that makes it |
-| Setup | How to reach the Needs state from a fresh start — described, never pasted from the run |
-| Steps | What the person does, in order |
-| Expected | What the document says will happen, in the document's own words |
-| Result | `pass`, `fail`, or `blocked`, filled in during the pass and not before |
+| **ID** | Stable within the file, so a result can be cited later |
+| **P** | `P1`, `P2`, or `P3` — the priority below |
+| **Needs** | The state the product must be in — a role, a record, a flag, a network condition |
+| **Claim** | The sentence being checked, linked to the section that makes it |
+| **Setup** | How to reach the Needs state from a fresh start — described, never pasted from the run |
+| **Steps** | What the person does, in order |
+| **Expected** | What the document says will happen, in the document's own words |
+| **Result** | `pass`, `fail`, or `blocked`, filled in during the pass and not before |
 
 **Real data never enters a checklist.** These files land in the described product's own repo, and a pass runs against live data: a `Needs`, `Setup`, or `Result` cell names the *kind* of record it used — "a member with an active plan and one denied claim" — never the member, the ID, the token, or the response body. Where the product handles a regulated class of data, what may appear at all is `phi-safe-code`'s.
 
@@ -35,7 +35,7 @@ One checklist file per cluster of documents, written under `docs/product-descrip
 
 ## Running a pass
 
-`docs/product-description/README.md` says how to bring this product up — the fourth thing settled before the first document. Read the command and the state the product must start from there, and confirm the running build matches the commit the documents' footers cite; a pass against a different build is not a pass. Where the README does not say how to run it, that is the blocker: get it, write it there, and start the pass from a build you can name.
+`docs/product-description/README.md` says how to bring this product up — one of the things settled before the first document — how the product is run. Read the command and the state the product must start from there, and confirm the running build matches the commit the documents' footers cite; a pass against a different build is not a pass. Where the README does not say how to run it, that is the blocker: get it, write it there, and start the pass from a build you can name.
 
 Run `P1` first, then `P2`, then `P3`. Record every result as it happens rather than at the end. A `blocked` row names what blocked it — the concrete prerequisite (a role, an entitlement, an OS, external state, or that the pass did not reach it) and the route attempted — and a prerequisite the document never mentioned is itself a finding against the document, fixed there like a `fail` of the second kind below.
 

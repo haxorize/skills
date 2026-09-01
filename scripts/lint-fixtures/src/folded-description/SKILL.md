@@ -5,6 +5,6 @@ description: >-
   Use when the check for block scalars needs a fixture.
 ---
 
-# Folded description (fixture)
+# Folded Description (Fixture)
 
 The description above is a YAML block scalar; the linter must flag it.

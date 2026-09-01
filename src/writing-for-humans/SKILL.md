@@ -5,19 +5,21 @@ description: Writing conventions for human-facing prose — ticket and work-item
 
 # Writing for Humans
 
-Human-facing prose exists to be **understood** — that is the boundary with `writing-for-agents`, which owns documents that exist to be *obeyed* (skill bodies, CLAUDE.md, references). The test is the prose's function, not its reader: agents read ADRs too, but they read them the way a human does, for comprehension. Rationale, tickets, definitions, summaries, and the prose a run addresses to the user live here.
+Human-facing prose exists to be **understood**. The test is the prose's function, not its reader: agents read ADRs too, but they read them the way a human does, for comprehension. Rationale, tickets, definitions, summaries, and the prose a run addresses to the user live here.
 
-Serve the reader, never the detector. Don't try to make text score as human-written, and don't guess whether a text was AI-written — detectors guess; a named pattern with a quoted line is evidence the reader can check. The AI tells this skill hunts are banned because they are *clarity* failures, not because of who tends to produce them.
+**One hard stop, stated here because it fires last:** an outbound draft written as the user carries **no em dashes, none**, and the dash sweep is its mandatory final step — `~/.claude/rules/outbound-dash-sweep.md` owns the sweep and fires with no skill loaded, and § Register by artifact carries the row and the pipeline pointer.
 
-Write for the reader who arrives with no history. Prose that only makes sense to someone who watched the conversation happen is **overfitted** — rewrite it against the project's own vocabulary until it stands alone. On a document long enough to be worth the round-trip, prove that rather than assume it with a **Cold-reader pass** — the draft alone to a fresh-context reader that saw none of this conversation, asked what they took from it; every miss is a defect in the draft, fixed by editing it, never by briefing the reader (`work-item-shape` runs the work-item form of the same pass, asking what the reader would build). Readers scan rather than read, and expert readers prefer plain wording *more*, not less, as the topic gets harder — so front-loading and plain words are a service to every audience, never dumbing down.
+Serve the reader, never the detector. Don't try to make text score as human-written, and don't guess whether a text was AI-written — detectors guess; a named pattern with a quoted line is evidence the reader can check. The AI tells this skill hunts are banned because they are *clarity* failures, not because of who tends to produce them — with two named exceptions that turn on authorship instead: the catalog's Formatting glyph entries, which nobody typing by hand produces, and the outbound row, where a draft sent as the user stakes authorship perception. Both still serve the reader — a glyph the reader knows the user did not type undercuts the message — and neither licenses mimicry or an authorship verdict. The named tells — filler, puffery, contrastive formulas, mic-drops, metadiscourse, anthropomorphism, and the rest — are the **tell catalog**, [references/tell-catalog.md](references/tell-catalog.md); open it when auditing a draft for tells or sweeping one before it ships.
+
+Write for the reader who arrives with no history. Prose that only makes sense to someone who watched the conversation happen is **overfitted** — rewrite it against the project's own vocabulary until it stands alone. On anything that leaves this session — a work-item body, a doc, a release note, an outbound draft — and on any document over 500 words, prove that rather than assume it with a **Cold-reader pass** — the draft alone to a fresh-context reader that saw none of this conversation, asked what they took from it; every miss is a defect in the draft, fixed by editing it, never by briefing the reader (`work-item-shape` runs the work-item form of the same pass, asking what the reader would build). Readers scan rather than read, and expert readers prefer plain wording *more*, not less, as the topic gets harder — so front-loading and plain words are a service to every audience, never dumbing down.
 
 ## Classify, then write
 
 Every passage is **procedural** (instructions — the reader will *do* something) or **descriptive** (explanation — the reader will *know* something). Classify first; the mode selects the rules. Don't mix modes in one passage or one list: acceptance criteria and repro steps are procedural; context, approach, and rationale are descriptive.
 
-**Procedural:** imperative voice. One instruction per sentence, unless two actions happen at once. At most 20 words per sentence. A required condition comes *before* its command, split by a comma: "If the build fails, read the log" — trailing conditions get dropped. A warning leads with the command, then the risk: "Do not run this against production. The flag deletes rows that do not match the source" — never the explanation first.
+**Procedural:** imperative voice. One instruction per sentence, unless 2 actions happen at once. At most 20 words per sentence. A required condition comes *before* its command, split by a comma: "If the build fails, read the log" — trailing conditions get dropped. A warning leads with the command, then the risk: "Do not run this against production. The flag deletes rows that do not match the source" — never the explanation first.
 
-**Descriptive:** no imperative. At most two clauses per sentence; split anything over 25 words. One new fact per sentence. Timelines use simple past — "we identified" not "we have identified", which hides when — except where the compound form is carrying the uncertainty or the current relevance the simple form would drop ("the request may have failed", "the job has completed and still holds the lock"), which the preservation contract (its modality rule, in [references/preservation-contract.md](references/preservation-contract.md)) settles in the compound form's favour. Passive voice only when the actor is genuinely unknown; otherwise ask "by whom?" and put the answer first.
+**Descriptive:** no imperative. At most 2 clauses per sentence; split anything over 25 words. One new fact per sentence. Timelines use simple past — "we identified" not "we have identified", which hides when — except where the compound form is carrying the uncertainty or the current relevance the simple form would drop ("the request may have failed", "the job has completed and still holds the lock"), which the preservation contract (its modality rule, in [references/preservation-contract.md](references/preservation-contract.md)) settles in the compound form's favor. Passive voice only when the actor is genuinely unknown; otherwise ask "by whom?" and put the answer first.
 
 **Word counting**, so the caps survive technical prose: a backticked span, an identifier, a number with its unit, a parenthesized aside, and a hyphenated word each count as one word. `az boards work-item update --id 42` is one word.
 
@@ -29,16 +31,16 @@ Admit a row only with a named typist — the role that writes the artifact, and 
 
 | Artifact | Register |
 | --- | --- |
-| Ticket body, doc | Neutral and plain; contractions fine — but avoid negative ones ("cannot", not "can't": readers misread them as their opposite) |
-| README, and a guide (a how-to, a tutorial) | Same register, plus the first-screen and guide structure rules in [references/register-by-artifact.md](references/register-by-artifact.md) — open it before writing one |
-| ADR rationale | Descriptive, and it takes a position — "strike a balance" and "it depends" prose is the decision dodging itself; name who decided and why |
-| Session summary, incident report | Outcome first; simple past with times ("Between 14:02 and 14:31 UTC, 12% of requests failed"); state the unknown as "unknown" — a hedge reads less honest, not more careful. The first line and the last line, read alone, must give what happened and what to do next |
-| Changelog entry, release note | Notable-to-users only: what a user of the product observes changed — never typo fixes or internal refactors ("Refactored internal code structure" is an entry about nothing). Order breaking changes → features → fixes; cite PRs (`#1234`), never commit SHAs; append to the unreleased section rather than rewriting released ones; match the file's declared format where one exists |
-| Error message, UX microcopy | Calm, zero playfulness; the five-question shape in [references/register-by-artifact.md](references/register-by-artifact.md) — open it before writing one |
-| Commit message, PR body, review reply, closing comment | A maintainer recording a decision for another maintainer: impersonal, matter-of-fact ("Previously, …", "This caused …"); imperative only in the subject line; first person only for an actual decision or open question. The catalog's commit-and-PR family ([references/tell-catalog-shipping.md](references/tell-catalog-shipping.md)) fires here |
-| Meeting notes (whoever posts the recap) | Decided separated from discussed; an action is an owner plus a date or is flagged unassigned or undated — the writer never fills either in; commitments and load-bearing statements verbatim, with a paraphrase marked as the writer's reading |
-| Weekly status note to a manager (any engineer, weekly) | Progress, not activity; every next step dated or marked undated; opens with what last week's note said would happen and whether it did |
-| Outbound as the user — email, Teams message, memo, proposal, questionnaire | The user's own voice, matched from a writing sample they supply, with their own sentences kept over composed ones; **no em dashes, none**, and the full tell catalog swept at maximum strictness. The rules are in [references/outbound-as-the-user.md](references/outbound-as-the-user.md) — open it before drafting |
+| **Ticket body, doc** | Neutral and plain; contractions fine — but avoid negative ones ("cannot", not "can't": readers misread them as their opposite) |
+| **README, and a guide (a how-to, a tutorial)** | Same register, plus the first-screen and guide structure rules in [references/register-by-artifact.md](references/register-by-artifact.md) — open it before writing one |
+| **ADR rationale** | Descriptive, and it takes a position — "strike a balance" and "it depends" prose is the decision dodging itself; name who decided and why |
+| **Session summary, incident report** | Outcome first; simple past with times ("Between 14:02 and 14:31 UTC, 12% of requests failed"); state the unknown as "unknown" — a hedge reads less honest, not more careful. The first line and the last line, read alone, must give what happened and what to do next |
+| **Changelog entry, release note** | Notable-to-users only: what a user of the product observes changed — never typo fixes or internal refactors ("Refactored internal code structure" is an entry about nothing). Order breaking changes → features → fixes; cite PRs (`#1234`), never commit SHAs; append to the unreleased section rather than rewriting released ones; match the file's declared format where one exists |
+| **Error message, UX microcopy** | Calm, zero playfulness; the five-question shape in [references/register-by-artifact.md](references/register-by-artifact.md) — open it before writing one |
+| **Commit message, PR body, review reply, closing comment** | A maintainer recording a decision for another maintainer: impersonal, matter-of-fact ("Previously, …", "This caused …"); imperative only in the subject line; first person only for an actual decision or open question. The catalog's commit-and-PR family ([references/tell-catalog-shipping.md](references/tell-catalog-shipping.md)) fires here |
+| **Meeting notes (whoever posts the recap)** | Decided separated from discussed; an action is an owner plus a date or is flagged unassigned or undated — the writer never fills either in; commitments and load-bearing statements verbatim, with a paraphrase marked as the writer's reading |
+| **Weekly status note to a manager (any engineer, weekly)** | Progress, not activity; every next step dated or marked undated; opens with what last week's note said would happen and whether it did |
+| **Outbound as the user — email, Teams message, memo, proposal, questionnaire** | The user's own voice, matched from a writing sample they supply, with their own sentences kept over composed ones; **no em dashes, none**, and the full tell catalog swept at maximum strictness. The rules are in [references/outbound-as-the-user.md](references/outbound-as-the-user.md) — open it before drafting |
 
 **The dash sweep** is the mandatory last step on an outbound draft; the global rule `~/.claude/rules/outbound-dash-sweep.md` owns it and fires with no skill loaded, and the pipeline it runs is in [references/outbound-as-the-user.md](references/outbound-as-the-user.md) § The dash sweep.
 
@@ -46,8 +48,6 @@ Admit a row only with a named typist — the role that writes the artifact, and 
 
 In anything the human reads — narration, publish confirmations, reports — a work item goes by its **title**, the ID and link riding inside (`[Rate-limit login](url) (#42)`), never by a bare ID: a wall of `#42, #43, #44` is illegible.
 
-
-This discipline deletes persuasion by design. Marketing, brand, and campaign copy are out of scope — say so and offer to apply it to the factual parts only.
 
 ## Core rules
 
@@ -64,14 +64,6 @@ This discipline deletes persuasion by design. Marketing, brand, and campaign cop
 - **Paragraphs hold one topic, at most 5 sentences**, and the topic sentences alone must read as an outline of the document — check by reading only them.
 - **Numerals for every number from 2 up** — "3 retries", not "three retries" — except at a sentence start.
 
-## Two modes
-
-**Edit.** First read the whole text and note the voice worth preserving; a difference from generic plain style is a finding only when it creates ambiguity, inconsistency, or wrong-stakes tone — deliberate character survives the edit. Then two passes: fix rule violations; reread as if you had never seen it and cut every clause the reader doesn't need. Make the minimum effective edit — a rough draft with a real voice still sounds like the same person after. A form fix cannot rescue substance: where the draft has no claim, no fact, and nothing the reader can act on, editing it produces better-sounding emptiness. Say the content is missing and name what it needs.
-
-**Detect.** Audit without rewriting: name each distinct pattern from the catalog once per phrase, quote the offending line, give the fix in a few words. Where several tells converge on one phrase (bold plus scare quotes plus a dash aside on one coined term), report it once under the strongest name. No rewrite, no score, no authorship verdict. Offer the edit afterward.
-
-Either mode: if the text already complies, say so and stop — don't churn compliant prose. A pass that finds the draft contradicting itself (two sentences that cannot both hold) reports the pair and stops; picking one is the author's decision, not the editor's.
-
 ## The preservation contract
 
 - Never fabricate a fact, citation, number, or example the original didn't contain. The invented number has a cause: a template slot the source cannot fill — a before/after line in a status note, a measured-improvement claim in a release note, a proof figure in a proposal — is what produces it. Cut the slot, never fill it.
@@ -80,10 +72,18 @@ Either mode: if the text already complies, say so and stop — don't churn compl
 - A qualifier bolted on after a flat claim ("X always holds. In most cases.") is the claim being walked back: fix the claim, not the hedge.
 - Untouchables: code spans, identifiers, CLI commands, file paths, quoted error text, proper nouns, and text quoted from or attributed to another person stay exact, even where they break a rule — a tell inside someone else's words is reported, never edited. The user's own sentence in an outbound draft is theirs on the same terms, under the *Outbound as the user* row above.
 
+## Two modes
+
+**Edit.** First read the whole text and note the voice worth preserving; a difference from generic plain style is a finding only when it creates ambiguity, inconsistency, or wrong-stakes tone — deliberate character survives the edit. Then 2 passes: fix rule violations; reread as if you had never seen it and cut every clause the reader doesn't need. Make the minimum effective edit — a rough draft with a real voice still sounds like the same person after. A form fix cannot rescue substance: where the draft has no claim, no fact, and nothing the reader can act on, editing it produces better-sounding emptiness. Say the content is missing and name what it needs.
+
+**Detect.** Audit without rewriting: name each distinct pattern from the tell catalog once per phrase, quote the offending line, give the fix in a few words. Where several tells converge on one phrase (bold plus scare quotes plus a dash aside on one coined term), report it once under the strongest name. No rewrite, no score, no authorship verdict. Offer the edit afterward.
+
+Either mode: if the text already complies, say so and stop — don't churn compliant prose. A pass that finds the draft contradicting itself (2 sentences that cannot both hold) reports the pair and stops; picking one is the author's decision, not the editor's.
+
 ## Long documents
 
 A document longer than a few screens lands section by section under the mechanics `handoff` § Where to write it owns (`~/.claude/skills/handoff/SKILL.md`) — where the global large-write rule (`~/.claude/rules/large-write-chunking.md`) forwards, keeping only its own gate: a truncated artifact is discarded, never shown.
 
-## The tell catalog
+## Boundary
 
-The named AI tells — filler, puffery, contrastive formulas, mic-drops, metadiscourse, anthropomorphism, and the rest — live in [references/tell-catalog.md](references/tell-catalog.md); open it when auditing a draft for tells or sweeping one before it ships.
+Documents that exist to be *obeyed* — a skill body, `CLAUDE.md`, a reference an agent follows as process — are `writing-for-agents`', and the split is the document's function, never its reader. This discipline deletes persuasion by design: marketing, brand, and campaign copy are out of scope — say so and offer to apply it to the factual parts only. Copy a member, patient, or subscriber has to act on is `health-literacy`'s, which owns the define-at-first-use and next-step-with-a-date rules the register rows above do not carry; what data may appear in that copy is `phi-safe-code`'s.

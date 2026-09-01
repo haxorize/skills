@@ -6,15 +6,15 @@ Use this when publishing a Bug work item to Azure DevOps via `az boards work-ite
 
 | ADO field (display name) | Reference name | Source | CLI flag |
 |---|---|---|---|
-| Title | `System.Title` | Set on command line | `--title` |
-| Description | `System.Description` | Body markdown converted to HTML | `--description @<file>` |
-| Repro Steps | `Microsoft.VSTS.TCM.ReproSteps` | Repro markdown converted to HTML | `--fields "Microsoft.VSTS.TCM.ReproSteps=@<file>"` |
-| Severity | `Microsoft.VSTS.Common.Severity` | One of `1 - Critical`, `2 - High`, `3 - Medium`, `4 - Low` | `--fields "Microsoft.VSTS.Common.Severity=..."` |
-| Area Path | `System.AreaPath` | From CLAUDE.md `Area path:` | `--area` |
-| Iteration Path | `System.IterationPath` | From CLAUDE.md `Iteration:` | `--iteration` |
-| State | `System.State` | From CLAUDE.md `Default state:` (typically `New`) | `--fields "System.State=..."` |
-| System Info | `Microsoft.VSTS.TCM.SystemInfo` | Environment details (optional) | `--fields "Microsoft.VSTS.TCM.SystemInfo=@<file>"` |
-| Parent (Feature, optional) | (relation) | From `--parent <feature-id>` arg | post-create: `az boards work-item relation add --id <bug-id> --relation-type Parent --target-id <feature-id>` |
+| **Title** | `System.Title` | Set on command line | `--title` |
+| **Description** | `System.Description` | Body markdown converted to HTML | `--description @<file>` |
+| **Repro Steps** | `Microsoft.VSTS.TCM.ReproSteps` | Repro markdown converted to HTML | `--fields "Microsoft.VSTS.TCM.ReproSteps=@<file>"` |
+| **Severity** | `Microsoft.VSTS.Common.Severity` | One of `1 - Critical`, `2 - High`, `3 - Medium`, `4 - Low` | `--fields "Microsoft.VSTS.Common.Severity=..."` |
+| **Area Path** | `System.AreaPath` | From CLAUDE.md `Area path:` | `--area` |
+| **Iteration Path** | `System.IterationPath` | From CLAUDE.md `Iteration:` | `--iteration` |
+| **State** | `System.State` | From CLAUDE.md `Default state:` (typically `New`) | `--fields "System.State=..."` |
+| **System Info** | `Microsoft.VSTS.TCM.SystemInfo` | Environment details (optional) | `--fields "Microsoft.VSTS.TCM.SystemInfo=@<file>"` |
+| **Parent (Feature, optional)** | (relation) | From `--parent <feature-id>` arg | post-create: `az boards work-item relation add --id <bug-id> --relation-type Parent --target-id <feature-id>` |
 
 Before first publish against a new ADO project, verify the field shape once per [ado-html-transport.md](ado-html-transport.md).
 

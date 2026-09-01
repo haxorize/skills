@@ -1,6 +1,6 @@
 ---
 name: sweep-domain
-description: Sweep the codebase to refresh DOMAIN.md — extract and formalize domain terminology into a consistent glossary. For inline domain capture during a grilling session, reach for `grill-me` instead.
+description: Sweep the codebase and this conversation to refresh DOMAIN.md — extract and formalize domain terminology into a consistent glossary, closing with every entry the sweep retired or narrowed and why. For inline domain capture during a grilling session, reach for `/grill-me` instead.
 disable-model-invocation: true
 requires: domain-modeling
 ---
@@ -38,11 +38,13 @@ Call the Skill tool with `domain-modeling` to write the glossary to `DOMAIN.md` 
 
 Summarize the glossary inline in the conversation, and list every entry the sweep retired or narrowed, each with why — a glossary that gets quietly smaller has lost something nobody chose to lose. Suggest: "Consider adding a reference to `DOMAIN.md` in CLAUDE.md so future sessions use these terms consistently."
 
-## Rules
+## Notes
+
+### Rules
 
 - **Only domain terms.** Skip module/class names unless they have domain meaning. Skip generic programming concepts unless they have domain-specific meaning.
 - **Retire on evidence the concept is gone, never on a deleted symbol.** An entry outlives the code that implemented it; it is retired only when something replaced or removed the concept, and the entry names what did. A dropped synonym joins the surviving term's *Aliases to avoid* cell, and a retired term stays in the cell of the term that absorbed it, marked `(retired — <what removed it>)`.
 
-## Re-running
+### Re-running
 
 When invoked again in the same conversation, re-sweep the conversation and codebase for new terms, revise existing definitions whose understanding has evolved (don't just append), and re-run step 4's write to fold them into the existing `DOMAIN.md` — call the Skill tool with `domain-modeling` again — if you don't see a `Launching skill: domain-modeling` line, stop and call it again before continuing.

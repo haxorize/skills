@@ -61,7 +61,7 @@ For each child Task, parse its `## Covers` line. Bucket each Task:
 
 For each active AC ID on the parent:
 
-- **Covered** — at least one Healthy Task or Stale Task references it.
+- **Covered** — at least one Healthy Task or a Task in Stale Covers references it.
 - **Uncovered** — no Task references it. Propose: add a new Task slice, or update an existing Task's `## Covers`.
 
 **Legacy parents without AC IDs fall back to fuzzy synthesis.** When the parent's criteria carry no `**ACn:**` prefixes, or child Tasks predate `## Covers` lines, don't bucket every Task Unknown and every criterion Uncovered — match Tasks to criteria by content, present the fuzzy mapping as proposals for the user to confirm, and offer to rewrite the parent's ACs with typed IDs (via `to-story --update`) so the next reconcile diffs mechanically.
@@ -72,9 +72,9 @@ Task state gates whether reconcile auto-modifies, surfaces for decision, or leav
 
 | State | ADO | GitHub | Behavior |
 |---|---|---|---|
-| Done / Closed | `Done` / `Closed` / `Removed` | issue closed | Leave alone; surface as historical |
-| In Progress / Active | `Active` / `In Progress` / `Committed` | issue open + In-progress signal matches | Never auto-modify; surface per-Task for user decision |
-| New / Not Started | `New` / `To Do` / `Proposed` | issue open + In-progress signal does not match | Safe to revise body, close, or transition to Removed |
+| **Done / Closed** | `Done` / `Closed` / `Removed` | issue closed | Leave alone; surface as historical |
+| **In Progress / Active** | `Active` / `In Progress` / `Committed` | issue open + In-progress signal matches | Never auto-modify; surface per-Task for user decision |
+| **New / Not Started** | `New` / `To Do` / `Proposed` | issue open + In-progress signal does not match | Safe to revise body, close, or transition to Removed |
 
 ### In-progress signal (GitHub)
 
@@ -82,8 +82,8 @@ GitHub has no native work-item state beyond `open` / `closed` — reconcile uses
 
 | Declaration | Match condition |
 |---|---|
-| `In-progress signal: label <name>` | Open issue carries the named label |
-| (block absent — default) | Open issue has ≥1 assignee |
+| **`In-progress signal: label <name>`** | Open issue carries the named label |
+| **(block absent — default)** | Open issue has ≥1 assignee |
 
 Single label only — no multi-label OR-match. Closed issues are always Done regardless of the signal — `closed` and `closed --reason not_planned` are bucketed identically.
 

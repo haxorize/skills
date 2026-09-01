@@ -24,14 +24,14 @@ Match the stuck-pattern to the move. When unsure, default to **Reframe**.
 
 | Stuck-pattern | Move |
 | --- | --- |
-| Framing feels forced ("must be X or Y") | **Reframe** |
-| Generator keeps returning near-duplicates | **Random stimulus** |
-| Obvious answer is wrong but you can't see past it | **Provocation (Po)** |
-| Iterating on an existing artifact | **SCAMPER** |
+| **Framing feels forced ("must be X or Y")** | Reframe |
+| **Generator keeps returning near-duplicates** | Random stimulus |
+| **Obvious answer is wrong but you can't see past it** | Provocation (Po) |
+| **Iterating on an existing artifact** | SCAMPER |
 | Stuck on "how do we make X succeed?" | **Inversion** |
-| Problem defined entirely in one domain's vocabulary | **Perspective shift** |
-| Every solution is blocked by a constraint | **Constraint play** |
-| Two known examples, no theory of the space between/beyond them | **Family traversal** |
+| **Problem defined entirely in one domain's vocabulary** | Perspective shift |
+| **Every solution is blocked by a constraint** | Constraint play |
+| **Two known examples, no theory of the space between/beyond them** | Family traversal |
 
 ## The moves
 
@@ -53,4 +53,8 @@ Match the stuck-pattern to the move. When unsure, default to **Reframe**.
 
 ## On your own reasoning
 
-Agent loops exhibit the same fixation: the nth iteration has the structure of the first, the same class of option has been rejected three times with similar reasoning, or a step labeled "brainstorm" is producing adjacent bullets. The fix is identical — pick one move, execute it on your own current framing, and **write the new framings out explicitly** before resuming: a framing left implicit in attention gets re-absorbed into the old frame.
+Your own loop exhibits the same fixation: the nth iteration has the structure of the first, the same class of option has been rejected three times with similar reasoning, or a step labeled "brainstorm" is producing adjacent bullets. The fix is identical — pick one move, execute it on your own current framing, and **write the new framings out explicitly** before resuming: a framing left implicit in attention gets re-absorbed into the old frame.
+
+## Boundary
+
+This skill generates framings, never judgment: it says nothing about which framing is right, and a move's output is raw until something else weighs it. Testing a framing once it is on the table is `grilling`'s, the convergent complement, and deciding an adopt-or-not question is `adoption-verdict`'s. Turning a framing into work is `work-item-shape`'s, and a framing that changes how the system is built lands with `codebase-design` or `review-architecture` rather than here.

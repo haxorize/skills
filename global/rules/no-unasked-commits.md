@@ -1,4 +1,4 @@
-# No unasked commits
+# No unasked outward acts
 
 Depends: `committing`
 

@@ -29,7 +29,7 @@ A document's content is ranked by how immediately the agent needs it — a ladde
 
 **Progressive disclosure** is the move down the ladder — out of the main document into a linked file — so the top stays legible. Push too little down and the top bloats; push too much and you hide what the agent needs. Branching licenses the call (see *Branch*).
 
-**Co-location** is the within-file companion: keep a concept's definition, rules, and caveats under one heading rather than scattered, so reading one part brings its neighbours along.
+**Co-location** is the within-file companion: keep a concept's definition, rules, and caveats under one heading rather than scattered, so reading one part brings its neighbors along.
 
 ## Granularity — when to split
 
@@ -44,12 +44,12 @@ Diagnose the *baseline* failure — how the agent behaves without the guidance �
 
 | Observed baseline failure | Form that fixes it |
 | --- | --- |
-| Agent skips the rule under pressure (deadline, sunk cost, "just this once") | Hard prohibition + rationalization table + red-flags list |
-| The hard prohibition is in place and the agent still breaks it | The rung above prose: a hook or lint that sees the violation — built only after a control run shows the prose actually missing the failure. A prohibition kept as prose after that states why neither can see it |
-| Agent complies but the output is wrong-shaped (bloated, buried verdict, restated spec) | Positive recipe — state what the output IS, in order |
-| Agent omits a required element | A REQUIRED slot in the template, not prose asking for it |
-| Output respects a stated bound (length, register, "keep it brief") but smuggles in what the bound existed to exclude | An **exclusion spec** — name what may *not* appear there (commentary, the finding's history, comparisons to prior belief) plus one wrong/right pair; positive adjectives ("brief", "tight", "salient") get honored while the drift continues underneath them |
-| Behavior should apply only sometimes | Conditional keyed to an observable predicate ("if the brief exists, reference it") — observable means a fact the environment can answer (a path, a file type, a named task, a checkable state like a red suite or an exit code), never the agent's own state ("before your first edit", "when the task is complex") |
+| **Agent skips the rule under pressure (deadline, sunk cost, "just this once")** | Hard prohibition + rationalization table + red-flags list |
+| **The hard prohibition is in place and the agent still breaks it** | The rung above prose: a hook or lint that sees the violation — built only after a control run shows the prose actually missing the failure. A prohibition kept as prose after that states why neither can see it |
+| **Agent complies but the output is wrong-shaped (bloated, buried verdict, restated spec)** | Positive recipe — state what the output IS, in order |
+| **Agent omits a required element** | A REQUIRED slot in the template, not prose asking for it |
+| **Output respects a stated bound (length, register, "keep it brief") but smuggles in what the bound existed to exclude** | An **exclusion spec** — name what may *not* appear there (commentary, the finding's history, comparisons to prior belief) plus one wrong/right pair; positive adjectives ("brief", "tight", "salient") get honored while the drift continues underneath them |
+| **Behavior should apply only sometimes** | Conditional keyed to an observable predicate ("if the brief exists, reference it") — observable means a fact the environment can answer (a path, a file type, a named task, a checkable state like a red suite or an exit code), never the agent's own state ("before your first edit", "when the task is complex") |
 
 ## Failure modes
 

@@ -6,13 +6,13 @@ Use this when publishing a Feature work item to Azure DevOps via `az boards work
 
 | ADO field | Reference name | Source | CLI flag |
 |---|---|---|---|
-| Title | `System.Title` | Set on command line | `--title` |
-| Description | `System.Description` | Body markdown converted to HTML | `--description @<file>` |
-| Acceptance Criteria | `Microsoft.VSTS.Common.AcceptanceCriteria` | Outcome bullets converted to HTML | `--fields "Microsoft.VSTS.Common.AcceptanceCriteria=@<file>"` |
-| Area Path | `System.AreaPath` | From CLAUDE.md `Area path:` | `--area` |
-| Iteration Path | `System.IterationPath` | From CLAUDE.md `Iteration:` | `--iteration` |
-| State | `System.State` | From CLAUDE.md `Default state:` (typically `New`) | `--fields "System.State=..."` |
-| Parent (Epic) | (relation) | From `--parent <epic-id>` arg | post-create: `az boards work-item relation add --id <feature-id> --relation-type Parent --target-id <epic-id>` |
+| **Title** | `System.Title` | Set on command line | `--title` |
+| **Description** | `System.Description` | Body markdown converted to HTML | `--description @<file>` |
+| **Acceptance Criteria** | `Microsoft.VSTS.Common.AcceptanceCriteria` | Outcome bullets converted to HTML | `--fields "Microsoft.VSTS.Common.AcceptanceCriteria=@<file>"` |
+| **Area Path** | `System.AreaPath` | From CLAUDE.md `Area path:` | `--area` |
+| **Iteration Path** | `System.IterationPath` | From CLAUDE.md `Iteration:` | `--iteration` |
+| **State** | `System.State` | From CLAUDE.md `Default state:` (typically `New`) | `--fields "System.State=..."` |
+| **Parent (Epic)** | (relation) | From `--parent <epic-id>` arg | post-create: `az boards work-item relation add --id <feature-id> --relation-type Parent --target-id <epic-id>` |
 
 Before first publish against a new ADO project, verify the field shape once per [ado-html-transport.md](ado-html-transport.md).
 

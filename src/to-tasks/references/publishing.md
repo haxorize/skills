@@ -21,7 +21,7 @@ If a required CLAUDE.md field is missing, fail fast with a clear "add this to CL
 
 ## When the write is blocked
 
-A blocked tracker write (auth, sandbox, policy) lands the body as a file in the scratchpad with a frontmatter block carrying the fields the create call needs — title, type, parent, labels or area path — and the manual-commands block carries the one command that consumes it: `gh issue create --title "..." --body-file <path>` or `az boards work-item create --type "..." --title "..." --description @<path>` — never a body pasted into chat.
+A blocked tracker write (auth, sandbox, policy) lands the body as a file in the scratchpad with a frontmatter block carrying the fields the create call needs — title, type, parent, labels or area path — and the manual-commands block carries the one command that consumes it: `gh issue create --title "..." --body-file <path>` or `az boards work-item create --type "..." --title "..." --description @<file>` — never a body pasted into chat.
 
 ## Transport safety
 

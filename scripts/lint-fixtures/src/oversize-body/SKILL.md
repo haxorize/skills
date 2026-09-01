@@ -3,7 +3,7 @@ name: oversize-body
 description: A body past the re-attach bound, which the linter must WARN about and never FAIL. Use when the byte-size warning needs a fixture.
 ---
 
-# Oversize body (fixture)
+# Oversize Body (Fixture)
 
 Line 001 of filler, long enough that one hundred and fifty of them cross fifteen thousand bytes without crossing the two-hundred-line cap.
 Line 002 of filler, long enough that one hundred and fifty of them cross fifteen thousand bytes without crossing the two-hundred-line cap.

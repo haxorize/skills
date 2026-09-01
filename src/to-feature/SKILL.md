@@ -38,7 +38,7 @@ If not already explored in the conversation, look at the touched modules. Use ca
 
 ### 4. Sketch modules and feature scope
 
-What areas are touched, what are the major sub-features. Check with the user that the shape matches expectations.
+Name the areas the feature touches and its major sub-features, then check with the user that the shape matches expectations.
 
 ### 5. Propose 2-3 approaches with trade-offs
 
@@ -68,7 +68,7 @@ Before showing the user, check:
 
 - Placeholders (no TBD/TODO)
 - Contradictions between sections
-- Scope (broad enough to warrant multiple stories — if it shrinks to one, redirect to `to-story`)
+- Scope (broad enough to warrant multiple stories — if it shrinks to one, redirect to `/to-story`)
 - Ambiguity (any requirement readable two ways)
 - Domain language matches `DOMAIN.md`
 - AC IDs: append-only — no reused IDs across active and `## Removed acceptance criteria`; gaps from removals preserved (no renumbering)
@@ -85,7 +85,7 @@ Iterate until approved.
 
 The **Publish gate** in [references/publishing.md](references/publishing.md) holds first.
 
-- **GitHub:** `gh issue create --title "..." --body-file <draft>` with default labels from CLAUDE.md. Parent linking via `Tracked-by:` line or template `Parent: #N` reference if `--parent` was provided. **Before creating the issue,** run the label precheck in [references/publishing.md](references/publishing.md).
+- **GitHub:** `gh issue create --title "..." --body-file <draft>` with default labels from CLAUDE.md. Parent linking via the template's `Parent: #N` reference if `--parent` was provided. **Before creating the issue,** run the label precheck in [references/publishing.md](references/publishing.md). If a parent was resolved, add the new issue as a native sub-issue of it after create — see [references/github-sub-issues.md](references/github-sub-issues.md).
 - **ADO:** publish with the create call in [feature-template-ado.md](references/feature-template-ado.md) — the **two-field split**, body into the description and outcome bullets into the AC field, each converted on its own per the template. The body's final section is `## Story Decomposition`; inside it, HTML markers (`<!-- BEGIN STORY MAP -->` / `<!-- END STORY MAP -->`) fence an append-only region — see the template for the snapshot separator and emergent-Story sentinel inside it. If decomposition was deferred, the section body is the single line `Story Decomposition: deferred at Feature creation.` (no markers). Link the parent per the template's field-mapping row. Tag derivation (`$TAGS` in the create call): see [references/work-item-tags.md](references/work-item-tags.md).
 
 Missing required CLAUDE.md fields, writes blocked on auth or policy (don't loop on auth), and **transport safety** on every create and retry all follow [references/publishing.md](references/publishing.md) — `## When a required field is missing`, `## When the write is blocked`, `## Transport safety`.

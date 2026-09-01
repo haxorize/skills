@@ -8,9 +8,9 @@ One row per acceptance criterion the slice covers, in AC-ID order, derived from 
 
 | AC | Status | Evidence |
 |---|---|---|
-| AC1 | DONE | `pytest tests/test_scores.py::test_brand_scope` — 3 passed, exercises the brand filter the criterion names |
-| AC2 | PARTIAL | endpoint returns the field; the sort order the criterion specifies is not implemented |
-| AC3 | UNVERIFIABLE | criterion names the staging dashboard; no access from this session — would be proven by a screenshot of the tile after deploy |
+| **AC1** | DONE | `pytest tests/test_scores.py::test_brand_scope` — 3 passed, exercises the brand filter the criterion names |
+| **AC2** | PARTIAL | endpoint returns the field; the sort order the criterion specifies is not implemented |
+| **AC3** | UNVERIFIABLE | criterion names the staging dashboard; no access from this session — would be proven by a screenshot of the tile after deploy |
 
 Statuses, and what each requires:
 
@@ -43,7 +43,7 @@ Every out-of-scope observation made mid-slice and deliberately left alone. Each 
 
 | Where | Observed problem | Why parked |
 |---|---|---|
-| `src/api/scores.py:112` | N+1 query when brands exceed the page size | outside — not in AC1–AC3; fix touches the repository layer this slice does not own |
+| **`src/api/scores.py:112`** | N+1 query when brands exceed the page size | outside — not in AC1–AC3; fix touches the repository layer this slice does not own |
 
 **A row leaves the completion-audit ledger resolved or dismissed, and says which.** Resolved means the observed problem is gone, with the evidence that shows it. Dismissed means it was judged not worth acting on, and the reason has to dispose of the observation itself — "the page size is fixed upstream, so the N+1 cannot fire" — never merely rank it below the work that shipped. A row that simply stops appearing reads as resolved, which is the one thing it is not.
 

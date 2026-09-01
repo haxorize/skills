@@ -47,7 +47,7 @@ Before the document is treated as final, offer it to them to read, and say why: 
 ## 6. What must not be in it
 
 - **Secret values**, and **anything about the departure itself** — both are the body's hard stops, and this is where they are most tempting to break.
-- **Blame.** The register surfaces undocumented, fragile, and strange code, much of it theirs. Describe the code and its risk, never the judgement: "uncommented, and only they have touched it" is a fact about the system; "they left a mess" is an opinion about a person, unusable to a successor, and it makes consent for every future run of this skill harder to get.
+- **Blame.** The register surfaces undocumented, fragile, and strange code, much of it theirs. Describe the code and its risk, never the judgment: "uncommented, and only they have touched it" is a fact about the system; "they left a mess" is an opinion about a person, unusable to a successor, and it makes consent for every future run of this skill harder to get.
 
 ## 7. Close
 

@@ -1,11 +1,13 @@
 ---
 name: backfill-adrs
-description: Sweep recent git history for architectural decisions that should have been recorded as ADRs but weren't, and write up the ones worth keeping. For recording a single fresh decision, reach for the standalone `adr` skill instead.
+description: Sweep recent git history for architectural decisions that should have been recorded as ADRs but weren't, and write up the ones worth keeping; the same sweep re-verifies the existing log, reporting an ADR whose named mechanism no longer resolves as STALE with three dispositions to pick from. For recording a single fresh decision, reach for `adr` instead.
 disable-model-invocation: true
 requires: writing-for-humans
 ---
 
 # Backfill ADRs
+
+Recover decisions the history made and nobody recorded: sweep a window of git log, dedupe every candidate against the existing ADR log, and write up only what survives. Three things bind the whole run and are stated here because they arrive late: a candidate no record owns is rejected unless it clears the three-criteria gate in [references/adr-format.md](references/adr-format.md), a decision is recorded as standing only once its mechanism is confirmed to still exist in the tree, and nothing is written until the user has been quizzed candidate by candidate — rejected ones are dropped without argument. One fresh decision is `adr`'s, not this sweep's.
 
 ## Workflow
 
@@ -19,7 +21,7 @@ Default suggestion: **last 90 days OR last 200 commits, whichever is shorter**. 
 git log --oneline --since="<date>" | head -<n>
 ```
 
-For each commit that smells like a design choice (new module, new dependency, schema change, infra change, test-strategy change), capture the SHA and one-line subject. Code shapes are candidates beside the log smells: a defensive check that looks unnecessary, a magic constant, a compatibility workaround, a boundary that does not follow from the domain. A candidate resolved from code alone carries an **inferred** or **unknown** label on its rationale; it is never recorded as confirmed.
+For each commit that smells like a design choice (new module, new dependency, schema change, infra change, test-strategy change), capture the SHA and one-line subject. Code shapes are candidates beside the log smells: a defensive check that looks unnecessary, a magic constant, a compatibility workaround, a boundary that does not follow from the domain. A candidate resolved from code alone carries an `[inferred]` or `[unknown]` label on its rationale; it is never recorded as confirmed.
 
 ### 3. Follow PR / work-item references via tracker dispatch
 

@@ -55,6 +55,35 @@
 # because the two anchors pin each other: a tree carrying one without the other
 # fails, whatever root it is.
 #
+# The nine house-style checks (round plan §5) are covered in both directions,
+# with one instance per ALTERNATIVE rather than one per check: British spelling
+# (a form in prose fires; the same word in a code span and in a URL stays
+# quiet), heading case (a SKILL.md H1 not in title case, and an H2 with three
+# mid-heading capitals, fire; an acronym, a word whose number is the next
+# token, a word carrying its own digit, and an em-dash clause opening after a
+# numbered label all stay quiet), skill-reference form (the descriptive "the X
+# skill" and a bare user-invoked name at a suggestion site fire; a model-invoked
+# name at the same site stays quiet), artifact filenames (an uppercase name and
+# an underscored one fire in one line whose rendered list is pinned; a
+# repo-convention name stays quiet), the label family (an unregistered token in
+# bold and one in backticks fire; a token registered in that tree's DOMAIN.md
+# stays quiet, and an isolated root takes the registration away to prove the
+# check reads the glossary rather than its own list), section pointers (all four
+# target forms fire — an inline link, a backticked skill name, a
+# `~/.claude/skills/` path and a `~/.claude/rules/` path — as does the branch
+# where the target names no file; a pointer that resolves stays quiet), and
+# orphaned references (one unlinked file fires; the three forms that count as a
+# pointer — a path from the skill root, a basename from a sibling reference, and
+# the installed path cited from another skill — each stay quiet). The
+# always-loaded byte budget and the loaded-file byte WARN cannot be carried by a
+# committed fixture without every root paying the bytes, so each takes an
+# isolated one-edit copy of the clean root: the budget row asserts the FAIL and
+# exit 1, the WARN row asserts the line, that it is NOT rendered as a FAIL, and
+# that the root still exits 0. Every quiet form above is asserted PRESENT in its
+# fixture by a `quiet_pin` row, so deleting one reds this run rather than
+# turning a reject row into a no-op. Both read guards are covered below with the
+# other read-error branches.
+#
 # All four read-error branches are covered, by a runtime `chmod 000` on
 # throwaway copies rather than by a fixture: the link extractor's, the Depends:
 # citation check's, the line cap's, and the ledger checks' two (the anchor grep,
@@ -118,14 +147,28 @@
 # and the classifier's unclaimed-file arm — walk_shipped_md emits only the
 # classes the arms above it claim, so no fixture can produce a path that
 # reaches its say_fail; it guards a tree added to the walk without an arm, and
-# has no input to grade it with. Several checks can be disabled outright with
-# this run still green; this list is the authority on which, and lint-skills.sh's
-# own header states what its scans never reach at all.
+# has no input to grade it with. Nor is the pass-4 spelling walk over docs/**
+# and global/README.md covered: neither fixture root carries those trees, so no
+# fixture can reach that loop and only the repo's own run exercises it. And the
+# word list, the acronym-and-literal list, and the proper-noun list are each
+# graded on ONE member — a word or a name dropped from any of the three stops
+# being checked with this run green. Several checks can be disabled outright
+# with this run still green; this list is the authority on which, and
+# lint-skills.sh's own header states what its scans never reach at all.
 #
 # What the covered list buys, stated no larger than it is: those shapes cannot
 # stop grading without this script saying so. It was measured, not assumed —
 # 31 mutations of lint-skills.sh graded by this script, 30 red and 1 silent
-# (the unclaimed-file arm above). The 30: each of the three ledger check calls
+# (the unclaimed-file arm above), and 24 more when the nine house-style checks
+# landed: each of the nine dropped from its caller; the H1 title-case test
+# disabled; each of the four section-pointer target arms dropped; the orphan
+# check's basename and installed-path arms dropped; the artifact-name exempt
+# list dropped; the spelling check's code-span strip and its URL strip dropped;
+# the heading-case acronym, next-token-number and own-digit exemptions dropped;
+# the label check's digit-and-underscore exemption dropped; and the DOMAIN.md
+# lookups in check_labels and check_heading_case each made to miss. All 24 red
+# — two of them only after the fixture that grades them was written, which is
+# what a mutation run is for. The 30: each of the three ledger check calls
 # removed; the consumer sweep's process substitution turned into a pipe, its
 # `hits -ge 2` loosened to `-ge 1`, its `hits -eq 3` moved to `-eq 4`, its
 # legend-owner wholesale arm removed, and its mask_examples dropped; the
@@ -256,6 +299,28 @@ expect "single-line description (continued line)" "src/continued-description/SKI
 expect "re-attach byte-size WARN" "WARN: src/oversize-body/SKILL.md is "
 expect "hook selftest (missing)" "global/hooks/orphan-hook.sh carries an '# Install note:' header, so it is a hook, and has no selftest — write global/hooks/orphan-hook-selftest.sh"
 expect "hook selftest (not executable)" "global/hooks/unexec-hook-selftest.sh is not executable"
+# The house-style checks (round plan §5, checks 2-9), each with its firing
+# instance in src/house-style/SKILL.md and its quiet neighbour in that skill's
+# references/quiet-forms.md — a file of its own, so a check that widens names
+# that path and reds a reject row by name rather than by line number.
+expect "British spelling" "src/house-style/SKILL.md uses a British spelling"
+expect "heading case (SKILL.md H1 not in title case)" "src/broken-links/SKILL.md H1 'Broken links (fixture)' is not in title case"
+expect "heading case (H2 not in sentence case)" "src/house-style/SKILL.md H2 'The Cold Reader Pass' (line 32) capitalizes 'Cold' 'Reader' 'Pass'"
+expect "skill-reference form (the descriptive form)" "src/house-style/SKILL.md writes \"the fixture-discipline skill\""
+expect "skill-reference form (a bare name at a suggestion site)" "src/house-style/SKILL.md suggests \`quoted-dep\` at an invocation site"
+# Both alternatives of the artifact-name pattern in one line, so dropping
+# either the uppercase or the underscore half changes the rendered list.
+expect "artifact filenames (uppercase and underscore)" "— Notes.md Progress_Log.md run_log.md ) — a file a run writes is lowercase with dashes"
+expect "label family (an unregistered token in bold)" "uses the ALL-CAPS label 'BLOCKEDX'"
+expect "label family (an unregistered token in backticks)" "uses the ALL-CAPS label 'COINED'"
+# One row per form the section-pointer check resolves a target from: dropping
+# an arm otherwise leaves the other three firing and the selftest green.
+expect "section pointers (inline link)" "src/house-style/SKILL.md cites '§ No Such Heading is where it lands' (line 25), and src/house-style/references/quiet-forms.md carries no heading by that name"
+expect "section pointers (backticked skill name)" "cites '§ No Such Section' (line 26), and src/fixture-discipline/SKILL.md carries no heading"
+expect "section pointers (a ~/.claude/skills/ path)" "cites '§ Missing Skill Section' (line 27), and src/fixture-discipline/SKILL.md carries no heading"
+expect "section pointers (a ~/.claude/rules/ path)" "cites '§ Missing Rule Section' (line 28), and global/rules/body-checked.md carries no heading"
+expect "section pointers (a target that is not a file)" "cites '§ Anything' (line 30) in src/fixture-discipline/references/gone.md, which is not a file"
+expect "orphaned references" "src/broken-links/references/orphaned.md is linked from nowhere"
 expect "script selftest (missing)" "scripts/orphan-tool.sh has no selftest — write scripts/orphan-tool-selftest.sh"
 expect "script selftest (not executable)" "scripts/unexec-tool-selftest.sh is not executable"
 expect "git-hook selftest (missing)" "scripts/git-hooks/orphan-hook has no selftest — write scripts/git-hooks/orphan-hook-selftest.sh"
@@ -338,6 +403,20 @@ reject "git-hook selftest (the hook with an unexecutable selftest is itself exec
 # The pointer check fires on the one script that lacks the line and on nothing
 # else: every other fixture script carries it, so a matcher that widened past
 # "line 2 after a shebang, line 1 without one" reds here.
+# The quiet neighbour of each house-style check, one row per exemption. Each
+# names a substring only a WIDENED check could produce — the neighbour itself,
+# never the file, because one expect row above legitimately names
+# quiet-forms.md as the TARGET of the broken pointer.
+reject "skill-reference form (a model-invoked name at a suggestion site)" "suggests \`fixture-discipline\`"
+reject "artifact filenames (a repo-convention name is exempt)" "— README.md ) — a file a run writes"
+reject "label family (a label registered in DOMAIN.md)" "label 'FIXTUREPASS'"
+reject "British spelling (a form inside a code span)" "— cancelled )"
+reject "heading case (an acronym and a numbered label mid-heading)" "src/house-style/references/quiet-forms.md H2"
+reject "section pointers (a pointer that resolves)" "cites '§ The quiet half"
+reject "orphaned references (a reference its body links)" "references/quiet-forms.md is linked from nowhere"
+reject "orphaned references (a sibling reference linked by basename)" "references/sibling-note.md is linked from nowhere"
+reject "orphaned references (a reference cited by its installed path from another skill)" "references/cited-by-path.md is linked from nowhere"
+reject "British spelling (a form inside a URL)" "— behaviour )"
 reject "conventions pointer (a shebang-less library carrying it on line 1)" "scripts/quiet-lib.sh does not open with"
 reject "conventions pointer (no-pointer's own selftest carries it)" "scripts/no-pointer-selftest.sh does not open with"
 reject "hook selftest (library exempt)" "global/hooks/quiet-lib.sh"
@@ -361,7 +440,7 @@ expect_rc "the lint against the fixture tree" 1 "$status"
 # The count of FAIL lines is pinned: a check that begins firing on a fixture
 # it should leave alone reds here even when no substring row names the line.
 nfail=$(printf '%s\n' "$output" | grep -c '^FAIL: ')
-[ "$nfail" -eq 50 ] || selftest_fail "expected exactly 50 FAIL lines against the fixture tree, got $nfail"
+[ "$nfail" -eq 65 ] || selftest_fail "expected exactly 65 FAIL lines against the fixture tree, got $nfail"
 # The shared-trigger-phrase fixtures are pinned by property, as near_bytes and
 # bulk_bytes are below: every row above them asserts a FAIL that appears or a
 # FAIL that does not, and each of those readings is silently satisfied by a
@@ -388,6 +467,32 @@ phrase_pin "$clean_fixtures/src/which-skill/SKILL.md" "clean-skill's phrase in a
 # spans are compared": two model-invoked descriptions share it, so widening the
 # extractor's alternation to backticks turns this root red — which is what makes
 # the exemption an assertion rather than a sentence in a header.
+# The house-style checks' quiet neighbours are pinned the same way and for the
+# same reason: every reject row above is satisfied by a fixture whose quiet
+# line someone deleted, so the lines themselves are asserted present. The
+# firing instances need no pin — an expect row that stops matching says so.
+quiet_pin() {
+  local f=$1 what=$2 pattern=$3
+  if [ ! -f "$f" ]; then
+    selftest_fail "$f is missing — it carries $what for the house-style checks; restore it rather than reading the reject rows above as still graded"
+  elif ! grep -qF -- "$pattern" "$f"; then
+    selftest_fail "$f no longer carries $what — the reject row above stopped grading it; put it back rather than deleting the assertion"
+  fi
+}
+quiet="$fixtures/src/house-style/references/quiet-forms.md"
+quiet_pin "$quiet" "a model-invoked name at a suggestion site" 'run `fixture-discipline` first'
+quiet_pin "$quiet" "a repo-convention filename the artifact-name shape exempts" 'the artifact-name shape: `README.md`'
+quiet_pin "$quiet" "a label this tree registers" '**FIXTUREPASS**'
+quiet_pin "$quiet" "a British form inside a code span" 'an order in `cancelled`'
+quiet_pin "$quiet" "a British form inside a URL" 'https://example.invalid/docs/behaviour'
+quiet_pin "$quiet" "a section pointer that resolves" '[the sibling note](sibling-note.md) § The sibling half'
+quiet_pin "$quiet" "an acronym mid-heading" '## The HTML half'
+quiet_pin "$quiet" "an em-dash clause opening after a numbered label" '## Phase 2 — Reproduce the thing'
+quiet_pin "$quiet" "a label whose number is the next token" '## The adversary pass (Tier 2/3)'
+quiet_pin "$quiet" "an identifier carrying its own digit" '## The Sprint2 window'
+quiet_pin "$fixtures/src/broken-links/SKILL.md" "the installed-path citation of another skill's reference, which is the orphan check's third arm" '`~/.claude/skills/house-style/references/cited-by-path.md`'
+quiet_pin "$fixtures/src/house-style/references/quiet-forms.md" "the basename link that is the orphan check's second arm" '(sibling-note.md)'
+
 for capped in clean-skill near-cap; do
   phrase_pin "$clean_fixtures/src/$capped/SKILL.md" "the backticked span two model-invoked descriptions share, which only-double-quoted-spans must leave quiet" '`pin the bound`'
 done
@@ -532,6 +637,47 @@ isolated_case "rule-reworded" 's/\*\*Exactly one stored status\.\*\*/**Exactly o
 isolated_case "two-rules" 's/\z/\n- **Exactly one stored status.** `marketed`, `verified`, `refuted`.\n/' \
   "src/ledger-legend/references/complete-consumer.md" \
   "two files state the evaluation ledger's stored-status rule"
+
+# The always-loaded budget. It is a per-DIRECTORY total, so no committed
+# fixture can carry it without every other root paying the bytes: the clean
+# tree's one rule file is padded past 12,000 in a copy instead.
+isolated_case "rules-budget" 's/\z/"\n" . ("padding that carries the rules directory past the always-loaded budget. " x 200) . "\n"/e' \
+  "global/rules/clean-rule.md" \
+  "over the 12,000-byte budget for the always-loaded layer"
+# The two checks that read DOMAIN.md as their registry, each graded by taking
+# the registration away rather than by adding a violation: a check that stopped
+# reading the glossary and fell back to its own list stays green in the clean
+# root and reds here.
+isolated_case "label-unregistered" 's/`FIXTUREPASS` and //' \
+  "DOMAIN.md" \
+  "uses the ALL-CAPS label 'FIXTUREPASS', which DOMAIN.md's Status-marker row does not register"
+isolated_case "proper-noun-unregistered" 's/\*\*Cold-reader pass\*\*/**Fresh-eyes read**/' \
+  "DOMAIN.md" \
+  "capitalizes 'Cold-reader' mid-heading"
+
+# The loaded-file byte WARN, which by construction cannot move the exit status
+# — so it takes its own helper: the same one-edit copy of the clean root, with
+# the assertion that the line appears AND that the root still exits 0. A WARN
+# that started FAILing would pass the substring row and red here.
+isolated_warn_case() {  # name, perl expression, file, expected substring
+  local root="$isolated_parent/$1"
+  mkdir -p "$root" && cp -R "$clean_fixtures/." "$root/" || {
+    selftest_skip "could not copy the clean tree for the '$1' case — that row was not exercised."
+    return 0
+  }
+  perl -0pi -e "$2 or die" "$root/$3" 2>/dev/null || {
+    selftest_skip "the edit for the '$1' case matched nothing in $3 — the fixture was renamed or reworded, so that row was not exercised. Fix the pattern rather than reading the row as still graded."
+    return 0
+  }
+  local out rc
+  out=$(LINT_ROOT="$root" bash scripts/lint-skills.sh 2>&1); rc=$?
+  expect_in "$out" "the WARN did not fire in the isolated '$1' root" "$4"
+  reject_in "$out" "the '$1' WARN was rendered as a FAIL" "FAIL: $4"
+  expect_rc "the lint against the isolated '$1' root" 0 "$rc"
+}
+isolated_warn_case "oversize-reference" 's/\z/"\n" . ("padding that carries this reference past the loaded-file bound. " x 260) . "\n"/e' \
+  "src/clean-skill/references/note.md" \
+  "src/clean-skill/references/note.md is "
 fi
 
 # ---------------------------------------------------------------------------
@@ -592,6 +738,12 @@ else
   # status 1. Without these rows either could be deleted with this run green.
   inject_expect "line-cap read-error" "src/broken-links/references/real-reference.md could not be read for its line count"
   inject_expect "evaluation-ledger anchor read-error" "src/broken-links/references/real-reference.md could not be read for the evaluation ledger anchor"
+  # The two guards the house-style set and the heading-case check carry, for
+  # the same reason: five awk programs on an unreadable file printed errors on
+  # stderr and nothing on stdout, which reads from outside exactly like a file
+  # that passed all five.
+  inject_expect "house-style read-error" "src/broken-links/references/real-reference.md could not be read — the house-style checks"
+  inject_expect "heading-case read-error" "src/broken-links/references/real-reference.md could not be read — the heading-case check"
 
   # The same injection against the clean root, which is what makes an exit-status
   # assertion mean anything. Asserting exit 1 against the broken tree is vacuous:
@@ -636,5 +788,5 @@ fi
 # status alone. Which rows went ungraded is the SKIP lines' to say, not this
 # one's: six sites can set it, across two blocks that skip for different reasons.
 selftest_close \
-  "lint self-test clean — every fixture failure fired, every exempt form stayed quiet, the isolated roots moved the exit status, and both read-error branches fired on an unreadable file." \
+  "lint self-test clean — every fixture failure fired, every exempt form stayed quiet, the isolated roots moved the exit status, and every read-error branch fired on an unreadable file." \
   "clean on the fixture trees — every fixture failure fired and every exempt form stayed quiet — but at least one throwaway-root block could not be built, so the rows it carries went ungraded. The SKIP line or lines above name which; a run that ends here has not graded them."

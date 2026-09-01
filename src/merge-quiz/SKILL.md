@@ -10,13 +10,15 @@ argument-hint: "[<base>|<PR number>] — defaults to the current branch against 
 
 Call the Skill tool with `writing-for-humans` before writing — the report is prose a person reads cold.
 
-You are the reader's check on their own understanding, not a second review. `review-changes` audits the change's claims; this skill makes the person who is about to approve the change prove they hold a working model of it. It runs when the reader was not here for the build — a session they handed off, an agent that ran unattended, a teammate's PR they are asked to approve.
+You are the reader's check on their own understanding, not a second review. The approval itself stays the reader's act: this skill never merges, comments on, or approves anything. `review-changes` audits the change's claims; this skill makes the person who is about to approve the change prove they hold a working model of it. It runs when the reader was not here for the build — a session they handed off, an agent that ran unattended, a teammate's PR they are asked to approve.
 
-## 1. Read the change
+## Workflow
 
-Resolve the diff: the argument's base or PR, else `git diff <merge-base>...HEAD` plus `git log <merge-base>..HEAD --oneline`. Read every hunk, then read the code each hunk calls into and is called from — the quiz's questions live in those neighbours, not in the hunks.
+### 1. Read the change
 
-## 2. The report
+Resolve the diff: the argument's base or PR, else `git diff <merge-base>...HEAD` plus `git log <merge-base>..HEAD --oneline`. Read every hunk, then read the code each hunk calls into and is called from — the quiz's questions live in those neighbors, not in the hunks.
+
+### 2. The report
 
 Three parts, in this order, each a few lines:
 
@@ -24,12 +26,12 @@ Three parts, in this order, each a few lines:
 - **How it interacts.** The code paths the diff does not show: the callers of what changed, the state it reads or writes that something else also reads or writes, the default it altered for every existing caller, the test that used to cover this and what it covers now. This section is the one the reader cannot get from the diff view; it earns the skill.
 - **What you should already know.** One line per assumption the change rests on that the reader must hold to judge it (an invariant, an ordering, a contract with another system).
 
-## 3. The quiz
+### 3. The quiz
 
-Five to eight questions, all on **interaction effects** — what happens at a boundary the diff crosses — never on recall of what the diff says. Shapes that work: "After this change, what does `X` receive when `Y` is empty?"; "Which existing caller's behaviour changed, and how?"; "If this deploys before the migration, what breaks?" Number them like a `grilling` round — one line each ending in `?` — but without its 💡 recommended-answer line: you hold the answer key back. Ask them all at once, and wait.
+Five to eight questions, all on **interaction effects** — what happens at a boundary the diff crosses — never on recall of what the diff says. Shapes that work: "After this change, what does `X` receive when `Y` is empty?"; "Which existing caller's behavior changed, and how?"; "If this deploys before the migration, what breaks?" Number them like a `grilling` round — one line each ending in `?` — but without its 💡 recommended-answer line: you hold the answer key back. Ask them all at once, and wait.
 
 Grade each answer right, wrong, or partial against the key, and say which. A miss is named as one of two things: a **model gap** (the reader's picture of the code was wrong — the report, or the code, needs to show that part) or a **too-clever change** (the change's effect is one a competent reader cannot predict from reading it — a finding against the change, not the reader). Two failed rounds is a verdict on the change: recommend splitting or simplifying it, and stop quizzing.
 
-## 4. The result
+### 4. The result
 
-One line: `merge-quiz: passed (7/7, round 1)`, `passed (6/8, round 2)`, or `failed after 2 rounds — split recommended: <why>`. It lands in the handoff when this session writes one, or as a line beside the completion audit the build session left. The approval itself stays the reader's act; this skill never merges, comments on, or approves anything.
+One line: `merge-quiz: passed (7/7, round 1)`, `passed (6/8, round 2)`, or `failed after 2 rounds — split recommended: <why>`. It lands in the handoff doc's completion audit when this session writes one; with no handoff to write, it is reported in the session and nowhere else — this skill creates no artifact of its own.

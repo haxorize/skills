@@ -13,6 +13,18 @@ Every `scripts/<name>.sh` and `scripts/git-hooks/<name>` that is not a selftest,
 
 `selftest-lib.sh`'s header defines a selftest's three outcomes and what each exit status means.
 
+## The exit-code taxonomy
+
+Every script under `scripts/` and every hook under `scripts/git-hooks/` renders one of five statuses, and `DOMAIN.md` registers them under this name:
+
+- **0** — clean.
+- **1** — at least one `FAIL`.
+- **2** — nothing, or not everything, was checked: a linter over an empty tree, a selftest that left a branch unexercised (`SELFTEST PARTIAL`), a `skill-usage.sh` count carrying a `+` floor.
+- **3** — usage error.
+- **4** — a check never ran, so the run is not a verdict on anything: the script is broken, which is a different claim from the corpus being wrong.
+
+A `WARN` never moves the status. `scripts/git-hooks/post-merge` and `sweep-corpus` read the number alone, so the 2 is what tells a narrower clean from a whole one. A script states its own roster in `--help`; it does not restate this table. [ADR-0068](../docs/adr/0068-lint-adrs-enforces-two-way-pointers.md) set 0-3 and [ADR-0072](../docs/adr/0072-shared-trigger-phrase-check-and-never-ran-is-not-clean.md) added 4.
+
 ## A check lands with its fixture and its mutation, in both directions
 
 The `Why not a hook or lint:` line in the ten `scripts/lint-fixtures*/global/rules/*.md` fixtures is **inert filler** — no check parses it (`grep -c 'Why not a hook' scripts/lint-skills.sh` → 0), and the real rule files stopped carrying it on 2026-08-31, when the control moved into ADR-0053's amendments. Each fixture's line says what that fixture is for, which is why it stays; do not copy the key into a new rule file.

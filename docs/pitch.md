@@ -9,7 +9,7 @@ Everything is plain files in a git repo: readable, editable, versioned, with no 
 ## Problems it removes
 
 - "Done" without evidence. Every claim in a commit message, ticket comment, or status line is checked against the diff, the command output, or the ticket before it is written, and counts are re-measured at write time. The check is the loaded discipline's own rule, so it travels with the agent into every repo.
-- Unasked commits and pushes. Nothing lands without an explicit ask in the conversation, or a standing authorisation in the repo's `Landing:` block (a short policy section in its `CLAUDE.md`).
+- Unasked commits and pushes. Nothing lands without an explicit ask in the conversation, or a standing authorization in the repo's `Landing:` block (a short policy section in its `CLAUDE.md`).
 - Mass edits that rewrite unlisted files. In a directory that opts in with a marker file, an in-place `sed`/`perl` edit is refused; the agent must search first and edit each listed match with an edit tool.
 - Bypassed safety hooks. `git commit --no-verify`, its short and prefix forms, and the config override that skips hook paths are refused before they run.
 - Unreviewed pushes. In a repo whose `Landing:` block says review is required, a push is refused unless a review report exists whose recorded tree hash equals the tree being pushed. The review skill writes the report and the hash; a fix pass re-stamps it.

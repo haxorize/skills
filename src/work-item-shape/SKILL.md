@@ -6,7 +6,7 @@ requires: writing-for-humans
 
 # Work-Item Shape
 
-This discipline owns what a good work-item body *is* — any tier (Feature, Story, Task, Bug, plain issue), any tracker. The `to-*` publishers own how one enters a tracker: templates, parent reconciliation, tags, update modes. When both apply, shape here, publish there. One carve-out: a body carrying a `Chart-type:` line is a `chart-course` decision ticket — a question, not a deliverable — and follows chart-format, not this behavior's goal/AC rules.
+This discipline owns what a good work-item body *is* — any tier (Feature, Story, Task, Bug, plain issue), any tracker.
 
 ## Routing gate — before drafting anything
 
@@ -42,10 +42,10 @@ Done conditions by work type:
 
 | Work type | The criteria must pin |
 |---|---|
-| Bug | Reproduction before fix — a check that fails before the change and passes after |
-| Performance | Metric, threshold, measurement method, run count, and the correctness criterion the optimisation must not break, stated as its own pass/fail criterion ("under 200 ms" *and* "no result dropped") — all five, because a bare number is met by losing what it measured |
-| Research or spike | The decision the work must enable, and the evidence standard that settles it |
-| Operations | The healthy end state, the observation window, the rollback trigger |
+| **Bug** | Reproduction before fix — a check that fails before the change and passes after |
+| **Performance** | Metric, threshold, measurement method, run count, and the correctness criterion the optimization must not break, stated as its own pass/fail criterion ("under 200 ms" *and* "no result dropped") — all five, because a bare number is met by losing what it measured |
+| **Research or spike** | The decision the work must enable, and the evidence standard that settles it |
+| **Operations** | The healthy end state, the observation window, the rollback trigger |
 
 Close the section by reading its criteria once as a set against the goal: if every criterion could pass and the goal still go unmet, the gap names the missing criterion; if two settle the same fact, one goes. The publishers check that children cover the criteria; nothing but this read checks that the criteria cover the goal.
 
@@ -84,7 +84,7 @@ Size by structure, never hours: one item is one deliverable, independently verif
 
 Too big announces itself as an "and" in the title, or a bundling verb there — *manage*, *handle*, *maintain*, *support* — that hides one: split it. Criteria that can't be checked independently are the same signal: split. Split by outcome, never by step: a multi-step workflow sliced one step per item looks vertical, since each step touches every layer, and delivers nothing until the last step lands; the first slice runs the whole workflow at its crudest, and later slices add the intermediate steps. Too small to demo alone — merge it upward into its parent rather than filing it.
 
-Watch the **scope-reduction vocabulary** in a draft — "v1", "for now", "hardcoded", "placeholder", "will be wired later". Each either names deferred work that lands explicitly in out-of-scope or a follow-up item, or it quietly under-delivers the decision the item claims to implement. The only resolutions are deliver fully or propose a split; a body can cite its parent decision and still deliver a fraction of it.
+Watch the **scope-reduction vocabulary** — the surface **scope drift** shows on, in a redraft as much as a first draft — — "v1", "for now", "hardcoded", "placeholder", "will be wired later". Each either names deferred work that lands explicitly in out-of-scope or a follow-up item, or it quietly under-delivers the decision the item claims to implement. The only resolutions are deliver fully or propose a split; a body can cite its parent decision and still deliver a fraction of it.
 
 ## Naming drift
 
@@ -105,3 +105,7 @@ Self-review sees what you meant, not what you wrote — before an item publishes
 - Fold real gaps back into the draft. One pass, not a loop.
 
 When the pass (or any self-review) works from checklist items, the items test the English, not the future code: each interrogates the requirements text itself — "is 'prominent display' quantified with a size or position?" — and tags what it probes (a gap, an ambiguity, a conflict, an assumption, or the section it checks). An item that starts "Verify/Test/Confirm" plus implementation behavior fails that test.
+
+## Boundary
+
+This discipline shapes the body; it never files it. The `to-*` publishers own how one enters a tracker — templates, parent reconciliation, tags, update modes — so when both apply, shape here and publish there, and a tier-named ask routes to its publisher rather than to a lookalike drafted here. A body carrying a `Chart-type:` line is a `chart-course` decision ticket — a question, not a deliverable — and follows chart-format, not the goal and criteria rules above. Loading an item that already exists on a tracker is `/from-ticket`'s, and building what the item asks for is `implement`'s.

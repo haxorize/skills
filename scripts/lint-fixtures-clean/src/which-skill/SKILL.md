@@ -4,6 +4,6 @@ description: Router for this fixture root, present because router coverage requi
 disable-model-invocation: true
 ---
 
-# Which skill
+# Which Skill
 
 `clean-skill`, `near-cap` and `ledger-legend` are the skills here.

@@ -51,7 +51,7 @@ Same fields, same order, every time — a reader hunting one rule in a long docu
 ### C-014 · Cancel an order  ·  [contract]
 **Actor:** the order's owner, or any support agent.
 **Trigger:** an explicit cancel request naming the order.
-**Preconditions:** the order is in `placed` or `paid`. Cancelling a `shipped` or already `cancelled` order fails with E-31 and changes nothing.
+**Preconditions:** the order is in `placed` or `paid`. Canceling a `shipped` or already `cancelled` order fails with E-31 and changes nothing.
 **Rules:** a paid order refunds the full captured amount to the original payment method; refunds are issued at most once per order however many times cancel is called. Cancellation within 30 minutes of placement is free; after that a 10% restocking fee is deducted from the refund and itemized in the refund record.
 **Effects:** the order moves to `cancelled`; reserved stock is released; the refund is recorded with amount, reason, and timestamp.
 **Outputs:** the updated order. A cancellation notice reaches the customer — not necessarily synchronously.
@@ -60,7 +60,7 @@ Same fields, same order, every time — a reader hunting one rule in a long docu
 **Evidence:** trail `02-capabilities.md#C-014` — the 30-minute window is an [inference] from the code with no test covering it; flagged for a human.
 ```
 
-The right one is longer, contains no implementation, and can be built in any language. Every rule executable, every obligation labelled, every gap named instead of smoothed — that difference is the whole skill.
+The right one is longer, contains no implementation, and can be built in any language. Every rule executable, every obligation labeled, every gap named instead of smoothed — that difference is the whole skill.
 
 ## 5. The leak sweep: strip the implementation on the way out
 
@@ -79,7 +79,7 @@ Nobody will rebuild the system while you wait, so run the proxy, before declarin
   grep -nE '\b[a-z0-9_]+/[a-z0-9_./-]+\.[a-z]+' contract.md
   ```
 
-  The first catches a source-file name with or without a `:42` after it; the second catches a bare path (`services/order.py`, `src/app/handlers`). Both over-match on purpose — a wire path or a table name will show up, and keeping it is the judgement the sweep above describes. What neither reaches is the subtle leak: framework nouns, vendor names, and layering vocabulary, found only by reading.
+  The first catches a source-file name with or without a `:42` after it; the second catches a bare path (`services/order.py`, `src/app/handlers`). Both over-match on purpose — a wire path or a table name will show up, and keeping it is the judgment the sweep above describes. What neither reaches is the subtle leak: framework nouns, vendor names, and layering vocabulary, found only by reading.
 - **Pass D — the numbers.** Every threshold, timeout, limit, and percentage traces to a trail citation. A confidently stated number nobody verified is the single most damaging failure here, because it will be implemented exactly.
 
 Report the audit in one line at `stop`: questions raised and resolved, spot-check miss rate, leaks removed.
@@ -89,8 +89,8 @@ Report the audit in one line at `stop`: questions raised and resolved, spot-chec
 Close with a flat, checkable list — one line per [contract] behavior, phrased as a test a reimplementation passes or fails, each carrying its capability ID:
 
 ```markdown
-- [ ] C-014 · Cancelling a `paid` order within 30 minutes refunds 100% of the captured amount.
-- [ ] C-014 · Cancelling a `shipped` order fails with E-31 and changes no state.
+- [ ] C-014 · Canceling a `paid` order within 30 minutes refunds 100% of the captured amount.
+- [ ] C-014 · Canceling a `shipped` order fails with E-31 and changes no state.
 - [ ] C-014 · Two concurrent cancels produce exactly one refund.
 ```
 
@@ -100,7 +100,7 @@ This converts the contract into an acceptance suite someone can work through and
 
 - **Secret values.** Kind, purpose, and absence behavior only. A credential that appeared in chat during the run does not enter the contract, and say plainly that it should be rotated.
 - **Real data.** Every example value is invented.
-- **Judgement about the people who wrote it.** "This appears unintended and any external caller can observe it" is a fact about the system; "this is a mess" is an opinion, unusable to a reimplementer, and ages badly in a document that outlives everyone's employment.
+- **Judgment about the people who wrote it.** "This appears unintended and any external caller can observe it" is a fact about the system; "this is a mess" is an opinion, unusable to a reimplementer, and ages badly in a document that outlives everyone's employment.
 - **Architecture.** No module maps, dependency graphs, or layering diagrams; what is interesting and does not survive reimplementation belongs in a KT map.
 
 ## 9. Stamp and announce

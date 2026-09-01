@@ -4,26 +4,26 @@ Two halves, read on two different triggers.
 
 **The quick table** — read it when the inclusion test lands close to the line, or the item is in one of its categories, the ones that are both behavior and implementation.
 
-**Behavior that comes from the stack** — read and sweep it **unconditionally at Stage 6**, item by item. It is not a close-call reference: nobody decided these behaviors, so none of them presents as a judgement call, and that is exactly why a port diverges on them silently. Stage 6's criterion is not met until every item on that list is stated or recorded as not found.
+**Behavior that comes from the stack** — read and sweep it **unconditionally at Stage 6**, item by item. It is not a close-call reference: nobody decided these behaviors, so none of them presents as a judgment call, and that is exactly why a port diverges on them silently. Stage 6's criterion is not met until every item on that list is stated or recorded as not found.
 
 ## The quick table
 
 | Category | In the contract | Left in the source |
 | --- | --- | --- |
-| Domain data | concepts, identity rules, invariants, lifecycles, derived-value formulas, required vs optional, value ranges | table layout, column types, indexes, ORM shape |
-| Database schema | **only where a consumer you cannot redeploy reads it** — then verbatim, as `exact` | otherwise everything |
-| API surface | paths, methods, status codes, request and response shapes, error bodies, pagination, versioning, idempotency keys | routing library, serializer, controller layout |
-| Auth | who may do what, session and token lifetimes, expiry and refresh, lockout, revocation, what a failure looks like to the caller | JWT vs session vs opaque token, hashing library, middleware order |
-| Permissions | the complete actor × capability matrix, deny cases included, and what a denial looks like | how the checks are wired |
-| Integrations | what is sent and received and when, failure and retry semantics, idempotency, sandbox vs live differences, what happens when it is down | SDK choice, client wrapper, connection pooling |
-| Persistence | durability and consistency guarantees, what survives a restart or crash, transaction boundaries *as observable atomicity*, retention | storage engine, migration history, caching layer |
-| Background work | trigger, cadence, delivery guarantees, ordering, idempotency, observable effects, behavior on failure and on catch-up | the scheduler or queue technology |
-| Config | every key that changes behavior, its default, its precedence, what changes when it is absent | file format, loading mechanism, secret store |
-| Errors | user-visible messages and codes, which are retryable, what state is left behind | the exception hierarchy |
-| Migrations | data-repair rules and compatibility windows still enforced | the migration history itself |
-| Caching | only where observable — staleness windows, invalidation guarantees, what a user can see go stale | the cache |
-| Logging & metrics | only what something outside depends on — an alert parsing a log line, a dashboard metric, an audit trail with a retention requirement | everything else |
-| Feature flags | the behavior of each state, and which is the default | the flag system |
+| **Domain data** | concepts, identity rules, invariants, lifecycles, derived-value formulas, required vs optional, value ranges | table layout, column types, indexes, ORM shape |
+| **Database schema** | **only where a consumer you cannot redeploy reads it** — then verbatim, as `exact` | otherwise everything |
+| **API surface** | paths, methods, status codes, request and response shapes, error bodies, pagination, versioning, idempotency keys | routing library, serializer, controller layout |
+| **Auth** | who may do what, session and token lifetimes, expiry and refresh, lockout, revocation, what a failure looks like to the caller | JWT vs session vs opaque token, hashing library, middleware order |
+| **Permissions** | the complete actor × capability matrix, deny cases included, and what a denial looks like | how the checks are wired |
+| **Integrations** | what is sent and received and when, failure and retry semantics, idempotency, sandbox vs live differences, what happens when it is down | SDK choice, client wrapper, connection pooling |
+| **Persistence** | durability and consistency guarantees, what survives a restart or crash, transaction boundaries *as observable atomicity*, retention | storage engine, migration history, caching layer |
+| **Background work** | trigger, cadence, delivery guarantees, ordering, idempotency, observable effects, behavior on failure and on catch-up | the scheduler or queue technology |
+| **Config** | every key that changes behavior, its default, its precedence, what changes when it is absent | file format, loading mechanism, secret store |
+| **Errors** | user-visible messages and codes, which are retryable, what state is left behind | the exception hierarchy |
+| **Migrations** | data-repair rules and compatibility windows still enforced | the migration history itself |
+| **Caching** | only where observable — staleness windows, invalidation guarantees, what a user can see go stale | the cache |
+| **Logging & metrics** | only what something outside depends on — an alert parsing a log line, a dashboard metric, an audit trail with a retention requirement | everything else |
+| **Feature flags** | the behavior of each state, and which is the default | the flag system |
 
 ## Behavior that comes from the stack
 

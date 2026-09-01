@@ -18,7 +18,7 @@ Check [`docs/lineage.md`](docs/lineage.md) first.
 
 ## Adding, renaming, or removing a skill, or changing how one fits the flows
 
-Update [`src/which-skill/SKILL.md`](src/which-skill/SKILL.md) and `README.md`'s skill map in the same change — a new caller relation or a new `requires:` edge counts as a change to how a skill fits. Lint catches a missing mention, never a wrong blurb.
+Update [`src/which-skill/SKILL.md`](src/which-skill/SKILL.md) and `README.md`'s skill map in the same change; a new caller relation or a new `requires:` edge counts as a change to how a skill fits. A skill under `.claude/skills/` updates the README map only — the router covers the hoisted suite, and neither repo-local skill has an entry there. Lint catches a missing mention, never a wrong blurb.
 
 ## Touching a script or hook
 
@@ -26,7 +26,7 @@ Read [`scripts/README.md`](scripts/README.md) first. The `pre-commit` git hook r
 
 ## Review lenses
 
-The instruction-file lens in this repo also runs a **pruning test** against the pruning grounds in [`src/writing-for-agents/SKILL.md`](src/writing-for-agents/SKILL.md): for every rule the diff adds or edits, report keep / condense / move / delete, with the covering rule named for anything but keep (the rule elsewhere that already says it, or the reason nothing does). A skill-change review that never reports this ran the lens on another repo's terms. The same lens also reports, row by row, conformance with the house-style rows in [`src/write-skill/SKILL.md`](src/write-skill/SKILL.md)'s `## Review checklist` — the single home of the judgment conventions (voice, spine, label families, relocation condition, table shape).
+The instruction-file lens in this repo also runs a **pruning test** against the **Deletion grounds** in [`src/writing-for-agents/SKILL.md`](src/writing-for-agents/SKILL.md): for every rule the diff adds or edits, report keep / condense / move / delete, with the covering rule named for anything but keep (the rule elsewhere that already says it, or the reason nothing does). A skill-change review that never reports this ran the lens on another repo's terms. The same lens also reports, row by row, conformance with the house-style rows in [`src/write-skill/SKILL.md`](src/write-skill/SKILL.md) § Review checklist — the single home of the judgment conventions (voice, spine, label families, relocation condition, table shape).
 
 ## Landing
 

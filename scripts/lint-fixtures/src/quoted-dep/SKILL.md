@@ -4,7 +4,7 @@ description: Fixture whose only Skill-tool and slash mentions are quoted, parent
 disable-model-invocation: true
 ---
 
-# Quoted dep
+# Quoted Dep
 
 A quoted example stays exempt: "Call the Skill tool with `fixture-discipline`" and "Run the `/fixture-discipline` skill" are how the guide quotes the live form and the retired one, and so is an aside (`caller` → Call the Skill tool with `fixture-discipline`, never `/fixture-discipline`).
 

@@ -1,6 +1,6 @@
 # Story — Update mode
 
-`--update <story-id>` patches an existing Story in place. Skips tracker resolution (uses the Story's existing project), parent resolution (already linked), and approach selection (already chosen at creation). Runs codebase exploration only when the proposed change expands scope.
+`--update <story-id>` patches an existing Story in place. Skips tracker resolution (uses the Story's existing project), parent resolution (already linked), approach selection (already chosen at creation), the parent's map stamp (step 10), and relation projection (step 11) — a re-snapshot of the parent map is `/to-feature --update`'s job, not this one's. Runs codebase exploration only when the proposed change expands scope.
 
 ## Cold-start
 
@@ -45,8 +45,8 @@ If the update adds or removes ACs, changes the module list, or reshapes layers, 
   ```bash
   az boards work-item update --id <story-id> \
     --title "<updated-title>" \
-    --description @desc.html \
-    --fields "Microsoft.VSTS.Common.AcceptanceCriteria=@acs.html"
+    --description @description.html \
+    --fields "Microsoft.VSTS.Common.AcceptanceCriteria=@acceptance.html"
   ```
 - **GitHub:** `gh issue edit <story-number> --title "<updated-title>" --body-file <draft>`.
 

@@ -1,15 +1,15 @@
 ---
 name: ship
-description: Carry a green, reviewed change to a closed ticket — proposes the commit split, then lands it through a PR where someone must approve it or directly where nobody must, with every claim checked by the committing discipline.
+description: Carry a green, reviewed change to a landed commit and, where the repo has a tracker, a closed ticket — proposes the commit split, then lands it through a PR where someone must approve it or directly where nobody must, with every claim checked by the committing discipline.
 disable-model-invocation: true
 requires: committing
 ---
 
 # Ship
 
-The last beat of the main flow: a change that is green and reviewed becomes commits, lands on the trunk — through a PR where someone must approve it, directly where nobody must — and closes its ticket. This skill owns the **split** and the **PR path**; the claims rule, the closing comment, the blocked-action protocol, and every outward act are the `committing` discipline's. Call the Skill tool with `committing` now; if you don't see a `Launching skill: committing` line, stop and call it again before going on.
+The last beat of the main flow: a change that is green and reviewed becomes commits, lands on the trunk — through a PR where someone must approve it, directly where nobody must — and, where the repo has a tracker, closes its ticket. This skill owns the **split** and the **PR path**; the claims rule, the closing comment, the blocked-action protocol, and every outward act are the `committing` discipline's. Call the Skill tool with `committing` now; if you don't see a `Launching skill: committing` line, stop and call it again before going on.
 
-It does not build, refactor, or review. Arrive here with the work already green (`feedback-loops` ran) and already reviewed (`review-changes` ran, findings addressed). If either is missing, say so and stop — and "reviewed" is a claim `committing` checks against a report, not a word this skill takes on faith.
+It does not build, refactor, or review. Arrive here with the work already green (`feedback-loops` ran) and already reviewed (`review-changes` ran, findings addressed). If either is missing, say so and stop — and "reviewed" is a claim `committing` checks against a report, not a word this skill takes on faith. On the PR path it stops at the open: approval is someone else's act, so the skill does not wait, poll, or nudge for it, and never merges a PR the human has not seen.
 
 ## Workflow
 
@@ -24,7 +24,7 @@ It does not build, refactor, or review. Arrive here with the work already green 
 
 ### 2. Propose the commit split
 
-Commits land in **lineage order — rationale before implementation**, so a reviewer meets the *why* before the *what*. The project states its own order in `CLAUDE.md` where it has one (a decision record before the code it shapes; a schema before its consumers). Where the record quotes its own implementation — a count, a command's output, a behaviour the same change produces — the pair is one commit: a record false at the commit that carries it serves nobody, and a claim carrying its evidence outranks the reading order. One Task = one commit is the common case, not the ceiling — a change touching a decision record, a skill, and a glossary is three commits in that order.
+Commits land in **lineage order — rationale before implementation**, so a reviewer meets the *why* before the *what*. The project states its own order in `CLAUDE.md` where it has one (a decision record before the code it shapes; a schema before its consumers). Where the record quotes its own implementation — a count, a command's output, a behavior the same change produces — the pair is one commit: a record false at the commit that carries it serves nobody, and a claim carrying its evidence outranks the reading order. One Task = one commit is the common case, not the ceiling — a change touching a decision record, a skill, and a glossary is three commits in that order.
 
 Two more principles shape the split:
 

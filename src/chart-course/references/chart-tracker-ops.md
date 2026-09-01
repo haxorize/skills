@@ -6,7 +6,7 @@ Resolve project, area path, iteration, default labels, and title prefixes from t
 
 ADO carries no typing projection — the domain `System.Tags` its work items get at create are unrelated to typing. Merge them into each create call's `--fields` per [work-item-tags.md](work-item-tags.md). A chart's drafted title has no leading bracket (its `[App]` arrives via `Title prefix:`), so the set is usually just the tracker block's `Additional tags:` — usually nothing, and an empty set omits the `--fields "System.Tags=…"` pair entirely rather than sending it empty. The pair is shown below as `<merged tags>`; drop it where the set is empty.
 
-- **Create map:** `az boards work-item create --type Feature --title "<prefixed title>" --description @<converted-html> --fields "System.Tags=<merged tags>"` with project/area/iteration from CLAUDE.md. Parent it under an Epic only if the tracker block requires hierarchy above Features.
+- **Create map:** `az boards work-item create --type Feature --title "<prefixed title>" --description @<file> --fields "System.Tags=<merged tags>"` with project/area/iteration from CLAUDE.md. Parent it under an Epic only if the tracker block requires hierarchy above Features.
 - **Create ticket:** `az boards work-item create --type "User Story" --fields "System.Tags=<merged tags>" ...`, then parent it to the map: `az boards work-item relation add --id <ticket-id> --relation-type Parent --target-id <map-id>`.
 - **Wire blocking:** the blocker is a Predecessor of the blocked ticket: `az boards work-item relation add --id <blocked-id> --relation-type Predecessor --target-id <blocker-id>`.
 - **Claim:** `az boards work-item update --id <ticket-id> --assigned-to <user>`.

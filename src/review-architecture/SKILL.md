@@ -1,6 +1,6 @@
 ---
 name: review-architecture
-description: Read-only architecture review of a codebase — surface architectural friction and propose deeper, cleaner module interfaces as a prioritized, vetted report.
+description: Read-only architecture review of a codebase — surface architectural friction and propose deeper, cleaner module interfaces as a prioritized, vetted report, then frame the candidate you pick, grill it, update DOMAIN.md, and hand the result to /to-story to file.
 disable-model-invocation: true
 requires: codebase-design, grilling, writing-for-humans, adr
 ---
@@ -29,7 +29,7 @@ In parallel, read project context and search prior work:
 
 - `DOMAIN.md` — domain vocabulary for candidate descriptions ("the billing rollup module," not "the AggregatorService")
 - `docs/adr/` — recorded decisions you should not re-litigate; match candidates against them by concept, never by wording (proceed silently if absent)
-- Search the tracker for existing refactor work items (Search command above; terms: `review-architecture`, `improve-design` (this skill's pre-2026-08-30 name, still on old tickets), `deepen`, `refactor`, `extract`, `absorb`). Read open ones fully — intent, not just title.
+- Search the tracker for existing refactor work items (the Search command in [references/tracker-dispatch.md](references/tracker-dispatch.md); terms: `review-architecture`, `improve-design` (this skill's pre-2026-08-30 name, still on old tickets), `deepen`, `refactor`, `extract`, `absorb`). Read open ones fully — intent, not just title.
 - `git log --oneline -30` — recent structural changes (extract, move, rename, refactor)
 - `git log --since='6 months ago' --name-only --pretty=format: | grep -v '^$' | sort | uniq -c | sort -rn | head -15` — the files change keeps landing in; step 2's weighting reads this list rather than an impression of the log
 - The repo's reachability detector where it has one (`knip` in a JS/TS repo, named in `package.json` scripts) — read here as a shape signal and never as a deletion list, which is `delete-dead-code`'s use of the same output: a module most of whose exports nothing outside it reaches is an interface nobody crosses, and a cluster of files that reach each other freely and are reached from outside through one narrow entry point is a seam that already exists and has no name. Both feed step 2's candidates; neither is a finding on its own.
@@ -38,7 +38,7 @@ If an area was recently refactored, the bar for proposing another change is much
 
 ### 2. Explore organically
 
-**Scope before you scan — YAGNI.** Deepening a module pays off by making future changes to it easier, so weight the parts of the codebase where change keeps landing. If the user named a direction — a module, a subsystem, a pain point — take it. Otherwise take the hot spots from step 1's churn list — the files that keep coming up — and let those paths pull attention first. Scattered changes with no hot spot → widen the net.
+**Scope before you scan — YAGNI.** Deepening a module pays off by making future changes to it easier, so weight the parts of the codebase where change keeps landing. If the user named a direction — a module, a subsystem, a point of architectural friction — take it. Otherwise take the hot spots from step 1's churn list — the files that keep coming up — and let those paths pull attention first. Scattered changes with no hot spot → widen the net.
 
 Use the Agent tool with subagent_type=Explore to navigate the codebase. Every Explore prompt carries the rules in [references/subagent-brief.md](references/subagent-brief.md) quoted, and its **Launch-failure classification** binds you: a slice whose explorer never launched is explored inline. Don't follow rigid heuristics — explore and note where you experience friction:
 
@@ -64,7 +64,7 @@ Each candidate, **ordered by leverage** (see the reference), carries:
 - **Prior work**: Any existing work items or recent refactors in this area (from step 1)
 - **Current test coverage**: What exists, what's missing, what's fragile
 - **Deepening direction**: What a deeper module would hide and what it would expose
-- **Impact / effort (S/M/L) / fix-risk / confidence (HIGH/MED/LOW)**: the leverage inputs, stated explicitly
+- **Impact / effort (Small/Medium/Large) / fix-risk / confidence (HIGH/MED/LOW)**: the leverage inputs, stated explicitly
 
 Write each candidate self-contained — a reader who hasn't seen the codebase should understand it from the report alone. Don't propose interfaces yet — that comes after the user picks a candidate.
 

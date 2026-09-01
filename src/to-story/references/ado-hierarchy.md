@@ -1,4 +1,4 @@
-# Story — ADO Hierarchy
+# Story — ADO hierarchy
 
 Steps that only apply when `Hierarchy: required` is set (ADO default). Skip if using GitHub without opting in via CLAUDE.md.
 
@@ -31,7 +31,7 @@ If the parent has no story-map markers but has a headed decomposition section (l
 Write the modified HTML to a file and patch with its absolute path:
 
 ```bash
-az boards work-item update --id <feature-id> --description @/absolute/path/feature_desc.html
+az boards work-item update --id <feature-id> --description @/absolute/path/description.html
 ```
 
 **Emergent Story** (no Snapshot match): After publishing, fetch the parent Feature's description. Locate `<!-- BEGIN STORY MAP -->` / `<!-- END STORY MAP -->`; append an entry below the separator with this Story's tracker ID, scope summary, parent Feature AC IDs it covers (`Covers: AC1, AC3`), and shared names. The Snapshot above the separator is immutable.
@@ -66,7 +66,7 @@ Then add only the edges whose predecessor is not already in that set:
 az boards work-item relation add --id <successor-id> --relation-type Predecessor --target-id <predecessor-id>
 ```
 
-One fetch per successor, not one per edge, keeps republish idempotent without N redundant reads. `--update` never reaches this step — it skips the map-stamp and does not expand relations (see [update-mode.md](story-update-mode.md)) — so only create-mode republish is covered.
+One fetch per successor, not one per edge, keeps republish idempotent without N redundant reads. `--update` never reaches this step — it skips the map-stamp and does not expand relations (see [story-update-mode.md](story-update-mode.md)) — so only create-mode republish is covered.
 
 Both directions matter because Stories can publish out of map order — each edge then links the instant its second endpoint is stamped, with no separate reconcile pass. Emergent Stories (below the separator) carry no Dependencies edges and are skipped.
 

@@ -43,7 +43,7 @@ Status is exactly one of: `marketed` — the claimant said it and nothing here c
 - **Source** — one stable locator: a URL with nothing after it that the date column does not already say, or a path under `sources/`, or `file:line` in this repo, or a named person for something told rather than read.
 - **Seen** — the date the source was read, not the date the source claims.
 - **Status** — from the legend.
-- **Evidence** — for `verified`, what confirmed it and where (a trial output path, a licence clause, a regulator's section); for `contradicted`, what contradicted it; for `marketed`, any of — and where more than one applies, all of — an `awaiting: <what>` where a check is blocked, the scope difference between the claim and this project, and the rows that establish that difference. Empty only where there is genuinely nothing to say.
+- **Evidence** — for `verified`, what confirmed it and where (a trial output path, a license clause, a regulator's section); for `contradicted`, what contradicted it; for `marketed`, any of — and where more than one applies, all of — an `awaiting: <what>` where a check is blocked, the scope difference between the claim and this project, and the rows that establish that difference. Empty only where there is genuinely nothing to say.
 - **Expires** — a date, always.
 
 ## Two rows
@@ -59,11 +59,11 @@ Rows print in ID order, which is the order added, so a row citing another cites 
 
 | Kind of claim | Expires |
 | --- | --- |
-| Price, plan, version, roadmap item, "coming in Q4" | The next release, or ninety days, whichever is first |
-| Licence term, contract clause | The renewal or expiry date the document states |
-| Regulatory obligation | Its effective date, or the next scheduled rulemaking |
-| A project fact (`us`) | Six months, or the date a planned change would move it |
-| Anything else | The evaluation's deadline |
+| **Price, plan, version, roadmap item, "coming in Q4"** | The next release, or ninety days, whichever is first |
+| **License term, contract clause** | The renewal or expiry date the document states |
+| **Regulatory obligation** | Its effective date, or the next scheduled rulemaking |
+| **A project fact (`us`)** | Six months, or the date a planned change would move it |
+| **Anything else** | The evaluation's deadline |
 
 ## Resuming and closing out
 

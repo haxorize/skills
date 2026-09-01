@@ -10,14 +10,14 @@ Slug-only kebab-case describing the problem (`vitest-mock-leaks-across-suites.md
 
 | Field | Required | Content |
 | --- | --- | --- |
-| `title` | yes | Human title, matches the body H1 |
-| `problem_type` | yes | One of the bug-track enum below |
-| `tags` | yes | Lowercase keywords — the retrieval fallback when symptoms don't match verbatim |
-| `symptoms` | yes | Verbatim error strings and observable behavior — the **primary retrieval key**; write what a stuck agent would actually grep |
-| `root_cause` | yes | One line |
-| `module` | no | The repo area the problem lives in |
-| `date` | yes | Creation date (`YYYY-MM-DD`) |
-| `last_updated` | on update | Added when an existing doc absorbs a new occurrence |
+| **`title`** | yes | Human title, matches the body H1 |
+| **`problem_type`** | yes | One of the bug-track enum below |
+| **`tags`** | yes | Lowercase keywords — the retrieval fallback when symptoms don't match verbatim |
+| **`symptoms`** | yes | Verbatim error strings and observable behavior — the **primary retrieval key**; write what a stuck agent would actually grep |
+| **`root_cause`** | yes | One line |
+| **`module`** | no | The repo area the problem lives in |
+| **`date`** | yes | Creation date (`YYYY-MM-DD`) |
+| **`last_updated`** | on update | Added when an existing doc absorbs a new occurrence |
 
 `problem_type` enum (compound-engineering's bug track, kept for cross-tool greppability): `build_error`, `test_failure`, `runtime_error`, `performance_issue`, `database_issue`, `security_issue`, `ui_bug`, `integration_issue`, `logic_error`.
 

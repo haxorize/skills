@@ -33,7 +33,7 @@ The split between the two is subject, not role: `onboard-me` maps the inside, ho
 
 ## Sources
 
-Written from two methods, in local prose, never from either upstream's templates or wording. `nitfolio-nirvajna-skills` at `c842141` (**MIT**) supplied the KT session: the fog-of-war map, evidence tags, the stage ladder with a completion criterion per rung, and the read-only boundary. The product description's own sources are ADR-0065's. The 2026-08-27 batch plan attributes a NONE-STATED licence to nitfolio; `~/code/lib/_rounds/2026-08-27/licences.tsv:52` records nitfolio as **MIT**, and the NONE-STATED sources are the `steveruizok` gists, so the constraint binds those instead.
+Written from two methods, in local prose, never from either upstream's templates or wording. `nitfolio-nirvajna-skills` at `c842141` (**MIT**) supplied the KT session: the fog-of-war map, evidence tags, the stage ladder with a completion criterion per rung, and the read-only boundary. The product description's own sources are ADR-0065's. The 2026-08-27 batch plan attributes a NONE-STATED license to nitfolio; `~/code/lib/_rounds/2026-08-27/licenses.tsv:52` records nitfolio as **MIT**, and the NONE-STATED sources are the `steveruizok` gists, so the constraint binds those instead.
 
 A secrets prohibition was drafted for this skill and **cut on evidence**. Two fresh-context controls under combined time, authority and social pressure — the second with the escape hatch closed — both refused to inline live credentials unprompted, and `testing-skills.md` reads a clean control as proof the wording is a no-op. The controls were agents in this harness carrying the user's global rules, which is the scope of the finding.
 

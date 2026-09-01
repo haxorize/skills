@@ -19,9 +19,9 @@ The visual and structural system for lessons and cheat sheets. Every lesson in a
 
 1. **Header** — lesson number, title, date, and a one-line tie back to the mission.
 2. **Hook + cold attempt** — the generation prompt as the first interactive element.
-3. **Segments** — one idea each, ending in a gate check; boxed-insight asides capped at 2–3 bullets, placed adjacent to the thing they explain; load-bearing claims link their `RESOURCES.md` source.
+3. **Segments** — one idea each, ending in a gate check; boxed-insight asides capped at 2–3 bullets, placed adjacent to the thing they explain; load-bearing claims link their `resources.md` source.
 4. **Practice** — the scaffold-arc exercises and ungraded self-checks. The graded quiz is agent-conducted in conversation, not embedded here (see SKILL.md Lessons).
-5. **Footer** — one primary-source recommendation (the highest-trust `RESOURCES.md` entry on the lesson's point), relative-anchor links to related cheat sheets and lessons, and a reminder that the agent is the teacher: ask follow-up questions.
+5. **Footer** — one primary-source recommendation (the highest-trust `resources.md` entry on the lesson's point), relative-anchor links to related cheat sheets and lessons, and a reminder that the agent is the teacher: ask follow-up questions.
 
 ## Components (`assets/`)
 

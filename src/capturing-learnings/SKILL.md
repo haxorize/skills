@@ -37,3 +37,7 @@ How any skill reads the store — grep-first, cheapest signal first:
 3. Read only the frontmatter (first ~15 lines) of candidate files; full-read only the strong matches.
 4. Return at most 5 distilled matches — each as root cause + fix + what didn't work, with its freshness flagged (`last_updated:` if present, else `date:`) — never raw doc dumps.
 5. A match **informs** the present investigation; it never overrides present evidence — a stale learning can be confidently wrong.
+
+## Boundary
+
+This skill owns the store of solved problems and how a stuck run finds one; it does not diagnose. Running the loop that produces the fix is `diagnosing-bugs`', which calls the retrieval protocol above at its start and this skill at its close. Whether a Learning doc is still true against the code it describes is `doc-claims`', which reads the store as a document already in claim form. A durable project decision and its rationale is an ADR, written by `adr`, never a Learning doc: this store holds what broke and what fixed it.

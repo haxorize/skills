@@ -8,7 +8,7 @@ Three checks the code lenses cannot make: is each constraint *enforceable* as wr
 
 ## Repo-declared lenses
 
-A `## Review lenses` block in the repo's `CLAUDE.md` may add lenses or specialise these (an a11y lens for an accessibility product; this repo's block adds the pruning test to the instruction-file lens). It never changes the contract: finding format, severities, IDs, the evidence rules, and the read-only stance stay this skill's.
+A `## Review lenses` block in the repo's `CLAUDE.md` may add lenses or specialize these (an a11y lens for an accessibility product; this repo's block adds the pruning test to the instruction-file lens). It never changes the contract: finding format, severities, IDs, the evidence rules, and the read-only stance stay this skill's.
 
 ## Falsification lens
 

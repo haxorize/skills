@@ -3,11 +3,11 @@ name: discoverable-code
 description: Naming and placing code so a plain-text search finds it — identifiers as search queries, whole string literals, one definition site, a doc line the natural-language grep lands on. Use when naming or renaming an exported symbol, type, file, error message, event name, or flag, when moving code between files, when a search for a concept returns nothing or a wall of hits, when the code deliberately leaves out something a reader would search for, when reviewing a diff for names the next session will not find, or when another skill needs the discoverability vocabulary.
 ---
 
-# Discoverable code
+# Discoverable Code
 
 An agent finds code by searching for strings and reading a small window around each hit. It has no hover text, no jump-to-definition, and no memory of last session's tour of the repo. So every identifier is a **search query**, every log line is a query someone will paste back, and a name that greps to 40 hits costs the same reads as a name that greps to none. Write so one search resolves the question.
 
-The rules below govern *findability*. How much behavior sits behind an interface, where the seam goes, and which types make a bad state unrepresentable are `codebase-design`'s questions — a deep module can carry an ungreppable name and a shallow one a perfect name.
+The rules below govern *findability*.
 
 ## Names are search queries
 
@@ -21,7 +21,7 @@ The rules below govern *findability*. How much behavior sits behind an interface
 - **A rename ends when every remaining hit of the old name is one you named as deliberate.** **Where the rename inverts a sense** — `bypass` → `verify`, `disable` → `enable`, `skip` → `run` — an empty hit list is not the end: grep the default-stating vocabulary (`by default`, `defaults to`, `enabled`, `disabled`, `on`, `off`) in the files the rename touched and read each hit against the code's default, which is the arbiter. A sentence that stated the old default is now false with no old spelling left to find. The rest of the sweep — the whole-repo search and the one-site-at-a-time rule — is [references/rename-sweep.md](references/rename-sweep.md); open it mid-rename.
 - **Names carry durable vocabulary, not planning vocabulary.** `Phase2Handler`, `NewCheckoutService`, `v2Client` name a moment in a plan, and the plan ends while the name stays. Ticket IDs, migration phases, and rollout stages belong in the ticket and the ADR; the public name says what the thing does.
 - **Filenames are names.** `config.ts`, `types.ts`, `utils.ts`, `helpers.ts`, `handlers.ts` say nothing in a result list and collide with every other module's copy of the same file. Prefix the domain: `billing-plan-config.ts`. `index.ts` earns its name only as a thin re-export entry point.
-- **Name a type the way a compiler error will quote it.** The agent self-corrects from that error text; `OrgScopedDb` explains itself there, `Ctx2` does not.
+- **Name a type the way a compiler error will quote it.** The next session self-corrects from that error text; `OrgScopedDb` explains itself there, `Ctx2` does not.
 
 ## Say it where the search lands
 
@@ -33,7 +33,7 @@ The rules below govern *findability*. How much behavior sits behind an interface
 - **One searchable concept per file, and thin orchestrators.** The code answering "where is X done?" lives in a module named after X — the thing a reader would ask about, not the mechanism inside — never inline in a coordinator or service class. An orchestrator reads as a sequence of calls into well-named modules, each line one hop from the real implementation. Split until each question-sized concept has one home, then stop: a helper meaningful only inside one concept stays inline, and a file per tiny function scatters one answer across several reads.
 - **Put tests where the repo already puts them**, and where nothing settles it, beside the source (`foo.test.ts` next to `foo.ts`) so one search finds the behavior and its specification together. A house layout the rest of the suite follows beats a locally better one, the same way an existing naming convention does.
 - **Mark dead ends.** `@deprecated` on the old path, naming the new one, so the search hit that lands on it says so.
-- **Write the deliberate absence where its search would land.** When the code leaves out something a reader would search for — a retry, a cache, a validation step, a timeout the neighbouring modules have — one line in the module or doc comment says so, in the words the search would use: "no retry here on purpose; the caller owns backoff". A search finds code and never the absence of code, and a well-organised repo keeps offering the reader one more plausible place to look.
+- **Write the deliberate absence where its search would land.** When the code leaves out something a reader would search for — a retry, a cache, a validation step, a timeout the neighboring modules have — one line in the module or doc comment says so, in the words the search would use: "no retry here on purpose; the caller owns backoff". A search finds code and never the absence of code, and a well-organized repo keeps offering the reader one more plausible place to look.
 
 ## Before the change lands
 
@@ -46,3 +46,7 @@ The rules below govern *findability*. How much behavior sits behind an interface
 7. Where the change deliberately leaves out something a reader would search for, is the absence written where that search lands?
 
 A "no" here is a finding on the change, the same as a failing check.
+
+## Boundary
+
+This skill decides whether a name can be found and where an absence is written; it says nothing about how the code behind the name is built. How much behavior sits behind an interface, where the seam goes, and which types make a bad state unrepresentable are `codebase-design`'s questions — a deep module can carry an ungreppable name and a shallow one a perfect name. Whether a *document* is still true is `doc-claims`', and running the rename's checks at the close of a change is `feedback-loops`'.

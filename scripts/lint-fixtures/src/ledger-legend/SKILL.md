@@ -4,7 +4,7 @@ description: Fixture holding the ledger status legend, and a stored-status rule 
 disable-model-invocation: true
 ---
 
-# Ledger legend (fixture)
+# Ledger Legend (Fixture)
 
 The rule below is one line because the extractor reads one line — the real body's is too,
 and a wrapped rule would silently contribute only its first fragment.
@@ -13,3 +13,4 @@ and a wrapped rule would silently contribute only its first fragment.
 
 That set disagrees with the legend under references/ on its third member, which is the
 whole point of this fixture.
+\nThe references beneath this skill are pointed at from here, so the orphan check\ngrades its one deliberate orphan and not this tree's whole reference set:\n\n- [legend-line](references/legend-line.md)\n- [unanchored-in-legend-dir](references/unanchored-in-legend-dir.md)\n

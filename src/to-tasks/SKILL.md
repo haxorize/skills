@@ -1,6 +1,6 @@
 ---
 name: to-tasks
-description: Break a parent User Story into child Task work items on the project's tracker. Tracer-bullet style — each Task is a thin vertical slice through every integration layer. ADO — creates Tasks under a User Story. GitHub — creates task-shaped issues under a story-shaped parent issue.
+description: Break a parent User Story into child Task work items on the project's tracker. Tracer-bullet style — each Task is a thin vertical slice through every integration layer. ADO — creates Tasks under a User Story. GitHub — creates task-shaped issues under a story-shaped parent issue. Also patches one published Task (`--update`) and re-syncs a whole set against its parent (`--reconcile`).
 disable-model-invocation: true
 requires: writing-for-humans, work-item-shape, adr
 ---
@@ -50,7 +50,7 @@ Solo repos (no declaration) get vanilla behavior — no cross-repo annotations. 
 
 ### 4. Explore codebase and apply ADR gate
 
-If the work isn't already grounded in the conversation, explore the touched modules. Identify durable architectural decisions — for any that passes the **ADR gate** in `adr`, offer to record it via `adr` before slicing, on the standalone path.
+If the work isn't already grounded in the conversation, explore the touched modules. Identify durable architectural decisions — for any that passes the **ADR gate** in `adr`, offer to record it via `adr` before slicing.
 
 ### 5. Draft vertical slices
 

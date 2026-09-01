@@ -4,7 +4,7 @@ description: Fixture writing the Skill-tool call in the shapes a one-name impera
 disable-model-invocation: true
 ---
 
-# Call forms
+# Call Forms
 
 Run the mechanical checks by calling the Skill tool with `fixture-discipline` and `broken-links` — a gerund, mid-sentence, naming two skills in one clause.
 

@@ -9,7 +9,7 @@ requires: writing-for-humans, work-item-shape, diverging
 
 Synthesize the current conversation into a Story-level artifact (single-feature spec) and publish it to the project's tracker. No interviewing — this is a synthesis-only skill. Run `/grill-me` first if context is thin.
 
-Use `to-feature` only when scope explicitly needs multiple stories beneath it.
+Use `/to-feature` only when scope explicitly needs multiple stories beneath it.
 
 ## Publication constraints
 
@@ -40,7 +40,7 @@ If not already explored in the conversation, look at the touched modules. Use ca
 
 ### 4. Sketch major modules
 
-Modules to build or modify. Look for opportunities to extract deep modules. Check with the user that the module shape matches expectations and which modules they want tests for.
+Name the modules to build or modify, and look for opportunities to extract deep modules. Check with the user that the module shape matches expectations and which modules they want tests for.
 
 ### 5. Propose 2-3 approaches with trade-offs
 

@@ -5,7 +5,7 @@
 # review report for that repo in the landing zone carries a `Reviewed-tree:`
 # stamp equal to the tree of the commit the push would send. The report is the
 # receipt: `review-changes` writes `<repo>-<date>-<slug>.review.md` to the
-# landing zone the `handoff` skill defines (its "Where to write it" section:
+# landing zone `handoff` defines (its "Where to write it" section:
 # `claude-handoffs/` under the platform temp dir) and stamps it with the tree
 # hash of the work tree it reviewed; `address-findings` appends a fresh stamp
 # when its fix pass closes; nothing else produces one — an in-session subagent

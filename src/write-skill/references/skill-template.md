@@ -9,7 +9,7 @@ Every skill opens the same way:
 name: skill-name
 description: <model-facing with triggers, OR human-facing one-liner if user-invoked>
 # disable-model-invocation: true   # add for user-invoked skills
-# requires: discipline-a, discipline-b # add when an orchestrator declares discipline deps
+# requires: discipline-a, discipline-b # add for every discipline this skill fires, whichever kind it is
 ---
 
 # Skill Name

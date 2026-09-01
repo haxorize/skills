@@ -12,6 +12,8 @@ Also rejected, with reasons that generalize: porting Vale's 108-rule linter cata
 
 ## Amendments
 
+- **2026-08-31 — the `health-literacy` leg of the 2026-08-28 deferral is settled: the declaration is earned and stays.** Under the rule that amendment states — a reference that will *fire* the skill earns the declaration, a pure register statement does not — `health-literacy` fires it: `src/health-literacy/SKILL.md:15` says to call the Skill tool with `writing-for-humans` at the first draft or review, and the frontmatter carries `requires: writing-for-humans`. Nothing changes in the skill. `committing`, `receiving-review`, and `improve-design` stay deferred.
+
 - **2026-08-08** — A wiring audit found the test above was applied to the orchestrators that *visibly* author artifacts and missed the inline-write paths. Rulings by skill:
   - `grill-and-record` writes ADRs inline — its deliberate bypass of the `adr` skill carried the write but not that skill's dependency — and `domain-modeling` writes the DOMAIN.md definitions this record itself assigns to writing-for-humans territory. Both now declare the behavior via `requires:`, invoked lazily at the first write so a grill pays the load only once prose exists. The same fix restores a second rule the inline bypass had lost: the owning-record check (search for an ADR that already owns the decision, deciding amend versus new file) now runs before the inline ADR write, as it does on the standalone `adr` path.
   - `receiving-review` joined the consumers — its per-thread PR replies became durable tracker prose when the reply contract landed, a gap created and closed in the same round.

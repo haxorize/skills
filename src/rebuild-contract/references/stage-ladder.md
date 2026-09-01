@@ -20,14 +20,14 @@ Each stage narrows what the next has to decide. Work them in order, except where
 
 | Stage | Done when |
 | --- | --- |
-| 0 · Boundary & scope | Every observer is named with a fidelity per surface, in- and out-of-scope areas are listed, and `00-boundary.md` exists |
-| 1 · Behavior inventory | `01-behavior-index.md` holds one entry per candidate behavior across every surface the boundary named, each with an ID and a state, and you can state the count |
-| 2 · Capabilities — the bulk of the run | Every in-scope entry carries the uniform capability entry's nine fields — trigger, actor, preconditions, rules, effects, outputs, edge cases, undefined, evidence — in the shape `contract-format.md` fixes, which is read here; or the entry's index state is `excluded`, `deferred`, or `unknown`, each with its reason. No entry is left `open` and unread |
-| 3 · Domain, state & invariants | Each core entity has a meaning, an identity rule, its lifecycle with legal transitions, and its invariants; every derived value has its formula written out; and what is persisted, what survives a restart, what is atomic with what, and what is deleted or retained is stated — the spine's *State & persistence* section is built from this stage and nowhere else |
-| 4 · Integrations, jobs & side effects | Every outbound call, scheduled task, queue consumer, webhook, email, and export has its trigger, its guarantees (ordering, idempotency, delivery), its failure and retry behavior, and its observable effect |
-| 5 · Configuration, permissions & errors | Every behavior-changing key has its default and precedence; the actor × capability matrix is complete, denials included; every user-visible error has its trigger, its code or message, and whether it is retryable |
-| 6 · Non-functional contract | Rate limits, size and pagination caps, timeouts, concurrency and consistency guarantees, retention and deletion, and compliance-driven behavior are each stated or recorded as not found — and so is every item on `obligation-rulings.md`'s stack-behavior list, swept one by one rather than waited on |
-| 7 · Suspect behaviors & open questions | Every [suspect] has what happens, why it looks unintended, and whether anything outside can see it; every [unknown] names what would settle it |
+| **0 · Boundary & scope** | Every observer is named with a fidelity per surface, in- and out-of-scope areas are listed, and `00-boundary.md` exists |
+| **1 · Behavior inventory** | `01-behavior-index.md` holds one entry per candidate behavior across every surface the boundary named, each with an ID and a state, and you can state the count |
+| **2 · Capabilities — the bulk of the run** | Every in-scope entry carries the uniform capability entry's nine fields — trigger, actor, preconditions, rules, effects, outputs, edge cases, undefined, evidence — in the shape `contract-format.md` fixes, which is read here; or the entry's index state is `excluded`, `deferred`, or `unknown`, each with its reason. No entry is left `open` and unread |
+| **3 · Domain, state & invariants** | Each core entity has a meaning, an identity rule, its lifecycle with legal transitions, and its invariants; every derived value has its formula written out; and what is persisted, what survives a restart, what is atomic with what, and what is deleted or retained is stated — the spine's *State & persistence* section is built from this stage and nowhere else |
+| **4 · Integrations, jobs & side effects** | Every outbound call, scheduled task, queue consumer, webhook, email, and export has its trigger, its guarantees (ordering, idempotency, delivery), its failure and retry behavior, and its observable effect |
+| **5 · Configuration, permissions & errors** | Every behavior-changing key has its default and precedence; the actor × capability matrix is complete, denials included; every user-visible error has its trigger, its code or message, and whether it is retryable |
+| **6 · Non-functional contract** | Rate limits, size and pagination caps, timeouts, concurrency and consistency guarantees, retention and deletion, and compliance-driven behavior are each stated or recorded as not found — and so is every item on `obligation-rulings.md`'s stack-behavior list, swept one by one rather than waited on |
+| **7 · Suspect behaviors & open questions** | Every [suspect] has what happens, why it looks unintended, and whether anything outside can see it; every [unknown] names what would settle it |
 
 ## Where the record lives
 

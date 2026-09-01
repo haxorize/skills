@@ -6,13 +6,13 @@ Use this when publishing a Task work item to Azure DevOps via `az boards work-it
 
 | ADO field (display name) | Reference name | Source | CLI flag |
 |---|---|---|---|
-| Title | `System.Title` | Set on command line | `--title` |
-| Description (HTML) | `System.Description` | Body markdown converted to HTML | `--description @<file>` |
-| Area Path | `System.AreaPath` | From CLAUDE.md `Area path:` | `--area` |
-| Iteration Path | `System.IterationPath` | From CLAUDE.md `Iteration:` | `--iteration` |
-| State | `System.State` | From CLAUDE.md `Default state:` (typically `New`) | `--fields "System.State=..."` |
-| Parent (User Story) | (relation) | From `--parent <story-id>` arg or resolved upstream | post-create: `az boards work-item relation add --id <task-id> --relation-type Parent --target-id <story-id>` |
-| Blocked-by (Predecessor) | (relation) | In-project blockers identified during drafting (SKILL step 5) | post-create: `az boards work-item relation add --id <task-id> --relation-type Predecessor --target-id <blocker-id>` |
+| **Title** | `System.Title` | Set on command line | `--title` |
+| **Description (HTML)** | `System.Description` | Body markdown converted to HTML | `--description @<file>` |
+| **Area Path** | `System.AreaPath` | From CLAUDE.md `Area path:` | `--area` |
+| **Iteration Path** | `System.IterationPath` | From CLAUDE.md `Iteration:` | `--iteration` |
+| **State** | `System.State` | From CLAUDE.md `Default state:` (typically `New`) | `--fields "System.State=..."` |
+| **Parent (User Story)** | (relation) | From `--parent <story-id>` arg or resolved upstream | post-create: `az boards work-item relation add --id <task-id> --relation-type Parent --target-id <story-id>` |
+| **Blocked-by (Predecessor)** | (relation) | In-project blockers identified during drafting (SKILL step 5) | post-create: `az boards work-item relation add --id <task-id> --relation-type Predecessor --target-id <blocker-id>` |
 
 ADO Tasks have only `System.Description` for body content — **no Acceptance Criteria field**. Acceptance criteria belong on the parent User Story.
 
@@ -38,7 +38,7 @@ Convert the draft per [ado-html-transport.md](ado-html-transport.md), then:
 az boards work-item create \
   --type "Task" \
   --title "$TITLE" \
-  --description @<draft>.html \
+  --description @description.html \
   --area "$AREA_PATH" \
   --iteration "$ITERATION" \
   --fields "System.State=New" "System.Tags=$TAGS"

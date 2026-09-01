@@ -21,7 +21,7 @@ This deliberately steers clear of the stone/emerald Mermaid-default look and the
 --warn-bg:  #F3E7C8   /* pale amber — ADR-reopen callout fill */
 ```
 
-Type (Google Fonts via CDN): **Archivo** for display/headings (structural, wide grotesque — reads as mass), **IBM Plex Sans** for body, **IBM Plex Mono** for file paths, module labels, and all schematic diagram text. Module labels inside diagrams are `Plex Mono, text-xs uppercase tracking-wider` so they read as schematic, not as UI. Colour sparingly: `--depth` is the *only* accent; `--leak` and `--warn` are signals, never decoration.
+Type (Google Fonts via CDN): **Archivo** for display/headings (structural, wide grotesque — reads as mass), **IBM Plex Sans** for body, **IBM Plex Mono** for file paths, module labels, and all schematic diagram text. Module labels inside diagrams are `Plex Mono, text-xs uppercase tracking-wider` so they read as schematic, not as UI. Color sparingly: `--depth` is the *only* accent; `--leak` and `--warn` are signals, never decoration.
 
 ## Scaffold
 
@@ -89,7 +89,7 @@ Type (Google Fonts via CDN): **Archivo** for display/headings (structural, wide 
 
 ## Writing and opening the file
 
-Write the report to the OS temp dir (resolve `$TMPDIR`, falling back to `/tmp`, or `%TEMP%` on Windows) as `design-review-<timestamp>.html` so each run is fresh and nothing lands in the repo; open it (`open` on macOS, `xdg-open` on Linux, `start` on Windows) and tell the user the absolute path.
+Write the report to the OS temp dir (resolve `$TMPDIR`, falling back to `/tmp`, or `%TEMP%` on Windows) as `<repo>-<date>-<slug>.design-review.html` (the shape `handoff` § Where to write it owns) so each run is fresh and nothing lands in the repo; open it (`open` on macOS, `xdg-open` on Linux, `start` on Windows) and tell the user the absolute path.
 
 ## Header
 
@@ -115,8 +115,8 @@ If a paragraph is needed to explain a diagram, redraw the diagram.
 Pick the one that fits; mix them so cards don't all look alike.
 
 - **Depth-rectangle (the signature, default for shallow→deep).** Draw it in **inline SVG**, not HTML boxes. Before: a wide-but-thin shallow module `<rect class="svg-shallow">`, with leaked deps as `.leak` arrows crossing a `.seam` to outside boxes. After: a tall deep `<rect class="svg-deep">` (the shared `#deep` gradient) with the now-internal deps drawn faded *inside* it and a narrow interface strip on top. **SVG-safe rules — `background` is a no-op inside SVG; only `fill` paints it:** use `class="svg-shallow"` / `class="svg-deep"` (never `mod-shallow`/`mod-deep`, which are HTML-only and render *black* on a `<rect>`), and give **every `<text>` an explicit fill** — `class="svg-lbl"` on paper, `class="svg-lbl-on-deep"` inside the deep body — or it inherits black and vanishes. Keep the `.seam` line at the module's interface edge; don't run it through the deep body. Reads as "the interface shrank; the implementation absorbed the pass-throughs."
-- **Mermaid graph (only when genuinely graph-shaped** — call/dependency mess). `flowchart` styled by the theme config above. **Colour the thing your label points at:** `classDef leak stroke:#C0392B` + `class a,b leak` reddens *nodes*; to redden *edges* (e.g. the function-local imports that can't be top-level) use `linkStyle <indices> stroke:#C0392B,stroke-width:2px` instead — a label that says "red edges" over reddened nodes misdirects the eye. Don't reach for Mermaid when a depth-rectangle would say it better.
-- **Cross-section (layered shallowness).** Stacked horizontal bands; before: N thin layers each doing nothing; after: one thick `.mod-deep` band labelled with the consolidated responsibility.
+- **Mermaid graph (only when genuinely graph-shaped** — call/dependency mess). `flowchart` styled by the theme config above. **Color the thing your label points at:** `classDef leak stroke:#C0392B` + `class a,b leak` reddens *nodes*; to redden *edges* (e.g. the function-local imports that can't be top-level) use `linkStyle <indices> stroke:#C0392B,stroke-width:2px` instead — a label that says "red edges" over reddened nodes misdirects the eye. Don't reach for Mermaid when a depth-rectangle would say it better.
+- **Cross-section (layered shallowness).** Stacked horizontal bands as **HTML divs**, not SVG rects, which is why `.mod-deep` is the right class here; before: N thin layers each doing nothing; after: one thick `.mod-deep` band labeled with the consolidated responsibility.
 
 Keep diagrams ~320px tall so before/after sits side by side without scrolling, and match the row height to the SVG — don't set a grid `min-height` taller than the SVG, or a dead band opens under the diagram. Motion: at most the one `reveal` fade, and only when `prefers-reduced-motion` allows.
 

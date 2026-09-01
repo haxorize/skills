@@ -6,13 +6,15 @@ requires: feedback-loops, discoverable-code
 
 # Test-Driven Development
 
+Build a slice test-first: one vertical slice at a time, RED before GREEN, and production code that got ahead of its failing test deleted rather than retro-tested. A ticket still sitting on the tracker is loaded by `/from-ticket` first — suggest it and stop, rather than cold-starting the cycle from an ID; a story or task already in context starts here.
+
 ## Philosophy
 
 Tests verify behavior through public interfaces, not implementation details. Never write a **tautological test** — one whose assertion recomputes the expected value the way the code does (`expect(add(a, b)).toBe(a + b)`), so it passes by construction; expected values come from an independent source of truth (a known-good literal, a worked example, the spec) — table-driven tests with literal expected values are the preferred shape. One test at a time, one implementation at a time. Never write all tests first then all code — that's horizontal slicing.
 
 Before writing a test body, name the break it catches: the production change that would make it fail — and that change must be a bug, not a decision. Can't name one → the code earns no test. Constructors, getters, constants, and trivial forwarding earn tests only when they **validate, normalize, default, derive, enforce, or cause side effects** — otherwise assert the first consumer-visible result that depends on them; prose earns none, and a test written to satisfy process costs maintenance forever. A test only intentional decisions can fail is a **change detector** — a constant's value, exact message wording, private structure — firing on every redesign and sleeping through bugs; test the behavior that depends on the decision: not `MAX_RETRIES == 5` but "the 6th attempt never happens".
 
-Test the contract your code makes at its boundaries — the route you register, the query you emit — never the framework's own mechanics upstream of it; when upstream behavior genuinely surprised you, write one narrow characterization test naming the assumption. Scripts and configs are tested by running them against controlled inputs and asserting outputs or exit codes — asserting their text contains a line proves only that the source is the source. An elapsed-time assertion in a unit test measures the host machine, not your code — assert ordering or completion there; a performance criterion runs under its recorded measurement method, not the inner loop.
+Test the contract your code makes at its boundaries — the route you register, the query you emit — never the framework's own mechanics upstream of it; when upstream behavior genuinely surprised you, write one narrow pinning test naming the assumption. Scripts and configs are tested by running them against controlled inputs and asserting outputs or exit codes — asserting their text contains a line proves only that the source is the source. An elapsed-time assertion in a unit test measures the host machine, not your code — assert ordering or completion there; a performance criterion runs under its recorded measurement method, not the inner loop.
 
 When the behavior's own acceptance criterion carries a **temporal quantifier** — "after N attempts", "subsequent", "over time", "converges", "adapts" — the defect lives in the trajectory, and step-wise given-X-return-Y tests cannot see it: write the closed-loop test per [references/doubles.md](references/doubles.md) § Temporal acceptance criteria.
 
@@ -26,10 +28,10 @@ Production code that got ahead of its failing test gets **deleted** — not kept
 
 | Rationalization | Reality |
 | --- | --- |
-| "Deleting X hours of work is wasteful" | Sunk cost — untested code isn't an asset, it's an unverified liability |
-| "Keep it as reference" | You'll adapt it, which is test-after with extra steps |
-| "I'll write the tests right after" | Test-after verifies what you built, not what was needed |
-| "It's simple, it obviously works" | Simple code that obviously works is the fastest to rewrite test-first |
+| **"Deleting X hours of work is wasteful"** | Sunk cost — untested code isn't an asset, it's an unverified liability |
+| **"Keep it as reference"** | You'll adapt it, which is test-after with extra steps |
+| **"I'll write the tests right after"** | Test-after verifies what you built, not what was needed |
+| **"It's simple, it obviously works"** | Simple code that obviously works is the fastest to rewrite test-first |
 
 **Red flags** — the negotiation has already started: an implementation file open before its failing test exists; "let me just sketch the shape first"; a stash or branch kept "for reference"; running the app instead of a test to see if it works. Any of these, or catching yourself in a table row, means stop and delete.
 
@@ -87,4 +89,6 @@ The check itself is a suspect: a test that cannot fail reports green forever and
 
 When the cycle's behaviors are built and refactored, close the loop: call the Skill tool with `feedback-loops` once to finalize mechanically.
 
-Tests prove code-correctness, not feature-correctness. When the slice touched behavior no test actually ran — a UI flow, an external integration, a real ingest — name it before declaring done and take one of the two branches in [references/untested-at-close.md](references/untested-at-close.md) (eyeball it, or offer `/validate-behavior`); the failure here is closing the cycle with the gap unnamed because the suite is green.
+## Boundary
+
+Tests prove code-correctness, not feature-correctness. When the slice touched behavior no test actually ran — a UI flow, an external integration, a real ingest — name it before declaring done and take one of the two branches in [references/untested-at-close.md](references/untested-at-close.md) (eyeball it, or offer `/validate-behavior`); the failure here is closing the cycle with the gap unnamed because the suite is green. Proving the change works in the running app is `validate-behavior`'s, and judging whether an existing suite tests the right things is `audit-tests`'. The mechanical close — lint, format, typecheck, docs — is `feedback-loops`', called at the end of the cycle rather than restated here.

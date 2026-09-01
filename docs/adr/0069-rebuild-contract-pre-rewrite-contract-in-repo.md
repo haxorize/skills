@@ -35,7 +35,7 @@ Three alternatives lost. **A `--contract` mode on `product-description`** lost b
 
 ## Sources
 
-Written in local prose from the method in `nitfolio-nirvajna-skills` at `c842141` (**MIT**, `~/code/lib/_rounds/2026-08-27/licences.tsv`), which supplied the observer-and-fidelity boundary, the inclusion test, the two tag axes, the behavior index as denominator, stable IDs, the scope-down rule, the section spine, and the self-audit. Two formulations are kept close to the source's wording because they are the load-bearing questions and MIT permits it: the inclusion test's question and the behavior-is-a-rule line. The ledger rows are N1b.28, N1b.29, and N1b.20 at `~/code/lib/_rounds/2026-08-27/ledger.md`.
+Written in local prose from the method in `nitfolio-nirvajna-skills` at `c842141` (**MIT**, `~/code/lib/_rounds/2026-08-27/licenses.tsv`), which supplied the observer-and-fidelity boundary, the inclusion test, the two tag axes, the behavior index as denominator, stable IDs, the scope-down rule, the section spine, and the self-audit. Two formulations are kept close to the source's wording because they are the load-bearing questions and MIT permits it: the inclusion test's question and the behavior-is-a-rule line. The ledger rows are N1b.28, N1b.29, and N1b.20 at `~/code/lib/_rounds/2026-08-27/ledger.md`.
 
 Revisit when: a contract this skill produced is handed to a reimplementer and the rebuild diverges at the declared boundary on a behavior the contract *stated* — that indicts the method, not the coverage — or when `validate-behavior` is pointed at a rebuild contract as its Behavior contract, which would mean the `DOMAIN.md` split did not hold in practice.
 

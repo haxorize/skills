@@ -25,20 +25,20 @@ Content states — what the component is given:
 - **Long prose** — a paragraph where a sentence was expected.
 - **Extremes** — 0, a negative, 1,000,000, a currency amount with cents, a date at a year boundary.
 - **Loading** and **error**, where the component has them.
-- **Longer locale** — the German or Finnish rendering, roughly a third longer, where the product localises; a right-to-left locale where it ships one.
+- **Longer locale** — the German or Finnish rendering, roughly a third longer, where the product localizes; a right-to-left locale where it ships one.
 
 Container states — the room it is given:
 
 - **Default** — the width it was built at.
 - **Narrow** — a 320 px container.
-- **Squeezed** — beside a sibling that takes the room (a flex row with a greedy neighbour).
+- **Squeezed** — beside a sibling that takes the room (a flex row with a greedy neighbor).
 - **Wide** — a 1600 px container: does it stretch into a ribbon?
 
-Interaction states — focus, hover, disabled, selected — and colour schemes are left out on purpose: they are questions about the design, which is the UI branch's.
+Interaction states — focus, hover, disabled, selected — and color schemes are left out on purpose: they are questions about the design, which is the UI branch's.
 
 ### 2. Build the page
 
-A grid: content states down, container states across, one cell per pair — a labelled container at the column's width holding the component with the row's fixture. The defects this page exists to find live at the pairs — an unbreakable string in a 320 px cell, forty rows squeezed by a greedy sibling — so the grid is the whole product, never one axis at a time. Every cell is visible without interaction; the comparison across cells is the point, so no tabs and no switcher. Side by side means one page, not one viewport: the wide column scrolls. The page is one load — a state added later is added to the same grid — and it asserts nothing: a page that asserts is a test suite, and belongs in one.
+A grid: content states down, container states across, one cell per pair — a labeled container at the column's width holding the component with the row's fixture. The defects this page exists to find live at the pairs — an unbreakable string in a 320 px cell, forty rows squeezed by a greedy sibling — so the grid is the whole product, never one axis at a time. Every cell is visible without interaction; the comparison across cells is the point, so no tabs and no switcher. Side by side means one page, not one viewport: the wide column scrolls. The page is one load — a state added later is added to the same grid — and it asserts nothing: a page that asserts is a test suite, and belongs in one.
 
 Mount it as a throwaway route under the routing convention the project already uses, named so it is obviously a prototype, gated out of production builds (`process.env.NODE_ENV !== 'production'` or the project's equivalent), and reached under the command the project already uses to run the app. The route is deleted at step 5.
 

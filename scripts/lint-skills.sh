@@ -106,9 +106,13 @@
 #     under .claude/skills/*/scripts/ is walked by no check here and owes no
 #     selftest). The repo-local
 #     skills under .claude/skills/, and DOMAIN.md and README.md, are in pass
-#     2's walk for the slash sweep and the evaluation-ledger consumer sweep
-#     and for nothing else: the hoisting, size, frontmatter, ADR-citation,
-#     HTML-transport and reference-link checks do not read them. They never
+#     2's walk for the slash sweep, the house-style set (spelling, reference
+#     form, artifact names, labels, section pointers, heading case) and the
+#     evaluation-ledger consumer sweep, and for nothing else: the hoisting,
+#     frontmatter, ADR-citation, HTML-transport and reference-link checks do
+#     not read them, and a repo-local body draws the loaded-file byte WARN
+#     because it is re-attached exactly as a hoisted one is. DOMAIN.md is the
+#     one file check_labels skips — it is where the labels are registered. They never
 #     hoist, so the router-coverage and requires checks would demand mentions
 #     that do not belong, and they legitimately cite this repo's paths. Their
 #     size and frontmatter are the author's to keep; a pass here says nothing
@@ -157,8 +161,13 @@
 #     needs the UTF-8 ctype the probe below establishes.
 #   - Re-attach byte WARN (write-skill § Size constraints): a SKILL.md over
 #     15,000 bytes draws a WARN, never a FAIL — the platform figure it converts
-#     is dated in the block below. Reference files are not measured: they are
-#     read on demand, never re-attached.
+#     is dated in the block below. A reference file and a repo-local body draw
+#     the same WARN under check_reference_bytes, with the remedy each has: a
+#     reference is read whole when its pointer is followed, so an oversize one
+#     has a tail the run does not reach, and the fix is to split it at a
+#     heading rather than to move detail one tier down — there is no tier
+#     below a reference. Neither WARN moves the exit status, and the FAIL this
+#     bound will one day be cannot land while bodies sit over it.
 #   - CLAUDE.md byte WARN (ADR-0076): a CLAUDE.md at the root over 6,000
 #     bytes draws a WARN, never a FAIL — a round bound roughly 2.4 times the
 #     2,471 bytes the 2026-08-30 cut left it at and just over a third of the
@@ -212,6 +221,71 @@
 #     reword that leaves no legend or no rule site is a FAIL in this repo
 #     rather than a silent stand-down, and each anchor sentence carries a note
 #     in its own file saying it is load-bearing.
+#   - The always-loaded budget (ADR-0077's C9 amendment): global/rules/ totals
+#     no more than 12,000 bytes. A FAIL, not a WARN, because unlike the two
+#     byte bounds above this figure is this repo's own ruling: every byte in
+#     that directory is paid on every turn of every session. The directory
+#     total is the unit, never a single file.
+#   - British spellings (ADR-0077 § House style): a word list, over src/**,
+#     .claude/skills/**, global/rules/, global/README.md, DOMAIN.md, README.md,
+#     CLAUDE.md and docs/** — the one check here whose scope runs past the
+#     skill tree, because a British form in an ADR is the same drift. Code
+#     spans and URLs are stripped first, so a machine-matched literal or a
+#     state value (`order.cancelled`) is not prose to spell. global/hooks/ and
+#     scripts/ are outside every caller: `tokeniser error` is a breadcrumb
+#     three selftests grep for, so that tree keeps the British form on purpose
+#     and only the prose describing it flipped. The word list IS the check —
+#     a form absent from it passes, which is why it is spelled out rather than
+#     derived from an `-ise` rule that would fire on `precise`.
+#   - Heading case (ADR-0077 § House style): a SKILL.md H1 is the skill's
+#     display name in title case; every H2 is sentence case. Mid-heading
+#     capitals that are legitimate and not chased: an acronym, a token
+#     carrying or followed by a digit (`Tier 2`, `Phase 3`, `Step 11`), a term
+#     registered in DOMAIN.md, and a short proper-noun list in the file. A
+#     clause opened by an em dash or a colon starts a new sentence, which is
+#     the shape every numbered step here takes. global/rules/ is not walked:
+#     a rule file's H1 is a sentence-case proposition, not a display name.
+#   - Skill-reference form (ADR-0077 § Amendments 2026-08-30, which narrowed
+#     the flat rule): the bare backtick stays licensed for vocabulary, a
+#     boundary statement, an already-loaded skill's rules, and a gated offer,
+#     and no scan can tell those from a suggestion — so this grades the two
+#     forms banned outright: "the X skill" for any name that resolves to a
+#     skill, and an invocation verb followed by a bare backticked user-invoked
+#     name, which is a suggestion site where `/name` is what the human types.
+#     A suggestion written any other way is invisible here, and the licensed
+#     classes are graded by nobody.
+#   - Artifact filenames (ADR-0077 § Renames): a file a body tells a run to
+#     write is lowercase with dashes. A backticked token ending in .md, .html,
+#     .csv or .txt that carries an uppercase letter or an underscore fails,
+#     except the repo-convention names (README.md, CLAUDE.md, AGENTS.md,
+#     SKILL.md, DOMAIN.md, MEMORY.md). A source file in the user's own project
+#     takes that ecosystem's convention and is deliberately out of the
+#     extension set.
+#   - Label family (DOMAIN.md's Status-marker row: "A marker outside those sets
+#     is registered here before a body uses it"): an ALL-CAPS token in bold or
+#     backticks is registered in DOMAIN.md or on the acronym-and-literal list
+#     in this file. Not a marker by form: a single letter, a token carrying a
+#     digit (`AC1`, `L-04`), a token carrying an underscore (`NO_COLOR`).
+#     DOMAIN.md is not scanned against itself.
+#   - Section pointers: a `§ Name` citation names a heading its target file
+#     carries. check_reference_links reads the `.md` inside the parens and
+#     stops, so the half that says WHERE to read has never been checked and a
+#     renamed section shipped past a green lint. Graded only where the line
+#     names a target — an inline link, a `~/.claude/` path, or a backticked
+#     skill name (whose target is that skill's SKILL.md). A `§ 4` naming a
+#     section of its own file has no target and is not read. The name is
+#     matched as a PREFIX of a heading, because a citation runs on into its
+#     sentence; that is also the limit — a heading that is a prefix of a
+#     longer sibling can be cited by the shorter name and pass.
+#   - Orphaned references: a file under src/*/references/ is linked from
+#     somewhere. check_reference_links validates link -> file and never
+#     file -> link, so a reference nothing points at passes every other check
+#     while loading for nobody. Pointed at means an inline link from inside
+#     its own skill (by path from the skill root or by basename from a sibling
+#     reference) or the `~/.claude/skills/<owner>/<path>` form from anywhere in
+#     the walk. A reference reached only by a link form the extractor above
+#     does not read (reference-style, titled, angle-bracketed) reads as an
+#     orphan here — the two checks share that boundary on purpose.
 #   - Router coverage (CLAUDE.md § Adding, renaming, or removing a skill:
 #     update both in the same change): every skill under
 #     src/ must appear as a backticked code-span (`name` or `/name`) in
@@ -267,15 +341,25 @@
 #     check_reference_links    every inline .md link resolves
 #     check_load_gate          no "Launching skill" under a model-invoked skill
 #     check_slash_form         no `/name` naming a model-invoked skill
+#     check_spelling           no British form outside a code span
+#     check_heading_case       SKILL.md H1 title case, every H2 sentence case
+#                              (not global/rules/, whose H1 is a proposition)
+#     check_reference_form     no "the X skill"; `/name` at a suggestion site
+#     check_artifact_names     a written filename is lowercase with dashes
+#     check_labels             every ALL-CAPS label registered in DOMAIN.md
+#     check_section_pointers   every `§ Name` names a heading its target has
+#     check_reference_bytes    the 15,000-byte WARN over a loaded file
 #   Pass 3 — cross-file contracts, read from pass 2's captured walk:
 #     check_sibling_identity   byte-identical copies (this repo only)
 #     check_sibling_membership every basename shared by two skills is grouped
+#     check_reference_orphans  every reference is linked from somewhere
 #     check_evaluation_ledger_authority       one legend, defining three statuses
 #     check_evaluation_ledger_rule_agreement  the body's stored-status rule
 #                              defines the same set as the legend
 #     check_evaluation_ledger_consumers       a file that enumerates the
 #                              vocabulary carries all of it
 #   Pass 4 — the other trees, each read once:
+#     check_rules_bytes        global/rules/ totals under 12,000 bytes
 #     check_global_rule        Depends: resolves, and each dependant cites back
 #     check_hook_selftest      every hook has an executable selftest
 #     check_script_selftest    every script, and every git hook, has an
@@ -285,6 +369,9 @@
 #     check_reference_links    every relative .md link in the root CLAUDE.md
 #                              resolves (pass 2's parser, pointed at the
 #                              root file)
+#     check_spelling           over docs/** and global/README.md, which no
+#                              other pass walks, and over CLAUDE.md with the
+#                              rest of the house-style set
 #   Every FAIL goes through say_fail, so the prefix and the exit status
 #   cannot disagree; a WARN is printed directly and never touches the status.
 #
@@ -459,6 +546,22 @@ for f in src/*/SKILL.md; do
     user_invoked_skills="$user_invoked_skills$skill "
 done
 
+# DOMAIN.md, read once for the two checks that grade a body against it. The
+# registered ALL-CAPS labels are what check_labels admits; the capitalized
+# words of every registered term name are the proper nouns check_heading_case
+# admits mid-heading. Both are pipe- and space-delimited membership lists,
+# since Darwin's bash 3.2 has no associative arrays, and both are empty when
+# there is no DOMAIN.md — a tree without one registers nothing, so the checks
+# that read them fall back to their own name lists rather than to silence.
+registered_labels="|"
+domain_terms=" "
+if [ -f DOMAIN.md ]; then
+  registered_labels="|$(grep -oE '`[[:upper:]][[:upper:][:digit:] _:+-]{1,20}`|\*\*[[:upper:]][[:upper:][:digit:] _:+-]{1,20}\*\*' DOMAIN.md \
+    | tr -d '`*' | sed -e 's/[[:space:]]*$//' -e 's/:$//' | sort -u | tr '\n' '|')"
+  domain_terms=" $(grep -oE '^\| \*\*[^*]+\*\*' DOMAIN.md | sed -e 's/^| \*\*//' -e 's/\*\*$//' \
+    | tr ' ' '\n' | grep -E '^[[:upper:]]' | tr -d '`,()' | sort -u | tr '\n' ' ')"
+fi
+
 # ---------------------------------------------------------------------------
 # Pass 1 — every skill's frontmatter and its own body, read once each.
 # ---------------------------------------------------------------------------
@@ -485,6 +588,15 @@ warn_bytes() {
 
 check_reattach_bytes() {
   warn_bytes "$1" 15000 "past the 5,000-token re-attach bound (at 3 bytes/token) Claude Code keeps per skill after auto-compaction, so its tail is what a re-attach drops; put its hard stops and close-out steps above its long sections, or move detail into references/"
+}
+
+# The same bound over a file that is read rather than re-attached: a reference
+# and a repo-local body are both loaded whole when their pointer is followed,
+# so the tail of an oversize one is what the run never reaches. A WARN on the
+# same terms as the body's, with the remedy a reference has — split it, since
+# there is no third tier to move detail into.
+check_reference_bytes() {
+  warn_bytes "$1" 15000 "past the 5,000-token bound (at 3 bytes/token) a loaded file is read within, so its tail is what the run does not reach; split it at a heading into two references the caller opens on different conditions"
 }
 
 # (see header) CLAUDE.md byte WARN. A WARN, not a FAIL, on the re-attach
@@ -859,6 +971,293 @@ check_slash_form() {
   done
 }
 
+
+# (see header) British spellings. The word list IS the check: a form absent
+# from it is not caught, which is why it is spelled out rather than derived
+# from a suffix rule (`-ise` alone fires on `wise`, `precise`, `concise`).
+# Code spans and URLs are stripped first, because a state value, an
+# identifier, or a vendor path is not this repo's prose to spell —
+# `order.cancelled` in a contract example stays. global/hooks/ and scripts/
+# are outside every caller on purpose: `tokeniser error` is a machine-matched
+# breadcrumb three selftests grep for, so that tree keeps the British form
+# while the prose describing it does not.
+british_words='behaviour|behaviours|colour|colours|coloured|favour|favours|favoured|favourite|labour|honour|humour|neighbour|neighbours|rumour|endeavour|flavour|centre|centres|fibre|litre|metre|metres|theatre|licence|licences|defence|offence|pretence|analyse|analysed|analyses|analysing|paralyse|organise|organised|organises|organising|organisation|recognise|recognised|recognises|recognising|prioritise|prioritised|prioritises|prioritising|summarise|summarised|summarises|summarising|synthesise|synthesised|synthesises|synthesising|minimise|minimised|minimises|minimising|maximise|maximised|maximises|maximising|normalise|normalised|normalises|normalising|serialise|serialised|serialises|serialising|initialise|initialised|initialises|initialising|utilise|utilised|utilises|utilising|categorise|categorised|categorises|categorising|emphasise|emphasised|emphasises|emphasising|apologise|apologised|apologises|apologising|optimise|optimised|optimises|optimising|optimisation|specialise|specialised|standardise|standardised|generalise|generalised|formalise|formalised|realise|realised|realises|realising|criticise|criticised|memorise|memorised|characterise|characterised|itemise|itemised|harmonise|harmonised|tokenise|tokenised|tokenises|tokenising|tokeniser|tokenisation|cancelled|cancelling|modelling|labelling|labelled|travelled|travelling|signalled|fulfil|fulfilment|enrolment|instalment|whilst|amongst|grey|artefact|artefacts|sceptic|sceptical|scepticism|programme|programmes|judgement|judgements|acknowledgement|acknowledgements|storey|draught|practise|practised|enquire|enquiry'
+check_spelling() {
+  local f=$1 hits badlines words
+  hits=$(awk "$FENCE_AWK"'{ print FNR ":" $0 }' "$f" \
+    | sed -e 's/`[^`]*`//g' -e 's#https\{0,1\}://[^ )]*##g' \
+    | grep -iwE "($british_words)") || true
+  if [ -n "$hits" ]; then
+    badlines=$(linenos "$hits")
+    words=$(printf '%s\n' "$hits" | grep -oiwE "($british_words)" | sort -fu | tr '\n' ' ')
+    say_fail "$f uses a British spelling (line(s) ${badlines}— ${words}) — this repo writes the American form; flip the word, or put it in a code span if it is a machine-matched literal"
+  fi
+}
+
+# (see header) Skill-reference form. The bare backtick stays licensed for the
+# classes write-skill names — vocabulary, a boundary statement, an
+# already-loaded skill's rules, a gated offer — and no scan can tell those
+# from a suggestion, so this check grades the two forms banned outright
+# rather than guessing at the licensed ones:
+#   "the `X` skill" (and its unbackticked twin), banned for every skill; and
+#   an invocation verb followed by a bare backticked USER-INVOKED name, which
+#   is a suggestion site, where `/name` is what the human types.
+# Scope, stated so a pass isn't read as more than it is: a suggestion written
+# any other way — "then hand it to `ship`", a name alone in a list row — is
+# invisible here, and the licensed classes are graded by nobody. The verb list
+# is the check.
+invocation_verbs='run|runs|running|suggest|suggests|suggesting|offer|offers|offering|type|types|typing|invoke|invokes|invoking'
+check_reference_form() {
+  local f=$1 scan hits badlines named
+  scan=$(awk "$FENCE_AWK"'{ print FNR ":" $0 }' "$f")
+  for named in $(printf '%s\n' "$scan" | grep -oE 'the `?[a-z][a-z0-9-]+`? skill([^a-z]|$)' | sed -e 's/^the //' -e 's/ skill.*$//' | tr -d '`' | sort -u); do
+    [ -f "src/$named/SKILL.md" ] || continue
+    hits=$(printf '%s\n' "$scan" | grep -E "the \`?$named\`? skill([^a-z]|\$)") || true
+    badlines=$(linenos "$hits")
+    say_fail "$f writes \"the $named skill\" (line(s) ${badlines}) — a skill is named, never described as one; write the bare backticked name, or \`/$named\` where a human types it"
+  done
+  for named in $(printf '%s\n' "$scan" | grep -oiE "($invocation_verbs) \`[a-z0-9-]+\`" | grep -oE '`[a-z0-9-]+`$' | tr -d '`' | sort -u); do
+    [ -f "src/$named/SKILL.md" ] || continue
+    name_is_user_invoked "$named" || continue
+    say_fail "$f suggests \`$named\` at an invocation site, but '$named' is user-invoked — write \`/$named\`, the form the human types (write-skill: \`/<name>\` only where a human types it)"
+  done
+}
+
+# (see header) Artifact filenames. A body that tells a run to write a file
+# names it lowercase with dashes; the repo-convention names below are the
+# exception, and any other backticked filename carrying an uppercase letter or
+# an underscore is a name the next session's `ls` or grep will not predict.
+# Scope: a backticked token ending in a document extension this repo's skills
+# write (.md, .html, .csv, .txt) — a source file in the user's project takes
+# that ecosystem's convention (`PrototypeSwitcher.tsx`) and is not read here.
+# A filename in prose without
+# backticks, and a path built at runtime from a variable, are not read.
+artifact_name_exempt='README.md|CLAUDE.md|AGENTS.md|SKILL.md|DOMAIN.md|MEMORY.md'
+check_artifact_names() {
+  local f=$1 hits badlines names
+  hits=$(awk "$FENCE_AWK"'
+    {
+      line = $0
+      while (match(line, /`[A-Za-z0-9_.<>-]+`/)) {
+        tok = substr(line, RSTART + 1, RLENGTH - 2)
+        line = substr(line, RSTART + RLENGTH)
+        if (tok !~ /\.(md|html|csv|txt)$/) continue   # a document this repo writes, not a source file
+        if (tok !~ /[A-Z_]/) continue
+        print FNR ":" tok
+      }
+    }
+  ' "$f" | grep -vE ":($artifact_name_exempt)$") || true
+  if [ -n "$hits" ]; then
+    badlines=$(linenos "$hits")
+    names=$(printf '%s\n' "$hits" | cut -d: -f2- | sort -u | tr '\n' ' ')
+    say_fail "$f names an artifact file with an uppercase letter or an underscore (line(s) ${badlines}— ${names}) — a file a run writes is lowercase with dashes, so a later session can predict it; the repo-convention names ($artifact_name_exempt) are the exception"
+  fi
+}
+
+# (see header) Label family. An ALL-CAPS token in bold or backticks is read as
+# a status marker, and DOMAIN.md's Status-marker row is where the family is
+# registered — so a token neither registered there nor on the list below is a
+# marker coined in a body, which is the drift that row bans.
+# What is not a marker by FORM: a single letter (an option label, a column
+# key), a token carrying a digit (an identifier —
+# `AC1`, `P2`, `L-04`) or an underscore (a shell or environment name —
+# `NO_COLOR`, `TEST_CASE_ID`). What is not a marker by NAME: the list below,
+# which is acronyms, SQL and shell keywords, and literals this repo quotes
+# from somewhere else (a GitHub visibility, a confirm token, a template
+# marker). DOMAIN.md is not scanned: every token in it is registered by
+# sitting there.
+known_caps=' ADO ADR AC ID UI UD DU SQL CI PR HTML CSS CSV TSV API URL CLI OS PHI PII WCAG NPI EOB SMS FHIR MRN HIPAA BAA VPAT ACR AT KT MCP SDK TDD YAML JSON HEAD README CONTRIBUTING ORDER BY SELECT DROP DELETE UPDATE INSERT WHERE CONTAINS TRUNCATE AND OR NOT NULL TITLE TODO STAGES CUTOVER PUBLIC INTERNAL PRIVATE SKIPPED CLOSED YELLOW BREAKING CHANGE YYYY-MM-DD '
+check_labels() {
+  local f=$1 tokens tok
+  tokens=$(awk "$FENCE_AWK"'{ print }' "$f" \
+    | grep -oE '`[[:upper:]][[:upper:][:digit:] _:+-]{1,20}`|\*\*[[:upper:]][[:upper:][:digit:] _:+-]{1,20}\*\*' \
+    | tr -d '`*' | sed -e 's/[[:space:]]*$//' -e 's/:$//' | sort -u) || true
+  [ -z "$tokens" ] && return 0
+  while IFS= read -r tok; do
+    [ -z "$tok" ] && continue
+    case "$tok" in *[0-9]* | *_*) continue ;; esac
+    [ "${#tok}" -lt 2 ] && continue
+    case "$registered_labels" in *"|$tok|"*) continue ;; esac
+    case "$known_caps" in *" $tok "*) continue ;; esac
+    say_fail "$f uses the ALL-CAPS label '$tok', which DOMAIN.md's Status-marker row does not register — register it there with the skill that owns it, or write it in prose; a marker nobody registered is one no consumer can match"
+  done <<< "$tokens"
+}
+
+# The two name lists check_heading_case admits mid-heading, beside the
+# DOMAIN.md-derived one built in pass 0: proper nouns the glossary has no
+# reason to register (a vendor, a language, a format, and the two tracker
+# field names this repo quotes verbatim), and the function words title case
+# leaves lowercase.
+proper_nouns=' Markdown Claude Anthropic Python Git GitHub Azure DevOps Boards Slack Teams Windows Linux macOS English Spanish YAML JSON Acceptance Criteria '
+title_case_small=' a an the and or nor but for of to in on at by as vs with from into over per '
+
+# (see header) Heading case, the H2 half. The clause split and the
+# already-capitalized tests run in awk, which emits one candidate word per
+# line; the shell filters those against the two name lists and reports. The
+# split is deliberate: a `while read` fed by a PIPE runs in a subshell, where
+# say_fail's `fail=1` dies with it and every FAIL it printed leaves the exit
+# status at 0 — the same trap the Depends: citation check carries a paragraph
+# about. Both loops below read from a here-string for that reason. The em dash
+# is written as literal UTF-8 in the awk program rather than as a `\x` escape,
+# which this platform's awk does not read. Every capital test is
+# `[[:upper:]]`, never `[A-Z]`: the sweep runs under a UTF-8 ctype (the probe
+# above establishes one), where `[A-Z]` is a COLLATION range that includes
+# every lowercase letter from `b` on — the H1 test silently passed every
+# lowercase word until this was written as a class.
+heading_case_candidates() {
+  awk "$FENCE_AWK"'
+    function emit(lineno, heading, clause,   n, parts, i, probe, next_word) {
+      n = split(clause, parts, " ")
+      i = 1
+      if (parts[1] ~ /^[0-9]+\.?$/) i = 2       # a numbered step: "4." is the label
+      i++                                       # the clause opener is capitalized by right
+      for (; i <= n; i++) {
+        probe = parts[i]
+        gsub(/[(),.*"\047\342\200\231]/, "", probe)
+        next_word = (i < n) ? parts[i + 1] : ""
+        if (probe == "") continue
+        if (probe !~ /^[[:upper:]]/) continue
+        if (probe ~ /[0-9]/) continue           # a label form: Tier 2, Phase 3, Step 11
+        if (next_word ~ /^[(]?[0-9]/) continue  # the same, with the number as its own word
+        if (probe ~ /^[[:upper:][:digit:]-]+$/) continue    # an acronym
+        print lineno "\t" heading "\t" probe
+      }
+    }
+    /^## / {
+      heading = substr($0, 4)
+      stripped = heading
+      gsub(/`[^`]*`/, "", stripped)             # a backticked span is a literal, not prose
+      gsub(/ — /, "\n", stripped)               # an em-dash clause opens a new sentence
+      gsub(/: /, "\n", stripped)                # so does a colon
+      n = split(stripped, clauses, "\n")
+      for (c = 1; c <= n; c++) emit(FNR, heading, clauses[c])
+    }
+  ' "$1"
+}
+
+check_heading_case() {
+  local f=$1 h1 w first bad hits lineno heading probe
+  if [ ! -r "$f" ]; then
+    say_fail "$f could not be read — the heading-case check did not run on it; this is not a verdict on its headings"
+    return
+  fi
+  case "$f" in
+    */SKILL.md)
+      h1=$(awk "$FENCE_AWK"'/^# / { sub(/^# /, ""); print; exit }' "$f")
+      if [ -n "$h1" ]; then
+        first=1; bad=""
+        for w in $h1; do
+          # Wrapping punctuation is not part of the word: a display name
+          # carrying a parenthetical ("Ask for Me (Fixture)") is still title
+          # case, and testing the bracket instead of the letter failed every
+          # one of them.
+          w=$(printf '%s' "$w" | sed -e 's/^[("'"'"'`[]*//' -e 's/[)"'"'"'`.,:;\]]*$//')
+          [ -z "$w" ] && continue
+          case "$w" in *[0-9]*) first=0; continue ;; esac
+          if [ "$first" -eq 1 ]; then first=0; continue; fi
+          case "$title_case_small" in *" $w "*) continue ;; esac
+          case "$w" in [[:upper:]]*) : ;; *) bad="$bad $w" ;; esac
+        done
+        [ -n "$bad" ] && say_fail "$f H1 '$h1' is not in title case (lowercase:${bad}) — a SKILL.md H1 is the display name of the skill, so every word but the short function words (${title_case_small# }) is capitalized"
+      fi
+      ;;
+  esac
+  hits=$(heading_case_candidates "$f")
+  [ -z "$hits" ] && return 0
+  # One FAIL per heading, not per word: three capitals in one heading are one
+  # edit, and three lines for it is three times the noise for the same fix.
+  # The grouping runs on a sorted stream, so the accumulator only ever holds
+  # the heading it is still reading.
+  local at="" seen_heading="" seen_words=""
+  while IFS=$'\t' read -r lineno heading probe; do
+    [ -z "$probe" ] && continue
+    case "$proper_nouns" in *" $probe "*) continue ;; esac
+    case "$domain_terms" in *" $probe "*) continue ;; esac
+    if [ "$lineno" != "$at" ]; then
+      [ -n "$seen_words" ] && say_fail "$f H2 '$seen_heading' (line $at) capitalizes${seen_words} mid-heading — an H2 is sentence case; lowercase the word, or register the proper noun in DOMAIN.md"
+      at=$lineno; seen_heading=$heading; seen_words=""
+    fi
+    seen_words="$seen_words '$probe'"
+  done <<< "$hits"
+  [ -n "$seen_words" ] && say_fail "$f H2 '$seen_heading' (line $at) capitalizes${seen_words} mid-heading — an H2 is sentence case; lowercase the word, or register the proper noun in DOMAIN.md"
+  return 0
+}
+
+# (see header) Section pointers. check_reference_links reads the `.md` inside
+# the parens and stops there, so a trailing ` § Name` — the half that says
+# WHERE in the file to read — has never been checked, and a section renamed
+# out from under a pointer shipped past a green lint. A citation is graded
+# only where the line names a target file: an inline link, a `~/.claude/`
+# path, or a backticked skill name (whose target is that skill's SKILL.md,
+# the form F9's fix introduced). A `§ 4` naming a section of the file it sits
+# in has no target and is not read.
+# The name is matched as a PREFIX of a heading, because a citation runs on
+# into the sentence ("§ Where to write it owns the shape"); that is also the
+# check's limit — a heading that is a prefix of a longer sibling can be cited
+# by the shorter name and pass.
+section_pointer_candidates() {
+  awk "$FENCE_AWK"'
+    {
+      rest = $0
+      while ((i = index(rest, "§")) > 0) {
+        before = substr(rest, 1, i - 1)
+        rest = substr(rest, i + length("§"))
+        name = rest
+        sub(/^ /, "", name)
+        if (name !~ /^[[:upper:]]/) continue
+        print FNR "\t" before "\t" name
+      }
+    }
+  ' "$1"
+}
+
+# The four target forms, as variables rather than inline patterns: a `~` at the
+# start of a regex written inline in `[[ =~ ]]` is TILDE-EXPANDED to the home
+# directory before the match runs, so both path arms silently matched nothing
+# and the check graded the link arm alone while reporting a clean sweep.
+section_link_re='\]\(([^)]+\.md)\)$'
+section_skills_re='~/\.claude/skills/([a-z0-9-]+)/([A-Za-z0-9/._-]+)`?$'
+section_rules_re='~/\.claude/rules/([a-z0-9-]+\.md)`?$'
+section_name_re='`([a-z][a-z0-9-]+)`$'
+check_section_pointers() {
+  local f=$1 dir cands lineno before name tail target heading found
+  dir=$(dirname "$f")
+  cands=$(section_pointer_candidates "$f")
+  [ -z "$cands" ] && return 0
+  while IFS=$'\t' read -r lineno before name; do
+    [ -z "$name" ] && continue
+    # The citation runs on into its sentence, so the name is cut at the first
+    # sentence end or closing paren — both of which a heading may not contain,
+    # and neither of which the prefix match below needs.
+    name=$(printf '%s' "$name" | sed -e 's/\. .*$//' -e 's/[.,;)].*$//' -e 's/[[:space:]]*$//')
+    [ -z "$name" ] && continue
+    tail=$(printf '%s' "$before" | sed -E 's/[[:space:]—-]+$//')
+    target=""
+    if [[ "$tail" =~ $section_link_re ]]; then
+      target="$dir/${BASH_REMATCH[1]%%#*}"
+    elif [[ "$tail" =~ $section_skills_re ]]; then
+      target="src/${BASH_REMATCH[1]}/${BASH_REMATCH[2]}"
+    elif [[ "$tail" =~ $section_rules_re ]]; then
+      target="global/rules/${BASH_REMATCH[1]}"
+    elif [[ "$tail" =~ $section_name_re ]]; then
+      [ -f "src/${BASH_REMATCH[1]}/SKILL.md" ] && target="src/${BASH_REMATCH[1]}/SKILL.md"
+    fi
+    [ -z "$target" ] && continue
+    if [ ! -f "$target" ]; then
+      say_fail "$f cites '§ ${name}' (line $lineno) in $target, which is not a file — fix the path or the pointer; check_reference_links reads only the parenthesised half, so a pointer like this one is graded nowhere else"
+      continue
+    fi
+    found=no
+    while IFS= read -r heading; do
+      heading=${heading#\#}; while [ "${heading#\#}" != "$heading" ]; do heading=${heading#\#}; done
+      heading=${heading# }
+      [ -z "$heading" ] && continue
+      case "$name" in "$heading"*) found=yes; break ;; esac
+    done <<< "$(grep -E '^#{1,6} ' "$target")"
+    [ "$found" = no ] && say_fail "$f cites '§ ${name}' (line $lineno), and $target carries no heading by that name — rename the pointer to the heading, or the heading back; the pointer resolves to a file that loads and a section that is not there"
+  done <<< "$cands"
+}
+
 # One walk, produced once and passed to every consumer. Pass 2 classifies it
 # file by file; pass 3's checks need the same list as a whole, and re-running
 # the find there would be a second walk that could silently disagree with this
@@ -887,6 +1286,25 @@ body_checks() {
   check_reference_links "$1"
 }
 
+# The house-style checks, named once for the same reason. Heading case is
+# NOT in here: it is the one of the five a class can legitimately be exempt
+# from (global/rules/), so each arm names it or does not, in the open.
+house_style_checks() {
+  # One read guard for the five, on the taxonomy's terms: a file that cannot be
+  # read is a set of checks that never ran, which is a different claim from a
+  # file that passed them. Without it an unreadable file drew five awk errors
+  # on stderr and a clean line on stdout.
+  if [ ! -r "$1" ]; then
+    say_fail "$1 could not be read — the house-style checks (spelling, reference form, artifact names, labels, section pointers) did not run on it; this is not a verdict on the file"
+    return
+  fi
+  check_spelling "$1"
+  check_reference_form "$1"
+  check_artifact_names "$1"
+  check_labels "$1"
+  check_section_pointers "$1"
+}
+
 # One classifier, and it is exhaustive because the last arm says so rather
 # than because a catch-all absorbs the remainder: a file the walk emits and no
 # arm claims is a FAIL naming itself. Each arm names that class's whole check
@@ -904,13 +1322,21 @@ if [ -n "$walked_files" ]; then
 while IFS= read -r f; do
   case "$f" in
     global/rules/*)
-      # Hoisted prose. Body checks, and deliberately no slash sweep: a rule
-      # file addresses the model directly and names no skill as a command.
+      # Hoisted prose. Body checks and the house-style checks, and
+      # deliberately no slash sweep: a rule file addresses the model directly
+      # and names no skill as a command. Deliberately no heading case either:
+      # a rule file's H1 is a sentence-case proposition, not a display name
+      # (write-skill's spine row says so), so the H1 half would fail every
+      # file here and the H2 half has nothing to grade.
       body_checks "$f"
+      house_style_checks "$f"
       ;;
     src/*/*)
       # A skill's own SKILL.md or a reference beneath it. Everything.
       body_checks "$f"
+      house_style_checks "$f"
+      check_heading_case "$f"
+      case "$f" in */SKILL.md) : ;; *) check_reference_bytes "$f" ;; esac
       owner=${f#src/}; owner=${owner%%/*}
       if [ -f "src/$owner/SKILL.md" ] && ! name_is_user_invoked "$owner"; then
         check_load_gate "$f"
@@ -920,12 +1346,36 @@ while IFS= read -r f; do
     src/*)
       # Depth one under src/: no owning skill, so no load gate to apply.
       body_checks "$f"
+      house_style_checks "$f"
+      check_heading_case "$f"
       check_slash_form "$f"
       ;;
-    .claude/skills/* | DOMAIN.md | README.md)
-      # Swept for the slash form only; their size and frontmatter are the
-      # author's (see header Scope).
+    .claude/skills/*)
+      # A repo-local skill: swept for the slash form, the house style, and the
+      # loaded-file byte WARN (it is re-attached exactly as a hoisted body
+      # is). Its frontmatter is still the author's (see header Scope).
       check_slash_form "$f"
+      house_style_checks "$f"
+      check_heading_case "$f"
+      check_reference_bytes "$f"
+      ;;
+    DOMAIN.md)
+      # The glossary. Swept for the slash form and the house style, minus
+      # check_labels: every ALL-CAPS token here is registered by sitting here,
+      # so grading it against itself asserts nothing.
+      check_slash_form "$f"
+      check_spelling "$f"
+      check_reference_form "$f"
+      check_artifact_names "$f"
+      check_section_pointers "$f"
+      check_heading_case "$f"
+      ;;
+    README.md)
+      # The second router. The slash form and the house style; its size and
+      # frontmatter are the author's (see header Scope).
+      check_slash_form "$f"
+      house_style_checks "$f"
+      check_heading_case "$f"
       ;;
     *)
       say_fail "walk_shipped_md emitted $f and no classifier arm claims it — add an arm naming that class's whole check set, or drop the tree from the walk; an unclaimed file would otherwise be graded by nothing"
@@ -1169,7 +1619,7 @@ sibling_groups=(
   "src/review-changes/references/subagent-brief.md|src/review-architecture/references/subagent-brief.md|src/chart-course/references/subagent-brief.md|src/handoff/references/subagent-brief.md|src/work-item-shape/references/subagent-brief.md|src/adoption-verdict/references/subagent-brief.md|src/product-description/references/subagent-brief.md"
   "src/review-architecture/references/finding-discipline.md|src/review-changes/references/finding-discipline.md"
   "src/review-changes/references/tree-stamp.md|src/address-findings/references/tree-stamp.md"
-  "src/to-bug/references/github-sub-issues.md|src/to-story/references/github-sub-issues.md|src/to-tasks/references/github-sub-issues.md|src/chart-course/references/github-sub-issues.md"
+  "src/to-bug/references/github-sub-issues.md|src/to-feature/references/github-sub-issues.md|src/to-story/references/github-sub-issues.md|src/to-tasks/references/github-sub-issues.md|src/chart-course/references/github-sub-issues.md"
   "src/to-bug/references/work-item-tags.md|src/to-feature/references/work-item-tags.md|src/to-story/references/work-item-tags.md|src/to-tasks/references/work-item-tags.md|src/chart-course/references/work-item-tags.md"
   "src/implement/references/completion-audit.md|src/handoff/references/completion-audit.md|src/committing/references/completion-audit.md"
   "src/to-feature/references/ado-html-transport.md|src/to-story/references/ado-html-transport.md|src/to-tasks/references/ado-html-transport.md|src/to-bug/references/ado-html-transport.md|src/chart-course/references/ado-html-transport.md"
@@ -1215,7 +1665,39 @@ check_sibling_membership() {
 }
 
 [ -z "${LINT_ROOT:-}" ] && check_sibling_identity
+
+# (see header) Orphaned references. check_reference_links validates a link's
+# target and never the other direction, so a reference file nothing points at
+# passes every check today while loading for nobody — the failure mode a
+# relocation-heavy round produces by the dozen. A reference counts as pointed
+# at by an inline link from anywhere inside its own skill (by its path from
+# the skill root, or by its basename from a sibling reference), or by the
+# `~/.claude/skills/<owner>/<path>` form from anywhere in the walk, which is
+# how one skill cites another's reference.
+# Scope: src/*/references/ only. A file elsewhere under a skill is not walked,
+# and a reference reached by a link form check_reference_links does not
+# extract either (reference-style, titled, angle-bracketed) reads as an orphan
+# here — the two checks share that boundary on purpose.
+check_reference_orphans() {
+  local files=$1 r owner rel base orphan_scan_roots
+  orphan_scan_roots="src"
+  [ -d global ] && orphan_scan_roots="$orphan_scan_roots global"
+  [ -d .claude/skills ] && orphan_scan_roots="$orphan_scan_roots .claude/skills"
+  for r in DOMAIN.md README.md CLAUDE.md; do [ -f "$r" ] && orphan_scan_roots="$orphan_scan_roots $r"; done
+  while IFS= read -r r; do
+    case "$r" in src/*/references/*) : ;; *) continue ;; esac
+    owner=${r#src/}; owner=${owner%%/*}
+    rel=${r#src/$owner/}
+    base=${r##*/}
+    grep -rqF -- "]($rel)" "src/$owner" && continue
+    grep -rqF -- "]($base)" "src/$owner" && continue
+    grep -rqF -- "~/.claude/skills/$owner/$rel" $orphan_scan_roots 2>/dev/null && continue
+    say_fail "$r is linked from nowhere — every reference is opened by a caller that names the condition; add the pointer in src/$owner/SKILL.md, or delete the file (write-skill: a reference nobody opens is content that left a body and arrived nowhere)"
+  done <<< "$files"
+}
+
 check_sibling_membership "$walked_files"
+check_reference_orphans "$walked_files"
 check_evaluation_ledger_authority "$walked_files"
 check_evaluation_ledger_rule_agreement "$walked_files"
 check_evaluation_ledger_consumers "$walked_files"
@@ -1265,6 +1747,24 @@ check_global_rule() {
     say_fail "$f Depends: resolves to no existing skill — a global rule with no dependant leaves global/ (global/README.md admission rule)"
   fi
 }
+
+# (see header) The always-loaded budget. Every file under global/rules/ is
+# read on every turn, so the directory's TOTAL is the figure that matters, not
+# any one file's — a FAIL, unlike the two byte WARNs above, because this bound
+# is this repo's own ruling rather than a platform figure that moves under it.
+check_rules_bytes() {
+  local bytes
+  [ -d global/rules ] || return 0
+  bytes=$(cat global/rules/*.md 2>/dev/null | wc -c | tr -d ' ')
+  if [ -z "$bytes" ]; then
+    say_fail "global/rules/ could not be read for its byte total — the 12,000-byte budget did not run"
+    return
+  fi
+  if [ "$bytes" -gt 12000 ]; then
+    say_fail "global/rules/ totals $bytes bytes, over the 12,000-byte budget for the always-loaded layer — cut a rule, move one behind a skill that opens it, or make the case for a new floor in an ADR amendment; every byte here is paid on every turn of every session"
+  fi
+}
+check_rules_bytes
 
 for f in global/rules/*.md; do
   check_global_rule "$f"
@@ -1362,6 +1862,15 @@ if [ -d scripts/git-hooks ]; then
   done
 fi
 
+# The spelling-only trees. docs/ and global/README.md are read by people
+# rather than loaded as instructions, so no other check here walks them — but
+# a British form in an ADR is the same drift as one in a body, and this is the
+# one check whose scope ADR-0077 wrote wider than the skill tree. A separate
+# walk because it is a separate glob: nothing else reads these files.
+for f in docs/*.md docs/adr/*.md global/README.md; do
+  [ -f "$f" ] && check_spelling "$f"
+done
+
 if [ -f CLAUDE.md ]; then
   check_claude_md_bytes CLAUDE.md
   # ADR-0076 left the root file as triggers and pointers; a pointer to a
@@ -1369,6 +1878,10 @@ if [ -f CLAUDE.md ]; then
   # check every shipped markdown file gets — pass 2's parser, reused rather
   # than a second extractor, so the two cannot disagree about scope.
   check_reference_links CLAUDE.md
+  # The root file is an instruction file like any other: it names skills, cites
+  # sections, and is written in this repo's prose. Heading case is left off —
+  # its H1 is the repo's name, not a display name on the axis above.
+  house_style_checks CLAUDE.md
 fi
 
 if [ "$fail" -eq 0 ]; then

@@ -80,7 +80,7 @@ A sticky header or toolbar hides the focused element that scrolls behind it; the
 
 A composite is one tab stop; arrow keys move inside it — its label, hint, and status glyph are properties of that stop's name, value, and description rather than stops of their own, while an interactive part inside it (a clear button, a chip's close) is its own stop. Two tab stops per tab, or every tool in a toolbar in the tab order, is the default output.
 
-- One of roving `tabindex` (the active item `0`, the rest `-1`) or `aria-activedescendant` on the container — never both; a `role="tablist"` carries `role="tab"` children with `aria-selected` and `aria-controls`, and each `role="tabpanel"` is labelled by its tab.
+- One of roving `tabindex` (the active item `0`, the rest `-1`) or `aria-activedescendant` on the container — never both; a `role="tablist"` carries `role="tab"` children with `aria-selected` and `aria-controls`, and each `role="tabpanel"` is labeled by its tab.
 - An inactive panel, a collapsed accordion body, and a closed disclosure are `hidden` or `inert`, not `opacity: 0` or `height: 0`, which leave their controls in the tab order.
 - A control that toggles keeps one name (not "Show"/"Hide" swapping) and flips its state attribute — a disclosure flips `aria-expanded` — because swapping the name *and* flipping the state announces the state twice and lets the two disagree ("Play, pressed"); site navigation is `<nav>` with links and `aria-current="page"`, never `role="menu"`.
 - Run: one Tab lands on the composite, arrows move the selection, Tab leaves it; a screen reader reads "tab 2 of 4, selected".

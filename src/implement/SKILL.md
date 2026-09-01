@@ -15,7 +15,9 @@ Drive the build of **one Vertical slice** — the slice `from-ticket` just loade
 2. **Restate the slice as a vertical cut.** Name the end-to-end behavior the slice delivers across the layers it touches — not a horizontal "all the data-layer work" chunk. The full vertical-slicing discipline (and the horizontal anti-pattern) lives in `tdd`; hold the line here.
 3. **Declare the edit boundary.** Name the narrowest directory in each layer the slice touches that contains its files there — `src/api/scores/`, `src/web/scores/`, `migrations/`, never the root that happens to contain them all — and say it before the first edit. A fix that needs a file past that boundary stops and asks — **Proceed** (widen it, with the reason), **Split** (the outside part becomes its own slice), or **Rethink** (the plan was wrong) — never widens quietly. `diagnosing-bugs` inherits this boundary when it runs under `implement`, and declares its own once its hypotheses are ranked otherwise.
 
-## Pick the build path
+## Workflow
+
+### 1. Pick the build path
 
 Decide how the slice is built, and say which path you picked and why:
 
@@ -26,7 +28,7 @@ When it's genuinely ambiguous (some testable behavior, some glue), it is a judgm
 
 The choice ratchets one way. Complexity that surfaces mid-slice **upgrades** the path — glue that turns out to carry a rule becomes a testable slice, and its tests get written from that point. Nothing downgrades: a testable slice doesn't become "just glue" because the tests are proving to be work. Mid-slice doubt therefore resolves upward on its own, with no round-trip to the user: reaching for the lighter label in order to skip the heavier path is itself the doubt.
 
-## Build
+### 2. Build
 
 - **Testable:** hand the slice to `tdd` and let it run its cycle — the refactor beat is `tdd`'s job there.
 - **Non-testable:** build the change directly, then do a cleanup pass — `/simplify` over what you wrote, applying what it finds, and the naming discipline over anything the slice named, renamed, or moved. Call the Skill tool with `discoverable-code` there; if you don't see a `Launching skill: discoverable-code` line, stop and call it again. This is the direct path's refactor beat; on the testable path `tdd` runs both beats itself.
@@ -37,11 +39,11 @@ The choice ratchets one way. Complexity that surfaces mid-slice **upgrades** the
 
 If an **unplanned failure** turns up mid-build that you can't quickly explain — a red that isn't the test you just wrote, behavior that contradicts the plan — stop guessing and call the Skill tool with `diagnosing-bugs` before continuing (if you don't see a `Launching skill: diagnosing-bugs` line, stop and call it again). Don't fold an unexplained red into the slice's normal red/green rhythm; it needs its own tight feedback loop first.
 
-## Park what you notice
+### 3. Park what you notice
 
-Out-of-scope observations made mid-slice — a smell, a missing test, a refactor itch — get **parked**, never fixed inline: add a row to the **parked ledger** in the audit form's shape and hold the slice's line. Pre-existing dead code is parked; what this slice orphaned — a function, import, or test nothing calls once the change lands — is removed in the slice. A refactor you went ahead with because it felt natural is a judgment-calls row (`my call`), so the reviewer sees the scope it took. At close the ledger is surfaced inside the completion audit — "noticed but didn't touch" — and doubles as the change's scope declaration: what you deliberately left alone. It opens with the rows the last slice on this ticket parked, each carried forward or given the exit the audit form defines; a ledger that starts empty on a ticket whose prior slice parked rows has resolved them by omission, which is the one exit that is not available. Filing a parked item is the user's ask — `to-bug` for a defect, `to-tasks` or `to-story` otherwise, where the repo has them; the `Landing:` defect policy in `CLAUDE.md` says what a found defect does by default.
+Out-of-scope observations made mid-slice — a code smell, a missing test, a refactor itch — get **parked**, never fixed inline: add a row to the **parked ledger** in the audit form's shape and hold the slice's line. Pre-existing dead code is parked; what this slice orphaned — a function, import, or test nothing calls once the change lands — is removed in the slice. A refactor you went ahead with because it felt natural is a judgment-calls row (`my call`), so the reviewer sees the scope it took. At close the ledger is surfaced inside the completion audit — "noticed but didn't touch" — and doubles as the change's scope declaration: what you deliberately left alone. It opens with the rows the last slice on this ticket parked, each carried forward or given the exit the audit form defines; a ledger that starts empty on a ticket whose prior slice parked rows has resolved them by omission, which is the one exit that is not available. Filing a parked item is the user's ask — `to-bug` for a defect, `to-tasks` or `to-story` otherwise, where the repo has them; the `Landing:` defect policy in `CLAUDE.md` says what a found defect does by default.
 
-## Close the loop
+### 4. Close the loop
 
 `feedback-loops` is the mechanical finalize, and the slice gets one run of it. On the testable path `tdd` makes that run itself as it closes its cycle — that run *is* this pass, so don't repeat it here. Otherwise, once the slice's behaviors are built and refactored, call the Skill tool with `feedback-loops` yourself; if you don't see a `Launching skill: feedback-loops` line, stop and call it again.
 
@@ -51,17 +53,17 @@ Then run the **completion audit** against the loaded ticket: treat done as unpro
 - **Judgment calls are the unsure choices *and* the confident defaults** picked where the ticket was silent — the sort order, the helper, the endpoint kept alive. The form's reversibility test decides inclusion; each entry is a review prompt the user can act on while the context is live, and nothing else in the flow makes these visible.
 - **The audit is one inspection round.** Read the evidence once, fix everything it turns up in one batch, and — only if the batch changed anything — confirm once by re-running the checks the fixes touched, not a second audit. Whatever the confirm still leaves open is a row marked so, not another round.
 
-## Record a load-bearing decision
+### 5. Record a load-bearing decision
 
 If any decision — a listed judgment call or not — turned on a choice that passes the **ADR gate** in `adr`, offer to record it via `adr` — synthesize the decision from what you just built and let the user approve or discard, rather than asking a blank yes/no.
 
 Most slices won't clear the gate; don't manufacture an ADR for an obvious or easily-reversed choice — but say the gate's result either way, in its own words, so a stated zero is on the record. `feedback-loops`' mechanical doc-sync does **not** cover this — recording rationale is judgment, which is why it delegates to `adr`.
 
-## Suggest review, then ship
+### 6. Suggest review, then ship
 
 `review-changes` is user-invoked, like this skill, so nothing here can invoke it. **Suggest** it to the user before the change lands: "Slice built and green — consider `/review-changes` before it lands."
 
-If the user runs `review-changes`, the findings are acted on in `/address-findings`' one pass (it runs `feedback-loops` after its last fix); a finding that pass cannot fix is a deferral the user ratifies there, never a follow-up this slice files on its own.
+If the user runs `/review-changes`, the findings are acted on in `/address-findings`' one pass (it runs `feedback-loops` after its last fix); a finding that pass cannot fix is a deferral the user ratifies there, never a follow-up this slice files on its own.
 
 Once the slice is reviewed and findings are addressed, it lands: a one-commit change through the `committing` discipline on the user's ask, a change that needs a split or a PR through `/ship` — suggest it, don't invoke it: "Green and reviewed — `/ship` from here."
 

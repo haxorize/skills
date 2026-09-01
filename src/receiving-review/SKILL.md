@@ -6,7 +6,7 @@ requires: writing-for-humans
 
 # Receiving Review
 
-Review feedback is a set of claims to verify, not orders to follow or occasions for gratitude. Technical correctness over social comfort.
+Review feedback is a set of claims to verify, not orders to follow or occasions for gratitude. Technical correctness over social comfort. Three stops bound the pass and each is stated in full below: clarify every unclear item before implementing any of them; stop and hand the call back when the fix work would exceed roughly 2× the original change; and stop when the pass has accepted nothing, since a review with zero accepted findings is a reading failure before it is a review failure.
 
 This holds whoever produced the findings. A report from your own self-review is not pre-verified because it came from your side of the desk — subagent findings are claims like any other. Inline threads, review bodies, and top-level PR comments are judged alike; a claim is not weaker for arriving outside a thread. An advisory — an item a `review-changes` report lists under a lens with no `F<n>` — is a claim like the rest and is verified the same way; it asks for no reply and takes no disposition, and the author acts on it or leaves it.
 
@@ -23,7 +23,7 @@ This holds whoever produced the findings. A report from your own self-review is 
 
 A verified finding is not always a code defect. Before fixing, ask which artifact it indicts: the **code** (fix it here), the **spec or work item** the code was built from (raise it against that item — patching code to satisfy a wrong spec buries the defect), or an **intent gap** only the human can resolve (escalate; no local fix is legitimate). A reviewer's label — security, correctness, required, high-risk — is evidence about the finding, never authority to widen the change: a fix that would add a guarantee, subsystem, or compatibility surface the work item never asked for is the intent-gap route, escalated with the smallest fix that satisfies the accepted intent named beside it. When a spec-level defect is confirmed, code-level findings in its shadow are moot until the spec is corrected — re-verify them after; don't fix them first.
 
-Two findings have a fixed route. A finding against **prose** — an instruction file, a doc, a skill body — is answered with the *condition* it fails (the rule it breaks, the reader it loses), not with a patch handed back; a second round on the same block means restate the condition, not re-patch. And an instruction-file finding **outside the change's scope** — a rule the diff did not touch — is deferred for the user to ratify, never patched in passing: a review of a change is not a licence to edit the rules in force.
+Two findings have a fixed route. A finding against **prose** — an instruction file, a doc, a skill body — is answered with the *condition* it fails (the rule it breaks, the reader it loses), not with a patch handed back; a second round on the same block means restate the condition, not re-patch. And an instruction-file finding **outside the change's scope** — a rule the diff did not touch — is deferred for the user to ratify, never patched in passing: a review of a change is not a license to edit the rules in force.
 
 ## Clarify all before implementing any
 
@@ -43,7 +43,7 @@ Pushed back and turned out wrong? State the correction factually and move on ("V
 
 Fixing findings is one pass: verify, fix what holds, push back on what doesn't, propose deferrals for the user to ratify, and close with every finding disposed. Re-review is the user's call — when they ask for round N, that is one more pass with its own ledger; a fix → re-review loop you start on your own is the failure.
 
-A deferral is a proposal, not a disposition: say which findings you propose to defer and why, and the user ratifies or refuses in the same exchange — an unstated deferral reads as a finding silently dropped, and a stated one the user never saw is the same thing. Stop the pass and ask when the fix work would exceed roughly **2× the original change's scope** — a review that becomes a rewrite has stopped being a review. `/address-findings` runs this pass over a `review-changes` report and owns the disposition table; this behavior owns the judgment per finding.
+A deferral is a proposal, not a disposition: say which findings you propose to defer and why, and the user ratifies or refuses in the same exchange — an unstated deferral reads as a finding silently dropped, and a stated one the user never saw is the same thing. Stop the pass and ask when the fix work would exceed roughly **2× the original change's scope** — a review that becomes a rewrite has stopped being a review.
 
 ## The zero-accepted tripwire
 
@@ -56,3 +56,7 @@ When a reviewer wants something "implemented properly" (a fuller endpoint, more 
 ## Replying on the review's own threads
 
 When the findings arrived as PR review comments, open [references/pr-threads.md](references/pr-threads.md) before the first reply and follow it — replies are outbound tracker prose, so have `writing-for-humans` live before writing one. Every comment gets an outcome reply; no silent ignores.
+
+## Boundary
+
+This skill owns the judgment per finding — whether the claim holds, what it indicts, what to say back. `/address-findings` runs the same pass over a `review-changes` report and owns the mechanics around it: the partition, the disposition table, the re-stamp. Producing the findings is `review-changes`'; making the fix work is `implement`'s or `tdd`'s, and landing it is `committing`'s. A finding that turns out to be a defect nobody asked for follows the repo's `Landing:` defect policy rather than becoming this pass's work.

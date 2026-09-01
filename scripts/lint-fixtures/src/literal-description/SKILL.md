@@ -5,6 +5,6 @@ description: |2-
   Use when the block-scalar check needs a form that is not the bare ">-".
 ---
 
-# Literal description (fixture)
+# Literal Description (Fixture)
 
 The description above is a YAML block scalar with a suffix; the linter must flag it.

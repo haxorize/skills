@@ -31,7 +31,7 @@ A record must clear all three; if one is missing, don't write it:
 2. **Durable** — it will shape lessons or decisions beyond today.
 3. **Revisable** — it's a belief future evidence could overturn; the record is what makes that revision visible.
 
-Routine quiz outcomes and per-concept scheduling belong in `PROGRESS.md`, not here.
+Routine quiz outcomes and per-concept scheduling belong in `progress.md`, not here.
 
 ## Example
 

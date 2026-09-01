@@ -8,31 +8,33 @@ argument-hint: "[<package> ...] — defaults to everything the manifest lists as
 
 # Upgrade Deps
 
-Dependency bumps are the change whose diff says nothing — a one-line manifest edit that can swap a maintainer, a licence, or a default under every caller. The skill is the order of work plus the check every bump passes before the lockfile moves.
+Dependency bumps are the change whose diff says nothing — a one-line manifest edit that can swap a maintainer, a license, or a default under every caller. The skill is the order of work plus the check every bump passes before the lockfile moves.
 
-## 0. Baseline
+## Before upgrading
 
 Each step below ends at a clean tree with the suite green, and the run is one commit per step; the commit ask is put at the end of step 1, once the step list is known and the ask can name its count. Before any bump: a green suite on the current tree (call the Skill tool with `feedback-loops` — if you did not just see a `Launching skill: feedback-loops` line, stop and call it again; a red baseline is fixed or named before anything else moves — an upgrade cannot be blamed for a failure it inherited) and a revertable point (a clean tree at a known commit, or a stash the close step names). Rollback is defined now, not at the failure: restore manifest plus lockfile together and re-run the suite to prove the restore, never the manifest alone.
 
-## 1. Discover
+## Workflow
+
+### 1. Discover
 
 List what is outdated and what is flagged, with the tool the repo already uses — `npm outdated` / `npm audit`, `pip list --outdated` / `pip-audit` (or `uv lock --upgrade --dry-run`), `dotnet list package --outdated` / `--vulnerable` / `--deprecated`. A package is classed once: security-flagged, major, below-major. Then by exposure: dev-only (type packages, test frameworks, formatters) updates freely; libraries the code calls directly and SDKs for third-party services get the changelog read; the build toolchain (the runtime, the compiler, the bundler, the SDK itself) gets the most caution, because breakage there reaches every output. Deferred bumps from a previous run resurface here from `docs/deps-deferred.md` with their review-by date.
 
 Discovery fixes the run's step list — each security-flagged package its own step, each major its own step, one below-major batch. Now put the commit ask, once, with the count in it: "N steps, one commit per step, on this branch?" A yes is the ask the `committing` discipline needs for those N commits and no more — a step added later gets its own ask; a no means the tree is left clean at each step and nothing is committed until asked. The push stays on the `Landing:` key or a separate ask.
 
-## 2. Audit each package before it touches the lockfile
+### 2. Audit each package before it touches the lockfile
 
-One verdict per package — **safe**, **review**, or **defer** — from facts looked up now, never from the package's reputation:
+One verdict per package — **Safe**, **Review**, or **Defer** — from facts looked up now, never from the package's reputation:
 
-- **Publisher** — who published the target version against who published the current one (`npm view <pkg>@<v> _npmUser` per version — `maintainers` is the current list only; the NuGet gallery's owners and the package's signer; PyPI's release uploader). A new account is `review`; an unknown one is `defer`.
+- **Publisher** — who published the target version against who published the current one (`npm view <pkg>@<v> _npmUser` per version — `maintainers` is the current list only; the NuGet gallery's owners and the package's signer; PyPI's release uploader). A new account is **Review**; an unknown one is **Defer**.
 - **Publish age** — the floor is 7 days, this skill's default; a target younger than the floor is flagged: wait unless the bump is the security fix itself. Check the target repo's `CLAUDE.md` for a `## Registry` block carrying `Minimum release age:` — where that key is present it replaces the floor, and [references/version-gates.md](references/version-gates.md) § Registry release-age gate is what the run picks instead.
 - **Provenance** — an attestation present on the target version or noted absent, checked on the registry metadata before anything is installed (`npm view <pkg>@<v> dist.attestations`; download the `.nupkg` and `dotnet nuget verify <path>`; PyPI attestations on the release page). A claim resting on absent metadata earns no verdict of safe — and a lookup that failed is *no observation*, never a declared absence: `npm view` prints nothing and exits 0 when the field is absent (that is absence), and a non-zero exit is a failed lookup; say which.
-- **Tarball diff** — what the published package actually changed (`npm diff --diff=<pkg>@<from> --diff=<pkg>@<to>`; unpack the two `.nupkg` or wheels and diff): new runtime dependencies, `eval`, network calls where none belonged, a diff larger than the changelog explains. Read the changelog first and check the tarball against it; a tarball that does more than the changelog says is `defer`. A package that is an **MCP server** — pinned in `.mcp.json` or a settings file rather than a lockfile — is audited the same way plus the tool-description diff and injection scan in [references/mcp-server-audit.md](references/mcp-server-audit.md), before the bump is wired.
-- **Licence** — a licence that changed between versions is not this skill's to bump: call the Skill tool with `adoption-verdict` on the licence change and take its verdict — if you did not just see a `Launching skill: adoption-verdict` line, stop and call it again.
+- **Tarball diff** — what the published package actually changed (`npm diff --diff=<pkg>@<from> --diff=<pkg>@<to>`; unpack the two `.nupkg` or wheels and diff): new runtime dependencies, `eval`, network calls where none belonged, a diff larger than the changelog explains. Read the changelog first and check the tarball against it; a tarball that does more than the changelog says is **Defer**. A package that is an **MCP server** — pinned in `.mcp.json` or a settings file rather than a lockfile — is audited the same way plus the tool-description diff and injection scan in [references/mcp-server-audit.md](references/mcp-server-audit.md), before the bump is wired.
+- **License** — a license that changed between versions is not this skill's to bump: call the Skill tool with `adoption-verdict` on the license change and take its verdict — if you did not just see a `Launching skill: adoption-verdict` line, stop and call it again.
 
-Run the audits in parallel, one subagent per package; an audit that did not complete is `defer`, never `safe`. A run where every audit is `defer` because the registry proxy refused the lookups is a tooling finding to report (which lookups, which proxy), not an upgrade to abandon — name the manual path and stop.
+Run the audits in parallel, one subagent per package; an audit that did not complete is **Defer**, never **Safe**. A run where every audit is **Defer** because the registry proxy refused the lookups is a tooling finding to report (which lookups, which proxy), not an upgrade to abandon — name the manual path and stop.
 
-## 3. Upgrade in order
+### 3. Upgrade in order
 
 After each step below, call the Skill tool with `feedback-loops` — if you don't see a `Launching skill: feedback-loops` line, stop and call it again; a red step is fixed or reverted before the next begins. "Each step ends green" is this skill's whole contract, so the check binds every one of the three, not only the one whose sentence happens to name it.
 
@@ -42,10 +44,14 @@ After each step below, call the Skill tool with `feedback-loops` — if you don'
 
 Peer-dependency warnings are findings to resolve, never reasons for `--force` or `--legacy-peer-deps` by default; where one is unavoidable, it is named in the close with the package that needs it. Snapshot updates (`--updateSnapshot`, approval-test rewrites) are reviewed diff by diff, never auto-accepted.
 
-## 4. Lockfile
+### 4. Lockfile
 
 The lockfile is part of the change: committed with the manifest, installed from in CI (`npm ci`, `uv sync --locked`, `dotnet restore --locked-mode` with `RestorePackagesWithLockFile`), and its diff read for transitive entries the manifest never named — a new transitive package gets the step-2 audit too.
 
-## 5. Close
+### 5. Close
 
-One table: package, from → to, class, verdict, what the suite did. Deferred packages carry a reason and a review-by date, written one line each to `docs/deps-deferred.md` in the target repo so the next run's step 1 greps them back. The commit body names what the upgrade changes for a caller and what was verified, never the list of bumps — the `writing-for-humans` commit family's "Bumped dependencies" pair is the shape to avoid and the one to write. The close's counts and "suite green" are bound by the global evidence rule (`~/.claude/rules/evidence.md`).
+One table: package, from → to, class, verdict, what the suite did. Deferred packages carry a reason and a review-by date, written one line each to `docs/deps-deferred.md` in the target repo so the next run's step 1 greps them back. The commit body names what the upgrade changes for a caller and what was verified, never the list of bumps — the `writing-for-humans` commit family's "Bumped dependencies" pair is the shape to avoid and the one to write.
+
+## Notes
+
+Every count and every "suite green" this run reports is bound by the global evidence rule (`~/.claude/rules/evidence.md`) — the command and its output travel with the claim, in the step that makes it and in the closing table.

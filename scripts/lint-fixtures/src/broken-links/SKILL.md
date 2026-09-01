@@ -18,7 +18,7 @@ quietly greener lint run.
 
 ## Must stay quiet
 
-A resolvable link is not a finding: [real reference](references/real-reference.md)
+A resolvable link is not a finding: [real reference](references/real-reference.md)\n\nThe load-gate fixture beneath this skill is pointed at from here, so only\n[references/orphaned.md](references/does-not-exist.md) is left unlinked — see\n[the gated reference](references/load-gated.md).
 
 A dependant of a global rule that cites it by stem is not a finding either: the global
 `well-formed` rule.
@@ -39,3 +39,6 @@ A fenced block is exempt for the same reason:
 
 This body is also the dependant the `body-checked` rule names, cited here by stem so
 that rule's own admission check stays quiet and only its body checks fire.
+
+A reference in another skill is cited by its installed path, which is the orphan
+check's third arm: `~/.claude/skills/house-style/references/cited-by-path.md`.
