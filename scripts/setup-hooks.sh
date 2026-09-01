@@ -35,20 +35,41 @@ fi
 
 git config --local core.hooksPath "$hooks_path"
 
-# The roster is the directory: a hook is a file under scripts/git-hooks/ that
-# is not a selftest. lint-skills.sh holds each to a selftest beside it, and
-# post-merge derives its gate roster from the same pairing.
+# The roster is the directory, and it is derived the way the one other reader
+# of this question derives it: a hook is a file under scripts/git-hooks/ whose
+# FIRST LINE IS A SHEBANG — scripts/README.md's definition, and the one
+# lint-skills.sh walks with. post-merge is not a third reader; its gate roster
+# comes from the *-selftest.sh globs beside the hooks, not from shebangs. "Every file that is not a selftest" was a third answer to the same
+# question, and it over-reported in the direction that matters: a README, a
+# .gitignore or a *.sample beside the hooks was counted and named in the banner
+# below as something that now executes on a git event. lint-skills.sh holds
+# each hook to a selftest beside it.
 hooks=""
+unreadable=""
+first=""
 count=0
 for h in "$hooks_path"/*; do
   [ -f "$h" ] || continue
   case "$h" in *-selftest.sh) continue ;; esac
+  # ADR-0072: a file this cannot read is not a file that is not a hook. It stays
+  # live under core.hooksPath either way, so dropping it from the roster
+  # understates what now executes — and the TRUST NOTE above is the whole point
+  # of the count. Named, not silently skipped.
+  if ! first=$(head -n 1 "$h" 2>/dev/null); then
+    echo "setup-hooks.sh: could not read $h — it is live under core.hooksPath like every other file here, and nothing below says whether it is a hook; read it by hand" >&2
+    unreadable="$unreadable $(basename "$h")"
+    continue
+  fi
+  case "$first" in '#!'*) : ;; *) continue ;; esac
   hooks="$hooks $(basename "$h")"
   count=$((count + 1))
 done
 
 echo "core.hooksPath → $hooks_path"
 echo "Done. $count git hook(s) now live in this clone:"
+if [ -n "$unreadable" ]; then
+  echo "  (and$unreadable, unreadable — live all the same, and not counted above)"
+fi
 for hook in $hooks; do
   # Every `# Gate map:` line the hook carries, indented under its name; a hook
   # with none points at its own header rather than getting a blurb kept here.

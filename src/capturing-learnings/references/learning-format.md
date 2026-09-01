@@ -19,9 +19,9 @@ Slug-only kebab-case describing the problem (`vitest-mock-leaks-across-suites.md
 | **`date`** | yes | Creation date (`YYYY-MM-DD`) |
 | **`last_updated`** | on update | Added when an existing doc absorbs a new occurrence |
 
-`problem_type` enum (compound-engineering's bug track, kept for cross-tool greppability): `build_error`, `test_failure`, `runtime_error`, `performance_issue`, `database_issue`, `security_issue`, `ui_bug`, `integration_issue`, `logic_error`.
+**Quote any scalar holding a colon-space or a space-hash.** Unquoted, `: ` opens a nested mapping and ` #` starts a comment that truncates the value — and `symptoms` carries verbatim error strings (`Error: connection refused`), which is exactly the shape that corrupts. A corrupted `symptoms` value is one the symptom-keyed greps in `capturing-learnings` § Retrieval protocol cannot match.
 
-YAML safety: quote any scalar containing a colon-space or a space-hash — both silently corrupt unquoted values.
+`problem_type` enum (compound-engineering's bug track, kept for cross-tool greppability): `build_error`, `test_failure`, `runtime_error`, `performance_issue`, `database_issue`, `security_issue`, `ui_bug`, `integration_issue`, `logic_error`.
 
 ## Body sections
 

@@ -19,7 +19,10 @@
 #
 # A file that cannot be fully parsed — a line cut mid-write when the session
 # died — is counted as far as it parses, and every count from that source
-# carries a trailing `+`: the number is a floor, not a total. The typed and the
+# carries a trailing `+`: the number is a floor, not a total. A source that is
+# absent altogether — a missing history file, a --projects directory with no
+# transcripts, a mistyped path — is the same claim and gets the same marker:
+# zero counted is not zero used. The typed and the
 # loaded side each carry their own marker, so a truncated history never
 # discredits a whole transcript set or the reverse. stderr names each such
 # file by its basename (the full path under --projects is a list of every
@@ -56,8 +59,8 @@
 # transcript's `input.skill` is dropped, never printed.
 #
 # Exit codes: 0 counted · 2 nothing to count (no history file and no
-# transcripts under --projects), or not everything counted (a file did not
-# fully parse and a `+` marks its column) · 3 usage error.
+# transcripts under --projects), or not everything counted (a source was absent
+# or did not fully parse, and a `+` marks its column) · 3 usage error.
 #
 # Needs bash 3.2+ and jq. scripts/skill-usage-selftest.sh proves the shapes
 # above are the ones counted, against scripts/lint-fixtures/usage/.
@@ -110,12 +113,29 @@ elif [ -d "$repo_root/src" ]; then
   roster=$(find "$repo_root/src" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; | sort | paste -sd, -)
 fi
 
+# A source that is not there is a source that was not counted, and it reads
+# out as a column of zeros with no marker — the same number a mistyped
+# --history or --projects produces. Each absent side is named on stderr and
+# carries its own `+` floor, so the taxonomy's 2 says which half is a floor
+# rather than only that something was missing.
+typed_partial=0; loaded_partial=0
 have_history=0; [ -s "$history_file" ] && have_history=1
 transcripts=""
 [ -d "$projects_dir" ] && transcripts=$(find "$projects_dir" -type f -name '*.jsonl' | sort)
+# Both sides gone is one message, not three: the two per-column lines below
+# describe a table that will not render, and each would print its path a second
+# time. One side gone is the case the floor marker exists for.
 if [ "$have_history" -eq 0 ] && [ -z "$transcripts" ]; then
   echo "skill-usage.sh: nothing to count — no history at $history_file and no *.jsonl under $projects_dir; pass --history and --projects" >&2
   exit 2
+fi
+if [ "$have_history" -eq 0 ]; then
+  echo "skill-usage.sh: no readable history at $history_file — the typed column is a floor of 0, not a count; pass --history if the file is elsewhere" >&2
+  typed_partial=1
+fi
+if [ -z "$transcripts" ]; then
+  echo "skill-usage.sh: no *.jsonl under $projects_dir — the loaded column is a floor of 0, not a count; pass --projects if the transcripts are elsewhere" >&2
+  loaded_partial=1
 fi
 
 events=$(mktemp -t skill-usage.XXXXXX 2>/dev/null)
@@ -124,7 +144,6 @@ if [ -z "$events" ] || [ ! -f "$events" ]; then
   exit 2
 fi
 trap 'rm -f "$events"' EXIT
-typed_partial=0; loaded_partial=0
 
 # typed: kind, date, session, skill. The date is the ms timestamp's UTC day.
 if [ "$have_history" -eq 1 ]; then

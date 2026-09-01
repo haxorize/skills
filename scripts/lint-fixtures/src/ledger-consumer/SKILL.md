@@ -20,3 +20,5 @@ grades its one deliberate orphan and not this tree's whole reference set:
 - [ledger-quiet-forms](references/ledger-quiet-forms.md)
 - [unrelated-vocabulary](references/unrelated-vocabulary.md)
 - [fenced-example](references/fenced-example.md)
+
+- [two in prose, the third fenced](references/fenced-third-status.md)

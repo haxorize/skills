@@ -36,6 +36,19 @@
 #     settled-deferral check above. adr-format.md gives Consequences the marker
 #     the Deferred convention already had: an amendment never rewrites the
 #     bullet it corrects, so the bullet carries the pointer forward instead.
+#   - Amended claims: an `amended: see Amendments <date>` marker — the leading
+#     em dash is house style and this does not require it, so an audit grep
+#     spelled with one undercounts what is graded — anywhere
+#     outside the record's own `## Amendments` log, `## Deferred` and
+#     `## Consequences` points at an entry in that
+#     log whose bold opener starts with that date, on the same reading as the
+#     two checks above. The widest of the three: `settled` and `corrected` mark
+#     a line a reader may skip, while `amended` marks a sentence that is still
+#     the record's operative claim wherever the marker is absent, so a marker
+#     naming no entry leaves a reader acting on a superseded rule. Scoped away
+#     from the two sections that have their own marker and read everywhere
+#     else, because the corpus writes it wherever the overtaken claim sits; one
+#     row per distinct date on a line.
 #   - Cross-references: every `[…](NNNN-….md)` link a record makes — the plain
 #     ADR-to-ADR citation, not only the supersession and amend forms the two
 #     checks above read — names a file that exists.
@@ -43,7 +56,9 @@
 #   on one line, and only where the word `amends` sits directly before the
 #   `[ADR`, `ADR-N`, or `**` token (`amends its ADR 22` is another repo's
 #   record and is not read); a settled line is read only inside `## Deferred`
-#   and a corrected line only inside `## Consequences`; the pointer's placement
+#   and a corrected line only inside `## Consequences`; an amended marker is
+#   read anywhere but those two sections and the `## Amendments` log, so a log
+#   entry QUOTING the marker form is not read as one; the pointer's placement
 #   is checked and its wording is not — nothing here judges whether a pointer's
 #   summary is true, or whether a resolving cross-reference cites the record the
 #   sentence around it means. The cross-reference check reads `](NNNN-….md)`
@@ -57,7 +72,7 @@
 # The shape, as the named functions below. One producer reads a record into
 # rows; one consumer runs a check over them; a check is a function taking
 # `<file> <fields…>`:
-#   read_rows <file> <kind>          the six row kinds and their field layout
+#   read_rows <file> <kind>          the seven row kinds and their field layout
 #   for_rows <file> <kind> <check>   the only reader of the tab layout
 #     check_supersession             the successor exists and links back
 #     check_forward_pointer          the amended record carries the pointer
@@ -178,6 +193,10 @@ body_lines() {
 #                                             `settled: see Amendments <date>`
 #   corrected    lineno  date                 every `## Consequences` line marked
 #                                             `corrected: see Amendments <date>`
+#   amended      lineno  date                 every `amended: see Amendments
+#                                             <date>` marker anywhere OUTSIDE
+#                                             the `## Amendments` log, one row
+#                                             per distinct date on a line
 #   xref         lineno  target_f             every `](NNNN-….md)` link target in
 #                                             the record, once per distinct
 #                                             target, at the line it first
@@ -242,7 +261,11 @@ read_rows() {
           seen[key] = 1
           print ln "\t" n "\t" fl
         }'
-      [ $? -eq 0 ] || return 2
+      # PIPESTATUS[0], not $?: `$?` after a pipeline is the LAST command's, and
+      # awk over an unreadable file exits 2 while the sed or awk downstream of
+      # it exits 0 on an empty stream. ADR-0072 — a check that never ran is
+      # never reported as a clean one.
+      [ "${PIPESTATUS[0]}" -eq 0 ] || return 2
       ;;
     revisit)
       grep -nE '^(- )?(\*\*)?Revisit when:?(\*\*)?:?[[:space:]]*$' "$f" | cut -d: -f1
@@ -255,7 +278,7 @@ read_rows() {
         /^## / { in_def = 0 }
         in_def { print NR "\t" $0 }' "$f" \
         | sed -nE 's/^([0-9]+)\t.*settled: see Amendments ([0-9]{4}-[0-9]{2}-[0-9]{2}).*$/\1\t\2/p'
-      [ $? -eq 0 ] || return 2
+      [ "${PIPESTATUS[0]}" -eq 0 ] || return 2
       ;;
     corrected)
       awk '
@@ -263,7 +286,36 @@ read_rows() {
         /^## / { in_con = 0 }
         in_con { print NR "\t" $0 }' "$f" \
         | sed -nE 's/^([0-9]+)\t.*corrected: see Amendments ([0-9]{4}-[0-9]{2}-[0-9]{2}).*$/\1\t\2/p'
-      [ $? -eq 0 ] || return 2
+      [ "${PIPESTATUS[0]}" -eq 0 ] || return 2
+      ;;
+    amended)
+      # Scoped the way adr-format.md defines it: anywhere a later amendment
+      # overtook a claim — Decision, Scope, House style — EXCEPT `## Deferred`
+      # and `## Consequences`, each of which has its own marker. Without that
+      # exclusion an `amended:` marker inside Consequences resolves, the
+      # corrected-bullet check never fires on that line, and the two-marker
+      # distinction ADR-0074 built dissolves in the section that most needs it.
+      # body_lines drops the `## Amendments` log itself, which is what keeps a
+      # log entry that QUOTES the marker form (docs/adr/0077 does) from being
+      # read as a marker of its own.
+      body_lines "$f" | awk -F'\t' '
+        { line = $0; sub(/^[0-9]+\t/, "", line)
+          if (line ~ /^## (Deferred|Consequences)/) { skip = 1; next }
+          if (line ~ /^## /) { skip = 0 }
+          if (skip) next
+          print }' | awk -F'\t' '
+        {
+          lineno = $1; line = $0; sub(/^[0-9]+\t/, "", line)
+          while (match(line, /amended: see Amendments [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/)) {
+            seg = substr(line, RSTART, RLENGTH); line = substr(line, RSTART + RLENGTH)
+            d = seg; sub(/^.*Amendments /, "", d)
+            key = lineno "\t" d
+            if (key in seen) continue
+            seen[key] = 1
+            print key
+          }
+        }'
+      [ "${PIPESTATUS[0]}" -eq 0 ] || return 2
       ;;
     xref)
       # One row per distinct target, keeping the line it first appears on.
@@ -399,6 +451,20 @@ check_corrected_consequence() {
   fi
 }
 
+# Amended claims point at a dated amendment in the same file. The third of the
+# marker family, and the one with the widest blast radius: `settled` and
+# `corrected` mark a line a reader may skip, while `amended` marks a line that
+# is still the record's operative claim everywhere the marker is missing. A
+# marker whose date names no entry leaves a reader at the superseded sentence
+# with a pointer that goes nowhere — and `lint-adrs.sh` was the only thing that
+# could have said so, since a marker is prose and no other gate reads it.
+check_amended_marker() {
+  local f=$1 lineno=$2 date=$3
+  if ! amendments_entry_exists "$f" "$date"; then
+    say_fail "$f (line $lineno) marks a claim amended by Amendments $date, but no '- **$date' entry exists under ## Amendments — fix the date, or write the amendment; until one of those, the sentence the marker qualifies is still what a reader acts on"
+  fi
+}
+
 # Cross-references resolve: a plain `[ADR-N](N-slug.md)` citation names a file
 # that exists. The two checks above read the supersession and amend forms only,
 # so before this the ordinary citation — the corpus's most common link by far —
@@ -433,6 +499,7 @@ for f in "${records[@]}"; do
   check_revisit_heading "$f"
   for_rows "$f" settled check_settled_deferral
   for_rows "$f" corrected check_corrected_consequence
+  for_rows "$f" amended check_amended_marker
   for_rows "$f" xref check_xref_target
 done
 

@@ -4,6 +4,15 @@
 # exactly like a clean push — this table is the only thing that tells the two
 # apart. Run it after changing any rule: bash global/hooks/review-receipt-selftest.sh
 #
+# Scope, stated because the fixture used to imply more than it graded: this hook
+# reads ONE line out of a `Landing:` block, `Review required:`. The other keys in
+# GATED_LINES are decoration, and the `noise` and `optoutroot` repos below make
+# that explicit — a block malformed in every other key still gates, and a block
+# well-formed throughout whose `Review required:` reads `no` does not. Nothing
+# here stages a MALFORMED `Review required:` line; a value the hook's pattern
+# does not match is the `planned` and `ticks` rows. Whether the other keys are
+# themselves well-formed is lint-skills.sh's check_landing_key, not this hook's.
+#
 # HOOK_SELFTEST_VERBOSE=1 shows each row's stderr. The run/expect helpers are
 # selftest-lib.sh beside this file; expect_quiet is the receipt path's own
 # check: "allowed because a stamp matched" and "allowed because something
@@ -43,6 +52,21 @@ mkrepo boldval '# repo\n\n- **Review required:** **yes**\n'
 mkrepo ticks '# repo\n\n- Review required: `yes`\n'
 mkrepo planned '# repo\n\n- Review required: yes (planned)\n'
 mkrepo fenced '# repo\n\n```\n- Review required: yes\n```\n'
+# The scope of this hook's Landing: reading, made explicit and graded. GATED_LINES
+# carries three keys under its header and the hook reads ONE — everything but `Review required:` is
+# decoration here, which made the fixture look like it modeled a Landing block
+# when it modeled a line. `noise` is that block with every OTHER key corrupted;
+# it must still block, because the key the hook reads is intact. The corrupted
+# lines are not fine, they are somebody else's gate: lint-skills.sh's
+# check_landing_key FAILs each of them, and the split is deliberate — a
+# pre-commit linter can refuse a malformed contract, while a fail-open push hook
+# that started refusing on a key it does not use would block pushes for a reason
+# it cannot explain.
+mkrepo noise '# repo\n\nLanding:\n- Branch policy: squash-merge\n- Push pre-authorised: MAYBE\n- Merge policy: squash\n- Review required: yes\n'
+# The same block with the one key the hook reads set to `no`: it must allow. The
+# `plain` repo below covers a block with the key ABSENT; this covers it present
+# and negative, which is the only other way a well-formed block opts out.
+mkrepo optoutroot '# repo\n\nLanding:\n- Branch policy: trunk\n- Push pre-authorized: yes\n- Review required: no\n'
 mkrepo unreadable "$GATED_LINES"
 chmod 000 "$work/unreadable/CLAUDE.md"
 # monorepo: the line at the root, a package CLAUDE.md without it
@@ -176,6 +200,14 @@ expect_block "$G" "cd .git && git push"                        "push from inside
 expect_block "$G" "git -C .git push"                           "-C .git"
 expect_block "$work" "GIT_DIR=$G/.git git push"                "GIT_DIR= from outside the repo"
 expect_block "$work" "GIT_DIR=$G/.git; git push"               "GIT_DIR= assigned in an earlier segment"
+# The one-key reading, both directions. Neither row can pass by accident: the
+# first repo's block is malformed in every key but the one that matters, and
+# the second's is well-formed in every key but that one.
+expect_block "$work/noise" "git push"                          "a Landing: block malformed in every key but 'Review required: yes' still gates"
+# expect_quiet, not expect_allow: the opt-out path and the fail-open path both
+# exit 0, and only the opt-out exits without a breadcrumb. A walk that made this
+# repo's CLAUDE.md unreadable would satisfy expect_allow while proving nothing.
+expect_quiet "$work/optoutroot" "git push"                     "a well-formed Landing: block whose 'Review required:' is 'no' opts the repo out"
 
 # --- the range: the remote on the command line decides ---------------------------
 expect_allow "$work/tworemotes" "git push"                     "upstream remote is fully pushed"

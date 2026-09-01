@@ -30,10 +30,14 @@
 #     reads is drift the installer still links. Calling the Skill tool with a
 #     *user-invoked* skill fails outright: its description is hidden from the
 #     model, so the call does nothing at runtime.
-#     The slash-on-model-invoked check is the mirror image, and file-local
-#     rather than per-skill: `/<name>` naming a model-invoked skill fails,
+#     The slash check is the mirror image, and file-local rather than
+#     per-skill. It has two arms: `/<name>` naming a model-invoked skill fails,
 #     because the slash form is what a human types and it hides the call from
-#     the scan above. Needing no `requires:` line, it sweeps every markdown
+#     the scan above; and `/<name>` naming no skill at all fails, because a
+#     rename leaves the old name spelled correctly and pointing nowhere. The
+#     second arm reads a roster of names that are not skills — typed prefixes,
+#     built-in commands, filesystem paths — and a `<!-- slash-exempt: name -->`
+#     marker for a one-file case. Needing no `requires:` line, it sweeps every markdown
 #     file the repo ships as instructions — `src/**`, `.claude/skills/**`,
 #     `DOMAIN.md`, `README.md` — not just `src/*/SKILL.md`.
 #     Before every scan, double-quoted spans, parenthesised asides containing
@@ -187,8 +191,8 @@
 #     no marker is a library or a selftest and owes nothing.
 #   - Script selftest (ADR-0068: every selftest is `<script>-selftest.sh`):
 #     every scripts/<name>.sh that is not itself a selftest, a `*-lib.sh`, or
-#     one of the two installers (install.sh, setup-hooks.sh, by basename) has
-#     an executable scripts/<name>-selftest.sh beside it, so a gate landing
+#     setup-hooks.sh (by basename — one name, since install.sh left the list on
+#     2026-09-01) has an executable scripts/<name>-selftest.sh beside it, so a gate landing
 #     without one is named here rather than silently ungated. Under
 #     scripts/git-hooks/ a file is a git hook when its first line is a shebang
 #     (a README or a sample there is not walked); each git hook carries no
@@ -344,7 +348,8 @@
 #     check_html_transport     no HTML through the shell
 #     check_reference_links    every inline .md link resolves
 #     check_load_gate          no "Launching skill" under a model-invoked skill
-#     check_slash_form         no `/name` naming a model-invoked skill
+#     check_slash_form         no `/name` naming a model-invoked skill, and no
+#                              `/name` naming nothing at all
 #     check_spelling           no British form outside a code span
 #     check_heading_case       SKILL.md H1 title case, every H2 sentence case
 #                              (not global/rules/, whose H1 is a proposition)
@@ -355,7 +360,8 @@
 #     check_reference_bytes    the 15,000-byte WARN over a loaded file
 #   Pass 3 — cross-file contracts, read from pass 2's captured walk:
 #     check_sibling_identity   byte-identical copies (this repo only)
-#     check_sibling_membership every basename shared by two skills is grouped
+#     check_sibling_membership every PATH sharing a basename with another
+#                              skill's is listed in a sibling group
 #     check_reference_orphans  every reference is linked from somewhere
 #     check_evaluation_ledger_authority       one legend, defining three statuses
 #     check_evaluation_ledger_rule_agreement  the body's stored-status rule
@@ -373,9 +379,13 @@
 #     check_reference_links    every relative .md link in the root CLAUDE.md
 #                              resolves (pass 2's parser, pointed at the
 #                              root file)
-#     check_spelling           over docs/** and global/README.md, which no
-#                              other pass walks, and over CLAUDE.md with the
-#                              rest of the house-style set
+#     check_spelling           over docs/**, global/README.md and
+#                              scripts/README.md, which no other pass walks,
+#                              and over CLAUDE.md with the rest of the
+#                              house-style set
+#     check_landing_key        every key in a CLAUDE.md `Landing:` block is one
+#                              of the six, with a value `committing` reads, and
+#                              a block that exists names `Review required:`
 #   Every FAIL goes through say_fail, so the prefix and the exit status
 #   cannot disagree; a WARN is printed directly and never touches the status.
 #
@@ -987,18 +997,76 @@ check_load_gate() {
 # that scan: every markdown file the repo ships as instructions, not just
 # `src/*/SKILL.md`. A `references/` template is where the convention regresses
 # unseen, because that is what a publisher writes from.
+# The slash names this repo writes that resolve to no skill in the tree, each
+# with the reason it is not a dangling pointer. This is a ROSTER, not a
+# pattern: nothing derives it, and a name reaching it is a decision. It exists
+# because the two failures look identical in the source — `/compact` and
+# `/compakt` are both "a slash form naming no skill here" — and only a person
+# knows which is a command Claude Code ships and which is a typo or a skill
+# that was renamed out from under the sentence.
+#   External commands, not skills in this collection:
+#     clear compact init          Claude Code built-ins
+#     code-review security-review simplify
+#                                 commands shipped outside src/ and
+#                                 .claude/skills/, named by the bodies that
+#                                 route to them
+#   Not a command at all, but written in the slash form:
+#     name old-name               metasyntactic placeholders — `audit-skills`
+#                                 and DOMAIN.md write `/name` for "whatever the
+#                                 skill is called"
+#     sweep                       a typed PREFIX, not a name: DOMAIN.md records
+#                                 that typing it offers `/sweep-domain` and
+#                                 `/sweep-corpus`
+#     tmp                         a filesystem path written in the slash form —
+#                                 never a command anywhere, and a whole-repo
+#                                 fact, so a second site owes no second decision
+# A line may also carry `<!-- slash-exempt: token -->`, which exempts exactly
+# the tokens it names on exactly that line — the same scope its sibling
+# `<!-- spelling-exempt: word -->` has, so one syntax means one thing. Use it
+# for a name that is right here and wrong three paragraphs down; a name that is
+# never a command anywhere in the repo belongs in the roster above instead.
+slash_exempt=' clear compact init code-review security-review simplify name old-name sweep tmp '
 check_slash_form() {
-  local f=$1 scan slashed
+  local f=$1 scan slashed line line_exempt seen=' '
   # Strip frontmatter where there is any; a reference file has none.
   scan=$(awk 'NR == 1 && $0 == "---" { fm = 1; next }
               fm && $0 == "---" { fm = 0; next }
               fm { next } { print }' "$f" \
     | mask_examples)
-  for slashed in $(printf '%s\n' "$scan" | grep -o '`/[a-z0-9-]*`' | tr -d '`/' | sort -u); do
-    [ -f "src/$slashed/SKILL.md" ] || continue
-    name_is_user_invoked "$slashed" && continue
-    say_fail "$f writes \`/$slashed\`, but '$slashed' is model-invoked — the slash form is for commands a human types; use \`\`Call the Skill tool with \`$slashed\` \`\`"
-  done
+  # Per line, because that is what the marker promises and what `spelling-exempt`
+  # does: collected over the whole file instead, one marked site blesses every
+  # later use of that name in the body, and the rename this check exists to
+  # catch goes unreported. `seen` keeps it to one FAIL per name per file, so a
+  # name written at three sites does not print three identical lines.
+  # Only the lines carrying a slash form reach the loop: this check runs over
+  # every markdown file the repo ships, and a per-line walk that forked for the
+  # marker on every line put seconds on every pre-commit.
+  while IFS= read -r line; do
+    line_exempt=' '
+    case "$line" in
+      *'slash-exempt:'*)
+        line_exempt=" $(printf '%s\n' "$line" \
+          | grep -o '<!-- *slash-exempt:[^>]*-->' \
+          | sed -E 's/<!-- *slash-exempt: *//; s/ *-->//' \
+          | tr ',' ' ' | tr -s '[:space:]' ' ') " ;;
+    esac
+    for slashed in $(printf '%s\n' "$line" | grep -o '`/[a-z0-9-]*`' | tr -d '`/' | sort -u); do
+      case "$seen" in *" $slashed "*) continue ;; esac
+      if [ ! -f "src/$slashed/SKILL.md" ] && [ ! -f ".claude/skills/$slashed/SKILL.md" ]; then
+        case "$slash_exempt" in *" $slashed "*) continue ;; esac
+        case "$line_exempt" in *" $slashed "*) continue ;; esac
+        seen="$seen$slashed "
+        say_fail "$f writes \`/$slashed\`, and no skill of that name is in src/ or .claude/skills/ — a renamed or retired skill leaves this form behind pointing at nothing, and a reader types it and gets no command; fix the name, or add it to slash_exempt in scripts/lint-skills.sh with its reason, or mark the line \`<!-- slash-exempt: $slashed -->\` where the slash form is a route or a path rather than a command"
+        continue
+      fi
+      [ -f "src/$slashed/SKILL.md" ] || continue
+      name_is_user_invoked "$slashed" && continue
+      seen="$seen$slashed "
+      say_fail "$f writes \`/$slashed\`, but '$slashed' is model-invoked — the slash form is for commands a human types; use \`\`Call the Skill tool with \`$slashed\` \`\`"
+    done
+    # A here-string, not a pipe: `seen` accumulates across lines, and a pipe
+    # would run the loop in a subshell and discard it.
+  done <<< "$(printf '%s\n' "$scan" | grep -F '`/' || true)"
 }
 
 
@@ -1766,7 +1834,7 @@ check_evaluation_ledger_rule_agreement() {
 # ledger, `implement`'s parked ledger and `review-changes`' coverage ledger,
 # none of which use this vocabulary.
 check_evaluation_ledger_consumers() {
-  local walked_files=$1 legend legend_file v_legend legend_owner f hits missing t
+  local walked_files=$1 legend legend_file v_legend legend_owner f hits present n_present missing
   if ! legend=$(find_evaluation_ledger_legend "$walked_files"); then
     # No single readable legend, so there is no vocabulary to check consumers
     # against. Say so where a legend exists at all: the author fixes the
@@ -1806,12 +1874,16 @@ check_evaluation_ledger_consumers() {
       say_fail "$f could not be read for evaluation ledger statuses — the vocabulary check did not run on it, which is not the same as it having nothing to report"
       continue
     fi
-    hits=$(printf '%s\n' "$hits" | grep -xF "$v_legend" | grep -c .)
-    [ "$hits" -ge 2 ] || continue
-    [ "$hits" -eq 3 ] && continue
-    missing=$(printf '%s\n' "$v_legend" | while IFS= read -r t; do
-      grep -q "\`$t\`" "$f" || echo "$t"
-    done | tr '\n' ' ')
+    # Both halves read the SAME masked token set. `missing` used to re-grep the
+    # RAW file, so on the very input this check exists to catch — two statuses
+    # in prose and the third only inside a fenced example — `hits` counted 2
+    # (a FAIL) while the raw grep found all three and the FAIL rendered an
+    # empty backtick pair where the missing status belongs.
+    present=$(printf '%s\n' "$hits" | grep -xF "$v_legend")
+    n_present=$(printf '%s\n' "$present" | grep -c .)
+    [ "$n_present" -ge 2 ] || continue
+    [ "$n_present" -eq 3 ] && continue
+    missing=$(printf '%s\n' "$v_legend" | grep -vxF "$present" | tr '\n' ' ')
     say_fail "an evaluation ledger status is missing from $f — it names 2 of the 3 and not \`${missing% }\`; a file that enumerates the vocabulary carries all of it, or a rename leaves this one pointing at a status that no longer exists"
   done < <(printf '%s\n' "$walked_files")
 }
@@ -1855,19 +1927,32 @@ check_sibling_identity() {
   done
 }
 
-# Sibling-group membership: any reference basename that exists under two or
-# more skills must be governed by a group above — an unlisted copy sits outside
-# the byte-identity check and drifts silently, the exact failure that check
-# exists to prevent. A deliberate variant needs a distinct name (or its own
-# group entry).
+# Sibling-group membership: any reference PATH whose basename exists under two
+# or more skills must be listed in a group above — an unlisted copy sits
+# outside the byte-identity check and drifts silently, the exact failure that
+# check exists to prevent. A deliberate variant needs a distinct name (or its
+# own group entry).
+# Graded per PATH, not per basename. The basename test this replaces asked only
+# whether a name was grouped SOMEWHERE, so once `ac-ids.md` was grouped for two
+# skills a THIRD copy under a skill the group does not list passed — covered by
+# name, ungraded by path, and invisible to check_sibling_identity, which walks
+# the group's listed paths and never sees it. A group gaining a new sharer is
+# the commoner edit in a suite that adds a fifth and sixth publisher to a group
+# of four, so it is the case that has to fire.
 check_sibling_membership() {
-  local walked_files=$1 grouped_basenames base
-  grouped_basenames=$(printf '%s|' "${sibling_groups[@]}" | tr '|' '\n' | awk -F/ 'NF { print $NF }' | sort -u)
-  while IFS= read -r base; do
-    if ! printf '%s\n' "$grouped_basenames" | grep -qxF "$base"; then
-      say_fail "reference file '$base' exists in multiple skills but no sibling group covers it — add it to sibling_groups in scripts/lint-skills.sh, or rename the deliberate variant"
-    fi
-  done < <(printf '%s\n' "$walked_files" | grep '^src/.*/references/.*\.md$' | awk -F/ '{ print $NF }' | sort | uniq -d)
+  local walked_files=$1 grouped_paths shared_bases refs path base
+  grouped_paths=$(printf '%s|' "${sibling_groups[@]}" | tr '|' '\n' | grep -v '^$' | sort -u)
+  refs=$(printf '%s\n' "$walked_files" | grep '^src/.*/references/.*\.md$')
+  [ -z "$refs" ] && return 0
+  shared_bases=$(printf '%s\n' "$refs" | awk -F/ '{ print $NF }' | sort | uniq -d)
+  [ -z "$shared_bases" ] && return 0
+  while IFS= read -r path; do
+    [ -z "$path" ] && continue
+    base=${path##*/}
+    printf '%s\n' "$shared_bases" | grep -qxF "$base" || continue
+    printf '%s\n' "$grouped_paths" | grep -qxF "$path" && continue
+    say_fail "$path shares the reference basename '$base' with another skill and no sibling group lists this path — add it to sibling_groups in scripts/lint-skills.sh, or rename the deliberate variant; a copy no group lists sits outside the byte-identity check and drifts silently"
+  done <<< "$refs"
 }
 
 [ -z "${LINT_ROOT:-}" ] && check_sibling_identity
@@ -2039,7 +2124,7 @@ check_conventions_pointer() {
 }
 
 # Every script has a selftest (see header): scripts/<name>.sh that is not a
-# selftest, a library, or an installer has an executable
+# selftest or a library has an executable
 # scripts/<name>-selftest.sh. post-merge and sweep-corpus derive their gate
 # rosters from that pairing, so a script landing without one is named here
 # rather than left outside every automated run. The same function grades the
@@ -2050,7 +2135,10 @@ check_script_selftest() {
   local sc=$1
   check_conventions_pointer "$sc"
   case "$sc" in *-selftest.sh | *-lib.sh) return 0 ;; esac
-  case "${sc##*/}" in install.sh | setup-hooks.sh) return 0 ;; esac
+  # setup-hooks.sh alone: it writes into .git/hooks and has no readable
+  # surface to grade without a throwaway clone. Every other script here is
+  # gradeable against a fixture or a redirected HOME, so the list is one name.
+  case "${sc##*/}" in setup-hooks.sh) return 0 ;; esac
   case "$sc" in
     scripts/git-hooks/*)
       [ -x "$sc" ] || say_fail "$sc is not executable — chmod +x it; git runs a hook under core.hooksPath only when it carries the exec bit, and skips it silently otherwise"
@@ -2098,11 +2186,155 @@ fi
 # NOT in this glob: each is a fixture whose job is to carry a violation for a
 # LINT_ROOT run, so walking them from the repo's own run would report the
 # fixture's deliberate instance as this repo's defect.
-{ [ -d docs ] && find docs -type f -name '*.md'
-  printf '%s\n' global/README.md scripts/README.md
-} | sort -u | while IFS= read -r f; do
+# Process substitution, never a pipe: a `while read` fed by a PIPE runs in a
+# subshell, where say_fail's `fail=1` dies with it — so every FAIL this walk
+# printed left the exit status at 0 and `OK: skill conventions clean.` printed
+# beside it. That is the trap check_heading_case and the ledger consumer sweep
+# each carry a paragraph about, and this walk shipped with it: it is the only
+# check that reads docs/**, so an ADR carrying a British form committed and
+# merged green past pre-commit and post-merge, both of which read the status
+# alone.
+while IFS= read -r f; do
   [ -f "$f" ] && check_spelling "$f"
-done
+done < <({ [ -d docs ] && find docs -type f -name '*.md'
+           printf '%s\n' global/README.md scripts/README.md
+         } | sort -u)
+
+# (see header) The `Landing:` key. `committing` § Before any outward act reads
+# six lines out of CLAUDE.md and lets four of them pre-authorize an outward
+# act — a push, a ticket close — so a typo in a key name or a value does not
+# read as a malformed contract, it reads as "no block, nothing pre-authorized"
+# or, worse, as a yes. Before this the key was a four-copy prose contract
+# (CLAUDE.md, README.md, `committing`, `onboard-repo`) with nothing parsing it,
+# which is how a nonsense value survives every gate.
+#
+# What this grades: key spelling, value vocabulary, and one presence rule. It
+# does NOT require a `Landing:` block to exist, and inside a block that does
+# exist every key but one is optional — `committing` says a missing line means
+# `no`, so absence is a defined state and only a WRONG line is a defect. The
+# exception is `Review required:`, which a block that exists must name; the arm
+# at the bottom of this function carries the reason. The pre-2026-08-30
+# `pre-authorised` spelling is accepted here for the same reason `committing`
+# reads it: the key was renamed, not retired.
+#
+# The three keys whose value may carry a trailing parenthetical. `Review
+# required:` is not among them and has its own arm, because the hook that reads
+# it anchors at end of line.
+landing_yesno_keys=' pr-required push-pre-authorized ticket-close-pre-authorized '
+check_landing_key() {
+  local f=$1 in_block=0 saw_block=0 line raw key val norm saw_review=0 masked
+  # ADR-0072: an unreadable file is not a block-free file. Without this the
+  # grep below fails, the check returns 0, and a repo whose CLAUDE.md cannot
+  # be read reports as one whose Landing: key is well-formed.
+  if [ ! -r "$f" ]; then
+    say_fail "$f could not be read — the Landing: key check did not run on it, so nothing here says whether the push and ticket-close pre-authorizations are well-formed; this is not a verdict on the file"
+    return
+  fi
+  # Fenced lines are not read, the way every other markdown check in this file
+  # reads a file and the way global/hooks/review-receipt.sh reads this same
+  # contract: a `Landing:` block shown inside a fenced example is an
+  # illustration. Reading one consumed the whole check — an illustration above
+  # the real block satisfied every arm, including the deletion arm below.
+  masked=$(awk "$FENCE_AWK"'{ print }' "$f")
+  printf '%s\n' "$masked" | grep -qE '^[[:space:]>]*\**`?Landing:`?\**[[:space:]]*$' || return 0
+  while IFS= read -r line; do
+    if [ "$in_block" -eq 0 ]; then
+      printf '%s' "$line" | grep -qE '^[[:space:]>]*\**`?Landing:`?\**[[:space:]]*$' && { in_block=1; saw_block=1; }
+      continue
+    fi
+    # The block is the contiguous run of bullets under the header: a blank line
+    # ends it, and so does anything that is not a bullet. Without the blank-line
+    # end, an unrelated list further down the file reads as Landing keys. A
+    # bullet is read the way global/hooks/review-receipt.sh's OPT_IN reads one
+    # — `-` or `*`, any indent, a `>` quote prefix — so the two readers of one
+    # contract cannot disagree about what a line in the block is. Ending a block
+    # is not ending the file: a later header starts another one.
+    printf '%s' "$line" | grep -qE '^[[:space:]>]*[-*][[:space:]]' || { in_block=0; continue; }
+    # The line as the author wrote it, less the bullet. Every FAIL below quotes
+    # this and nothing else, so the string in the message is one an author can
+    # grep their own file for; the normalized forms are for comparison only.
+    raw=$(printf '%s' "$line" | sed -E 's/^[[:space:]>]*[-*][[:space:]]+//; s/[[:space:]]+$//')
+    case "$raw" in *:*) key=${raw%%:*}; val=${raw#*:} ;; *) continue ;; esac
+    # Normalize away the bold, the backticks, the case and the spaces, so the
+    # check reads the same key a human writing `- **Push pre-authorized:** yes`
+    # meant. `pre-authorised` folds to the current spelling.
+    norm=$(printf '%s' "$key" | tr -d '*`' | tr '[:upper:]' '[:lower:]' \
+      | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//; s/[[:space:]]+/-/g; s/pre-authorised/pre-authorized/')
+    # An HTML comment on the line is a marker for another check, not part of
+    # the value: without this strip the value reads 'maybe <!-- ... -->' and no
+    # arm below recognizes it.
+    val=$(printf '%s' "$val" | sed -E 's/<!--.*-->//' | tr -d '*`' \
+      | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//' | tr '[:upper:]' '[:lower:]')
+    case " $norm " in
+      ' branch-policy ')
+        case "$val" in
+          trunk | trunk\ * | branch-per-ticket | branch-per-ticket\ *) ;;
+          *) say_fail "$f Landing: '$raw' — the vocabulary is 'trunk' or 'branch-per-ticket' (a naming pattern may follow), and \`committing\` reads no third value, so this line pre-authorizes nothing it looks like it pre-authorizes" ;;
+        esac
+        ;;
+      ' defect-policy ')
+        [ -n "$val" ] || say_fail "$f Landing: '$raw' has no value — name the policy ('fix, don't file' is the default \`committing\` states) or drop the line"
+        ;;
+      ' review-required ')
+        saw_review=1
+        # The one key that takes no parenthetical. global/hooks/review-receipt.sh
+        # anchors its OPT_IN pattern at end of line, so `yes (planned)` matches
+        # nothing there, the walk finds no line, and the repo is ungated — the
+        # same silent disarm the deletion arm below exists to prevent, reached
+        # by a value rather than a deletion. The hook's own selftest stages it.
+        case "$val" in
+          yes | no) ;;
+          *) say_fail "$f Landing: '$raw' — 'Review required:' reads a bare 'yes' or 'no' and nothing after it, because global/hooks/review-receipt.sh matches the value to end of line: a parenthetical arms no gate, so the push goes out with no Reviewed-tree: stamp and nothing reports it" ;;
+        esac
+        ;;
+      *)
+        case "$landing_yesno_keys" in
+          *" $norm "*)
+            case "$val" in
+              yes | yes\ * | no | no\ *) ;;
+              *) say_fail "$f Landing: '$raw' — the pre-authorization keys read 'yes' or 'no' (a parenthetical may follow), and \`committing\` treats anything else as no block at all; write yes or no, or drop the line" ;;
+            esac
+            ;;
+          *)
+            say_fail "$f Landing: '$raw' is not one of the six keys \`committing\` § Before any outward act reads (Branch policy, PR required, Push pre-authorized, Ticket close pre-authorized, Review required, Defect policy) — nothing parses this line, so it states a contract no tool honors; fix the spelling, or move the sentence out of the block"
+            ;;
+        esac
+        ;;
+    esac
+  # A here-string, not a pipe: the loop assigns saw_review, and a pipe would run
+  # the body in a subshell and discard it.
+  done <<< "$masked"
+  # The deletion half, and the reason this check exists at all. `committing`
+  # reads a missing `Review required:` line as `no`, so dropping the line from
+  # a repo that gates on it turns the push gate off and reads, from every
+  # angle, like a repo that never had one: global/hooks/review-receipt.sh arms
+  # on that line alone. A block that is written at all names the key, so the
+  # gate cannot be disarmed by a deletion nothing reports. A repo that does
+  # not gate says so in the line — `no` satisfies this. saw_block, not
+  # in_block: a block that ended before the file did is still a block.
+  if [ "$saw_block" -eq 1 ] && [ "$saw_review" -eq 0 ]; then
+    say_fail "$f has a Landing: block with no 'Review required:' line — \`committing\` reads the absence as 'no', so a gate deleted and a gate never configured are the same text; write 'Review required: no' if that is the policy, and 'yes' where global/hooks/review-receipt.sh should refuse a push with no matching Reviewed-tree: stamp"
+  fi
+}
+
+# Every CLAUDE.md in the tree, not the root one alone. global/hooks/review-receipt.sh
+# walks upward from the directory a push runs in and the NEAREST file carrying
+# `Review required:` decides, in either direction — so a block under a
+# subdirectory opts that subtree out of the repo's push gate while `git push`
+# stays repo-scoped, and a monorepo's package files are where that block goes
+# unreported. The FIXTURE roots are excluded on the rule the docs/** walk below
+# states for the fixture READMEs: each is a file whose job is to carry a
+# deliberate violation for a LINT_ROOT run, and walking it from this repo's own
+# run would report that instance as this repo's defect. Their own CLAUDE.md is
+# checked under LINT_ROOT, where it is the root file. What that exclusion does
+# NOT buy back is a legal-but-wrong value in a fixture — `Review required: no`
+# is well-formed vocabulary and no arm here fires on it; the property pins in
+# scripts/lint-skills-selftest.sh are what hold that line.
+# Process substitution, never a pipe: say_fail's `fail=1` dies in a subshell.
+while IFS= read -r claude_md; do
+  [ -n "$claude_md" ] || continue
+  check_landing_key "${claude_md#./}"
+done < <(find . -name CLAUDE.md -not -path './.git/*' -not -path './scripts/lint-fixtures*/*' | sort)
 
 if [ -f CLAUDE.md ]; then
   check_claude_md_bytes CLAUDE.md

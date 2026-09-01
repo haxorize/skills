@@ -6,7 +6,7 @@ requires: feedback-loops
 
 # Resolving Merge Conflicts
 
-Resolve an in-progress merge, rebase, cherry-pick, or revert **without losing intent**. Always resolve; **never `--abort`**.
+Resolve an in-progress merge, rebase, cherry-pick, or revert **without losing intent**. Resolve rather than abort: an `--abort` discards the intent reconstruction the primary-sources step builds, so the next attempt starts from the diff alone.
 
 ## Workflow
 

@@ -7,7 +7,7 @@ description: Checking what a document claims against what that document answers 
 
 A **claim** is a checkable assertion a document makes about something outside itself: a signature, a default, a behavior, a return shape, a guarantee, a count, a version, an example that is supposed to run. The unit of this discipline is the claim, not the document — a doc is never "mostly accurate", it is a list of claims each of which holds or does not, and the finding names the one that does not.
 
-Read the prose directly for meaning. There are no claim markers, no annotation DSL, no structured comments to key on: the thing being checked is the thing the human reads, and any scheme that checks a parallel annotation instead checks the wrong artifact.
+There are no claim markers, no annotation DSL, no structured comments to key on: the thing being checked is the thing the human reads, and any scheme that checks a parallel annotation instead checks the wrong artifact.
 
 This is the bare judgment. Orchestrators layer on top and choose which documents to check: `/verify-docs` ranks the verdicts that come back and offers the fixes, and where a repo keeps its own scheduled sweep — this one's `sweep-corpus`, over the three documents that claim what the suite is — that sweep is another. Both are user-invoked, so suggest them when the ask is a sweep over many documents rather than a judgment of one.
 

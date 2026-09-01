@@ -18,12 +18,18 @@
 #                                             path is built on the result,
 #                                             since an empty prefix makes
 #                                             `cp -R x/. "$tmp/"` copy into /
-#   selftest_close <ok-line> <partial-line> — prints one closing line and exits
-#                                             1 on any FAIL, 2 on any SKIP with
-#                                             no FAIL, else 0: three statuses,
-#                                             because scripts/git-hooks/post-merge
+#   selftest_close <ok-line> <partial-line> — exits 1 on any FAIL, 2 on any
+#                                             SKIP with no FAIL, else 0: three
+#                                             statuses, because
+#                                             scripts/git-hooks/post-merge
 #                                             discards output and reads the
-#                                             status alone
+#                                             status alone. It prints a closing
+#                                             line in the last two cases only —
+#                                             a red run's output is the
+#                                             SELFTEST FAIL lines already
+#                                             printed, and a fourth summary
+#                                             after them would be one more line
+#                                             to read past to reach them
 #
 # Every FAIL sets `fail=1`, every SKIP sets `skipped=1`; a selftest reads them
 # only through selftest_close.

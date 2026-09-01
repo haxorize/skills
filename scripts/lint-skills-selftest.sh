@@ -95,10 +95,23 @@
 # forms the matcher must reach — an imperative call, a gerund one, two names in
 # one clause, and a call on a user-invoked skill, each firing; a quoted, an
 # arrow-parenthesised and a fenced mention staying quiet. The
-# slash-on-model-invoked check is covered the same way, in a SKILL.md and in a
-# reference file (the wider sweep), with the two slash forms that are correct
-# unmasked — a user-invoked skill and a built-in — staying quiet.
-# Also covered: the single-line-description check in three shapes (a folded
+# slash check is covered the same way, in a SKILL.md and in a reference file
+# (the wider sweep), in both its arms: a slash form naming a model-invoked
+# skill, and one naming no skill at all. Four quiet forms across two exemption
+# mechanisms stay quiet — a user-invoked skill, a built-in and a roster name,
+# and a name marked `<!-- slash-exempt: -->` ON ITS OWN LINE — with the same
+# marker one line away from its name firing, which is what pins the marker's
+# line scope.
+# Also covered: the Landing: key check, in both directions and across the two
+# roots — four malformed lines and two more under a bold and a backtick header
+# in the wrong-on-purpose root (so a header form and a bullet form the
+# review-receipt hook accepts cannot be narrowed out of this check silently),
+# the quiet forms in the clean root (a bold key, a parenthetical after a yes/no
+# value, an apostrophe in a free-text value, and an unrelated bullet list under
+# the block that a blank line ends), the missing-`Review required:` arm and the
+# negative value in two throwaway copies of that root, and the unreadable-file
+# arm; the walk itself, through a CLAUDE.md below the root that no other check
+# reaches; the single-line-description check in three shapes (a folded
 # block scalar, a literal one with an indentation indicator, a continued plain
 # scalar), the re-attach byte-size WARN (fires on the oversize fixture, draws
 # no FAIL, stays silent on the clean root, and stays silent on the clean
@@ -107,7 +120,9 @@
 # selftest, one whose selftest lacks the exec bit, an unmarked file that must
 # stay quiet whatever its name, and a *-lib.sh), the script-selftest check
 # (a script with no selftest, one whose selftest lacks the exec bit, and the
-# quiet forms: a *-lib.sh and install.sh), the same check over
+# quiet forms: a *-lib.sh and setup-hooks.sh — with install.sh beside them
+# firing, so a one-name exemption is told from a two-name one), the same check
+# over
 # scripts/git-hooks/ (a hook with no selftest — with the hook-shaped remedy —
 # one whose selftest lacks the exec bit, one that lacks the exec bit itself,
 # a shebang-less README that is not a hook and must stay quiet, and a paired
@@ -138,11 +153,13 @@
 # NOT covered, so a clean run here is not a claim about them: the 200-line caps
 # (the read-error branch is graded, the cap itself is not), sibling
 # byte-identity (skipped under LINT_ROOT — the registry names this repo's own
-# paths), the sibling-group MEMBERSHIP check (it does run against the fixture
-# tree, but the fixtures hold no two reference files sharing a basename, so its
-# `uniq -d` input is always empty and the check is structurally incapable of
-# firing — covering it needs a fixture pair with one shared basename and no
-# group), description length, angle brackets, name/directory agreement, the
+# paths; the MEMBERSHIP half beside it IS covered as of 2026-09-01, by the two
+# `ac-ids.md` copies under src/bulk-cited-dep/ and src/quoted-dep/ — a basename
+# the REAL registry groups, carried by two paths it does not list, so the
+# pre-2026-09-01 basename reading stays quiet on them and the path reading fires
+# twice; if `ac-ids.md` ever leaves sibling_groups those rows still fire but stop
+# discriminating the two readings, and both copies must be renamed to another
+# grouped basename then), description length, angle brackets, name/directory agreement, the
 # requires: resolution check (existence and model-invoked), router coverage,
 # and the classifier's unclaimed-file arm — walk_shipped_md emits only the
 # classes the arms above it claim, so no fixture can produce a path that
@@ -167,7 +184,18 @@
 # the label check's digit-and-underscore exemption dropped; and the DOMAIN.md
 # lookups in check_labels and check_heading_case each made to miss. All 24 red
 # — two of them only after the fixture that grades them was written, which is
-# what a mutation run is for. The 30: each of the three ledger check calls
+# what a mutation run is for. Ten more when the Landing: key check and the
+# per-line slash marker landed: the fence mask dropped from check_landing_key,
+# its header regex narrowed to the bare form (twice — the gate grep and the
+# in-loop one, only the second of which is graded), its bullet test narrowed to
+# `- ` at column 0, its blank-line-ends-block rule dropped, its key bold strip
+# dropped, `branch-per-ticket` dropped from the branch-policy arm, the
+# `Review required:` arm widened to take a parenthetical, the slash marker
+# collected file-wide instead of per line, and the sibling-membership check's
+# `listed -> stay quiet` branch deleted. Nine red; the gate grep's narrowing is
+# the one silent mutation, because the wrong-on-purpose root's first block
+# carries the bare header either way, so the check still runs and the in-loop
+# regex beside it is what decides which blocks it reads. The 30: each of the three ledger check calls
 # removed; the consumer sweep's process substitution turned into a pipe, its
 # `hits -ge 2` loosened to `-ge 1`, its `hits -eq 3` moved to `-eq 4`, its
 # legend-owner wholesale arm removed, and its mask_examples dropped; the
@@ -182,7 +210,7 @@
 # read-error guards each removed; the empty-walk guard removed; and the
 # consumer-sweep-did-not-run note removed from the authority-failure path.
 # Turning the
-# process substitution into a here-string instead is behaviour-preserving — no
+# process substitution into a here-string instead is behavior-preserving — no
 # subshell, so `fail=1` survives — and is correctly green.
 #
 # PARTIAL, and what it does and does not mean. Six sites can skip: three in the
@@ -256,6 +284,21 @@ expect "slash-on-model-invoked" "src/slash-on-model-invoked/SKILL.md writes \`/f
 # The check sweeps past src/*/SKILL.md: a references/ template is where the convention
 # regresses unseen, because that is what a publisher writes from.
 expect "slash-on-model-invoked (reference file)" "src/slash-on-model-invoked/references/retired-form.md writes \`/fixture-discipline\`"
+# The dangling arm: a slash form naming no skill in either tree. Its two quiet
+# neighbours are the roster and the line marker, rejected below — without both,
+# the arm could be widened to fire on every unresolved name with this row still
+# green, which is the shape that would red the whole repo.
+# install.sh left the exempt list on 2026-09-01, and the fixture keeps both
+# names so the row discriminates: a check that re-exempted install.sh, or that
+# dropped the exemption entirely, moves exactly one of this row and the
+# setup-hooks reject below.
+expect "script selftest (install.sh is no longer exempt)" "scripts/install.sh has no selftest"
+expect "slash names no skill (dangling)" "src/slash-on-model-invoked/SKILL.md writes \`/no-such-command\`, and no skill of that name is in src/ or .claude/skills/"
+# The marker's SCOPE, from the other side: the same shape with its marker one
+# line below fires. Collect the markers file-wide instead and this row goes
+# quiet while `/checkout-page` stays quiet too, so the check would bless every
+# later dangling name in a body that carries one marker anywhere.
+expect "slash names no skill (marker on another line)" "src/slash-on-model-invoked/SKILL.md writes \`/order-status\`"
 # The pass-2 classifier's per-class routing, graded here because nothing else
 # reaches it: a rule file is the only class the body checks and the slash sweep
 # disagree about, .claude/skills/ and the two routers are the only classes the
@@ -291,6 +334,27 @@ expect "body checks on a file at depth one under src/" "src/stray-note.md cites 
 expect "slash-on-model-invoked (DOMAIN.md)" "DOMAIN.md writes \`/fixture-discipline\`"
 expect "slash-on-model-invoked (README.md)" "README.md writes \`/fixture-discipline\`"
 expect "body checks on a global rule (HTML transport)" "global/rules/body-checked.md passes HTML through the shell"
+# The Landing: key, one row per alternative. Each needle carries the line as the
+# fixture writes it, because the FAIL quotes the raw line: fold the case or strip
+# the marker in the message and these rows red. The missing-`Review required:`
+# arm is graded in an isolated copy of the clean root below, since this root's
+# first block names the key.
+expect "Landing key (branch policy vocabulary)" "Landing: 'Branch policy: squash-merge'"
+expect "Landing key (a pre-authorization value that is neither yes nor no)" "Landing: 'Push pre-authorised: MAYBE <!-- spelling-exempt: authorised -->'"
+expect "Landing key (empty value)" "Landing: 'Defect policy:' has no value"
+expect "Landing key (a key committing does not read)" "Landing: 'Merge policy: squash' is not one of the six keys"
+# The second and third blocks in the same file, under the bold and backtick
+# header forms. Both die if the header regex narrows to the bare form, and the
+# third dies as well if the block reader latches on the first header instead of
+# resuming — which is how a fenced example consumed the whole check.
+expect "Landing key (a parenthetical after Review required)" "Landing: 'Review required: yes (planned)'"
+expect "Landing key (a second block, backtick header, indented bullet)" "Landing: 'PR required: sometimes'"
+# A CLAUDE.md BELOW the root, which no other walk reaches. review-receipt.sh
+# reads the nearest one from the push directory up, so a package file that
+# loses the key opts its subtree out while `git push` stays repo-scoped. Point
+# the check back at the root file alone and this row is the only thing that
+# moves.
+expect "Landing key (a CLAUDE.md below the root)" "packages/api/CLAUDE.md has a Landing: block with no 'Review required:' line"
 expect "two-way requires (unused)" "src/unused-dep/SKILL.md declares requires: 'fixture-discipline' but the body never names it"
 expect "single-line description (block scalar)" "src/folded-description/SKILL.md description is a YAML block scalar ('>-')"
 expect "single-line description (literal block scalar with indicators)" "src/literal-description/SKILL.md description is a YAML block scalar ('|2-')"
@@ -384,6 +448,8 @@ reject "ledger vocabulary (an enumeration inside a fenced example)" "fenced-exam
 # which fires from every other file in the walk, so this row is the difference between
 # an exemption that holds and a pattern nobody exercises.
 reject "slash-on-model-invoked" "global/rules/body-checked.md writes"
+reject "slash names no skill (slash_exempt roster)" "writes \`/compact\`"
+reject "slash names no skill (line marker, same line)" "writes \`/checkout-page\`"
 reject "reference-link resolution" "references/real-reference.md"
 reject "reference-link resolution" "references/exempt-single.md"
 reject "reference-link resolution" "references/exempt-double.md"
@@ -428,6 +494,24 @@ reject "git-hook selftest (the hook with an unexecutable selftest is itself exec
 # The pointer check fires on the one script that lacks the line and on nothing
 # else: every other fixture script carries it, so a matcher that widened past
 # "line 2 after a shebang, line 1 without one" reds here.
+# The masked/raw split in the consumer FAIL: `hits` counts masked tokens and
+# `missing` used to re-grep the RAW file, so on this fixture — two statuses in
+# prose, the third only inside a fence — the old reading rendered "and not ``".
+# The row asserts the NAME, which is the only part the two readings disagree on.
+expect "evaluation ledger consumers (the missing status is named, not an empty pair of backticks)" "fenced-third-status.md — it names 2 of the 3 and not \`contradicted\`"
+expect "sibling-group membership (a copy no group lists, first skill)" "src/bulk-cited-dep/references/ac-ids.md shares the reference basename 'ac-ids.md'"
+expect "sibling-group membership (a copy no group lists, second skill)" "src/quoted-dep/references/ac-ids.md shares the reference basename 'ac-ids.md'"
+# The quiet half of the same check, which no fixture root can reach:
+# sibling_groups names this repo's own src/ paths, so under LINT_ROOT nothing is
+# ever listed and the "listed -> stay quiet" branch is unreachable. Delete it and
+# every row above still fires, the FAIL count does not move, and the clean root
+# still exits 0 — while the real tree's pre-commit reds on all 51 grouped paths.
+# The only place the branch can be graded is the real tree, so this row runs the
+# linter there. It costs one full lint run; the assertion is scoped to this
+# check's own sentence, so an unrelated FAIL in the working tree does not red it.
+real_out=$(bash scripts/lint-skills.sh 2>&1)
+reject_in "$real_out" "a grouped sibling path FAILed the membership check in the real tree — the 'listed -> stay quiet' branch is what keeps sibling_groups from reporting its own members" "shares the reference basename"
+
 # The quiet neighbour of each house-style check, one row per exemption. Each
 # names a substring only a WIDENED check could produce — the neighbour itself,
 # never the file, because one expect row above legitimately names
@@ -436,6 +520,10 @@ reject "invocation form (a model-invoked name at a suggestion site)" "suggests \
 reject "artifact filenames (a repo-convention name is exempt)" "— README.md ) — a file a run writes"
 reject "label family (a label registered in DOMAIN.md)" "label 'FIXTUREPASS'"
 reject "British spelling (a form inside a code span)" "— cancelled )"
+# The pass-4 walk's third producer. docs/** and global/README.md were both
+# reachable from a fixture root and scripts/README.md was not, so dropping it
+# from the producer list moved nothing in the suite.
+expect "British spelling (scripts/README.md, the walk's third producer)" "scripts/README.md uses a British spelling (line(s) 5 — catalogue )"
 reject "heading case (an acronym and a numbered label mid-heading)" "src/house-style/references/quiet-forms.md H2"
 reject "section pointers (a pointer that resolves)" "cites '§ The quiet half"
 reject "orphaned references (a reference its body links)" "references/quiet-forms.md is linked from nowhere"
@@ -447,7 +535,7 @@ reject "conventions pointer (no-pointer's own selftest carries it)" "scripts/no-
 reject "hook selftest (library exempt)" "global/hooks/quiet-lib.sh"
 reject "hook selftest (no Install note, so not a hook)" "global/hooks/unmarked-helper.sh"
 reject "script selftest (library exempt)" "scripts/quiet-lib.sh"
-reject "script selftest (installer exempt)" "scripts/install.sh"
+reject "script selftest (setup-hooks.sh exempt)" "scripts/setup-hooks.sh"
 
 # The reject above is the only row in this suite that grades the citation check's
 # plumbing, and it discriminates only while bulk-cited-dep's tail is longer than a
@@ -464,13 +552,17 @@ fi
 expect_rc "the lint against the fixture tree" 1 "$status"
 # The count of FAIL lines is pinned: a check that begins firing on a fixture
 # it should leave alone reds here even when no substring row names the line.
-# Last moved 2026-08-31: −1 (`broken-links`' "Must stay quiet" section carried an
-# accidental second broken link, which the old 65 had baked in), +2 (the two new
-# label rows), +3 (the pass-4 walk, which no fixture reached before), +5 (one
-# house-style instance per classifier class). A count that moves is read before
-# it is re-pinned.
+# Last moved 2026-09-01 (Batch M-lint fix pass): 88. Seven of them are
+# check_landing_key: six on the root CLAUDE.md's three deliberately malformed
+# blocks, one on the packages/api file below it; one is the fixture install.sh, which owes a selftest; two are the dangling
+# slash-name arm, on `/no-such-command` and on the `/order-status` whose marker
+# sits on the wrong line; one is the British form in the fixture
+# scripts/README.md, the pass-4 walk's third producer; three are the widened
+# sibling-membership check naming the ungrouped `ac-ids.md` copies per PATH and
+# the consumer fixture whose third status sits only inside a fence. A count that
+# moves is read before it is re-pinned.
 nfail=$(printf '%s\n' "$output" | grep -c '^FAIL: ')
-[ "$nfail" -eq 74 ] || selftest_fail "expected exactly 74 FAIL lines against the fixture tree, got $nfail"
+[ "$nfail" -eq 88 ] || selftest_fail "expected exactly 88 FAIL lines against the fixture tree, got $nfail"
 # The shared-trigger-phrase fixtures are pinned by property, as near_bytes and
 # bulk_bytes are below: every row above them asserts a FAIL that appears or a
 # FAIL that does not, and each of those readings is silently satisfied by a
@@ -583,6 +675,22 @@ claude_bytes=$(wc -c < "$clean_fixtures/CLAUDE.md" 2>/dev/null | tr -d ' ')
 # baseline's exit 0 below is what grades it); this pins that it is there.
 grep -q '](README.md)' "$clean_fixtures/CLAUDE.md" || selftest_fail "the clean root's CLAUDE.md no longer carries its '](README.md)' link — the CLAUDE.md link check's quiet direction went ungraded; put the link back rather than reading the clean baseline as covering it"
 
+# The clean root's Landing: block is the Landing-key check's whole quiet
+# direction AND the base the two isolated rows below edit, so those readings die
+# silently if someone trims it out of the fixture. Its keys carry the forms the
+# check must exempt: a parenthetical after a yes/no value, an apostrophe in a
+# free-text value, and a key written in bold. `Review required:` is `yes` here
+# rather than `no` because this directory sits inside a gated repo and
+# global/hooks/review-receipt.sh reads the nearest CLAUDE.md from the push
+# directory up — a committed `no` opts the directory out of this repo's own push
+# gate. The `no` value is exercised in the throwaway copy below instead.
+grep -q '^Landing:$' "$clean_fixtures/CLAUDE.md" || selftest_fail "the clean root's CLAUDE.md no longer carries a 'Landing:' block — check_landing_key's quiet direction went ungraded, and the two isolated rows below have nothing to edit"
+grep -q '^- Review required: yes$' "$clean_fixtures/CLAUDE.md" || selftest_fail "the clean root's CLAUDE.md Landing: block no longer carries '- Review required: yes' — that is the line the isolated 'landing-no-review' and 'landing-review-no' rows edit, so the missing-key arm and the negative value both went ungraded"
+grep -q '^- Ticket close pre-authorized: no (no tracker)$' "$clean_fixtures/CLAUDE.md" || selftest_fail "the clean root's CLAUDE.md Landing: block no longer carries a yes/no value with a trailing parenthetical — that exemption went ungraded"
+grep -q "^- Defect policy: fix, don't file$" "$clean_fixtures/CLAUDE.md" || selftest_fail "the clean root's CLAUDE.md Landing: block no longer carries an apostrophe in a free-text value — that exemption went ungraded"
+grep -q '^- \*\*Push pre-authorized:\*\* yes$' "$clean_fixtures/CLAUDE.md" || selftest_fail "the clean root's CLAUDE.md Landing: block no longer carries a key written in bold — check_landing_key strips the bold before matching the key name, and dropping that strip would FAIL every repo writing '- **Push pre-authorized:** yes' with nothing red here"
+grep -q '^- Not a Landing key' "$clean_fixtures/CLAUDE.md" || selftest_fail "the clean root's CLAUDE.md no longer carries an unrelated bullet list under its Landing: block — that list is what grades the rule that a blank line ends the block; tolerate the blank instead and those bullets read as Landing keys"
+
 # The clean root's baseline. Every later assertion against it reads "the thing
 # I broke caused this", and that reading is only sound while the untouched tree
 # exits 0 — so a violation drifting into scripts/lint-fixtures-clean/ must fail
@@ -676,9 +784,20 @@ isolated_run() {  # name, perl expression, file
 isolated_case() {  # a fifth argument, when given, is a second required substring
   isolated_run "$1" "$2" "$3" || return 0
   local out=$isolated_out rc=$isolated_rc
-  expect_in "$out" "the ledger check did not fire in the isolated '$1' root" "$4"
+  expect_in "$out" "the graded check did not fire in the isolated '$1' root" "$4"
   [ -n "${5:-}" ] && expect_in "$out" "the isolated '$1' root did not carry its second required line" "$5"
   expect_rc "the lint against the isolated '$1' root" 1 "$rc"
+}
+# The other polarity: an edit a check must stay QUIET about. Exit 0 alone would
+# pass on a check that stopped running, so the fourth argument names a substring
+# that must NOT appear in any FAIL line — the check's own vocabulary, so a FAIL
+# from this edit is told apart from a FAIL the copy carried in.
+isolated_quiet_case() {  # name, perl expression, file, substring that must not FAIL
+  isolated_run "$1" "$2" "$3" || return 0
+  local out=$isolated_out rc=$isolated_rc
+  printf '%s\n' "$out" | grep '^FAIL: ' | grep -qF "$4" && \
+    selftest_fail "the isolated '$1' root drew a FAIL naming '$4'; that edit is a form the check must accept"
+  expect_rc "the lint against the isolated '$1' root" 0 "$rc"
 }
 # A consumer that drops one status is the whole difference between this root and
 # the clean one, so exit 1 here is this check's doing and nothing else's.
@@ -719,6 +838,19 @@ isolated_case "two-rules" 's/\z/\n- **Exactly one stored status.** `marketed`, `
   "src/ledger-legend/references/complete-consumer.md" \
   "two files state the evaluation ledger's stored-status rule"
 
+# The pass-4 spelling walk, graded for its EFFECT ON THE EXIT STATUS. In the
+# wrong-on-purpose root a dozen other checks already force exit 1, and the FAIL
+# count pins that the walk still PRINTS — so a walk whose FAILs never reached
+# `fail` looked identical to one that worked, which is what shipped: the walk
+# was a PIPE into `while`, its loop body ran in a subshell, and `fail=1` died
+# with it, so `OK: skill conventions clean.` printed beside a FAIL and the run
+# exited 0. Only a root where a docs/ spelling FAIL is the one thing wrong can
+# tell the two apart, which is why this row is here and not beside the other
+# spelling rows.
+isolated_case "docs-spelling-status" 's/its behavior is/its behaviour is/' \
+  "docs/adr/0001-clean-record.md" \
+  "docs/adr/0001-clean-record.md uses a British spelling"
+
 # The always-loaded budget. It is a per-DIRECTORY total, so no committed
 # fixture can carry it without every other root paying the bytes: the clean
 # tree's one rule file is padded past 12,000 in a copy instead.
@@ -735,6 +867,22 @@ isolated_case "label-unregistered" 's/`FIXTUREPASS` and //' \
 isolated_case "proper-noun-unregistered" 's/\*\*Cold-reader pass\*\*/**Fresh-eyes read**/' \
   "DOMAIN.md" \
   "capitalizes 'Cold-reader' mid-heading"
+
+# The Landing: key's missing-`Review required:` arm. This is the arm that
+# matters most, because it is the one a deletion trips: the review-receipt hook
+# arms on that line alone, and a repo that loses it looks exactly like a repo
+# that never gated.
+isolated_case "landing-no-review" 's/^- Review required: yes\n//m' \
+  "CLAUDE.md" \
+  "has a Landing: block with no 'Review required:' line"
+# The negative value, which must stay quiet. It cannot be exercised in a
+# committed fixture: global/hooks/review-receipt.sh walks up from the push
+# directory and the nearest CLAUDE.md carrying the line decides in either
+# direction, so a `no` under scripts/ opts that directory out of this repo's own
+# push gate. A throwaway copy carries it instead.
+isolated_quiet_case "landing-review-no" 's/^- Review required: yes$/- Review required: no/m' \
+  "CLAUDE.md" \
+  "Landing:"
 
 # The loaded-file byte WARN, which by construction cannot move the exit status
 # — so it takes its own helper: the same one-edit copy of the clean root, with
@@ -831,6 +979,11 @@ else
   expect_in "$clean_output" "the evaluation-ledger anchor read-error did not fire on an otherwise-clean tree" "src/clean-skill/references/note.md could not be read for the evaluation ledger anchor"
   expect_in "$clean_output" "the evaluation-ledger status-token read-error did not fire on an unreadable file inside the legend's own skill" "src/ledger-legend/references/complete-consumer.md could not be read for evaluation ledger statuses"
   expect_in "$clean_output" "the CLAUDE.md byte-count read-error did not fire on an unreadable root file" "CLAUDE.md could not be read for its byte count"
+  # The Landing: key check's own guard, on the same unreadable root file. Its
+  # first act is a grep, which fails on an unreadable file and would otherwise
+  # return 0 — reporting a CLAUDE.md nobody could read as one whose
+  # pre-authorization keys are well-formed.
+  expect_in "$clean_output" "the Landing: key read-error did not fire on an unreadable root file" "CLAUDE.md could not be read — the Landing: key check did not run on it"
 fi
 fi
 fi

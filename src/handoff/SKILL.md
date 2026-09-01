@@ -9,7 +9,7 @@ argument-hint: "What will the next session be used for?"
 
 This skill **forks** the conversation — you don't continue in place. It has two exits: write the doc for a fresh interactive session (the default), or hand straight off to a background agent (on request). Its § Where to write it also carries a contract wider than this skill: the landing zone every pickup reads, and the per-section write mechanics the global `large-write-chunking` rule and every other document that cites this section point at.
 
-If the user passed an argument, treat it as a description of what the next session will focus on and tailor the doc to that.
+**An argument scopes the whole document.** Where the user passed one, it describes what the next session will focus on: the goal line, *Next steps*, *Residual traps* and *Suggested skills* are each written to that focus, not the goal line alone.
 
 **Redact before the first write.** Strip API keys, passwords, tokens, and any personally identifiable information out of everything that lands in the doc or the agent's brief — a background agent's brief is unrecoverable once it is running, so the strip happens before the launch, not after.
 

@@ -15,7 +15,20 @@
 # truncated transcript in the fixture, the typed side from a truncated copy of
 # the history made here — and its absence when nothing is cut; the JSON shape;
 # a loaded name that is not a skill name dropped rather than printed; and the
-# exit codes, 2 for a partial run included. Run it after changing the script.
+# exit codes, 2 for a partial run included; and an absent source per side — a
+# --history path that is not there, a --projects directory with no transcripts.
+#
+# NOT covered, so a clean run here is not a claim about them: the DEFAULT
+# --history and --projects paths (every row passes both flags, so the
+# `${HOME}/.claude/...` resolution is exercised by nothing here and a change to
+# either default ships green); the src/ roster fallback taken when neither
+# --skills nor --skills-from is given: the nothing-to-count row below omits
+# both flags and so runs the fallback, but asserts only the exit code, so the
+# roster the fallback produces is asserted by nothing); the
+# --json array's empty shape; the awk aggregator's name ordering, which is
+# asserted only through the rows that happen to be present; and the two jq
+# programs against a `.display` or an `.input.skill` that is not a string,
+# which the fixture does not carry. Run it after changing the script.
 set -uo pipefail
 
 repo_root="$(cd "$(dirname "$0")/.." && pwd)"
@@ -92,7 +105,22 @@ if tmp="$(selftest_tmpdir)"; then
     selftest_skip "could not copy the fixture into $tmp — the per-side floor rows were not exercised by this run."
   fi
   mkdir -p "$tmp/empty"
-  bash scripts/skill-usage.sh --history "$tmp/no-such-history.jsonl" --projects "$tmp/empty" >/dev/null 2>&1; expect_rc "no history and no transcripts" 2 $?
+  # An ABSENT source, per side. A mistyped --history or an empty --projects
+  # renders that column as a plain `0` — the same figure a real zero gives —
+  # unless the script names it and marks the floor. Graded one side at a time,
+  # since a run missing both could not show which half moved.
+  no_hist=$(bash scripts/skill-usage.sh --history "$tmp/no-such-history.jsonl" --projects "$fx/projects" --skills "$roster" 2>"$tmp/nohist.err"); expect_rc "a --history path that is not there" 2 $?
+  expect_row "$no_hist" "an absent history marks the typed column only" "$(row tdd 0+ 2+ - 2026-08-13)"
+  expect_in "$(cat "$tmp/nohist.err")" "the absent history was not named on stderr" "no readable history at $tmp/no-such-history.jsonl"
+  no_proj=$(bash scripts/skill-usage.sh --history "$fx/history.jsonl" --projects "$tmp/empty" --skills "$roster" 2>"$tmp/noproj.err"); expect_rc "a --projects directory with no transcripts" 2 $?
+  expect_row "$no_proj" "an absent transcript set marks the loaded column only" "$(row tdd 2 0+ 2026-08-11 -)"
+  expect_in "$(cat "$tmp/noproj.err")" "the empty --projects directory was not named on stderr" "no *.jsonl under $tmp/empty"
+  both_gone=$(bash scripts/skill-usage.sh --history "$tmp/no-such-history.jsonl" --projects "$tmp/empty" 2>&1 >/dev/null); expect_rc "no history and no transcripts" 2 $?
+  expect_in "$both_gone" "both sources absent did not draw the nothing-to-count line" "nothing to count"
+  # One message, not three: the two per-side floor lines describe columns that
+  # never render when both sides are gone, and each repeats a path the line
+  # above already printed.
+  [ "$(printf '%s\n' "$both_gone" | grep -c '^skill-usage.sh: ')" -eq 1 ] || selftest_fail "both sources absent printed more than the one nothing-to-count line: $both_gone"
 else
   selftest_skip "mktemp -d produced no usable directory — the --skills-from, per-side floor, and nothing-to-count rows were not exercised by this run."
 fi

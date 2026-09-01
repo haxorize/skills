@@ -3,9 +3,20 @@
 set -euo pipefail
 
 SKILLS_DIR="$(cd "$(dirname "$0")/../src" && pwd)"
-TARGET_DIR="${HOME}/.claude/skills"
 GLOBAL_DIR="$(cd "$(dirname "$0")/../global" && pwd)"
-RULES_TARGET="${HOME}/.claude/rules"
+# Every path this script WRITES to hangs off one root, and that root is an
+# explicit input. It is the only seam that makes this script safe to run for
+# real in a test: prune_stale and link_rules call `rm` under it, and
+# scripts/install-selftest.sh runs the real installer with TARGET_ROOT pointed
+# at a throwaway directory. Derived from $HOME rather than declared, the seam
+# was a property the selftest asserted about this file rather than an interface
+# this file offers — so an edit here to an XDG path, a literal `~`, or a second
+# ${HOME} expansion would leave the selftest green while its `rm` loops ran
+# against the user's real ~/.claude/skills. SKILLS_DIR and GLOBAL_DIR come from
+# this script's own path and are read-only; they are deliberately NOT under it.
+TARGET_ROOT="${TARGET_ROOT:-$HOME}"
+TARGET_DIR="${TARGET_ROOT}/.claude/skills"
+RULES_TARGET="${TARGET_ROOT}/.claude/rules"
 mkdir -p "$TARGET_DIR"
 
 # Read a skill's declared discipline dependencies from its frontmatter `requires:`
@@ -32,6 +43,7 @@ read_requires() {
 # .agents/skills/). A rename needs no special handling: the old name dangles
 # (pruned here) and the new name is missing (linked below).
 prune_stale() {
+  local link target
   for link in "$TARGET_DIR"/*; do
     [ -L "$link" ] || continue          # symlinks only; skip real dirs/files
     [ -e "$link" ] && continue          # target resolves → still valid, keep
@@ -45,7 +57,17 @@ prune_stale() {
   done
 }
 
+# Every loop and name in this file is `local`, and link_skill is why: it
+# recurses at the dependency line below, and with `name`, `skill`, `target` and
+# `dep` as globals the recursive call overwrote them, so the `dep` line of the
+# CALLER's next iteration printed the deepest name the recursion reached — a
+# skill requiring `B, C` where `B` requires `D` printed `dep D -> C`. The
+# linking was right; the trace a user reads to see why an unasked-for skill is
+# now in ~/.claude/skills/ was not. The other two loops do not recurse today,
+# and share `link`, `name` and `target` with this one — so they are `local` as
+# well, rather than left as the reason the next call site reintroduces this.
 link_skill() {
+  local name skill target dep
   name="$1"
   skill="$SKILLS_DIR/$name"
   target="$TARGET_DIR/$name"
@@ -83,6 +105,7 @@ done
 # left alone, and ~/.claude/CLAUDE.md is never touched. Prune is scoped the
 # same way as prune_stale above: only dangling links into our global/.
 link_rules() {
+  local link name rule target
   mkdir -p "$RULES_TARGET"
   for link in "$RULES_TARGET"/*; do
     [ -L "$link" ] || continue
@@ -119,7 +142,7 @@ link_rules
 # `# Install note:` line (the libraries and selftests beside it carry none);
 # that line is also its one-line install note. post-merge derives the same
 # roster the same way.
-SETTINGS="${HOME}/.claude/settings.json"
+SETTINGS="${TARGET_ROOT}/.claude/settings.json"
 hooks=""
 for f in $(grep -l '^# Install note: ' "$GLOBAL_DIR"/hooks/*.sh); do
   hooks="$hooks $(basename "$f" .sh)"

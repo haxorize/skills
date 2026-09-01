@@ -21,3 +21,5 @@ Two slash forms are correct with no mask, and grade the slash check's own guards
 Call the Skill tool with `fixture-discipline` now, and never write `/fixture-discipline`.
 The global `uncited-depends` rule is named only here, inside a fence, which is not a citation.
 ```
+
+- [the ungrouped sibling copy](references/ac-ids.md)

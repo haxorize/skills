@@ -19,6 +19,17 @@
 # the pulled-hook NOTE names a change under global/hooks/ and one under
 # scripts/git-hooks/, and nothing outside them.
 #
+# NOT covered, so a clean run here is not a claim about them: every gate in the
+# throwaway repository is a FAKE with a pinned exit code, so nothing here says
+# the real rosters resolve — the `# Install note:` grep over global/hooks/ and
+# the two *-selftest.sh globs are exercised against the fake tree alone; the
+# ORIG_HEAD range the pulled-hook NOTE reads is staged, so the stale-ORIG_HEAD
+# case the hook's own header names is not graded; and the hook's exit status is
+# graded only as 0, because git ignores it: the two expect_rc rows below pin
+# that the hook reaches its end (a `set -e` death at the first failing gate
+# shows as a non-zero status), and no row tells a 1 from a 2. The WARN lines
+# are the channel every other row reads.
+#
 # Run it after changing the hook. post-merge itself sweeps this directory for
 # *-selftest.sh, so this file is on its own roster.
 set -uo pipefail

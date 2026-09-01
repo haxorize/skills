@@ -28,9 +28,25 @@
 # an inline Revisit line with text, a heading-form Revisit with a paragraph,
 # the `, later` and ` — title.` settled-entry openers, both of those openers
 # on a corrected Consequences bullet, a `corrected:` marker outside
-# `## Consequences`, a cross-reference that resolves beside a relative path, an
+# `## Consequences`, both amended-marker forms resolving beside an
+# `## Amendments` entry that quotes the marker with a date nothing claims, a cross-reference that resolves beside a relative path, an
 # outbound URL and the `[ADR N](N-slug.md)` placeholder, the unnumbered README,
-# and — in the clean tree — a well-formed supersession pair. Run it after
+# and — in the clean tree — a well-formed supersession pair. Also graded, for
+# RESOLUTION and never for a verdict: the no-argument default.
+#
+# NOT covered, so a clean run here is not a claim about them: the number-value
+# reading (`0036` and `36` as one record) is graded only through the one
+# padding-differs row, so `num_val` could stop normalizing for every other
+# padding and stay green; the four-field guard in for_rows and the
+# check-name-is-not-a-function guard, both of which exit 4 and neither of which
+# any fixture can reach, since the kinds and the dispatch names are this
+# script's own; the read_rows producer-failure paths (rc 2), which no row
+# stages — an unreadable record reaches the `superseded` arm's grep first and
+# exits 4 there, so the later arms' own rc 2 is unreached rather than absent;
+# the kind/dispatch pairing guard
+# at the foot of the linter, which fires only on an edit to the linter itself;
+# and the CONTENT of a forward pointer or a supersession summary — placement is
+# checked, wording is not, and the linter's own header says so. Run it after
 # changing a check.
 set -uo pipefail
 
@@ -65,6 +81,16 @@ expect "settled deferral (entry outside ## Amendments is not a match)" "9013-set
 expect "corrected consequence without its amendment" "9038-corrected-no-amendment.md (line 7) marks a Consequences bullet corrected by Amendments 2026-01-01"
 expect "corrected consequence (date-suffix entry is not a match)" "9038-corrected-no-amendment.md (line 8) marks a Consequences bullet corrected by Amendments 2026-07-07"
 expect "corrected consequence (entry outside ## Amendments is not a match)" "9038-corrected-no-amendment.md (line 9) marks a Consequences bullet corrected by Amendments 2026-03-03"
+# The amended-marker family, one row per alternative. The last two share a
+# physical line: the reader emits one row per DISTINCT date on a line, so a
+# repeated date must not double-report and a third marker must not be swallowed
+# by the first — both readings are wrong in the obvious one-match-per-line
+# implementation, and neither shows up in a fixture with one marker per line.
+expect "amended marker without its amendment" "9042-amended-no-amendment.md (line 3) marks a claim amended by Amendments 2026-05-05"
+expect "amended marker (date-suffix entry is not a match)" "9042-amended-no-amendment.md (line 3) marks a claim amended by Amendments 2026-05-05, but no '- **2026-05-05' entry exists"
+expect "amended marker (entry outside ## Amendments is not a match)" "9042-amended-no-amendment.md (line 7) marks a claim amended by Amendments 2026-06-06"
+expect "amended marker (first of three on one line)" "9042-amended-no-amendment.md (line 9) marks a claim amended by Amendments 2026-08-08"
+expect "amended marker (a later date on the same line)" "9042-amended-no-amendment.md (line 9) marks a claim amended by Amendments 2026-09-09"
 expect "cross-reference to a record that does not exist" "9040-xref-dangling.md (line 3) links to 9099-does-not-exist.md, and no such file is in"
 # The overlap is deliberate and pinned here: a dangling supersession or amend
 # link is also a dangling citation, and each draws its own FAIL naming its own
@@ -93,15 +119,30 @@ reject "revisit heading with paragraph" "9017-revisit-heading-ok.md"
 # `[ADR N](N-slug.md)` placeholder.
 reject "corrected consequence (both entry forms, and the section anchoring)" "9039-corrected-ok.md"
 reject "cross-reference (resolves, beside the exempt link forms)" "9041-xref-ok.md"
+# 9043 carries both marker forms resolving — plain and bold — and its
+# `## Amendments` log QUOTES the marker with a date nothing claims. That quote
+# is the only reason the log exclusion is load-bearing here: read the log and
+# this file fires on 2026-12-12.
+reject "amended marker (both forms resolving, and the log exclusion)" "9043-amended-ok.md"
+# The two SECTION exclusions, quiet on purpose: `## Consequences` and
+# `## Deferred` each own a marker of their own (`— corrected:`, `— settled:`),
+# so an `amended:` marker in either is not this check's to read — reading it
+# would let a Consequences bullet skip the corrected-bullet check. 9042 carries
+# one in each section pointing at a date nothing claims; drop the exclusion and
+# the FAIL count below moves from 27 to 29.
+reject "amended marker (the Consequences and Deferred exclusions)" "see Amendments 2026-07-07"
 reject "unnumbered README" "README.md"
 expect_rc "the lint against the fixture tree" 1 "$status"
 # The count of `FAIL: `-prefixed lines is pinned: a new firing on a quiet
 # form, a check that starts double-reporting, or a message that loses the
 # prefix the family shares shows up here even if no substring above moves.
-# Three of the 23 are the cross-reference check's deliberate overlap with the
-# supersession and amend link checks, asserted by name above.
+# Three of the 27 are the cross-reference check's deliberate overlap with the
+# supersession and amend link checks, asserted by name above. Four of them are
+# the amended-marker check's rows in 9042; the two markers that file carries
+# inside `## Consequences` and `## Deferred` are not among them, and are what
+# the section-exclusion row above pins.
 nfail=$(printf '%s\n' "$output" | grep -c '^FAIL: ')
-[ "$nfail" -eq 23 ] || selftest_fail "expected exactly 23 FAIL lines against the fixture tree, got $nfail"
+[ "$nfail" -eq 27 ] || selftest_fail "expected exactly 27 FAIL lines against the fixture tree, got $nfail"
 
 clean_out=$(bash scripts/lint-adrs.sh "$clean" 2>&1); clean_status=$?
 if [ "$clean_status" -ne 0 ]; then
@@ -119,6 +160,19 @@ fi
 bash scripts/lint-adrs.sh --bogus >/dev/null 2>&1; expect_rc "an unknown flag" 3 $?
 bash scripts/lint-adrs.sh "" >/dev/null 2>&1; expect_rc "an empty directory argument" 3 $?
 bash scripts/lint-adrs.sh "$fx" "$clean" >/dev/null 2>&1; expect_rc "two directories" 3 $?
+# The no-argument default (docs/adr, resolved from this file's own path) is the
+# form scripts/git-hooks/pre-commit calls, and every row above passes something:
+# a directory, an empty string, two directories, a flag, or --help. Graded for
+# RESOLUTION alone, never for a verdict — the header above is right that a real
+# record's state must never be what this script grades — so the assertion is
+# that the run reached a verdict at all (0 or 1) rather than the 2 or 3 a
+# default that stopped resolving would return, which in the hook reads as a
+# block on every ADR commit.
+bash scripts/lint-adrs.sh >/dev/null 2>&1; default_rc=$?
+case "$default_rc" in
+  0|1) : ;;
+  *) selftest_fail "the no-argument run exited $default_rc, not 0 or 1 — the docs/adr default did not resolve to a directory holding NNNN-*.md records. That is the form scripts/git-hooks/pre-commit invokes, where a 2 or 3 blocks every commit touching docs/adr/" ;;
+esac
 help_out=$(bash scripts/lint-adrs.sh --help 2>&1); expect_rc "--help" 0 $?
 expect_in "$help_out" "--help printed no Usage: line" "Usage:"
 expect_in "$help_out" "--help lost the tail of its header (the last header line is missing)" "(wrong on purpose) and scripts/lint-fixtures-clean/adr/ (right on purpose)."
@@ -128,5 +182,5 @@ if [ "$fail" -ne 0 ]; then
   echo; echo "Linter output against $fx was:"; printf '%s\n' "$output"
 fi
 selftest_close \
-  "lint-adrs self-test clean — every fixture failure fired, every exempt form stayed quiet, the clean tree exited 0, and the four exit codes hold." \
+  "lint-adrs self-test clean — every fixture failure fired, every exempt form stayed quiet, the clean tree exited 0, the no-argument default resolved, and the four exit codes hold." \
   "lint-adrs self-test clean on both fixture trees, but the two temp-directory exit-code rows were not exercised; see the SKIP line above."

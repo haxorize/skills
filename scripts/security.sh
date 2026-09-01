@@ -67,7 +67,11 @@
 #   - a scan that could not be whole: a file over 1 MB (its first 1 MB is
 #     still scanned), a directory past the 200-file cap, a file that is not
 #     UTF-8 or UTF-16/32 text, or a file the scanner could not open is a
-#     finding of its own, so an incomplete scan never renders as PASS
+#     finding of its own, so an incomplete scan never renders as PASS.
+#     The cap bounds files SCANNED, not files touched: every file in the tree
+#     is stat'd and opened for a four-byte header read before the cap is
+#     charged, so the work of walking a directory is unbounded and only the
+#     text scanning is capped
 # What is a script: a file with a script extension (sh, bash, zsh, fish, ksh,
 # py, js/mjs/cjs/jsx, ts/mts/cts/tsx, rb, pl, php, lua, ps1/psm1, bat, cmd —
 # whitespace around the name ignored), a `#!` first line, an executable mode,
@@ -100,8 +104,10 @@
 # else — that read is the skill-security-review.md lens's, in write-skill);
 # and anything under .git or node_modules. A symlink inside the directory is
 # skipped, and so is a symlinked subdirectory, with no finding (ADR-0075's
-# batch-1 amendment records this as an accepted boundary, with the 200-file
-# cap being applied in walk order and the absence of a per-file time budget);
+# batch-1 amendment records this as an accepted boundary, alongside the absence
+# of a per-file time budget; the third boundary that amendment named — the cap
+# applied in walk order, so padding hid a payload behind it — is fixed, the cap
+# now being charged after classification and only on files the walk opens);
 # the directory handed on the command line is followed if it is itself a
 # symlink.
 #
@@ -542,11 +548,6 @@ def scan_dir(path):
                 # holds — a script renamed .pyc draws the script rules too.
                 # Not counted against the file cap: a build leaves hundreds.
                 finding(findings, BIN_BYTECODE, rel, fn)
-            else:
-                if n >= MAX_FILES_PER_SKILL:
-                    capped += 1
-                    continue
-                n += 1
             try:
                 with open(fp, "rb") as fh:
                     head = fh.read(4)
@@ -558,25 +559,37 @@ def scan_dir(path):
                 continue
             if LOCK_FILE.match(fn.strip()):
                 continue
-            if fn == "package.json":
-                text = read_text(fp, rel, findings)
-                if text is None:
-                    continue
-                for key, cmd in manifest_hooks(text):
-                    finding(findings, MANIFEST_HOOK, rel, f"{key}: {cmd}")
-                scan_text(text, rel, False, findings)
-                continue
-            if ext in MD_EXT:
+            manifest = fn == "package.json"
+            if manifest:
+                is_md = False
+            elif ext in MD_EXT:
                 is_md = True
             elif looks_like_script(fp, fn, ext):
                 is_md = False
             else:
                 continue
+            # The cap is charged HERE, on the files this walk actually reads.
+            # Charged before the classification it counted every file the walk
+            # touched — a lock file, an image, a CSV, anything neither markdown
+            # nor script-like — so a directory padded with data files spent the
+            # budget on files that were never going to be opened and pushed the
+            # real scripts past it, with the SCAN_SKIPPED finding pointing at
+            # the padding rather than at them. The bytecode branch above states
+            # the intent for its own class; it is the same intent here.
+            if ext not in BYTECODE_EXT:
+                if n >= MAX_FILES_PER_SKILL:
+                    capped += 1
+                    continue
+                n += 1
             text = read_text(fp, rel, findings)
-            if text is not None:
-                scan_text(text, rel, is_md, findings)
+            if text is None:
+                continue
+            if manifest:
+                for key, cmd in manifest_hooks(text):
+                    finding(findings, MANIFEST_HOOK, rel, f"{key}: {cmd}")
+            scan_text(text, rel, is_md, findings)
     if capped:
-        finding(findings, SCAN_SKIPPED._replace(title=f"{capped} file(s) past the {MAX_FILES_PER_SKILL}-file cap were not scanned — read them by hand"), ".", "")
+        finding(findings, SCAN_SKIPPED._replace(title=f"{capped} scannable file(s) past the {MAX_FILES_PER_SKILL}-file scan cap were not read — read them by hand. The cap bounds files scanned, not files walked"), ".", "")
     return findings
 
 
