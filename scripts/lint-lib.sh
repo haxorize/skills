@@ -1,4 +1,5 @@
 # Conventions for this tree: scripts/README.md
+# shellcheck shell=bash   # sourced, never executed: no shebang to read the dialect from
 # lint-lib.sh — sourced by scripts/lint-skills.sh and scripts/lint-adrs.sh. Not
 # a linter and not a test: the one home for the failure-flag mechanism both
 # carry. Until 2026-09-01 it was nine lines duplicated in each, kept in step by

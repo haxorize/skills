@@ -1,4 +1,5 @@
 # Conventions for this tree: scripts/README.md
+# shellcheck shell=bash   # sourced, never executed: no shebang to read the dialect from
 # selftest-lib.sh — sourced by the scripts/*-selftest.sh scripts beside it. Not
 # a test. The one home for the matcher, the FAIL/SKIP wording, and the
 # three-state close, so a fix to any of them lands once; a failing line pasted

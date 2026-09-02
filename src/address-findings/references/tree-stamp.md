@@ -1,6 +1,6 @@
 # The tree stamp and the review-receipt gate
 
-Open this only when a stamp is about to be taken or checked — a review's first stamp, a fix pass's re-stamp, or the `Measured-tree:` line a producer outside a review owes. The stamp contract both sides of a review share, in every repo: `/review-changes` writes the first stamp on the report it produces, `/address-findings` appends the last. In a repo whose `Landing:` block says `Review required: yes` the stamps are also a receipt — there the `review-receipt` hook matches the tree a push would send against the newest report's `Reviewed-tree:` stamps, and an unstamped tree does not go out.
+Open this only when a stamp is about to be taken or checked — a review's first stamp, a fix pass's re-stamp, or the `Measured-tree:` line a producer outside a review owes. The stamp contract both sides of a review share, in every repo: `/review-changes` writes the first stamp on the report it produces, `/address-findings` appends the last. In a repo whose `Landing:` block says `Review required: yes` the stamps are also a receipt — there the `review-receipt` hook matches the tree a push would send against any report's `Reviewed-tree:` stamp, and an unstamped tree does not go out.
 
 ## The stamp command
 

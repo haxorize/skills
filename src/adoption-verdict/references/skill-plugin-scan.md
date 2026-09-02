@@ -1,5 +1,7 @@
 # Skill and plugin scan
 
+Open this only when the candidate under verdict is an external skill or plugin about to be installed from someone else's repo.
+
 Run a heuristic injection scan over the candidate's directory before install. The skills repo ships one as `scripts/security.sh`; from another project, reach it as:
 
 ```

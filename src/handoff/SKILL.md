@@ -44,7 +44,7 @@ This section also owns the **per-section file mechanics** the global `large-writ
 
 ### 1. Hand off, or write the doc
 
-When the user asks for the work continued **unattended** rather than picked up in a fresh interactive session, don't save a doc — launch a background agent seeded with the handoff as its prompt. Seed the prompt with explicit boundaries — **don't push, merge, close work items, or post to external services unless the handoff says to** — because an unattended agent inherits none of this conversation's implicit ones. The invocation, the rest of the boundary seeding, and the three disciplines to seed are in [references/background-agent.md](references/background-agent.md). The redaction rule at the top of this body matters doubly on this path — the handoff becomes the launched agent's prompt verbatim.
+When the user asks for the work continued **unattended** rather than picked up in a fresh interactive session, launch a background agent seeded with the handoff as its prompt. The invocation, the boundaries the prompt is seeded with, and the three disciplines to seed are in [references/background-agent.md](references/background-agent.md). The redaction rule at the top of this body matters doubly on this path — the handoff becomes the launched agent's prompt verbatim.
 
 ### 2. What goes in it
 

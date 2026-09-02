@@ -28,7 +28,7 @@ The approach the team agreed on (one of the proposed approaches from the grillin
 
 ## Removed acceptance criteria
 
-History of ACs retired from the AC field (omit the heading if nothing has been removed):
+History of ACs retired from the AC field:
 
 - ~~**AC3:** Original criterion text~~ — removed 2026-05-01: reason in one line
 

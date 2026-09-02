@@ -30,6 +30,4 @@ When a round's answer invalidates something an artifact under revision already s
 
 ### 4. The rules that bind at every write
 
-The standalone path's other rules bind inline as well: the owning-record search before a new number (the amend-or-write-new rule above), the forward pointer a superseding record owes, and the human-facing register for the rationale prose — call the Skill tool with `writing-for-humans` at the first write if it isn't already live.
-
-## Notes
+The standalone path's other rules bind inline as well: the owning-record search before a new number (the amend-or-write-new rule above), the forward pointer an amending record owes the record it amends, and the human-facing register for the rationale prose — call the Skill tool with `writing-for-humans` at the first write if it isn't already live.

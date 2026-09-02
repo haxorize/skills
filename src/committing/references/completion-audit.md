@@ -8,9 +8,9 @@ One row per acceptance criterion the slice covers, in AC-ID order, derived from 
 
 | AC | Status | Evidence |
 |---|---|---|
-| **AC1** | DONE | `pytest tests/test_scores.py::test_brand_scope` — 3 passed, exercises the brand filter the criterion names |
-| **AC2** | PARTIAL | endpoint returns the field; the sort order the criterion specifies is not implemented |
-| **AC3** | UNVERIFIABLE | criterion names the staging dashboard; no access from this session — would be proven by a screenshot of the tile after deploy |
+| AC1 | DONE | `pytest tests/test_scores.py::test_brand_scope` — 3 passed, exercises the brand filter the criterion names |
+| AC2 | PARTIAL | endpoint returns the field; the sort order the criterion specifies is not implemented |
+| AC3 | UNVERIFIABLE | criterion names the staging dashboard; no access from this session — would be proven by a screenshot of the tile after deploy |
 
 Statuses, and what each requires:
 

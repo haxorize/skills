@@ -39,7 +39,7 @@ Preview every block, then write on confirmation. A block or file that already ex
 - `## Convention skills` — role → skill name, one line each.
 - `## Registry` — `Minimum release age:` and any other curation line step 2 admitted; the number is the org's and lives here, never in a skill.
 - `DOMAIN.md` — a heading and an empty `| Term | Definition | Aliases to avoid |` table; the vocabulary arrives through `grill-me` and `sweep-domain`, not here.
-- `docs/solutions/` — the directory plus the `CLAUDE.md` line `capturing-learnings` would otherwise add at first capture, verbatim from its step 4: `docs/solutions/ — solved problems keyed by symptom frontmatter`.
+- `docs/solutions/` — the directory plus the `CLAUDE.md` line `capturing-learnings` would otherwise add at first capture. Its `references/learning-format.md` § First capture in a repo owns the wording, which goes in the closest existing section: `docs/solutions/ — solved problems keyed by symptom frontmatter`.
 
 Hook opt-in is a printed `settings.json` snippet and, for `rename-safety`, the `touch .claude/rename-safety` line; `review-receipt`'s opt-in is the `Review required: yes` line the Landing block already carries — this skill never edits `settings.json`.
 

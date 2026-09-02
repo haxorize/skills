@@ -1,5 +1,7 @@
 # Model-invoked vs user-invoked skill split
 
+> **Amended by [ADR-0057](0057-rename-table-and-discipline-skill-term.md):** the skills are `review-architecture` and `sweep-domain` as of 2026-08-30, not `improve-design` and `harden-domain`. The roster and the naming ground below stand as this record made them — an ADR is the record as it landed, and a renamed name is never backfilled.
+
 ## Context
 
 Every skill in this repo was historically **model-invoked**: each `SKILL.md` carried a trigger-rich, model-facing `description` ("Use when the user wants…"), so the agent could auto-load any of them. Two problems followed. First, consequential orchestrators — the `to-*` publishers that write real work items to a tracker — could auto-fire without an explicit human go-ahead. Second, there was no clean separation between a skill that **orchestrates a workflow** (something a human deliberately starts) and a skill that holds **reusable discipline** (something the model should reach for mid-task). Matt Pocock's skills repo split exactly this axis, and Claude Code supports it natively via the `disable-model-invocation` frontmatter field.

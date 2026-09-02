@@ -20,7 +20,7 @@ Assemble the body from the skeleton in [story-body.md](story-body.md), inserting
 Parent: #<issue-number>
 ```
 
-The example skips `AC3` for the reason [ac-ids.md](ac-ids.md) gives. Each criterion is a single concrete check. Avoid "works correctly" — say what "correct" looks like. Omit the removed-criteria heading if nothing has been removed; omit `## Parent` if parentless.
+The example skips `AC3` for the reason [ac-ids.md](ac-ids.md) gives. Each criterion is a single concrete check. Avoid "works correctly" — say what "correct" looks like. Omit `## Parent` if parentless.
 
 ## Notes
 

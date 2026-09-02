@@ -61,7 +61,7 @@ Named patterns that read as AI-generated: almost all because they are clarity fa
 - **Em-dash habit** — budgeted, not banned: none in short copy, one or two in a long draft where they clearly beat commas or parentheses; delete clusters; the outbound row bans them outright, and the global dash-sweep rule enforces it. *Displacement partner chain:* em dash → semicolon → colon — the punchy appended clause survives the ban by swapping its glyph; fix the clause, not the mark.
 - **Bold decoration** — bold sprinkled mid-sentence for emphasis, emoji in headings, "**Note:**" callouts. Bold names the subject a list item explains, nothing else; emphasis lives in word choice.
 - **Bullet overuse** — prose chopped into bullets where two sentences read better. Keep a list when items are genuinely parallel, short, or sequential steps; convert to prose when the bullets are full sentences in costume, carry inline bold headers, or exist to look organized.
-- **Heading title case** — "Everything You Need To Know". Sentence case, everywhere in human-facing prose, including titles. A `SKILL.md` H1 is the exception and not a counter-example: it is the skill's display name, takes title case per `write-skill` § Size constraints' sibling rows, and `check_heading_case` enforces it.
+- **Heading title case** — "Everything You Need To Know". Sentence case, everywhere in human-facing prose, including titles. A `SKILL.md` H1 is the exception and not a counter-example: it is the skill's display name, takes title case, and `check_heading_case` enforces it.
 - **Keyboard-unreachable glyphs** — `→`, `⇒`, `≠`, non-ASCII bullets in prose a person types into a plain-text surface (a commit body, a chat message, a terminal). Nobody reaches for them on a keyboard, so they read as generated (the em dash has its own entry under Em-dash habit). Plain ASCII: `->`, `!=`, `-` bullets. Curly quotes are not a tell: Outlook, Word, and Teams convert them automatically, so human mail is full of them.
 - **Inline-header list** — "- **User experience:** significantly improved." — a bullet whose bold label repeats the pattern of its siblings. Either a real table or real prose.
 
@@ -71,14 +71,4 @@ Ten tells that fire only in shipping prose — commit messages, PR bodies, revie
 
 ## Rate tells
 
-Per-instance rules can't see these; they live in the run of the text, and *occasional* instances are ordinary English — the sustained pattern is the tell.
-
-- **Monotone openers** — most sentences starting with the same word (usually "The" or "This"). Vary by restructuring, not by synonym rotation.
-- **Uniform sentence length** — every sentence 15–25 words, no short ones, no long ones. Split and merge until the rhythm follows the content.
-- **Sustained passive** — a third or more of a section's sentences passive. Occasional passive with an unknown actor is correct; the uniform register is the tell.
-- **One-point dilution** — one argument restated many ways across paragraphs, circular repetition disguised as thoroughness. State it once, well, and move on.
-- **Dead-metaphor repetition** — one metaphor adopted early and repeated throughout. If a figure earns one use, it does not earn five.
-- **Synonym rotation** — the same referent renamed each mention for variety; the one-term-per-concept rule violated at rate, and an ambiguity besides the tell.
-- **Anaphora** — consecutive sentences or clauses opening on the same word or construction for rhythm ("We shipped the parser. We shipped the linter. We shipped the formatter."). One repetition is emphasis; a run is cadence doing the work content should be doing.
-- **Single-sentence paragraph run** — three or more one-sentence paragraphs in a row, each landing as a beat. Merge them into a paragraph that argues, or give at least one of them its second sentence.
-- **Aphorism rate** — a memorable general truth per section, set off as its own line. The occasional one is ordinary writing; the steady rate substitutes resonance for information. Read the section aloud: wherever the rhythm is doing the persuading, the sentence carries no fact.
+Nine tells that fire on the run of the text, not on any one phrase — monotone openers, sustained passive, one-point dilution, and the rest — live in [tell-catalog-rate.md](tell-catalog-rate.md); open it only for a draft of a section or more.

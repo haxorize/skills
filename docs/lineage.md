@@ -44,5 +44,6 @@ The three nitfolio rows are written in local prose from one diffable upstream â€
 | `writing-for-humans` | ten origins, named in the record | a synthesis with no single upstream | ADR-0042 |
 | `work-item-shape` | agent-armory, openai-skills | ideas folded over local publisher discipline | ADR-0044 |
 | `phi-safe-code`, `health-literacy`, `accessible-ui` | the material each admission ADR names | Domain skills mined from named material with no upstream skill to diff, so the diff-before-editing trigger does not fire; listed for attribution only | ADR-0055 and the later admission records |
+| `receiving-review` | addyosmani/agent-skills | `doubt-driven-development`'s doubt-theater alarm, direction-flipped into the zero-accepted tripwire; attribution only | ADR-0029 |
 | `audit-skills`, `delete-dead-code` | an enterprise plugin repo, ECC-derived, mined once | not a tracked upstream | ADR-0062 |
 | `product-description` | the `steveruizok` gists | license NONE-STATED: ideas only, never their wording or templates | ADR-0065 |

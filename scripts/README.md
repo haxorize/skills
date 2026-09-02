@@ -4,7 +4,7 @@ This file holds only rules that bind more than one gate. A rule about one script
 
 ## Run the selftest of what you touched
 
-Every `scripts/<name>.sh` and `scripts/git-hooks/<name>` that is not a selftest, a `*-lib.sh`, or `setup-hooks.sh` has a `<name>-selftest.sh` beside it. One name is exempt, `setup-hooks.sh`, because it writes into `.git/hooks` and has no readable surface to grade without a throwaway clone; everything else here is gradeable against a fixture or a redirected `HOME`. `lint-skills.sh` fails one that lacks it — a git hook is any file under `scripts/git-hooks/` whose first line is a shebang, and it must itself be executable — and `post-merge` derives its gate roster from the pairing, so a script is gated the moment its selftest exists. Both walks stop at those two directories: a skill-private script under `.claude/skills/*/scripts/` is reached by no gate. Every file the walks visit opens with `# Conventions for this tree: scripts/README.md` — line 2 after a shebang, line 1 in a sourced library — and `lint-skills.sh` fails one that does not.
+Every `scripts/<name>.sh` and `scripts/git-hooks/<name>` that is not a selftest, a `*-lib.sh`, or `setup-hooks.sh` has a `<name>-selftest.sh` beside it. One name is exempt, `setup-hooks.sh`, because it writes into `.git/hooks` and has no readable surface to grade without a throwaway clone; everything else here is gradeable against a fixture or a redirected `HOME`. `lint-skills.sh` fails one that lacks it — a git hook is any file under `scripts/git-hooks/` whose first line is a shebang, and it must itself be executable — and `post-merge` derives its gate roster from the pairing, so a script is gated the moment its selftest exists. A third walk covers `.claude/skills/*/scripts/` on the same pairing contract, so a skill-private script is gated too. Every file the walks visit opens with `# Conventions for this tree: scripts/README.md` — line 2 after a shebang, line 1 in a sourced library — and `lint-skills.sh` fails one that does not.
 
 - After changing a script or hook, run its `-selftest.sh`.
 - After changing a check in `lint-skills.sh` or `lint-adrs.sh`, run that linter's selftest: a lint gate that quietly stopped matching looks identical to a repo with no violations. Each selftest's header names what it grades and what it does not, and that list is the authority.
@@ -16,7 +16,7 @@ Every `scripts/<name>.sh` and `scripts/git-hooks/<name>` that is not a selftest,
 
 ## The exit-code taxonomy
 
-Every script under `scripts/`, every hook under `scripts/git-hooks/`, and every hook selftest under `global/hooks/` renders one of five statuses, and `DOMAIN.md` registers them under this name (`sweep-corpus` reads `exit=` off all three trees):
+Every script under `scripts/`, every hook under `scripts/git-hooks/`, every hook selftest under `global/hooks/`, and every skill-private script under `.claude/skills/*/scripts/` renders one of five statuses, and `DOMAIN.md` registers them under this name (`sweep-corpus` reads `exit=` off all four trees):
 
 - **0** — clean.
 - **1** — at least one `FAIL`.

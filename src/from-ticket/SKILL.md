@@ -101,4 +101,4 @@ The skill itself doesn't build — it loads context and stops. Both are user-inv
 
 ## Notes
 
-- `from-ticket` does not modify the ticket or any sibling work item, and writes no files — it resolves the tracker in Declared mode only and never bootstraps a block. Revisions to tickets go through `to-story --update` / `to-tasks --update` / `to-bug --update`.
+- `from-ticket` does not modify the ticket or any sibling work item, and writes no files. Revisions to tickets go through `to-story --update` / `to-tasks --update` / `to-bug --update`.

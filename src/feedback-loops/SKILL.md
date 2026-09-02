@@ -1,6 +1,6 @@
 ---
 name: feedback-loops
-description: The mechanical pass that closes the loop after a slice's behaviors are built and refactored. Use when finishing a change, after the last test passes, when asked to clear the lint, typecheck, format, or test warnings, or when another skill needs to run lint, format, typecheck, migrations, and doc updates before declaring work done.
+description: The mechanical pass that closes the loop after a slice's behaviors are built and refactored. Use when finishing a change, after the last test passes, when a red check has to be classified in-scope or out-of-scope before anything is touched, when asked to clear the lint, typecheck, format, or test warnings, or when another skill needs to run lint, format, typecheck, migrations, and doc updates before declaring work done.
 requires: diagnosing-bugs
 ---
 

@@ -27,6 +27,8 @@ Title prefix: if the tracker block declares a generic `Title prefix:`, prepend i
 
 ### 2. Resolve parent
 
+In no-repo CLI-only mode, save the resolved Feature ID to the same memory entry `tracker-resolution.md` keys by tracker context, so the next invocation does not re-look it up.
+
 - **`Hierarchy: required`** (default for ADO): if `--parent <feature-id>` is provided, use it; otherwise interactively prompt for the Feature ID. If no Feature exists, suggest running `/to-feature` first or (only if team config allows top-level Stories) accepting a parentless Story.
 - **`Hierarchy: optional`** (default for GitHub): parent linking is optional; only use `--parent` if provided. Do not prompt.
 

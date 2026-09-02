@@ -1,5 +1,7 @@
 # Questionnaire template
 
+Open this only when drafting the questionnaire at `ask-for-me` step 3.
+
 ## Filling the skeleton
 
 The block below is emitted with every `<placeholder>` replaced by real content and every `<question-example>` block **deleted** — the example is a worked illustration for the author, and its specifics (the 200-requests-per-second reading) are invented. Two more things never travel with the emitted file: this section, and the `**Purpose:**` line's own text, which describes what to write there rather than being it.

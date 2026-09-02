@@ -1,3 +1,4 @@
+# shellcheck shell=bash   # sourced, never executed: no shebang to read the dialect from
 # hook-lib.sh — sourced by the PreToolUse hooks beside it. Not a hook.
 #
 # A hook sets `hook_name`, sources this file, then:

@@ -26,7 +26,7 @@ Author the body as Markdown from the skeleton in [story-body.md](story-body.md),
 - ~~**AC3:** Original criterion text~~ — removed 2026-05-01: reason in one line
 ```
 
-The record shape and the append-only rule are in [ac-ids.md](ac-ids.md); omit the heading if nothing has been removed.
+The record shape and the append-only rule are in [ac-ids.md](ac-ids.md).
 
 ## Acceptance Criteria (ADO field)
 

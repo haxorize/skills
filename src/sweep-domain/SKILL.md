@@ -32,7 +32,7 @@ Pick the best term for each concept and list alternatives as aliases to avoid.
 
 ### 4. Write to `DOMAIN.md` via `domain-modeling`
 
-Call the Skill tool with `domain-modeling` to write the glossary to `DOMAIN.md` in the working directory — if you don't see a `Launching skill: domain-modeling` line, stop and call it again before continuing. It owns the output format and the multi-context rules; apply its checks to the swept terms as you write. An entry the sweep inferred from usage, with no definition found in the code, is flagged under `Flagged ambiguities` as resting on a guess, so the next sweep knows which definitions rest on the code and which do not.
+Call the Skill tool with `domain-modeling` to write the glossary to `DOMAIN.md` in the working directory — if you don't see a `Launching skill: domain-modeling` line, stop and call it again before continuing. It owns the output format and the multi-context rules; apply its checks to the swept terms as you write.
 
 ### 5. Output a summary
 

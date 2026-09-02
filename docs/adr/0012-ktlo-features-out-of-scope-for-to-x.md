@@ -16,7 +16,7 @@ KTLO Features sit outside the to-X publishing path. The suite ships no `to-ktlo`
 - Initial drafting and any later refinement use `grill-me` (or `grill-and-record` if DOMAIN.md side effects are wanted), reading the file as conversation context. The grilling skill is artifact-agnostic — no KTLO-specific tooling.
 - Per-PI publish is manual: read the file, create the new ADO Feature with bumped title/iteration. Claude Code can run the CLI mechanically, but no skill orchestrates the rollover.
 - Body shape is slim: Scope, Out of scope, Cadence/SLA, Constraints, Notes. No AC field. No Story map.
-- Child Stories parent to the KTLO Feature via `to-story --parent <ktlo-feature-id>` and behave normally — `Covers:` only exists on Tasks (referencing the *Story's* ACs, not the Feature's), so the parent's AC absence is structurally invisible to child authoring.
+- Child Stories parent to the KTLO Feature via `to-story --parent <ktlo-feature-id>` and behave normally — the parent's AC absence is structurally invisible to child authoring. — amended: see Amendments 2026-09-02.
 
 ## Considered Options
 
@@ -29,3 +29,7 @@ KTLO Features sit outside the to-X publishing path. The suite ships no `to-ktlo`
 - KTLO authoring effort is bounded per PI (one file read + one CLI invocation per category, mechanically scriptable). The cost of leaving it manual is small; the cost of carrying KTLO branches in every skill would be recurring.
 - A future contributor proposing a `to-ktlo` skill or a `--rolling` mode for `to-feature` should re-read this ADR before re-litigating. Re-evaluation is appropriate if KTLO authoring friction grows beyond per-PI copy-paste — e.g., if a single PI workspace accrues 20+ KTLO Features and the rollover becomes a bottleneck.
 - DOMAIN.md captures **KTLO Feature** as a distinct work-item entry; the README's `## Conventions` section documents the `docs/ktlo/<category>.md` convention so users find the path without reading ADRs.
+
+## Amendments
+
+- **2026-09-02** — The Decision's last bullet rested its child-authoring claim on "`Covers:` only exists on Tasks (referencing the *Story's* ACs, not the Feature's)", which is not what the suite does: a story-map entry carries `Covers: AC1, AC3` against the **parent Feature's** AC IDs ([ADR-0002](0002-structural-ac-mapping-stable-ids.md); `to-story`'s `references/ado-hierarchy.md` at both the Planned-match and Emergent-append steps). The conclusion survives on a different mechanism: a KTLO Feature carries no story map, so `to-story` step 2a classifies every child **Emergent** and the Emergent append finds no markers and skips silently. The premise is struck and the mechanism named; the ruling — KTLO Features stay outside the to-X path — is untouched.

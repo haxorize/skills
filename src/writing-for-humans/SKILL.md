@@ -1,6 +1,6 @@
 ---
 name: writing-for-humans
-description: Writing conventions for human-facing prose — ticket and work-item bodies, docs and READMEs, ADR rationale, session summaries, incident reports, release notes, error messages, outbound messages drafted for the user, and the narration, publish confirmations, and reports the user reads in the terminal. Use when writing or editing prose whose job is to be understood by a person, when narrating work or confirming a publish back to the user, when auditing a draft for AI tells, or when picking the register for an artifact. Not for agent-consumed instruction files (`writing-for-agents` owns those) and not for code.
+description: Writing conventions for human-facing prose — ticket and work-item bodies, docs and READMEs, ADR rationale, session summaries, incident reports, release notes, error messages, outbound messages drafted for the user, and the narration, publish confirmations, and reports the user reads in the terminal. Use when writing or editing prose whose job is to be understood by a person, when narrating work or confirming a publish back to the user, when auditing a draft for AI tells, or when picking the register for an artifact. Not for agent-consumed instruction files (`writing-for-agents` owns those), not for copy a member, patient, or subscriber reads (`health-literacy` owns that), and not for code.
 ---
 
 # Writing for Humans
@@ -19,7 +19,7 @@ Every passage is **procedural** (instructions — the reader will *do* something
 
 **Procedural:** imperative voice. One instruction per sentence, unless two actions happen at once. At most 20 words per sentence. A required condition comes *before* its command, split by a comma: "If the build fails, read the log" — trailing conditions get dropped. A warning leads with the command, then the risk: "Do not run this against production. The flag deletes rows that do not match the source" — never the explanation first.
 
-**Descriptive:** no imperative. At most two clauses per sentence; split anything over 25 words. One new fact per sentence. Timelines use simple past — "we identified" not "we have identified", which hides when — except where the compound form carries an uncertainty or a current relevance the simple form would drop ("the job has completed and still holds the lock"), which the preservation contract's modality rule keeps. Passive voice only when the actor is genuinely unknown; otherwise ask "by whom?" and put the answer first.
+**Descriptive:** no imperative. At most two clauses per sentence; split anything over 25 words. One new fact per sentence. Timelines use simple past — "we identified" not "we have identified", which hides when — except where the compound form carries an uncertainty or a current relevance the simple form would drop ("the job has completed and still holds the lock"), which the preservation contract's modality rule in [references/edit-and-detect.md](references/edit-and-detect.md) keeps. Passive voice only when the actor is genuinely unknown; otherwise ask "by whom?" and put the answer first.
 
 **Word counting**, so the caps survive technical prose: a backticked span, an identifier, a number with its unit, a parenthesized aside, and a hyphenated word each count as one word. `az boards work-item update --id 42` is one word.
 
@@ -55,32 +55,18 @@ In anything the human reads — narration, publish confirmations, reports — a 
 - **Vague quantifiers become questions.** "Many", "significant", "improved", "countless", "a handful" (when the count is known) each demand their number: how many, by how much. Answer from evidence you have; **never invent the number — ask.**
 - **A number carries its method.** A precise figure with no sample, window, or measurement behind it reads as precision it has not earned — "94% of runs" needs the run count and the period, or it becomes "most runs". State the method beside the number, or write the honest imprecise version. A figure offered as good or bad also names what it is measured against — the prior value, the target, or the baseline; where the source holds no comparator, the good/bad framing goes and the bare figure stays. Figures measured by different methods are reported side by side, never summed into one total: a re-counted file and a before-and-after median are not the same kind of evidence, and a blended total hides which component is wrong.
 - **Durable docs carry no clock.** "Currently", "recently", "soon", "for now", "the new endpoint", "at the time of writing" date a sentence to the day it was typed and read as wrong the day after. State what is true without the temporal frame; where a change is the point, tie it to the version or date that carries it.
-- **A deliverable ships bare.** When the output *is* the artifact — a drafted message, a release note, a summary someone will paste onward — it arrives with nothing wrapped around it: no "Here's the draft", no note on the approach taken, no closing offer to revise. The wrapper makes the reader dig the artifact out, and it travels with the artifact into wherever it lands next. The one exception is the flag line in § The preservation contract — after the artifact, never wrapped around it.
+- **A deliverable ships bare.** When the output *is* the artifact — a drafted message, a release note, a summary someone will paste onward — it arrives with nothing wrapped around it: no "Here's the draft", no note on the approach taken, no closing offer to revise. The wrapper makes the reader dig the artifact out, and it travels with the artifact into wherever it lands next. The one exception is the flag line in § The preservation contract in [references/edit-and-detect.md](references/edit-and-detect.md) — after the artifact, never wrapped around it.
 - **Protect the specific fact.** Don't smooth "cut review time from 30 minutes to 8" into "significantly improves review efficiency" — the edit that generalizes a detail is a deletion wearing a rewrite's clothes.
 - **Verbs, not nominalizations.** "Validates", not "performs a validation of"; the nominalized verb is where long sentences come from.
 - **Everyday word over formal word.** "Use" not "utilize", "help" not "facilitate", "about" not "approximately". The test: would you say it to a colleague out loud?
 - **Paragraphs hold one topic, at most 5 sentences**, and the topic sentences alone must read as an outline of the document — check by reading only them.
 - **Numerals for every number from 2 up** — "3 retries", not "three retries" — except at a sentence start.
 
-## The preservation contract
-
-- Never fabricate a fact, citation, number, or example the original didn't contain. The invented number has a cause: a template slot the source cannot fill — a before/after line in a status note, a measured-improvement claim in a release note, a proof figure in a proposal — is what produces it. Cut the slot, never fill it.
-- **Modality and logical scope are content.** A hedge, a tense, a trigger, a prerequisite, a scoped condition: each is part of the claim, and a rewrite that cuts or widens one promotes the statement into a claim the source never made. The full rules are in [references/preservation-contract.md](references/preservation-contract.md) — open it in Edit mode, when rewriting prose someone else already wrote; a fresh draft has no source to preserve.
-- Never silently drop a qualifier, scope condition, number, or safety condition to make a sentence fit a cap — keep the longer sentence and flag the trade-off instead, in one line after the artifact naming the phrase and the precision that would have been lost, never wrapped around it.
-- A qualifier bolted on after a flat claim ("X always holds. In most cases.") is the claim being walked back: fix the claim, not the hedge.
-- Untouchables: code spans, identifiers, CLI commands, file paths, quoted error text, proper nouns, and text quoted from or attributed to another person stay exact, even where they break a rule — a tell inside someone else's words is reported, never edited.
-
-## Two modes
-
-**Edit.** First read the whole text and note the voice worth preserving; a difference from generic plain style is a finding only when it creates ambiguity, inconsistency, or wrong-stakes tone — deliberate character survives the edit. Then two passes: fix rule violations; reread as if you had never seen it and cut every clause the reader doesn't need. Make the minimum effective edit. A form fix cannot rescue substance: where the draft has no claim, no fact, and nothing the reader can act on, editing it produces better-sounding emptiness. Say the content is missing and name what it needs.
-
-**Detect.** Audit without rewriting: name each distinct pattern from the tell catalog once per phrase, quote the offending line, give the fix in a few words. Where several tells converge on one phrase (bold plus scare quotes plus a dash aside on one coined term), report it once under the strongest name. No rewrite, no score, no authorship verdict. Offer the edit afterward.
-
-Either mode: if the text already complies, say so and stop — don't churn compliant prose. A pass that finds the draft contradicting itself (two sentences that cannot both hold) reports the pair and stops; picking one is the author's decision, not the editor's.
+**Prose that already exists has two modes** — Edit, a rewrite, and Detect, an audit that names patterns without rewriting — and both answer to the preservation contract, which a fresh draft has no source for. Both are in [references/edit-and-detect.md](references/edit-and-detect.md) — open it when the text in hand was already written, by someone else or by an earlier run; a first draft from nothing reaches neither mode.
 
 ## Long documents
 
-A document longer than a few screens lands section by section under `handoff` § Where to write it (`~/.claude/skills/handoff/SKILL.md`), as the global rule `~/.claude/rules/large-write-chunking.md` forwards; a truncated artifact is discarded, never shown.
+A document over three planned sections, or of a kind that section names, lands section by section under `handoff` § Where to write it (`~/.claude/skills/handoff/SKILL.md`), as the global rule `~/.claude/rules/large-write-chunking.md` forwards; a truncated artifact is discarded, never shown.
 
 ## Boundary
 

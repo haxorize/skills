@@ -438,6 +438,10 @@ expect "section pointers (an em-dash lead-in before the citation)" "src/house-st
 expect "section pointers (a hyphen lead-in before the citation)" "src/house-style/SKILL.md cites '§ No Such Hyphen Heading' (line 59), and src/house-style/references/quiet-forms.md carries no heading by that name"
 expect "orphaned references" "src/broken-links/references/orphaned.md is linked from nowhere"
 expect "script selftest (missing)" "scripts/orphan-tool.sh has no selftest — write scripts/orphan-tool-selftest.sh"
+# The same pairing under a repo-local skill's own scripts/: dropping that walk
+# leaves the mining round's enumerator, the widest-blast-radius script in the
+# tree, graded by nothing.
+expect "repo-local script selftest (missing)" ".claude/skills/repo-local/scripts/orphan-local.sh has no selftest — write .claude/skills/repo-local/scripts/orphan-local-selftest.sh"
 expect "script selftest (not executable)" "scripts/unexec-tool-selftest.sh is not executable"
 expect "git-hook selftest (missing)" "scripts/git-hooks/orphan-hook has no selftest — write scripts/git-hooks/orphan-hook-selftest.sh"
 # The remedy a git hook gets is one it can follow: no *-lib.sh rename (git
@@ -624,7 +628,12 @@ fi
 expect_rc "the lint against the fixture tree" 1 "$status"
 # The count of FAIL lines is pinned: a check that begins firing on a fixture
 # it should leave alone reds here even when no substring row names the line.
-# Last moved 2026-09-01 (F24 fix): 95 — two section-pointer FAILs added, one
+# Last moved 2026-09-01 (the deferrals-register pass): 96 — the script-selftest
+# walk now reaches .claude/skills/*/scripts/, and the wrong-on-purpose root
+# gained one orphan there (repo-local/scripts/orphan-local.sh). ADR-0075 had
+# recorded that tree as reached "by scope, not by omission", which left the
+# mining round's own enumerator ungraded.
+# Before that, 2026-09-01 (F24 fix): 95 — two section-pointer FAILs added, one
 # per lead-in alternative of the right-trim (`— ` and `- ` before the `§`), in
 # the appended block at the end of src/house-style/SKILL.md.
 # Before that, 2026-09-01 (Batch M-size): 93 — the two byte bounds flipped WARN
@@ -640,7 +649,7 @@ expect_rc "the lint against the fixture tree" 1 "$status"
 # the consumer fixture whose third status sits only inside a fence. A count that
 # moves is read before it is re-pinned.
 nfail=$(printf '%s\n' "$output" | grep -c '^FAIL: ')
-[ "$nfail" -eq 95 ] || selftest_fail "expected exactly 95 FAIL lines against the fixture tree, got $nfail"
+[ "$nfail" -eq 96 ] || selftest_fail "expected exactly 96 FAIL lines against the fixture tree, got $nfail"
 # The shared-trigger-phrase fixtures are pinned by property, as near_bytes and
 # bulk_bytes are below: every row above them asserts a FAIL that appears or a
 # FAIL that does not, and each of those readings is silently satisfied by a

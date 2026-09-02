@@ -64,7 +64,7 @@ State the menu once, then end each turn with what changed, the three sweep lists
 
 ## `memo`, `pause`, `stop`
 
-**memo** — write `memo.md`. Call the Skill tool with `writing-for-humans` before its first line; the memo is prose a decision-maker reads, and it cannot be written well without that in context. Then read [references/memo-format.md](references/memo-format.md) and follow it: the stamp, the four counts per candidate, the no-verified-row floor, the headings that are the questions, the row ID after every sentence, the expiry section, and § 4's two Skill-tool calls — `writing-for-humans` at the write, `adoption-verdict` before an adopt-or-not recommendation — with what each is handed and what happens when one does not load. A memo may be drafted again on a later session; each draft replaces the last and carries the new stamp.
+**memo** — write `memo.md`. Call the Skill tool with `writing-for-humans` before its first line; the memo is prose a decision-maker reads, and it cannot be written well without that in context. Then read [references/memo-format.md](references/memo-format.md) and follow it: the stamp, the four counts per candidate, the no-verified-row floor, the headings that are the questions, the row ID after every sentence, the expiry section, and its two Skill-tool calls — `writing-for-humans` at the write, `adoption-verdict` before an adopt-or-not recommendation — with what each is handed and what happens when one does not load. A memo may be drafted again on a later session; each draft replaces the last and carries the new stamp.
 
 **pause** — a bookmark: the ledger is already current. Restate the sweep lists and the *Next* line, and write no memo.
 

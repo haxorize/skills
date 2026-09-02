@@ -1,3 +1,4 @@
+# shellcheck shell=bash   # sourced, never executed: no shebang to read the dialect from
 # selftest-lib.sh — sourced by the *-selftest.sh scripts beside it. Not a test.
 #
 # A selftest sets `hook` (the script under test) and sources this file. Every

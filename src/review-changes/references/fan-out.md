@@ -4,7 +4,7 @@ Opened from §3 only when the diff exceeds the in-process threshold — more tha
 
 Run each **custom lens** (DOMAIN, ADR, AC, design depth, discoverability, smell baseline, verification gap, instruction-file, amendment bookends, falsification) as its own **read-only subagent** that returns *findings only* — keeps the caller's context clean. Built-ins that already self-parallelize (`/code-review`, `/security-review`) may run at top level rather than wrapped in a subagent.
 
-**Every finder is briefed diff-only.** The handoff's narrative goes to the falsification lens alone (§2), run last, after the diff lenses return; every other finder judges the change without the author's framing, so the framing cannot steer it.
+**Every finder is briefed diff-only.** The handoff's narrative goes to the falsification lens alone ([lens-briefs-docs.md](lens-briefs-docs.md) § Falsification lens), run last, after the diff lenses return; every other finder judges the change without the author's framing, so the framing cannot steer it.
 
 When a brief enumerates files, each must have its hunk in the brief; a file named without its hunk was not reviewed.
 

@@ -1,5 +1,7 @@
 # Design-quality vocabulary and project-aware review
 
+> **Amended by [ADR-0057](0057-rename-table-and-discipline-skill-term.md):** the skill is `review-architecture` as of 2026-08-30, not `improve-design`, and the naming ground below no longer stands. The decision itself — the shared vet phase, finding format, and project-aware lenses — is unchanged.
+
 ## Context
 
 ADR-0017 left `/review` and `/adr` out of `tdd`'s sliced-off finalization tail, routing them to a review skill and `adr` respectively — but no skill yet *owned* judgment review, and the design vocabulary needed to power a design-depth lens was thin. Three forces converged here:

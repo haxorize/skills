@@ -2,7 +2,7 @@
 
 Use this body when publishing a Feature-level issue to GitHub via `gh issue create`. The title is set on the command line; this is the body.
 
-Assemble the body from the skeleton in [feature-body.md](feature-body.md), inserting the two GitHub-only sections below after `## Non-goals` (acceptance criteria live in the body on GitHub — there is no separate field) and the `## Parent` section at the end; `## Stories underneath` sits after `## Constraints`. AC IDs follow [ac-ids.md](ac-ids.md) — typed prefixes, append-only, removed-criteria record, and why the worked examples skip `AC3`; omit the removed-criteria heading if nothing has been removed.
+Assemble the body from the skeleton in [feature-body.md](feature-body.md), placing each section below at one anchor: `## Acceptance criteria` after `## Non-goals` (acceptance criteria live in the body on GitHub — there is no separate field), `## Stories underneath` after `## Constraints`, and `## Parent` at the end. AC IDs follow [ac-ids.md](ac-ids.md) — typed prefixes, append-only, removed-criteria record, and why the worked examples skip `AC3`.
 
 ```markdown
 ## Acceptance criteria

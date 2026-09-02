@@ -1,6 +1,6 @@
 ---
 name: work-item-shape
-description: The shape of a well-formed work item — an outcome goal instead of an activity, acceptance criteria a check can settle, an honest AFK/HITL readiness call, right-sized scope, ambiguities surfaced instead of papered over. Use when filing a ticket or issue, writing up a story, feature, task, or bug, drafting or editing any work-item body, or judging whether an item is ready to hand to an agent. In repos wired for the `to-*` publishers, routes tier-named asks to the right publisher instead of drafting a lookalike.
+description: The shape of a well-formed work item — an outcome goal instead of an activity, acceptance criteria a check can settle, an honest AFK/HITL readiness call, right-sized scope, ambiguities surfaced instead of papered over. Use when filing a ticket or issue, writing up a story, feature, task, or bug, drafting or editing any work-item body, or judging whether an item is ready to hand to an agent. In repos wired for the `to-*` publishers, routes creation asks to the right publisher instead of drafting a lookalike.
 requires: writing-for-humans
 ---
 
@@ -12,7 +12,7 @@ This discipline owns what a good work-item body *is* — any tier (Feature, Stor
 
 When the ask names a tier a publisher owns — "file a story", "create a feature", "break this into tasks", "write up this bug" — and the repo is wired for the pipeline (`CLAUDE.md` carries an `Issue tracker:` block), stop and name the publisher: `/to-feature`, `/to-story`, `/to-tasks`, or `/to-bug`. An ask that names no tier — "file an issue for this" — routes the same way in a wired repo: infer the tier from the work's shape (a defect is a Bug, one deliverable is a Story, sub-work under a story is Tasks) and name that publisher.
 
-Repos `onboard-repo` wires carry the **routing policy line** in `CLAUDE.md`'s `Issue tracker:` block, which says the same thing to a session that never loads this skill. It reinforces this gate and never replaces it: the gate binds on the work's shape whether or not the line is there, and repos wired before 2026-08-31 do not carry it.
+Repos `onboard-repo` wires carry the **routing policy line** in `CLAUDE.md`'s `Issue tracker:` block, which says the same thing to a session that never loads this skill. It reinforces this gate and never replaces it: the gate binds on the work's shape whether or not the line is there.
 
 Say what ad-hoc drafting would skip — parent reconciliation against the story map, `Covers:` wiring, tags, the per-tier template, update modes — and wait. A published lookalike is worse than nothing: it looks done, and the pipeline's bookkeeping never hears about it.
 

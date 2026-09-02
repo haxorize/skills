@@ -118,7 +118,7 @@ TEST_POINT_ID=$(az devops invoke \
   --query "value[0].id" -o tsv)
 ```
 
-On a **fresh suite** the suite has exactly one test case, so `value[0]` is the right point and its `outcome` is `unspecified`. On a **re-run** the suite can hold more: replace the query with ``"value[?testCaseReference.id==`$TEST_CASE_ID`].id | [0]"`` so the point selected is the reused test case's.
+On a **fresh suite** the suite has exactly one test case, so `value[0]` is the right point and its `outcome` is `unspecified`. On a **re-run** the suite can hold more: replace the query with ``"value[?testCaseReference.id==\`$TEST_CASE_ID\`].id | [0]"`` so the point selected is the reused test case's.
 
 ### 8. Create a test run
 
@@ -188,7 +188,7 @@ az boards work-item update --id "$TEST_CASE_ID" \
 
 ### 12. Report
 
-Print the created IDs — test case, suite, run, test point — and confirm the test point outcome is `passed` by querying `testplan/TestPoint` one more time, selecting the point the same way step 7 did (by `testCaseReference.id` on a re-run, never a bare `value[0]`):
+Print the created IDs — test case, suite, run, test point — and confirm the test point outcome is `passed` by querying `testplan/TestPoint` one more time:
 
 ```bash
 az devops invoke \

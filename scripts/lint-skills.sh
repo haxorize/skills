@@ -2265,6 +2265,14 @@ if [ -d scripts ]; then
     [ -f "$sc" ] && check_script_selftest "$sc"
   done
 fi
+# A repo-local skill's own scripts/ is walked too. ADR-0075 recorded the gap as
+# "by scope, not by omission": enum.sh drives the first step of every mining
+# round and no gate reached it, so the one script with the widest blast radius
+# was the one script nothing graded. Same contract as scripts/ — a *.sh here is
+# paired with its selftest or named *-lib.sh.
+for sc in .claude/skills/*/scripts/*.sh; do
+  [ -f "$sc" ] && check_script_selftest "$sc"
+done
 # The git hooks walk: check_script_selftest grades these too (check_hook_selftest
 # is global/hooks/ only). What makes a file here a hook is derived, not listed:
 # its first line is a shebang, the way `# Install note:` marks a PreToolUse

@@ -1,6 +1,6 @@
 # Text scaling and reflow
 
-Open this only when the change alters layout, type size, spacing, the viewport meta, or anything that reflows — not on a change that only adds a control or a state. The body's rule stands: text survives zoom, reflow, and user text spacing. The thresholds:
+Open this only when the change alters layout, type size, spacing, the viewport meta, or anything that reflows — not on a change that only adds a control or a state. **Text scales** in [surface-and-content.md](surface-and-content.md) stands: text survives zoom, reflow, and user text spacing. The thresholds:
 
 - At 200% zoom no text is clipped or lost (1.4.4), and at 320 CSS pixels wide nothing needs two-dimensional scrolling (1.4.10).
 - The viewport meta never sets `user-scalable=no` or `maximum-scale=1`, which makes that zoom impossible rather than merely broken.

@@ -24,11 +24,15 @@ set -uo pipefail
 # is named and any non-zero status blocks.
 #
 # The lineage notice is advisory: a staged path under src/<skill>/ whose
-# skill has a docs/lineage.md table row (a first cell carrying the backticked
-# name) gets one stderr line pointing there — CLAUDE.md's rule is to diff the
-# upstream before a material edit, and the commit touching the skill is the
-# moment that rule matters. Once per skill, never a block, and silence when
-# docs/lineage.md is absent.
+# skill has a row in docs/lineage.md's FIRST table (a first cell carrying the
+# backticked name) gets one stderr line pointing there — CLAUDE.md's rule is
+# to diff the upstream before a material edit, and the commit touching the
+# skill is the moment that rule matters. Once per skill, never a block, and
+# silence when docs/lineage.md is absent. The scope is the first table on
+# purpose: the second one is headed "nothing to diff" and its rows exist for
+# attribution, so a notice on them tells the reader to diff an upstream the
+# file says is not there — an advisory that cries wolf is one nobody reads.
+# The table boundary is the second H2, whatever it is called.
 #
 # The linters read the WORKING TREE, not the index: an unstaged edit in a
 # linted file is checked too, and a violation staged and then fixed only in
@@ -138,7 +142,8 @@ while IFS= read -r -d '' p; do
         *)
           lineage_seen="$lineage_seen$skill "
           if [ -f "$repo_root/docs/lineage.md" ] &&
-             grep -Eq "^\|[^|]*\`$skill\`" "$repo_root/docs/lineage.md"; then
+             awk '/^## /{h++} h==1' "$repo_root/docs/lineage.md" |
+             grep -Eq "^\|[^|]*\`$skill\`"; then
             echo "pre-commit: src/$skill has an upstream — see docs/lineage.md before a material edit (ADR-0034 swept point)" >&2
           fi ;;
       esac ;;

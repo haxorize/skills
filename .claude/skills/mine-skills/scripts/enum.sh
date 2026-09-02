@@ -1,4 +1,5 @@
 #!/bin/bash
+# Conventions for this tree: scripts/README.md
 # Enumerate skills/commands/plugins under a lib dir, one TSV line per entry: source<TAB>relpath<TAB>name<TAB>description. Usage: enum.sh [lib-dir] [skip-regex]
 export LC_ALL=en_US.UTF-8
 LIB="${1:-$HOME/code/lib}"

@@ -9,7 +9,7 @@ requires: codebase-design, discoverable-code
 
 Judgment review of a **diff** — never the conversation, never the working tree's intent as you remember it. The diff *is* the handoff. This skill is **read-only**: it runs review lenses — fanned out to subagents on a large diff, in-process on a small prose one (§3) — vets what comes back, and presents a ranked, classified report.
 
-It closes on a ranked per-lens report written to the landing zone and stamped `Reviewed-tree:` — the step the `review-receipt` hook reads at the push, and the reason a review that never reached its report has not run. Its value over the raw built-ins is **project awareness**: generic quality goes to `/code-review`, generic security to `/security-review`, and this skill adds the lenses they can't supply (§2).
+It closes on a ranked per-lens report written to the landing zone and stamped `Reviewed-tree:` with the tree this machine reviewed (§1) — the step the `review-receipt` hook reads at the push, and the reason a review that never reached its report has not run. Its value over the raw built-ins is **project awareness**: generic quality goes to `/code-review`, generic security to `/security-review`, and this skill adds the lenses they can't supply (§2).
 
 ## Workflow
 
@@ -45,17 +45,9 @@ Don't run every lens on every diff. Triage from the diff:
 
 - **Always:** `/code-review` (generic quality) · **DOMAIN conformance** (against `DOMAIN.md`) · **ADR conformance** (against `docs/adr/`).
 - **Conditional:** **AC conformance** — only when a work item is loaded (does the diff satisfy its acceptance criteria?).
-- **Conditional — code-gated** (briefs in [references/lens-briefs-code.md](references/lens-briefs-code.md), opened only when the diff touches code, at the section per selected lens):
-  - **Smell baseline** — the Fowler catalog has no referent in a docs/config-only change.
-  - `/security-review` — only on **security surfaces**: endpoints/external surface, auth/permissions, raw SQL, deserialization/input boundaries, file ingest, CORS/secrets/config, new dependencies — and a new or bumped MCP server, whose tool descriptions are prompt text every session reads.
-  - **Design depth** — only on non-trivial **structural** change; its brief fires `codebase-design`.
-  - **Discoverability** — only when the diff adds, renames, or moves an exported symbol, a file, an error message, or an event or flag literal; its brief fires `discoverable-code` and carries its checklist into the finder prompt verbatim.
-  - **Verification gap** — only when the diff changes behavior or weakens a check.
-- **Conditional — document- and handoff-gated** (briefs in [references/lens-briefs-docs.md](references/lens-briefs-docs.md), opened only when one of these fires):
-  - **Instruction-file lens** — only when the diff touches a file whose job is to be obeyed: a `SKILL.md`, a `references/*.md`, `CLAUDE.md`, a rule under `global/rules/` or `~/.claude/rules/`, a hook.
-  - **Repo-declared lenses** — only when the repo's `CLAUDE.md` carries a `## Review lenses` block.
-  - **Falsification lens** — only when the input is a handoff; it alone reads the narrative, last.
-  - **Amendment bookends** — only when the diff amends a document or skill.
+- **Conditional — code-gated:** a diff that touches code opens [references/lens-briefs-code.md](references/lens-briefs-code.md) — each code lens's trigger and brief, two of which fire `codebase-design` and `discoverable-code`. A docs- or config-only diff never opens it.
+- **Conditional — document- and handoff-gated:** a diff that touches a document, a skill, or an instruction file — or a handoff input — opens [references/lens-briefs-docs.md](references/lens-briefs-docs.md): each lens's trigger and brief.
+- **Repo-declared lenses** — only when the repo's `CLAUDE.md` carries a `## Review lenses` block. That block may add lenses or specialize these (an a11y lens for an accessibility product; this repo's block adds the pruning test to the instruction-file lens). It never changes the contract: finding format, severities, IDs, the evidence rules, and the read-only stance stay this skill's.
 
 **A blocked built-in degrades; it never aborts the review.** When a built-in lens can't run here — e.g. `/security-review` needs a Bash permission for `git status` that an org-locked machine denies — record it as **unavailable here** with the reason in its section heading and continue with the rest. The user reruns it manually wherever it's permitted.
 
@@ -69,7 +61,7 @@ Above that size, fan out per [references/fan-out.md](references/fan-out.md), ope
 
 Vet the raw findings per [references/finding-discipline.md](references/finding-discipline.md), which covers the over-report, the drop classes, the advisory, the vet's context-asymmetry default, and the **bidirectional** ADR/DOMAIN read.
 
-**Negative-space pass:** on a fanned-out diff, after the vet, run the one more read-only subagent [references/fan-out.md](references/fan-out.md) § Negative-space pass defines — it hunts only where the findings did not go. Skip it on a diff small by §3's bar or mechanical (renames, formatting, generated content).
+**Negative-space pass:** on a fanned-out diff, run it after the vet per [references/fan-out.md](references/fan-out.md) § Negative-space pass, which carries the brief and the skip rule.
 
 ### 5. Rank and classify each finding
 
@@ -78,8 +70,6 @@ Format and rank every finding per [references/finding-discipline.md](references/
 - **Blocker** — must fix before the change lands.
 - **Follow-up** — worth doing, doesn't block; a deferral the user ratifies, never a backlog item filed on your own authority.
 - **Escalation** — needs a human decision (a design call, an ADR reopen, a security judgment).
-
-**Design-lens default:** the defensive bar defaults to a Blocker and the offensive bar to a Follow-up, with the simpler shape proposed, per [references/lens-briefs-code.md](references/lens-briefs-code.md) § Design depth, opened only when the design lens ran; taste never silently escalates to Blocker.
 
 **Context-sensitivity:** on a release/hotfix branch, only **blockers / breakage / security** warrant a fix now; everything else becomes a main-branch follow-up.
 

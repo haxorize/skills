@@ -1,6 +1,6 @@
 ---
 name: tdd
-description: Test-driven development workflow using vertical slices. Use when implementing a feature, building a story or task already loaded in context, or the user mentions "TDD" or "test first". A ticket still sitting on the tracker gets loaded by `/from-ticket` first — suggest it rather than cold-starting from the ticket ID.
+description: Test-driven development workflow using vertical slices. Use when implementing a feature, building a story or task already loaded in context, or the user mentions "TDD" or "test first". Also use when tests are asked for on code that is already written, and when judging whether a test would still pass if the behavior it covers were broken. A ticket still sitting on the tracker gets loaded by `/from-ticket` first — suggest it rather than cold-starting from the ticket ID.
 requires: feedback-loops, discoverable-code
 ---
 
@@ -89,8 +89,9 @@ The check itself is a suspect: a test that cannot fail reports green forever and
 
 When the cycle's behaviors are built and refactored, close the loop: call the Skill tool with `feedback-loops` once to finalize mechanically.
 
-Tests prove code-correctness, not feature-correctness. When the slice touched behavior no test actually ran — a UI flow, an external integration, a real ingest — name it before declaring done and take one of the two branches in [references/untested-at-close.md](references/untested-at-close.md) (eyeball it, or offer `/validate-behavior`); the failure here is closing the cycle with the gap unnamed because the suite is green. Proving the change works in the running app is `validate-behavior`'s, and judging whether an existing suite tests the right things is `audit-tests`'. The mechanical close — lint, format, typecheck, docs — is `feedback-loops`', called at the end of the cycle rather than restated here.
-
+Tests prove code-correctness, not feature-correctness. When the slice touched behavior no test actually ran — a UI flow, an external integration, a real ingest — name it before declaring done and take one of the two branches in [references/untested-at-close.md](references/untested-at-close.md) (eyeball it, or offer `/validate-behavior`); the failure here is closing the cycle with the gap unnamed because the suite is green.
 
 ## Boundary
+
+Proving the change works in the running app is `validate-behavior`'s, and judging whether an existing suite tests the right things is `audit-tests`'. The mechanical close — lint, format, typecheck, docs — is `feedback-loops`', called at the end of the cycle rather than restated here.
 

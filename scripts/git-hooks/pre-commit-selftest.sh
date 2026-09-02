@@ -42,10 +42,12 @@
 # lineage notice: a staged src/<skill>/ path with a backticked first-cell row
 # in docs/lineage.md prints the notice — once per skill even for two staged
 # files, and on the second name of a two-name cell — a skill with no row
-# prints nothing, a tree with no docs/lineage.md prints nothing and exits 0,
-# and the notice moves the exit status in neither direction (red stays red,
-# green stays green). NOT covered: the working-tree-versus-index gap the
-# hook's header names, whether the real linters and selftests are correct,
+# prints nothing, a skill whose only row is under the second H2 (the
+# nothing-to-diff table) prints nothing, a tree with no docs/lineage.md prints
+# nothing and exits 0, and the notice moves the exit status in neither
+# direction (red stays red, green stays green). NOT covered: the
+# working-tree-versus-index gap the hook's header names, whether the real
+# linters and selftests are correct,
 # and whether the fixture lineage row's shape still matches the real
 # docs/lineage.md table's (verified against its rows on 2026-08-30).
 
@@ -266,14 +268,24 @@ run_cwd="$work"
 # --- the lineage notice --------------------------------------------------------
 # One stderr line per staged skill with a docs/lineage.md row, never a block.
 # The fixture row matches the real table's shape: a first cell of backticked,
-# comma-separated names between pipes.
+# comma-separated names between pipes. It carries BOTH tables, because the
+# notice is scoped to the first one — a row under the second H2 is attribution
+# for a skill with no upstream to diff, and must stay silent.
 notice() { printf 'pre-commit: src/%s has an upstream — see docs/lineage.md before a material edit (ADR-0034 swept point)' "$1"; }
 cat > "$work/docs/lineage.md" <<'ROWS'
 # Lineage — fixture
 
+## Ported — diff before editing
+
 | Local | Upstream | Name there | Licence | Record |
 | --- | --- | --- | --- | --- |
 | `ported`, `also-ported` | someone/skills | same name | MIT | ADR-0001 |
+
+## Synthesized or ideas only — nothing to diff
+
+| Local | Upstream | Rule | Record |
+| --- | --- | --- | --- |
+| `attributed` | someone/skills | ideas only | ADR-0002 |
 ROWS
 stage "src/ported/SKILL.md"; run
 expect_rc "a staged ported skill (green linters)" 0 "$rc"
@@ -284,6 +296,11 @@ expect_in "$out" "the lineage notice did not print for the second name in a two-
 # A skill with no row prints nothing.
 stage "src/local/SKILL.md"; run
 reject_in "$out" "the lineage notice printed for a skill with no row" "has an upstream"
+# A skill whose only row is in the second table prints nothing: that table is
+# headed "nothing to diff", so the notice would name an upstream the file
+# denies. A mutation that widens the awk back to the whole file reds here.
+stage "src/attributed/SKILL.md"; run
+reject_in "$out" "the lineage notice printed for a skill in the nothing-to-diff table" "$(notice attributed)"
 # Two staged files under one skill: once.
 stage "src/ported/SKILL.md"
 mkdir -p "$work/src/ported/references"; printf 'x\n' > "$work/src/ported/references/extra.md"
@@ -305,4 +322,4 @@ reject_in "$out" "a missing docs/lineage.md still printed a notice" "has an upst
 # instruction.
 [ -f "$repo_root/scripts/README.md" ] || selftest_fail "the advisory points at scripts/README.md, which does not exist"
 
-selftest_close "pre-commit self-test clean — every mapped class ran its linter under every index status, unmapped paths ran none, red blocked, green allowed, a merge in progress or an unreadable index took its own branch, the selftest map ran each staged pairing once and blocked on red, and the lineage notice printed once per ported skill without moving the exit status." "pre-commit self-test PARTIAL"
+selftest_close "pre-commit self-test clean — every mapped class ran its linter under every index status, unmapped paths ran none, red blocked, green allowed, a merge in progress or an unreadable index took its own branch, the selftest map ran each staged pairing once and blocked on red, and the lineage notice printed once per ported skill, stayed silent for the nothing-to-diff table, and moved the exit status in neither direction." "pre-commit self-test PARTIAL"

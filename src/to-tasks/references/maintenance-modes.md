@@ -33,8 +33,6 @@ Parse:
 - **ADO:** convert Markdown → HTML (using the pandoc or Python one-liner from [ado-html-transport.md](ado-html-transport.md)) to a file, then `az boards work-item update --id <task-id> --description @<file>`. Tasks have no AC field; do not pass `Microsoft.VSTS.Common.AcceptanceCriteria`.
 - **GitHub:** `gh issue edit <task-number> --body-file <draft>`.
 
-The naming-drift check runs here against the sibling Task titles fetched at cold-start — SKILL.md states it for publish; `--update` never publishes, so this is the update path's own statement of it.
-
 ## Reconcile mode
 
 `--reconcile <story-id>` diffs all child Tasks under a parent Story against the current Story spec, proposes adds / closures / edits, and applies user-approved changes. The ID identifies the *parent* of the set, not a single Task — semantically different from `--update`'s ID.

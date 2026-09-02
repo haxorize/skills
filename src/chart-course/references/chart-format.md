@@ -1,5 +1,7 @@
 # Chart formats
 
+Open this only when a map body, a decision-ticket body, or a title is being drafted or updated.
+
 ## Map body
 
 ADO: the map Feature's description. GitHub: the map issue's body.

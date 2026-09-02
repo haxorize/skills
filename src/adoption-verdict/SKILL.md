@@ -8,10 +8,6 @@ requires: capturing-learnings, adr, diverging
 
 Answer an external-adoption question with one graded, project-grounded verdict — never a neutral survey of pros and cons.
 
-**An adoption question is the trigger, not any mention of a technology.** "What is X?" or "how does X work?" gets a normal answer; this fires when someone must decide whether this project takes X on.
-
-The three `requires:` disciplines are reached three different ways: `capturing-learnings` is called outright, `adr` only as the gated offer at the close, `diverging` only when the question turns out to be a selection over an unbounded field. All three are declared so the installer links them — an offer that cannot be taken is not an offer.
-
 ## Reversibility tiers
 
 Classify first — the tier sizes everything downstream. State it in the verdict; the user can override it.
@@ -40,7 +36,7 @@ A failed floor forbids Adopt and Reject alike. Return the matching Hold — "Hol
 3. **Ground.** Read the project directly — the incumbent and its call sites, the constraints that decide compatibility, licensing where the tier warrants — and the external evidence (docs, issue trackers, release history) with whatever web tools are reachable. Two external sources are independent only when a different publisher stands on different underlying data — a syndication, a quote, or the same vendor's marketing in two places is one source counted twice. When sources dispute a figure, report both values, both cited — never average them.
 4. **Gate.** Apply the two floors.
 5. **Verdict.** Emit the schema below, leading with the grade in plain words.
-6. **Adversary (Tier 2/3).** Offer one fresh-context adversary against the verdict just emitted — Tier 1 never offers.
+6. **Adversary (Tier 2/3).** Run § The adversary pass below.
 
 ## The adversary pass (Tier 2/3)
 

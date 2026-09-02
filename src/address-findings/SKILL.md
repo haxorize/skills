@@ -45,10 +45,10 @@ Close with one row per finding, every `F<n>` in the report present, in ID order:
 
 | ID | Disposition | Evidence |
 |---|---|---|
-| **F1** | FIXED | `src/api/scores.py:112` — the N+1 is gone: one query per page, `test_scores.py::test_page_queries` asserts the count |
-| **F2** | DECLINED | the ADR at `docs/adr/0012` records the sync call as deliberate; the finding is by-design |
-| **F3** | DEFERRED (proposed) | touches the repository layer this change does not own; would go on the `repo-layer-pagination` story as a new AC — needs the user's ratification |
-| **F4** | ABANDON | started the rename, three call sites resist it without a contract change; reverted, tree clean, the contract change is a question for the user |
+| F1 | FIXED | `src/api/scores.py:112` — the N+1 is gone: one query per page, `test_scores.py::test_page_queries` asserts the count |
+| F2 | DECLINED | the ADR at `docs/adr/0012` records the sync call as deliberate; the finding is by-design |
+| F3 | DEFERRED (proposed) | touches the repository layer this change does not own; would go on the `repo-layer-pagination` story as a new AC — needs the user's ratification |
+| F4 | ABANDON | started the rename, three call sites resist it without a contract change; reverted, tree clean, the contract change is a question for the user |
 
 - **FIXED** carries the hunk or SHA *and* a statement that the cited deficiency is gone — not that an edit was made. A fix that addresses the finding's line but not its claim is not FIXED: it is DEFERRED, with what remains named.
 - **DECLINED** carries a reason that disposes *that* claim, with the same verification read a FIXED row gets — the dismissal standard is `review-changes`' [finding-discipline.md](../review-changes/references/finding-discipline.md)'s — a claim is disposed by the evidence that refutes it, never by its confidence or its author. Verifying before implementing is `receiving-review`'s, gated in step 1.
@@ -59,7 +59,7 @@ Re-measure the count at write time — `grep -oE '\bF[0-9]+\b' <report> | sort -
 
 ### 5. Re-stamp the report
 
-**Re-stamp the report** whenever the tree now differs from the report's last stamp, per [references/tree-stamp.md](references/tree-stamp.md). This is the last step of the pass, not an aside: without it the `review-receipt` hook blocks the push of the tree the fixes made. The one exception is a PR-mode report: it carries no tree stamp and never gets one here, because a stamp minted against a tree that was not this machine's blesses whatever is sitting in the local one.
+**Re-stamp the report** whenever the tree now differs from the report's last stamp. Append one line — `Reviewed-tree: <40-hex>` of the tree as it now stands, bare, with nothing after the hash — and close the pass with one line, `re-stamped: <12-hex>`. The stamp is taken from the repo root: `T="$(mktemp -u)"; GIT_INDEX_FILE="$T" git read-tree HEAD 2>/dev/null; GIT_INDEX_FILE="$T" git add -A :/ && GIT_INDEX_FILE="$T" git write-tree; rm -f "$T"` — uncommitted and untracked non-ignored files count. The receipt contract both sides of a review answer to is [references/tree-stamp.md](references/tree-stamp.md), which carries the same one-liner (inline here on purpose — every fix pass re-stamps); edit one copy and edit them all. This is the last step of the pass, not an aside: without it the `review-receipt` hook blocks the push of the tree the fixes made. The one exception is a PR-mode report: it carries no tree stamp and never gets one here, because a stamp minted against a tree that was not this machine's blesses whatever is sitting in the local one.
 
 ### 6. Stop
 

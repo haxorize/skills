@@ -30,7 +30,7 @@ If the question is genuinely ambiguous and the user isn't reachable, default to 
 
 ## When done
 
-Before any branch hands its page over, self-check the render, because a silently mis-rendered page spends the user's turn, not yours: screenshot the page headless and read the PNG; fix any black box, invisible label, or illegible cell and re-render, at most three times; where a defect survives the third render, say so, **name the defect**, and present it rather than blocking; where no headless browser is available, say so and present unverified rather than blocking. That is `review-architecture`'s report reference (`~/.claude/skills/review-architecture/references/html-report.md` § Before you present: self-check the render) restated here, because this skill's branches never load that file.
+Before any branch hands its page over, self-check the render, because a silently mis-rendered page spends the user's turn, not yours: screenshot the page headless (`<chrome> --headless --screenshot=<png> --window-size=1000,2400 file://<path>`) and read the PNG; fix any black box, invisible label, or illegible cell and re-render, at most three times; where a defect survives the third render, say so, **name the defect**, and present it rather than blocking; where no headless browser is available, say so and present unverified rather than blocking. That is `review-architecture`'s report reference (`~/.claude/skills/review-architecture/references/html-report.md` § Before you present: self-check the render) restated here, because this skill's branches never load that file.
 
 Two things come out of a finished prototype: the **answer** (the verdict plus the question it settled) and the **prototype itself** — the runnable evidence the answer came from. Capture both.
 
