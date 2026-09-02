@@ -16,7 +16,7 @@ KTLO Features sit outside the to-X publishing path. The suite ships no `to-ktlo`
 - Initial drafting and any later refinement use `grill-me` (or `grill-and-record` if DOMAIN.md side effects are wanted), reading the file as conversation context. The grilling skill is artifact-agnostic — no KTLO-specific tooling.
 - Per-PI publish is manual: read the file, create the new ADO Feature with bumped title/iteration. Claude Code can run the CLI mechanically, but no skill orchestrates the rollover.
 - Body shape is slim: Scope, Out of scope, Cadence/SLA, Constraints, Notes. No AC field. No Story map.
-- Child Stories parent to the KTLO Feature via `to-story --parent <ktlo-feature-id>` and behave normally — the parent's AC absence is structurally invisible to child authoring. — amended: see Amendments 2026-09-02.
+- Child Stories parent to the KTLO Feature via `to-story --parent <ktlo-feature-id>` and behave normally — `Covers:` only exists on Tasks (referencing the *Story's* ACs, not the Feature's), so the parent's AC absence is structurally invisible to child authoring. — amended: see Amendments 2026-09-02
 
 ## Considered Options
 

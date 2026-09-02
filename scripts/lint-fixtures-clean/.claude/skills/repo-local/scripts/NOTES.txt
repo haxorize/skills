@@ -1,0 +1,7 @@
+Right on purpose: a non-.sh file beside a repo-local skill's scripts.
+
+The script-selftest walk is scoped `.claude/skills/*/scripts/*.sh`. Widening
+that glob to `*` pulls this file in, and it draws two FAILs at once — no
+conventions pointer, and no selftest — so a loosened boundary reds the clean
+root instead of landing green. That is the widening half of scripts/README.md's
+both-ways rule; the narrowing half is graded in the wrong-on-purpose root.

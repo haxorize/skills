@@ -15,11 +15,13 @@
 # This builds a throwaway lib dir with one source per behavior and runs the
 # real script against it. No network, no clone, no ~/code/lib.
 #
-# Covered here: the four find arms (SKILL.md at any depth; commands/, agents/,
-# plugins/, .codex/ and prompts/ .md files) and the four prune arms
-# (node_modules, .git, docs, and — for command-shaped files only — references,
-# reference, examples, templates, assets, scripts, so a SKILL.md under
-# references/ is still found while a command under it is not); README.md
+# Covered here: the two find arms (SKILL.md at any depth, and a .md under any
+# of the five command paths — commands/, agents/, plugins/, .codex/ and
+# prompts/) and every prune name with one graded instance each, which is the
+# per-alternative bar scripts/README.md sets: the three shared (node_modules,
+# .git, docs) and the six that prune command-shaped files only (references,
+# reference, examples, templates, assets, scripts), so a SKILL.md under
+# references/ is still found while a command under it is not; README.md
 # excluded; the skip regex (default `^_rounds` and a caller's own); the name
 # rule (SKILL.md takes its directory's name, case-insensitively, everything
 # else its own stem); the description arms in precedence order, block scalars
@@ -46,6 +48,13 @@
 # surrounding-quote strip dropped. That list's "exit-status contract dropped"
 # was `exit 2` made `exit 0`, which reds the exit-2 row — which is why twelve
 # mutations never reached the unreachable one.
+#
+# Four more ran on 2026-09-02 and all four red: each of references, reference,
+# templates and assets dropped from CMD_PRUNE alone. Before that pass only
+# examples and scripts carried command-side fixtures, so four of the six
+# command-only prune names could be deleted with this selftest still exit 0
+# while the header above claimed them covered — the over-claim, not the prune,
+# was the defect.
 
 set -uo pipefail
 
@@ -141,6 +150,26 @@ EOF
 put owner-repo/commands/scripts/helper.md <<'EOF'
 ---
 description: A command under scripts/ is pruned.
+---
+EOF
+put owner-repo/commands/references/cited.md <<'EOF'
+---
+description: A command under references/ is pruned.
+---
+EOF
+put owner-repo/commands/reference/singular.md <<'EOF'
+---
+description: A command under reference/ is pruned.
+---
+EOF
+put owner-repo/commands/templates/skeleton.md <<'EOF'
+---
+description: A command under templates/ is pruned.
+---
+EOF
+put owner-repo/commands/assets/blurb.md <<'EOF'
+---
+description: A command under assets/ is pruned.
 ---
 EOF
 put owner-repo/commands/README.md <<'EOF'
@@ -259,6 +288,13 @@ absent "docs/ pruned"                     owner-repo fr
 absent ".git pruned"                      owner-repo .git
 absent "examples/ pruned for commands"    owner-repo sample
 absent "scripts/ pruned for commands"     owner-repo helper
+# One graded instance per CMD_PRUNE alternative, not one per rule: dropping any
+# of these four names from CMD_PRUNE used to leave this selftest at exit 0,
+# while the header above claimed all six command-only prunes were covered.
+absent "references/ pruned for commands"  owner-repo cited
+absent "reference/ pruned for commands"   owner-repo singular
+absent "templates/ pruned for commands"   owner-repo skeleton
+absent "assets/ pruned for commands"      owner-repo blurb
 absent "README.md excluded"               owner-repo README
 absent "a .md outside the command paths"  owner-repo loose
 

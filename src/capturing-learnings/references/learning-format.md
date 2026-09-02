@@ -1,6 +1,6 @@
 # Learning doc format
 
-Open this only from `capturing-learnings` § Capture workflow at steps 2-4 — adjudicating an ambiguous overlap, drafting or updating a Learning doc, or making the first capture in a repo. The retrieval protocol never opens it.
+Open this only when a Learning doc is being written or updated — `capturing-learnings` § Capture workflow steps 2-4, which is the only path that reaches one — adjudicating an ambiguous overlap, drafting or updating a Learning doc, or making the first capture in a repo. The retrieval protocol never opens it.
 
 Learning docs live in `docs/solutions/<slug>.md` at the target repo's root.
 

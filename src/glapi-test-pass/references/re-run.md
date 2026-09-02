@@ -25,7 +25,7 @@ TEST_CASE_ID=$(az devops invoke \
 
 ## Selecting the test point
 
-Steps 7 and 12 select by `value[0]`, which is right only while the suite holds one test case. A re-run's suite can hold more, so both select on the reused test case instead:
+Step 7 selects by `value[0]`, which is right only while the suite holds one test case. A re-run's suite can hold more, so it selects on the reused test case instead:
 
 ``"value[?testCaseReference.id==\`$TEST_CASE_ID\`].id | [0]"``
 

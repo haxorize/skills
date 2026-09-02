@@ -11,7 +11,7 @@ set -uo pipefail
 # Gate map: lint-skills.sh when a staged path is under src/, global/, .claude/skills/ or scripts/, or is README.md, DOMAIN.md, CLAUDE.md or docs/lineage.md
 # Gate map: lint-adrs.sh when a staged path is under docs/adr/
 # Gate map: the -selftest.sh beside a staged scripts/*.sh or scripts/git-hooks/ hook, when it exists — every selftest when any scripts/*-lib.sh is staged — each once; a red one blocks
-# Gate map: a stderr notice, never a block, when a staged src/<skill>/ path has a docs/lineage.md row — diff the upstream before a material edit
+# Gate map: a stderr notice, never a block, when a staged src/<skill>/ path has a row in docs/lineage.md's FIRST table — diff the upstream before a material edit; a skill listed only in the nothing-to-diff table gets no notice
 #
 # The selftest map is derived, never kept: the pairing is scripts/README.md's
 # (scripts/<x>.sh or a git hook <h> is graded by the <x>-selftest.sh beside
@@ -32,7 +32,13 @@ set -uo pipefail
 # purpose: the second one is headed "nothing to diff" and its rows exist for
 # attribution, so a notice on them tells the reader to diff an upstream the
 # file says is not there — an advisory that cries wolf is one nobody reads.
-# The table boundary is the second H2, whatever it is called.
+# The table boundary is the second H2, whatever it is called, and the opening
+# assumption is that the FIRST H2 opens the ported table — true today, where
+# docs/lineage.md's preamble runs to :8 and its first H2 is :9. Insert any
+# other `## ` section above the ported one and this scopes to prose holding no
+# rows: awk prints nothing when h never reaches 1, so every notice goes quiet
+# with nothing failing. Re-read docs/lineage.md's heading order before moving
+# a heading into that file, not just its rows.
 #
 # The linters read the WORKING TREE, not the index: an unstaged edit in a
 # linted file is checked too, and a violation staged and then fixed only in
@@ -141,9 +147,14 @@ while IFS= read -r -d '' p; do
         *" $skill "*) ;;
         *)
           lineage_seen="$lineage_seen$skill "
+          # Process substitution, not a pipe: grep -q exits at its first
+          # match, which SIGPIPEs the still-writing awk (141), and pipefail
+          # would make that the pipeline's status — silencing the notice
+          # precisely when the row matches, once the first table outgrows the
+          # pipe buffer. Here the status is grep's alone.
           if [ -f "$repo_root/docs/lineage.md" ] &&
-             awk '/^## /{h++} h==1' "$repo_root/docs/lineage.md" |
-             grep -Eq "^\|[^|]*\`$skill\`"; then
+             grep -Eq "^\|[^|]*\`$skill\`" \
+               < <(awk '/^## /{h++} h==1' "$repo_root/docs/lineage.md"); then
             echo "pre-commit: src/$skill has an upstream — see docs/lineage.md before a material edit (ADR-0034 swept point)" >&2
           fi ;;
       esac ;;

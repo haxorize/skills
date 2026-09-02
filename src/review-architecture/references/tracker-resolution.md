@@ -1,6 +1,6 @@
 # Tracker resolution
 
-Open this only when the step in hand needs the tracker resolved — filing, reading, updating, or closing an item — and this session has not resolved it already.
+Open this when the step in hand needs the tracker resolved — filing, reading, updating, or closing an item — and this session has not resolved it already. For the publishing skills and `/ship`'s step 1 that is every run, which is why the pointer there is unconditional; the reader-side callers (`review-architecture`, `backfill-adrs`) reach it only on the branch that touches an item.
 
 Read `CLAUDE.md` for an `Issue tracker:` block. Three modes:
 

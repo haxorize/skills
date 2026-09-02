@@ -29,7 +29,7 @@ Title prefix: if the tracker block declares `Title prefix:`, prepend it (with a 
 
 If the user passed a parent reference (issue number / work-item ID / URL), fetch the parent Story via the tracker CLI. Otherwise work from current conversation.
 
-In no-repo CLI-only mode, save the resolved Story ID to the same memory entry `tracker-resolution.md` keys by tracker context, so the next invocation does not re-look it up.
+On ADO, in no-repo CLI-only mode, save the resolved Story ID to the same memory entry `tracker-resolution.md` keys by tracker context, so the next invocation does not re-look it up.
 
 - **`Hierarchy: required`** (default for ADO): if `--parent <story-id>` is provided, use it; otherwise interactively prompt for the User Story ID.
 - **`Hierarchy: optional`** (default for GitHub): parent linking is optional; only use `--parent` if provided. Do not prompt.

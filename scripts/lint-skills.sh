@@ -105,10 +105,10 @@
 #     references must not carry the phrase.
 #   - Scope: the skill checks walk src/*/SKILL.md (and references beneath);
 #     the global-rules checks below walk global/rules/, the hook-selftest
-#     check global/hooks/, the script-selftest check scripts/ and
-#     scripts/git-hooks/ (only those two directories: a skill-private script
-#     under .claude/skills/*/scripts/ is walked by no check here and owes no
-#     selftest). The repo-local
+#     check global/hooks/, the script-selftest check scripts/,
+#     scripts/git-hooks/ and .claude/skills/*/scripts/ (all three trees on one
+#     pairing contract: a skill-private script owes a selftest exactly as one
+#     under scripts/ does, unless it is named *-lib.sh). The repo-local
 #     skills under .claude/skills/, and DOMAIN.md and README.md, are in pass
 #     2's walk for the slash sweep, the house-style set (spelling, reference
 #     form, artifact names, labels, section pointers, heading case) and the
@@ -415,10 +415,10 @@ usage() {
 Usage: scripts/lint-skills.sh [--help]
 
 Lints src/*/SKILL.md and their references against src/write-skill/SKILL.md, and
-global/rules/, global/hooks/ (one selftest per hook), scripts/ and scripts/git-hooks/
-(one selftest per script or hook, and the conventions pointer), CLAUDE.md's size and
-its relative links, and the two routers against the rules each cites. Takes no
-argument but --help.
+global/rules/, global/hooks/ (one selftest per hook), scripts/, scripts/git-hooks/ and
+.claude/skills/*/scripts/ (one selftest per script or hook, and the conventions
+pointer), CLAUDE.md's size and its relative links, and the two routers against the
+rules each cites. Takes no argument but --help.
 
   LINT_ROOT=<dir>   point the whole sweep at another tree; unset in normal use
                     (scripts/lint-skills-selftest.sh sets it to the fixture roots)
@@ -1287,7 +1287,7 @@ check_artifact_names() {
 # bare in ordinary prose (not in a table cell) is not read at all — an
 # unrestricted bare-CAPS scan over prose would need an exemption list longer
 # than the family it guards.
-known_caps=' ADO ADR AC ID UI UD DU SQL CI PR HTML CSS CSV TSV API URL CLI OS PHI PII WCAG NPI EOB SMS FHIR MRN HIPAA BAA VPAT ACR AT KT MCP SDK TDD YAML JSON HEAD README CONTRIBUTING ORDER BY SELECT DROP DELETE UPDATE INSERT WHERE CONTAINS TRUNCATE AND OR NOT NULL TITLE TODO STAGES CUTOVER PUBLIC INTERNAL PRIVATE SKIPPED CLOSED YELLOW BREAKING CHANGE YYYY-MM-DD HHMMSS HTTP HTTPS JWT REST XML PDF PNG SVG ARIA DOM LLM RAG GDPR ICD CPT SSN ZIP TTY UTF URI UUID RFC WCAG2 AA AAA SC SCAMPER OCR CRLF DNS TLS SSH JS TS '
+known_caps=' ADO ADR AC ID UI UD DU SQL CI PR HTML CSS CSV TSV API URL CLI OS PHI PII WCAG NPI EOB SMS FHIR MRN HIPAA BAA VPAT ACR AT KT MCP SDK TDD YAML JSON HEAD README CONTRIBUTING ORDER BY SELECT DROP DELETE UPDATE INSERT WHERE CONTAINS TRUNCATE AND OR NOT NULL TITLE TODO STAGES CUTOVER PUBLIC INTERNAL PRIVATE CLOSED YELLOW BREAKING CHANGE YYYY-MM-DD HHMMSS HTTP HTTPS JWT REST XML PDF PNG SVG ARIA DOM LLM RAG GDPR ICD CPT SSN ZIP TTY UTF URI UUID RFC WCAG2 AA AAA SC SCAMPER OCR CRLF DNS TLS SSH JS TS '
 # A table cell whose WHOLE content is an ALL-CAPS token, bare. Anchored on the
 # cell boundaries so an ALL-CAPS word inside a sentence in a cell is not read.
 bare_cell_labels() {
@@ -2199,9 +2199,14 @@ require_selftest() {
   # before the builtin assigns any of them, so `b` would read an outer `a`.
   st="${f%.sh}-selftest.sh"
   if [ ! -f "$st" ]; then
-    say_fail "$f $what — write $st $tail"
+    # Both messages open with a literal prefix, ahead of every interpolation:
+    # discoverable-code's rule is that a message copied out of a log greps back
+    # to the line that threw it. Interpolating $f at the front made the whole
+    # string unfindable — only the bare fragment "has no selftest" reached the
+    # call sites, and the paste hit the selftest's expectation row instead.
+    say_fail "selftest-pairing: $f $what — write $st $tail"
   elif [ ! -x "$st" ]; then
-    say_fail "$st is not executable — chmod +x it, so 'bash' is not the only way this $kind's selftest runs and the roster can be run as a set"
+    say_fail "selftest-pairing: $st is not executable — chmod +x it, so 'bash' is not the only way this $kind's selftest runs and the roster can be run as a set"
   fi
 }
 
@@ -2249,6 +2254,9 @@ check_script_selftest() {
       [ -x "$sc" ] || say_fail "$sc is not executable — chmod +x it; git runs a hook under core.hooksPath only when it carries the exec bit, and skips it silently otherwise"
       require_selftest "$sc" "git hook" "has no selftest" "(source scripts/selftest-lib.sh; every git hook under scripts/git-hooks/ is graded by a selftest that runs it against a throwaway repo)"
       ;;
+    .claude/skills/*/scripts/*)
+      require_selftest "$sc" script "has no selftest" "(source scripts/selftest-lib.sh; every .claude/skills/*/scripts/*.sh is graded by a selftest that runs it against a fixture, the same pairing scripts/ answers to), or name the file *-lib.sh if it is a library"
+      ;;
     *)
       require_selftest "$sc" script "has no selftest" "(source scripts/selftest-lib.sh; every scripts/*.sh is graded by a selftest that runs it against a fixture), or name the file *-lib.sh if it is a library"
       ;;
@@ -2265,9 +2273,11 @@ if [ -d scripts ]; then
     [ -f "$sc" ] && check_script_selftest "$sc"
   done
 fi
-# A repo-local skill's own scripts/ is walked too. ADR-0075 recorded the gap as
-# "by scope, not by omission": enum.sh drives the first step of every mining
-# round and no gate reached it, so the one script with the widest blast radius
+# A repo-local skill's own scripts/ is walked too. ADR-0075:23 recorded that no
+# gate walked .claude/skills/*/scripts/, so the enumerator's stderr count landed
+# with no selftest "by that scope, not by omission" — a deliberate scope rather
+# than an oversight. Its 2026-09-01 amendment closes that: enum.sh drives the
+# first step of every mining round, so the script with the widest blast radius
 # was the one script nothing graded. Same contract as scripts/ — a *.sh here is
 # paired with its selftest or named *-lib.sh.
 for sc in .claude/skills/*/scripts/*.sh; do

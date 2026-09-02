@@ -30,7 +30,7 @@ Keep steps 1–2 in **one unbroken context window** so the grilling, decompositi
 
 ## Meeting, and leaving, a system you did not write
 
-- Four routes to a record of a system you did not write, split by **who the record is for**: **`/onboard-repo`** writes config blocks so the *suite* can work the repo; **`/onboard-me`** teaches *you* the repo and writes nothing into it; **`/rebuild-contract`** writes what a *reimplementer* must preserve through a rewrite; **`/offboard-engineer`** captures what only the *departing person* knows. Arriving at a repo usually wants the first two in that order — they are different jobs on the same first day, neither needing the other. The full tie-breaks are in [references/inherited-systems.md](references/inherited-systems.md).
+- Four routes to a record of a system you did not write, split by **who the record is for**: **`/onboard-repo`** writes config blocks so the *suite* can work the repo; **`/onboard-me`** teaches *you* the repo and writes nothing into it; **`/rebuild-contract`** writes what a *reimplementer* must preserve through a rewrite; **`/offboard-engineer`** captures what only the *departing person* knows. Arriving at a repo usually wants the first two in that order — they are different jobs on the same first day, neither needing the other. The full tie-breaks are in [references/inherited-systems.md](references/inherited-systems.md), opened when the ask concerns an inherited system and two of these four routes both plausibly fit.
 
 ## When the way isn't clear: `/chart-course`
 
@@ -65,13 +65,15 @@ Keep steps 1–2 in **one unbroken context window** so the grilling, decompositi
 
 ## Standalone
 
+Each route in one line; the tie-breaks, and the three-way split between `/teach-me`, `/explain` and `/explain <topic>`, are in [references/standalone.md](references/standalone.md), opened only when two of these both plausibly fit.
+
 - **`/grill-me`** — sharpen any plan or design with no repo to back it.
-- **`/teach-me <topic>`** — tutored, multi-session learning of any topic, standalone or grounded in a codebase as its textbook. Bring it a topic you can name; a repo you cannot yet name a mission for goes to `/onboard-me` first, which produces the topics.
-- **`/ask-for-me`** — the questionnaire drafter routed above, usable with no repo; pairs with a `chart-course` Errand when the blocker is someone else's knowledge. The register items an `/offboard-engineer` capture leaves for the departing engineer are raw material pasted into its interview, not an intake it reads.
-- **`/evaluation-ledger`** — a multi-week evaluation kept as a ledger in the repo under `docs/evaluation/`: one row per claim with its source, the date seen, its `marketed` / `verified` / `contradicted` status, and an expiry the sweep reads every session; the decision memo is drafted from the rows alone, and where it decides adopt-or-not its recommendation is the `adoption-verdict` grade, which it declares and calls. A watch — a rule set or a vendor landscape with no adopt-or-not — is the same ledger with one candidate.
+- **`/teach-me <topic>`** — tutored, multi-session learning of any topic, standalone or grounded in a codebase as its textbook.
+- **`/ask-for-me`** — the questionnaire drafter routed above, usable with no repo.
+- **`/evaluation-ledger`** — a multi-week evaluation kept as a ledger under `docs/evaluation/`, one row per claim, closing on a decision memo drafted from the rows.
 - **`/to-bug`** — file a defect as a tracked ticket from the current conversation.
-- **`/merge-quiz`** (Off-path) — before merging a change you did not watch being built: a report grouped by intent, a section on the paths the diff does not show, and 5–8 questions on interaction effects you answer before approving. Two failed rounds is a verdict on the change — split or simplify it — not on you.
-- **`/explain`** — stop and re-pitch: the last explanation didn't land, so it comes back with the missing context, in the plain, neutral register the `writing-for-humans` discipline sets for a doc, using `DOMAIN.md` vocabulary. For when you stopped following — not a shortener. `/explain <topic>` is the cold branch: the shape of a thing before you meet it, same register, shorter by design — a topic you mean to *learn* across sessions goes to `/teach-me <topic>` instead.
+- **`/merge-quiz`** (Off-path) — before merging a change you did not watch being built: a report, the paths the diff does not show, and questions you answer before approving.
+- **`/explain`** — stop and re-pitch: the last explanation didn't land, so it comes back with the missing context. `/explain <topic>` is the cold branch.
 - **`/glapi-test-pass`** — ADO only; satisfy the GLAPI production deployment gate for a Story.
-- **`/write-skill`** — conventions for writing and editing skills (you're reading the suite that follows them): the invocation axis, package structure, descriptions, the size cap, and the review checklist a skill-change review reports against. The prose conventions themselves are `writing-for-agents`', which it declares and which fires on its own whenever you draft a skill body, `CLAUDE.md`, or a reference file.
-- **`/audit-skills`** — audit the whole *installed* skill collection under `~/.claude/skills/`: a Keep / Improve / Update / Retire / Merge verdict per skill, on Overlap, Currency, Actionability, Scope fit, and Usage; a project-scoped skill sharing an installed skill's name is listed beside it and the verdict is written for the pair — library hygiene across every repo that fed the machine, distinct from `audit-tests` (a test suite) and `find-skills` (discovery).
+- **`/write-skill`** — conventions for writing and editing skills (you're reading the suite that follows them).
+- **`/audit-skills`** — audit the whole *installed* skill collection under `~/.claude/skills/`, a verdict per skill.

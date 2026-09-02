@@ -48,8 +48,11 @@
 # direction (red stays red, green stays green). NOT covered: the
 # working-tree-versus-index gap the hook's header names, whether the real
 # linters and selftests are correct,
-# and whether the fixture lineage row's shape still matches the real
-# docs/lineage.md table's (verified against its rows on 2026-08-30).
+# and whether the fixture lineage row's shape — or docs/lineage.md's HEADING
+# ORDER, which the first-table scope now depends on — still matches the real
+# file's (both verified against it on 2026-09-02: preamble to :8, first H2 at
+# :9 opening the ported table). The fixture cannot catch a heading inserted
+# above that one; only this re-read can.
 
 set -uo pipefail
 

@@ -1,8 +1,6 @@
 # The tell catalog — rate tells
 
-The rate members of the tell catalog: each fires on the run of the text, not on any one phrase. Open this only when the draft is a section or more of continuous prose — a doc, a README, an ADR, an incident report, a long outbound message — and not for prose too short to have a rate, where the per-instance families in [tell-catalog.md](tell-catalog.md) are the whole audit; that file's citation and displacement-partner rules govern here too.
-
-Per-instance rules can't see these; they live in the run of the text, and *occasional* instances are ordinary English — the sustained pattern is the tell.
+The rate members of the tell catalog: each fires on the run of the text, not on any one phrase, so a per-instance rule cannot see it and an *occasional* instance is ordinary English — the sustained pattern is the tell. Open this only when the draft is a section or more of continuous prose — a doc, a README, an ADR, an incident report, a long outbound message — and not for prose too short to have a rate, where the per-instance families in [tell-catalog.md](tell-catalog.md) are the whole audit; that file's citation and displacement-partner rules govern here too.
 
 - **Monotone openers** — most sentences starting with the same word (usually "The" or "This"). Vary by restructuring, not by synonym rotation.
 - **Uniform sentence length** — every sentence 15–25 words, no short ones, no long ones. Split and merge until the rhythm follows the content.

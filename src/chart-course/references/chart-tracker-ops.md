@@ -1,6 +1,6 @@
 # Chart tracker operations
 
-Resolve project, area path, iteration, default labels, and title prefixes from the CLAUDE.md tracker block (see [tracker-resolution.md](tracker-resolution.md)). A create call blocked on auth or policy follows `## When the write is blocked` in [publishing.md](publishing.md) — don't loop on auth. Apply the **transport safety** rules in [publishing.md](publishing.md) to every create and retry. On a ticket you didn't author, prefer an additive comment over editing its body — the body is the author's record.
+Open this only when a chart step writes to the tracker — creating a decision ticket, resolving one, or reading its state. Resolve project, area path, iteration, default labels, and title prefixes from the CLAUDE.md tracker block (see [tracker-resolution.md](tracker-resolution.md)); a required field missing there is a fail-fast, not a guess — `## When a required field is missing` in [publishing.md](publishing.md). A create call blocked on auth or policy follows `## When the write is blocked` in [publishing.md](publishing.md) — don't loop on auth. Apply the **transport safety** rules in [publishing.md](publishing.md) to every create and retry. On a ticket you didn't author, prefer an additive comment over editing its body — the body is the author's record.
 
 ## ADO
 

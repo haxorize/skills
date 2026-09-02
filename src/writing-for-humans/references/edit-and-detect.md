@@ -4,11 +4,11 @@ Read this only when the text in hand was already written — someone else's pros
 
 ## The preservation contract
 
-- Never fabricate a fact, citation, number, or example the original didn't contain. The invented number has a cause: a template slot the source cannot fill — a before/after line in a status note, a measured-improvement claim in a release note, a proof figure in a proposal — is what produces it. Cut the slot, never fill it.
+The two rules that bind a fresh draft too — never fabricate, and the untouchables — are in the body, since a run drafting from nothing never opens this file. These three are the mode-scoped remainder.
+
 - **Modality and logical scope are content.** A hedge, a tense, a trigger, a prerequisite, a scoped condition: each is part of the claim, and a rewrite that cuts or widens one promotes the statement into a claim the source never made. The full rules for this bullet are in [modality-and-scope.md](modality-and-scope.md) — open it in Edit mode, when rewriting prose someone else already wrote; a fresh draft has no source to preserve.
 - Never silently drop a qualifier, scope condition, number, or safety condition to make a sentence fit a cap — keep the longer sentence and flag the trade-off instead, in one line after the artifact naming the phrase and the precision that would have been lost, never wrapped around it.
 - A qualifier bolted on after a flat claim ("X always holds. In most cases.") is the claim being walked back: fix the claim, not the hedge.
-- Untouchables: code spans, identifiers, CLI commands, file paths, quoted error text, proper nouns, and text quoted from or attributed to another person stay exact, even where they break a rule — a tell inside someone else's words is reported, never edited.
 
 ## Two modes
 

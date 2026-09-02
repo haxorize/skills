@@ -5,7 +5,7 @@ description: Shared vocabulary and principles for designing deep modules. Use wh
 
 # Codebase Design
 
-Design **deep modules**: a lot of behavior behind a small interface, placed at a clean seam, testable through that interface. Use this language and these principles throughout.
+Design **deep modules**: a lot of behavior behind a small interface, placed at a clean seam, testable through that interface. Use this language and these principles wherever code is being designed or restructured.
 
 ## Vocabulary
 

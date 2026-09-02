@@ -1,6 +1,6 @@
 # Chart formats
 
-Open this only when a map body, a decision-ticket body, or a title is being drafted or updated.
+Open this only when a map body, a decision-ticket body, a resolution comment, or a title is being drafted or updated.
 
 ## Map body
 

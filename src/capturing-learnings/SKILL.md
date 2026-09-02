@@ -8,7 +8,7 @@ requires: writing-for-humans
 
 A solved problem dies with the session unless it lands where the next agent can grep it. This skill owns the **solved-problems store** — `docs/solutions/` at the target repo's root, one Learning doc per problem — on both sides: capturing a new learning and retrieving past ones.
 
-The store is flat and lazily created at first capture. Doc format, filename, frontmatter fields, and update mechanics live in [references/learning-format.md](references/learning-format.md).
+The store is flat and lazily created at first capture. Doc format, filename, frontmatter fields, and update mechanics live in [references/learning-format.md](references/learning-format.md), opened at § Capture workflow steps 2-4 when a doc is actually being written — never by the retrieval protocol.
 
 ## The capture gate
 

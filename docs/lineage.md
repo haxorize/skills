@@ -1,6 +1,6 @@
 # Lineage
 
-A row here is a skill or scanner rule with a lineage other than local original. Anything else about an upstream — why it was admitted, what was rejected — goes to its ADR. **Every skill not listed is a local original with nothing to diff against**; the Domain-skill row in the second table is listed for attribution only.
+A row here is a skill or scanner rule with a lineage other than local original. Anything else about an upstream — why it was admitted, what was rejected — goes to its ADR. **Every skill not listed is a local original with nothing to diff against**; the rows in the second table are listed for attribution only. A skill may hold a row in both tables where it has more than one upstream — `receiving-review` does — and the first table's row is what the lineage notice fires on.
 
 Before materially editing anything in the first table, diff its upstream — main *and* unmerged branches — from the swept point recorded against that upstream in [ADR-0034](adr/0034-branch-mining-lineage-or-dormant-main.md)'s amendment ledger (the newest entry for an upstream supersedes the rest), and fold in or consciously reject what changed there. Clones live under `~/code/lib/<owner>-<repo>` on the machine that mined them; the license column is read from each clone's license file.
 

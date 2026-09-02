@@ -59,7 +59,7 @@ If decomposition was deferred at Feature creation, the body of `## Story Decompo
 
 ## Acceptance Criteria
 
-ADO renders Acceptance Criteria as a separate field. Author as Markdown bullets with typed, append-only IDs per [ac-ids.md](ac-ids.md), converted to HTML before publishing.
+ADO renders Acceptance Criteria as a separate field. Author as Markdown bullets with typed, append-only IDs and the removed-criteria record per [ac-ids.md](ac-ids.md), converted to HTML before publishing.
 
 ```markdown
 - **AC1:** Outcome 1 measurable success criterion

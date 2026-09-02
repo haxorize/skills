@@ -20,7 +20,7 @@ If neither `pandoc` nor the Python `markdown` module is present, stop and ask fo
 
 ## Shell safety on the create call
 
-- The tag set goes into `System.Tags` (`$TAGS` in the create calls above) — see [work-item-tags.md](work-item-tags.md) for derivation and when to omit the pair.
+- The tag set goes into `System.Tags` (`$TAGS` in the per-tier template's own create call) — see [work-item-tags.md](work-item-tags.md) for derivation and when to omit the pair.
 - Assign `TITLE` in single quotes (`TITLE='…'`, an apostrophe inside written `'\''`) — the title is the one value that still crosses the shell, and a backtick or `$` inside double quotes is expanded there.
 - `@<file>` transport and its read-back are in [publishing.md](publishing.md) `## Transport safety`.
 

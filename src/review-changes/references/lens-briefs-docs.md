@@ -1,6 +1,6 @@
 # Lens briefs — document- and handoff-gated lenses
 
-Opened from §2 only when the diff touches an instruction file, amends a document or skill, or the input is a handoff. Each section carries its lens's trigger and the brief it runs under; §2 keeps only the gate that opens this file.
+Opened from §2 only when the diff touches an instruction file — a `SKILL.md`, a `references/*.md`, `CLAUDE.md`, a rule under `global/rules/` or `~/.claude/rules/`, or a hook — amends a document or skill, or the input is a handoff. Each section carries its lens's trigger and the brief it runs under; §2 keeps the gate that opens this file, and the repo-declared lens, whose gate is repo-level rather than diff-content and so cannot live behind this one.
 
 ## Instruction-file lens
 

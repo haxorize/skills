@@ -442,6 +442,10 @@ expect "script selftest (missing)" "scripts/orphan-tool.sh has no selftest — w
 # leaves the mining round's enumerator, the widest-blast-radius script in the
 # tree, graded by nothing.
 expect "repo-local script selftest (missing)" ".claude/skills/repo-local/scripts/orphan-local.sh has no selftest — write .claude/skills/repo-local/scripts/orphan-local-selftest.sh"
+# And the remedy it gets names its own tree. The default arm's parenthetical
+# asserts a rule about scripts/*.sh — a glob this file does not match — so the
+# computed half was right and the justification half named the wrong tree.
+expect "repo-local script selftest (tree-specific remedy)" "(source scripts/selftest-lib.sh; every .claude/skills/*/scripts/*.sh is graded by a selftest that runs it against a fixture, the same pairing scripts/ answers to)"
 expect "script selftest (not executable)" "scripts/unexec-tool-selftest.sh is not executable"
 expect "git-hook selftest (missing)" "scripts/git-hooks/orphan-hook has no selftest — write scripts/git-hooks/orphan-hook-selftest.sh"
 # The remedy a git hook gets is one it can follow: no *-lib.sh rename (git
@@ -630,24 +634,14 @@ expect_rc "the lint against the fixture tree" 1 "$status"
 # it should leave alone reds here even when no substring row names the line.
 # Last moved 2026-09-01 (the deferrals-register pass): 96 — the script-selftest
 # walk now reaches .claude/skills/*/scripts/, and the wrong-on-purpose root
-# gained one orphan there (repo-local/scripts/orphan-local.sh). ADR-0075 had
-# recorded that tree as reached "by scope, not by omission", which left the
-# mining round's own enumerator ungraded.
-# Before that, 2026-09-01 (F24 fix): 95 — two section-pointer FAILs added, one
-# per lead-in alternative of the right-trim (`— ` and `- ` before the `§`), in
-# the appended block at the end of src/house-style/SKILL.md.
-# Before that, 2026-09-01 (Batch M-size): 93 — the two byte bounds flipped WARN
-# to FAIL: one on src/oversize-body/SKILL.md, one on the repo-local oversize.md,
-# and three on bulk-cited-dep's ~30 KB references, whose size the pipe-capacity
-# pin below requires. Seven of them are
-# check_landing_key: six on the root CLAUDE.md's three deliberately malformed
-# blocks, one on the packages/api file below it; one is the fixture install.sh, which owes a selftest; two are the dangling
-# slash-name arm, on `/no-such-command` and on the `/order-status` whose marker
-# sits on the wrong line; one is the British form in the fixture
-# scripts/README.md, the pass-4 walk's third producer; three are the widened
-# sibling-membership check naming the ungrouped `ac-ids.md` copies per PATH and
-# the consumer fixture whose third status sits only inside a fence. A count that
-# moves is read before it is re-pinned.
+# gained one orphan there (repo-local/scripts/orphan-local.sh). ADR-0075:23 had
+# recorded that tree as landing with no selftest "by that scope, not by
+# omission", which left the mining round's own enumerator ungraded; its
+# 2026-09-01 amendment closes that. Earlier moves of this pin are in
+# `git log -p -S 'expected exactly' -- scripts/lint-skills-selftest.sh` — they describe counts
+# nothing asserts any more, and stacking them here made a changelog out of the
+# one line that has to stay readable. A count that moves is read before it is
+# re-pinned.
 nfail=$(printf '%s\n' "$output" | grep -c '^FAIL: ')
 [ "$nfail" -eq 96 ] || selftest_fail "expected exactly 96 FAIL lines against the fixture tree, got $nfail"
 # The shared-trigger-phrase fixtures are pinned by property, as near_bytes and
@@ -705,7 +699,11 @@ list_pin() {  # variable name, expected member count, separator
   [ "$got" -eq "$want" ] || selftest_fail "${var} carries $got members, pinned at $want — a name added or dropped there changes what the whole tree is graded on, and no fixture row would have said so. Re-measure, land a fixture instance for anything added, then move this number."
 }
 list_pin british_words 260 '|'
-list_pin known_caps 102 ' '
+# 102 → 101 on 2026-09-02: SKIPPED dropped. DOMAIN.md:77 bans the word outright
+# (UNVERIFIABLE is the registered marker), so admitting it here left check_labels
+# blind to a token the glossary forbids. Zero prose uses remain in any .md; the
+# five hits in src/wizard/template.sh are a shell array name, not a label.
+list_pin known_caps 101 ' '
 list_pin proper_nouns 20 ' '
 list_pin invocation_verbs 15 '|'
 list_pin artifact_name_exempt 6 '|' 
@@ -802,6 +800,18 @@ fi
 # lost its `#` and ran as a command lands here as "command not found" — with
 # the linter still exiting 0, which is how one shipped on 2026-08-30.
 reject_in "$clean_baseline" "the clean run printed a shell error (a header line running as a command, or a call to an undefined function)" "command not found"
+
+# The widening half of scripts/README.md's both-ways rule for the
+# .claude/skills/*/scripts/*.sh walk. Narrowing is graded twice — dropping the
+# walk reds the wrong-on-purpose root's expect row and moves the FAIL count —
+# but a loosened boundary lands green with nothing to fire on, which is how the
+# walk shipped half-graded. Two clean-root files close that: NOTES.txt grades
+# the extension (widen *.sh to * and it draws both a conventions-pointer and a
+# selftest FAIL), tools/helper.sh grades the directory segment (loosen scripts/
+# to * and it draws the same two). Both are exempt as written, so the clean
+# root stays green and the wrong-on-purpose FAIL count does not move.
+reject_in "$clean_baseline" "the .claude/skills/*/scripts/ walk reached a non-.sh file, so its *.sh boundary has been widened" "repo-local/scripts/NOTES.txt"
+reject_in "$clean_baseline" "the .claude/skills/*/scripts/ walk reached a .sh file outside a scripts/ directory, so its path has been loosened" "repo-local/tools/helper.sh"
 
 # Argument handling, each direction: --help prints usage and runs no check;
 # an unknown argument exits 3 and runs no check; a LINT_ROOT that is not a
