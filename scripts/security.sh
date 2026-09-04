@@ -73,25 +73,47 @@
 #     charged, so the work of walking a directory is unbounded and only the
 #     text scanning is capped
 #   - an invocation-time shell command in markdown: a !`cmd` span or a ```!
-#     fence in a SKILL.md runs before the model reads the body, with no
-#     permission prompt. Reported as md-shell-inline (MEDIUM), and the command
-#     text is read by every script rule, so a curl piped to sh in one draws
-#     that rule's HIGH on the same line
+#     (or ~~~!) fence in a SKILL.md runs before the model reads the body,
+#     with no permission prompt. Reported as md-shell-inline (MEDIUM), and
+#     the command text is read by every script rule, so a curl piped to sh
+#     in one draws that rule's HIGH on the same line. The span's ! must open
+#     a token: prose quoting `fixup!` and then another span is not a command
 #   - an injection phrase concealed from the phrase rules: letters spaced out
 #     (i g n o r e), a declared marker spliced between letters ("remove the
 #     marker XYZ from the text", then igXYZnore), or HTML entity encoding
 #     (&#105;gnore). Each line is normalized and the phrase rules re-run over
-#     it; a hit the raw text did not already draw is inj-obfuscated (MEDIUM).
+#     it; a hit the raw text did not already draw is inj-obfuscated, at the
+#     severity of the phrase it reads as — concealment never lowers one.
 #     Past three declared markers the scanner stops stripping and reports the
-#     count instead, so the cap fails closed
+#     count instead, so the cap fails closed. A declaration is recognised by
+#     a fixed noun list (marker, token, tag, string, sequence, placeholder,
+#     characters) — a known bound, not a claim of coverage — and a marker is
+#     stripped only inside a word, never as a word of its own
 #   - an archive — a .skill bundle, a zip (an Office document, a wheel or a
 #     jar included), a tar, a gzipped tar or a gzipped single file, by
-#     extension or by magic — is unpacked to a temporary directory and its
-#     members scanned as files of the skill, one level deep. A member that is itself
-#     an archive, an archive over 10 MB unpacked, a member whose path escapes
-#     the archive, or an archive that will not open is a scan-skipped finding,
-#     never PASS; an archive whose extension hides what it is (zip or gzip
-#     magic under another name) is bin-archive (MEDIUM)
+#     extension or by magic (zip, gzip, or tar's ustar) — is unpacked to a
+#     temporary directory and its members scanned as files of the skill, one
+#     level deep, with nothing pruned inside it (a node_modules/ or .git/
+#     member is the author's choice). Every way the
+#     unpack can be partial is a scan-skipped finding, never PASS: a member
+#     that is itself an archive, an archive over 200 members or over 10 MB
+#     by its declared sizes, a member whose content does not match its
+#     declared size (each read is bounded to the cap, so a lying header
+#     cannot drive memory either), a member that is not a regular file, a
+#     member whose path escapes the archive, two members on one path (the
+#     first is scanned), a binary member with no extension, an archive that
+#     will not open, or a container the scanner has no bounded reader for
+#     (xz, bz2, zstd, 7z, rar — by extension or magic). A member under a
+#     name the classifier declines (an Office document's XML, a gzipped
+#     file under a foreign name, an executable with no extension — the
+#     stored mode is not applied) is read as text under the markdown and
+#     the script rules both; a binary member under a data extension (an
+#     image) is the same boundary as outside an archive. An
+#     archive whose extension hides what it is (zip, gzip or tar magic under
+#     another name) is bin-archive (MEDIUM). In --json a finding under an
+#     archive carries the archive's path in its `archive` key (null
+#     otherwise) and names the member as <archive>/<member> in `file` — a
+#     path that no longer exists on disk once the scan ends
 # What is a script: a file with a script extension (sh, bash, zsh, fish, ksh,
 # py, js/mjs/cjs/jsx, ts/mts/cts/tsx, rb, pl, php, lua, ps1/psm1, bat, cmd —
 # whitespace around the name ignored), a `#!` first line, an executable mode,
@@ -106,8 +128,7 @@
 # The 2026-08-29 additions (hex blob, drop site, download-then-exec,
 # minified, npmrc, install hook, binary, remote instructions) follow the
 # pattern classes in zcaceres/skills' investigate-repo skill (MIT, swept at
-# b7213839; ADR-0034 keeps the lineage — the openhonest/honest-skills
-# attribution this header carried until 2026-09-04 was wrong), rewritten
+# b7213839; ADR-0034 keeps the lineage), rewritten
 # here; the same day's second set (metadata endpoint, agent config,
 # persistence, TLS off,
 # environment dump, homoglyph, bytecode) follows nvidia/skillspector and
@@ -115,9 +136,8 @@
 # here with a homoglyph table of our own. The 2026-09-04 additions:
 # md-shell-inline follows dbreunig/drskill's observation (MIT), inj-obfuscated
 # follows nvidia/skillspector's concealment class (Apache-2.0), both written
-# here; the archive walk and bin-archive are the scanner's own. The round's
-# reconcile (~/code/lib/_rounds/2026-09-04/reconcile.md, batch 2) is the
-# record until its closing ADR lands.
+# here; the archive walk and bin-archive are the scanner's own. ADR-0081
+# records the three admissions and their licences.
 # Not read: a file that is neither markdown (.md, .markdown, .txt) nor
 # script-like as defined above (.html, .rst, .env, .csv, a data file) is not
 # opened at all; the injection-phrase rules run over markdown only, so a
@@ -142,7 +162,7 @@
 #   security.sh --path <dir> [--path <dir> ...]   # one verdict per directory
 #   security.sh --json ...                         # machine-readable
 #   security.sh --each <parent>                    # every child directory of <parent>
-#   security.sh --fail-on risk|review ...          # non-zero exit at or past the threshold
+#   security.sh --fail-on risk|review|incomplete   # non-zero exit at or past the threshold
 # Example:
 #   bash scripts/security.sh --path ~/code/lib/some-skill
 #
@@ -152,9 +172,12 @@
 # into the status) · 1 the scanner crashed (no findings were produced; the
 # traceback is on stderr) · 2 nothing scanned (a --path that is not a
 # directory) · 3 usage error (no target, an unknown option, a --fail-on value
-# other than risk or review, python3 missing, a path holding a tab or newline)
-# · 4 the --fail-on threshold was met: with risk, some scanned target graded
-# RISK; with review, some target graded REVIEW or RISK. The scan still
+# other than risk, review or incomplete, python3 missing, a path holding a
+# tab or newline) · 4 the --fail-on threshold was met: with risk, some
+# scanned target graded RISK; with review, some target graded REVIEW or RISK;
+# with incomplete, some target graded RISK or carries a scan-skipped or
+# scan-error finding — the scan was not whole, whatever its verdict, so a
+# bundle padded past a cap cannot buy its way under the gate. The scan still
 # completed and the summary and findings still printed — the flag only turns
 # the verdict into a status a caller can gate on
 # (`security.sh --fail-on risk --path X && install`); without it the verdicts
@@ -196,10 +219,10 @@ while [ $# -gt 0 ]; do
       for d in "$2"/* "$2"/.[!.]* "$2"/..?*; do [ -d "$d" ] && add_target "$d"; done
       shift 2 ;;
     --fail-on)
-      [ $# -ge 2 ] || { echo "ERROR: --fail-on needs a threshold: risk or review — run with --help" >&2; exit 3; }
+      [ $# -ge 2 ] || { echo "ERROR: --fail-on needs a threshold: risk, review or incomplete — run with --help" >&2; exit 3; }
       case "$2" in
-        risk|review) FAIL_ON="$2" ;;
-        *) echo "ERROR: --fail-on takes risk or review, not: $2 — run with --help for the flags" >&2; exit 3 ;;
+        risk|review|incomplete) FAIL_ON="$2" ;;
+        *) echo "ERROR: --fail-on takes risk, review or incomplete, not: $2 — run with --help for the flags" >&2; exit 3 ;;
       esac
       shift 2 ;;
     -h|--help) usage; exit 0 ;;
@@ -217,6 +240,7 @@ export TARGETS_TSV JSON_OUTPUT FAIL_ON
 
 python3 <<'PYEOF'
 import base64
+import contextlib
 import gzip
 import html
 import json
@@ -228,6 +252,7 @@ import tarfile
 import tempfile
 import unicodedata
 import zipfile
+import zlib
 from collections import namedtuple
 
 JSON_OUTPUT = os.environ.get("JSON_OUTPUT", "false") == "true"
@@ -242,16 +267,33 @@ SCRIPT_NAMES = {"Makefile", "makefile", "GNUmakefile", "Dockerfile", "Justfile",
 CONFIG_EXT = {".json", ".toml", ".yaml", ".yml"}
 BYTECODE_EXT = {".pyc", ".pyo"}
 # An archive is unpacked and its members scanned as files of the skill. By
-# name: these extensions and `.tar.gz`. By magic: zip or gzip, whatever the
-# name — and a name that hides the magic is a finding of its own.
-# Office and package formats are zips under an honest name, so they are
-# opened, not flagged; their XML members are neither markdown nor script and
-# draw nothing, while a wheel or a jar can carry a script that does.
+# name: these extensions and `.tar.gz`. By magic: zip, gzip, or tar (the
+# `ustar` at byte 257), whatever the name — and a name that hides the magic
+# is a finding of its own. So the set does two things: `.tar` is the one
+# entry that OPENS something the magic would not, and every other entry
+# names a format whose honest name is not flagged as hiding its magic.
+# Office documents and the Python and Java package formats are zips under
+# an honest name, so they are opened, not flagged; their XML members are
+# neither markdown nor script and draw nothing, while a wheel or a jar can
+# carry a script that does. A browser extension, an Android package, an
+# e-book, a NuGet or VS Code package is not something a skill ships, so
+# each is a hidden archive (bin-archive) like any other renamed zip.
 ARCHIVE_EXT = {".skill", ".zip", ".tar", ".tgz", ".gz", ".docx", ".xlsx", ".pptx", ".xlam", ".odt", ".ods", ".odp",
-               ".jar", ".whl", ".egg", ".nupkg", ".vsix", ".crx", ".epub", ".apk"}
-ARCHIVE_MAGIC = (b"PK\x03\x04", b"\x1f\x8b")
-MAX_ARCHIVE_BYTES = 10_000_000  # unpacked, summed over the members' declared sizes
+               ".jar", ".whl", ".egg"}
+GZIP_MAGIC = b"\x1f\x8b"
+ARCHIVE_MAGIC = (b"PK\x03\x04", GZIP_MAGIC)
+TAR_MAGIC_AT = (257, b"ustar")
+HEAD_BYTES = 262                # enough for every magic above, the tar one included
+# A container the scanner does not open (no size trailer to bound the read,
+# or no stdlib reader): reported, never PASS, never opened.
+CONTAINER_EXT = {".xz", ".bz2", ".zst", ".7z", ".rar"}
+CONTAINER_MAGIC = (b"\xfd7zXZ\x00", b"BZh", b"\x28\xb5\x2f\xfd", b"7z\xbc\xaf\x27\x1c", b"Rar!")
+MAX_ARCHIVE_BYTES = 10_000_000  # unpacked: the members' declared sizes summed, and each read bounded to it
 MAX_ARCHIVE_DEPTH = 1           # an archive inside an archive is reported, never opened
+# The errors the stdlib raises on a malformed, truncated, encrypted, or
+# unsupported archive. Anything else is a scanner bug and reaches the bash
+# wrapper as a crash (exit 1), never a finding attributed to the archive.
+ARCHIVE_ERRORS = (OSError, EOFError, ValueError, zlib.error, zipfile.BadZipFile, tarfile.TarError, RuntimeError, NotImplementedError)
 MAX_MARKERS = 3                 # declared concealment markers stripped per file; past it, a finding
 MAX_FILE_BYTES = 1_000_000
 MAX_FILES_PER_SKILL = 200
@@ -260,10 +302,14 @@ MAX_LINES_PER_RULE_FILE = 5  # text output only: past this, one rule in one file
 R = re.compile
 # Generated lock files are data, routinely over the size cap, and never opened.
 LOCK_FILE = R(r"^(package-lock\.json|npm-shrinkwrap\.json|pnpm-lock\.yaml|.*[.-]lock\.(json|yaml|yml|toml))$")
-# A rule is (id, severity, pattern, title); the tables below keep the tuple
-# shape and are wrapped at load, so a table row and a one-off rule share one
-# definition.
-Rule = namedtuple("Rule", "id sev rx title")
+# Two rule shapes, told apart by depth: a PatternRule is one table row whose
+# regex reaches every call site by itself, and a FindingKind is an id, a
+# severity and a title for a detection written by hand (a walk-level check,
+# a derived view, a partial scan) — it carries no pattern, so adding one
+# means writing the detection and its selftest rows, not a row in a table.
+# The tables below keep the tuple shape and are wrapped at load.
+PatternRule = namedtuple("PatternRule", "id sev rx title")
+FindingKind = namedtuple("FindingKind", "id sev title")
 MD_RULES = [
     ("inj-ignore", "HIGH", R(r"(ignore|disregard|forget)\s+(all\s+|any\s+)?(previous|prior|above|earlier)\s+(instructions?|prompts?|rules?)", re.I),
      "Instruction-override phrase (classic prompt injection)"),
@@ -336,8 +382,8 @@ SCRIPT_RULES = [
     ("sh-envdump", "MEDIUM", R(r"JSON\.stringify\(\s*process\.env\s*\)|\bdict\(\s*os\.environ\s*\)|\b(printenv|env)\b\s*\|[^\n]*\b(curl|wget|nc|ncat|base64|openssl)\b"),
      "Serialises or pipes the whole environment (a credential harvest)"),
 ]
-MD_RULES = [Rule(*r) for r in MD_RULES]
-SCRIPT_RULES = [Rule(*r) for r in SCRIPT_RULES]
+MD_RULES = [PatternRule(*r) for r in MD_RULES]
+SCRIPT_RULES = [PatternRule(*r) for r in SCRIPT_RULES]
 # Latin-lookalike letters from other scripts — the homoglyph set, hand-listed
 # here rather than copied from Unicode's confusables.txt: Cyrillic and Greek,
 # both cases where the lookalike holds in both. A token is split into runs at
@@ -380,13 +426,14 @@ B64_BLOB = R(r"[A-Za-z0-9+/]{120,}={0,2}")
 # A hex digest (sha512, blake2b) is base64-shaped and decodes to noise; it is
 # a checksum, not a payload.
 HEX_ONLY = R(r"^[0-9a-fA-F]+$")
-# An invocation-time command in markdown: the !`cmd` span, and the ```! fence.
-# The span's `!` must not itself sit after a backtick, so prose about the
-# `!` marker (`!` in a commit subject, then another span on the line) is not
-# a command.
-MD_SHELL_SPAN = r"(?<!`)!`([^`\n]+)`"
-MD_SHELL_FENCE = r"^[ \t]*```![^\n]*\n(.*?)^[ \t]*```"
-MD_SHELL = R(MD_SHELL_SPAN + "|" + MD_SHELL_FENCE, re.M | re.S)
+# An invocation-time command in markdown: the !`cmd` span, and the ```! or
+# ~~~! fence. The span's `!` must open a token — line start, whitespace, or
+# an open bracket before it — so a `!` closing one code span (`fixup!`) with
+# another span later on the line is prose, not a command. Fences are read
+# in order with the open one tracked (shell_fences below), so a ```! fence
+# quoted inside another fence is that fence's content, not a command.
+MD_SHELL_SPAN = R(r"(?<![^\s(\[])!`(?P<span>[^`\n]+)`")
+FENCE_LINE = R(r"^[ \t]*(?P<mark>`{3,}|~{3,})(?P<info>.*)$")
 # Concealment the phrase rules cannot see through, undone per line before a
 # second pass: a run of single letters separated by one space, dot, hyphen or
 # underscore (i g n o r e, d o   n o t) is joined; a marker the text declares ("remove the
@@ -394,8 +441,14 @@ MD_SHELL = R(MD_SHELL_SPAN + "|" + MD_SHELL_FENCE, re.M | re.S)
 # HTML entity is decoded. Newlines are kept, so a hit maps to its raw line.
 # A marker is quoted, or is not a plain lowercase word: "remove all
 # characters except ASCII" declares nothing, `remove the marker XYZ` does.
-MARKER_DECL = R(r"\b(remove|strip|delete|drop|ignore)\s+(the\s+|every\s+|all\s+)?(marker|token|tag|string|sequence|characters?)\s+([\"'`])?([^\s\"'`,.;:]{2,12})(?(4)[\"'`])", re.I)
+# A declaration is recognised by this noun list and no other: a text that
+# says "placeholder" is read, one that says "glyph" or "infix" is not — the
+# list is a known bound, not a claim of coverage. A marker is stripped only
+# where it sits inside a word (IgQZXnore), never as a word of its own, so a
+# quoted common word declared as a marker cannot rewrite ordinary prose.
+MARKER_DECL = R(r"\b(remove|strip|delete|drop|ignore)\s+(the\s+|every\s+|all\s+)?(marker|token|tag|string|sequence|placeholder|characters?)\s+([\"'`])?([^\s\"'`,.;:]{2,12})(?(4)[\"'`])", re.I)
 PLAIN_WORD = R(r"[a-z]+")
+BLANK_LINE = R(r"\n[ \t]*\n")
 # One separator kind per run, so `d.o n.o.t` joins into two words, not one.
 SPACED = R(r"(?<!\w)\w(?:([ ._-])\w)(?:\1\w)*(?!\w)")
 SPACER = R(r"[ ._-]")
@@ -411,13 +464,25 @@ def finding(findings, rule, rel, snippet, line=None):
             return
         findings.seen.add(key)
     findings.append({"rule": rule.id, "severity": rule.sev, "title": rule.title,
-                     "file": rel, "line": line, "evidence": snippet.strip()[:160]})
+                     "file": rel, "line": line, "evidence": snippet.strip()[:160],
+                     "archive": findings.archive})
+
+
+def skipped(findings, rel, why, snippet="", what="it"):
+    """A scan-skipped finding: `why` opens on a literal, and the title always
+    closes by sending the reader to the file, so an incomplete scan never
+    renders PASS and never leaves the reader without the next step."""
+    finding(findings, SCAN_SKIPPED._replace(title=f"{why} — read {what} by hand"), rel, snippet)
 
 
 class Findings(list):
-    """The findings of one directory, with the dedupe set beside them."""
+    """The findings of one directory, with the dedupe set beside them, and
+    the archive whose members are being walked (None outside one) — the
+    `archive` key every finding carries, so a `file` of the form
+    <archive>/<member> is never mistaken for a path on disk."""
     def __init__(self):
         super().__init__()
+        self.archive = None
         self.seen = set()
 
 
@@ -474,21 +539,21 @@ def confusable_runs(text):
             yield m, tok, conf
 
 
-UNI_CONFUSABLE = Rule("uni-confusable", "MEDIUM", None, "Latin-lookalike letter from another script inside an ASCII identifier (homoglyph)")
-UNI_HIDDEN_RULE = Rule("uni-hidden", "HIGH", UNI_HIDDEN, "Zero-width or bidi-control unicode (hidden text)")
-MD_REMOTE_RULE = Rule("md-remote-instructions", "MEDIUM", REMOTE_INSTR, "Fetches instructions from a URL on each run and applies them (rules change under the installer with no commit)")
-MD_HTMLCOMMENT = Rule("md-htmlcomment", "MEDIUM", None, "HTML comment contains imperative instructions (invisible when rendered)")
-MD_B64_TEXT = Rule("md-b64", "MEDIUM", None, "Large base64 blob in markdown that decodes to text (hidden instructions)")
-MD_B64_PAYLOAD = Rule("md-b64", "MEDIUM", None, "Large base64 blob in markdown that decodes to non-text (smuggled payload)")
-SH_MINIFIED = Rule("sh-minified", "MEDIUM", None, "Minified or single-line script")
-SCAN_SKIPPED = Rule("scan-skipped", "MEDIUM", None, "Part of the directory was not scanned — read it by hand")
-SCAN_ERROR = Rule("scan-error", "MEDIUM", None, "File could not be read, so nothing here was checked")
-BIN_BYTECODE = Rule("bin-bytecode", "MEDIUM", None, "Python bytecode shipped (a decoy source can sit beside compiled code); its content is classified like any other file's")
-BIN_COMPILED = Rule("bin-compiled", "HIGH", None, "Compiled binary present (ELF/Mach-O/PE magic)")
-MANIFEST_HOOK = Rule("manifest-hook", "HIGH", None, "Install-time script hook in a manifest (runs on npm install, before anyone reads it)")
-MD_SHELL_RULE = Rule("md-shell-inline", "MEDIUM", None, "Invocation-time shell command in markdown (runs before the body is read, with no permission prompt); its text was read by the script rules")
-INJ_OBFUSCATED = Rule("inj-obfuscated", "MEDIUM", None, "Injection phrase concealed by spacing, a declared marker, or entity encoding")
-BIN_ARCHIVE = Rule("bin-archive", "MEDIUM", None, "Archive whose extension hides it (zip or gzip magic under another name); its members were unpacked and scanned")
+UNI_CONFUSABLE = FindingKind("uni-confusable", "MEDIUM", "Latin-lookalike letter from another script inside an ASCII identifier (homoglyph)")
+UNI_HIDDEN_RULE = PatternRule("uni-hidden", "HIGH", UNI_HIDDEN, "Zero-width or bidi-control unicode (hidden text)")
+MD_REMOTE_RULE = PatternRule("md-remote-instructions", "MEDIUM", REMOTE_INSTR, "Fetches instructions from a URL on each run and applies them (rules change under the installer with no commit)")
+MD_HTMLCOMMENT = FindingKind("md-htmlcomment", "MEDIUM", "HTML comment contains imperative instructions (invisible when rendered)")
+MD_B64_TEXT = FindingKind("md-b64", "MEDIUM", "Large base64 blob in markdown that decodes to text (hidden instructions)")
+MD_B64_PAYLOAD = FindingKind("md-b64", "MEDIUM", "Large base64 blob in markdown that decodes to non-text (smuggled payload)")
+SH_MINIFIED = FindingKind("sh-minified", "MEDIUM", "Minified or single-line script")
+SCAN_SKIPPED = FindingKind("scan-skipped", "MEDIUM", "Part of the directory was not scanned — read it by hand")
+SCAN_ERROR = FindingKind("scan-error", "MEDIUM", "File could not be read, so nothing here was checked")
+BIN_BYTECODE = FindingKind("bin-bytecode", "MEDIUM", "Python bytecode shipped (a decoy source can sit beside compiled code); its content is classified like any other file's")
+BIN_COMPILED = FindingKind("bin-compiled", "HIGH", "Compiled binary present (ELF/Mach-O/PE magic)")
+MANIFEST_HOOK = FindingKind("manifest-hook", "HIGH", "Install-time script hook in a manifest (runs on npm install, before anyone reads it)")
+MD_SHELL_RULE = FindingKind("md-shell-inline", "MEDIUM", "Invocation-time shell command in markdown (runs before the body is read, with no permission prompt); its text was read by the script rules")
+INJ_OBFUSCATED = FindingKind("inj-obfuscated", "MEDIUM", "Injection phrase concealed by spacing, a declared marker, or entity encoding")
+BIN_ARCHIVE = FindingKind("bin-archive", "MEDIUM", "Archive whose extension hides it (zip, gzip or tar magic under another name); its members were unpacked and scanned")
 
 
 def deobfuscate(text):
@@ -501,10 +566,33 @@ def deobfuscate(text):
         if "&" in line:
             line = html.unescape(line).replace("\n", " ")
         for mk in strip:
-            line = line.replace(mk, "")
+            line = re.sub(r"(?<=\w)" + re.escape(mk) + r"(?=\w)", "", line)
         line = SPACED.sub(lambda m: SPACER.sub("", m.group(0)), line)
         out.append(line)
     return "\n".join(out), len(markers)
+
+
+def derived_view(findings, rel, view, rules, line_of, attribute, novel_only=False):
+    """One rule table over a transformed view of a file's text — the seam
+    every second-look pass shares, so the two questions a reader has of such
+    a pass are answered by its arguments, never by its body. `view` is the
+    transformed text and `line_of(m)` maps a hit in it back to the raw file's
+    line. `attribute(rule)` is the rule the finding is reported under — the
+    matched rule itself (a command read as a script keeps the script rule's
+    id and severity), or a view-level kind borrowing the matched rule's
+    severity (a normalized phrase is inj-obfuscated at the severity of the
+    phrase it reads as; concealment never lowers one). With `novel_only`, a
+    hit the raw pass already drew on that line under the matched rule is not
+    repeated, and a hit assembled across a paragraph break is dropped."""
+    for rule in rules:
+        for m in rule.rx.finditer(view):
+            ln = line_of(m)
+            if novel_only:
+                if (rule.id, rel, ln) in findings.seen:
+                    continue
+                if BLANK_LINE.search(m.group(0)):
+                    continue  # a phrase assembled across a paragraph break is prose, not a hit
+            finding(findings, attribute(rule), rel, line_at(view, m), ln)
 
 
 def scan_obfuscated(text, rel, findings):
@@ -513,16 +601,45 @@ def scan_obfuscated(text, rel, findings):
     norm, nmark = deobfuscate(text)
     if nmark > MAX_MARKERS:
         first = next(m for m in MARKER_DECL.finditer(text) if m.group(4) or not PLAIN_WORD.fullmatch(m.group(5)))
-        finding(findings, INJ_OBFUSCATED._replace(title=f"{nmark} declared concealment markers, past the {MAX_MARKERS} the scanner strips — read it by hand"), rel, line_at(text, first), line_no(text, first.start()))
+        finding(findings, INJ_OBFUSCATED._replace(title=f"Declared concealment markers past the cap: {nmark}, where the scanner strips at most {MAX_MARKERS} — read it by hand"), rel, line_at(text, first), line_no(text, first.start()))
     if norm == text:
         return
-    raw_hits = {(rule.id, line_no(text, m.start())) for rule in MD_RULES for m in rule.rx.finditer(text)}
-    for rule in MD_RULES:
-        for m in rule.rx.finditer(norm):
-            ln = line_no(norm, m.start())
-            if (rule.id, ln) in raw_hits:
-                continue
-            finding(findings, INJ_OBFUSCATED._replace(title=f"{INJ_OBFUSCATED.title} (reads as: {rule.title})"), rel, line_at(norm, m), ln)
+    # The raw pass has already run over this file; the normalization keeps
+    # line count, so a hit maps to its raw line by position.
+    derived_view(findings, rel, norm, MD_RULES, lambda m: line_no(norm, m.start()),
+                 lambda rule: INJ_OBFUSCATED._replace(sev=rule.sev, title=f"{INJ_OBFUSCATED.title} (reads as: {rule.title})"),
+                 novel_only=True)
+
+
+def shell_fences(text):
+    """(offset of the opening line, offset of the body, body) for every ```!
+    or ~~~! fence. Fences are read in order and the open one is tracked: a
+    fence line while one is open is content unless it closes the open fence
+    (same mark character, at least as long, nothing after it), so a ```!
+    quoted as documentation inside an outer fence is never a command."""
+    open_mark, is_shell, body, at, body_at, pos = None, False, [], 0, 0, 0
+    for line in text.split("\n"):
+        m = FENCE_LINE.match(line)
+        if m and open_mark is None:
+            open_mark, is_shell, body, at, body_at = m.group("mark"), m.group("info").startswith("!"), [], pos, pos + len(line) + 1
+        elif m and m.group("mark")[0] == open_mark[0] and len(m.group("mark")) >= len(open_mark) and not m.group("info").strip():
+            if is_shell:
+                yield at, body_at, "\n".join(body) + "\n"
+            open_mark = None
+        elif open_mark is not None:
+            body.append(line)
+        pos += len(line) + 1
+
+
+def scan_shell(text, rel, findings):
+    """Invocation-time commands: each is reported, then read as a script
+    would be, so a hit keeps the script rule's own id and severity on the
+    raw line the command text sits in."""
+    commands = [(m.start(), m.start("span"), m.group("span")) for m in MD_SHELL_SPAN.finditer(text)]
+    commands += list(shell_fences(text))
+    for at, body_at, cmd in sorted(commands):
+        finding(findings, MD_SHELL_RULE, rel, cmd, line_no(text, at))
+        derived_view(findings, rel, cmd, SCRIPT_RULES, lambda h: line_no(text, body_at + h.start()), lambda rule: rule)
 
 
 def scan_confusables(text, rel, findings):
@@ -541,16 +658,7 @@ def scan_text(text, rel, is_md, findings):
         for rule in MD_RULES:
             report_each(findings, rule, rel, text, lambda t, m: t[max(0, m.start()-30):m.end()+30])
         scan_obfuscated(text, rel, findings)
-        for m in MD_SHELL.finditer(text):
-            g = 1 if m.group(1) is not None else 2
-            cmd = m.group(g)
-            finding(findings, MD_SHELL_RULE, rel, cmd, line_no(text, m.start()))
-            # The command runs as a script would, so it is read as one; a hit
-            # is reported under the script rule's own id and severity, on
-            # the line of the command text it sits in.
-            for rule in SCRIPT_RULES:
-                for h in rule.rx.finditer(cmd):
-                    finding(findings, rule, rel, line_at(cmd, h), line_no(text, m.start(g) + h.start()))
+        scan_shell(text, rel, findings)
         for m in HTML_COMMENT.finditer(text):
             body = m.group(1)
             if len(body) > 20 and IMPERATIVE.search(body):
@@ -591,19 +699,20 @@ def decode(raw):
     return raw.decode("utf-8", errors="replace")
 
 
-def read_text(path, rel, findings):
+def read_text(path, rel, findings, report_binary=True):
     """The file's text, or None with a finding saying why the scan is not whole.
     A file over the size cap is scanned to the cap and flagged, so the prefix
-    still draws whatever it holds."""
+    still draws whatever it holds. With report_binary False a file that is
+    not text returns None and draws nothing — the caller owns that call."""
     try:
         size = os.path.getsize(path)
         with open(path, "rb") as f:
             raw = f.read(MAX_FILE_BYTES)
         if size > MAX_FILE_BYTES:
-            finding(findings, SCAN_SKIPPED._replace(title=f"File over {MAX_FILE_BYTES:,} bytes: only its first {MAX_FILE_BYTES:,} were scanned ({size:,} bytes) — read it by hand"), rel, "")
+            skipped(findings, rel, f"File over {MAX_FILE_BYTES:,} bytes: only its first {MAX_FILE_BYTES:,} were scanned ({size:,} bytes)")
         text = decode(raw)
-        if text is None:
-            finding(findings, SCAN_SKIPPED._replace(title="File is not UTF-8 or UTF-16/32 text and was not scanned — read it by hand"), rel, "")
+        if text is None and report_binary:
+            skipped(findings, rel, "File is not UTF-8 or UTF-16/32 text and was not scanned")
         return text
     except OSError as e:
         finding(findings, SCAN_ERROR, rel, str(e))
@@ -629,43 +738,127 @@ def manifest_hooks(text):
     return hits
 
 
-def looks_like_script(fp, fn, ext):
-    if ext in SCRIPT_EXT or ext in CONFIG_EXT or fn in SCRIPT_NAMES or fn == ".pnpmfile.cjs":
-        return True
-    try:
-        if os.stat(fp).st_mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH):
-            return True
-        with open(fp, "rb") as fh:
-            return fh.read(2) == b"#!"
-    except OSError:
-        return False
+# What a file is to the walk — a closed set, one row per kind, each carrying
+# its policy: `reads` says the walk opens the file as text (and charges the
+# file cap for it, bytecode aside), and `binary_is` says what a file of this
+# kind that turns out not to be text draws — a finding, or nothing (the
+# documented boundary for a data file the walk never meant to read).
+Kind = namedtuple("Kind", "name reads binary_is")
+BINARY = Kind("binary", False, None)          # compiled: ELF, Mach-O, PE
+CONTAINER = Kind("container", False, None)    # xz, bz2, zstd, 7z, rar: reported, never opened
+ARCHIVE = Kind("archive", False, None)        # zip, gzip, tar: unpacked and walked
+LOCK = Kind("lock", False, None)              # a generated lock file: data, never opened
+UNREAD = Kind("unread", False, None)          # the documented boundary: neither markdown nor script-like
+MANIFEST = Kind("manifest", True, "skipped")  # package.json: hooks, then the script rules
+MARKDOWN = Kind("markdown", True, "skipped")
+SCRIPT = Kind("script", True, "skipped")
+MEMBER = Kind("member", True, "silent")       # inside an archive, a name the classifier declines: read under both rule sets
+Classified = namedtuple("Classified", "kind hidden evidence")
 
 
-def archive_members(fp):
-    """[(name, declared size, bytes-reader)] for the regular files of a zip or
-    tar; raises when the file is neither."""
+def classify(fn, ext, head, executable, depth):
+    """What the walk does with one file, from its name, its first HEAD_BYTES
+    and its mode alone — no I/O, no findings, so the order of the checks is
+    stated once, here, and a reader can see which kind wins. In order:
+    compiled magic; a container format; an archive by name or magic (this
+    preempts every kind below it, so a .json or .md holding zip magic is
+    scanned as its members and never as config or markdown — `hidden` says
+    the name did not admit the magic, and `evidence` names the magic); a
+    lock file; the npm manifest; markdown; a script by extension, config
+    extension, basename, mode or shebang; inside an archive, anything else
+    is a member (read anyway — the author chose to ship it); outside one,
+    anything else is the documented unread boundary."""
+    if any(head.startswith(magic) for magic in BINARY_MAGIC):
+        return Classified(BINARY, False, head[:4].hex())
+    if ext in CONTAINER_EXT or any(head.startswith(magic) for magic in CONTAINER_MAGIC):
+        return Classified(CONTAINER, False, head[:8].hex())
+    is_archive_name = ext in ARCHIVE_EXT or fn.strip().lower().endswith(".tar.gz")
+    is_tar_magic = head[TAR_MAGIC_AT[0]:TAR_MAGIC_AT[0] + len(TAR_MAGIC_AT[1])] == TAR_MAGIC_AT[1]
+    is_archive_magic = any(head.startswith(magic) for magic in ARCHIVE_MAGIC) or is_tar_magic
+    if is_archive_name or is_archive_magic:
+        return Classified(ARCHIVE, is_archive_magic and not is_archive_name, "ustar at byte 257" if is_tar_magic else head[:4].hex())
+    if LOCK_FILE.match(fn.strip()):
+        return Classified(LOCK, False, None)
+    if fn == "package.json":
+        return Classified(MANIFEST, False, None)
+    if ext in MD_EXT:
+        return Classified(MARKDOWN, False, None)
+    if ext in SCRIPT_EXT or ext in CONFIG_EXT or fn in SCRIPT_NAMES or fn == ".pnpmfile.cjs" or executable or head.startswith(b"#!"):
+        return Classified(SCRIPT, False, None)
+    if depth > 0:
+        return Classified(MEMBER, False, None)
+    return Classified(UNREAD, False, None)
+
+
+@contextlib.contextmanager
+def open_archive(fp, head):
+    """Yields (members, dropped) for a zip, a tar, or a gzipped single file,
+    and closes the archive on exit — the readers are good only inside the
+    block. A member is (name, declared size, stored mode, reader); the reader
+    returns (bytes, short), reading at most MAX_ARCHIVE_BYTES + 1 and
+    setting `short` when the archive held more than the declared size let it
+    read. The mode is reported, never applied: an executable member with no
+    extension is read as an unclassified member by the walk, which covers
+    it without trusting the archive's mode bits. `dropped` counts the
+    members that are not regular files (symlinks, devices, fifos —
+    directories aside), which are never unpacked. Raises one of
+    ARCHIVE_ERRORS when the file is none of the three."""
     if zipfile.is_zipfile(fp):
-        zf = zipfile.ZipFile(fp)
-        return [(i.filename, i.file_size, (lambda i=i: zf.read(i))) for i in zf.infolist()
-                if not i.is_dir() and (i.external_attr >> 16) & 0o170000 != 0o120000]
+        with zipfile.ZipFile(fp) as zf:
+            def read_zip(i):
+                # The declared size ends the read, so a central directory
+                # that understates it hides the rest: the read is short when
+                # the deflate stream did not finish, a stored member's two
+                # sizes disagree, a "zero-byte" member carries compressed
+                # data, or the CRC fails over what the declared size let
+                # through (a CRC lie beside the size lie).
+                with zf.open(i) as fh:
+                    try:
+                        data = fh.read(MAX_ARCHIVE_BYTES + 1)
+                    except zipfile.BadZipFile as e:
+                        if "CRC" not in str(e):
+                            raise
+                        return b"", True
+                    dec = getattr(fh, "_decompressor", None)
+                    short = ((dec is not None and not getattr(dec, "eof", True))
+                             or (i.compress_type == zipfile.ZIP_STORED and i.compress_size != i.file_size)
+                             or (i.file_size == 0 and i.compress_size > 2))
+                    return data, short
+            members, dropped = [], 0
+            for i in zf.infolist():
+                if i.is_dir():
+                    continue
+                if (i.external_attr >> 16) & 0o170000 == 0o120000:
+                    dropped += 1
+                    continue
+                members.append((i.filename, i.file_size, (i.external_attr >> 16) & 0o777, (lambda i=i: read_zip(i))))
+            yield members, dropped
+        return
     try:
         tf = tarfile.open(fp)
-        return [(m.name, m.size, (lambda m=m: tf.extractfile(m).read())) for m in tf.getmembers() if m.isfile()]
     except tarfile.ReadError:
-        if not is_gzip(fp):
+        if not head.startswith(GZIP_MAGIC):
             raise
+        tf = None
+    if tf is not None:
+        with tf:
+            members = [(m.name, m.size, m.mode, (lambda m=m: (tf.extractfile(m).read(MAX_ARCHIVE_BYTES + 1), False)))
+                       for m in tf.getmembers() if m.isfile()]
+            dropped = sum(1 for m in tf.getmembers() if not m.isfile() and not m.isdir())
+            yield members, dropped
+        return
     # A gzipped single file (notes.md.gz): one member named by the stem, its
     # size read from the gzip trailer, the read bounded by the cap either way.
     with open(fp, "rb") as fh:
         fh.seek(-4, os.SEEK_END)
         declared = int.from_bytes(fh.read(4), "little")
-    stem = os.path.basename(fp)[:-3] if fp.lower().endswith(".gz") else os.path.basename(fp) + ".out"
-    return [(stem, declared, lambda: gzip.open(fp).read(MAX_ARCHIVE_BYTES + 1))]
-
-
-def is_gzip(fp):
-    with open(fp, "rb") as fh:
-        return fh.read(2) == b"\x1f\x8b"
+    # Under a name that does not end in .gz the member takes the bare stem
+    # (payload.tgz -> payload), which the walk reads as an unclassified member.
+    stem = os.path.basename(fp)[:-3] if fp.lower().endswith(".gz") else os.path.splitext(os.path.basename(fp))[0]
+    def read_gz():
+        data = gzip.open(fp).read(MAX_ARCHIVE_BYTES + 1)
+        return data, len(data) > MAX_ARCHIVE_BYTES
+    yield [(stem, declared, 0o644, read_gz)], 0
 
 
 def safe_member(name):
@@ -677,36 +870,67 @@ def safe_member(name):
     return os.path.join(*parts)
 
 
-def scan_archive(fp, rel, depth, scan):
+def scan_archive(fp, rel, depth, head, scan):
     """Unpack one archive and walk it as part of the skill. Every way the
     unpack can be partial is a scan-skipped finding, so an archive never
-    hides what the scanner did not read."""
+    hides what the scanner did not read: the depth cap, an archive that will
+    not open, more members than the file cap, more declared bytes than the
+    size cap, a member that is not a regular file, a member whose path
+    escapes, two members on one path, and a member whose content does not
+    match its declared size. Findings under the archive carry it in their
+    `archive` key and name the member as <archive>/<member>."""
+    findings = scan.findings
     if depth >= MAX_ARCHIVE_DEPTH:
-        finding(scan.findings, SCAN_SKIPPED._replace(title=f"Archive inside an archive was not opened (depth cap {MAX_ARCHIVE_DEPTH}) — read it by hand"), rel, "")
+        skipped(findings, rel, f"Archive inside an archive was not opened (depth cap {MAX_ARCHIVE_DEPTH})")
         return
     try:
-        members = archive_members(fp)
-    except Exception as e:
-        finding(scan.findings, SCAN_SKIPPED._replace(title="Archive could not be opened, so nothing in it was checked — read it by hand"), rel, f"{e.__class__.__name__}: {str(e).splitlines()[0] if str(e) else e}")
-        return
-    total = sum(size for _, size, _ in members)
-    if total > MAX_ARCHIVE_BYTES:
-        finding(scan.findings, SCAN_SKIPPED._replace(title=f"Archive unpacks to {total:,} bytes, over the {MAX_ARCHIVE_BYTES:,}-byte cap, and was not opened — read it by hand"), rel, "")
-        return
-    with tempfile.TemporaryDirectory(prefix="security-scan-archive.") as td:
-        for name, _, read in members:
-            safe = safe_member(name)
-            if safe is None:
-                finding(scan.findings, SCAN_SKIPPED._replace(title="Archive member path escapes the archive and was not unpacked — read the archive by hand"), f"{rel}/{name}", "")
-                continue
-            dest = os.path.join(td, safe)
+        with open_archive(fp, head) as (members, dropped):
+            if len(members) > MAX_FILES_PER_SKILL:
+                skipped(findings, rel, f"Archive holds {len(members):,} members, over the {MAX_FILES_PER_SKILL}-member cap, and was not opened")
+                return
+            total = sum(size for _, size, _, _ in members)
+            if total > MAX_ARCHIVE_BYTES:
+                skipped(findings, rel, f"Archive unpacks to {total:,} bytes, over the {MAX_ARCHIVE_BYTES:,}-byte cap, and was not opened")
+                return
+            if dropped:
+                skipped(findings, rel, f"Archive members that are not regular files (symlinks, devices) were not unpacked: {dropped}", what="the archive")
+            # A finding on the archive itself names the archive as its file
+            # (a path that exists) and carries no `archive` key; from here on
+            # every finding is under a member and carries one.
+            for name, _, _, _ in members:
+                if safe_member(name) is None:
+                    skipped(findings, rel, "Archive member path escapes the archive and was not unpacked", name, what="the archive")
+            outer, findings.archive = findings.archive, rel
             try:
-                os.makedirs(os.path.dirname(dest), exist_ok=True)
-                with open(dest, "wb") as fh:
-                    fh.write(read())
-            except Exception as e:
-                finding(scan.findings, SCAN_ERROR, f"{rel}/{name}", f"{e.__class__.__name__}: {e}")
-        walk(td, rel + "/", depth + 1, scan)
+                with tempfile.TemporaryDirectory(prefix="security-scan-archive.") as td:
+                    written = set()
+                    for name, size, _, read in members:
+                        safe = safe_member(name)
+                        if safe is None:
+                            continue
+                        dest = os.path.join(td, safe)
+                        if dest in written:
+                            skipped(findings, f"{rel}/{safe}", "Archive member shares its path with an earlier member and was not unpacked; only the first was scanned, and an extractor may keep either", name)
+                            continue
+                        try:
+                            data, short = read()
+                            if len(data) > MAX_ARCHIVE_BYTES:
+                                skipped(findings, f"{rel}/{safe}", f"Archive member is over the {MAX_ARCHIVE_BYTES:,}-byte cap and was not unpacked")
+                                continue
+                            if short or len(data) != size:
+                                skipped(findings, f"{rel}/{safe}", f"Archive member content does not match its declared size ({size:,} declared, {len(data):,} read) and was not unpacked")
+                                continue
+                            os.makedirs(os.path.dirname(dest), exist_ok=True)
+                            with open(dest, "wb") as fh:
+                                fh.write(data)
+                            written.add(dest)
+                        except ARCHIVE_ERRORS as e:
+                            finding(findings, SCAN_ERROR, f"{rel}/{safe}", f"{e.__class__.__name__}: {e}")
+                    walk(td, rel + "/", depth + 1, scan)
+            finally:
+                findings.archive = outer
+    except ARCHIVE_ERRORS as e:
+        skipped(findings, rel, "Archive could not be opened, so nothing in it was checked", f"{e.__class__.__name__}: {str(e).splitlines()[0] if str(e) else e}")
 
 
 class Scan:
@@ -722,14 +946,24 @@ def scan_dir(path):
     scan = Scan()
     walk(path, "", 0, scan)
     if scan.capped:
-        finding(scan.findings, SCAN_SKIPPED._replace(title=f"{scan.capped} scannable file(s) past the {MAX_FILES_PER_SKILL}-file scan cap were not read — read them by hand. The cap bounds files scanned, not files walked"), ".", "")
+        skipped(scan.findings, ".", f"Scannable files past the {MAX_FILES_PER_SKILL}-file scan cap were not read: {scan.capped}. The cap bounds files scanned, not files walked", what="them")
     return scan.findings
 
 
 def walk(path, prefix, depth, scan):
+    """Classify and scan every file under `path`, one directory's worth of
+    the skill. `prefix` is what a finding's `file` opens with — "" for the
+    skill's own tree, "<archive>/" for an unpacked archive's — and `depth` is
+    the archive nesting (0 outside one). The call mutates `scan.n` and
+    `scan.capped`, shared across every archive the directory opens, so the
+    file cap is one budget for the skill and its bundles together."""
     findings = scan.findings
     for root, dirs, files in os.walk(path):
-        dirs[:] = [d for d in dirs if d not in (".git", "node_modules")]
+        if depth == 0:
+            # A real checkout's .git and node_modules are not the skill's.
+            # Inside an archive every path is the author's choice, so
+            # nothing is pruned there.
+            dirs[:] = [d for d in dirs if d not in (".git", "node_modules")]
         for fn in files:
             fp = os.path.join(root, fn)
             if os.path.islink(fp):
@@ -744,30 +978,21 @@ def walk(path, prefix, depth, scan):
                 finding(findings, BIN_BYTECODE, rel, fn)
             try:
                 with open(fp, "rb") as fh:
-                    head = fh.read(4)
+                    head = fh.read(HEAD_BYTES)
+                executable = bool(os.stat(fp).st_mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH))
             except OSError as e:
                 finding(findings, SCAN_ERROR, rel, str(e))
                 continue
-            if any(head.startswith(magic) for magic in BINARY_MAGIC):
-                finding(findings, BIN_COMPILED, rel, head.hex())
-                continue
-            is_archive_name = ext in ARCHIVE_EXT or fn.strip().lower().endswith(".tar.gz")
-            is_archive_magic = any(head.startswith(magic) for magic in ARCHIVE_MAGIC)
-            if is_archive_name or is_archive_magic:
-                if is_archive_magic and not is_archive_name:
-                    finding(findings, BIN_ARCHIVE, rel, head.hex())
-                scan_archive(fp, rel, depth, scan)
-                continue
-            if LOCK_FILE.match(fn.strip()):
-                continue
-            manifest = fn == "package.json"
-            if manifest:
-                is_md = False
-            elif ext in MD_EXT:
-                is_md = True
-            elif looks_like_script(fp, fn, ext):
-                is_md = False
-            else:
+            kind, hidden, evidence = classify(fn, ext, head, executable, depth)
+            if kind is BINARY:
+                finding(findings, BIN_COMPILED, rel, evidence)
+            elif kind is CONTAINER:
+                skipped(findings, rel, "Archive in a format the scanner does not open (xz, bz2, zstd, 7z, rar) and nothing in it was checked", evidence)
+            elif kind is ARCHIVE:
+                if hidden:
+                    finding(findings, BIN_ARCHIVE, rel, evidence)
+                scan_archive(fp, rel, depth, head, scan)
+            if not kind.reads:
                 continue
             # The cap is charged HERE, on the files this walk actually reads.
             # Charged before the classification it counted every file the walk
@@ -782,13 +1007,42 @@ def walk(path, prefix, depth, scan):
                     scan.capped += 1
                     continue
                 scan.n += 1
-            text = read_text(fp, rel, findings)
+            text = read_text(fp, rel, findings, report_binary=kind.binary_is == "skipped")
             if text is None:
+                # A member under a name the classifier declines: text draws
+                # both rule sets (below); a binary with no extension is
+                # reported here; a binary under a data extension (an image,
+                # a font) is the same boundary as outside an archive.
+                if kind is MEMBER and ext == "":
+                    skipped(findings, rel, "Archive member is binary, has no extension, and is not a kind the scanner reads, so it was not scanned")
                 continue
-            if manifest:
-                for key, cmd in manifest_hooks(text):
-                    finding(findings, MANIFEST_HOOK, rel, f"{key}: {cmd}")
-            scan_text(text, rel, is_md, findings)
+            READERS[kind](text, rel, findings)
+
+
+def scan_manifest(text, rel, findings):
+    for key, cmd in manifest_hooks(text):
+        finding(findings, MANIFEST_HOOK, rel, f"{key}: {cmd}")
+    scan_text(text, rel, False, findings)
+
+
+def scan_member(text, rel, findings):
+    """Inside an archive, a file the classifier declined: something the
+    author chose to ship under a name the walk would not read outside one,
+    so it draws the markdown rules and the script rules both."""
+    scan_text(text, rel, True, findings)
+    for rule in SCRIPT_RULES:
+        report_each(findings, rule, rel, text)
+
+
+# The dispatch: one reader per kind the walk opens. A kind added to the set
+# above without a row here is a KeyError on its first file, never a silent
+# skip.
+READERS = {
+    MANIFEST: scan_manifest,
+    MARKDOWN: lambda text, rel, findings: scan_text(text, rel, True, findings),
+    SCRIPT: lambda text, rel, findings: scan_text(text, rel, False, findings),
+    MEMBER: scan_member,
+}
 
 
 results = []
@@ -806,10 +1060,14 @@ with open(TARGETS) as f:
 results.sort(key=lambda s: ({"RISK": 0, "REVIEW": 1, "PASS": 2}[s["verdict"]], s["name"]))
 risk = [s for s in results if s["verdict"] == "RISK"]
 review = [s for s in results if s["verdict"] == "REVIEW"]
+# A target is incomplete when any part of it went unread: the two partial-scan
+# kinds are an axis of their own beside the verdict, which is what the third
+# threshold gates on.
+incomplete = [s for s in results if any(f["rule"] in (SCAN_SKIPPED.id, SCAN_ERROR.id) for f in s["findings"])]
 
 # --fail-on's gate: the one place the verdicts reach the exit code. Both output
 # paths exit through EXIT_CODE, so the summary and findings always print first.
-EXIT_CODE = 4 if (FAIL_ON == "risk" and risk) or (FAIL_ON == "review" and (risk or review)) else 0
+EXIT_CODE = 4 if (FAIL_ON == "risk" and risk) or (FAIL_ON == "review" and (risk or review)) or (FAIL_ON == "incomplete" and (risk or incomplete)) else 0
 
 if JSON_OUTPUT:
     print(json.dumps({"scanned": len(results), "risk": len(risk), "review": len(review),

