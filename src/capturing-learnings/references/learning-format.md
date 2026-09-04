@@ -1,6 +1,6 @@
 # Learning doc format
 
-Open this only when a Learning doc is being written or updated — `capturing-learnings` § Capture workflow steps 2-4, which is the only path that reaches one — adjudicating an ambiguous overlap, drafting or updating a Learning doc, or making the first capture in a repo. The retrieval protocol never opens it.
+Open this only when a Learning doc or an incident learning is being written or updated — `capturing-learnings` § Capture workflow steps 2-4, which is the only path that reaches one — adjudicating an ambiguous overlap, drafting or updating a doc, or making the first capture in a repo. The retrieval protocol never opens it.
 
 Learning docs live in `docs/solutions/<slug>.md` at the target repo's root.
 
@@ -56,6 +56,21 @@ date: 2026-07-03
 ## Fix
 ## Prevention
 ```
+
+## The incident learning
+
+The second document kind, same store, same filename rule, same frontmatter — `symptoms:` carries the alert text, the error strings, and the user-visible failure, because the next on-call's grep is the retrieval path, and a review only a reader can find is not in the store. `problem_type` takes the enum value nearest the failure. The body replaces the four sections above with six, in order.
+
+**Owed when** the incident was SEV1 or SEV2, a customer-facing outage past the project's stated threshold, data loss, a near miss that would have been one of those, or a novel failure mode. A resolved incident below every trigger is a Learning doc if it passes the gate, and nothing otherwise.
+
+- **Summary** — outcome first, in the register `writing-for-humans` gives an incident report: what failed, for whom, between which UTC times, and what was done.
+- **Timeline** — UTC, one entry per line, every entry cited to its evidence: source control, the tracker, docs, chat, observability, error tracking, or product analytics. Evidence before narrative; a gap in the evidence is named as a gap, never filled by reading the code and inferring what must have happened. Detection-to-resolution is stated apart from symptom-start-to-detection, because the two are improved by different work.
+- **Root cause** — one, established by `diagnosing-bugs`' falsifiable chain (the hypothesis, its prediction, the check that confirmed it), never by asking "why" five times; an unconfirmed cause is written as the leading hypothesis with what would confirm it.
+- **Contributing factors** — what made the root cause reach production or made it worse, kept apart from the cause so that fixing one is not mistaken for fixing the other.
+- **Impact** — a table: who, how many, for how long, what they could not do, and what data or money moved wrongly; "unknown" where it is unknown.
+- **Action items** — each one a ticket with an owner and a date, published through the repo's work-item path (`work-item-shape`'s shape; `to-bug` or `to-tasks` where the repo is wired), and cited here by ID. A bullet with no ticket is a wish, and the review is not done while one remains.
+
+**Blameless names owners.** Blameless means the review asks what let the failure through, never who; it does not mean no owner on an action item, no hard truth in the timeline, and no standard the incident showed was missing. A review that reads as everyone having done everything right is the theater this section exists to stop.
 
 ## Overlap adjudication
 
