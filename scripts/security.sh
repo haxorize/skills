@@ -85,9 +85,11 @@
 # no line) and counts the rest, --json carries every one.
 # The 2026-08-29 additions (hex blob, drop site, download-then-exec,
 # minified, npmrc, install hook, binary, remote instructions) follow the
-# pattern classes in the openhonest/honest-skills sweep skill (Apache-2.0,
-# swept at 2397865; ADR-0034 keeps the lineage), rewritten here; the same
-# day's second set (metadata endpoint, agent config, persistence, TLS off,
+# pattern classes in zcaceres/skills' investigate-repo skill (MIT, swept at
+# b7213839; ADR-0034 keeps the lineage — the openhonest/honest-skills
+# attribution this header carried until 2026-09-04 was wrong), rewritten
+# here; the same day's second set (metadata endpoint, agent config,
+# persistence, TLS off,
 # environment dump, homoglyph, bytecode) follows nvidia/skillspector and
 # DataDog/guarddog (both Apache-2.0; ADR-0075 records the round), rewritten
 # here with a homoglyph table of our own.
