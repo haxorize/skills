@@ -30,6 +30,9 @@ Two more principles shape the split:
 
 - **One attributable claim per commit.** A commit that changes a check and the code that check validates proves nothing — when the numbers move, nothing says which half moved them. The check change and the code change are separate commits.
 - **Every commit leaves the tree consistent.** Don't strand a rename from its references or a schema from its consumers mid-split; someone landing on any single commit should find a coherent tree. This shapes where the lines are drawn — it is not a mandate to run the suite once per commit.
+- **Reviewer groups are split lines.** Where `.github/CODEOWNERS` maps the touched paths to different owners, the commits — and on the PR path, the PRs — follow those groups, tests traveling with the code they validate; when a later part depends on a rename an earlier part makes, the earlier part carries a shim so each lands alone.
+
+**A dirty path this session never edited is not in the split.** It is another session's or the user's: name it by path and leave it out — the review receipt's stamp covering the tree does not make it this change's, and whether it stays or goes is the question `committing`'s pre-flight already put.
 
 Show the proposed split — which files, which message, in which order — and let the human adjust before anything is staged. **A change that resolves to one commit needs no split:** hand it to `committing`'s one-commit fast path and skip to step 4's closure.
 
