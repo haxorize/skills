@@ -20,7 +20,7 @@ A wizard is ephemeral by default — built for one run, saved to a scratch or `s
 Work out every manual step the human must take and every value captured along the way. Read the repo first — don't ask cold:
 
 - For setup: `.env`, `.env.example`, `.env.*`, `README`, `docker-compose*`, framework config, and CI workflow files (every secret/variable reference is a value the wizard must produce).
-- For a migration or transition: the current state, the target state, and the irreversible actions between them.
+- For a migration or transition: the current state, the target state, and the irreversible actions between them. A cutover's stages run in one order: the success line and the rollback trigger written first, before any window opens; the reversible preparations next (a DNS TTL lowered, a backup taken, a target warmed); go/no-go as a `confirm`; a fresh backup of current production immediately ahead of the cutover; the cutover itself as the `confirm_token` gate; the `watch` after. The source ladders these as T-7, T-1, T-0 — the order is the rule, the clock is illustrative.
 
 Design for the **fewest stages that still work**. Every stage is a place the human can lose the thread or stop, so merge stages that always happen together *and land on one task the human can hold at once*, and cut any stage capturing a value the wizard could read from the repo or derive itself. Two steps that merge into a stage the human has to re-read were two stages. A procedure written as eleven stages where six would do has five extra chances to be abandoned halfway.
 

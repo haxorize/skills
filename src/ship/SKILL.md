@@ -48,6 +48,8 @@ Stage, commit, push, close the ticket — each an outward act under `committing`
 
 **With an approver, a PR carries it** — open [references/pr-path.md](references/pr-path.md) and follow it, including on a re-entry that finds a PR already open. Never merge a PR the human hasn't seen.
 
+**Where the change deploys, the landing is not done at the push.** Open [references/after-landing.md](references/after-landing.md) for the post-deploy watch; its verdict is what lifts `committing`'s `UNVERIFIED: live path`.
+
 ## Notes
 
 - `implement` suggests this skill; it cannot invoke it (both are user-invoked). Work that never went through `implement` enters here only when it needs a split or a PR; otherwise `committing` alone lands it.
