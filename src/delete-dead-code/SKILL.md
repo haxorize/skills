@@ -24,14 +24,16 @@ Dead-code deletion is destructive and unforgiving of a wrong call. Say so and st
 
 Find dead-code candidates with the repo's own tooling — the detector that already knows this stack. A JS/TS repo has `knip` (its predecessors `ts-prune` and `depcheck` are maintenance-only and point at it); a Python repo has `vulture`; a Rust build warns on dead code; many languages have a linter that flags unused symbols. Use what the repo has rather than a fixed tool list, and read `package.json` scripts / the build config to find it. A detector's false positive you can name — an entry point, a plugin, a path alias it did not know about — is a tooling finding: report it (step 4) and fix it in the detector's config, committed on its own before the first deletion so the tree step 3 relies on stays clean, never an ignore line that hides the next real hit; a hit you cannot explain is not a false positive but Caution (step 2). Where no detector exists, fall back to grep: for each exported symbol, search the tree for references — grep finds direct references only; anything reached dynamically (a string-built import, reflection, a config-named handler) is Caution by default.
 
-List candidates, including two the detectors miss: the other arm of a feature flag pinned at one value in every environment, and a markdown file nothing links to, written by an agent in one commit and never edited by a person. Both tier Danger (step 2). Don't touch anything yet.
+Then run the detector a second time with test files and generation scripts removed from its entry points (`knip --production`; `vulture` over the source tree without the tests): a symbol reachable only from its own test or its generator is a third candidate the single pass misses, and its test goes with it. It tiers Caution, never Safe.
+
+List candidates, including two the detectors miss: the other arm of a feature flag pinned at one value in every environment — found by the flag's introduction age (`git log --diff-filter=A -S <name>`) and a use count of two or fewer — and a markdown file nothing links to, written by an agent in one commit and never edited by a person. Both tier Danger (step 2). Don't touch anything yet.
 
 ### 2. Tier by deletion risk
 
-Every candidate gets a tier before anything is removed — the tier decides the order and the caution:
+Every candidate gets a tier before anything is removed — the tier decides the order and the caution. The unit tiered is the dead responsibility, not its carrier: a file with one dead role beside an evidenced live one is tiered by the dead role alone, and the file stays.
 
 - **Safe** — unused local symbols, unreferenced private files, dependencies no source imports. Static analysis and a grep both come back empty; the suite, not the grep, is the arbiter (step 3).
-- **Caution** — anything a static tool can miss: dynamic imports, reflection, string-keyed dispatch, framework conventions that wire by filename — and anything the sweep cannot explain: code half-wired for work in flight, a symbol whose purpose you cannot state. Confirm by hand before touching; what stays unexplained stays Caution, surfaced and not deleted.
+- **Caution** — anything a static tool can miss: dynamic imports, reflection, string-keyed dispatch, framework conventions that wire by filename — and anything the sweep cannot explain: code half-wired for work in flight, a symbol whose purpose you cannot state. Confirm by hand before touching; what stays unexplained stays Caution, surfaced and not deleted. A test-only symbol is either an internal seam the design keeps (`codebase-design`) or dead code kept alive by a check that cannot fail — `audit-tests`' grade of that test decides which, and the sweep does not re-grade it.
 - **Danger** — public API, a published export, anything a consumer outside this repo could call — and the two candidates the detectors miss: a pinned flag's other arm, which whoever owns the flag can flip back, and an orphan doc, which a person may be reading from a bookmark. "Unused *in this repo*" is not "unused." Do not delete on the sweep's authority; surface it and let the user decide.
 
 ### 3. Delete one at a time, verified
@@ -48,7 +50,7 @@ After each tier's pass, re-run the detector: a deletion exposes the layer beneat
 
 ### 4. Report
 
-State what was removed, tier by tier; what was re-tiered when the suite caught it; every Danger candidate left in place for the user's call; and any tooling finding from step 1. The deletions are the change, and staging is not committing: landing them follows the normal `committing` discipline on the user's ask.
+State what was removed, tier by tier; what was re-tiered when the suite caught it; every Danger candidate left in place for the user's call; every doc, runbook, ADR, or router entry that still describes a removed item, listed as an orphaned record for its owner; and any tooling finding from step 1. The deletions are the change, and staging is not committing: landing them follows the normal `committing` discipline on the user's ask.
 
 ## Notes
 
