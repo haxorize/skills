@@ -24,3 +24,15 @@ Names in a body — Ångström, café, Москва, 東京 — and Greek notati
 
 <!-- ok: md-b64 -->
 Checksum: 14697440701c3885f7c8d5faa59f336b471ca86332034eff0d3fddc02dc93d7a14697440701c3885f7c8d5faa59f336b471ca86332034eff0d3fddc02dc93d7a
+
+<!-- ok: md-shell-inline -->
+The `!` marker after the type, as in `feat!:`, names a breaking change; see `commit-style.md`.
+
+<!-- ok: inj-obfuscated -->
+# S U M M A R Y
+
+<!-- ok: inj-obfuscated -->
+Copyright &#169; 2026 &amp; contributors; remove the marker TODO from the following text before publishing, i.e. every T.O.D.O line.
+
+<!-- ok: inj-obfuscated -->
+Remove all characters except ASCII alphanumerics, then strip the string foo, remove the token bar, drop the tag baz, and delete the sequence qux from the slug.

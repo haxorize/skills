@@ -33,6 +33,7 @@ Before materially editing anything in the first table, diff its upstream — mai
 | `offboard-engineer` (until 2026-08-30 `offboard-me`) | nitfolio/nirvajna-skills (clone `nitfolio-nirvajna-skills`) | inversion, SCAN → RANK → ASK loop, five evidence tags, seven-rung ladder, five-section register, eleven signals | MIT | ADR-0070 |
 | `scripts/security.sh` — hex blob, drop site, download-then-exec, minified line, `.npmrc`, install-time manifest hook, compiled binary, remote instructions | zcaceres/skills (clone `zcaceres-skills`) | `skills/investigate-repo/SKILL.md`'s pattern list; diff its patterns, not a skill body (attributed to openhonest/honest-skills until 2026-09-04 — ADR-0034's entry of that date) | MIT | ADR-0073 |
 | `scripts/security.sh` — `sh-imds`, `sh-agentcfg`, `sh-persist`, `sh-noverify`, `sh-envdump`, `uni-confusable`, `bin-bytecode` | nvidia/skillspector and DataDog/guarddog | their pattern classes; the homoglyph table is the scanner's own | Apache-2.0 | ADR-0075 |
+| `scripts/security.sh` — `inj-obfuscated` | nvidia/skillspector | its concealed-instruction class (spaced letters, a declared marker, entity encoding); the normalization is the scanner's own | Apache-2.0 | the 2026-09-04 round's closing record, once written; `~/code/lib/_rounds/2026-09-04/reconcile.md` batch 2 until then |
 
 The three nitfolio rows are written in local prose from one diffable upstream — ADR-0034 spells it by its clone directory, which is the form to grep there — and each keeps two formulations close to the upstream's wording — which is why the MIT attribution lives here and not only in the records.
 
@@ -47,3 +48,4 @@ The three nitfolio rows are written in local prose from one diffable upstream �
 | `receiving-review` | addyosmani/agent-skills | `doubt-driven-development`'s doubt-theater alarm, direction-flipped into the zero-accepted tripwire; attribution only | ADR-0029 |
 | `audit-skills`, `delete-dead-code` | an enterprise plugin repo, ECC-derived, mined once | not a tracked upstream | ADR-0062 |
 | `product-description` | the `steveruizok` gists | license NONE-STATED: ideas only, never their wording or templates | ADR-0065 |
+| `scripts/security.sh` — `md-shell-inline` | dbreunig/drskill | the observation that an invocation-time command runs before the body is read; the rule is the scanner's own, and `bin-archive` with the archive walk has no upstream at all | the 2026-09-04 round's closing record, once written; its `reconcile.md` batch 2 until then |

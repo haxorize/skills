@@ -72,6 +72,26 @@
 #     is stat'd and opened for a four-byte header read before the cap is
 #     charged, so the work of walking a directory is unbounded and only the
 #     text scanning is capped
+#   - an invocation-time shell command in markdown: a !`cmd` span or a ```!
+#     fence in a SKILL.md runs before the model reads the body, with no
+#     permission prompt. Reported as md-shell-inline (MEDIUM), and the command
+#     text is read by every script rule, so a curl piped to sh in one draws
+#     that rule's HIGH on the same line
+#   - an injection phrase concealed from the phrase rules: letters spaced out
+#     (i g n o r e), a declared marker spliced between letters ("remove the
+#     marker XYZ from the text", then igXYZnore), or HTML entity encoding
+#     (&#105;gnore). Each line is normalized and the phrase rules re-run over
+#     it; a hit the raw text did not already draw is inj-obfuscated (MEDIUM).
+#     Past three declared markers the scanner stops stripping and reports the
+#     count instead, so the cap fails closed
+#   - an archive — a .skill bundle, a zip (an Office document, a wheel or a
+#     jar included), a tar, a gzipped tar or a gzipped single file, by
+#     extension or by magic — is unpacked to a temporary directory and its
+#     members scanned as files of the skill, one level deep. A member that is itself
+#     an archive, an archive over 10 MB unpacked, a member whose path escapes
+#     the archive, or an archive that will not open is a scan-skipped finding,
+#     never PASS; an archive whose extension hides what it is (zip or gzip
+#     magic under another name) is bin-archive (MEDIUM)
 # What is a script: a file with a script extension (sh, bash, zsh, fish, ksh,
 # py, js/mjs/cjs/jsx, ts/mts/cts/tsx, rb, pl, php, lua, ps1/psm1, bat, cmd —
 # whitespace around the name ignored), a `#!` first line, an executable mode,
@@ -92,7 +112,12 @@
 # persistence, TLS off,
 # environment dump, homoglyph, bytecode) follows nvidia/skillspector and
 # DataDog/guarddog (both Apache-2.0; ADR-0075 records the round), rewritten
-# here with a homoglyph table of our own.
+# here with a homoglyph table of our own. The 2026-09-04 additions:
+# md-shell-inline follows dbreunig/drskill's observation (MIT), inj-obfuscated
+# follows nvidia/skillspector's concealment class (Apache-2.0), both written
+# here; the archive walk and bin-archive are the scanner's own. The round's
+# reconcile (~/code/lib/_rounds/2026-09-04/reconcile.md, batch 2) is the
+# record until its closing ADR lands.
 # Not read: a file that is neither markdown (.md, .markdown, .txt) nor
 # script-like as defined above (.html, .rst, .env, .csv, a data file) is not
 # opened at all; the injection-phrase rules run over markdown only, so a
@@ -192,12 +217,17 @@ export TARGETS_TSV JSON_OUTPUT FAIL_ON
 
 python3 <<'PYEOF'
 import base64
+import gzip
+import html
 import json
 import os
 import re
 import stat
 import sys
+import tarfile
+import tempfile
 import unicodedata
+import zipfile
 from collections import namedtuple
 
 JSON_OUTPUT = os.environ.get("JSON_OUTPUT", "false") == "true"
@@ -211,6 +241,18 @@ SCRIPT_NAMES = {"Makefile", "makefile", "GNUmakefile", "Dockerfile", "Justfile",
 # Config files are read as script text: a command inside one runs the same.
 CONFIG_EXT = {".json", ".toml", ".yaml", ".yml"}
 BYTECODE_EXT = {".pyc", ".pyo"}
+# An archive is unpacked and its members scanned as files of the skill. By
+# name: these extensions and `.tar.gz`. By magic: zip or gzip, whatever the
+# name — and a name that hides the magic is a finding of its own.
+# Office and package formats are zips under an honest name, so they are
+# opened, not flagged; their XML members are neither markdown nor script and
+# draw nothing, while a wheel or a jar can carry a script that does.
+ARCHIVE_EXT = {".skill", ".zip", ".tar", ".tgz", ".gz", ".docx", ".xlsx", ".pptx", ".xlam", ".odt", ".ods", ".odp",
+               ".jar", ".whl", ".egg", ".nupkg", ".vsix", ".crx", ".epub", ".apk"}
+ARCHIVE_MAGIC = (b"PK\x03\x04", b"\x1f\x8b")
+MAX_ARCHIVE_BYTES = 10_000_000  # unpacked, summed over the members' declared sizes
+MAX_ARCHIVE_DEPTH = 1           # an archive inside an archive is reported, never opened
+MAX_MARKERS = 3                 # declared concealment markers stripped per file; past it, a finding
 MAX_FILE_BYTES = 1_000_000
 MAX_FILES_PER_SKILL = 200
 MAX_LINES_PER_RULE_FILE = 5  # text output only: past this, one rule in one file prints "+N more"
@@ -338,6 +380,25 @@ B64_BLOB = R(r"[A-Za-z0-9+/]{120,}={0,2}")
 # A hex digest (sha512, blake2b) is base64-shaped and decodes to noise; it is
 # a checksum, not a payload.
 HEX_ONLY = R(r"^[0-9a-fA-F]+$")
+# An invocation-time command in markdown: the !`cmd` span, and the ```! fence.
+# The span's `!` must not itself sit after a backtick, so prose about the
+# `!` marker (`!` in a commit subject, then another span on the line) is not
+# a command.
+MD_SHELL_SPAN = r"(?<!`)!`([^`\n]+)`"
+MD_SHELL_FENCE = r"^[ \t]*```![^\n]*\n(.*?)^[ \t]*```"
+MD_SHELL = R(MD_SHELL_SPAN + "|" + MD_SHELL_FENCE, re.M | re.S)
+# Concealment the phrase rules cannot see through, undone per line before a
+# second pass: a run of single letters separated by one space, dot, hyphen or
+# underscore (i g n o r e, d o   n o t) is joined; a marker the text declares ("remove the
+# marker XYZ from the following text") is stripped wherever it appears; an
+# HTML entity is decoded. Newlines are kept, so a hit maps to its raw line.
+# A marker is quoted, or is not a plain lowercase word: "remove all
+# characters except ASCII" declares nothing, `remove the marker XYZ` does.
+MARKER_DECL = R(r"\b(remove|strip|delete|drop|ignore)\s+(the\s+|every\s+|all\s+)?(marker|token|tag|string|sequence|characters?)\s+([\"'`])?([^\s\"'`,.;:]{2,12})(?(4)[\"'`])", re.I)
+PLAIN_WORD = R(r"[a-z]+")
+# One separator kind per run, so `d.o n.o.t` joins into two words, not one.
+SPACED = R(r"(?<!\w)\w(?:([ ._-])\w)(?:\1\w)*(?!\w)")
+SPACER = R(r"[ ._-]")
 
 
 def finding(findings, rule, rel, snippet, line=None):
@@ -425,6 +486,43 @@ SCAN_ERROR = Rule("scan-error", "MEDIUM", None, "File could not be read, so noth
 BIN_BYTECODE = Rule("bin-bytecode", "MEDIUM", None, "Python bytecode shipped (a decoy source can sit beside compiled code); its content is classified like any other file's")
 BIN_COMPILED = Rule("bin-compiled", "HIGH", None, "Compiled binary present (ELF/Mach-O/PE magic)")
 MANIFEST_HOOK = Rule("manifest-hook", "HIGH", None, "Install-time script hook in a manifest (runs on npm install, before anyone reads it)")
+MD_SHELL_RULE = Rule("md-shell-inline", "MEDIUM", None, "Invocation-time shell command in markdown (runs before the body is read, with no permission prompt); its text was read by the script rules")
+INJ_OBFUSCATED = Rule("inj-obfuscated", "MEDIUM", None, "Injection phrase concealed by spacing, a declared marker, or entity encoding")
+BIN_ARCHIVE = Rule("bin-archive", "MEDIUM", None, "Archive whose extension hides it (zip or gzip magic under another name); its members were unpacked and scanned")
+
+
+def deobfuscate(text):
+    """(normalized text, declared-marker count). Line count is preserved: a
+    decoded entity that is itself a newline becomes a space."""
+    markers = [m.group(5) for m in MARKER_DECL.finditer(text) if m.group(4) or not PLAIN_WORD.fullmatch(m.group(5))]
+    strip = markers if len(markers) <= MAX_MARKERS else []  # past the cap: report, never guess
+    out = []
+    for line in text.split("\n"):
+        if "&" in line:
+            line = html.unescape(line).replace("\n", " ")
+        for mk in strip:
+            line = line.replace(mk, "")
+        line = SPACED.sub(lambda m: SPACER.sub("", m.group(0)), line)
+        out.append(line)
+    return "\n".join(out), len(markers)
+
+
+def scan_obfuscated(text, rel, findings):
+    """The phrase rules over the normalized text; only a hit the raw text did
+    not already draw on that line is reported, under inj-obfuscated."""
+    norm, nmark = deobfuscate(text)
+    if nmark > MAX_MARKERS:
+        first = next(m for m in MARKER_DECL.finditer(text) if m.group(4) or not PLAIN_WORD.fullmatch(m.group(5)))
+        finding(findings, INJ_OBFUSCATED._replace(title=f"{nmark} declared concealment markers, past the {MAX_MARKERS} the scanner strips — read it by hand"), rel, line_at(text, first), line_no(text, first.start()))
+    if norm == text:
+        return
+    raw_hits = {(rule.id, line_no(text, m.start())) for rule in MD_RULES for m in rule.rx.finditer(text)}
+    for rule in MD_RULES:
+        for m in rule.rx.finditer(norm):
+            ln = line_no(norm, m.start())
+            if (rule.id, ln) in raw_hits:
+                continue
+            finding(findings, INJ_OBFUSCATED._replace(title=f"{INJ_OBFUSCATED.title} (reads as: {rule.title})"), rel, line_at(norm, m), ln)
 
 
 def scan_confusables(text, rel, findings):
@@ -442,6 +540,17 @@ def scan_text(text, rel, is_md, findings):
         report_each(findings, MD_REMOTE_RULE, rel, text, lambda t, m: m.group(0))
         for rule in MD_RULES:
             report_each(findings, rule, rel, text, lambda t, m: t[max(0, m.start()-30):m.end()+30])
+        scan_obfuscated(text, rel, findings)
+        for m in MD_SHELL.finditer(text):
+            g = 1 if m.group(1) is not None else 2
+            cmd = m.group(g)
+            finding(findings, MD_SHELL_RULE, rel, cmd, line_no(text, m.start()))
+            # The command runs as a script would, so it is read as one; a hit
+            # is reported under the script rule's own id and severity, on
+            # the line of the command text it sits in.
+            for rule in SCRIPT_RULES:
+                for h in rule.rx.finditer(cmd):
+                    finding(findings, rule, rel, line_at(cmd, h), line_no(text, m.start(g) + h.start()))
         for m in HTML_COMMENT.finditer(text):
             body = m.group(1)
             if len(body) > 20 and IMPERATIVE.search(body):
@@ -532,17 +641,100 @@ def looks_like_script(fp, fn, ext):
         return False
 
 
+def archive_members(fp):
+    """[(name, declared size, bytes-reader)] for the regular files of a zip or
+    tar; raises when the file is neither."""
+    if zipfile.is_zipfile(fp):
+        zf = zipfile.ZipFile(fp)
+        return [(i.filename, i.file_size, (lambda i=i: zf.read(i))) for i in zf.infolist()
+                if not i.is_dir() and (i.external_attr >> 16) & 0o170000 != 0o120000]
+    try:
+        tf = tarfile.open(fp)
+        return [(m.name, m.size, (lambda m=m: tf.extractfile(m).read())) for m in tf.getmembers() if m.isfile()]
+    except tarfile.ReadError:
+        if not is_gzip(fp):
+            raise
+    # A gzipped single file (notes.md.gz): one member named by the stem, its
+    # size read from the gzip trailer, the read bounded by the cap either way.
+    with open(fp, "rb") as fh:
+        fh.seek(-4, os.SEEK_END)
+        declared = int.from_bytes(fh.read(4), "little")
+    stem = os.path.basename(fp)[:-3] if fp.lower().endswith(".gz") else os.path.basename(fp) + ".out"
+    return [(stem, declared, lambda: gzip.open(fp).read(MAX_ARCHIVE_BYTES + 1))]
+
+
+def is_gzip(fp):
+    with open(fp, "rb") as fh:
+        return fh.read(2) == b"\x1f\x8b"
+
+
+def safe_member(name):
+    """The member's path relative to the unpack root, or None when it would
+    land outside it (absolute, a drive, or a `..` component)."""
+    parts = [p for p in name.replace("\\", "/").split("/") if p not in ("", ".")]
+    if not parts or name.startswith(("/", "\\")) or ":" in parts[0] or ".." in parts:
+        return None
+    return os.path.join(*parts)
+
+
+def scan_archive(fp, rel, depth, scan):
+    """Unpack one archive and walk it as part of the skill. Every way the
+    unpack can be partial is a scan-skipped finding, so an archive never
+    hides what the scanner did not read."""
+    if depth >= MAX_ARCHIVE_DEPTH:
+        finding(scan.findings, SCAN_SKIPPED._replace(title=f"Archive inside an archive was not opened (depth cap {MAX_ARCHIVE_DEPTH}) — read it by hand"), rel, "")
+        return
+    try:
+        members = archive_members(fp)
+    except Exception as e:
+        finding(scan.findings, SCAN_SKIPPED._replace(title="Archive could not be opened, so nothing in it was checked — read it by hand"), rel, f"{e.__class__.__name__}: {str(e).splitlines()[0] if str(e) else e}")
+        return
+    total = sum(size for _, size, _ in members)
+    if total > MAX_ARCHIVE_BYTES:
+        finding(scan.findings, SCAN_SKIPPED._replace(title=f"Archive unpacks to {total:,} bytes, over the {MAX_ARCHIVE_BYTES:,}-byte cap, and was not opened — read it by hand"), rel, "")
+        return
+    with tempfile.TemporaryDirectory(prefix="security-scan-archive.") as td:
+        for name, _, read in members:
+            safe = safe_member(name)
+            if safe is None:
+                finding(scan.findings, SCAN_SKIPPED._replace(title="Archive member path escapes the archive and was not unpacked — read the archive by hand"), f"{rel}/{name}", "")
+                continue
+            dest = os.path.join(td, safe)
+            try:
+                os.makedirs(os.path.dirname(dest), exist_ok=True)
+                with open(dest, "wb") as fh:
+                    fh.write(read())
+            except Exception as e:
+                finding(scan.findings, SCAN_ERROR, f"{rel}/{name}", f"{e.__class__.__name__}: {e}")
+        walk(td, rel + "/", depth + 1, scan)
+
+
+class Scan:
+    """One directory's findings and the file-cap counters the walk shares
+    with every archive it opens."""
+    def __init__(self):
+        self.findings = Findings()
+        self.n = 0
+        self.capped = 0
+
+
 def scan_dir(path):
-    findings = Findings()
-    n = 0
-    capped = 0
+    scan = Scan()
+    walk(path, "", 0, scan)
+    if scan.capped:
+        finding(scan.findings, SCAN_SKIPPED._replace(title=f"{scan.capped} scannable file(s) past the {MAX_FILES_PER_SKILL}-file scan cap were not read — read them by hand. The cap bounds files scanned, not files walked"), ".", "")
+    return scan.findings
+
+
+def walk(path, prefix, depth, scan):
+    findings = scan.findings
     for root, dirs, files in os.walk(path):
         dirs[:] = [d for d in dirs if d not in (".git", "node_modules")]
         for fn in files:
             fp = os.path.join(root, fn)
             if os.path.islink(fp):
                 continue
-            rel = os.path.relpath(fp, path)
+            rel = prefix + os.path.relpath(fp, path)
             # Whitespace around the name is not part of the extension.
             ext = os.path.splitext(fn.strip())[1].lower()
             if ext in BYTECODE_EXT:
@@ -558,6 +750,13 @@ def scan_dir(path):
                 continue
             if any(head.startswith(magic) for magic in BINARY_MAGIC):
                 finding(findings, BIN_COMPILED, rel, head.hex())
+                continue
+            is_archive_name = ext in ARCHIVE_EXT or fn.strip().lower().endswith(".tar.gz")
+            is_archive_magic = any(head.startswith(magic) for magic in ARCHIVE_MAGIC)
+            if is_archive_name or is_archive_magic:
+                if is_archive_magic and not is_archive_name:
+                    finding(findings, BIN_ARCHIVE, rel, head.hex())
+                scan_archive(fp, rel, depth, scan)
                 continue
             if LOCK_FILE.match(fn.strip()):
                 continue
@@ -579,10 +778,10 @@ def scan_dir(path):
             # the padding rather than at them. The bytecode branch above states
             # the intent for its own class; it is the same intent here.
             if ext not in BYTECODE_EXT:
-                if n >= MAX_FILES_PER_SKILL:
-                    capped += 1
+                if scan.n >= MAX_FILES_PER_SKILL:
+                    scan.capped += 1
                     continue
-                n += 1
+                scan.n += 1
             text = read_text(fp, rel, findings)
             if text is None:
                 continue
@@ -590,9 +789,6 @@ def scan_dir(path):
                 for key, cmd in manifest_hooks(text):
                     finding(findings, MANIFEST_HOOK, rel, f"{key}: {cmd}")
             scan_text(text, rel, is_md, findings)
-    if capped:
-        finding(findings, SCAN_SKIPPED._replace(title=f"{capped} scannable file(s) past the {MAX_FILES_PER_SKILL}-file scan cap were not read — read them by hand. The cap bounds files scanned, not files walked"), ".", "")
-    return findings
 
 
 results = []
