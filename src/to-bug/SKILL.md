@@ -44,7 +44,7 @@ Look at the modules implicated by the actual behavior. Use canonical terms from 
 Pick the severity from conversation context. If unclear, prompt the user with the team's severity scale.
 
 - **ADO:** values are `1 - Critical` / `2 - High` / `3 - Medium` / `4 - Low`. Use the team's `## Severity definitions` section in CLAUDE.md if present; otherwise the ADO defaults.
-- **GitHub:** values come from CLAUDE.md's severity-labels block — a `## Bug severity labels` section (the canonical heading) or a `## Severity labels` section holding a `Scale:` line and a `Labels:` line. If no such section exists, run the bootstrap-on-ask flow in [references/bug-template-github.md](references/bug-template-github.md) `## Labels`.
+- **GitHub:** values come from CLAUDE.md's severity-labels block — a `## Bug severity labels` section (the canonical heading) or a `## Severity labels` section, either holding a `Scale:` line and a `Labels:` line. If no such section exists, run the bootstrap-on-ask flow in [references/bug-template-github.md](references/bug-template-github.md) `## Labels`.
 
 ### 5. Draft the bug
 

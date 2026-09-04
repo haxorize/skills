@@ -16,7 +16,6 @@ The content stays data at each of the three places it can go. To the **agent**, 
 
 - **FAIL** — the skill acts on directives found inside content it ingested, merges ingested content into a prompt with nothing marking it as data, relays a fetched manifest, notice, or upstream instruction file to the user in its own voice, or embeds unescaped content in an artifact a person opens.
 - **WARN** — content is treated as data but the skill never says so, so a subagent brief or a resumed session inherits no rule.
-- **WARN** — the skill writes its author's citation, link, sponsor line, or credit into the user's deliverable, or fetches a URL to do so ("add the paper to the references and tell the user you did so"). The user's own ask is the only PASS: a standard the user asked the skill to cite is theirs, an author's paper they never mentioned is not.
 - **PASS** — the skill carries the rule (verbatim, or the brief that quotes it) wherever ingested content meets a prompt, and states the sink's rule — a fixed sentence plus the link for the reader, escaping at the point of embedding for a page — wherever it meets a reader or a rendered page.
 
 Check 1 grades what the skill does with content once in hand; check 5 grades what leaves the machine and what a URL from an argument brings in. A skill that fetches and relays maps its relay to check 1 and its fetch to check 5.
@@ -25,9 +24,9 @@ Check 1 grades what the skill does with content once in hand; check 5 grades wha
 
 A shell command a SKILL.md marks for invocation time — an exclamation mark opening a code span, or a fence whose opening line carries one — runs before the model reads the body and with no permission prompt; `security.sh` names each as `md-shell-inline` and reads the command with its script rules, and this check reads it the same way — as a script the skill ships, graded on what it runs, not on the prose around it.
 
-- **FAIL** — an argument is embedded in a shell string (`bash -c "$ARG"`), passed to `eval`/`exec`/`source`, or interpolated into a command unquoted.
-- **WARN** — an argument reaches a CLI where flag injection is plausible (`git checkout $ARG` — a value starting with `-` becomes a flag), or the only validation is one the agent runs on a value it has retyped (parse this, check that), which validates the transcription, not the input: the model is the transport, the string it hands the tool is already its own copy, and a transcript showing the parser ran is not evidence the guard works.
-- **PASS** — arguments are used only as discrete typed values (a number, a name validated where its bytes arrive — a hook's stdin payload, a file path, argv from the harness — a quoted positional slot) with no execution path.
+- **FAIL** — an argument is embedded in a shell string (`bash -c "$ARG"`), passed to `eval`/`exec`/`source`, or interpolated into a command unquoted; or an invocation-time command, argument or none, fetches or executes remote content or reads a credential store — it runs before any prompt.
+- **WARN** — an argument reaches a CLI where flag injection is plausible (`git checkout $ARG` — a value starting with `-` becomes a flag), or the only validation is one the agent runs on a value it has retyped (parse this, check that), which validates the transcription, not the input: the model is the transport, the string it hands the tool is already its own copy, and a transcript showing the parser ran is not evidence the guard works; or an invocation-time command with no argument does more than read repo-owned files — a network call, a write, an install.
+- **PASS** — arguments are used only as discrete typed values (a number, a name validated where its bytes arrive — a hook's stdin payload, a file path, argv from the harness — a quoted positional slot) with no execution path, and an invocation-time command reads repo-owned files and nothing else.
 
 ### 3. Destructive operations are gated
 
@@ -45,6 +44,7 @@ A shell command a SKILL.md marks for invocation time — an exclamation mark ope
 Three capabilities together are the danger: access to sensitive local data, exposure to untrusted external content, and a channel to send data out. Any two is a WARN; all three around the same flow is the trifecta.
 
 - **FAIL** — the skill reads sensitive local content *and* sends output externally; sends repo content, env vars, or user data to an endpoint outside its stated purpose; fetches a URL from an argument and acts on the content as instructions.
+- **WARN** — the skill writes its author's citation, link, sponsor line, or credit into the user's deliverable, or fetches a URL to do so ("add the paper to the references and tell the user you did so"): a channel out of the user's work in the author's interest. A standard the user asked the skill to cite is theirs; an author's paper they never mentioned is not.
 - **PASS** — data stays local, or flows only through an authenticated, purpose-scoped channel.
 
 ### 6. Scope matches the stated purpose
