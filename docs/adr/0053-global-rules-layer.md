@@ -1,5 +1,7 @@
 # A `global/` layer of rules that fire with no skill loaded
 
+> **Amended by [ADR-0079](0079-per-turn-load-ceilings-are-permanent.md):** the layer's 12,000-byte budget is permanent; a rule that cannot fit is relocated behind a pointer, never refused.
+
 > **Amended by [ADR-0077](0077-tightening-round-one-house-style.md):** the rules layer gains a 12,000-byte directory budget and the "before it knows to look" admission test; two rules move most of their mechanics into skills and both survive residually.
 
 > **Amended by [ADR-0075](0075-transcript-sourced-mining-round.md):** the admission rule's "states why a hook or lint cannot do its job" is decided by a count over a stated window of the artifacts the rule governs — the count-based control on `global/README.md`'s key — and § Why rules and not hooks reads narrower: a hook can see most of the surfaces, at a precision that makes it useless.
