@@ -17,7 +17,7 @@ Omit `## Parent` if parentless.
 Two label categories apply:
 
 - **Type:** `bug` — applied unconditionally by `to-bug` on GitHub.
-- **Severity:** one of the labels declared in CLAUDE.md's severity-labels block — a `## Bug severity labels` section (the canonical heading; an existing `## Severity labels` section also counts) holding a `Scale:` line and a `Labels:` line.
+- **Severity:** one of the labels declared in CLAUDE.md's severity-labels block — a `## Bug severity labels` section (the canonical heading) or a `## Severity labels` section holding a `Scale:` line and a `Labels:` line.
 
 If no such section exists under either name, bootstrap on ask:
 
