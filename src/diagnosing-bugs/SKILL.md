@@ -153,7 +153,7 @@ Required before declaring done:
 Walk that question as a why-chain, **one level at a time** — a single-shot chain produces renames, not explanations ("because the test was missing" restates the bug; name what let the test go missing). Dead-end causes — "the author forgot", "more review was needed", "time pressure" — are constants, not causes: name the structural check, default, or incentive that failed. By the third to fifth why you should be at process, defaults, or incentives, and there are usually several distinct root causes, not one — the change that introduced the bad state and the check that let it persist or propagate are usually both.
 
 - A why-chain landing on an **architectural cause** or an **unrecorded decision** takes its branch in [references/hard-cases.md](references/hard-cases.md) § Post-mortem branches — the second ends in a gated offer to record the decision via `adr`.
-- Call the Skill tool with `capturing-learnings` if it isn't already live, and run its capture gate (verified, expensive, recurrence-plausible), saying the result either way in the gate's own words: where it holds, offer to capture the solved problem as a Learning doc, so the next diagnosis of this symptom starts where this one ended.
+- Call the Skill tool with `capturing-learnings` if it isn't already live, and run its capture gate (verified, expensive, recurrence-plausible; an incident remaps the first two), saying the result either way in the gate's own words: where it holds, offer a Learning doc, or an incident learning for a production incident, so the next diagnosis starts where this one ended.
 
 ## Boundary
 

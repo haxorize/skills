@@ -38,6 +38,14 @@ Landing:
 - Review required: yes
 - Defect policy: fix, don't file
 
+## Round
+
+Round:
+- Review cadence: per batch family — the families are enumerated in the round's reconcile file
+- Deferrals register: `~/code/lib/_rounds/<round-date>/reconcile.md` § Deferrals register
+
+`feedback-loops`' close reads the first line; `committing`'s fast path greps the second. Delete the block when no round is running.
+
 ## Commit order
 
 An ADR commits before the skill it shapes; the two land together when the record quotes the change's own output.

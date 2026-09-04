@@ -1,13 +1,13 @@
 ---
 name: ship
-description: Carry a green, reviewed change to a landed commit and, where the repo has a tracker, a closed ticket — proposes the commit split, then lands it through a PR where someone must approve it or directly where nobody must, with every claim checked by the committing discipline.
+description: Carry a green, reviewed change to a landed commit, a closed ticket where the repo has a tracker, and a post-deploy watch's verdict where the change deploys — proposes the commit split, then lands it through a PR where someone must approve it or directly where nobody must, with every claim checked by the committing discipline.
 disable-model-invocation: true
 requires: committing
 ---
 
 # Ship
 
-The last beat of the main flow: a change that is green and reviewed becomes commits, lands on the trunk — through a PR where someone must approve it, directly where nobody must — and, where the repo has a tracker, closes its ticket. This skill owns the **split** and the **PR path**; the claims rule, the closing comment, the blocked-action protocol, and every outward act are the `committing` discipline's. Call the Skill tool with `committing` now; if you don't see a `Launching skill: committing` line, stop and call it again before going on.
+The last beat of the main flow: a change that is green and reviewed becomes commits, lands on the trunk — through a PR where someone must approve it, directly where nobody must — and, where the repo has a tracker, closes its ticket. This skill owns the **split**, the **PR path**, and the **post-deploy watch**; the claims rule, the closing comment, the blocked-action protocol, and every outward act are the `committing` discipline's. Call the Skill tool with `committing` now; if you don't see a `Launching skill: committing` line, stop and call it again before going on.
 
 It does not build, refactor, or review. Arrive here with the work already green (`feedback-loops` ran) and already reviewed (`review-changes` ran, findings addressed). If either is missing, say so and stop — and "reviewed" is a claim `committing` checks against a report, not a word this skill takes on faith. On the PR path it stops at the open: approval is someone else's act, so the skill does not wait, poll, or nudge for it, and never merges a PR the human has not seen.
 
@@ -30,9 +30,9 @@ Two more principles shape the split:
 
 - **One attributable claim per commit.** A commit that changes a check and the code that check validates proves nothing — when the numbers move, nothing says which half moved them. The check change and the code change are separate commits.
 - **Every commit leaves the tree consistent.** Don't strand a rename from its references or a schema from its consumers mid-split; someone landing on any single commit should find a coherent tree. This shapes where the lines are drawn — it is not a mandate to run the suite once per commit.
-- **Reviewer groups are split lines.** Where `.github/CODEOWNERS` maps the touched paths to different owners, the commits — and on the PR path, the PRs — follow those groups, tests traveling with the code they validate; when a later part depends on a rename an earlier part makes, the earlier part carries a shim so each lands alone.
+- **Reviewer groups are split lines.** Where a CODEOWNERS file (at the repo root, in `.github/`, or in `docs/` — the three locations GitHub reads) maps the touched paths to different owners, the commits — and on the PR path, the PRs, each on its own branch and only the last carrying the closing keyword, per [references/pr-path.md](references/pr-path.md) — follow those groups, tests traveling with the code they validate. When a later part depends on a rename an earlier part makes, the earlier part carries a shim and the last part of the same split removes it: the intermediate commit is the named live reader `implement`'s compatibility rule requires, and a shim that outlives its split has none.
 
-**A dirty path this session never edited is not in the split.** It is another session's or the user's: name it by path and leave it out — the review receipt's stamp covering the tree does not make it this change's, and whether it stays or goes is the question `committing`'s pre-flight already put.
+**A dirty path this session never edited is `committing`'s pre-flight question** — asked before the review, never deselected at staging.
 
 Show the proposed split — which files, which message, in which order — and let the human adjust before anything is staged. **A change that resolves to one commit needs no split:** hand it to `committing`'s one-commit fast path and skip to step 4's closure.
 
@@ -48,7 +48,7 @@ Stage, commit, push, close the ticket — each an outward act under `committing`
 
 **With an approver, a PR carries it** — open [references/pr-path.md](references/pr-path.md) and follow it, including on a re-entry that finds a PR already open. Never merge a PR the human hasn't seen.
 
-**Where the change deploys, the landing is not done at the push.** Open [references/after-landing.md](references/after-landing.md) for the post-deploy watch; its verdict is what lifts `committing`'s `UNVERIFIED: live path`.
+**Where the change deploys, the landing is not done at the push.** Before the deploy, write three lines: the **success line** (what the deployed change does that the prior version did not), the **rollback trigger** (the observation that means roll back — written now, because a trigger decided after the deploy is decided under the pressure to keep it), and the **window** (how long the post-deploy watch runs and what traffic it must have seen; a window that closes before the change's path is exercised has watched nothing). Where the work item is an Operations item, read all three off its acceptance criteria — `work-item-shape`'s done conditions pin them there — rather than re-deriving them. Then capture the **baseline**: the measurements the post-deploy watch will take, taken against the prior version — status codes, error counts in the logs, failed-call counts, latency, the presence of the elements or endpoints the change touches — because a threshold with no baseline is a guess about normal. After the deploy, open [references/after-landing.md](references/after-landing.md) for the post-deploy watch, handing it the three lines and the baseline; its verdict is what lifts `committing`'s `UNVERIFIED: live path`.
 
 ## Notes
 

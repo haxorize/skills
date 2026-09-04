@@ -61,7 +61,7 @@ Then run **one rung per turn**, and stop. A rung is complete only when its crite
 | Rung | Done when |
 | --- | --- |
 | **Orientation — what the system is, its stack, its size** | You can name its purpose, stack, entry points, and repo type, each one cited |
-| **Architecture — the major modules and how they are organized** | Every top-level module is explained or explicitly listed as unexplored, and you can say how the pieces talk; `.github/CODEOWNERS`, where one exists, is read as a source for who owns which module |
+| **Architecture — the major modules and how they are organized** | Every top-level module is explained or explicitly listed as unexplored, you can say how the pieces talk, and you can say who owns each module where an owners file names one |
 | **Domain — the business concepts and why they exist** | Read the repo's `DOMAIN.md` and `docs/adr/` first where they exist, and take the terms from there rather than re-deriving them; each core term has a one-line meaning and the file it lives in, and you can state how the entities relate. Where the repo has neither, say so — a repo with no glossary is a finding for the map |
 | **Key flows — one or two paths end to end** | At least one flow runs entry point to exit with no hand-waving, each waypoint carrying a real `file:line` |
 | **Blast radius — what depends on what** | For each area covered you can answer "what breaks if I change this", and external dependencies are named with their failure behavior |
@@ -69,6 +69,8 @@ Then run **one rung per turn**, and stop. A rung is complete only when its crite
 | **Safe first change — where a newcomer can start** | You can point at a specific low-risk area and give the exact commands to make and verify a change there |
 
 Pick the next rung from what is just beyond what the human now knows and reachable from it — building on the rung just finished, serving the goal they stated, learnable in one turn. The cleverest corner of the repo is rarely it.
+
+A CODEOWNERS file — at the repo root, in `.github/`, or in `docs/`, the three locations GitHub reads — is a source for who owns which module, read on the Architecture rung where one exists; where none does, ownership is an **[unknown]** like any other, never a rung left open.
 
 Prefer reading a few of the right files deeply over skimming everything. A session that reads widely and shallowly ends out of context holding a vague model, which is the thing this skill exists to prevent.
 

@@ -1,6 +1,6 @@
 ---
 name: feedback-loops
-description: The mechanical pass that closes the loop after a slice's behaviors are built and refactored. Use when finishing a change, after the last test passes, when a red check has to be classified in-scope or out-of-scope before anything is touched, when asked to clear the lint, typecheck, format, or test warnings, or when another skill needs to run lint, format, typecheck, migrations, and doc updates before declaring work done.
+description: The mechanical pass that closes the loop after a slice's behaviors are built and refactored. Use when finishing a change, after the last test passes, when a red check has to be classified in-scope or out-of-scope before anything is touched, when asked to clear the lint, typecheck, format, or test warnings, or when another skill needs to run lint, format, typecheck, migrations, and doc updates before declaring work done, or to stamp the tree at a close.
 requires: diagnosing-bugs
 ---
 
@@ -53,9 +53,9 @@ Regeneration steps are also where out-of-scope failures are *born*: a generator 
 
 Start from what the diff removed: grep `README.md`, `CLAUDE.md`, `DOMAIN.md`, and any docs the project names for each deleted name before reading for anything else (a renamed name is `discoverable-code`'s search-to-zero check, not this step's) — a doc that still names a thing that is gone is the drift a read-through misses, because nothing on the page looks wrong. Then check whether the change affects anything else documented there — new or changed commands, structure, conventions, or domain terms. Update what drifted. This step only fixes docs the change has already made stale: recording a *decision* is `adr`'s, and capturing or sharpening a *domain term* is `domain-modeling`'s. Close with one pass across the whole touched set, for the names, terms, and cross-references that now disagree with each other; whether an edit landed in the right section, or repeats what the page said two paragraphs up, is a register read this pass does not make.
 
-## Close
+### 4. Close once, at the outermost invocation: state the tree, then name the next act
 
-State the tree and stop: the `Measured-tree:` line the global rule `~/.claude/rules/evidence.md` defines and the count of dirty paths, then the next act — in a repo running from a round plan, "commit this batch", the batch's completion signal. Name `/review-changes` only when that plan's §0 `Review cadence:` line says this batch closes a batch family; a close that names a review the cadence does not call for re-asks a preference the plan already settled.
+When another skill called this one mid-loop, that skill's close is the close; this step runs once, when `feedback-loops` is the last thing running. State the tree, then name the next act: the `Measured-tree:` line the global rule `~/.claude/rules/evidence.md` defines and the count of dirty paths, then the next act. In a repo whose `Landing:` says `Review required: yes` the next act is `/review-changes`, unless the repo's `CLAUDE.md` `## Round` block sets a `Review cadence:` under which this close does not end a batch family — then it is "commit this batch", the batch's completion signal, and naming a review the cadence does not call for re-asks a preference the block already settled. In every other repo the next act is the commit `committing` lands.
 
 ## Boundary
 

@@ -15,11 +15,11 @@ Classify each edit before writing it. The consumer's side decides, not the autho
 | Adding a key to a machine-shaped output | Changing an error's shape or code, or what a status means |
 | Documenting behavior that already held | Adding a required input; changing a default; changing ordering a consumer sorts on |
 
-Hyrum's law sits under the table: with enough consumers, every observable behavior is depended on, whether documented or not. "Undocumented" is a weaker guess about consumers, not a license.
+Hyrum's law sits under the table: with enough consumers, every observable behavior is depended on, whether documented or not. "Undocumented" is a weaker guess about consumers, not a license. An edit the table does not place — a latency or throughput change, a rate limit, a retry or timeout default, a log line or metric name a consumer alerts on — is breaking until a consumer count says otherwise.
 
 ## Zero consumers licenses the break
 
-Where the consumer count is zero — pre-production, a contract nothing has shipped against, an internal seam with no caller outside the change — make the break outright: remove the shim, the fallback, the dual-write path, the alias; leave one canonical contract. A compatibility layer added to shrink a diff nobody is on the other side of is a second interface to maintain. The one guard that stays: zero consumers licenses breaking a contract, never destroying confirmed production data.
+Where the consumer count is zero — pre-production, a contract nothing has shipped against, an internal seam with no caller outside the change — make the break outright, in the same slice — `implement`'s compatibility rule is the one that removes the old path: remove the shim, the fallback, the dual-write path, the alias; leave one canonical contract. A compatibility layer added to shrink a diff nobody is on the other side of is a second interface to maintain. The one guard that stays: zero consumers licenses breaking a contract, never destroying confirmed production data.
 
 ## Deprecating
 

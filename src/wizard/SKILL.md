@@ -20,7 +20,13 @@ A wizard is ephemeral by default — built for one run, saved to a scratch or `s
 Work out every manual step the human must take and every value captured along the way. Read the repo first — don't ask cold:
 
 - For setup: `.env`, `.env.example`, `.env.*`, `README`, `docker-compose*`, framework config, and CI workflow files (every secret/variable reference is a value the wizard must produce).
-- For a migration or transition: the current state, the target state, and the irreversible actions between them. A cutover's stages run in one order: the success line and the rollback trigger written first, before any window opens; the reversible preparations next (a DNS TTL lowered, a backup taken, a target warmed); go/no-go as a `confirm`; a fresh backup of current production immediately ahead of the cutover; the cutover itself as the `confirm_token` gate; the `watch` after. The source ladders these as T-7, T-1, T-0 — the order is the rule, the clock is illustrative.
+- For a migration or transition: the current state, the target state, and the irreversible actions between them. A cutover's stages run in one order — the order is the rule; a clock laid over it (T-7, T-1, T-0) is illustrative:
+  1. The success line and the rollback trigger, carried in from `ship` step 4, which wrote them before the window opened — the wizard repeats them, never rewrites them.
+  2. The reversible preparations: a DNS TTL lowered, a backup taken, a target warmed.
+  3. Go/no-go as a `confirm`.
+  4. A fresh backup of current production, immediately ahead of the cutover.
+  5. The cutover itself as the `confirm_token` gate.
+  6. `watch` — the template's helper, printing the copy-paste command the human follows the cutover with. The post-deploy watch's verdict is `ship`'s, from its after-landing reference, never the wizard's.
 
 Design for the **fewest stages that still work**. Every stage is a place the human can lose the thread or stop, so merge stages that always happen together *and land on one task the human can hold at once*, and cut any stage capturing a value the wizard could read from the repo or derive itself. Two steps that merge into a stage the human has to re-read were two stages. A procedure written as eleven stages where six would do has five extra chances to be abandoned halfway.
 
