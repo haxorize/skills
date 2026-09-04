@@ -1,0 +1,11 @@
+# A negative result, and what makes it a finding
+
+Opened only when a claim about to be written rests on a check that found nothing or never ran — "not found", "no callers", "nothing uses it", a search that came back empty, a command that failed before it measured. A claim whose check returned a hit never reads this file. The verdict is the global evidence rule's (`~/.claude/rules/evidence.md`, "An empty or failed check is not a clean result"); this file is the procedure that earns it.
+
+1. **Name the command and the scope.** A negative is written with the command that produced it and the root, pattern, and window it searched — `grep -rn 'fooBar(' src/ packages/` → 0 — never the bare word. A scope the reader cannot re-run is a negative the reader cannot check.
+2. **Show the search can find.** Before an empty result stands as absence, the same command, in this session, runs against a pattern you know is present and returns that hit. A grep that has found nothing today has not shown it can find anything: a wrong root, a fence-stripped body, a case flag, and an alias all return empty and look identical to absence.
+3. **Name the step not run.** A generalization drawn from a negative — "so the feature is unused", "so it is safe to delete" — names the check it skipped: the dynamic reference, the second search root, the runtime path a grep cannot see. The generalization is a hypothesis until that step runs.
+4. **An empty search does not refute someone else's claim.** A citation not found means never verified, not false. The claim is overturned by an attempt under the conditions it names — the ref, the version, the environment — and a miss under other conditions is reported as exactly that.
+5. **A check that never ran gets its own line, marked `UNVERIFIABLE`.** Auth, network, a missing tool, a sandbox refusal: the line names what would run it — the credential, the host, the binary — and never the clean outcome the check was looking for. The marker is the global rule's; the failure this step guards is a negative read as a pass.
+
+At the commit, a message or report that carries a negative carries steps 1 and 2 inline — command, scope, and the known-hit control — and a separate `UNVERIFIABLE` line for step 5. It is the claims table's "blocked by X" and "any count" rows applied to a zero.

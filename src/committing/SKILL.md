@@ -45,6 +45,8 @@ Every assertion written into a commit message, closing comment, PR body, or end-
 
 **A claim you cannot check does not get written.** Drop it, or write the weaker claim the evidence supports. Evidence you cannot obtain, a capture that never landed, a system you cannot reach, gets its own line marked `UNVERIFIABLE`, named as the global evidence rule in `~/.claude/rules/` requires; it never launders into a pass.
 
+A negative — "not found", "no callers", a search that came back empty — is written as a finding only through [references/negative-results.md](references/negative-results.md): the command and scope inline, and the same command shown finding a known hit first.
+
 The pressure is predictable: the work is at its end, the change is green, the summary reads plausibly. Plausible is not checked.
 
 ## The closing comment
