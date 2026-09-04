@@ -990,6 +990,32 @@ isolated_quiet_case "landing-review-no" 's/^- Review required: yes$/- Review req
 isolated_case "oversize-reference" 's/\z/"\n" . ("padding that carries this reference past the loaded-file bound. " x 260) . "\n"/e' \
   "src/clean-skill/references/note.md" \
   "FAIL: src/clean-skill/references/note.md is "
+
+# A global rule's absolute pointer into src/ (the ADR-0079 relocation form),
+# resolved by no other check: check_section_pointers reads only `§` lines and
+# check_reference_links only the `](…)` form. Firing: a pointer at a file that
+# is not there. Quiet: the same form at a file that is — the check must accept
+# the shape, not just reject every absolute path.
+isolated_case "rule-pointer-missing" 's/\z/\nProcedure: `~\/.claude\/skills\/clean-skill\/references\/gone.md`.\n/' \
+  "global/rules/clean-rule.md" \
+  "points at ~/.claude/skills/clean-skill/references/gone.md but src/clean-skill/references/gone.md does not exist"
+isolated_quiet_case "rule-pointer-resolves" 's/\z/\nProcedure: `~\/.claude\/skills\/clean-skill\/references\/note.md`.\n/' \
+  "global/rules/clean-rule.md" \
+  "points at ~/.claude/skills/"
+# The catalog ceiling (ADR-0079): the SUM of the model-invoked description
+# lines — the clean root has two (ledger-legend and which-skill are user-invoked
+# and do not load). They total under 1 KB and the per-file cap is 1,024 chars,
+# so no root can cross 13,200 without check_description_limits also FAILing —
+# the exit status here is 1 for that reason, and the row grades only that the
+# WARN line prints. The unit is pinned by the figure in the message: 2 lines ×
+# (13 bytes of `description: ` + 6,600 of value + newline) = 13,228, which a
+# value-only sum (13,200) would not exceed.
+if isolated_run "catalog-ceiling" 's/^(description: )(.*)$/$1 . $2 . ("x" x (6600 - length $2))/gme' "src/clean-skill/SKILL.md"; then
+  perl -0pi -e 's/^(description: )(.*)$/$1 . $2 . ("x" x (6600 - length $2))/gme' \
+    "$isolated_parent/catalog-ceiling/src/near-cap/SKILL.md" 2>/dev/null || selftest_skip "the catalog-ceiling padding matched nothing in near-cap — that row was not exercised."
+  isolated_out=$(LINT_ROOT="$isolated_parent/catalog-ceiling" bash scripts/lint-skills.sh 2>&1)
+  expect_in "$isolated_out" "the catalog ceiling WARN did not print in the isolated 'catalog-ceiling' root" "WARN: the model-invoked description lines total 13228 bytes, over the 13,200-byte ceiling"
+fi
 fi
 
 # ---------------------------------------------------------------------------

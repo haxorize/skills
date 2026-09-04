@@ -381,6 +381,10 @@
 #                              vocabulary carries all of it
 #   Pass 4 — the other trees, each read once:
 #     check_rules_bytes        global/rules/ totals under 12,000 bytes
+#     check_catalog_bytes      model-invoked description: lines total under
+#                              13,200 bytes (ADR-0079; a WARN)
+#     check_rule_pointers      every ~/.claude/skills/<owner>/<path> pointer in
+#                              a rule resolves under src/
 #     check_global_rule        Depends: resolves, and each dependant cites back
 #     check_hook_selftest      every hook has an executable selftest
 #     check_script_selftest    every script, and every git hook, has an
@@ -2173,13 +2177,57 @@ check_rules_bytes() {
     bytes=$((bytes + one))
   done
   if [ "$bytes" -gt 12000 ]; then
-    say_fail "global/rules/ totals $bytes bytes, over the 12,000-byte budget for the always-loaded layer — cut a rule, move one behind a skill that opens it, or make the case for a new ceiling in an ADR amendment; every byte here is paid on every turn of every session"
+    say_fail "global/rules/ totals $bytes bytes, over the 12,000-byte budget for the always-loaded layer — cut a rule, or move its procedure behind a reference the depending skill opens and leave a one-line verdict global (ADR-0079: the cap is permanent and a rule that cannot fit is relocated, never refused); every byte here is paid on every turn of every session"
   fi
 }
 check_rules_bytes
 
+# (see header) The other per-turn load: the `description:` line of every
+# model-invoked skill is in the catalog Claude Code loads on every turn, so
+# the SUM over src/*/SKILL.md is the figure, not any one file's (that is
+# check_description_limits' 1,024-char bound). ADR-0079 fixes the ceiling at
+# 13,200 bytes — the 2026-09-04 sum, 13,132, rounded up — and rules it a WARN
+# where check_rules_bytes above is a FAIL: the ceiling was set as the day's
+# sum rounded up, not a budget argued from load, so it tightens by amendment
+# to ADR-0079 rather than blocking a description on its first overrun.
+# The measured span is the whole `description:` line, key and value and
+# newline, which is what the 13,132 figure counted; a value-only reading
+# would report 308 bytes of headroom that do not exist.
+check_catalog_bytes() {
+  local f skill bytes one
+  bytes=0
+  for f in src/*/SKILL.md; do
+    [ -f "$f" ] || continue
+    skill=$(basename "$(dirname "$f")")
+    name_is_user_invoked "$skill" && continue
+    one=$(grep -m1 -E '^description:' "$f" | wc -c | tr -d ' ')
+    bytes=$((bytes + one))
+  done
+  if [ "$bytes" -gt 13200 ]; then
+    echo "WARN: the model-invoked description lines total $bytes bytes, over the 13,200-byte ceiling ADR-0079 fixed for the catalog loaded on every turn — trim the description that grew, or trim others to pay for it; the ceiling does not move"
+  fi
+}
+check_catalog_bytes
+
+# (see header) A global rule's relocated procedure is reached by an absolute
+# `~/.claude/skills/<owner>/<path>` pointer — the form ADR-0079 makes the
+# standing remedy for a rule that will not fit — and nothing else resolved it:
+# check_section_pointers reads only lines carrying `§`, check_reference_links
+# reads the `](…)` form. A rename under src/ left the always-loaded layer
+# pointing at a file that does not exist with every check green.
+check_rule_pointers() {
+  local f=$1 ptrs ptr target
+  ptrs=$(grep -oE '~/\.claude/skills/[A-Za-z0-9_.-]+/[A-Za-z0-9_./-]+' "$f" | sort -u || true)
+  [ -n "$ptrs" ] || return 0
+  while IFS= read -r ptr; do
+    target="src/$(printf '%s' "$ptr" | sed 's|^~/\.claude/skills/||')"
+    [ -f "$target" ] || say_fail "$f points at $ptr but $target does not exist — the always-loaded layer names a file no session can open; fix the path, or move the file back"
+  done <<<"$ptrs"
+}
+
 for f in global/rules/*.md; do
   check_global_rule "$f"
+  check_rule_pointers "$f"
 done
 
 # Every hook has a selftest (global/README.md § Hooks: "Each hook has a
