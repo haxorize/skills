@@ -13,7 +13,7 @@ This is the bare judgment. Orchestrators layer on top and choose which documents
 
 ## Extract the claims
 
-Go through the prose and write down every assertion that could be false. Include the ones carried by example code, by a table, and by a heading. Exclude what makes no factual claim about anything outside the document — intent, rationale, and register have nothing to check, and a document made only of those is reported as having no claims rather than passed.
+Go through the prose and write down every assertion that could be false. Include the ones carried by example code, by a table, by a heading, and by a diagram — every node and edge names a component or a call that exists or does not. Exclude what makes no factual claim about anything outside the document — intent, rationale, and register have nothing to check, and a document made only of those is reported as having no claims rather than passed.
 
 ## Judge each claim against what it answers to
 
@@ -31,8 +31,9 @@ Go through the prose and write down every assertion that could be false. Include
 | **FAIL** | The code, the running product, or the source contradicts the claim |
 | **UNSUPPORTED** | Matches what it answers to, but nothing protects it — no test, no observed run, or no source passage behind it |
 | **STALE** | Refers to something removed or renamed — or rests on a source whose currency has lapsed: an evaluation-ledger row past its Expires date, where the source is still there and no longer stands for what it did when it was read |
+| **CONTRADICTS** | Two instructions in force at once disagree — each is a claim about what the agent does, and the pair is reported with both lines quoted, for the user to settle; the checker never picks one |
 
-Every claim gets exactly one. **STALE** carries the whole "was true, is not now" class, expiry included; the fix for an expired row is a `check` that re-reads its source, not a rewrite of the prose. An **UNSUPPORTED** verdict is a missing protection — a missing test, or a behavior claim nobody has watched hold — reported as a candidate task rather than filed as a doc bug: the prose is fine, the protection is absent.
+Every claim gets exactly one, and a **CONTRADICTS** pair counts as one finding over two claims. **STALE** carries the whole "was true, is not now" class, expiry included; the fix for an expired row is a `check` that re-reads its source, not a rewrite of the prose. An **UNSUPPORTED** verdict is a missing protection — a missing test, or a behavior claim nobody has watched hold — reported as a candidate task rather than filed as a doc bug: the prose is fine, the protection is absent.
 
 ## Derived documents answer to their sources
 
