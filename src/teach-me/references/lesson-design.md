@@ -6,7 +6,7 @@ The visual and structural system for lessons and cheat sheets. Every lesson in a
 
 - When the workspace earns its stylesheet (first lesson), derive a compact token system: palette, display + body type pairing, spacing scale, and one signature element. Record the tokens as CSS custom properties in the shared stylesheet.
 - Source the identity from the topic's own world — its materials, instruments, and vernacular. A health-insurance topic and a synthesizer topic should not look alike.
-- Refuse the generated-page clusters `prototype`'s [ui.md](../../prototype/references/ui.md) § Defaults to refuse names — that list has one home. Recognize them as defaults, then choose deliberately.
+- Refuse the generated-page clusters `~/.claude/skills/prototype/references/ui.md` § Defaults to refuse names — that list has one home; open it when you are about to pick a lesson page's palette or typeface. Recognize them as defaults, then choose deliberately.
 - Spend boldness in exactly one place — the signature element. Keep everything around it quiet and disciplined.
 
 ## Typography and layout

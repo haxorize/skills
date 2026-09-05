@@ -38,7 +38,7 @@ See [references/ado-hierarchy.md](references/ado-hierarchy.md) for the snapshot-
 
 ### 3. Explore the codebase
 
-If not already explored in the conversation, look at the touched modules. Use canonical terms from `DOMAIN.md` and respect existing ADRs in `docs/adr/`. Where a prototype answered this story's question, read its `notes.md` (`prototype/*/notes.md`) — the answer, never the throwaway code.
+If not already explored in the conversation, look at the touched modules. Use canonical terms from `DOMAIN.md` and respect existing ADRs in `docs/adr/`. Where a prototype answered this story's question, read its `notes.md` — the answer, never the throwaway code. `prototype` leaves it next to the prototype code on a `prototype/<name>` branch, not in a `prototype/` directory, so find it with `git log --all --name-only --format= -- '*notes.md'` and read it at that branch. When the search is empty, the answer went straight into an ADR or `DOMAIN.md` because the user was around, or the work item carries the pointer `prototype` left to the branch; absent all three, no prototype answered this story.
 
 ### 4. Sketch major modules
 

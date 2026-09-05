@@ -62,7 +62,7 @@ Each slice is one Task. Prefer many thin Tasks over few thick ones.
 
 **Admission test:** publish only Tasks whose slice you can state precisely *now* (blocked-but-sharp is fine); scope that hasn't sharpened stays as prose in the parent Story until it graduates — never a placeholder Task.
 
-**Wide refactors slice by expand–contract, not tracer bullets.** Watch for a wide refactor hiding in the Story — one mechanical change whose blast radius fans across the codebase, where a single edit breaks every call site at once so no slice can land green. Sequence it per [references/expand-contract.md](references/expand-contract.md).
+**Wide refactors slice by expand–contract, not tracer bullets.** Watch for a wide refactor hiding in the Story — one mechanical change whose blast radius fans across the codebase, where a single edit breaks every call site at once so no slice can land green — or a data migration, a schema change plus a batched row migration. Sequence it per [references/expand-contract.md](references/expand-contract.md).
 
 **Tests belong in the same Task as the behavior they verify.** Never file a test as its own Task — that is a horizontal cut, not a vertical slice. Each Task must be independently handable to `tdd`. If writing a Task's tests would require another Task's implementation to exist first, merge them into one Task.
 
@@ -99,7 +99,7 @@ For each Task, use the appropriate template:
 - GitHub: [references/task-template-github.md](references/task-template-github.md)
 - ADO: [references/task-template-ado.md](references/task-template-ado.md)
 
-- **GitHub:** `gh issue create --title "..." --body-file <draft>` with default labels from CLAUDE.md. Reference the parent via template `Parent: #N` line. **Before creating the first Task in a publishing batch,** run the label precheck in [references/publishing.md](references/publishing.md); then create the first Task alone, open it as the tracker renders it, and only then create the rest. When a parent Story was resolved, add each new issue as a native sub-issue of it after create — see [references/github-sub-issues.md](references/github-sub-issues.md).
+- **GitHub:** `gh issue create --title "..." --body-file <draft>` with default labels from CLAUDE.md. Reference the parent via template `Parent: #N` line. **Before creating the first Task in a publishing batch,** run the label precheck in [references/publishing.md](references/publishing.md), and publish the first Task alone per its `## First item of a batch alone`. When a parent Story was resolved, add each new issue as a native sub-issue of it after create — see [references/github-sub-issues.md](references/github-sub-issues.md).
 - **ADO:** publish with the create call in [references/task-template-ado.md](references/task-template-ado.md), with project / area path / iteration / state from CLAUDE.md. Then, per created Task:
   - **Parent:** `az boards work-item relation add --id <task-id> --relation-type Parent --target-id <story-id>`.
   - **Tags:** merge `System.Tags` into the create call's `--fields` — see [references/work-item-tags.md](references/work-item-tags.md).

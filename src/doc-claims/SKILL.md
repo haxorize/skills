@@ -1,6 +1,6 @@
 ---
 name: doc-claims
-description: Checking what a document claims against what that document answers to — the code and tests it describes, the running product it describes, or the sources it was derived from — one verdict per claim rather than an impression of the whole. Use when judging whether a README, guide, reference, or spec is still true, when prose may have drifted after a refactor, rename, or removal, when a derived document (a distillation, a summary, a local rewrite of an upstream) needs grounding against its sources, when a periodic sweep or another skill needs per-claim verdicts it can act on, when someone asks whether the docs still match the code or the shipped product, or when an evaluation ledger's claim rows and their expiry dates need checking. Not for updating docs the current change just made stale, which is feedback-loops at every close. Not a merge gate — this judgment is fallible and runs as a triggered review, never as CI.
+description: Checking what a document claims against what it answers to — the code and tests, the running product, the sources it was derived from, or, for an instruction file (a `CLAUDE.md`, a rules directory), the other instructions in force — one verdict per claim, never an impression of the whole. Use when judging whether a README, guide, reference, spec, or instruction file is still true, when prose may have drifted after a refactor, rename, or removal, when a derived document needs grounding against its sources, when a sweep or another skill needs per-claim verdicts, when someone asks whether the docs or the `CLAUDE.md` still match the code, or when an evaluation ledger's rows and expiry dates need checking. Not for updating docs the current change just made stale, which is feedback-loops at every close. Not a merge gate — a fallible judgment, a triggered review, never CI.
 ---
 
 # Doc Claims
@@ -13,7 +13,7 @@ This is the bare judgment. Orchestrators layer on top and choose which documents
 
 ## Extract the claims
 
-Go through the prose and write down every assertion that could be false. Include the ones carried by example code, by a table, by a heading, and by a diagram — every node and edge names a component or a call that exists or does not. Exclude what makes no factual claim about anything outside the document — intent, rationale, and register have nothing to check, and a document made only of those is reported as having no claims rather than passed.
+Go through the prose and write down every assertion that could be false. Include the ones carried by example code, by a table, by a heading, and by a diagram — every node and edge names a component or a call that exists or does not — and, in an instruction file, every instruction in force: each is a claim about what the agent does, false when another instruction in force at the same time disagrees with it. Exclude what makes no factual claim about anything outside the document — intent, rationale, and register have nothing to check, and a document made only of those is reported as having no claims rather than passed.
 
 ## Judge each claim against what it answers to
 

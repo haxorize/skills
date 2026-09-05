@@ -1,6 +1,6 @@
 # Register by artifact — the fat rows
 
-The register table in the skill body routes every artifact; this file holds the rows whose rules outgrow a table cell. Open the section for the artifact at hand and no other.
+The register table in the skill body routes every artifact; this file holds the rows whose rules outgrow a table cell, except the Meeting-notes row's transcript reading, which is [recap-from-transcript.md](recap-from-transcript.md). Open the section for the artifact at hand and no other.
 
 ## README, and a guide (a how-to, a tutorial)
 
@@ -18,4 +18,4 @@ Before writing or approving one, answer five questions: what happened; why, at t
 
 Read this section only when writing a changelog entry or a release note.
 
-Notable-to-users only: what a user of the product observes changed — never typo fixes or internal refactors ("Refactored internal code structure" is an entry about nothing). Order breaking changes → features → fixes; cite PRs (`#1234`), never commit SHAs; append to the unreleased section rather than rewriting released ones; match the file's declared format where one exists. The range is a command, not a memory: the baseline is `git describe --tags --abbrev=0`, the candidates are `git log <baseline>..HEAD --no-merges`, and every entry cites a commit or PR inside that range — a change remembered from the session but absent from the log is not in the release.
+Notable-to-users only: what a user of the product observes changed — never typo fixes or internal refactors ("Refactored internal code structure" is an entry about nothing). Order breaking changes → features → fixes; cite the PR (`#1234`), or the commit only where no PR exists; append to the unreleased section rather than rewriting released ones; match the file's declared format where one exists. The range is a command, not a memory: the baseline is `git describe --tags --abbrev=0` (lightweight tags count; in a monorepo with per-package tag prefixes, add `--match '<prefix>*'`), or `git rev-list --max-parents=0 HEAD` when the repo has no tag; the candidates are `git log <baseline>..HEAD --no-merges`, and every entry cites its PR, or its commit where no PR exists, inside that range — a change remembered from the session but absent from the log is not in the release.

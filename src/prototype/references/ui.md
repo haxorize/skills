@@ -2,7 +2,7 @@
 
 Generate **several radically different UI variations** on a single route, switchable from a floating bottom bar. The user flips between variants in the browser, picks one (or steals bits from each), then throws the rest away.
 
-If the question is about logic/state rather than what something looks like, or the direction is settled and the question is whether the component survives real content — wrong branch; the routing table is in [SKILL.md](../SKILL.md).
+If the question is about logic/state rather than what something looks like, or the direction is settled and the question is whether the component survives real content — wrong branch; the routing table is in [SKILL.md](../SKILL.md). Sent here for § Defaults to refuse alone (`review-architecture`'s report, `teach-me`'s lessons)? That section stands on its own — read it and skip this routing.
 
 ## When this is the right shape
 
@@ -110,7 +110,7 @@ Don't leave variant components or the switcher lying around.
 
 ## Defaults to refuse
 
-A generated page arrives wearing one of five default costumes; recognize the cluster, then choose deliberately. This is the one home of the list — `review-architecture`'s report and `teach-me`'s lessons point here. The clusters: **cream with serifs and a terracotta accent**; **near-black with an acid accent**; **the hairline-rule broadsheet**; **the SaaS-card kit** (tracked-out eyebrow labels, `A · B · C` meta strings, `WORD — fragment` labels, `#0B0B0B` near-black, `→` on links); and **template chrome** (a hero, a three-column feature grid, a testimonial band). The `#D97757` clay accent is Anthropic's own house tell: a default on a page a *user* briefed, never a finding against this repo's own outputs, which carry it on purpose.
+A generated page arrives wearing one of five default costumes; recognize the cluster, then choose deliberately. This is the one home of the list — `review-architecture`'s report and `teach-me`'s lessons point here. The clusters: **cream with serifs and a terracotta accent**; **near-black with an acid accent**; **the hairline-rule broadsheet**; **the SaaS-card kit** (content diced into identical rounded cards, one corner radius on everything whatever its rank, the same faint gray drop shadow beneath each, gradient washes standing in for decoration); and **template chrome** (a hero, a three-column feature grid, a testimonial band, tracked-out eyebrow labels, `A · B · C` meta strings, `WORD — fragment` labels, `#0B0B0B` near-black, `→` on links). The `#D97757` clay accent is Anthropic's own house tell: a default on a page a *user* briefed, never a finding against this repo's own outputs, which carry it on purpose.
 
 ## Anti-patterns
 

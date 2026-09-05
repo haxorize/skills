@@ -1,6 +1,6 @@
 ---
 name: backfill-adrs
-description: Sweep recent git history for architectural decisions that should have been recorded as ADRs but weren't, and write up the ones worth keeping; the same sweep re-verifies the existing log, reporting an ADR whose named mechanism no longer resolves as STALE with three dispositions to pick from. For recording a single fresh decision, reach for `adr` instead.
+description: Sweep recent git history for architectural decisions that should have been recorded as ADRs but weren't, and write up the ones worth keeping; the same sweep re-verifies the existing log, reporting an ADR whose named mechanism no longer resolves, whose trigger has fired, or whose rationale rests on a fact that no longer holds as STALE, with three dispositions to pick from. For recording a single fresh decision, reach for `adr` instead.
 disable-model-invocation: true
 requires: writing-for-humans
 ---

@@ -8,11 +8,11 @@ Before reading, check that at least two people speak and take turns. A single-sp
 
 ## Thread state is a fixed vocabulary
 
-Every thread — a subject the conversation took up — ends in exactly one of nine states: `decided` (a choice was made and said out loud), `agreed` (one party's position was taken up by the other), `action` (a named person owns a next step), `closed` (a social or admin thread that ran its course), `open` (live, and explicitly unresolved), `partial` (direction set, specifics missing), `ambiguous` (addressed sideways; the question itself never got answered), `unanswered` (raised out loud, no response), `dropped` (died mid-thread on a topic switch). Where the transcript will not support a firmer state, `ambiguous` is the honest answer. Every thread in the last four states is an open loop, and the recap lists it as one: the question, and what happened instead of an answer.
+Every thread — a subject the conversation took up — ends in exactly one of nine states, a title-case verdict scale the recap's reader reads, never a status a later session parses: **Decided** (a choice was made and said out loud), **Agreed** (one party's position was taken up by the other), **Action** (a named person owns a next step), **Closed** (a social or admin thread that ran its course), **Open** (live, and explicitly unresolved), **Partial** (direction set, specifics missing), **Ambiguous** (addressed sideways; the question itself never got answered), **Unanswered** (raised out loud, no response), **Dropped** (died mid-thread on a topic switch). Where the transcript will not support a firmer state, Ambiguous is the honest answer. Every thread in Open, Partial, Ambiguous, Unanswered, or Dropped is an open loop, and the recap lists it as one: the question, and what happened instead of an answer.
 
-## The receipt rule
+## The quote rule
 
-A state claim carries its receipt: the quote from the transcript it was read from, verbatim, character for character. A state without a receipt does not ship. Keep the disfluencies — the false starts and repeats are what was said, and tidying them misrepresents it; a cut inside a quote shows its ellipsis. The same rule covers the recap's prose: a sentence about what happened points at the threads it was read from, or it is an impression, and impressions do not ship.
+A state claim carries its quote: the passage of the transcript it was read from, verbatim, character for character. A state without its quote does not ship. Keep the disfluencies — the false starts and repeats are what was said, and tidying them misrepresents it; a cut inside a quote shows its ellipsis. The same rule covers the recap's prose: a sentence about what happened points at the threads it was read from, or it is an impression, and impressions do not ship.
 
 ## Loop-back is a second segment
 

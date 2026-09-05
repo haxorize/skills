@@ -46,7 +46,7 @@ Where the decision fixes a value a check enforces — a cap, a count, a threshol
 
 Only when they add real value, not for completeness:
 
-- **Status** frontmatter (`proposed | accepted | superseded by [ADR N](N-slug.md)`) — useful when revisiting
+- **Status** frontmatter (`proposed | accepted | superseded by [ADR N](N-slug.md)`) — useful when revisiting, and required on a record still being argued, which carries `proposed`
 - **Considered Options** — only when rejected alternatives are worth remembering in detail. The gate's third criterion guarantees an alternative was weighed, so when the section is omitted the rationale still names that alternative and why it lost, in a clause — a record with no alternative anywhere reads, years on, as a decision nobody compared. Where a record truly has none, it says which kind it is — *forced* (no alternative existed; name the constraint — such a record fails the gate's third criterion and is written only when the constraint itself is what the next reader needs, a mandated platform or a regulation) or *unexamined* (none was weighed, as in a backfill) — because a reader re-opening the decision treats the two differently
 - **Deferred** — the open questions the decision leaves standing, one line each naming the question and the artifact that settles it (a ticket, a later ADR, a measurement); omitted when nothing is open, never padded. A line later settled stays as written and gains a trailing `— settled: see Amendments <date>`, so a reader who stops at Deferred is not left with a stale open question
 - **Revisit when:** — one line naming the assumption or trigger that would falsify the decision (a load figure, a dependency's status, a team size); `backfill-adrs`' STALE sweep reads it

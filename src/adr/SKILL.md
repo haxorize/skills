@@ -1,6 +1,6 @@
 ---
 name: adr
-description: Architecture Decision Record — capture why a single non-obvious design choice was made. Use when the user has just made a decision and wants to record it (post code-review, mid-implementation, after a grill), or wants to capture rationale for a fresh non-obvious choice. For sweeping git history to recover un-recorded decisions, use `/backfill-adrs` instead.
+description: Architecture Decision Record — capture why a single non-obvious design choice was made. Use when the user has just made a decision and wants to record it (post code-review, mid-implementation, after a grill), wants to capture rationale for a fresh non-obvious choice, or wants a decision still being argued written as a `proposed` record for reviewers to comment on. For sweeping git history to recover un-recorded decisions, use `/backfill-adrs` instead.
 requires: writing-for-humans
 ---
 
@@ -12,7 +12,7 @@ The file location, numbering, amend-or-write-new rule, default template, optiona
 
 ## When to write an ADR
 
-The **ADR gate** has three criteria (full statement, with worked examples of what qualifies and what doesn't, in the reference) — **hard to reverse**, **surprising without context**, **the result of a real trade-off**. All three must hold; open the reference's examples when the gate's outcome on the candidate isn't obvious from the criteria alone. A decision still being argued is written with `Status: proposed` and opened as a PR: the proposed ADR *is* the RFC, and the PR is where several reviewers' comments land on its lines.
+The **ADR gate** has three criteria (full statement, with worked examples of what qualifies and what doesn't, in the reference) — **hard to reverse**, **surprising without context**, **the result of a real trade-off**. All three must hold; open the reference's examples when the gate's outcome on the candidate isn't obvious from the criteria alone. A decision still being argued is written with `Status: proposed` and opened as a PR, so several reviewers' comments land on its lines; there is no separate RFC document. The open is gated in step 4.
 
 ## Workflow
 
@@ -30,7 +30,7 @@ Number, slug, and draft per the reference. Rationale prose follows the ADR-ratio
 
 ### 4. Show and save
 
-Show the draft to the user. Once approved, save it into the scheme the preflight resolved — `docs/adr/<NNNN>-<slug>.md` by default. When step 1 found an owning record and the new content earned its own number, also add the forward pointer at the amended record's top — the write isn't done until both files changed.
+Show the draft to the user. Once approved, save it into the scheme the preflight resolved — `docs/adr/<NNNN>-<slug>.md` by default. When step 1 found an owning record and the new content earned its own number, also add the forward pointer at the amended record's top — the write isn't done until both files changed. A `Status: proposed` record is opened as a PR only on the user's ask or the repo's `Landing:` key (`~/.claude/rules/no-unasked-commits.md`), and the open itself is `/ship`'s, never this skill's.
 
 ## Boundary
 

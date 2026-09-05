@@ -50,7 +50,7 @@ Keep steps 1–2 in **one unbroken context window** so the grilling, decompositi
 
 ## Codebase health (upkeep, not feature work)
 
-- Eight upkeep sweeps, each named by what it is **on trial**: **`/upgrade-deps`** (the dependencies — it declares `feedback-loops` for the suite between steps and hard-gates on `adoption-verdict` for a license change), **`/review-architecture`** (the module interfaces), **`/sweep-domain`** (the vocabulary in `DOMAIN.md`), **`/backfill-adrs`** (decisions in git history nobody recorded, and the existing log against the tree — an ADR whose mechanism no longer resolves is `STALE`), **`/verify-docs`** (sentences in prose, against what they answer to), **`/audit-tests`** (the assertions in the suite — can they fail?), **`/delete-dead-code`** (source nothing calls, which it removes), **`/validate-behavior`** (the running product, against a contract fixed before the run). Pick by the object, not the symptom: "our docs have drifted" is `/verify-docs` when the sentences are wrong and `/sweep-domain` when the *words* are. Where two still both fit, the family boundaries are in [references/codebase-health.md](references/codebase-health.md).
+- Eight upkeep sweeps, each named by what it is **on trial**: **`/upgrade-deps`** (the dependencies — it declares `feedback-loops` for the suite between steps and hard-gates on `adoption-verdict` for a license change), **`/review-architecture`** (the module interfaces), **`/sweep-domain`** (the vocabulary in `DOMAIN.md`), **`/backfill-adrs`** (decisions in git history nobody recorded, and the existing log against the tree — an ADR whose mechanism no longer resolves, whose trigger fired, or whose rationale went false is `STALE`), **`/verify-docs`** (sentences in prose, against what they answer to — instruction files included, audited as one stack), **`/audit-tests`** (the assertions in the suite — can they fail?), **`/delete-dead-code`** (source nothing calls, which it removes), **`/validate-behavior`** (the running product, against a contract fixed before the run). Pick by the object, not the symptom: "our docs have drifted" is `/verify-docs` when the sentences are wrong and `/sweep-domain` when the *words* are. Where two still both fit, the family boundaries are in [references/codebase-health.md](references/codebase-health.md).
 
 ## Review gate
 
@@ -64,11 +64,13 @@ Keep steps 1–2 in **one unbroken context window** so the grilling, decompositi
 - **`/handoff`** — fork the conversation: into a document a **fresh session** picks up, or straight to a **background agent** when the work should continue unattended. Use it when the window is full or you're branching off. The doc lands in the landing zone (see Review gate), stamped with the head it observed; `/review-changes` and `/from-ticket latest` pick the newest up without an argument. Its § Where to write it is also where the per-section write mechanics for every multi-section document in the suite are defined. (`/compact`, the built-in, continues *in place*; `handoff` forks.)
 - **At any phase boundary**, the ordered five-question tree in [references/phase-boundaries.md](references/phase-boundaries.md) picks the move — Continue / `/clear` / `/handoff` / unattended / `/compact`, first yes wins.
 
+## If you are a PM or a designer
+
+Your entries are **`/grill-me`** for the idea, **`/to-story`** to publish it, **`/prototype`** for a question only a running thing answers, a product description asked for by name (`product-description` answers) for what the product does today, and **`/explain`** when an answer did not land. A design decision that needs several reviewers' comments asynchronously is a `proposed` ADR opened as a PR on your ask, so comments land on lines — `adr` writes it and `/ship` opens it; there is no separate RFC document.
+
 ## Standalone
 
 Each route in one line; the tie-breaks, and the three-way split between `/teach-me`, `/explain` and `/explain <topic>`, are in [references/standalone.md](references/standalone.md), opened only when two of these both plausibly fit.
-
-If you are a PM or a designer rather than an engineer, your entries are **`/grill-me`** for the idea, **`/to-story`** to publish it, **`/prototype`** for a question only a running thing answers, `product-description` for what the product does today, and **`/explain`** when an answer did not land. A design decision that needs several reviewers' comments asynchronously is a `proposed` ADR opened as a PR, so comments land on lines — `adr` writes it; there is no separate RFC.
 
 - **`/grill-me`** — sharpen any plan or design with no repo to back it.
 - **`/teach-me <topic>`** — tutored, multi-session learning of any topic, standalone or grounded in a codebase as its textbook.

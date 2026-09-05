@@ -8,7 +8,7 @@ Run each **custom lens** (DOMAIN, ADR, AC, design depth, discoverability, smell 
 
 When a brief enumerates files, each must have its hunk in the brief; a file named without its hunk was not reviewed.
 
-A dispatch whose findings this step consumes runs in the foreground or under a deadline named at dispatch; a task still running at its deadline is stopped before any fallback (an in-process pass over the same brief) runs, so a late return never lands mid-report. Launch metadata returned in place of findings is not-returned — classified under [subagent-brief.md](subagent-brief.md)'s Launch-failure classification, never read as an empty lens.
+A dispatch whose findings this step consumes runs under a deadline named at dispatch; a task still running at its deadline is stopped, so a late return never lands mid-report. A stopped lens is disclosed in one line and gets its own coverage-ledger row naming every file in its brief as unexamined — it cannot name them itself; the fallback is a re-dispatch with a narrower brief, or the row stays open, never the in-process pass this file's opening condition already ruled out. Launch metadata returned in place of findings is not-returned — classified under [subagent-brief.md](subagent-brief.md)'s Launch-failure classification, never read as an empty lens.
 
 Before any prompt goes out, run the aggregate-sufficiency test from [subagent-brief.md](subagent-brief.md): if every lens did its brief well, would the aggregate be excellent? Then every fan-out prompt follows three rules:
 

@@ -1,6 +1,6 @@
 ---
 name: tdd
-description: Test-driven development workflow using vertical slices. Use when implementing a feature, building a story or task already loaded in context, or the user mentions "TDD" or "test first". Also use when tests are asked for on code that is already written, and when judging whether a test would still pass if the behavior it covers were broken. A ticket still sitting on the tracker gets loaded by `/from-ticket` first — suggest it rather than cold-starting from the ticket ID.
+description: Test-driven development workflow using vertical slices. Use when implementing a feature, building a story or task already loaded in context, or the user mentions "TDD" or "test first". Also when tests are asked for on code already written, and when judging whether a test would still pass if the behavior it covers were broken. A ticket still on the tracker is loaded by `/from-ticket` first — suggest it rather than cold-starting from the ID.
 requires: feedback-loops, discoverable-code
 ---
 
