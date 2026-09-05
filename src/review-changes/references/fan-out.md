@@ -8,6 +8,8 @@ Run each **custom lens** (DOMAIN, ADR, AC, design depth, discoverability, smell 
 
 When a brief enumerates files, each must have its hunk in the brief; a file named without its hunk was not reviewed.
 
+A dispatch whose findings this step consumes runs in the foreground or under a deadline named at dispatch; a task still running at its deadline is stopped before any fallback (an in-process pass over the same brief) runs, so a late return never lands mid-report. Launch metadata returned in place of findings is not-returned — classified under [subagent-brief.md](subagent-brief.md)'s Launch-failure classification, never read as an empty lens.
+
 Before any prompt goes out, run the aggregate-sufficiency test from [subagent-brief.md](subagent-brief.md): if every lens did its brief well, would the aggregate be excellent? Then every fan-out prompt follows three rules:
 
 - **Coverage-first.** Tell each lens to report everything it finds, severity and confidence attached — filtering is step 4's job, done here at the caller. Never write anti-noise hedges into a finder prompt ("don't pad the report", "only flag if you're certain"): scope-limiting phrasing suppresses real findings more than it suppresses noise. (The empty-return license in § Negative-space pass below is the one sanctioned exception — it licenses absence rather than suppressing findings.) Brief each finder with the stance that defects exist and its own named softenings — downgrading a Blocker to avoid seeming harsh, taking "tests pass" as correctness evidence, reading only the file under review. And every finder prompt carries §6's not-examined line requirement, so the coverage ledger gets its input from each return.
