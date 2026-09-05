@@ -35,7 +35,7 @@ One checklist file per cluster of documents, written under `docs/product-descrip
 
 ## Running a pass
 
-`docs/product-description/README.md` says how to bring this product up — settled at scope time, before the first document is written. Read the command and the state the product must start from there, and confirm the running build matches the commit the documents' footers cite; a pass against a different build is not a pass. Where the README does not say how to run it, that is the blocker: get it, write it there, and start the pass from a build you can name.
+How this product is brought up has one home: the `Run:` line under `## Commands` in the product repo's `CLAUDE.md` — launch, readiness signal, seed, and the canonical record. Read the command and the starting state from there, and confirm the running build matches the commit the documents' footers cite; a pass against a different build is not a pass. Where the line is absent, that is the blocker: get the answer from the person and have it written there (`/onboard-repo`, or by hand — this skill writes nothing outside its own directory), then start the pass from a build you can name.
 
 Run `P1` first, then `P2`, then `P3`. Record every result as it happens rather than at the end. A `blocked` row names what blocked it — the concrete prerequisite (a role, an entitlement, an OS, external state, or that the pass did not reach it) and the route attempted — and a prerequisite the document never mentioned is itself a finding against the document, fixed there like a `fail` of the second kind below.
 
