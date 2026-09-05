@@ -70,7 +70,7 @@ Two more are watched, not forbidden: `evidence.md` at 22 bullets becoming a chec
 
 ## Deferred
 
-- Whether `U6` lands — settled by one measured `/validate-behavior` run against `a11y-health-ui`, counting precondition turns, before the next round opens.
+- Whether `U6` lands — settled by one measured `/validate-behavior` run against `a11y-health-ui`, counting precondition turns, before the next round opens. — settled: see Amendments 2026-09-04 (the measured run)
 - Whether trigger-keyword lists route better than plain sentences (`X3.1`) — settled by the plain-variant run in the trigger-test session. — settled: see Amendments 2026-08-30 (the trigger test)
 - The host-directed re-read the 08-27 round briefed — the next round's shape, unchanged. — settled: see Amendments 2026-08-30 (the deferral's trigger and home)
 - Whether the six zero-load descriptions fire — the trigger-test session, one record per skill in the round directory, and an amendment here. — settled: see Amendments 2026-08-30 (the trigger test)
@@ -120,3 +120,4 @@ Revisit when: a round's transcript rows outnumber its repo rows; or a descriptio
 
 - **2026-09-02** — The batch-14 bullet states the visibility read order backwards for `to-bug`. As the corpus has it, the `gh repo view --json visibility` call is what `to-bug` §7 reads first and the `CLAUDE.md` `Visibility:` line is the fallback the read falls through to — the same order `onboard-repo` §1 and §2 item 1 use, where the written line answers only what the `gh` read cannot. The batch-14 bullet stays as written; this entry is the corrected order.
 - **2026-09-04** — § Lineage names `openhonest/honest-skills` as the upstream ADR-0073 first recorded the script-lineage shape for. The shape stands; the upstream does not: ADR-0073's 2026-09-04 amendment and ADR-0034's 2026-09-04 correction reassign those eight rules to `zcaceres/skills`, so the sentence should be read as "first recorded for `zcaceres/skills`".
+- **2026-09-04, later — the measured run.** `U6` does not land. The run this line waited on happened 2026-09-04: `/validate-behavior` typed fresh in `a11y-health-ui` against story #70, from the `Run:` line the 2026-09-04 round's batch 4i taught `onboard-repo` to write — bring-up 1 turn, 1 turn before the first probe, `M17`'s port check inside it, verdict FAIL as expected. [ADR-0041](0041-black-box-check-ported-from-behavior-validator.md)'s amendment of the same date carries the counts and the REJECT; the ceremony question that record left open closes on them.
