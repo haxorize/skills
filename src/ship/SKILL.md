@@ -38,7 +38,7 @@ Show the proposed split — which files, which message, in which order — and l
 
 ### 3. Draft the prose
 
-Write the commit messages, the PR body, and the closing comment under `committing`'s claims rule, sentence by sentence.
+Write the commit messages, the PR body (shaped per [references/pr-body.md](references/pr-body.md), opened only on the PR path), and the closing comment under `committing`'s claims rule, sentence by sentence.
 
 ### 4. Execute, one step at a time
 
