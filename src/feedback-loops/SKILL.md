@@ -41,7 +41,7 @@ Run the loop's format, lint, and typecheck commands, then the test re-run the lo
 
 ### 2. Stack-specific finalization
 
-Some changes need mechanical follow-on work that's specific to the stack — a database migration after a model change, a regenerated client after a schema change, a rebuilt lockfile after a dependency change. Don't hardcode these: **discover and invoke the project's convention skills by role** — the project lists them by name in its `CLAUDE.md` `## Convention skills` section, as § What "the loop" is resolves `## Commands` — and apply whatever finalization they own for the layer this change touched. A model change with a `database` convention skill present means its migration step runs here.
+Some changes need mechanical follow-on work that's specific to the stack — a database migration after a model change, a regenerated client after a schema change, a rebuilt lockfile after a dependency change. Don't hardcode these: **discover and invoke the project's convention skills by role** — the project lists them by name in its `CLAUDE.md` `## Convention skills` section, as § What "the loop" is resolves `## Commands` — and apply whatever finalization they own for the layer this change touched. A model change with a `database` convention skill present means its migration step runs here, and a migration over a large table names its lock behavior — the lock it takes and for how long — before it is declared done.
 
 This is where silent gaps hide — a model change that ships without its migration looks done but isn't. If the relevant convention skill exists, its finalization is not optional.
 

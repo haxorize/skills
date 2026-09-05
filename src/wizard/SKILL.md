@@ -57,4 +57,4 @@ The secret/variable helpers speak `gh`, and when `gh` is missing or unauthentica
 
 ## The chat fallback
 
-When a script is the wrong medium — no machine to run it where the human is, a procedure only a few steps long, or steps that will be discovered as you go — run the same discipline in chat instead, per [references/chat-fallback.md](references/chat-fallback.md): one atomic human step per message, a headline-only remainder list, re-audited every reply.
+When a script is the wrong medium — no machine to run it where the human is, a procedure only a few steps long, or steps that will be discovered as you go — run the same discipline in chat instead, per [references/chat-fallback.md](references/chat-fallback.md): one atomic human step per message, a headline-only remainder list, re-audited every reply. In chat a secret is never typed into the conversation: hand the user the exact `.env` line or `gh secret set` command to run themselves, and read back only that the variable is set — a value pasted here lands in the session transcript and every future grep over it.

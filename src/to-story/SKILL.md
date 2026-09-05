@@ -38,7 +38,7 @@ See [references/ado-hierarchy.md](references/ado-hierarchy.md) for the snapshot-
 
 ### 3. Explore the codebase
 
-If not already explored in the conversation, look at the touched modules. Use canonical terms from `DOMAIN.md` and respect existing ADRs in `docs/adr/`.
+If not already explored in the conversation, look at the touched modules. Use canonical terms from `DOMAIN.md` and respect existing ADRs in `docs/adr/`. Where a prototype answered this story's question, read its `notes.md` (`prototype/*/notes.md`) — the answer, never the throwaway code.
 
 ### 4. Sketch major modules
 

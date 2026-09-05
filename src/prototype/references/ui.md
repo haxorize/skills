@@ -108,6 +108,10 @@ Once a variant has won, write down which one and why — as `prototype`'s "When 
 
 Don't leave variant components or the switcher lying around.
 
+## Defaults to refuse
+
+A generated page arrives wearing one of five default costumes; recognize the cluster, then choose deliberately. This is the one home of the list — `review-architecture`'s report and `teach-me`'s lessons point here. The clusters: **cream with serifs and a terracotta accent**; **near-black with an acid accent**; **the hairline-rule broadsheet**; **the SaaS-card kit** (tracked-out eyebrow labels, `A · B · C` meta strings, `WORD — fragment` labels, `#0B0B0B` near-black, `→` on links); and **template chrome** (a hero, a three-column feature grid, a testimonial band). The `#D97757` clay accent is Anthropic's own house tell: a default on a page a *user* briefed, never a finding against this repo's own outputs, which carry it on purpose.
+
 ## Anti-patterns
 
 - **Sharing too much code between variants.** A shared `<Header>` is fine; a shared `<Layout>` defeats the point. Each variant should be free to throw out the layout.

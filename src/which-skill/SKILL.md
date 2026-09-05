@@ -68,6 +68,8 @@ Keep steps 1–2 in **one unbroken context window** so the grilling, decompositi
 
 Each route in one line; the tie-breaks, and the three-way split between `/teach-me`, `/explain` and `/explain <topic>`, are in [references/standalone.md](references/standalone.md), opened only when two of these both plausibly fit.
 
+If you are a PM or a designer rather than an engineer, your entries are **`/grill-me`** for the idea, **`/to-story`** to publish it, **`/prototype`** for a question only a running thing answers, `product-description` for what the product does today, and **`/explain`** when an answer did not land. A design decision that needs several reviewers' comments asynchronously is a `proposed` ADR opened as a PR, so comments land on lines — `adr` writes it; there is no separate RFC.
+
 - **`/grill-me`** — sharpen any plan or design with no repo to back it.
 - **`/teach-me <topic>`** — tutored, multi-session learning of any topic, standalone or grounded in a codebase as its textbook.
 - **`/ask-for-me`** — the questionnaire drafter routed above, usable with no repo.

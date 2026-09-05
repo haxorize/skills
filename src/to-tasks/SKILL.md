@@ -99,7 +99,7 @@ For each Task, use the appropriate template:
 - GitHub: [references/task-template-github.md](references/task-template-github.md)
 - ADO: [references/task-template-ado.md](references/task-template-ado.md)
 
-- **GitHub:** `gh issue create --title "..." --body-file <draft>` with default labels from CLAUDE.md. Reference the parent via template `Parent: #N` line. **Before creating the first Task in a publishing batch,** run the label precheck in [references/publishing.md](references/publishing.md). When a parent Story was resolved, add each new issue as a native sub-issue of it after create — see [references/github-sub-issues.md](references/github-sub-issues.md).
+- **GitHub:** `gh issue create --title "..." --body-file <draft>` with default labels from CLAUDE.md. Reference the parent via template `Parent: #N` line. **Before creating the first Task in a publishing batch,** run the label precheck in [references/publishing.md](references/publishing.md); then create the first Task alone, open it as the tracker renders it, and only then create the rest. When a parent Story was resolved, add each new issue as a native sub-issue of it after create — see [references/github-sub-issues.md](references/github-sub-issues.md).
 - **ADO:** publish with the create call in [references/task-template-ado.md](references/task-template-ado.md), with project / area path / iteration / state from CLAUDE.md. Then, per created Task:
   - **Parent:** `az boards work-item relation add --id <task-id> --relation-type Parent --target-id <story-id>`.
   - **Tags:** merge `System.Tags` into the create call's `--fields` — see [references/work-item-tags.md](references/work-item-tags.md).
