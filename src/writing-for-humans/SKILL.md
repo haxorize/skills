@@ -35,10 +35,11 @@ Admit a row only with a named typist — the role that writes the artifact, and 
 | **README, and a guide (a how-to, a tutorial)** | Same register, plus the first-screen and guide structure rules in [references/register-by-artifact.md](references/register-by-artifact.md) — open it before writing one |
 | **ADR rationale** | Descriptive, and it takes a position — "strike a balance" and "it depends" prose is the decision dodging itself; name who decided and why |
 | **Session summary, incident report** | Outcome first; simple past with times ("Between 14:02 and 14:31 UTC, 12% of requests failed"); state the unknown as "unknown" — a hedge reads less honest, not more careful. The first line and the last line, read alone, must give what happened and what to do next |
+| **Shift handover note (the outgoing on-call, per shift)** | Five sections, each present or an explicit "none": active incidents, ongoing investigations, recent changes, known issues with their workarounds, upcoming events; a section left blank is an incomplete handover, and an incomplete handover is a postmortem action item |
 | **Changelog entry, release note** | Notable-to-users only; the ordering, citation, and file rules in [references/register-by-artifact.md](references/register-by-artifact.md) — open it before writing one |
 | **Error message, UX microcopy** | Calm, zero playfulness; the five-question shape in [references/register-by-artifact.md](references/register-by-artifact.md) — open it before writing one |
 | **Commit message, PR body, review reply, closing comment** | A maintainer recording a decision for another maintainer: impersonal, matter-of-fact ("Previously, …", "This caused …"); imperative only in the subject line; first person only for an actual decision or open question. The catalog's commit-and-PR family ([references/tell-catalog-shipping.md](references/tell-catalog-shipping.md)) fires here |
-| **Meeting notes (whoever posts the recap)** | Decided separated from discussed; an action is an owner plus a date or is flagged unassigned or undated — the writer never fills either in; commitments and load-bearing statements verbatim, with a paraphrase marked as the writer's reading |
+| **Meeting notes (whoever posts the recap)** | Decided separated from discussed; an action is an owner plus a date or is flagged unassigned or undated — the writer never fills either in; commitments and load-bearing statements verbatim, with a paraphrase marked as the writer's reading. A recap drawn from a transcript or recording reads it under [references/recap-from-transcript.md](references/recap-from-transcript.md) — the thread-state vocabulary, the receipt rule, and the refusal — open it before reading one |
 | **Weekly status note to a manager (any engineer, weekly)** | Progress, not activity; every next step dated or marked undated; opens with what last week's note said would happen and whether it did |
 | **Outbound as the user — email, Teams message, memo, proposal, questionnaire** | The user's own voice, matched from a writing sample they supply, with their own sentences kept over composed ones; **no em dashes, none**, and the full tell catalog swept at maximum strictness. The rules, and the sweep's pipeline (§ The dash sweep), are in [references/outbound-as-the-user.md](references/outbound-as-the-user.md) — open it before drafting |
 
@@ -46,6 +47,7 @@ Admit a row only with a named typist — the role that writes the artifact, and 
 
 In anything the human reads — narration, publish confirmations, reports — a work item goes by its **title**, the ID and link riding inside (`[Rate-limit login](url) (#42)`), never by a bare ID.
 
+The report that closes a piece of work is one or two sentences: what changed, and the verification and review result, deferrals named. Never a list of changed files, a restatement of the spec, or a narration of the process — the diff and the transcript already hold those. A table a skill mandates at its close (`implement`'s completion audit) is exempt; the sentences sit above it.
 
 ## Core rules
 
