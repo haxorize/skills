@@ -4,7 +4,7 @@ The discipline that makes a work item good lived only inside the four `to-*` pub
 
 - the outcome-not-activity goal test with its greppable reject list and five-element goal,
 - acceptance-criteria checkability (three admissible evidence kinds, independent verifiability, implicit negative-path criteria derived from every stated limit, per-work-type done conditions, the most-honest-binary-validator fallback for placeholders),
-- the four-predicate readiness gate that justifies the existing Task `## Mode` AFK/HITL label plus the stop-condition field AFK items carry,
+- the four-predicate readiness gate that justifies the existing Task `## Mode` AFK/HITL label plus the stop-condition field AFK items carry, — amended: see Amendments 2026-09-04
 - non-temporal sizing tests with the merge-upward direction,
 - the three-type ambiguity block (Unclear/Missing/Conflicting with verbatim quote, question, impact, assumption),
 - and the Cold-reader pass, which moves here whole, dissolving the four-way sibling group.
@@ -23,3 +23,4 @@ Rejected: armory's `.out-of-scope/` rejection ledger (covered — ADR rejections
 ## Amendments
 
 - **2026-08-22** — `work-item-shape` gains a seventh pillar, **Naming drift** — the publish-time check [ADR-0048](0048-naming-drift-queue-trimmed-to-check-only.md) kept when it removed the queue, moved here from the three publishers that carried it so the check has one owner and binds ad-hoc drafting too.
+- **2026-09-04** — The readiness gate is five predicates, not four: the 2026-09-04 round's batch 6 ([ADR-0084](0084-batch-family-6-7-admissions-2026-09-04.md), the gnurio/nurijanian-skills `P-P12` fold) added the hidden-trunk predicate — code whose callers the item cannot enumerate, or a global registration no importer names, denies AFK however clear the item. The stop condition is now one of three scoping lines an AFK item carries, relocated to `references/afk-scoping.md`.

@@ -48,4 +48,4 @@ Round:
 
 ## Commit order
 
-An ADR commits before the skill it shapes; the two land together when the record quotes the change's own output.
+An ADR commits before the skill it shapes; the two land together when the record quotes the change's own output; an admissions record for a landed batch commits after it.

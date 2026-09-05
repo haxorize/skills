@@ -1,6 +1,6 @@
 # Work-item tags (ADO)
 
-Derive tags from the **drafted** title — before any `Title prefix:` is prepended — then set `System.Tags` on the `az boards work-item create` call.
+Derive tags from the **drafted** title — before any `Title prefix:` is prepended — add `debt` where the item pays down debt, then set `System.Tags` on the `az boards work-item create` call.
 
 ## Primary tag — the drafted title's leading bracket
 
@@ -17,7 +17,7 @@ A repo declaring neither yields just the primary tag, or none.
 
 ## The `debt` tag
 
-An item whose work is paying down debt — a deferral's follow-up, a placeholder's replacement, a flag's removal, a cleanup a review parked — carries the tag `debt` beside the derived set, so the tracker can be filtered for it: debt is a ticket, never a register kept elsewhere.
+An item whose work is paying down debt — a deferral's follow-up, a placeholder's replacement, a flag's removal, a cleanup a review parked — adds `debt` to the set after `Never tag:` has filtered it, so the board can be filtered for it; a deferral whose home is a ticket carries the tag, and the join in § Applying carries it into the create call like any other.
 
 ## Applying
 
