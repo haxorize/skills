@@ -24,15 +24,15 @@ Reject activity-shaped goals — "make progress on", "keep investigating", "impr
 
 A complete goal carries five elements: the outcome, its subject, how it will be verified, what's in scope, and — wherever ambiguity would matter — what's out of scope.
 
-Out of scope comes in two flavors; say which: an adjacent capability that must not change, or follow-up work that lands elsewhere.
+Out of scope comes in two flavors; say which: an adjacent capability that must not change, or follow-up work that lands elsewhere. Where that capability is an interface consumed outside the change, `codebase-design`'s published-interfaces reference names what the change owes its consumers. A flag the item adds is the second flavor at birth: name its type, its owner, and the item that removes it, or it has no end of life.
 
 ## Acceptance criteria
 
 Three kinds of evidence make a criterion checkable: a test, a command, or a concrete manual procedure. A criterion naming none of them isn't acceptance criteria — "works correctly" is the classic; say what correct looks like, and what you would demo. A post-launch outcome metric or business KPI ("adoption doubles in Q3") names none of them either — it is a goal for the goal-bearing section, never a criterion; no implementer can close it.
 
-Each criterion is independently verifiable: one criterion, one check, passable without the others. A criterion that names a command also names which outcome is the failure — the exit code, or the line that must or must not appear — because a command with no stated failing direction settles nothing: the reader runs it and guesses. A criterion sits where its evidence lives: a child settles only what its own slice can show, and an outcome only the composed result shows — a regression gate, an end-to-end flow — is the parent's criterion, stated once; a child that claims it carries a check nothing in its slice can settle, and a copy in every child is slower and weaker evidence than the one check that observes the whole.
+Each criterion is independently verifiable: one criterion, one check, passable without the others. A numeric threshold carries the value measured today beside it — a ratchet, not an aspiration: a bar the codebase fails at filing is a plan step, never a criterion. A criterion that names a command also names which outcome is the failure — the exit code, or the line that must or must not appear — because a command with no stated failing direction settles nothing: the reader runs it and guesses. A criterion sits where its evidence lives: a child settles only what its own slice can show, and an outcome only the composed result shows — a regression gate, an end-to-end flow — is the parent's criterion, stated once; a child that claims it carries a check nothing in its slice can settle, and a copy in every child is slower and weaker evidence than the one check that observes the whole.
 
-Every stated limit implies its negative path — a cap implies a defined at-and-over-limit behavior (rejection, clamp, or truncation) and what the user observes when it fires. Every flow with a middle implies its interrupted path — the user abandons it and comes back — and the state the item promises on return is a criterion, "no effect" included; the families of interruption are `product-description`'s interrupt taxonomy, never a list re-spelled here. Every surface that renders a collection implies its empty state and its first run — what a list, a dashboard, or a search page shows on day one is a criterion, and the one most often missed; the shapes are `product-description`'s edge cases, never re-spelled here. Derive those criteria; they never volunteer themselves.
+Every stated limit implies its negative path — a cap implies a defined at-and-over-limit behavior (rejection, clamp, or truncation) and what the user observes when it fires. Every flow with a middle implies its interrupted path — the user abandons it and comes back — and the state the item promises on return is a criterion, "no effect" included; the families of interruption are `product-description`'s interrupt taxonomy, never a list re-spelled here. Every surface that renders a collection implies its empty state and its first run — what a list, a dashboard, or a search page shows on day one is a criterion, and the one most often missed; the shapes are `product-description`'s edge cases, never re-spelled here. Every change that runs in production implies the criterion saying how production will show it working: the on-call's question and the one signal answering it — no signal without a named consumer and decision, no threshold without a named baseline, and an audit may find the existing signals suffice. Derive those criteria; they never volunteer themselves.
 
 When no clean check exists, propose the most honest binary validator you can state rather than leaving a TBD — a placeholder defers the decision to whoever is least equipped to make it.
 
@@ -58,18 +58,17 @@ The body reads as a plan for the work — for a bug, a report of the defect — 
 
 An item one agent or session will pick up and drive gets a readiness call — **AFK** (safely driven by the agent alone) or **HITL** (a human stays in the loop) — one word plus the reason, in the slot the tier's template provides, or a `Readiness:` line ad-hoc.
 
-The **readiness gate**, applied to a single item or a decomposed suite as a whole — AFK is denied unless all four hold:
+The **readiness gate**, applied to a single item or a decomposed suite as a whole — AFK is denied unless all five hold:
 
 - The desired behavior is clear enough for a fresh agent with no private context.
 - Every required decision is made or explicitly scoped out.
 - Every acceptance criterion is checkable by test, command, or concrete manual procedure.
 - Any external access the work needs is named.
+- Nothing in the change is a hidden trunk — code many callers depend on, or a registration of global behavior (a route, middleware, a migration) that no importer names; either denies AFK however clear the item.
 
 HITL whenever product judgment, credentials, stakeholder negotiation, design review, release authority, or an unapproved one-way door remains in the work — the reason names which.
 
-An AFK item also carries a **stop condition**: the trip-wire that ends unattended grinding — the result, obstacle, or spent effort that means stop and ask instead of pressing on. Where specific mid-work decisions are foreseeable, list them as **Ask-first triggers** — the decisions that halt unattended work for approval the moment they arise (a schema change, a new dependency, a contract choice): the stop condition bounds effort, ask-first triggers bound authority. A sub-problem inside the work whose crude answer is fixed in advance, so it cannot consume the item, is a third scoping decision, stated beside these: the stop condition ends a grind after it has started and an ask-first trigger bounds who decides, but only this names the sub-problem before anyone reaches it.
-
-Reversibility is rated on the decision, not the task's difficulty: a genuine one-way door is falsifiable — you can name the migration, the destructive operation, or the broken contract that makes undo expensive — and when you can't, rate it reversible; gating everything "just in case" produces the checkpoint fatigue that gets all gates skipped. Removing the irreversibility (a seam, a versioned contract) lets the item run AFK.
+An AFK item also carries its three scoping lines — the **stop condition**, the **Ask-first triggers**, and the sub-problem whose crude answer is fixed in advance — and a one-way door is rated on the decision, not the task: both per [references/afk-scoping.md](references/afk-scoping.md), opened for every item rated AFK or denied it for a one-way door.
 
 ## Sizing
 
@@ -77,7 +76,7 @@ Size by structure, never hours: one item is one deliverable, independently verif
 
 Too big announces itself as an "and" in the title, or a bundling verb there — *manage*, *handle*, *maintain*, *support* — that hides one: split it. Criteria that can't be checked independently are the same signal: split. Split by outcome, never by step: a multi-step workflow sliced one step per item looks vertical, since each step touches every layer, and delivers nothing until the last step lands; the first slice runs the whole workflow at its crudest, and later slices add the intermediate steps. Too small to demo alone — merge it upward into its parent rather than filing it.
 
-Watch the **scope-reduction vocabulary** — the surface **scope drift** shows on, in a redraft as much as a first draft — "v1", "for now", "hardcoded", "placeholder", "will be wired later". Each either names deferred work that lands explicitly in out-of-scope or a follow-up item, or it quietly under-delivers the decision the item claims to implement. The only resolutions are deliver fully or propose a split; a body can cite its parent decision and still deliver a fraction of it.
+Watch the **scope-reduction vocabulary** — the surface **scope drift** shows on, in a redraft as much as a first draft — "v1", "for now", "hardcoded", "placeholder", "will be wired later", a flag with no removal item. Each either names deferred work that lands explicitly in out-of-scope or a follow-up item, or it quietly under-delivers the decision the item claims to implement. The only resolutions are deliver fully or propose a split; a body can cite its parent decision and still deliver a fraction of it.
 
 ## Naming drift
 
@@ -85,7 +84,7 @@ A name in a draft or patch — module, route path, query key, model name — tha
 
 ## Surfacing ambiguity
 
-Never resolve source ambiguity silently. Emit each find as an **Ambiguity block** of one of three types — **Unclear** (present but readable two ways), **Missing** (required but absent), **Conflicting** (two statements disagree) — each carrying the source text quoted verbatim, the question a human must answer, the impact if guessed wrong, and what you assumed for now.
+Never resolve source ambiguity silently. Emit each find as an **Ambiguity block** of one of three types — **Unclear** (present but readable two ways), **Missing** (required but absent), **Conflicting** (two statements disagree) — each carrying the source text quoted verbatim, the question a human must answer, the impact if guessed wrong, and what you assumed for now. At a parent tier, a detail whose answer comes from decomposition — a latency figure only a Story can settle — is a decision the children settle, not an Ambiguity block; the test is whether a human could answer it now, at this tier.
 
 When more than 5 blocks accumulate, triage which ones escalate by impact: **scope > security and privacy > user experience > technical detail**. Below the bar, the block still emits — with an informed industry default recorded in its assumed-for-now slot and the deciding question stated rather than asked — retention windows, error-message tone, and standard performance targets have defaults; scope never does.
 

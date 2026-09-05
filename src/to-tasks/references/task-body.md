@@ -25,7 +25,7 @@ Covers: AC1, AC3
 
 ## Mode
 
-**HITL** or **AFK**. One word, then a short reason. The call follows the `work-item-shape` readiness gate: AFK only when all four predicates hold; a HITL reason names what remains for the human.
+**HITL** or **AFK**. One word, then a short reason. The call follows the `work-item-shape` readiness gate: AFK only when all five predicates hold; a HITL reason names what remains for the human.
 
 An AFK Task adds one more line — its stop condition: the result, obstacle, or spent effort that means stop unattended work and ask.
 ```

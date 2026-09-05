@@ -15,6 +15,10 @@ Two optional lines in the CLAUDE.md tracker block adjust the set:
 
 A repo declaring neither yields just the primary tag, or none.
 
+## The `debt` tag
+
+An item whose work is paying down debt — a deferral's follow-up, a placeholder's replacement, a flag's removal, a cleanup a review parked — carries the tag `debt` beside the derived set, so the tracker can be filtered for it: debt is a ticket, never a register kept elsewhere.
+
 ## Applying
 
 Join the deduplicated set with `; ` (ADO's tag separator) and pass it as one more `key=value` pair — `"System.Tags=<tag1>; <tag2>"` — **inside the create call's existing `--fields` flag**. Never add a second `--fields` flag: a repeated flag replaces the earlier one, silently dropping the other fields. An empty set omits the pair entirely.
