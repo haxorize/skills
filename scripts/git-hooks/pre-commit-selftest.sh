@@ -65,7 +65,7 @@ tmp="$(selftest_tmpdir)" || { selftest_skip "no usable temp directory; no row ra
 trap 'rm -rf "$tmp"' EXIT
 
 work="$tmp/work"
-mkdir -p "$work/scripts" "$work/src" "$work/global" "$work/.claude/skills" "$work/docs/adr" "$work/docs/other" "$work/sub"
+mkdir -p "$work/scripts" "$work/src" "$work/global" "$work/.claude/skills" "$work/docs/adr" "$work/docs/other" "$work/sub" "$work/vendor"
 git init -q "$work"
 git -C "$work" config user.email selftest@example.invalid
 git -C "$work" config user.name selftest
@@ -127,17 +127,36 @@ expect_run "scripts/ path"        "scripts/git-hooks/some-hook"       "lint-skil
 expect_run "README.md"            "README.md"                         "lint-skills "
 expect_run "DOMAIN.md"            "DOMAIN.md"                         "lint-skills "
 expect_run "CLAUDE.md"            "CLAUDE.md"                         "lint-skills "
-expect_run "docs/adr/ path"       "docs/adr/0001-some-record.md"      "lint-adrs "
-# docs/lineage.md is mapped by name: CLAUDE.md's lineage trigger points at it,
-# and check_reference_links CLAUDE.md is what refuses the commit that deletes
-# it — so the deleting commit itself runs the linter (ADR-0076).
+# docs/ runs BOTH: lint-skills.sh walks every docs/**/*.md for check_spelling
+# (lint-skills.sh's docs walk), so an ADR-only commit that ran lint-adrs.sh
+# alone spell-checked nothing — and CLAUDE.md's commit order mandates exactly
+# that commit. lint-skills runs first (pre-commit:181-182), so the order here
+# is not cosmetic.
+expect_run "docs/adr/ path"       "docs/adr/0001-some-record.md"      "lint-skills lint-adrs "
+# docs/lineage.md now matches the docs/ arm rather than its own name; the
+# ADR-0076 ground is unchanged — check_reference_links CLAUDE.md refuses the
+# commit that deletes it, so the deleting commit itself runs the linter.
 expect_run "docs/lineage.md"      "docs/lineage.md"                   "lint-skills "
-# Outside the map: neither linter. docs/ that is not docs/adr/, and a root file
-# the map does not name — the boundary rows for the README.md/DOMAIN.md/
-# CLAUDE.md alternatives, so widening one to a glob reds here.
-expect_run "docs/ outside adr/"   "docs/other/pitch.md"               ""
+# docs/ outside docs/adr/: lint-skills only. Two named subtrees and a generic
+# one, so dropping the docs/ arm reds here rather than passing on a sibling —
+# sweep-corpus writes docs/health/, capturing-learnings docs/solutions/. The
+# generic row stands for every other writer (evaluation-ledger, offboard-engineer,
+# product-description, rebuild-contract): the arm is one glob, so a row per
+# subtree would prove nothing the generic row does not.
+expect_run "docs/health/ path"    "docs/health/2026-01-01.md"         "lint-skills "
+expect_run "docs/solutions/ path" "docs/solutions/some-fix.md"        "lint-skills "
+expect_run "docs/ other subtree"  "docs/other/pitch.md"               "lint-skills "
+# Outside the map: neither linter. A root file the map does not name — the
+# boundary rows for the README.md/DOMAIN.md/CLAUDE.md alternatives, so
+# widening one to a glob reds here.
 expect_run "unmapped root file"   "NOTES.md"                          ""
 expect_run "a README below root"  "vendor/README.md"                  ""
+# A sibling of docs/ at the root: the docs/ arm must not widen to doc*/.
+expect_run "a docs-like sibling"  "documentation/guide.md"            ""
+# The other two ways the arm can lose its `/` anchor: a docs-prefixed sibling
+# reds a widening to docs*, a nested docs/ reds a widening to *docs/*.
+expect_run "a docs-prefixed sibling" "docs-archive/old.md"              ""
+expect_run "a nested docs/ dir"      "vendor/docs/x.md"                 ""
 # A non-ASCII path: with core.quotePath on (the default) a newline-delimited
 # list renders it as "src/caf\303\251/SKILL.md", quotes included, and no arm
 # matches a leading quote.
@@ -193,9 +212,16 @@ stage "src/a/SKILL.md"; run 127 0
 expect_rc "a linter exiting 127 blocks" 1 "$rc"
 expect_in "$out" "a linter exiting 127 was reported as an ordinary red run" "scripts/lint-skills.sh exited 127"
 # A red linter for a class that is NOT staged must not block: the gate reads
-# only what ran.
+# only what ran. src/ triggers lint-skills.sh and never lint-adrs.sh, so a red
+# lint-adrs.sh is the one that must not reach this commit.
+stage "src/a/SKILL.md"; run 0 1
+expect_rc "a red lint-adrs.sh with only src/ staged allows" 0 "$rc"
+# The other half of that trade, and the row the docs/ arm made constructible:
+# docs/adr/ runs both, lint-skills first, so a red lint-skills.sh followed by a
+# green lint-adrs.sh must still block. A gate that keeps only the last status
+# passes every other row in this file.
 stage "docs/adr/0004-r.md"; run 1 0
-expect_rc "a red lint-skills.sh with only docs/adr/ staged allows" 0 "$rc"
+expect_rc "a red lint-skills.sh under a green lint-adrs.sh blocks" 1 "$rc"
 # A missing linter blocks, and says so rather than pointing at output that
 # never printed.
 mv "$work/scripts/lint-adrs.sh" "$tmp/lint-adrs.sh.away"
@@ -219,14 +245,14 @@ expect_rc "a modified (M) src/ path (green linters)" 0 "$rc"
 [ "$ran" = "lint-skills " ] || selftest_fail "a modified (M) src/ path: expected to run 'lint-skills ', ran '$ran'"
 git -C "$work" reset -q; git -C "$work" rm -q docs/adr/0009-committed.md; run
 expect_rc "a deleted (D) docs/adr/ path (green linters)" 0 "$rc"
-[ "$ran" = "lint-adrs " ] || selftest_fail "a deleted (D) docs/adr/ path: expected to run 'lint-adrs ', ran '$ran'"
+[ "$ran" = "lint-skills lint-adrs " ] || selftest_fail "a deleted (D) docs/adr/ path: expected to run 'lint-skills lint-adrs ', ran '$ran'"
 git -C "$work" reset -q; rm "$work/src/swapped.md"; ln -s docs "$work/src/swapped.md"; git -C "$work" add src/swapped.md; run
 expect_rc "a typechange (T) src/ path (green linters)" 0 "$rc"
 [ "$ran" = "lint-skills " ] || selftest_fail "a typechange (T) src/ path: expected to run 'lint-skills ', ran '$ran'"
-# The rename leaves the map on its destination side: only the removed src/
-# path can call lint-skills, so a hook that sees the destination alone runs
-# nothing here.
-git -C "$work" reset -q; git -C "$work" mv src/moved/SKILL.md docs/other/moved.md; run
+# The rename lands OUTSIDE the map — vendor/, not docs/, which the docs/ arm
+# now covers: only the removed src/ path can call lint-skills, so a hook that
+# sees the destination alone runs nothing here.
+git -C "$work" reset -q; git -C "$work" mv src/moved/SKILL.md vendor/moved.md; run
 expect_rc "a rename (R) out of src/ (green linters)" 0 "$rc"
 [ "$ran" = "lint-skills " ] || selftest_fail "a rename (R) out of src/: expected to run 'lint-skills ' for the removed side, ran '$ran'"
 git -C "$work" reset -q --hard 2>/dev/null

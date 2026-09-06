@@ -8,7 +8,7 @@ set -uo pipefail
 # setup-hooks.sh prints, so the banner cannot disagree with the case arms that
 # read the same map. Any other commit pays nothing.
 #
-# Gate map: lint-skills.sh when a staged path is under src/, global/, .claude/skills/ or scripts/, or is README.md, DOMAIN.md, CLAUDE.md or docs/lineage.md
+# Gate map: lint-skills.sh when a staged path is under src/, global/, .claude/skills/, scripts/ or docs/, or is README.md, DOMAIN.md or CLAUDE.md
 # Gate map: lint-adrs.sh when a staged path is under docs/adr/
 # Gate map: the -selftest.sh beside a staged scripts/*.sh or scripts/git-hooks/ hook, when it exists — every selftest when any scripts/*-lib.sh is staged — each once; a red one blocks
 # Gate map: a stderr notice, never a block, when a staged src/<skill>/ path has a row in docs/lineage.md's FIRST table — diff the upstream before a material edit; a skill listed only in the nothing-to-diff table gets no notice
@@ -113,7 +113,7 @@ queue_selftest() {
 lineage_seen=" "
 while IFS= read -r -d '' p; do
   case "$p" in
-    src/*|global/*|.claude/skills/*|scripts/*|README.md|DOMAIN.md|CLAUDE.md|docs/lineage.md) run_skills=1 ;;
+    src/*|global/*|.claude/skills/*|scripts/*|docs/*|README.md|DOMAIN.md|CLAUDE.md) run_skills=1 ;;
   esac
   case "$p" in
     docs/adr/*) run_adrs=1 ;;
