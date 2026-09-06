@@ -1,0 +1,17 @@
+# `upgrade-deps`' Provenance rule narrows from absent metadata to absent attestation
+
+`upgrade-deps`' Provenance bullet carried "A claim resting on absent metadata earns no verdict of safe" — a rule wide enough to cover the Publisher bullet's metadata as well as the attestation. That width put it in direct contradiction with the `## Registry` key `Unattested publishers: accept`, which exists to let a repo take an unattested package on the tarball-versus-changelog result: under the wide rule, `accept` could never reach a verdict, and on PyPI it could never fire at all, because an unattested PyPI release leaves the Publisher check unverifiable too (the JSON API exposes no uploader, and `author`/`maintainer` are self-declared). We narrowed the rule to "Absent attestation is never itself a ground for **Safe**; with every other check clean it is **Review**, not **Defer**", pinning what the verdict rests on so the config key has something to settle.
+
+The narrowing is a weakening, and `writing-for-agents` § Deletion grounds requires that be named rather than passed off as an edit. What it gave up is the cover the wide rule extended to the Publisher bullet. `references/version-gates.md` § Unattested publishers carries the clause that restores that floor, scoped to the ecosystems where it means anything: `accept` clears the attestation together with the publisher identification that rests on it — one fact on PyPI — and never reaches a Publisher check that failed on its own, which stays **Review** or **Defer** as that bullet routes it. The scoping is load-bearing. On npm and NuGet the publisher is readable whether or not the release is attested, so "unattested" and "publisher unknown" are two facts and `accept` must clear only the first; on PyPI they are one, and a clause that treated them as two would make `accept` unreachable on the ecosystem it was written for. The check that holds the pair consistent is prose in `src/upgrade-deps/SKILL.md` step 2, not a script.
+
+The alternative — keep the wide rule and resolve the contradiction by dropping `accept` — was weighed and rejected. It is the simpler policy and refuses to let a config value buy off a metadata gap, which is a defensible position. It loses because `accept` was written for exactly the ecosystem where attestation is still uncommon, and a value that can never fire there is a value nobody can use.
+
+## Consequences
+
+- On npm and NuGet, a repo running `Unattested publishers: accept` still gets **Review** or **Defer** on a package whose publisher lookup failed or names a new or unknown account. `accept` buys the attestation gap alone there.
+- On PyPI it also buys the publisher gap, because there is no second source to buy. Measured against the 2026-09-05 `a11y-health-api` audit (`docs/reviews/2026-09-05-whole-repo-audit-p18-dependency-currency.md` § 3), 7 of 24 packages sat at `Review (unattested)` with `none / none` attestation — fastapi, sqlalchemy, pydantic-core, greenlet, mako, pygments, annotated-types. A clause that read the two as separate facts would defer all 7 and leave `accept` with nothing to take.
+- The wide rule's protection now lives in two places rather than one. A future edit to either the Provenance bullet or the § Unattested publishers `accept` clause has to read the other.
+
+## Revisit when:
+
+PyPI exposes an uploader field, or attestation coverage on PyPI becomes common enough that `accept` stops being the value most repos need — either one removes the pressure that produced the narrowing.
