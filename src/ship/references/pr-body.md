@@ -9,7 +9,7 @@ The body is written for a reviewer who was not there. Every sentence is a claim 
 1. **What changed** — the behavior, grouped by intent, never a file list the diff already shows.
 2. **What was checked, and how** — the behavioral checks that ran, each with its command and result, and a check the reviewer would expect that did not run, named as not run; generic lint, type-check, and CI output stays out, since the checks page shows it.
 3. **The risks** — what could break, and the observation that would show it.
-4. **What had to be fixed along the way** — the defects met and repaired inside the change, so the approver reads a repair as intended rather than as drift.
+4. **What had to be fixed along the way** — the defects met and repaired inside the change, so the approver reads a repair as intended rather than as **Unrequested** work.
 
 ## What did not change
 

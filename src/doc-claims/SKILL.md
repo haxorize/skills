@@ -21,7 +21,7 @@ Go through the prose and write down every assertion that could be false. Include
 
 - **Judge against the code and the tests, not the code alone.** A claim the code satisfies but nothing tests is not the same as one a test protects, and the verdicts below keep them apart. Where the document describes what a product does for the person using it, the **running product** is a third thing it answers to — a behavior claim is settled by performing the interaction and watching, and one the code appears to support but the product contradicts is a **FAIL** against the product; what to do about the product is never a verdict this discipline softens.
 - **A contradiction can mean the code regressed.** The document may be the only place the intended behavior is written down. Check which side is wrong before "fixing" the prose — a doc that caught a regression is the doc doing its job.
-- **Ground against the artifact reopened now, never from memory of it.** Memory of a codebase or a corpus is where drift hides, and a claim judged from recall is a guess with a verdict attached. An evaluation ledger (`docs/evaluation/<slug>/ledger.md`) is a document already in claim form: a `verified` row is judged against the evidence its own row cites, and a row past its Expires date is **STALE** whatever its source still says.
+- **Ground against the artifact reopened now, never from memory of it.** Memory of a codebase or a corpus is where a stale claim hides, and a claim judged from recall is a guess with a verdict attached. An evaluation ledger (`docs/evaluation/<slug>/ledger.md`) is a document already in claim form: a `verified` row is judged against the evidence its own row cites, and a row past its Expires date is **STALE** whatever its source still says.
 
 ## Verdicts
 
@@ -37,7 +37,7 @@ Every claim gets exactly one, and a **CONTRADICTS** pair counts as one finding o
 
 ## Derived documents answer to their sources
 
-Where a document was derived from something other than code, [references/derived-documents.md](references/derived-documents.md) owns the pass: which documents it covers, the source map, the three failure classes, drift in both directions, and the verdict for a source passage that has since vanished.
+Where a document was derived from something other than code, [references/derived-documents.md](references/derived-documents.md) owns the pass: which documents it covers, the source map, the three failure classes (of which **Drift** is the one that runs in both directions), and the verdict for a source passage that has since vanished.
 
 ## Honest limits
 

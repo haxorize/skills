@@ -20,7 +20,7 @@ Two ways in, both on invocation: `/rebuild-contract` with a target starts a run;
 
 This skill changes nothing in the repo: no edits to source, config, or dependencies, no formatting — a thing noticed on the way past is content for the record, never a task. No commits, pushes, branch changes, migrations, seed scripts, or deploys, and nothing run against a live database or cloud account.
 
-Running a build, a test, or a script executes code from a repo nobody in this session can vouch for, and it can reach the network or a real service. The global recommend-and-proceed rule puts "run it and find out" in bin 1 — **override that here**: propose the run and let a human run it or paste the output. Reading files, listing directories, and `git log` are unaffected. Observed behavior is the best evidence there is, which is exactly what makes fetching it yourself tempting.
+Running a build, a test, or a script executes code from a repo nobody in this session can vouch for, and it can reach the network or a real service. The global recommend-and-proceed rule (`~/.claude/rules/recommend-and-proceed.md`) puts "run it and find out" in bin 1 — **override that here**: propose the run and let a human run it or paste the output. Reading files, listing directories, and `git log` are unaffected. Observed behavior is the best evidence there is, which is exactly what makes fetching it yourself tempting.
 
 Before creating `docs/rebuild-contract/<target-slug>/`, say that a directory of working files and a contract will land there, and wait. The one exception is not this skill's write: where the human accepts the offer below, `product-description` writes `docs/product-description/` on its own terms.
 

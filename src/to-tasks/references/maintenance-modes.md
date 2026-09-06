@@ -125,4 +125,4 @@ Iterate per bucket until approved. Apply approved changes — body patches via `
 
 ### Naming drift
 
-Drift across sibling Tasks (`widgetId` vs `widget_id`) follows `work-item-shape`'s **Naming drift** rule, surfaced in the affected bucket's proposal with the rename folded into that Task's edit.
+**Naming drift** across sibling Tasks (`widgetId` vs `widget_id`) follows `work-item-shape` § Naming drift, surfaced in the affected bucket's proposal with the rename folded into that Task's edit.

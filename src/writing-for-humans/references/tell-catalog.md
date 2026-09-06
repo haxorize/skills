@@ -58,7 +58,7 @@ Named patterns that read as AI-generated: almost all because they are clarity fa
 
 ## Formatting
 
-- **Em-dash habit** — budgeted, not banned: none in short copy, one or two in a long draft where they clearly beat commas or parentheses; delete clusters; the outbound row bans them outright, and the global dash-sweep rule enforces it. *Displacement partner chain:* em dash → semicolon → colon — the punchy appended clause survives the ban by swapping its glyph; fix the clause, not the mark.
+- **Em-dash habit** — budgeted, not banned: none in short copy, one or two in a long draft where they clearly beat commas or parentheses; delete clusters; the outbound row bans them outright, and the global `outbound-dash-sweep` rule enforces it. *Displacement partner chain:* em dash → semicolon → colon — the punchy appended clause survives the ban by swapping its glyph; fix the clause, not the mark.
 - **Bold decoration** — bold sprinkled mid-sentence for emphasis, emoji in headings, "**Note:**" callouts. Bold names the subject a list item explains, nothing else; emphasis lives in word choice.
 - **Bullet overuse** — prose chopped into bullets where two sentences read better. Keep a list when items are genuinely parallel, short, or sequential steps; convert to prose when the bullets are full sentences in costume, carry inline bold headers, or exist to look organized.
 - **Heading title case** — "Everything You Need To Know". Sentence case, everywhere in human-facing prose, including titles. A `SKILL.md` H1 is the exception and not a counter-example: it is the skill's display name, takes title case, and `check_heading_case` enforces it.

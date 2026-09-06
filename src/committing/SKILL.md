@@ -41,11 +41,11 @@ Every assertion written into a commit message, closing comment, PR body, or end-
 | **"blocked by X"** | the command's verbatim error output, quoted; a familiar-looking failure is not evidence of its familiar cause |
 | **any count** | re-measured now, per the evidence rule |
 
-**Read a trailer with `git interpret-trailers`, never a grep.** `grep '^Co-Authored-By:'` misses a folded continuation line and a trailer block the parser rejects for a blank line above it — the concrete case of the global evidence rule's parse-as-your-consumer-parses line.
+**Read a trailer with `git interpret-trailers`, never a grep.** `grep '^Co-Authored-By:'` misses a folded continuation line and a trailer block the parser rejects for a blank line above it — the concrete case of the global `evidence` rule's parse-as-your-consumer-parses line.
 
 **Recall check: a summary of a change enumerates its commits.** Run `git log <base>..HEAD --oneline` and confirm every commit appears somewhere in the summary; a commit the summary does not reflect was missed, and the miss is reported, not absorbed. This binds any summary of a change — a commit body, a PR body, a session summary, a handoff, a status note — not only a PR body.
 
-**A claim you cannot check does not get written.** Drop it, or write the weaker claim the evidence supports. Evidence you cannot obtain, a capture that never landed, a system you cannot reach, gets its own line marked `UNVERIFIABLE`, named as the global evidence rule in `~/.claude/rules/` requires; it never launders into a pass.
+**A claim you cannot check does not get written.** Drop it, or write the weaker claim the evidence supports. Evidence you cannot obtain, a capture that never landed, a system you cannot reach, gets its own line marked `UNVERIFIABLE`, named as `~/.claude/rules/evidence.md` requires; it never launders into a pass.
 
 A negative — "not found", "no callers", a search that came back empty — is written as a finding only through [references/negative-results.md](references/negative-results.md): the command and scope inline, and the same command shown finding a known hit first.
 

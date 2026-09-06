@@ -46,5 +46,5 @@ az boards work-item create \
 
 ## Notes
 
-- Naming (routes, query keys, model names, search-param keys) must match across sibling Tasks. Drift here is the highest-cost mistake when slicing.
+- Naming (routes, query keys, model names, search-param keys) must match across sibling Tasks. Naming drift here is the highest-cost mistake when slicing.
 - ADO Bugs are not produced by this skill — they don't fit the Feature/Story/Task hierarchy. If a defect surfaces during task breakdown, file it with `to-bug`.

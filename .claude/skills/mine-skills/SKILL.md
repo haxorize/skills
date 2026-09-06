@@ -1,6 +1,6 @@
 ---
 name: mine-skills
-description: Open a skill-mining round over external skill repos and this user's transcript corpus — clone, scan, inventory both source classes, read under the standing lenses, re-check the prior round's parks, and write the ledger rows a grill can ratify. Repo-local to the skills repo.
+description: Open a skill-mining round over external skill repos and this user's transcript corpus — clone, scan, inventory both source classes, read under the standing lenses, re-check the prior round's parks, and write the round's ledger rows a grill can ratify. Repo-local to the skills repo.
 disable-model-invocation: true
 ---
 
