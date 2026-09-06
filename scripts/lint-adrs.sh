@@ -49,6 +49,19 @@
 #     from the two sections that have their own marker and read everywhere
 #     else, because the corpus writes it wherever the overtaken claim sits; one
 #     row per distinct date on a line.
+#   - In-log markers: a `corrected: see Amendments <date>` or `amended: see
+#     Amendments <date>` pointer written INSIDE the `## Amendments` log — the
+#     form one entry uses when it corrects or overtakes an earlier one — points
+#     at an entry of that same log whose bold opener starts with that date. The
+#     three checks above cannot reach it: each is scoped out of the log so that
+#     a log entry QUOTING the marker form is not read as one, which left the
+#     real in-log pointer the one member of the family nothing graded. This
+#     check reads the log and tells quotation from prose the way
+#     scripts/lint-skills.sh tells them everywhere else — a fenced block and a
+#     backtick code-span are quotation and are dropped before the marker is
+#     looked for — so `— amended: see Amendments <date>` in backticks stays
+#     illustrative while the bare prose form beside it is graded. One row per
+#     distinct date on a line.
 #   - Cross-references: every `[…](NNNN-….md)` link a record makes — the plain
 #     ADR-to-ADR citation, not only the supersession and amend forms the two
 #     checks above read — names a file that exists.
@@ -57,8 +70,10 @@
 #   `[ADR`, `ADR-N`, or `**` token (`amends its ADR 22` is another repo's
 #   record and is not read); a settled line is read only inside `## Deferred`
 #   and a corrected line only inside `## Consequences`; an amended marker is
-#   read anywhere but those two sections and the `## Amendments` log, so a log
-#   entry QUOTING the marker form is not read as one; the pointer's placement
+#   read anywhere but those two sections and the `## Amendments` log, and the
+#   in-log check reads that log alone, where quotation means a fenced block or
+#   a backtick code-span and nothing else — a marker set off by italics, a
+#   blockquote, or an indented block is read as real; the pointer's placement
 #   is checked and its wording is not — nothing here judges whether a pointer's
 #   summary is true, or whether a resolving cross-reference cites the record the
 #   sentence around it means. The cross-reference check reads `](NNNN-….md)`
@@ -72,7 +87,7 @@
 # The shape, as the named functions below. One producer reads a record into
 # rows; one consumer runs a check over them; a check is a function taking
 # `<file> <fields…>`:
-#   read_rows <file> <kind>          the seven row kinds and their field layout
+#   read_rows <file> <kind>          the eight row kinds and their field layout
 #   for_rows <file> <kind> <check>   the only reader of the tab layout
 #     check_supersession             the successor exists and links back
 #     check_forward_pointer          the amended record carries the pointer
@@ -83,6 +98,10 @@
 #     check_settled_deferral         a settled line points at a dated amendment
 #     check_corrected_consequence    a corrected bullet points at a dated
 #                                    amendment
+#     check_amended_marker           an amended claim points at a dated
+#                                    amendment
+#     check_log_marker               a marker inside the log points at a dated
+#                                    entry of that same log
 #     check_xref_target              an ADR-to-ADR link names a file that exists
 #   Every FAIL goes through say_fail, so the prefix and the exit status cannot
 #   disagree. A check that never ran is never reported as a clean one: a
@@ -209,6 +228,13 @@ body_lines() {
 #                                             <date>` marker anywhere OUTSIDE
 #                                             the `## Amendments` log, one row
 #                                             per distinct date on a line
+#   logmarker    lineno  date                 every `corrected:` or `amended:
+#                                             see Amendments <date>` marker INSIDE
+#                                             the `## Amendments` log, read with
+#                                             fenced blocks and backtick spans
+#                                             stripped so a QUOTED marker form is
+#                                             not one, one row per distinct date
+#                                             on a line
 #   xref         lineno  target_f             every `](NNNN-….md)` link target in
 #                                             the record, once per distinct
 #                                             target, at the line it first
@@ -309,7 +335,8 @@ read_rows() {
       # distinction ADR-0074 built dissolves in the section that most needs it.
       # body_lines drops the `## Amendments` log itself, which is what keeps a
       # log entry that QUOTES the marker form (docs/adr/0077 does) from being
-      # read as a marker of its own.
+      # read as a marker of its own. The log is not thereby ungraded: the
+      # `logmarker` arm below reads it, with the quotation stripped first.
       body_lines "$f" | awk -F'\t' '
         { line = $0; sub(/^[0-9]+\t/, "", line)
           if (line ~ /^## (Deferred|Consequences)/) { skip = 1; next }
@@ -327,6 +354,61 @@ read_rows() {
             print key
           }
         }'
+      [ "${PIPESTATUS[0]}" -eq 0 ] || return 2
+      ;;
+    logmarker)
+      # An inline `— corrected:`/`— amended:` pointer IS permitted inside a
+      # `## Amendments` entry, where one entry corrects or overtakes an earlier
+      # one. The three arms above are each scoped out of the log, so until this
+      # arm those markers were the only ones nothing graded — and a dead date
+      # in the log reads exactly like a live one to the reader who followed a
+      # pointer there.
+      #
+      # The log is not simply folded into those arms, because docs/adr/0077
+      # QUOTES the marker form inside its own log. At this tree that quotation
+      # is a `<date>` placeholder, which no date regex matches, so a widening
+      # without quotation handling happens to be green on the corpus today —
+      # this is prophylaxis against the next quoted marker carrying a real
+      # date, which the 9045 fixture demonstrates does fire. Quotation is told
+      # from prose the way
+      # scripts/lint-skills.sh tells them everywhere else — a fenced ``` block
+      # and a backtick code-span are quotation, and both are dropped before the
+      # marker is looked for — so the backticked form stays illustrative while
+      # the bare prose form beside it is graded. A run of N backticks closes on
+      # the next run of the same length; an UNCLOSED run leaves the rest of the
+      # line intact, so a stray backtick never hides a real marker. Fence state
+      # is reset at the `## Amendments` heading and headings are read before the
+      # fence toggle, so an odd fence count earlier in the record cannot carry
+      # in and silently blind the whole log — the failure mode a fence has that
+      # a backtick run does not.
+      awk '
+        function strip_spans(s,   out, run, rest, shut) {
+          out = ""
+          while (match(s, /`+/)) {
+            out = out substr(s, 1, RSTART - 1)
+            run = substr(s, RSTART, RLENGTH)
+            rest = substr(s, RSTART + RLENGTH)
+            shut = index(rest, run)
+            if (shut == 0) return out rest
+            s = substr(rest, shut + length(run))
+          }
+          return out s
+        }
+        /^## Amendments/ { in_log = 1; fence = 0; next }
+        /^## / { in_log = 0 }
+        /^[[:space:]]*```/ { fence = !fence; next }
+        fence { next }
+        in_log {
+          lineno = NR; line = strip_spans($0)
+          while (match(line, /(corrected|amended): see Amendments [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/)) {
+            seg = substr(line, RSTART, RLENGTH); line = substr(line, RSTART + RLENGTH)
+            d = seg; sub(/^.*Amendments /, "", d)
+            key = lineno "\t" d
+            if (key in seen) continue
+            seen[key] = 1
+            print key
+          }
+        }' "$f"
       [ "${PIPESTATUS[0]}" -eq 0 ] || return 2
       ;;
     xref)
@@ -434,11 +516,17 @@ check_revisit_heading() {
 # Both marker checks resolve their date against the ## Amendments section
 # alone: a dated bullet misfiled under another heading is exactly the drift
 # the markers exist to catch, so it must not satisfy the pointer.
+# A real entry resolves a pointer; an entry shown inside a fenced example does
+# not. The producer strips fences before it looks for a marker, so the resolver
+# strips them too — otherwise a record that illustrates an entry could satisfy a
+# pointer that names a date no live entry carries.
 amendments_entry_exists() {
   local f=$1 date=$2
   awk -v d="$date" '
-    /^## Amendments[[:space:]]*$/ { insec = 1; next }
+    /^## Amendments[[:space:]]*$/ { insec = 1; fence = 0; next }
     insec && /^## /               { insec = 0 }
+    insec && /^[[:space:]]*```/   { fence = !fence; next }
+    insec && fence                { next }
     insec && $0 ~ "^- \\*\\*" d "([^0-9-]|$)" { found = 1; exit }
     END { exit !found }' "$f"
 }
@@ -477,6 +565,19 @@ check_amended_marker() {
   fi
 }
 
+# Markers inside the `## Amendments` log point at an entry of that same log.
+# The fourth of the marker family, and the one the other three cannot see: each
+# of them is scoped out of the log so that a QUOTED marker form is not read as
+# a marker, which left the real in-log pointer ungraded. The log is where the
+# dates are densest and where a reader lands after following any of the other
+# three, so a dead date here sends that reader on a second hop to nothing.
+check_log_marker() {
+  local f=$1 lineno=$2 date=$3
+  if ! amendments_entry_exists "$f" "$date"; then
+    say_fail "$f (line $lineno) is an ## Amendments entry pointing at Amendments $date, but no '- **$date' entry exists under ## Amendments — fix the date, write the amendment, or — if the marker is being quoted rather than made — put it in backticks or a fenced block, which this check reads as quotation"
+  fi
+}
+
 # Cross-references resolve: a plain `[ADR-N](N-slug.md)` citation names a file
 # that exists. The two checks above read the supersession and amend forms only,
 # so before this the ordinary citation — the corpus's most common link by far —
@@ -512,6 +613,7 @@ for f in "${records[@]}"; do
   for_rows "$f" settled check_settled_deferral
   for_rows "$f" corrected check_corrected_consequence
   for_rows "$f" amended check_amended_marker
+  for_rows "$f" logmarker check_log_marker
   for_rows "$f" xref check_xref_target
 done
 

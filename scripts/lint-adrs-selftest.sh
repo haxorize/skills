@@ -18,7 +18,10 @@
 # naming a number nobody claims; an empty Revisit line in both forms; a settled
 # deferral with no entry, one whose only entry is `<date>-2`, and one whose
 # only entry sits under a heading other than `## Amendments`; a corrected
-# Consequences bullet in all three of those shapes; a plain cross-reference to a
+# Consequences bullet in all three of those shapes; an in-log marker with no
+# matching entry, in both the `corrected:` and the `amended:` spelling and in
+# the `<date>-2` and wrong-heading shapes, and one whose sentence opens an
+# unclosed backtick run that must not hide it; a plain cross-reference to a
 # record that does not exist, and the second FAIL a dangling supersession link
 # and a dangling amend link each draw from that same check. Quiet: a
 # well-formed link-form pair, the `[ADR N]` space form, a pair whose numbers are
@@ -29,7 +32,10 @@
 # the `, later` and ` — title.` settled-entry openers, both of those openers
 # on a corrected Consequences bullet, a `corrected:` marker outside
 # `## Consequences`, both amended-marker forms resolving beside an
-# `## Amendments` entry that quotes the marker with a date nothing claims, a cross-reference that resolves beside a relative path, an
+# `## Amendments` entry that quotes the marker with a date nothing claims, two
+# in-log markers that resolve beside the three quoted forms the in-log reader
+# must not take for pointers (a backticked marker span, the `<date>`
+# placeholder, and a fenced example entry), a cross-reference that resolves beside a relative path, an
 # outbound URL and the `[ADR N](N-slug.md)` placeholder, the unnumbered README,
 # and — in the clean tree — a well-formed supersession pair. Also graded, for
 # RESOLUTION and never for a verdict: the no-argument default. The exit status
@@ -94,6 +100,15 @@ expect "amended marker (date-suffix entry is not a match)" "9042-amended-no-amen
 expect "amended marker (entry outside ## Amendments is not a match)" "9042-amended-no-amendment.md (line 7) marks a claim amended by Amendments 2026-06-06"
 expect "amended marker (first of three on one line)" "9042-amended-no-amendment.md (line 9) marks a claim amended by Amendments 2026-08-08"
 expect "amended marker (a later date on the same line)" "9042-amended-no-amendment.md (line 9) marks a claim amended by Amendments 2026-09-09"
+# The in-log marker check, one row per alternative. The last row is the
+# backtick reading's other direction: 9044's fourth entry opens a backtick run
+# and never closes it, and an unclosed run must leave the rest of the line
+# intact — strip everything after a lone backtick instead and this row goes
+# quiet while 9045 stays quiet too, so nothing else would notice.
+expect "in-log marker without its amendment (corrected)" "9044-log-marker-no-amendment.md (line 18) is an ## Amendments entry pointing at Amendments 2026-10-10"
+expect "in-log marker without its amendment (amended)" "9044-log-marker-no-amendment.md (line 19) is an ## Amendments entry pointing at Amendments 2026-11-11"
+expect "in-log marker (date-suffix entry is not a match)" "9044-log-marker-no-amendment.md (line 20) is an ## Amendments entry pointing at Amendments 2026-05-05"
+expect "in-log marker (an unclosed backtick run does not hide it)" "9044-log-marker-no-amendment.md (line 22) is an ## Amendments entry pointing at Amendments 2026-10-11"
 expect "cross-reference to a record that does not exist" "9040-xref-dangling.md (line 3) links to 9099-does-not-exist.md, and no such file is in"
 # The overlap is deliberate and pinned here: a dangling supersession or amend
 # link is also a dangling citation, and each draws its own FAIL naming its own
@@ -132,20 +147,38 @@ reject "amended marker (both forms resolving, and the log exclusion)" "9043-amen
 # so an `amended:` marker in either is not this check's to read — reading it
 # would let a Consequences bullet skip the corrected-bullet check. 9042 carries
 # one in each section pointing at a date nothing claims; drop the exclusion and
-# the FAIL count below moves from 27 to 29.
+# the FAIL count below moves from 33 to 35.
 reject "amended marker (the Consequences and Deferred exclusions)" "see Amendments 2026-07-07"
+# 9045 carries two in-log markers that resolve beside the three forms the
+# reader must read as quotation: two backticked marker spans (2026-12-12 and
+# 2026-12-13), the `<date>` placeholder, and a fenced example entry
+# (2026-12-14). No entry in that file claims any of those dates, so each is a
+# FAIL the moment the backtick or the fence stripping goes — which is the trap
+# a naive widening of the log exclusion falls into.
+reject "in-log marker (a backticked marker span is a quotation)" "9045-log-marker-ok.md"
+reject "in-log marker (2026-12-12 and 2026-12-13 are quoted, not pointers)" "Amendments 2026-12-12, but"
+reject "in-log marker (a fenced example entry is a quotation)" "Amendments 2026-12-14"
+# The two shapes a fence can break, both in 9044. An odd fence count earlier in
+# the record must not carry into the log and blind it (fence state resets at the
+# heading); and a fenced example entry must not RESOLVE a live pointer, so the
+# resolver strips fences the same way the producer does. Revert either and the
+# matching row below goes quiet.
+expect "in-log marker (an odd fence above the log does not blind it)" "Amendments 2026-10-12"
+expect "in-log marker (a fenced example entry does not resolve a pointer)" "Amendments 2026-12-20, but"
 reject "unnumbered README" "README.md"
 expect_rc "the lint against the fixture tree" 1 "$status"
 # The count of `FAIL: `-prefixed lines is pinned: a new firing on a quiet
 # form, a check that starts double-reporting, or a message that loses the
 # prefix the family shares shows up here even if no substring above moves.
-# Three of the 27 are the cross-reference check's deliberate overlap with the
+# Three of the 33 are the cross-reference check's deliberate overlap with the
 # supersession and amend link checks, asserted by name above. Four of them are
 # the amended-marker check's rows in 9042; the two markers that file carries
 # inside `## Consequences` and `## Deferred` are not among them, and are what
-# the section-exclusion row above pins.
+# the section-exclusion row above pins. Four more are the in-log check's rows
+# in 9044; none of 9045's four quoted marker forms is among them, and that is
+# what the quotation rows above pin.
 nfail=$(printf '%s\n' "$output" | grep -c '^FAIL: ')
-[ "$nfail" -eq 27 ] || selftest_fail "expected exactly 27 FAIL lines against the fixture tree, got $nfail"
+[ "$nfail" -eq 33 ] || selftest_fail "expected exactly 33 FAIL lines against the fixture tree, got $nfail"
 
 clean_out=$(bash scripts/lint-adrs.sh "$clean" 2>&1); clean_status=$?
 if [ "$clean_status" -ne 0 ]; then
