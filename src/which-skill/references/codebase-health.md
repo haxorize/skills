@@ -2,7 +2,7 @@
 
 Open this only when an ask is upkeep-shaped rather than feature work and two of the eight routes both fit.
 
-- **`/upgrade-deps`** — **(Dependencies)** upgrade a project's dependencies in the safe order (security first, each major its own step with the changelog read and the suite run, then the rest), with a supply-chain check on every package before the lockfile moves. npm, pip/uv, NuGet.
+- **`/upgrade-deps`** — **(Dependencies)** upgrade a project's dependencies in the safe order (security first, each major its own step with the changelog read and the suite run, then the rest), with a supply-chain check on every package before the lockfile moves. npm, pip/uv, NuGet, and Gradle.
 - **`/review-architecture`** — read-only architecture review of the whole codebase; surfaces deepening opportunities. Picking one frames a design, offers a grill (`/grill-me`), then hands you to `/to-story` to file the result. Declares `adr`, so a rejected candidate's load-bearing reason gets recorded where the next review would re-propose it.
 - **`/sweep-domain`** — sweep the codebase to refresh `DOMAIN.md` when the vocabulary has drifted.
 - **`/backfill-adrs`** — sweep recent git history for architectural decisions that were made but never recorded.
