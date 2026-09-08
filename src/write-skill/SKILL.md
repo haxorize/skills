@@ -72,7 +72,7 @@ The description is the skill's top-level **context pointer** — its wording dec
 - **Over the cap** — the remediation procedures (relocate verbatim before editing; the description cut order that never trades routing surface) are in [references/over-the-cap.md](references/over-the-cap.md); open it when a cap binds — a body over the byte bound or past 200 lines, or a description at 1024 chars.
 - **Description**: ≤1024 chars, and no angle brackets (`<` or `>`) — the platform chokes on them, so replace placeholder text like `<topic>` before shipping.
 - **Name**: ≤64 chars.
-- **One line per paragraph/bullet** — soft-wrap, no hard newlines mid-paragraph (let the editor wrap). The line cap counts lines, so a "line" should be a unit of content, not an artifact of wrapping; hard-wrapping inflates the count and renders identically. Code fences, tables, and YAML frontmatter keep their own line breaks.
+- **One line per paragraph/bullet** — soft-wrap, no hard newlines mid-paragraph (let the editor wrap). The line cap counts lines, so a "line" should be a unit of content, not an artifact of wrapping; hard-wrapping inflates the count and renders identically. Code fences, tables, YAML frontmatter, and a **Blockquote stanza** keep their own line breaks — the stanza's are hard breaks on purpose, one label per line, and a renderer that reflows them is the defect it exists to avoid.
 
 ### Skill bodies don't cite repo ADRs
 
