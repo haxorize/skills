@@ -2,6 +2,30 @@
 
 The register table in the skill body routes every artifact; this file holds the rows whose rules outgrow a table cell, except the Meeting-notes row's transcript reading, which is [recap-from-transcript.md](recap-from-transcript.md). Open the section for the artifact at hand and no other.
 
+## Session summary, incident report
+
+Read this section only when writing a session summary or an incident report.
+
+Outcome first; simple past with times ("Between 14:02 and 14:31 UTC, 12% of requests failed"); state the unknown as "unknown" — a hedge reads less honest, not more careful. The first line and the last line, read alone, must give what happened and what to do next.
+
+## On-call shift note
+
+Read this section only when writing the outgoing on-call's shift note.
+
+Five sections, each present or an explicit "none": active incidents, ongoing investigations, recent changes, known issues with their workarounds, upcoming events. A section left blank is an incomplete note, and an incomplete note is a postmortem action item.
+
+## Commit message, PR body, review reply, closing comment
+
+Read this section only when writing one of these.
+
+A maintainer recording a decision for another maintainer: impersonal, matter-of-fact ("Previously, …", "This caused …"); imperative only in the subject line; first person only for an actual decision or open question. The catalog's commit-and-PR family ([tell-catalog-shipping.md](tell-catalog-shipping.md)) fires here.
+
+## Meeting notes
+
+Read this section only when posting a meeting recap.
+
+Decided separated from discussed; an action is an owner plus a date or is flagged unassigned or undated — the writer never fills either in; commitments and load-bearing statements verbatim, with a paraphrase marked as the writer's reading. A recap drawn from a transcript or recording reads it under [recap-from-transcript.md](recap-from-transcript.md) — the thread-state scale, the quote rule, and the refusal — open it before reading one.
+
 ## README, and a guide (a how-to, a tutorial)
 
 Read this section only when the artifact is a README, how-to, or tutorial.

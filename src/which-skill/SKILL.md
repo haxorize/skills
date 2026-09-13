@@ -70,15 +70,15 @@ Your entries are **`/grill-me`** for the idea, **`/to-story`** to publish it, **
 
 ## Standalone
 
-Each route in one line; the tie-breaks, and the three-way split between `/teach-me`, `/explain` and `/explain <topic>`, are in [references/standalone.md](references/standalone.md), opened only when two of these both plausibly fit.
+Each route in a line; the blurbs are in `README.md`'s skill map, and the tie-breaks, and the three-way split between `/teach-me`, `/explain` and `/explain <topic>`, are in [references/standalone.md](references/standalone.md), opened only when two of these both plausibly fit.
 
-- **`/grill-me`** — sharpen any plan or design with no repo to back it.
-- **`/teach-me <topic>`** — tutored, multi-session learning of any topic, standalone or grounded in a codebase as its textbook.
+- **`/grill-me`** — sharpen a plan or design with no repo to back it.
+- **`/teach-me <topic>`** — tutored, multi-session learning of a topic you can name.
 - **`/ask-for-me`** — the questionnaire drafter routed above, usable with no repo.
-- **`/evaluation-ledger`** — a multi-week evaluation kept as a ledger under `docs/evaluation/`, one row per claim, closing on a decision memo drafted from the rows.
+- **`/evaluation-ledger`** — a multi-week evaluation kept as a ledger under `docs/evaluation/`.
 - **`/to-bug`** — file a defect as a tracked ticket from the current conversation.
-- **`/merge-quiz`** (Off-path) — before merging a change you did not watch being built: a report, the paths the diff does not show, and questions you answer before approving.
-- **`/explain`** — stop and re-pitch: the last explanation didn't land, so it comes back with the missing context. `/explain <topic>` is the cold branch.
-- **`/glapi-test-pass`** — ADO only; satisfy the GLAPI production deployment gate for a Story.
-- **`/write-skill`** — conventions for writing and editing skills (you're reading the suite that follows them).
-- **`/audit-skills`** — audit the whole *installed* skill collection under `~/.claude/skills/`, a verdict per skill.
+- **`/merge-quiz`** (Off-path) — before merging a change you did not watch being built.
+- **`/explain`** — the last explanation didn't land; `/explain <topic>` is the cold branch.
+- **`/glapi-test-pass`** — ADO only; the GLAPI production deployment gate for a Story.
+- **`/write-skill`** — conventions for writing and editing skills.
+- **`/audit-skills`** — a verdict per skill installed under `~/.claude/skills/`.

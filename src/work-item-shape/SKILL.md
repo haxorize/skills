@@ -74,9 +74,9 @@ An AFK item also carries its three scoping lines — the **stop condition**, the
 
 Size by structure, never hours: one item is one deliverable, independently verifiable, demoable on its own. Where the repo maps a Story to one PR and a Task to one commit, size to that grain.
 
-Too big announces itself as an "and" in the title, or a bundling verb there — *manage*, *handle*, *maintain*, *support* — that hides one: split it. Criteria that can't be checked independently are the same signal: split. Split by outcome, never by step: a multi-step workflow sliced one step per item looks vertical, since each step touches every layer, and delivers nothing until the last step lands; the first slice runs the whole workflow at its crudest, and later slices add the intermediate steps. Too small to demo alone — merge it upward into its parent rather than filing it.
+Too big announces itself as an "and" in the title, a bundling verb there that hides one, or criteria that can't be checked independently: split it, by outcome, never by step. Too small to demo alone — merge it upward into its parent rather than filing it. The worked examples — the bundling verbs, the step-per-item workflow that only looks vertical, the scope-reduction phrases — are in [references/sizing.md](references/sizing.md), opened when proposing a split.
 
-Watch the **scope-reduction vocabulary** — the surface **scope drift** shows on, in a redraft as much as a first draft — "v1", "for now", "hardcoded", "placeholder", "will be wired later", a flag with no removal item (§ The goal). Each either names deferred work that lands explicitly in out-of-scope or a follow-up item, or it quietly under-delivers the decision the item claims to implement. The only resolutions are deliver fully or propose a split; a body can cite its parent decision and still deliver a fraction of it.
+Watch the **scope-reduction vocabulary** — the surface **scope drift** shows on, in a redraft as much as a first draft — "v1", "for now", a flag with no removal item (§ The goal), and the rest the reference lists. Each names deferred work that lands explicitly in out-of-scope or a follow-up item, or it quietly under-delivers the decision the item claims to implement; the only resolutions are deliver fully or propose a split.
 
 ## Naming drift
 
