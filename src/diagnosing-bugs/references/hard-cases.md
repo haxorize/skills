@@ -1,6 +1,6 @@
 # Hard cases
 
-Branch-gated detail for `diagnosing-bugs`. Each section is opened from the trigger sentence in the skill body that names it; none applies to an ordinary, locally reproducible, deterministic bug.
+Detail for `diagnosing-bugs`. Each section is opened from the body line that names it. One section runs on every diagnosis — § No correct seam; the rest are branch-gated and none of those applies to an ordinary, locally reproducible, deterministic bug.
 
 ## CI triage
 
@@ -30,7 +30,7 @@ A loop that survives three same-context attempts usually means the diagnoser can
 
 ## Post-mortem branches
 
-A single-shot why-chain produces renames, not explanations ("because the test was missing" restates the bug; name what let the test go missing). Dead-end causes — "the author forgot", "more review was needed", "time pressure" — are constants, not causes: name the structural check, default, or incentive that failed. By the third to fifth why you should be at process, defaults, or incentives, and there are usually several distinct root causes, not one — the change that introduced the bad state and the check that let it persist or propagate are usually both.
+Opened from Phase 6 when the why-chain (inline in the body) lands on one of these two causes.
 
 - If the answer involves **architectural change** — no good test seam, a too-shallow module, tangled callers, hidden coupling — suggest the user run `/review-architecture` with the specifics (it's user-invoked, so suggest it; don't try to invoke it). The deepening it surfaces is the durable fix.
 - If the root cause was a **load-bearing decision gap** — the bug existed because a real trade-off was made implicitly and never recorded — offer to capture it via `adr`. A recorded decision stops the same class of bug recurring for the next person.

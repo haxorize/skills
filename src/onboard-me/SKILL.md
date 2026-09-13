@@ -1,6 +1,6 @@
 ---
 name: onboard-me
-description: A guided knowledge-transfer session over an unfamiliar repo — evidence-tagged findings, a KT map of what is still dark, and each topic worth going deeper on named to the learner to take to `/teach-me` themselves; where the repo has no product description it offers one, which `product-description` then writes under `docs/product-description/`.
+description: A guided knowledge-transfer session over an unfamiliar repo — evidence-tagged findings, a KT map of what is still dark, and each topic worth going deeper on named to the learner to take to `/teach-me` themselves; where the repo has no product description it offers one, which `product-description` then writes under `docs/product-description/`; its only write of its own is `docs/inward-spec.md`, and only when the learner asks for it.
 disable-model-invocation: true
 requires: writing-for-humans, product-description
 argument-hint: "Which repo, and why are you here?"
@@ -19,9 +19,9 @@ Two ways in:
 - `/onboard-me` — the full session, from orientation to a safe first change.
 - `/onboard-me` in a repo already walked — resume from `kt.md` in the learner's workspace for this repo.
 
-## The session reads; it does not change the repo
+## The session reads; its one write is asked for first
 
-This skill changes nothing in the repo: no edits to source, config, or dependencies, no formatting — a thing noticed on the way past is content for the record, never a task. No commits, pushes, branch changes, migrations, seed scripts, or deploys, and nothing run against a live database or cloud account. Two exceptions, each said before it happens, never after. Where the human accepts the offer below, `product-description` writes under `docs/product-description/` on its own terms — a `README.md` index and one or more documents, a directory rather than a file — and that is its write, not this skill's. Where the learner asks for the inward spec under § Notes, this session writes `docs/inward-spec.md` and nothing else. Beyond those two, nothing this session does leaves anything behind in the repo.
+This skill changes nothing in the repo beyond the two exceptions below: no edits to source, config, or dependencies, no formatting — a thing noticed on the way past is content for the record, never a task. No commits, pushes, branch changes, migrations, seed scripts, or deploys, and nothing run against a live database or cloud account. Two exceptions, each said before it happens, never after. Where the human accepts the offer below, `product-description` writes under `docs/product-description/` on its own terms — a `README.md` index and one or more documents, a directory rather than a file — and that is its write, not this skill's. Where the learner asks for the inward spec under § Notes, this session writes `docs/inward-spec.md` and nothing else. Beyond those two, nothing this session does leaves anything behind in the repo.
 
 Running a build, a test, or a script executes code from a repo nobody in this session can vouch for, and it can reach the network or a real service. The global recommend-and-proceed rule (`~/.claude/rules/recommend-and-proceed.md`) puts "run it and find out" in bin 1 — **override that here**: propose the run and let a human run it or paste the output. Reading files, listing directories, and `git log` are unaffected.
 

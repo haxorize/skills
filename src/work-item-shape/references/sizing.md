@@ -4,9 +4,9 @@ Open this when § Sizing's signals fire — a split is being proposed, the scope
 
 ## Too big
 
-An "and" in the title is the plain case. A bundling verb hides one: *manage*, *handle*, *maintain*, *support* — each names a bag of deliverables, so "manage subscriptions" is create, change, and cancel until the title says which. Criteria that can't be checked independently are the same signal.
+An "and" in the title is the plain case. A bundling verb hides one: *manage*, *handle*, *maintain*, *support* — each names a bag of deliverables, so "manage subscriptions" is create, change, and cancel until the title says which. Criteria that pass only together show the same thing: "the export runs nightly" and "the report carries the new column" are two deliverables wearing one title.
 
-Split by outcome, never by step: a multi-step workflow sliced one step per item looks vertical, since each step touches every layer, and delivers nothing until the last step lands. The first slice runs the whole workflow at its crudest — every step present, each in its simplest form — and later slices add the intermediate steps.
+A checkout sliced signup, then cart, then payment — one step per item — looks vertical, since each step touches every layer, and delivers nothing until the last step lands. The first slice runs the whole workflow at its crudest — every step present, each in its simplest form — and later slices add the intermediate steps.
 
 ## The scope-reduction vocabulary
 
@@ -14,7 +14,7 @@ The phrases that mark deferred work hiding in a body: "v1", "for now", "hardcode
 
 ## The three tests
 
-**The rider.** The trigger is the defect or need itself: the same defect found on a second path is in scope, and an improvement noticed because the file was open is not. For the borderline addition, ask whether it would ship on its own merits if the main change did not exist: no makes it decoration on someone else's diff, cut here and noted for the tracker; yes licenses a separate item, never a rider. The owner can add the second item; the owner cannot merge the two into one change.
+**The rider.** The trigger is the defect or need itself: the same defect found on a second path is in scope, and an improvement noticed because the file was open is not. For the borderline addition, ask whether it would ship on its own merits if the main change did not exist: no makes it decoration on someone else's diff — cut from this change, one line in the tracker note, no item; yes cuts it from this change too and files it as its own item with its own criteria, never a rider. The owner can add the second item; the owner cannot merge the two into one change.
 
 **The claimed must-have.** A requirement everyone calls a must-have is tested against the item's core tasks: which one becomes impossible without it? A named task keeps it; "worse but possible" demotes it, however senior the claimant, and the demotion is recorded with the claimant, the evidence given, the workaround, and what evidence would reverse the call — a falsifiable claim instead of a fight.
 

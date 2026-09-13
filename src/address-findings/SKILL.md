@@ -55,6 +55,8 @@ Close with one row per finding, every `F<n>` in the report present, in ID order:
 - **DEFERRED** is a proposal the human ratifies in the same message. The row names where the work would go; if they do not ratify, it is not deferred.
 - **ABANDON** is the visible form of "I tried and stopped": what was attempted, why it did not land, what state was left. A finding that is neither fixed nor explicitly disposed is this row, never an omission.
 
+Before the count, the size line: `git diff --stat <Reviewed-head>` (or `<Reviewed-head>..HEAD` once committed), insertions plus deletions, beside the same sum from `git diff --stat <base>...<Reviewed-head>` — where the fix touched a file the review never graded or runs past half that sum, **offer** a re-review, per `receiving-review`, and never start one.
+
 Re-measure the count at write time — `grep -oE '\bF[0-9]+\b' <report> | sort -u | wc -l` against the rows you wrote — and state both numbers. The global evidence rule (`~/.claude/rules/evidence.md`) governs every claim in the table.
 
 ### 5. Re-stamp the report

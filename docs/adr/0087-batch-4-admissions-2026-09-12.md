@@ -2,7 +2,7 @@
 
 ## Context
 
-Batch 4 of the 2026-09-12 round landed on 2026-09-13 as one commit, `57d482a`, folding the rows `~/code/lib/_rounds/2026-09-12/reconcile.md` § Batch 4 held for the three bodies at the 15,000 B cap — `writing-for-humans`, `work-item-shape`, `which-skill` — 6 paths (`git show --stat --format= 57d482a | tail -1` → `6 files changed, 34 insertions(+), 8 deletions(-)`). Batch 0 (`6a56210`) had relocated one block out of each body to make the room; the reconcile's § 4 said the folds size to the measured room, not the estimate. Measured before the folds (`wc -c`, 2026-09-13): 14,643 · 14,777 · 14,555 — headroom 357 / 223 / 445 B. The rows for `which-skill` from Batches 5, 7, and 8 (the `aeo`, `aeo-audit`, `discovery`, `retro` entries) land with those batches, not here. This record is written before the family's review, inside the same unpushed range, as [ADR-0084](0084-batch-family-6-7-admissions-2026-09-04.md) required and [ADR-0086](0086-batch-3-admissions-2026-09-12.md) followed.
+Batch 4 of the 2026-09-12 round landed on 2026-09-13 as one commit, `57d482a`, folding the rows `~/code/lib/_rounds/2026-09-12/reconcile.md` § Batch 4 held for the three bodies at the 15,000 B cap — `writing-for-humans`, `work-item-shape`, `which-skill` — 6 paths (`git show --stat --format= 57d482a | tail -1` → `6 files changed, 34 insertions(+), 8 deletions(-)`). Batch 0 (`6a56210`) had relocated one block out of each body to make the room; the reconcile's § 4 said the folds size to the measured room, not the estimate. Measured before the folds (`wc -c`, 2026-09-13): 14,643 · 14,777 · 14,555 — headroom 357 / 223 / 445 B. The rows for `which-skill` from Batches 5, 7, and 8 (the `aeo`, `audit-aeo`, `discovery`, `retro` entries) land with those batches, not here. This record is written before the batch family's review, inside the same unpushed range, as [ADR-0084](0084-batch-family-6-7-admissions-2026-09-04.md) required and [ADR-0086](0086-batch-3-admissions-2026-09-12.md) followed; like ADR-0086 it is one record per batch, the unit this round's reconcile fixes, so `gnurio/pm-os` is a bullet in both.
 
 ## Decision
 
@@ -25,7 +25,11 @@ The admissions of batch 4 are recorded here, one bullet per outside source; the 
 
 ## Consequences
 
-- `docs/lineage.md`'s second table gains rows whose `Record` cell is this record, and its header sentence names this record beside ADR-0082 through ADR-0086.
+- `docs/lineage.md`'s second table gains rows whose `Record` cell is this record, and its header sentence names this record beside ADR-0082, ADR-0083, ADR-0084, and ADR-0086 (ADR-0085 is not an admissions record and is correctly absent).
 - The round's closing ADR points here for batch 4.
 - The three bodies stand at 14,985 · 14,991 · 14,866 B (`wc -c`, after the commit's last edit to `which-skill`); Batches 5, 7, and 8 each add a `which-skill` line and have 134 B between them before that body relocates again.
 - `PM-A3`'s residue (the resync-before-critique ordering rule, host `codebase-design`) is the one row the reconcile's "Batches 3–4 fold the ADAPT residue" deferral still leaves unfolded; it is not a capped-body row and goes back to the reconcile.
+
+## Amendments
+
+- **2026-09-13 — the review of batches 0–4 and its fix pass.** The review (`skills-2026-09-13-unpushed-batches-0-4.review.md` in the landing zone) reversed one relocation this record narrates: `references/checklist-items.md` is deleted and the Cold-reader paragraph is back inline, condensed, in `work-item-shape` (review F57 — a near-always open condition keeps its content inline). The same pass condensed five register rows in `writing-for-humans` and four lines in `which-skill` to land the fixes under the cap, then pruned those three bodies and `diagnosing-bugs` under `writing-for-agents`' Deletion grounds (review F55) and re-inlined the why-chain rule in `diagnosing-bugs` Phase 6 (review F56); the four stand at 14,554 · 14,218 · 14,401 · 14,789 B (`wc -c`), so the 134 B figure above is superseded. One departure from grill decision 5 this record did not name: `which-skill`'s "three homes" line now spells the three cases (a destructive command, a shared working tree, a leaked secret) rather than folding the shared tree into a relative clause (review F62).
