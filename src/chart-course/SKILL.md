@@ -11,7 +11,7 @@ A loose idea has arrived — too big for one agent session, and wrapped in fog: 
 
 Three stops bind every run and each is stated in full below: one ticket per session, no more; the session ends with a **claims recheck** of every assertion it wrote against the live tracker; and the **Publish gate** holds before any create call.
 
-The destination varies per effort, and naming it is the first act of charting — it shapes every ticket. It might be a spec to hand off, a decision to lock before planning starts, or a change made in place. The map is domain-agnostic — engineering work, course content, whatever fits the shape.
+The destination varies per effort, and naming it is the first act of charting — it shapes every ticket. When no outcome statement exists to hang decision tickets off, stop and say `/frame-effort` comes first: its Frame's outcome is the destination and its open questions are the first tickets. It might be a spec to hand off, a decision to lock before planning starts, or a change made in place. The map is domain-agnostic — engineering work, course content, whatever fits the shape.
 
 ## Plan, don't do
 

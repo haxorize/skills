@@ -18,6 +18,8 @@ Call the Skill tool with `grilling` — its body *is* this skill's discipline: i
 
 Before the first question, check the working directory for `DOMAIN.md` or an ADR log (`docs/adr/`, or whatever the format doc's preflight resolves). Either one present means **recording is on**: call the Skill tool with `domain-modeling` now as well — if you did not just see a `Launching skill: domain-modeling` line, stop and call it again before the first question. Neither present, or `--plain` passed, means a plain stress-test with no document side effects — say which mode this grill is running in, in one line, so the user can override it.
 
+When a Frame exists for the effort — a `docs/frames/<slug>.md`, or the framing section of a plan document the user names — read it before the first question: the interview starts from its Open questions and its top-ranked assumptions, and its Settled decisions are not re-argued unless an answer invalidates one.
+
 ### 2. Run the grill, and record a decision inline
 
 `domain-modeling` offers ADRs at its gate but treats recording as `adr`'s job. **Override that here:** when the gate fires and the user agrees, write the ADR file *inline* — do not delegate to `adr`. Its offer→confirm→write flow is a gated action that would interrupt the grill loop's rhythm.

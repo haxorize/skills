@@ -21,7 +21,7 @@ Every skill sits on one axis — **who can reach it** (see [`DOMAIN.md`](DOMAIN.
 - **User-invoked skills** — reachable only by a human typing them (`disable-model-invocation: true`). They **orchestrate** a workflow.
 - **Model-invoked skills** — reachable by the model or a human (the default). They hold a reusable **discipline** the model reaches for on its own, or that an orchestrator pulls in via a declared dependency.
 
-The route most work travels: **`/grill-me`** → **`/to-feature` / `/to-story` / `/to-tasks`** to decompose → **`/from-ticket`** to load one slice → **`/implement`** to build it → **`/review-changes`** before it lands → **`/address-findings`** to act on the report → a plain "commit and push" (the `committing` discipline) or **`/ship`** to land it. Detours branch off: a runnable question goes **`/handoff` → `/prototype` → `/handoff`**; a hard bug pulls in `diagnosing-bugs`; a conflicted merge pulls in `resolving-merge-conflicts`. An effort too big for one session and still wrapped in fog goes through **`/chart-course`** first. Upkeep loops — **`/review-architecture`**, **`/sweep-domain`**, **`/backfill-adrs`**, **`/verify-docs`** — run between features. A PM or designer enters through **`/grill-me`**, **`/to-story`**, **`/prototype`**, a product description asked for by name (`product-description` answers), and **`/explain`**. When you don't remember which to reach for, ask **`/which-skill`**.
+The route most work travels: **`/grill-me`** → **`/to-feature` / `/to-story` / `/to-tasks`** to decompose → **`/from-ticket`** to load one slice → **`/implement`** to build it → **`/review-changes`** before it lands → **`/address-findings`** to act on the report → a plain "commit and push" (the `committing` discipline) or **`/ship`** to land it. Detours branch off: a runnable question goes **`/handoff` → `/prototype` → `/handoff`**; a hard bug pulls in `diagnosing-bugs`; a conflicted merge pulls in `resolving-merge-conflicts`. A program or feature with no outcome statement yet is framed by **`/frame-effort`** before the grill. An effort too big for one session and still wrapped in fog goes through **`/chart-course`** first. Upkeep loops — **`/review-architecture`**, **`/sweep-domain`**, **`/backfill-adrs`**, **`/verify-docs`** — run between features. A PM or designer enters through **`/grill-me`**, **`/to-story`**, **`/prototype`**, a product description asked for by name (`product-description` answers), and **`/explain`**. When you don't remember which to reach for, ask **`/which-skill`**.
 
 ## User-invoked skills
 
@@ -31,6 +31,7 @@ The route most work travels: **`/grill-me`** → **`/to-feature` / `/to-story` /
 
 ### Grilling
 
+- **`frame-effort`** — Frame a program or feature before it is grilled: outcome, opportunities, ranked assumptions, kill evidence, and a pass/fail Fit check of candidate solutions against numbered requirements. Runs before `grill-me`; `chart-course` only when the grill will not fit one session.
 - **`grill-me`** — Stress-testing through relentless interview. In a project with a `DOMAIN.md` or an ADR log it records as it goes — glossary updates inline, ADRs when the gate triggers; `--plain` (or no such docs) saves nothing. Runs anywhere.
 
 ### Charting
@@ -115,7 +116,7 @@ The first two are the same first day, different subject: `onboard-repo` wires th
 
 ### Grilling & domain modeling
 
-- **`grilling`** — The relentless-interview discipline `grill-me` is built on, and that `chart-course`, `teach-me`, and `review-architecture` each declare; the first two gate a step on it, `review-architecture` calls it without a gate.
+- **`grilling`** — The relentless-interview discipline `grill-me` is built on, and that `frame-effort`, `chart-course`, `teach-me`, and `review-architecture` each declare; `frame-effort`, `chart-course`, and `teach-me` gate a step on it, `review-architecture` calls it without a gate.
 - **`diverging`** — Break out of a locked problem frame with one committed lateral move. Fires on fixation signals (iterations circling one idea, a binary with two bad options); generates framings that `grilling`, its convergent complement, then stress-tests. Declared by `to-feature` and `to-story`, which reach for it when their proposed approaches collapse into one, and by `adoption-verdict`, which reaches for it to bound an unbounded field of candidates.
 - **`domain-modeling`** — The discipline for capturing and sharpening ubiquitous language in `DOMAIN.md`. Declares `adr`, so the ADR offer-gate it delegates to is installed wherever it goes.
 

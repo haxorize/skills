@@ -44,7 +44,7 @@ Name the areas the feature touches and its major sub-features, then check with t
 
 ### 5. Propose 2-3 approaches with trade-offs
 
-Lead with a recommendation. This is a pre-publication direction check, not interviewing: present it once; if the user pushes back, revise and re-present once — do not loop, exhaustive trade-off exploration belongs in `grill-me`. Skip only when there's genuinely one defensible shape (rare; force yourself to think of two). Distinct means the sketches trade off different things, not wear different dress: when two of the set collapse into one on inspection, the set holds one approach fewer than it claims, and that collapse is the fixation `diverging` breaks — call the Skill tool with `diverging` before re-proposing, and only then.
+Lead with a recommendation. When a Frame exists for the effort (`docs/frames/<slug>.md`), its Fit check columns are the approaches and its grid is the trade-off: present those, never a fresh set. This is a pre-publication direction check, not interviewing: present it once; if the user pushes back, revise and re-present once — do not loop, exhaustive trade-off exploration belongs in `grill-me`. Skip only when there's genuinely one defensible shape (rare; force yourself to think of two). Distinct means the sketches trade off different things, not wear different dress: when two of the set collapse into one on inspection, the set holds one approach fewer than it claims, and that collapse is the fixation `diverging` breaks — call the Skill tool with `diverging` before re-proposing, and only then.
 
 ### 6. Decompose into Stories
 

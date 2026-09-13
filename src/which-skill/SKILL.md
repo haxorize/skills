@@ -15,6 +15,7 @@ A **flow** is a path through the skills.
 ## The main flow: idea → ship
 
 1. **Sharpen the idea by interview.**
+   - **`/frame-effort`** — when a program or feature arrives with no outcome statement: the outcome, the opportunities, the ranked assumptions, the kill evidence, and a pass/fail Fit check of candidate solutions — the page the grill reads first.
    - **`/grill-me`** — relentless interview. With a `DOMAIN.md` or ADR log in the repo it records as it goes, updating `DOMAIN.md` as terms resolve and writing ADRs when the gate triggers; `/grill-me --plain` (or no such docs) is the same interview with nothing saved.
 2. **Decompose into tracked work** (three tiers, top-down as scope warrants):
    - **`/to-feature`** — a PRD-shaped Feature, when scope spans multiple stories.
@@ -66,7 +67,7 @@ Keep steps 1–2 in **one unbroken context window** so the grilling, decompositi
 
 ## If you are a PM or a designer
 
-Your entries are **`/grill-me`** for the idea, **`/to-story`** to publish it, **`/prototype`** for a question only a running thing answers, a product description asked for by name (`product-description` answers) for what the product does today, and **`/explain`** when an answer did not land. A design decision that needs several reviewers' comments asynchronously is a `proposed` ADR opened as a PR on your ask, so comments land on lines — `adr` writes it and `/ship` opens it; there is no separate RFC document.
+Your entries are **`/frame-effort`** for a program with no outcome yet, **`/grill-me`** for the idea, **`/to-story`** to publish it, **`/prototype`** for a question only a running thing answers, a product description asked for by name (`product-description` answers) for what the product does today, and **`/explain`** when an answer did not land. A design decision that needs several reviewers' comments asynchronously is a `proposed` ADR opened as a PR on your ask, so comments land on lines — `adr` writes it and `/ship` opens it; there is no separate RFC document.
 
 ## Standalone
 
