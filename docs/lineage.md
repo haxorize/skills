@@ -20,8 +20,6 @@ Before materially editing anything in the first table, diff its upstream — mai
 | `chart-course` | mattpocock/skills | `wayfinder` | MIT | ADR-0028 |
 | `ask-for-me` | mattpocock/skills | `to-questionnaire` | MIT | ADR-0034 |
 | `explain` | mattpocock/skills | `wait-what` | MIT | ADR-0043 |
-| `adoption-verdict` | compound-engineering-plugin (clone `everyinc-compound-engineering-plugin`) | `ce-pov` | MIT | ADR-0032 |
-| `capturing-learnings` | compound-engineering-plugin | the learnings loop | MIT | ADR-0025 |
 | `receiving-review` | obra/superpowers | `receiving-code-review` | MIT | ADR-0034 |
 | `diverging` | oaustegard/claude-skills | `generative-thinking` | MIT | ADR-0031 |
 | `verify-docs`, `doc-claims` | oaustegard/claude-skills | `verifying-claims` (the verdict table lives in `doc-claims`) | MIT | ADR-0034 |
@@ -42,6 +40,8 @@ The three nitfolio rows are written in local prose from one diffable upstream �
 | Local | Upstream | Rule | Record |
 | --- | --- | --- | --- |
 | `to-feature`, `to-story`, `to-tasks`, `to-bug` | mattpocock/skills' `to-prd`, `to-issues`, `to-spec`, `to-tickets` | structurally independent: scan for portable ideas, never diff as an upstream | ADR-0009 |
+| `adoption-verdict` (until 2026-09-13 a first-table row) | compound-engineering-plugin's `ce-pov` — MIT; deleted upstream at `835edc9` (ADR-0034, 2026-09-13) | local original since the upstream's deletion: attribution kept, nothing to diff | ADR-0032 |
+| `capturing-learnings` (until 2026-09-13 a first-table row) | compound-engineering-plugin's learnings loop — MIT; deleted upstream at `835edc9` (ADR-0034, 2026-09-13) | local original since the upstream's deletion: attribution kept, nothing to diff | ADR-0025 |
 | `writing-for-humans` | ten origins, named in the record | a synthesis with no single upstream | ADR-0042 |
 | `work-item-shape` | agent-armory, openai-skills | ideas folded over local publisher discipline | ADR-0044 |
 | `phi-safe-code`, `health-literacy`, `accessible-ui` | the material each admission ADR names | Domain skills mined from named material with no upstream skill to diff, so the diff-before-editing trigger does not fire; listed for attribution only | ADR-0055 and the later admission records |
