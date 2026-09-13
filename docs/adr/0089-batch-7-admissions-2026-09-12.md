@@ -21,7 +21,7 @@ One bullet per outside source; both fed local prose, so **no diff-before-editing
 
 ## Considered Options
 
-- **Keep `discovery` as the name.** Rejected: three senses of one word in one `DOMAIN.md` section, a near-neighbor collision with `discoverable-code`, and the PM-coaching connotation the boundary forbids.
+- **Keep `discovery` as the name.** Rejected: three senses of one word in one `DOMAIN.md` section — the two `DOMAIN.md` already carried plus the skill's own —, a near-neighbor collision with `discoverable-code`, and the PM-coaching connotation the boundary forbids.
 - **A bare `/frame` with no noun.** Rejected: the user-invoked siblings carry their object (`chart-course`, `review-changes`, `upgrade-deps`), and `diverging` already uses "frame" for a different move.
 - **Fold the Frame into `grill-me` as a flag.** Rejected: the Frame's fixed sections are what let `chart-course` lift its outcome as the destination and its open questions as tickets; a grill's tree is shaped per conversation and cannot be lifted the same way.
 - **Drop the Fit check and route every candidate choice to `adoption-verdict`.** Rejected: `adoption-verdict` judges named external candidates and never enumerates them; internal shapes (cache vs index vs denormalize — `PM-C9`'s unpark moment) have no other home. The grid bounds the field; the verdict grades a survivor.
@@ -29,7 +29,9 @@ One bullet per outside source; both fed local prose, so **no diff-before-editing
 
 ## Consequences
 
-- `docs/lineage.md`'s second table gains two rows whose `Record` cell is this record.
+- `docs/lineage.md`'s second table gains two rows whose `Record` cell is this record; its header sentence does not name this record, since `frame-effort` holds no first-table row.
 - The round's closing ADR points here for batch 7.
-- `frame-effort` stands at 13,137 B; `which-skill` at 14,929 B, 71 B under its cap, so Batch 8's `retro` router line needs room condensed first — recorded in the round's deferrals register, with the `work-item-shape` reverse route (body at 14,991 B) and the unread served model.
+- `frame-effort` stands at 13,137 B; `which-skill` at 14,929 B, 71 B under its cap, so Batch 8's `retro` router line needs room condensed first — recorded in the round's deferrals register, with the `work-item-shape` reverse route (body at 14,554 B: `git show HEAD:src/work-item-shape/SKILL.md | wc -c` → 14554, at `40d3af8`; ADR-0087's 14,991 predates `df760c1`'s prune) and the unread served model.
 - `PM-B11` and `PM-C9` are unparked; `PM-B13` is killed.
+
+Revisit when: `frame-effort`'s served model is read from a wind-tunnel transcript, which lifts the **untested by model** standing above; or a pressure scenario is run against the body's hard wordings (`Refuse`, binary only, never coaches), which supplies the control this record says is missing; or `which-skill` crosses its 15,000-byte cap when Batch 8's `retro` line lands.
