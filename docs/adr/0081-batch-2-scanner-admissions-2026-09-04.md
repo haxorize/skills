@@ -22,3 +22,5 @@ The day's review fix pass (67 findings, 2026-09-04) hardened the archive walk â€
 ## Consequences
 
 `docs/lineage.md`'s two batch-2 rows and `scripts/security.sh`'s header cite this record. The round's closing ADR, when written, points here for batch 2 rather than restating the lineage.
+
+Revisit when: an ADR-0034 swept-point diff of either ported scanner upstream shows the class a rule here was ported from changed or retired, which reopens that rule's diff obligation; or `scripts/security-selftest.sh` first grades the local rule red on a corpus the round has already read clean, which says the rule and not the corpus moved.

@@ -41,3 +41,5 @@ Two relocations left `work-item-shape`'s body at 14,987 B: the `:70` stop-condit
 - The round's closing ADR points here for batches 6 and 7.
 - The ledger's four PR-body rows (`K9`, `D4.16`, `G12`, `C19`) read ADAPT-landed as of this record; their unpark condition, "`ship` gains a PR-body reference", was met by `d72bbf3`.
 - `work-item-shape`'s body sits 13 B under its cap; the next fold into it relocates first, which the register already says.
+
+Revisit when: an ADR-0034 swept-point diff of mattpocock/skills changes the sections `implement` or `writing-for-agents` hold a second-table row for here, which is the both-tables case this record's header sentence names; or `ship`'s PR-body reference is cut or moved, which re-parks the four PR-body rows (`K9`, `D4.16`, `G12`, `C19`); or `work-item-shape` takes a fold without relocating first.

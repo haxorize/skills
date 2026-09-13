@@ -170,7 +170,9 @@ link_rules
 # The roster is the directory: a hook is a hooks/*.sh whose header carries an
 # `# Install note:` line (the libraries and selftests beside it carry none);
 # that line is also its one-line install note. post-merge derives the same
-# roster the same way.
+# roster the same way. A hook's event is its `# Event:` header line, and a
+# hook with none is a PreToolUse check on Bash; only PreToolUse entries take
+# a matcher, so a Stop hook's entry is the bare hooks list.
 SETTINGS="${TARGET_ROOT}/.claude/settings.json"
 hooks=""
 for f in $(grep -l '^# Install note: ' "$GLOBAL_DIR"/hooks/*.sh); do
@@ -191,25 +193,47 @@ Hook snippet — paste this into ~/.claude/settings.json under "hooks" (not appl
 The paths point at this checkout: a 'git pull' that edits global/hooks/ changes the live hook.
 SNIPPET
 # One JSON object for every missing hook: a settings file holds one object,
-# so the entries are built first and printed once.
-entries=""
+# so the entries are built first, grouped by event, and printed once.
+events=""
 for hook in $missing; do
-  HOOK_PATH="$(printf '%s' "$GLOBAL_DIR/hooks/$hook.sh" | sed 's/[\\"]/\\&/g')"
-  entry="      {
+  ev="$(grep -m1 '^# Event: ' "$GLOBAL_DIR/hooks/$hook.sh" | sed 's/^# Event: //' || true)"
+  ev="${ev:-PreToolUse}"
+  case " $events " in *" $ev "*) ;; *) events="$events $ev" ;; esac
+done
+blocks=""
+for ev in $events; do
+  entries=""
+  for hook in $missing; do
+    hev="$(grep -m1 '^# Event: ' "$GLOBAL_DIR/hooks/$hook.sh" | sed 's/^# Event: //' || true)"
+    [ "${hev:-PreToolUse}" = "$ev" ] || continue
+    HOOK_PATH="$(printf '%s' "$GLOBAL_DIR/hooks/$hook.sh" | sed 's/[\\"]/\\&/g')"
+    if [ "$ev" = PreToolUse ]; then
+      entry="      {
         \"matcher\": \"Bash\",
         \"hooks\": [
           { \"type\": \"command\", \"command\": \"bash $HOOK_PATH\" }
         ]
       }"
-  if [ -n "$entries" ]; then entries="$entries,
+    else
+      entry="      {
+        \"hooks\": [
+          { \"type\": \"command\", \"command\": \"bash $HOOK_PATH\" }
+        ]
+      }"
+    fi
+    if [ -n "$entries" ]; then entries="$entries,
 $entry"; else entries="$entry"; fi
+  done
+  block="    \"$ev\": [
+$entries
+    ]"
+  if [ -n "$blocks" ]; then blocks="$blocks,
+$block"; else blocks="$block"; fi
 done
 cat <<SNIPPET
 {
   "hooks": {
-    "PreToolUse": [
-$entries
-    ]
+$blocks
   }
 }
 SNIPPET

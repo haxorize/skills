@@ -63,3 +63,5 @@ The admissions of batches 4a–4f are recorded here, now, one bullet per outside
 - The round's closing ADR points here for batches 4a–4f rather than restating the lineage. The ledger's `H43` license cell and `D1.2`'s silence on the key names are corrected by this record and not rewritten in the ledger, which is the round's artifact.
 - Two folds in these batches are counted against other records and not here: `M17`'s cost on ADR-0041 (its Amendments, this date), and the incident learning's standing as a second document kind, which is ADR-0025's ground.
 - Batches 4g–4k take the same treatment: a record per family, written inside the family's own review cycle, never after it.
+
+Revisit when: an ADR-0034 swept-point diff shows one of this family's twenty-two upstreams changed the idea a row here took as local prose, which reopens that row's fold on its merit; or a park sweep finds a REJECT recorded here met by a later change in this repo; or a `Depends:`-cited global rule this family shaped is retired, since its ledger rows name the rule as host.

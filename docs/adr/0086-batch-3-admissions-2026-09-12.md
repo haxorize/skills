@@ -38,3 +38,5 @@ The admissions of batch 3 are recorded here, one bullet per outside source; the 
 - The round's closing ADR points here for batch 3.
 - The reconcile's license line for Batch 3 ("the rest MIT/Apache") is corrected by this record: `thebushidocollective/han` is FSL-1.1-ALv2 and `cursor/plugins`' `pstack` is MIT, so `CR-1.18` is ideas only and `DCB.1` need not be.
 - `diagnosing-bugs` has 201 B of headroom; the next fold into it relocates first.
+
+Revisit when: an ADR-0034 swept-point diff shows one of this batch's twelve upstreams changed the idea a row here took as local prose, which reopens that row's fold on its merit; or `thebushidocollective/han` relicenses from FSL-1.1-ALv2, which lifts `CR-1.18` from ideas only; or `diagnosing-bugs` takes a fold without relocating first, since this record measured its headroom at 201 B.
