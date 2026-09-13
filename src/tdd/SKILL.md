@@ -45,7 +45,7 @@ Build the first slice as a **Tracer bullet** — the thinnest path that touches 
 
 ### 1. Plan
 
-If a Story or Task issue exists, pull acceptance criteria from it. If not, briefly identify:
+If a Story or Task issue exists, pull acceptance criteria from it — and keep their IDs as assigned: an AC ID is append-only once a story or feature assigns it, never renumbered, per `to-story`'s and `to-feature`'s `references/ac-ids.md`. If not, briefly identify:
 
 - What interface changes are needed (route, endpoint, component, hook, query, model)
 - Which behaviors to test, and the seam each is tested at — naming seams up front aims testing effort at critical paths instead of every edge case (prioritize with the user)

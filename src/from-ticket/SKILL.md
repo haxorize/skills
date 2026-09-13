@@ -43,7 +43,7 @@ Do not load any context; do not hand off. The user's next move here is structura
 
 ### 4. Load by type
 
-Branch on the detected type — the branches are mutually exclusive, so open only the detected type's section in [references/load-by-type.md](references/load-by-type.md). Each branch loads the artifact (body, and per type: blockers, parent context, active ACs), and its `## Layers touched` drives the ADR match in step 6.
+Branch on the detected type — the branches are mutually exclusive, so open only the detected type's section in [references/load-by-type.md](references/load-by-type.md). Each branch loads the artifact (body, and per type: blockers, parent context, active ACs), and its `## Layers touched` drives the ADR match in step 6. The active ACs come with their IDs, which are append-only once assigned — never renumbered on a redraft — per `to-story`'s and `to-feature`'s `references/ac-ids.md`.
 
 **Comments (all types).** Published bodies deliberately omit design specifics, so when no ADR records an interface sketch or a rejected alternative, a comment on the ticket is often its only durable home (`review-architecture` files its sketch as a comment when the user declines an ADR; humans leave them too). A cold start that skips comments loads the behavioral spec but misses the concrete design record it's meant to implement against.
 
