@@ -35,6 +35,8 @@ Spend disproportionate effort here. Stand up the tightest red-capable loop you c
 
 When none of these four reaches the bug, six rarer shapes continue the same order in [references/loop-shapes.md](references/loop-shapes.md).
 
+A **metric regression** — a number fell, cause unknown — runs the same loop: the red-capable signal is the metric shown outside its own variation (a control chart over the prior window; noise has no cause to find), and minimizing is segmenting by the break's date, then by the cohort that carries it.
+
 ### Tighten the loop
 
 Treat the loop as a product. Once you have _a_ loop, **tighten** it:
@@ -91,7 +93,7 @@ Each hypothesis must be **falsifiable**: state the prediction it makes.
 
 If you cannot state the prediction, the hypothesis is a vibe — discard or sharpen it. Each hypothesis names its trigger, and for a bug that appears only sometimes it names separately what hides the fault — the state, timing, cache, or configuration whose absence lets the bug show — since that explains the bug's timing, not its cause. The cheapest hypothesis generator is the earliest point where the failing path and a known-good path diverge (the differential loop in [references/loop-shapes.md](references/loop-shapes.md) is its instrument). A quantity that made you blink on the way (19,000 rows, a 40-second query) is a why still owed, not a finding to file.
 
-Seed the list with any Learning-doc match from the exploration preamble — it competes on the same falsifiable terms as fresh hypotheses, ranked by how exactly its symptoms match and how fresh it is.
+Seed the list with any Learning-doc match from the exploration preamble — it competes on the same falsifiable terms as fresh hypotheses, ranked by how exactly its symptoms match and how fresh it is. A web search — an issue, a thread, the error string — seeds a hypothesis on the same terms and is never evidence for one: search the exact string first, then at most one generalized variant, and read a thread's fix as a claim about someone else's system.
 
 With the list ranked, **declare the edit boundary**: the narrowest directory in each layer that contains the files the leading hypotheses implicate there — or, when this loop runs under `implement`, the boundary `implement` already declared, which a hypothesis past it does not widen. The rule and its stop are `implement`'s: a fix that needs a file past the boundary asks Proceed (widen, with the reason) / Split (the outside part is its own change) / Rethink (the diagnosis is wrong), and the fix in Phase 5 is held to it.
 
@@ -113,11 +115,7 @@ Tool preference:
 
 ## Phase 5 — Fix + regression test
 
-Write the regression test **before the fix** — but only if there is a **correct seam** for it.
-
-A correct seam (in `codebase-design`'s sense — the place where a module's interface lives, where behavior can be altered without editing in place) is one where the test exercises the **real bug pattern** as it occurs at the call site. If the only available seam is too shallow — a single-caller test when the bug needs multiple callers, a unit test that can't replicate the chain that triggered the bug — a regression test there gives false confidence.
-
-**If no correct seam exists, that itself is the finding** — a `codebase-design` problem, not just a missing test; note it for Phase 6.
+Write the regression test **before the fix** — but only at a **correct seam**: one, in `codebase-design`'s sense, where the test exercises the **real bug pattern** as it occurs at the call site. A seam too shallow for the pattern, or none at all, is [references/hard-cases.md](references/hard-cases.md) § No correct seam — the absence is itself a finding for Phase 6.
 
 If a correct seam exists:
 
@@ -150,7 +148,7 @@ Required before declaring done:
 
 **Then ask: what would have prevented this bug?** Make the call **after** the fix is in, not before.
 
-Walk that question as a why-chain, **one level at a time** — a single-shot chain produces renames, not explanations ("because the test was missing" restates the bug; name what let the test go missing). Dead-end causes — "the author forgot", "more review was needed", "time pressure" — are constants, not causes: name the structural check, default, or incentive that failed. By the third to fifth why you should be at process, defaults, or incentives, and there are usually several distinct root causes, not one — the change that introduced the bad state and the check that let it persist or propagate are usually both.
+Walk it as a why-chain **one level at a time**, per [references/hard-cases.md](references/hard-cases.md) § Post-mortem branches — dead-end causes and the single-shot chain are named there.
 
 - A why-chain landing on an **architectural cause** or an **unrecorded decision** takes its branch in [references/hard-cases.md](references/hard-cases.md) § Post-mortem branches — the second ends in a gated offer to record the decision via `adr`.
 - Call the Skill tool with `capturing-learnings` if it isn't already live, and run its capture gate (verified, expensive, recurrence-plausible; an incident remaps the first two), saying the result either way in the gate's own words: where it holds, offer a Learning doc, or an incident learning for a production incident, so the next diagnosis starts where this one ended.

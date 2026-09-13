@@ -8,6 +8,12 @@ Opened from §2 only when the diff touches code. Each section carries its lens's
 
 Run against [smell-baseline.md](smell-baseline.md).
 
+## Agent-authored code
+
+**Trigger.** Always, once this file is open — every diff this suite reviews was written by an agent.
+
+Three failure shapes the other lenses do not name. **An API that does not exist**: a call, option, flag, or import the author's memory supplied and the installed version does not — check each new external call against the package the lockfile pins (its types, its docs on disk, `--help`), never against what the reviewer also remembers. **Logic that reads right and computes wrong**: prose-shaped code the author never traced — trace one concrete input through each changed branch by hand and name the value at the exit; reading it again the way it was written finds nothing. **Scaffolding nothing reaches**: a helper, type, or branch with no caller in the tree — `grep` the symbol; Speculative Generality in the smell baseline is its cousin. A silenced check is the verification gap's.
+
 ## `/security-review`
 
 **Trigger.** Only on **security surfaces**: endpoints/external surface, auth/permissions, raw SQL, deserialization/input boundaries, file ingest, CORS/secrets/config, new dependencies — and a new or bumped MCP server, whose tool descriptions are prompt text every session reads.

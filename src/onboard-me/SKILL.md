@@ -21,7 +21,7 @@ Two ways in:
 
 ## The session reads; it does not change the repo
 
-This skill changes nothing in the repo: no edits to source, config, or dependencies, no formatting — a thing noticed on the way past is content for the record, never a task. No commits, pushes, branch changes, migrations, seed scripts, or deploys, and nothing run against a live database or cloud account. One exception, and it is not this skill's write: where the human accepts the offer below, `product-description` writes under `docs/product-description/` on its own terms — a `README.md` index and one or more documents, a directory rather than a file. Say that before the offer, not after, and nothing else this session does leaves anything behind in the repo.
+This skill changes nothing in the repo: no edits to source, config, or dependencies, no formatting — a thing noticed on the way past is content for the record, never a task. No commits, pushes, branch changes, migrations, seed scripts, or deploys, and nothing run against a live database or cloud account. Two exceptions, each said before it happens, never after. Where the human accepts the offer below, `product-description` writes under `docs/product-description/` on its own terms — a `README.md` index and one or more documents, a directory rather than a file — and that is its write, not this skill's. Where the learner asks for the inward spec under § Notes, this session writes `docs/inward-spec.md` and nothing else. Beyond those two, nothing this session does leaves anything behind in the repo.
 
 Running a build, a test, or a script executes code from a repo nobody in this session can vouch for, and it can reach the network or a real service. The global recommend-and-proceed rule (`~/.claude/rules/recommend-and-proceed.md`) puts "run it and find out" in bin 1 — **override that here**: propose the run and let a human run it or paste the output. Reading files, listing directories, and `git log` are unaffected.
 
@@ -79,6 +79,10 @@ Prefer reading a few of the right files deeply over skimming everything. A sessi
 Update the map, then say three things: what is lit, what is still dark, and the one rung or lesson you would take next. Where a description was written this session, say where it landed and what it does *not* yet cover — a `--seed` call writes the pilot and the foundations, and every other feature area is on the README's planned list rather than written, so most of the set does not exist yet rather than being unverified.
 
 ## Notes
+
+### The inward spec, on request
+
+A learner heading into a rewrite or a handover can ask for the map's lit part as an **inward spec** — the architecture, the contracts between modules, the data model — written to `docs/inward-spec.md` in the repo for a reader who will open the source. It is the KT map's `[fact]` lines reorganized by module rather than by rung; every `[inference]`, `[unknown]`, and `[conflict]` keeps its tag inside it, since a spec that reads complete where the map was dark is the painted-over failure above, now in the repo. It is written on request only, and `rebuild-contract` is its outward sibling: that contract is for a reader who never opens the source, and this spec never stands in for it.
 
 ### Handing a topic to `teach-me`
 

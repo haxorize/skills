@@ -16,6 +16,10 @@ Five moves look like flake fixes and are not, when reached for to make the red g
 
 List what you tried. Ask the user for: (a) access to whatever environment reproduces it, (b) a captured artifact (HAR file, log dump, core dump, screen recording with timestamps), or (c) permission to add temporary production instrumentation. Where the repo holds member or patient data, the artifact is a sink `phi-safe-code` governs: name the fields it will carry before asking for it.
 
+## No correct seam
+
+A correct seam (in `codebase-design`'s sense — the place where a module's interface lives, where behavior can be altered without editing in place) is one where the test exercises the real bug pattern as it occurs at the call site. If the only available seam is too shallow — a single-caller test when the bug needs multiple callers, a unit test that can't replicate the chain that triggered the bug — a regression test there gives false confidence. **If no correct seam exists, that itself is the finding** — a `codebase-design` problem, not just a missing test; note it for Phase 6.
+
 ## Diagnosed but not fixed
 
 A bug you diagnose but cannot fix now still earns a test: record the expected value and the current buggy value, and **assert the buggy one** as a deliberate **pinning test**, named as such in the test name — it passes today and breaks loudly the moment a real fix changes the behavior. An honest pinning test beats a skipped TODO.
@@ -25,6 +29,8 @@ A bug you diagnose but cannot fix now still earns a test: record the expected va
 A loop that survives three same-context attempts usually means the diagnoser can't see its own problem — offer **fresh eyes** as the recovery move: a subagent or fresh session that reads the evidence trail (loop command, minimized repro, falsified hypotheses) without inheriting your assumptions. The cap bounds automatic spend, not the investigation: continuing past it is earned by naming the unresolved question and the probe that could move it — never by just trying again.
 
 ## Post-mortem branches
+
+A single-shot why-chain produces renames, not explanations ("because the test was missing" restates the bug; name what let the test go missing). Dead-end causes — "the author forgot", "more review was needed", "time pressure" — are constants, not causes: name the structural check, default, or incentive that failed. By the third to fifth why you should be at process, defaults, or incentives, and there are usually several distinct root causes, not one — the change that introduced the bad state and the check that let it persist or propagate are usually both.
 
 - If the answer involves **architectural change** — no good test seam, a too-shallow module, tangled callers, hidden coupling — suggest the user run `/review-architecture` with the specifics (it's user-invoked, so suggest it; don't try to invoke it). The deepening it surfaces is the durable fix.
 - If the root cause was a **load-bearing decision gap** — the bug existed because a real trade-off was made implicitly and never recorded — offer to capture it via `adr`. A recorded decision stops the same class of bug recurring for the next person.

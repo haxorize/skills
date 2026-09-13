@@ -48,6 +48,7 @@ Use the Agent tool with subagent_type=Explore to navigate the codebase. Every Ex
 - Where do tightly-coupled modules create integration risk in the seams between them?
 - Which parts of the codebase are untested or hard to test?
 - Where do domain terms from DOMAIN.md leak across module interfaces?
+- Where does a smell from `review-changes/references/smell-baseline.md` recur across the hot spots — the catalog reads the same over a tree as over a diff, judgment calls and repo overrides included — and where does work grow with the data: a query issued inside a loop, a nested walk over two collections, a sort or a full scan repeated per item?
 
 Done when you've swept **every top-level module/area**, not just the first friction you hit; if you deliberately skipped a large subtree, say which and why.
 
