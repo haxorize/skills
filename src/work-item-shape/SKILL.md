@@ -14,6 +14,8 @@ A `CLAUDE.md` `Issue tracker:` block carrying the **routing policy line** (`onbo
 
 Say what ad-hoc drafting would skip — parent reconciliation against the story map, `Covers:` wiring, tags, the per-tier template, update modes — and wait. A published lookalike is worse than nothing: it looks done, and the pipeline's bookkeeping never hears about it.
 
+An ask that arrives program- or feature-sized with no outcome statement — nobody can say, asked once, what will be true when it has worked — routes up rather than down: say `/frame-effort` comes first, because its Frame's Outcome is the goal every item under it hangs from.
+
 Ad-hoc drafting is the right path when the repo has no pipeline, the item targets someone else's repo, or the user declines the publisher. Every rule below still binds there — including that the parent question ("what does this hang under?") is answered or explicitly scoped out, never skipped. Ad-hoc prose also follows the human-facing register — call the Skill tool with `writing-for-humans` at the first write if it isn't already live (under a publisher, the publisher has already run it).
 
 ## The goal
