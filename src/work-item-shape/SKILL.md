@@ -74,9 +74,9 @@ An AFK item also carries its three scoping lines — the **stop condition**, the
 
 Size by structure, never hours: one item is one deliverable, independently verifiable, demoable on its own. Where the repo maps a Story to one PR and a Task to one commit, size to that grain.
 
-Too big announces itself as an "and" in the title, a bundling verb there that hides one, or criteria that can't be checked independently: split it, by outcome, never by step. Too small to demo alone — merge it upward into its parent rather than filing it. The worked examples — the bundling verbs, the step-per-item workflow that only looks vertical, the scope-reduction phrases — are in [references/sizing.md](references/sizing.md), opened when proposing a split.
+Too big announces itself as an "and" in the title, a bundling verb there that hides one, or criteria that can't be checked independently: split it, by outcome, never by step. Too small to demo alone — merge it upward into its parent rather than filing it. An item is also sized to its **trigger** — the defect or need, never the sentence about it. The worked examples — the bundling verbs, the step-per-item workflow that only looks vertical, the scope-reduction phrases — and three tests — the rider, the claimed must-have, the bug arriving against committed work — are in [references/sizing.md](references/sizing.md), opened when proposing a split or one of the three is on the table.
 
-Watch the **scope-reduction vocabulary** — the surface **scope drift** shows on, in a redraft as much as a first draft — "v1", "for now", a flag with no removal item (§ The goal), and the rest the reference lists. Each names deferred work that lands explicitly in out-of-scope or a follow-up item, or it quietly under-delivers the decision the item claims to implement; the only resolutions are deliver fully or propose a split.
+Watch the **scope-reduction vocabulary** — the surface **scope drift** shows on, in a redraft as much as a first draft — "v1", "for now", a flag with no removal item (§ The goal), and the rest the reference lists: each is deferred work named in out-of-scope or a follow-up item, or a quiet under-delivery of the decision the item claims to implement; the only resolutions are deliver fully or propose a split.
 
 ## Naming drift
 
@@ -84,7 +84,7 @@ A name in a draft or patch — module, route path, query key, model name — tha
 
 ## Surfacing ambiguity
 
-Never resolve source ambiguity silently. Emit each find as an **Ambiguity block** of one of three types — **Unclear** (present but readable two ways), **Missing** (required but absent), **Conflicting** (two statements disagree) — each carrying the source text quoted verbatim, the question a human must answer, the impact if guessed wrong, and what you assumed for now. At a parent tier, a detail whose answer comes from decomposition — a latency figure only a Story can settle — is a decision the children settle, not an Ambiguity block; the test is whether a human could answer it now, at this tier.
+Never resolve source ambiguity silently. Emit each find as an **Ambiguity block** of one of three types — **Unclear** (present but readable two ways), **Missing** (required but absent), **Conflicting** (two statements disagree) — each carrying the source text quoted verbatim, the question a human must answer, the impact if guessed wrong, and what you assumed for now. A **Conflicting** block first names the goal behind each side's wording: compatible goals dissolve it; a real conflict is decided on user evidence, then strategy, then reversibility, never averaged. At a parent tier, a detail whose answer comes from decomposition — a latency figure only a Story can settle — is a decision the children settle, not an Ambiguity block; the test is whether a human could answer it now, at this tier.
 
 When more than 5 blocks accumulate, triage which ones escalate by impact: **scope > security and privacy > user experience > technical detail**. Below the bar, the block still emits — with an informed industry default recorded in its assumed-for-now slot and the deciding question stated rather than asked — retention windows, error-message tone, and standard performance targets have defaults; scope never does.
 
@@ -96,7 +96,7 @@ Self-review sees what you meant, not what you wrote — before an item publishes
 - It answers the calling skill's question — "what would you build?", or for a bug, "what's broken, and how do I reproduce it?"; ad-hoc, the question matching the inferred tier. Alongside the answer it names ambiguities in Ambiguity-block shape and any context it had to assume.
 - Fold real gaps back into the draft. One pass, not a loop.
 
-When the pass (or any self-review) works from checklist items, the items test the English, not the future code: each interrogates the requirements text itself — "is 'prominent display' quantified with a size or position?" — and tags what it probes (a gap, an ambiguity, a conflict, an assumption, or the section it checks). An item that starts "Verify/Test/Confirm" plus implementation behavior fails that test.
+When the pass (or any self-review) works from checklist items, the items test the English, never the future code; their shape is in [references/checklist-items.md](references/checklist-items.md), opened when writing them.
 
 ## Boundary
 

@@ -43,3 +43,15 @@ Before writing or approving one, answer five questions: what happened; why, at t
 Read this section only when writing a changelog entry or a release note.
 
 Notable-to-users only: what a user of the product observes changed — never typo fixes or internal refactors ("Refactored internal code structure" is an entry about nothing). Order breaking changes → features → fixes; cite the PR (`#1234`), or the commit only where no PR exists; append to the unreleased section rather than rewriting released ones; match the file's declared format where one exists. The range is a command, not a memory: the baseline is `git describe --tags --abbrev=0` (lightweight tags count; in a monorepo with per-package tag prefixes, add `--match '<prefix>*'`), or `git rev-list --max-parents=0 HEAD` when the repo has no tag; the candidates are `git log <baseline>..HEAD --no-merges`, and every entry cites its PR, or its commit where no PR exists, inside that range — a change remembered from the session but absent from the log is not in the release.
+
+## Weekly status note
+
+Read this section only when writing the weekly status note to a manager.
+
+One status line first — green, yellow, or red, with one sentence on where things stand — and the color matches reality: a note that is only ever green stops being read. Then four sections, each present: **wins** (what shipped, with its effect — never "made progress"), **next** (each step dated or marked undated), **risks** (each with its severity and the mitigation), **asks** (each with an owner and a by-when; "let me know if you have questions" is not an ask). The status and any ask land in the first three lines.
+
+## Runbook, release or migration procedure
+
+Read this section only when writing a procedure someone will execute, usually under time pressure.
+
+Written from a real run: a step nobody has taken, or a branch nobody has exercised, is marked draft and names who reports back after its first run — a procedure imagined at the desk is a draft, never a runbook. The skeleton: what the document covers and what it does not; the happy path first, then the same steps numbered, one action each, every command paste-ready with concrete example values; where steps differ in risk, a legend up front applied to every command — safe to run anytime, writes to production, manual step outside the terminal; where order matters, the consequence of getting it wrong stated on the step; every state-changing step names its rollback or says plainly that none exists; a closing "verify it worked" with the observable end state and the command that shows it. A troubleshooting entry is symptom-first — the error text verbatim so it can be searched, then cause, then the exact fix — with the cheapest diagnostic first. A migration or deprecation guide adds a mapping table of old to new, one row per behavior or key, a date for what stops working (never "a future release"), and its own completion condition, after which it is marked superseded rather than deleted.
