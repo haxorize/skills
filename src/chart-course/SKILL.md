@@ -1,6 +1,6 @@
 ---
 name: chart-course
-description: Chart a foggy, multi-session effort as a shared map of decision tickets on the project's tracker, then work them one per session until the way to the destination is clear. For efforts too big for one grill — the map ends where `to-feature`/`to-story` picks up. ADO — a map Feature with User Story tickets. GitHub — a map issue with sub-issue tickets.
+description: Chart a foggy, multi-session effort as a shared map of decision tickets on the project's tracker, then work them one per session until the way to the destination is clear. For efforts too big for one grill — the map ends where `to-feature`/`to-story` picks up; a program or feature with no outcome statement yet is framed by `/frame-effort` first. ADO — a map Feature with User Story tickets. GitHub — a map issue with sub-issue tickets.
 disable-model-invocation: true
 requires: grilling, domain-modeling, writing-for-humans
 ---
@@ -11,7 +11,7 @@ A loose idea has arrived — too big for one agent session, and wrapped in fog: 
 
 Three stops bind every run and each is stated in full below: one ticket per session, no more; the session ends with a **claims recheck** of every assertion it wrote against the live tracker; and the **Publish gate** holds before any create call.
 
-The destination varies per effort, and naming it is the first act of charting — it shapes every ticket. When no outcome statement exists to hang decision tickets off, stop and say `/frame-effort` comes first: its Frame's outcome is the destination and its open questions are the first tickets. It might be a spec to hand off, a decision to lock before planning starts, or a change made in place. The map is domain-agnostic — engineering work, course content, whatever fits the shape.
+The destination varies per effort, and naming it is the first act of charting — it shapes every ticket. It might be a spec to hand off, a decision to lock before planning starts, or a change made in place; a loose idea whose destination the grill can pin in this sitting is the canonical run. One stop sits before that grill: a program- or feature-sized effort whose user cannot say, asked once, what will be true when it has worked has no outcome statement to hang decision tickets off — say `/frame-effort` comes first; its Frame's Outcome is the destination and its Open questions are the first tickets. The map is domain-agnostic — engineering work, course content, whatever fits the shape.
 
 ## Plan, don't do
 

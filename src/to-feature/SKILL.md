@@ -1,6 +1,6 @@
 ---
 name: to-feature
-description: Synthesize the current conversation into a Feature-level (PRD-shaped) artifact and publish it to the project's tracker — for scope large enough to need multiple stories underneath. For single-feature scope, reach for `to-story` instead. ADO — creates a Feature work item under a parent Epic. GitHub — creates an issue with a feature/PRD template.
+description: Synthesize the current conversation into a Feature-level (PRD-shaped) artifact and publish it to the project's tracker — for scope large enough to need multiple stories underneath. For single-feature scope, reach for `to-story` instead. Where a `/frame-effort` Frame exists, its Fit check columns are the approaches proposed. ADO — creates a Feature work item under a parent Epic. GitHub — creates an issue with a feature/PRD template.
 disable-model-invocation: true
 requires: writing-for-humans, work-item-shape, diverging
 ---
@@ -44,7 +44,7 @@ Name the areas the feature touches and its major sub-features, then check with t
 
 ### 5. Propose 2-3 approaches with trade-offs
 
-Lead with a recommendation. When a Frame exists for the effort (`docs/frames/<slug>.md`), its Fit check columns are the approaches and its grid is the trade-off: present those, never a fresh set. This is a pre-publication direction check, not interviewing: present it once; if the user pushes back, revise and re-present once — do not loop, exhaustive trade-off exploration belongs in `grill-me`. Skip only when there's genuinely one defensible shape (rare; force yourself to think of two). Distinct means the sketches trade off different things, not wear different dress: when two of the set collapse into one on inspection, the set holds one approach fewer than it claims, and that collapse is the fixation `diverging` breaks — call the Skill tool with `diverging` before re-proposing, and only then.
+Lead with a recommendation. When a Frame exists for the effort (`docs/frames/<slug>.md`, or the framing section of a plan document the user names), its Fit check columns are the approaches and its grid is the trade-off: present those, never a fresh set — the one revision below re-presents the Frame's columns, and a user who rejects every column is routed back to `/frame-effort`, where a new column is graded. This is a pre-publication direction check, not interviewing: present it once; if the user pushes back, revise and re-present once — do not loop, exhaustive trade-off exploration belongs in `grill-me`. Skip only when there's genuinely one defensible shape (rare; force yourself to think of two). Distinct means the sketches trade off different things, not wear different dress: when two of the set collapse into one on inspection, the set holds one approach fewer than it claims, and that collapse is the fixation `diverging` breaks — call the Skill tool with `diverging` before re-proposing, and only then.
 
 ### 6. Decompose into Stories
 

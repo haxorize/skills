@@ -16,9 +16,9 @@ A **flow** is a path through the skills.
 
 1. **Sharpen the idea by interview.**
    - **`/frame-effort`** — when a program or feature arrives with no outcome statement: the outcome, the opportunities, the ranked assumptions, the kill evidence, and a pass/fail Fit check of candidate solutions — the page the grill reads first.
-   - **`/grill-me`** — relentless interview. With a `DOMAIN.md` or ADR log in the repo it records as it goes, updating `DOMAIN.md` as terms resolve and writing ADRs when the gate triggers; `/grill-me --plain` (or no such docs) is the same interview with nothing saved.
+   - **`/grill-me`** — relentless interview, opening from a `/frame-effort` Frame where one exists. With a `DOMAIN.md` or ADR log it records as it goes — `DOMAIN.md` as terms resolve, ADRs when the gate triggers; `--plain` (or no such docs) saves nothing.
 2. **Decompose into tracked work** (three tiers, top-down as scope warrants):
-   - **`/to-feature`** — a PRD-shaped Feature, when scope spans multiple stories.
+   - **`/to-feature`** — a PRD-shaped Feature, when scope spans multiple stories; a Frame's Fit check supplies its approaches.
    - **`/to-story`** — a single-feature Story. The usual entry point.
    - **`/to-tasks`** — split a Story into vertical-slice Tasks (one Task = one commit, where the repo maps them that way).
    - A creation ask ("file a story for this") is caught by the `work-item-shape` discipline: it routes the ask to the owning publisher in a wired repo, drafting the body itself only where its rules license ad-hoc drafting — it never replaces the publishers.
@@ -35,7 +35,7 @@ Keep steps 1–2 in **one unbroken context window** so the grilling, decompositi
 
 ## When the way isn't clear: `/chart-course`
 
-- **`/chart-course`** — a situational on-ramp, not the main entry. For an effort too big for one session and still wrapped in fog (usually multi-person): it charts a shared map of **decision tickets** on the tracker — questions, not build slices — then each later session works exactly one (`/chart-course <map-url>`). It plans rather than does, delegating its interviews to `grilling` and `domain-modeling`, its runnable questions to `/prototype`, and it ends where the main flow's step 2 begins: way clear, handed to `/to-feature` or `/to-story`. Ordinary ideas skip it — step 1's grill covers them.
+- **`/chart-course`** — a situational on-ramp, not the main entry. For an effort too big for one session and still wrapped in fog: with no outcome statement it stops and sends you to `/frame-effort` first; otherwise it charts a shared map of **decision tickets** on the tracker — questions, not build slices — then each later session works one (`/chart-course <map-url>`). It plans rather than does, delegating interviews to `grilling` and `domain-modeling`, runnable questions to `/prototype`, and ends where step 2 begins: way clear, handed to `/to-feature` or `/to-story`. Ordinary ideas skip it — step 1's grill covers them.
 
 ## Detours off the main flow
 

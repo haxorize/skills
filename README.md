@@ -32,15 +32,15 @@ The route most work travels: **`/grill-me`** → **`/to-feature` / `/to-story` /
 ### Grilling
 
 - **`frame-effort`** — Frame a program or feature before it is grilled: outcome, opportunities, ranked assumptions, kill evidence, and a pass/fail Fit check of candidate solutions against numbered requirements. Runs before `grill-me`; `chart-course` only when the grill will not fit one session.
-- **`grill-me`** — Stress-testing through relentless interview. In a project with a `DOMAIN.md` or an ADR log it records as it goes — glossary updates inline, ADRs when the gate triggers; `--plain` (or no such docs) saves nothing. Runs anywhere.
+- **`grill-me`** — Stress-testing through relentless interview, opening from an existing Frame's open questions where `/frame-effort` wrote one. In a project with a `DOMAIN.md` or an ADR log it records as it goes — glossary updates inline, ADRs when the gate triggers; `--plain` (or no such docs) saves nothing. Runs anywhere.
 
 ### Charting
 
-- **`chart-course`** — Chart a foggy, multi-session effort as a shared map of decision tickets on the project's tracker, then work them one per session until the way is clear. The map ends where `to-feature` / `to-story` picks up. ADO: a map Feature with User Story tickets. GitHub: a map issue with sub-issue tickets.
+- **`chart-course`** — Chart a foggy, multi-session effort as a shared map of decision tickets on the project's tracker, then work them one per session until the way is clear; with no outcome statement yet it stops and sends you to `/frame-effort` first. The map ends where `to-feature` / `to-story` picks up. ADO: a map Feature with User Story tickets. GitHub: a map issue with sub-issue tickets.
 
 ### Publishing to a tracker
 
-- **`to-feature`** — Synthesize a Feature-level (PRD-shaped) artifact and publish it. Use only when scope is broad enough to warrant multiple stories underneath. ADO: Feature work item. GitHub: feature issue. `--update <feature-id>` patches a published Feature.
+- **`to-feature`** — Synthesize a Feature-level (PRD-shaped) artifact and publish it. Use only when scope is broad enough to warrant multiple stories underneath; an existing Frame's Fit check supplies its approaches. ADO: Feature work item. GitHub: feature issue. `--update <feature-id>` patches a published Feature.
 - **`to-story`** — Synthesize a Story-level (single-feature spec) artifact and publish it. Default entry point for turning a grilled plan into a tracked ticket. ADO: User Story. GitHub: story-shaped issue. `--update <story-id>` patches a published Story in place.
 - **`to-tasks`** — Break a parent User Story into child Tasks. Tracer-bullet style; verifies the parent is a Story before slicing. To split a Feature into Stories, run `to-story --parent <feature-id>` repeatedly instead. `--update <task-id>` patches one Task; `--reconcile <story-id>` re-syncs the whole set against the parent.
 - **`to-bug`** — Synthesize a Bug from the current conversation and publish it. ADO: native Bug work item with `Microsoft.VSTS.Common.Severity` and `Microsoft.VSTS.TCM.ReproSteps`. GitHub: issue tagged with `bug` plus a severity label declared in CLAUDE.md. `--update <bug-id>` from day one.
@@ -77,6 +77,7 @@ The first two are the same first day, different subject: `onboard-repo` wires th
 ### Evaluating
 
 - **`evaluation-ledger`** — A multi-week evaluation kept as a ledger in the repo under `docs/evaluation/`: the questions the memo must answer, then one row per claim with its source, the date seen, `marketed` or `verified` against this project or `contradicted`, and an expiry the sweep reads every session. The decision memo is drafted from the rows alone, every sentence citing one and the four counts per candidate on the line after its title; an adopt-or-not recommendation is the `adoption-verdict` grade, which it declares. `doc-claims` sweeps the file; a watch over a rule set is the same ledger with one candidate.
+- **`audit-aeo`** — Audit one public page (a URL, or a saved HTML file on a machine with no fetch) as an AI agent reads it: an agent's-eye baseline against `aeo`'s rules, an extraction-fidelity scorecard run more than once, a Copilot snapshot sheet for a person to run, and a severity-ranked gap list with each fix written literally.
 
 ### Codebase health
 
@@ -86,7 +87,6 @@ The first two are the same first day, different subject: `onboard-repo` wires th
 - **`sweep-domain`** — Sweep the codebase *and the conversation* to refresh `DOMAIN.md`, closing with every entry the sweep retired or narrowed and why. Deliberate sweep mode (inline domain capture during grilling lives in `grill-me`).
 - **`backfill-adrs`** — Sweep recent git history for un-recorded architectural decisions and write the ones that pass the gate; the same sweep re-verifies the existing log, reporting an ADR whose named mechanism no longer resolves, whose trigger has fired, or whose rationale rests on a fact that no longer holds as `STALE`.
 - **`verify-docs`** — Check whether a document's claims still hold, against the code and tests it describes, the running product it describes, the sources a derived document was distilled from, or — for the instruction files the harness loads every turn, audited as one stack — the other instructions in force, with per-claim verdicts and fixes. An `evaluation-ledger` is one of the documents it sweeps: a row past its Expires date is STALE. The prose-drift sibling of `sweep-domain` (vocabulary) and `backfill-adrs` (decisions).
-- **`audit-aeo`** — Audit one public page (a URL, or a saved HTML file on a machine with no fetch) as an AI agent reads it: an agent's-eye baseline against `aeo`'s rules, an extraction-fidelity scorecard run more than once, a Copilot snapshot sheet for a person to run, and a severity-ranked gap list with each fix written literally.
 - **`delete-dead-code`** — A deliberate whole-repo dead-code sweep: find what nothing calls, tier it Safe / Caution / Danger, and remove it one test-verified deletion at a time — the removals `implement` parks, `review-architecture` never makes, and `/simplify` scopes to a diff.
 
 ### Crossing sessions & prototyping
@@ -117,7 +117,7 @@ The first two are the same first day, different subject: `onboard-repo` wires th
 ### Grilling & domain modeling
 
 - **`grilling`** — The relentless-interview discipline `grill-me` is built on, and that `frame-effort`, `chart-course`, `teach-me`, and `review-architecture` each declare; `frame-effort`, `chart-course`, and `teach-me` gate a step on it, `review-architecture` calls it without a gate.
-- **`diverging`** — Break out of a locked problem frame with one committed lateral move. Fires on fixation signals (iterations circling one idea, a binary with two bad options); generates framings that `grilling`, its convergent complement, then stress-tests. Declared by `to-feature` and `to-story`, which reach for it when their proposed approaches collapse into one, and by `adoption-verdict`, which reaches for it to bound an unbounded field of candidates.
+- **`diverging`** — Break out of a locked problem frame with one committed lateral move. Fires on fixation signals (iterations circling one idea, a binary with two bad options); generates framings that `grilling`, its convergent complement, then stress-tests. Declared by `to-feature` and `to-story`, which reach for it when their proposed approaches collapse into one, by `adoption-verdict`, which reaches for it to bound an unbounded field of candidates, and by `frame-effort`, which reaches for it when the Fit check has one candidate column or a top assumption has no nameable kill evidence.
 - **`domain-modeling`** — The discipline for capturing and sharpening ubiquitous language in `DOMAIN.md`. Declares `adr`, so the ADR offer-gate it delegates to is installed wherever it goes.
 
 ### Decisions & learnings
