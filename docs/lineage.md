@@ -1,6 +1,6 @@
 # Lineage
 
-A row here is a skill or scanner rule with a lineage other than local original. Anything else about an upstream — why it was admitted, what was rejected — goes to its ADR. **Every skill not listed is a local original with nothing to diff against**; the rows in the second table are listed for attribution only. A skill or a script may hold a row in both tables where it has more than one upstream — `receiving-review` and `scripts/security.sh` do, as do the skills [ADR-0082](adr/0082-batch-family-4a-4f-admissions-2026-09-04.md)'s, [ADR-0083](adr/0083-batch-family-4g-4k-admissions-2026-09-04.md)'s, [ADR-0084](adr/0084-batch-family-6-7-admissions-2026-09-04.md)'s, [ADR-0086](adr/0086-batch-3-admissions-2026-09-12.md)'s, and [ADR-0087](adr/0087-batch-4-admissions-2026-09-12.md)'s rows name — and the first table's row is what the pre-commit lineage notice fires on, for a staged `src/<skill>/` path only; a staged `scripts/` path draws no notice, so for a scanner rule `CLAUDE.md`'s read-this-file-first line is the whole guard.
+A row here is a skill or scanner rule with a lineage other than local original. Anything else about an upstream — why it was admitted, what was rejected — goes to its ADR. **Every skill not listed is a local original with nothing to diff against**; the rows in the second table are listed for attribution only. A skill or a script may hold a row in both tables where it has more than one upstream — `receiving-review` and `scripts/security.sh` do, as do most of the skills [ADR-0082](adr/0082-batch-family-4a-4f-admissions-2026-09-04.md)'s, [ADR-0083](adr/0083-batch-family-4g-4k-admissions-2026-09-04.md)'s, [ADR-0084](adr/0084-batch-family-6-7-admissions-2026-09-04.md)'s, [ADR-0086](adr/0086-batch-3-admissions-2026-09-12.md)'s, and [ADR-0087](adr/0087-batch-4-admissions-2026-09-12.md)'s rows name; `ship`, `committing`, `writing-for-humans`, and `work-item-shape` are second-table only, so a row in the second table never implies one in the first — and the first table's row is what the pre-commit lineage notice fires on, for a staged `src/<skill>/` path only; a staged `scripts/` path draws no notice, so for a scanner rule `CLAUDE.md`'s read-this-file-first line is the whole guard.
 
 Before materially editing anything in the first table, diff its upstream — main *and* unmerged branches — from the swept point recorded against that upstream in [ADR-0034](adr/0034-branch-mining-lineage-or-dormant-main.md)'s amendment ledger (the newest entry for an upstream supersedes the rest), and fold in or consciously reject what changed there. Clones live under `~/code/lib/<owner>-<repo>` on the machine that mined them; the license column is read from each clone's license file.
 
@@ -20,13 +20,15 @@ Before materially editing anything in the first table, diff its upstream — mai
 | `chart-course` | mattpocock/skills | `wayfinder` | MIT | ADR-0028 |
 | `ask-for-me` | mattpocock/skills | `to-questionnaire` | MIT | ADR-0034 |
 | `explain` | mattpocock/skills | `wait-what` | MIT | ADR-0043 |
+| `adoption-verdict` | compound-engineering-plugin (clone `everyinc-compound-engineering-plugin`) | `ce-pov` | MIT | ADR-0032 |
+| `capturing-learnings` | compound-engineering-plugin | the learnings loop | MIT | ADR-0025 |
 | `receiving-review` | obra/superpowers | `receiving-code-review` | MIT | ADR-0034 |
 | `diverging` | oaustegard/claude-skills | `generative-thinking` | MIT | ADR-0031 |
 | `verify-docs`, `doc-claims` | oaustegard/claude-skills | `verifying-claims` (the verdict table lives in `doc-claims`) | MIT | ADR-0034 |
 | `audit-tests` | oaustegard/claude-skills | `gating` — the audit half only | MIT | ADR-0034 |
 | `validate-behavior` | openclaw/agent-skills | `behavior-validator` | MIT | ADR-0041 |
 | `discoverable-code` | dmmulroy/dotfiles | `write-discoverable-code`, under `home/.agents/skills/` (modem-dev/skills is a byte-identical mirror, never diffed) | none stated | ADR-0050 |
-| `onboard-me` | nitfolio/nirvajna-skills (clone `nitfolio-nirvajna-skills`) | fog-of-war map, evidence tags, stage ladder, read-only boundary | MIT | ADR-0064 |
+| `onboard-me` | nitfolio/nirvajna-skills (clone `nitfolio-nirvajna-skills`) | fog-of-war map, evidence tags, stage ladder, read-only boundary (two local exceptions since: the `product-description` write and, on ask, `docs/inward-spec.md`) | MIT | ADR-0064 |
 | `rebuild-contract` | nitfolio/nirvajna-skills (clone `nitfolio-nirvajna-skills`) | observer-and-fidelity boundary, inclusion test, two tag axes, behavior index, stable IDs, scope-down rule, section spine, self-audit | MIT | ADR-0069 |
 | `offboard-engineer` (until 2026-08-30 `offboard-me`) | nitfolio/nirvajna-skills (clone `nitfolio-nirvajna-skills`) | inversion, SCAN → RANK → ASK loop, five evidence tags, seven-rung ladder, five-section register, eleven signals | MIT | ADR-0070 |
 | `scripts/security.sh` — hex blob, drop site, download-then-exec, minified line, `.npmrc`, install-time manifest hook, compiled binary, remote instructions | zcaceres/skills (clone `zcaceres-skills`) | `skills/investigate-repo/SKILL.md`'s pattern list; diff its patterns, not a skill body (attributed to openhonest/honest-skills until 2026-09-04 — ADR-0034's entry of that date) | MIT | ADR-0073 |
@@ -40,8 +42,6 @@ The three nitfolio rows are written in local prose from one diffable upstream �
 | Local | Upstream | Rule | Record |
 | --- | --- | --- | --- |
 | `to-feature`, `to-story`, `to-tasks`, `to-bug` | mattpocock/skills' `to-prd`, `to-issues`, `to-spec`, `to-tickets` | structurally independent: scan for portable ideas, never diff as an upstream | ADR-0009 |
-| `adoption-verdict` (until 2026-09-13 a first-table row) | compound-engineering-plugin's `ce-pov` — MIT; deleted upstream at `835edc9` (ADR-0034, 2026-09-13) | local original since the upstream's deletion: attribution kept, nothing to diff | ADR-0032 |
-| `capturing-learnings` (until 2026-09-13 a first-table row) | compound-engineering-plugin's learnings loop — MIT; deleted upstream at `835edc9` (ADR-0034, 2026-09-13) | local original since the upstream's deletion: attribution kept, nothing to diff | ADR-0025 |
 | `writing-for-humans` | ten origins, named in the record | a synthesis with no single upstream | ADR-0042 |
 | `work-item-shape` | agent-armory, openai-skills | ideas folded over local publisher discipline | ADR-0044 |
 | `phi-safe-code`, `health-literacy`, `accessible-ui` | the material each admission ADR names | Domain skills mined from named material with no upstream skill to diff, so the diff-before-editing trigger does not fire; listed for attribution only | ADR-0055 and the later admission records |
