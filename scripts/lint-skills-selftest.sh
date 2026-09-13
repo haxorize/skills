@@ -83,6 +83,16 @@
 # turning a reject row into a no-op. Both read guards are covered below with the
 # other read-error branches.
 #
+# The launch-loaded sum (check_context_budget) is covered whole and per arm:
+# the clean root's figure pinned to the byte on the baseline; a rule file grown
+# by 1,000 bytes moving the total with no other bound crossed; the 30,000-byte
+# WARN pinned one byte each side (30,000 quiet, 30,001 fires); a root without
+# CLAUDE.md and one without global/rules/ each printing that layer as `absent`;
+# and the three read-error refusals — CLAUDE.md, a rule file, a SKILL.md — each
+# FAILing with no measurement line printed. The header roster is diffed against
+# the check_*() definitions through --help, and the 12,000 / 14,400 / 30,000
+# literals in the roster, comments and WARN text are pinned to the comparisons.
+#
 # All four read-error branches are covered, by a runtime `chmod 000` on
 # throwaway copies rather than by a fixture: the link extractor's, the Depends:
 # citation check's, the line cap's, and the ledger checks' two (the anchor grep,
@@ -795,12 +805,24 @@ fi
 # over-bound near-cap would FAIL here, caught by the exit-0 assertion above
 # rather than by this grep.
 if printf '%s\n' "$clean_baseline" | grep -q '^WARN:'; then
-  selftest_fail "the clean fixture drew a WARN line; the one WARN the linter emits is CLAUDE.md's 6,000-byte bound, and the clean root's CLAUDE.md sits under it"
+  selftest_fail "the clean fixture drew a WARN line; the linter's three WARNs are CLAUDE.md's 6,000-byte bound, the 14,400-byte catalog ceiling and the 30,000-byte launch-loaded budget, and the clean root sits under all three — the WARN text above names which moved"
 fi
 # And no shell noise: the baseline is captured with 2>&1, so a header line that
 # lost its `#` and ran as a command lands here as "command not found" — with
 # the linter still exiting 0, which is how one shipped on 2026-08-30.
 reject_in "$clean_baseline" "the clean run printed a shell error (a header line running as a command, or a call to an undefined function)" "command not found"
+
+# The launch-loaded sum (round 2026-09-12, row I2). A measurement line with no
+# status marker, so neither root's exit-status assertions see it; what is
+# graded is that the sum reads all three layers. The clean root's figure is
+# pinned whole — 5,954 (CLAUDE.md) + 118 (the one rule) + 620 (the two
+# model-invoked description lines; ledger-legend and which-skill are
+# user-invoked and do not load) = 6,692, and 6,692 × 100 / 364 = 1,838 — so a
+# layer dropped from the sum, or the user-invoked lines let in, moves the
+# number and reds the row. It sits here, on the baseline already in hand,
+# rather than inside the throwaway-root block below: it needs no mktemp, so a
+# machine whose mktemp fails still grades it.
+expect_in "$clean_baseline" "the launch-loaded sum did not print, or its figure moved, in the clean root" "launch-loaded surface: 6692 bytes (CLAUDE.md 5954 + global/rules/ 118 + model-invoked catalog 620), about 1838 tokens"
 
 # The widening half of scripts/README.md's both-ways rule for the
 # .claude/skills/*/scripts/*.sh walk. Narrowing is graded twice — dropping the
@@ -820,6 +842,36 @@ reject_in "$clean_baseline" "the .claude/skills/*/scripts/ walk reached a .sh fi
 help_out=$(bash scripts/lint-skills.sh --help 2>&1); expect_rc "--help" 0 $?
 expect_in "$help_out" "--help printed no Usage: line" "Usage:"
 printf '%s\n' "$help_out" | grep -qE '^(OK|FAIL|WARN):' && selftest_fail "--help ran the lint"
+# The roster --help prints is the header span, so the two cannot disagree with
+# each other — but nothing in the linter makes the header name every check_*()
+# it defines, and check_conventions_pointer went unlisted from its landing
+# until 2026-09-13. Read the roster as --help renders it and diff it against
+# the function definitions; a check added without its roster line reds here.
+roster_missing=$(comm -23 \
+  <(grep -oE '^check_[a-z_]+\(\)' scripts/lint-skills.sh | sed 's/()$//' | sort -u) \
+  <(printf '%s\n' "$help_out" | grep -oE '^ *check_[a-z_]+' | sed 's/^ *//' | sort -u))
+[ -z "$roster_missing" ] || selftest_fail "--help's check roster (the header span of scripts/lint-skills.sh) does not name every check_*() the file defines; missing: $(printf '%s' "$roster_missing" | tr '\n' ' ')"
+# The roster and comment copies of the two ADR-0079 bounds are prose, and the
+# only copy that binds is the comparison literal; a bound re-pinned in the code
+# and not the prose, or the reverse, leaves --help stating a figure the linter
+# does not enforce. Read each enforced literal off its comparison, format it
+# the way the prose writes it, and require the roster line, the WARN text and
+# (for the budget) the header comment to carry that spelling.
+catalog_enforced=$(grep -oE '"\$bytes" -gt [0-9]+ \]; then$' scripts/lint-skills.sh | grep -oE '[0-9]+ \]; then$' | grep -oE '^[0-9]+' | sort -u | tr '\n' ' ')
+budget_enforced=$(grep -oE '"\$total" -gt [0-9]+ \]; then$' scripts/lint-skills.sh | grep -oE '[0-9]+' | sort -u | tr '\n' ' ')
+[ "$catalog_enforced" = "12000 14400 " ] || selftest_fail "check_rules_bytes and check_catalog_bytes compare \$bytes against something other than 12000 and 14400 (found: ${catalog_enforced:-nothing}) — if a bound moved by amendment to ADR-0079, re-pin it here and in the roster, comment and WARN literals below"
+[ "$budget_enforced" = "30000 " ] || selftest_fail "check_context_budget compares \$total against something other than 30000 (found: ${budget_enforced:-nothing}) — if the budget moved by amendment to ADR-0079, re-pin it here and in the roster, comment and WARN literals below"
+roster_span=$(sed -n '/^# The checks, as the named functions below/,/^#   Every FAIL goes through/p' scripts/lint-skills.sh)
+expect_in "$roster_span" "the header roster's check_catalog_bytes line no longer carries the enforced 14,400-byte figure" "14,400 bytes (ADR-0079; a WARN)"
+expect_in "$roster_span" "the header roster's check_rules_bytes line no longer carries the enforced 12,000-byte figure" "totals under 12,000 bytes"
+expect_in "$roster_span" "the header roster's check_context_budget line no longer carries the enforced 30,000-byte figure" "WARN past the 30,000-byte per-turn"
+budget_comment=$(sed -n '/^# (see header) The launch-loaded surface as ONE number/,/^check_context_budget() {$/p' scripts/lint-skills.sh)
+expect_in "$budget_comment" "check_context_budget's header comment no longer carries the enforced 30,000-byte figure" "WARN past 30,000 bytes"
+expect_in "$budget_comment" "check_context_budget's header comment no longer states the per-layer caps as independent of the budget, or its arithmetic moved" "6,000
+# + 12,000 + 14,400 = 32,400"
+warn_literals=$(grep -E '^    echo "WARN: ' scripts/lint-skills.sh)
+expect_in "$warn_literals" "check_catalog_bytes' WARN text no longer carries the enforced 14,400-byte figure" "over the 14,400-byte ceiling"
+expect_in "$warn_literals" "check_context_budget's WARN text no longer carries the enforced 30,000-byte figure" "over the 30,000-byte per-turn budget"
 bogus_out=$(LINT_ROOT="$fixtures" bash scripts/lint-skills.sh --bogus 2>&1); expect_rc "an unknown argument" 3 $?
 printf '%s\n' "$bogus_out" | grep -qE '^(OK|FAIL|WARN):' && selftest_fail "an unknown argument still ran the lint"
 expect_in "$bogus_out" "the unknown-argument error did not name --help as the fix" "--help"
@@ -1003,30 +1055,57 @@ isolated_case "rule-pointer-missing" 's/\z/\nProcedure: `~\/.claude\/skills\/cle
 isolated_quiet_case "rule-pointer-resolves" 's/\z/\nProcedure: `~\/.claude\/skills\/clean-skill\/references\/note.md`.\n/' \
   "global/rules/clean-rule.md" \
   "points at ~/.claude/skills/"
-# The launch-loaded sum (round 2026-09-12, row I2). A measurement line with no
-# status marker, so neither root's exit-status assertions see it; what is
-# graded is that the sum reads all three layers. The clean root's figure is
-# pinned whole — 5,954 (CLAUDE.md) + 118 (the one rule) + 620 (the two
-# model-invoked description lines; ledger-legend and which-skill are
-# user-invoked and do not load) = 6,692, and 6,692 × 100 / 364 = 1,838 — so a
-# layer dropped from the sum, or the user-invoked lines let in, moves the
-# number and reds the row. The isolated copy grows CLAUDE.md by exactly 1,000
-# bytes and pins the moved total, which is the arm the pin alone cannot tell
-# apart from a sum that reads CLAUDE.md's size once at some other site.
-expect_in "$clean_baseline" "the launch-loaded sum did not print, or its figure moved, in the clean root" "launch-loaded surface: 6692 bytes (CLAUDE.md 5954 + global/rules/ 118 + model-invoked catalog 620), about 1838 tokens"
-if isolated_run "context-budget-claude-md" 's/\z/("x" x 999) . "\n"/e' "CLAUDE.md"; then
-  expect_in "$isolated_out" "the launch-loaded sum did not move by the 1,000 bytes added to CLAUDE.md in the isolated 'context-budget-claude-md' root" "launch-loaded surface: 7692 bytes (CLAUDE.md 6954 + global/rules/ 118 + model-invoked catalog 620), about 2113 tokens"
-  expect_rc "the lint against the isolated 'context-budget-claude-md' root" 0 "$isolated_rc"
-  reject_in "$isolated_out" "the launch-loaded budget WARN printed at 7,692 bytes in the 'context-budget-claude-md' root, so the 30,000 boundary has moved" "over the 30,000-byte per-turn budget"
+# The launch-loaded sum's moving arms (round 2026-09-12, row I2); the clean
+# root's whole figure is pinned above, beside the baseline it reads. The first
+# copy grows the one rule file by exactly 1,000 bytes — a layer that crosses
+# no other bound on the way (the rule stays under its 12,000-byte FAIL, and
+# the CLAUDE.md WARN and the catalog ceiling are untouched) — and pins the
+# moved total, which is the arm the whole-figure pin alone cannot tell apart
+# from a sum that reads one layer's size once at some other site.
+if isolated_run "context-budget-rule" 's/\z/("x" x 999) . "\n"/e' "global/rules/clean-rule.md"; then
+  expect_in "$isolated_out" "the launch-loaded sum did not move by the 1,000 bytes added to global/rules/ in the isolated 'context-budget-rule' root" "launch-loaded surface: 7692 bytes (CLAUDE.md 5954 + global/rules/ 1118 + model-invoked catalog 620), about 2113 tokens"
+  expect_rc "the lint against the isolated 'context-budget-rule' root" 0 "$isolated_rc"
+  reject_in "$isolated_out" "a WARN printed at 7,692 bytes in the 'context-budget-rule' root, so a bound has moved or the row grew a layer that has one" "WARN:"
 fi
-# The per-turn budget WARN (ADR-0079, 2026-09-13): CLAUDE.md grown by 24,000
-# bytes carries the clean root's 6,692 to 30,692, past 30,000, and the exit
-# stays 0 because a WARN never moves the status. The 1,000-byte copy above is
-# the quiet side of the same boundary: 7,692 draws the measurement line alone.
-if isolated_run "context-budget-over" 's/\z/("x" x 23999) . "\n"/e' "CLAUDE.md"; then
-  expect_in "$isolated_out" "the launch-loaded budget WARN did not print in the isolated 'context-budget-over' root" "WARN: the launch-loaded surface totals 30692 bytes, over the 30,000-byte per-turn budget"
+# The 30,000-byte boundary itself (ADR-0079, 2026-09-13), pinned from both
+# sides one byte apart: CLAUDE.md grown by 23,308 bytes carries the clean
+# root's 6,692 to exactly 30,000, which is quiet (the bound is `-gt`), and by
+# 23,309 to 30,001, which WARNs. Move the literal in lint-skills.sh either way
+# and one of the two rows reds; the exit stays 0 in both because a WARN never
+# moves the status. CLAUDE.md is the layer grown because it is the only one
+# that can carry 23 KB: the rules directory FAILs past 12,000 and a
+# description past 1,024 chars. Both rows therefore also draw the 6,000-byte
+# CLAUDE.md WARN, which is why the quiet row rejects the budget WARN's own
+# text and not `WARN:` — and both lean on check_reattach_bytes' 15,000-byte
+# loaded-file FAIL NOT walking the root CLAUDE.md (it walks src/ and
+# .claude/skills/ only); extend that walk to CLAUDE.md and these rows exit 1
+# for a reason that is not the budget's.
+if isolated_run "context-budget-at-bound" 's/\z/("x" x 23307) . "\n"/e' "CLAUDE.md"; then
+  expect_in "$isolated_out" "the launch-loaded sum did not land on 30,000 in the isolated 'context-budget-at-bound' root" "launch-loaded surface: 30000 bytes (CLAUDE.md 29262 + global/rules/ 118 + model-invoked catalog 620), about 8241 tokens"
+  reject_in "$isolated_out" "the launch-loaded budget WARN printed at exactly 30,000 bytes in the 'context-budget-at-bound' root, so the boundary has tightened (it is -gt 30000, and 30,000 is under it)" "over the 30,000-byte per-turn budget"
+  expect_rc "the lint against the isolated 'context-budget-at-bound' root" 0 "$isolated_rc"
+fi
+if isolated_run "context-budget-over" 's/\z/("x" x 23308) . "\n"/e' "CLAUDE.md"; then
+  expect_in "$isolated_out" "the launch-loaded budget WARN did not print at 30,001 bytes in the isolated 'context-budget-over' root, so the boundary has loosened" "WARN: the launch-loaded surface totals 30001 bytes, over the 30,000-byte per-turn budget"
   expect_rc "the lint against the isolated 'context-budget-over' root" 0 "$isolated_rc"
 fi
+# The two absent-layer arms, which no perl edit can reach: a root with no
+# CLAUDE.md prints that layer as `absent`, not as a measured 0 that reads like
+# an empty file; a root with no global/rules/ prints the same word for that
+# layer. Each costs 0 in the sum and moves nothing else, so the exit stays 0.
+for absent_layer in CLAUDE.md global/rules; do
+  absent_root="$isolated_parent/context-budget-absent-${absent_layer//\//-}"
+  if ! mkdir -p "$absent_root" || ! cp -R "$clean_fixtures/." "$absent_root/" || ! rm -r "$absent_root/$absent_layer"; then
+    selftest_skip "could not build the clean tree without $absent_layer — the absent-layer row for it was not exercised."
+    continue
+  fi
+  absent_out=$(LINT_ROOT="$absent_root" bash scripts/lint-skills.sh 2>&1); absent_rc=$?
+  case $absent_layer in
+    CLAUDE.md) expect_in "$absent_out" "a root with no CLAUDE.md did not print that layer as absent (a measured 0 reads as an empty file)" "launch-loaded surface: 738 bytes (CLAUDE.md absent + global/rules/ 118 + model-invoked catalog 620), about 202 tokens" ;;
+    global/rules) expect_in "$absent_out" "a root with no global/rules/ did not print that layer as absent (a measured 0 reads as an empty directory)" "launch-loaded surface: 6574 bytes (CLAUDE.md 5954 + global/rules/ absent + model-invoked catalog 620), about 1806 tokens" ;;
+  esac
+  expect_rc "the lint against the clean root without $absent_layer" 0 "$absent_rc"
+done
 
 # The catalog ceiling (ADR-0079): the SUM of the model-invoked description
 # lines — the clean root has two (ledger-legend and which-skill are user-invoked
@@ -1130,11 +1209,42 @@ else
   expect_in "$clean_output" "the ledger stored-status-rule walk read-error did not fire on an unreadable file" "could not be read while looking for the evaluation ledger stored-status rule"
   expect_in "$clean_output" "the ledger anchor walk read-error did not fire on an unreadable file" "could not be read while looking for the evaluation ledger anchor"
   expect_in "$clean_output" "the CLAUDE.md byte-count read-error did not fire on an unreadable root file" "CLAUDE.md could not be read for its byte count"
+  # check_context_budget's own read of the same file. Without this row the
+  # branch could be deleted with the suite green, and the sum would print an
+  # empty CLAUDE.md figure and a total short by the whole file, no FAIL.
+  expect_in "$clean_output" "the launch-loaded sum's CLAUDE.md read-error did not fire on an unreadable root file" "CLAUDE.md could not be read for its byte total — the launch-loaded sum did not run"
+  reject_in "$clean_output" "the launch-loaded sum printed a figure over an unreadable CLAUDE.md" "launch-loaded surface:"
   # The Landing: key check's own guard, on the same unreadable root file. Its
   # first act is a grep, which fails on an unreadable file and would otherwise
   # return 0 — reporting a CLAUDE.md nobody could read as one whose
   # pre-authorization keys are well-formed.
   expect_in "$clean_output" "the Landing: key read-error did not fire on an unreadable root file" "CLAUDE.md could not be read — the Landing: key check did not run on it"
+
+  # The two layers the sum imports rather than reads itself, each broken in a
+  # copy of its own so the FAIL is that layer's alone. Before 2026-09-13 an
+  # unreadable rule file left the layer at 0 and the sum printed short with no
+  # marker on the line; an unreadable SKILL.md dropped its description bytes
+  # with no FAIL anywhere. Each row wants both the layer's own FAIL and the
+  # sum's refusal, and rejects the measurement line outright.
+  for unread_layer in "global/rules/clean-rule.md|rule" "src/clean-skill/SKILL.md|catalog"; do
+    unread_file=${unread_layer%|*}; unread_name=${unread_layer#*|}
+    unread_root="$inject_parent/unread-$unread_name"
+    if ! mkdir -p "$unread_root" || ! cp -R "$clean_fixtures/." "$unread_root/" || ! chmod 000 "$unread_root/$unread_file"; then
+      selftest_skip "could not build the clean tree with $unread_file unreadable — the $unread_name-layer read-error rows were not exercised."
+      continue
+    fi
+    unread_out=$(LINT_ROOT="$unread_root" bash scripts/lint-skills.sh 2>&1); unread_rc=$?
+    expect_rc "the lint against an otherwise-clean tree whose $unread_file is unreadable" 1 "$unread_rc"
+    case $unread_name in
+      rule)
+        expect_in "$unread_out" "check_rules_bytes' read-error did not fire on an unreadable rule file" "global/rules/clean-rule.md could not be read for its byte total — the 12,000-byte budget did not run"
+        expect_in "$unread_out" "the launch-loaded sum did not refuse to print over an unmeasured global/rules/ layer" "global/rules/ could not be measured (a rule file could not be read; the FAIL above names it) — the launch-loaded sum did not run" ;;
+      catalog)
+        expect_in "$unread_out" "check_catalog_bytes' read-error did not fire on an unreadable SKILL.md" "src/clean-skill/SKILL.md could not be read for its description line — the 14,400-byte catalog ceiling did not run"
+        expect_in "$unread_out" "the launch-loaded sum did not refuse to print over an unmeasured catalog layer" "the model-invoked catalog could not be measured (a SKILL.md could not be read; the FAIL above names it) — the launch-loaded sum did not run" ;;
+    esac
+    reject_in "$unread_out" "the launch-loaded sum printed a figure with the $unread_name layer unread — a total short by an unread file, shown as a measurement" "launch-loaded surface:"
+  done
 fi
 fi
 fi

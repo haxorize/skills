@@ -387,6 +387,9 @@
 #                              a rule resolves under src/
 #     check_global_rule        Depends: resolves, and each dependant cites back
 #     check_hook_selftest      every hook has an executable selftest
+#     check_conventions_pointer  every script and git hook opens with the
+#                              `# Conventions for this tree:` line (line 2 after
+#                              a shebang, line 1 without one)
 #     check_script_selftest    every script, and every git hook, has an
 #                              executable selftest, and opens with the
 #                              conventions pointer; a git hook is executable
@@ -416,7 +419,9 @@ set -uo pipefail
 
 # The check roster is printed, not summarised: it is read out of this file's own
 # header, between the two markers below, so --help and the header cannot come to
-# disagree about what runs. Everything each check does *not* reach is in the
+# disagree with each other. Neither is proof the header names every check_*()
+# defined below; scripts/lint-skills-selftest.sh diffs the --help roster against
+# the function definitions. Everything each check does *not* reach is in the
 # header's per-check prose above that block, which --help points at rather than
 # reprinting.
 usage() {
@@ -2168,13 +2173,16 @@ check_global_rule() {
 # bound is this repo's own ruling rather than a platform figure that moves
 # under it.
 # The two per-directory sums are kept for check_context_budget, which reads
-# them once at the end of pass 4; a root without the directory leaves the sum
-# at 0, which is what an absent layer costs.
+# them once at the end of pass 4. A root without global/rules/ leaves that
+# layer at `absent` (the sum counts it as 0, which is what an absent layer
+# costs, and the measurement line says so rather than printing a measured 0);
+# a read error empties the layer, and check_context_budget then refuses to
+# print a sum, since a total short by an unread file would read as a figure.
 rules_dir_bytes=0
 catalog_line_bytes=0
 check_rules_bytes() {
   local bytes r one
-  [ -d global/rules ] || return 0
+  [ -d global/rules ] || { rules_dir_bytes=absent; return 0; }
   set -- global/rules/*.md
   [ $# -gt 0 ] || return 0
   bytes=0
@@ -2182,6 +2190,7 @@ check_rules_bytes() {
     one=$(wc -c < "$r" | tr -d ' ')
     if [ -z "$one" ]; then
       say_fail "$r could not be read for its byte total — the 12,000-byte budget did not run, so global/rules/ is unmeasured rather than under budget; fix the file's permissions and rerun"
+      rules_dir_bytes=
       return
     fi
     bytes=$((bytes + one))
@@ -2197,21 +2206,33 @@ check_rules_bytes
 # model-invoked skill is in the catalog Claude Code loads on every turn, so
 # the SUM over src/*/SKILL.md is the figure, not any one file's (that is
 # check_description_limits' 1,024-char bound). ADR-0079's 2026-09-13
-# amendment fixes the ceiling at 14,400 bytes — the catalog's share of the
-# 30,000-byte per-turn budget check_context_budget below guards — and rules
-# it a WARN where check_rules_bytes above is a FAIL: the share moves only by
-# amendment to ADR-0079, never by a description's first overrun.
+# amendment fixes the ceiling at 14,400 bytes — a cap of its own, independent
+# of the 30,000-byte per-turn budget check_context_budget below sums on top of
+# it — and rules it a WARN where check_rules_bytes above is a FAIL: the
+# ceiling moves only by amendment to ADR-0079, never by a description's first
+# overrun.
 # The measured span is the whole `description:` line, key and value and
 # newline, which is what the 13,132 figure counted; a value-only reading
 # would report 308 bytes of headroom that do not exist.
 check_catalog_bytes() {
-  local f skill bytes one
+  local f skill bytes one line
   bytes=0
   for f in src/*/SKILL.md; do
     [ -f "$f" ] || continue
     skill=$(basename "$(dirname "$f")")
     name_is_user_invoked "$skill" && continue
-    one=$(grep -m1 -E '^description:' "$f" | wc -c | tr -d ' ')
+    # grep exits 2 on a file it cannot open, and its empty output would
+    # otherwise count as a 0-byte line — a catalog sum short by one file with
+    # nothing saying so. Exit 1 (no description: line) is a real 0 here;
+    # check_frontmatter_scalars is what FAILs the missing key.
+    line=$(grep -m1 -E '^description:' "$f" 2>/dev/null)
+    if [ $? -eq 2 ]; then
+      say_fail "$f could not be read for its description line — the 14,400-byte catalog ceiling did not run, so the model-invoked catalog is unmeasured rather than under its ceiling; fix the file's permissions and rerun"
+      catalog_line_bytes=
+      return
+    fi
+    one=0
+    [ -n "$line" ] && one=$(printf '%s\n' "$line" | wc -c | tr -d ' ')
     bytes=$((bytes + one))
   done
   catalog_line_bytes=$bytes
@@ -2534,14 +2555,18 @@ fi
 # estimate and the bytes are the figure. The measurement line carries no
 # status marker, so the selftest's `^(OK|FAIL|WARN):` greps stay exact; the
 # one verdict is the WARN past 30,000 bytes, the per-turn budget ADR-0079's
-# 2026-09-13 amendment argues (about 8,240 tokens, some 4% of a 200k window)
-# and the ceiling the three layer caps are shares of — CLAUDE.md growth and a
-# new description compete for the same bytes, and this is where that shows. It
+# 2026-09-13 amendment argues (about 8,241 tokens, some 4% of a 200k window).
+# The three per-layer caps are independent of it, and do not sum to it (6,000
+# + 12,000 + 14,400 = 32,400): a tree can sit under every cap and still cross
+# this one, which is what it is for — CLAUDE.md growth and a new description
+# compete for the same bytes, and this is where that shows. A layer whose read
+# failed (its check FAILed above and emptied the shared figure) makes this a
+# FAIL too, never a sum short by an unread file printed as a figure. It
 # does not reach nested CLAUDE.md files or .claude/rules/ (neither exists in
 # this repo; add the arm when one does), and the catalog span is
 # check_catalog_bytes' — the whole `description:` line, key and newline.
 check_context_budget() {
-  local claude_md_bytes=0 total tokens
+  local claude_md_bytes=absent rules_bytes=0 total tokens
   if [ -f CLAUDE.md ]; then
     claude_md_bytes=$(wc -c < CLAUDE.md | tr -d ' ')
     if [ -z "$claude_md_bytes" ]; then
@@ -2549,7 +2574,16 @@ check_context_budget() {
       return
     fi
   fi
-  total=$((claude_md_bytes + rules_dir_bytes + catalog_line_bytes))
+  if [ -z "$rules_dir_bytes" ]; then
+    say_fail "global/rules/ could not be measured (a rule file could not be read; the FAIL above names it) — the launch-loaded sum did not run, so this run measures nothing about the per-turn surface"
+    return
+  fi
+  if [ -z "$catalog_line_bytes" ]; then
+    say_fail "the model-invoked catalog could not be measured (a SKILL.md could not be read; the FAIL above names it) — the launch-loaded sum did not run, so this run measures nothing about the per-turn surface"
+    return
+  fi
+  [ "$rules_dir_bytes" = absent ] || rules_bytes=$rules_dir_bytes
+  total=$(( ${claude_md_bytes/absent/0} + rules_bytes + catalog_line_bytes ))
   # Integer division rounds down; the probe's ratio is 3.64, carried as 364/100.
   tokens=$((total * 100 / 364))
   echo "launch-loaded surface: $total bytes (CLAUDE.md $claude_md_bytes + global/rules/ $rules_dir_bytes + model-invoked catalog $catalog_line_bytes), about $tokens tokens at 3.64 bytes per token, paid on every turn of every session"
