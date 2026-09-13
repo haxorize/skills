@@ -35,3 +35,26 @@ A word carrying its own digit is an identifier, and identifiers are not recased.
 
 A deliberate British form that cannot sit in a code span, marked inline: the run
 normalises this row before it lands. <!-- spelling-exempt: normalises -->
+
+## Tables that render as written
+
+| Key | Value |
+| --- | --- |
+| an escaped separator inside a code span | `proposed \| accepted` |
+| a row with fewer cells than the header |
+
+A pipe in a code span outside any table is prose: `a | b` renders as written. A table
+inside a fence is an example and is never read:
+
+```
+| Key | Value |
+| --- | --- | --- |
+| `x | y` | dropped | cell |
+```
+
+- A list item straight under a table is a new block, not a swallowed row:
+
+| Key | Value |
+| --- | --- |
+| the last row | — |
+- this item opens a list, so it is not a row.

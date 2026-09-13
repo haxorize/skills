@@ -111,7 +111,8 @@
 #     under scripts/ does, unless it is named *-lib.sh). The repo-local
 #     skills under .claude/skills/, and DOMAIN.md and README.md, are in pass
 #     2's walk for the slash sweep, the house-style set (spelling, reference
-#     form, artifact names, labels, section pointers, heading case) and the
+#     form, artifact names, labels, section pointers, heading case, table
+#     rendering) and the
 #     evaluation-ledger consumer sweep, and for nothing else: the hoisting,
 #     frontmatter, ADR-citation, HTML-transport and reference-link checks do
 #     not read them, and a repo-local body draws the loaded-file byte FAIL
@@ -363,6 +364,11 @@
 #     check_spelling           no British form outside a code span
 #     check_heading_case       SKILL.md H1 title case, every H2 sentence case
 #                              (not global/rules/, whose H1 is a proposition)
+#     check_gfm_tables         every table renders as written on GitHub: the
+#                              header and delimiter rows agree, no row carries
+#                              more cells than the header, no code span in a
+#                              row holds an unescaped `|`, and no prose line
+#                              sits directly under a table
 #     check_invocation_form     no "the X skill"; `/name` at a suggestion site
 #     check_artifact_names     a written filename is lowercase with dashes
 #     check_labels             every ALL-CAPS label registered in DOMAIN.md
@@ -1634,24 +1640,112 @@ body_checks() {
   check_reference_links "$1"
 }
 
-# The house-style checks, named once for the same reason — all SIX of them,
-# heading case included. Each of the three exemptions now sits in the check
+# (see header) GFM tables that silently stop rendering. GitHub's table
+# extension is unforgiving in four ways, and every one of them renders a
+# clean-looking source as something else with no error anywhere: a header row
+# whose cell count differs from the delimiter row's is not a table at all (the
+# whole block renders as one paragraph of pipes); a body row with more cells
+# than the header has its extra cells dropped; a `|` inside a code span still
+# splits the cell (the spec reads pipes before spans — the one escape that
+# survives is `\|`, which write-skill's review checklist already prescribes);
+# and a non-blank line straight under a table, with no blank line between, is
+# swallowed as a one-cell row. Nothing graded any of them until the round of
+# 2026-09-12 (row CR-4.27); the first run found DOMAIN.md carrying the code-span
+# case and a four-cell row in a three-column table. Cells are counted the way
+# GitHub counts them — split on every unescaped `|`, a leading and a trailing
+# pipe optional — so this check sees what the renderer sees, never what the
+# author meant. A row with FEWER cells than the header is left alone: GitHub
+# fills the missing cells empty and loses nothing. Scope: the numbered,
+# fence-stripped stream the six house-style checks share, so a table inside a
+# fence is an example and never read; a table whose rows span a stripped fence
+# is not a shape this repo writes.
+check_gfm_tables() {
+  local f=$1 scan=${2-} hits
+  [ -n "${2+set}" ] || scan=$(awk "$FENCE_AWK"'{ print FNR ":" $0 }' "$f")
+  hits=$(printf '%s\n' "$scan" | awk '
+    # Cells as GitHub counts them: strip the optional leading and trailing
+    # pipe, then one cell per unescaped pipe plus one.
+    function cells(s,    i, c, prev, n) {
+      gsub(/^[[:space:]]+|[[:space:]]+$/, "", s)
+      sub(/^\|/, "", s)
+      if (s ~ /[^\\]\|$/ || s == "|") sub(/\|$/, "", s)
+      n = 1; prev = ""
+      for (i = 1; i <= length(s); i++) {
+        c = substr(s, i, 1)
+        if (c == "|" && prev != "\\") n++
+        prev = c
+      }
+      return n
+    }
+    function unescaped_pipe_in_span(s,    i, c, prev, inspan) {
+      inspan = 0; prev = ""
+      for (i = 1; i <= length(s); i++) {
+        c = substr(s, i, 1)
+        if (c == "`") inspan = !inspan
+        else if (c == "|" && inspan && prev != "\\") return 1
+        prev = c
+      }
+      return 0
+    }
+    {
+      ln = $0; sub(/:.*/, "", ln)
+      txt = $0; sub(/^[0-9]*:/, "", txt)
+      if (state == "body") {
+        if (txt ~ /^[[:space:]]*$/) { state = ""; next }
+        # Another block opener ends the table; anything else is a row.
+        if (txt !~ /\|/) {
+          if (txt !~ /^[[:space:]]*([#>*+-]|[0-9]+[.)])([[:space:]]|$)/ && txt !~ /^[[:space:]]*```/)
+            print ln ":swallowed"
+          state = ""; next
+        }
+        n = cells(txt)
+        if (n > hdrn) print ln ":extra:" n ":" hdrn
+        if (unescaped_pipe_in_span(txt)) print ln ":span"
+        next
+      }
+      if (state == "hdr") {
+        if (txt ~ /^[[:space:]]*\|?[[:space:]]*:?-+:?[[:space:]]*(\|[[:space:]]*:?-+:?[[:space:]]*)*\|?[[:space:]]*$/) {
+          dn = cells(txt); state = "body"
+          if (dn != hdrn) { print hdrln ":mismatch:" hdrn ":" dn; state = "" }
+          else if (unescaped_pipe_in_span(hdr)) print hdrln ":span"
+          next
+        }
+        state = ""
+      }
+      if (txt ~ /^[[:space:]]*\|/ ) { hdr = txt; hdrln = ln; hdrn = cells(txt); state = "hdr" }
+    }
+  ')
+  [ -n "$hits" ] || return 0
+  local hit kind ln a b
+  while IFS= read -r hit; do
+    ln=${hit%%:*}; kind=$(printf '%s' "$hit" | cut -d: -f2); a=$(printf '%s' "$hit" | cut -d: -f3); b=$(printf '%s' "$hit" | cut -d: -f4)
+    case $kind in
+      mismatch) say_fail "$f table at line $ln has a header row of $a cells and a delimiter row of $b — GitHub renders none of it (the block falls back to a paragraph of pipes); make the two rows agree, and check for a stray or unescaped \`|\` in the header" ;;
+      extra)    say_fail "$f table row at line $ln has $a cells against a header of $b — GitHub drops the extra cell(s) on render; join the split cell, or write a literal separator as \\|" ;;
+      span)     say_fail "$f table row at line $ln carries an unescaped \`|\` inside a code span — GitHub splits the cell there regardless of the span; write it \\| (the one escape that survives, per write-skill's review checklist)" ;;
+      swallowed) say_fail "$f line $ln sits directly under a table with no blank line between — GitHub renders it as a one-cell row of that table; add the blank line" ;;
+    esac
+  done <<< "$hits"
+}
+
+# The house-style checks, named once for the same reason — all SEVEN of them,
+# heading case and table rendering included. Each of the three exemptions now sits in the check
 # that owns it (check_labels skips DOMAIN.md, check_heading_case skips
 # global/rules/ and CLAUDE.md), so every caller is the same single call and
 # no caller has to know which cell its class drops. Spelling them out per arm
 # had already cost the DOMAIN.md arm its read guard, 200 lines after the
 # comment forbidding exactly that.
 house_style_checks() {
-  # One read guard for the six, on the taxonomy's terms: a file that cannot be
+  # One read guard for the seven, on the taxonomy's terms: a file that cannot be
   # read is a set of checks that never ran, which is a different claim from a
   # file that passed them. Without it an unreadable file drew six awk errors
   # on stderr and a clean line on stdout.
   if [ ! -r "$1" ]; then
-    say_fail "$1 could not be read — the house-style checks (spelling, invocation form, artifact names, labels, section pointers, heading case) did not run on it; this is not a verdict on the file"
+    say_fail "$1 could not be read — the house-style checks (spelling, invocation form, artifact names, labels, section pointers, heading case, table rendering) did not run on it; this is not a verdict on the file"
     return
   fi
   # The fence strip runs ONCE per file, here, and the numbered stream goes to
-  # all six. Six checks each opening the file and stripping the same fences was
+  # all seven. Six checks each opening the file and stripping the same fences was
   # six awk processes per file across a 225-file walk, and `--help`'s "each
   # pass reads its files once" was false the moment the fifth landed. The
   # stream is `<line number>:<text>`, fenced lines dropped, so every check
@@ -1664,6 +1758,7 @@ house_style_checks() {
   check_labels "$1" "$scan"
   check_section_pointers "$1" "$scan"
   check_heading_case "$1" "$scan"
+  check_gfm_tables "$1" "$scan"
 }
 
 # One classifier, and it is exhaustive because the last arm says so rather

@@ -57,3 +57,25 @@ exactly one of these silent and leaves the other red.
 
 - An em-dash lead-in: [the quiet forms](references/quiet-forms.md) — § No Such Dash Heading.
 - A hyphen lead-in: [the quiet forms](references/quiet-forms.md) - § No Such Hyphen Heading.
+
+## Tables that stop rendering
+
+One instance per arm of the table check, each its own table, because a header that
+disagrees with its delimiter row is not a table at all and would hide the rows under it.
+
+| Cell | Other |
+| --- | --- | --- |
+| a header of two cells over a delimiter row of three renders as nothing | — |
+
+| Key | Value |
+| --- | --- |
+| a third cell | in a two-column table | is dropped on render |
+
+| Key | Value |
+| --- | --- |
+| a pipe in a code span | `proposed | accepted` |
+
+| Key | Value |
+| --- | --- |
+| the row above the swallowed line | — |
+this prose line has no blank line above it, so it becomes a one-cell row.

@@ -55,7 +55,8 @@
 # because the two anchors pin each other: a tree carrying one without the other
 # fails, whatever root it is.
 #
-# The nine house-style checks (round plan §5) are covered in both directions,
+# The nine house-style checks (round plan §5), and the table-rendering check
+# beside them (round 2026-09-12, row CR-4.27), are covered in both directions,
 # with one instance per ALTERNATIVE rather than one per check: British spelling
 # (a form in prose fires; the same word in a code span and in a URL stays
 # quiet), heading case (a SKILL.md H1 not in title case, and an H2 with three
@@ -74,7 +75,12 @@
 # where the target names no file; a pointer that resolves stays quiet), and
 # orphaned references (one unlinked file fires; the three forms that count as a
 # pointer — a path from the skill root, a basename from a sibling reference, and
-# the installed path cited from another skill — each stay quiet). The
+# the installed path cited from another skill — each stay quiet), and table
+# rendering (one instance per arm fires — a header disagreeing with its
+# delimiter row, a row with more cells than the header, an unescaped pipe in a
+# code span, and a prose line straight under a table; an escaped `\|`, a row
+# with fewer cells, a table inside a fence, a pipe in a code span outside any
+# table, and a list item under a table each stay quiet). The
 # always-loaded byte budget and the loaded-file byte FAIL cannot be carried by a
 # committed fixture without every root paying the bytes, so each takes an
 # isolated one-edit copy of the clean root, and each row asserts the FAIL and
@@ -446,6 +452,17 @@ expect "section pointers (a ~/.claude/rules/ path)" "cites '§ Missing Rule Sect
 expect "section pointers (a target that is not a file)" "cites '§ Anything' (line 30) in src/fixture-discipline/references/gone.md, which is not a file"
 expect "section pointers (an em-dash lead-in before the citation)" "src/house-style/SKILL.md cites '§ No Such Dash Heading' (line 58), and src/house-style/references/quiet-forms.md carries no heading by that name"
 expect "section pointers (a hyphen lead-in before the citation)" "src/house-style/SKILL.md cites '§ No Such Hyphen Heading' (line 59), and src/house-style/references/quiet-forms.md carries no heading by that name"
+# One row per arm of the table check, each instance its own table in the
+# appended block at the end of src/house-style/SKILL.md, since a header that
+# disagrees with its delimiter row is not a table and would hide rows under it.
+# The code-span row draws two FAILs on one line: the span splits the cell, so
+# the row is also over-long — both are asserted, and the count pin below
+# carries both.
+expect "table rendering (header and delimiter rows disagree)" "src/house-style/SKILL.md table at line 66 has a header row of 2 cells and a delimiter row of 3"
+expect "table rendering (a row with more cells than the header)" "src/house-style/SKILL.md table row at line 72 has 3 cells against a header of 2"
+expect "table rendering (an unescaped pipe in a code span)" "src/house-style/SKILL.md table row at line 76 carries an unescaped \`|\` inside a code span"
+expect "table rendering (the split the code-span pipe causes)" "src/house-style/SKILL.md table row at line 76 has 3 cells against a header of 2"
+expect "table rendering (a prose line straight under a table)" "src/house-style/SKILL.md line 81 sits directly under a table with no blank line between"
 expect "orphaned references" "src/broken-links/references/orphaned.md is linked from nowhere"
 expect "script selftest (missing)" "scripts/orphan-tool.sh has no selftest — write scripts/orphan-tool-selftest.sh"
 # The same pairing under a repo-local skill's own scripts/: dropping that walk
@@ -501,6 +518,8 @@ reject "reference-link resolution" "references/exempt-double.md"
 reject "reference-link resolution" "references/exempt-inner.md"
 reject "reference-link resolution" "references/exempt-fenced.md"
 reject "global-rule Depends" "global/rules/well-formed.md"
+reject "table rendering (every quiet form in one file)" "src/house-style/references/quiet-forms.md table"
+reject "table rendering (a list item under a table read as a swallowed row)" "src/house-style/references/quiet-forms.md line"
 reject "global-rule Depends (path form)" "global/rules/path-cited.md"
 # Grades the check's plumbing, not its pattern: bulk-cited-dep cites early and then
 # carries a long tail, the shape that made a `grep -q` pipeline report a present
@@ -642,18 +661,16 @@ fi
 expect_rc "the lint against the fixture tree" 1 "$status"
 # The count of FAIL lines is pinned: a check that begins firing on a fixture
 # it should leave alone reds here even when no substring row names the line.
-# Last moved 2026-09-01 (the deferrals-register pass): 96 — the script-selftest
-# walk now reaches .claude/skills/*/scripts/, and the wrong-on-purpose root
-# gained one orphan there (repo-local/scripts/orphan-local.sh). ADR-0075:23 had
-# recorded that tree as landing with no selftest "by that scope, not by
-# omission", which left the mining round's own enumerator ungraded; its
-# 2026-09-01 amendment closes that. Earlier moves of this pin are in
+# Last moved 2026-09-13 (round 2026-09-12, row CR-4.27): 96 → 101 — the
+# table-rendering check landed with four firing instances in
+# src/house-style/SKILL.md, one of which (the code-span pipe) draws two lines,
+# the split and the over-long row it causes. Earlier moves of this pin are in
 # `git log -p -S 'expected exactly' -- scripts/lint-skills-selftest.sh` — they describe counts
 # nothing asserts any more, and stacking them here made a changelog out of the
 # one line that has to stay readable. A count that moves is read before it is
 # re-pinned.
 nfail=$(printf '%s\n' "$output" | grep -c '^FAIL: ')
-[ "$nfail" -eq 96 ] || selftest_fail "expected exactly 96 FAIL lines against the fixture tree, got $nfail"
+[ "$nfail" -eq 101 ] || selftest_fail "expected exactly 101 FAIL lines against the fixture tree, got $nfail"
 # The shared-trigger-phrase fixtures are pinned by property, as near_bytes and
 # bulk_bytes are below: every row above them asserts a FAIL that appears or a
 # FAIL that does not, and each of those readings is silently satisfied by a
@@ -751,6 +768,11 @@ quiet_pin "$quiet" "an acronym mid-heading" '## The HTML half'
 quiet_pin "$fixtures/global/rules/body-checked.md" "the installed-path citation that is a src/ reference's ONLY pointer, and lives in the global/ scan root" '`~/.claude/skills/house-style/references/cited-from-global.md`' 
 quiet_pin "$quiet" "an em-dash clause opening after a numbered label" '## Phase 2 — Reproduce the thing'
 quiet_pin "$quiet" "a label whose number is the next token" '## The adversary pass (Tier 2/3)'
+quiet_pin "$quiet" "an escaped separator inside a code span in a table row" '`proposed \| accepted`'
+quiet_pin "$quiet" "a table row with fewer cells than its header" '| a row with fewer cells than the header |'
+quiet_pin "$quiet" "a pipe in a code span outside any table" '`a | b` renders as written'
+quiet_pin "$quiet" "a broken table inside a fence, which is never read" '| `x | y` | dropped | cell |'
+quiet_pin "$quiet" "a list item straight under a table, which opens a new block" '- this item opens a list, so it is not a row.'
 quiet_pin "$quiet" "an identifier carrying its own digit" '## The Sprint2 window'
 quiet_pin "$fixtures/src/broken-links/SKILL.md" "the installed-path citation of another skill's reference, which is the orphan check's third arm" '`~/.claude/skills/house-style/references/cited-by-path.md`'
 quiet_pin "$fixtures/src/house-style/references/quiet-forms.md" "the basename link that is the orphan check's second arm" '(sibling-note.md)'
@@ -1186,7 +1208,7 @@ else
   # stderr and nothing on stdout, which reads from outside exactly like a file
   # that passed all six. The message names all six, so a check dropped from
   # the set is visible here and not only in the classifier.
-  inject_expect "house-style read-error" "src/broken-links/references/real-reference.md could not be read — the house-style checks (spelling, invocation form, artifact names, labels, section pointers, heading case)"
+  inject_expect "house-style read-error" "src/broken-links/references/real-reference.md could not be read — the house-style checks (spelling, invocation form, artifact names, labels, section pointers, heading case, table rendering)"
 
   # The same injection against the clean root, which is what makes an exit-status
   # assertion mean anything. Asserting exit 1 against the broken tree is vacuous:
