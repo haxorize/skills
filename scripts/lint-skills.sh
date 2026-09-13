@@ -382,7 +382,7 @@
 #   Pass 4 — the other trees, each read once:
 #     check_rules_bytes        global/rules/ totals under 12,000 bytes
 #     check_catalog_bytes      model-invoked description: lines total under
-#                              13,200 bytes (ADR-0079; a WARN)
+#                              14,400 bytes (ADR-0079; a WARN)
 #     check_rule_pointers      every ~/.claude/skills/<owner>/<path> pointer in
 #                              a rule resolves under src/
 #     check_global_rule        Depends: resolves, and each dependant cites back
@@ -391,6 +391,11 @@
 #                              executable selftest, and opens with the
 #                              conventions pointer; a git hook is executable
 #     check_claude_md_bytes    the 6,000-byte CLAUDE.md WARN
+#     check_context_budget     the launch-loaded surface summed across files
+#                              (CLAUDE.md + global/rules/ + the model-invoked
+#                              catalog) and its token estimate; a measurement
+#                              line, plus a WARN past the 30,000-byte per-turn
+#                              budget ADR-0079 argues (its 2026-09-13 amendment)
 #     check_reference_links    every relative .md link in the root CLAUDE.md
 #                              resolves (pass 2's parser, pointed at the
 #                              root file)
@@ -2162,6 +2167,11 @@ check_global_rule() {
 # any one file's — a FAIL, unlike the CLAUDE.md byte WARN above, because this
 # bound is this repo's own ruling rather than a platform figure that moves
 # under it.
+# The two per-directory sums are kept for check_context_budget, which reads
+# them once at the end of pass 4; a root without the directory leaves the sum
+# at 0, which is what an absent layer costs.
+rules_dir_bytes=0
+catalog_line_bytes=0
 check_rules_bytes() {
   local bytes r one
   [ -d global/rules ] || return 0
@@ -2176,6 +2186,7 @@ check_rules_bytes() {
     fi
     bytes=$((bytes + one))
   done
+  rules_dir_bytes=$bytes
   if [ "$bytes" -gt 12000 ]; then
     say_fail "global/rules/ totals $bytes bytes, over the 12,000-byte budget for the always-loaded layer — cut a rule, or move its procedure behind a reference the depending skill opens and leave a one-line verdict global (ADR-0079: the cap is permanent and a rule that cannot fit is relocated, never refused); every byte here is paid on every turn of every session"
   fi
@@ -2185,11 +2196,11 @@ check_rules_bytes
 # (see header) The other per-turn load: the `description:` line of every
 # model-invoked skill is in the catalog Claude Code loads on every turn, so
 # the SUM over src/*/SKILL.md is the figure, not any one file's (that is
-# check_description_limits' 1,024-char bound). ADR-0079 fixes the ceiling at
-# 13,200 bytes — the 2026-09-04 sum, 13,132, rounded up — and rules it a WARN
-# where check_rules_bytes above is a FAIL: the ceiling was set as the day's
-# sum rounded up, not a budget argued from load, so it tightens by amendment
-# to ADR-0079 rather than blocking a description on its first overrun.
+# check_description_limits' 1,024-char bound). ADR-0079's 2026-09-13
+# amendment fixes the ceiling at 14,400 bytes — the catalog's share of the
+# 30,000-byte per-turn budget check_context_budget below guards — and rules
+# it a WARN where check_rules_bytes above is a FAIL: the share moves only by
+# amendment to ADR-0079, never by a description's first overrun.
 # The measured span is the whole `description:` line, key and value and
 # newline, which is what the 13,132 figure counted; a value-only reading
 # would report 308 bytes of headroom that do not exist.
@@ -2203,8 +2214,9 @@ check_catalog_bytes() {
     one=$(grep -m1 -E '^description:' "$f" | wc -c | tr -d ' ')
     bytes=$((bytes + one))
   done
-  if [ "$bytes" -gt 13200 ]; then
-    echo "WARN: the model-invoked description lines total $bytes bytes, over the 13,200-byte ceiling ADR-0079 fixed for the catalog loaded on every turn — trim the description that grew, or trim others to pay for it; the ceiling does not move"
+  catalog_line_bytes=$bytes
+  if [ "$bytes" -gt 14400 ]; then
+    echo "WARN: the model-invoked description lines total $bytes bytes, over the 14,400-byte ceiling ADR-0079 fixed for the catalog loaded on every turn — trim the description that grew, or trim others to pay for it; the ceiling moves only by an amendment to ADR-0079"
   fi
 }
 check_catalog_bytes
@@ -2510,6 +2522,42 @@ if [ -f CLAUDE.md ]; then
   # and exempts this file itself.
   house_style_checks CLAUDE.md
 fi
+
+# (see header) The launch-loaded surface as ONE number. check_rules_bytes and
+# check_catalog_bytes each grade a directory against its own cap, and
+# check_claude_md_bytes the root file against its bound; nothing summed the
+# three, so "each file is under its cap" was read as "the standing tax is
+# small" with the total never computed (round 2026-09-12, row I2: the control
+# three parks had waited on since 08-29). This prints the sum and a token
+# estimate at the 3.64 bytes per token src/write-skill/SKILL.md § Size
+# constraints measured on this repo — one probe, so the tokens are an
+# estimate and the bytes are the figure. The measurement line carries no
+# status marker, so the selftest's `^(OK|FAIL|WARN):` greps stay exact; the
+# one verdict is the WARN past 30,000 bytes, the per-turn budget ADR-0079's
+# 2026-09-13 amendment argues (about 8,240 tokens, some 4% of a 200k window)
+# and the ceiling the three layer caps are shares of — CLAUDE.md growth and a
+# new description compete for the same bytes, and this is where that shows. It
+# does not reach nested CLAUDE.md files or .claude/rules/ (neither exists in
+# this repo; add the arm when one does), and the catalog span is
+# check_catalog_bytes' — the whole `description:` line, key and newline.
+check_context_budget() {
+  local claude_md_bytes=0 total tokens
+  if [ -f CLAUDE.md ]; then
+    claude_md_bytes=$(wc -c < CLAUDE.md | tr -d ' ')
+    if [ -z "$claude_md_bytes" ]; then
+      say_fail "CLAUDE.md could not be read for its byte total — the launch-loaded sum did not run, so this run measures nothing about the per-turn surface; fix the file's permissions and rerun"
+      return
+    fi
+  fi
+  total=$((claude_md_bytes + rules_dir_bytes + catalog_line_bytes))
+  # Integer division rounds down; the probe's ratio is 3.64, carried as 364/100.
+  tokens=$((total * 100 / 364))
+  echo "launch-loaded surface: $total bytes (CLAUDE.md $claude_md_bytes + global/rules/ $rules_dir_bytes + model-invoked catalog $catalog_line_bytes), about $tokens tokens at 3.64 bytes per token, paid on every turn of every session"
+  if [ "$total" -gt 30000 ]; then
+    echo "WARN: the launch-loaded surface totals $total bytes, over the 30,000-byte per-turn budget ADR-0079 argues (2026-09-13 amendment) — the layer that grew pays: relocate procedure out of global/rules/, trim CLAUDE.md to triggers and contracts, or trim the description that grew; the budget moves only by an amendment to ADR-0079"
+  fi
+}
+check_context_budget
 
 # The one read of the flag, and the whole exit. There is no `fail` variable to
 # pair with it, on purpose: see scripts/lint-lib.sh's header.

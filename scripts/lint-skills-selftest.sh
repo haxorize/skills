@@ -790,9 +790,10 @@ if ! clean_baseline=$(LINT_ROOT="$clean_fixtures" bash scripts/lint-skills.sh 2>
 fi
 
 # The clean root draws no WARN either. The loaded-file bound is a FAIL, so the
-# only WARN this linter still emits is CLAUDE.md's 6,000-byte one; an over-bound
-# near-cap would FAIL here, caught by the exit-0 assertion above rather than by
-# this grep, which grades the CLAUDE.md bound alone.
+# WARNs this linter emits are CLAUDE.md's 6,000-byte one, the catalog ceiling,
+# and the launch-loaded budget, and the clean root sits under all three; an
+# over-bound near-cap would FAIL here, caught by the exit-0 assertion above
+# rather than by this grep.
 if printf '%s\n' "$clean_baseline" | grep -q '^WARN:'; then
   selftest_fail "the clean fixture drew a WARN line; the one WARN the linter emits is CLAUDE.md's 6,000-byte bound, and the clean root's CLAUDE.md sits under it"
 fi
@@ -1002,19 +1003,44 @@ isolated_case "rule-pointer-missing" 's/\z/\nProcedure: `~\/.claude\/skills\/cle
 isolated_quiet_case "rule-pointer-resolves" 's/\z/\nProcedure: `~\/.claude\/skills\/clean-skill\/references\/note.md`.\n/' \
   "global/rules/clean-rule.md" \
   "points at ~/.claude/skills/"
+# The launch-loaded sum (round 2026-09-12, row I2). A measurement line with no
+# status marker, so neither root's exit-status assertions see it; what is
+# graded is that the sum reads all three layers. The clean root's figure is
+# pinned whole — 5,954 (CLAUDE.md) + 118 (the one rule) + 620 (the two
+# model-invoked description lines; ledger-legend and which-skill are
+# user-invoked and do not load) = 6,692, and 6,692 × 100 / 364 = 1,838 — so a
+# layer dropped from the sum, or the user-invoked lines let in, moves the
+# number and reds the row. The isolated copy grows CLAUDE.md by exactly 1,000
+# bytes and pins the moved total, which is the arm the pin alone cannot tell
+# apart from a sum that reads CLAUDE.md's size once at some other site.
+expect_in "$clean_baseline" "the launch-loaded sum did not print, or its figure moved, in the clean root" "launch-loaded surface: 6692 bytes (CLAUDE.md 5954 + global/rules/ 118 + model-invoked catalog 620), about 1838 tokens"
+if isolated_run "context-budget-claude-md" 's/\z/("x" x 999) . "\n"/e' "CLAUDE.md"; then
+  expect_in "$isolated_out" "the launch-loaded sum did not move by the 1,000 bytes added to CLAUDE.md in the isolated 'context-budget-claude-md' root" "launch-loaded surface: 7692 bytes (CLAUDE.md 6954 + global/rules/ 118 + model-invoked catalog 620), about 2113 tokens"
+  expect_rc "the lint against the isolated 'context-budget-claude-md' root" 0 "$isolated_rc"
+  reject_in "$isolated_out" "the launch-loaded budget WARN printed at 7,692 bytes in the 'context-budget-claude-md' root, so the 30,000 boundary has moved" "over the 30,000-byte per-turn budget"
+fi
+# The per-turn budget WARN (ADR-0079, 2026-09-13): CLAUDE.md grown by 24,000
+# bytes carries the clean root's 6,692 to 30,692, past 30,000, and the exit
+# stays 0 because a WARN never moves the status. The 1,000-byte copy above is
+# the quiet side of the same boundary: 7,692 draws the measurement line alone.
+if isolated_run "context-budget-over" 's/\z/("x" x 23999) . "\n"/e' "CLAUDE.md"; then
+  expect_in "$isolated_out" "the launch-loaded budget WARN did not print in the isolated 'context-budget-over' root" "WARN: the launch-loaded surface totals 30692 bytes, over the 30,000-byte per-turn budget"
+  expect_rc "the lint against the isolated 'context-budget-over' root" 0 "$isolated_rc"
+fi
+
 # The catalog ceiling (ADR-0079): the SUM of the model-invoked description
 # lines — the clean root has two (ledger-legend and which-skill are user-invoked
 # and do not load). They total under 1 KB and the per-file cap is 1,024 chars,
-# so no root can cross 13,200 without check_description_limits also FAILing —
+# so no root can cross 14,400 without check_description_limits also FAILing —
 # the exit status here is 1 for that reason, and the row grades only that the
 # WARN line prints. The unit is pinned by the figure in the message: 2 lines ×
-# (13 bytes of `description: ` + 6,600 of value + newline) = 13,228, which a
-# value-only sum (13,200) would not exceed.
-if isolated_run "catalog-ceiling" 's/^(description: )(.*)$/$1 . $2 . ("x" x (6600 - length $2))/gme' "src/clean-skill/SKILL.md"; then
-  perl -0pi -e 's/^(description: )(.*)$/$1 . $2 . ("x" x (6600 - length $2))/gme' \
+# (13 bytes of `description: ` + 7,200 of value + newline) = 14,428, which a
+# value-only sum (14,400) would not exceed.
+if isolated_run "catalog-ceiling" 's/^(description: )(.*)$/$1 . $2 . ("x" x (7200 - length $2))/gme' "src/clean-skill/SKILL.md"; then
+  perl -0pi -e 's/^(description: )(.*)$/$1 . $2 . ("x" x (7200 - length $2))/gme' \
     "$isolated_parent/catalog-ceiling/src/near-cap/SKILL.md" 2>/dev/null || selftest_skip "the catalog-ceiling padding matched nothing in near-cap — that row was not exercised."
   isolated_out=$(LINT_ROOT="$isolated_parent/catalog-ceiling" bash scripts/lint-skills.sh 2>&1)
-  expect_in "$isolated_out" "the catalog ceiling WARN did not print in the isolated 'catalog-ceiling' root" "WARN: the model-invoked description lines total 13228 bytes, over the 13,200-byte ceiling"
+  expect_in "$isolated_out" "the catalog ceiling WARN did not print in the isolated 'catalog-ceiling' root" "WARN: the model-invoked description lines total 14428 bytes, over the 14,400-byte ceiling"
 fi
 fi
 
