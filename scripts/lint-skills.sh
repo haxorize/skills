@@ -110,10 +110,10 @@
 #     pairing contract: a skill-private script owes a selftest exactly as one
 #     under scripts/ does, unless it is named *-lib.sh). The repo-local
 #     skills under .claude/skills/, and DOMAIN.md and README.md, are in pass
-#     2's walk for the slash sweep, the house-style set (spelling, reference
+#     2's walk for the slash sweep, the house-style set (spelling, invocation
 #     form, artifact names, labels, section pointers, heading case, table
-#     rendering) and the
-#     evaluation-ledger consumer sweep, and for nothing else: the hoisting,
+#     rendering) and the evaluation-ledger consumer sweep, and for nothing
+#     else: the hoisting,
 #     frontmatter, ADR-citation, HTML-transport and reference-link checks do
 #     not read them, and a repo-local body draws the loaded-file byte FAIL
 #     because it is re-attached exactly as a hoisted one is. DOMAIN.md is the
@@ -318,7 +318,7 @@
 # Cost model, stated so it can be checked rather than assumed: pass 2 opens
 # each walked file once for the body checks and once for the whole house-style
 # set (house_style_checks strips fences once and hands the numbered stream to
-# all six), and pass 3's reference checks then run per-reference greps over
+# all seven), and pass 3's reference checks then run per-reference greps over
 # the owning skill's directory. Pass 4 is a second, separate walk over a
 # different glob — docs/**, global/README.md and the prose READMEs, which no
 # other pass reads. Measured 2026-08-31 over 225 files: ~25s, against ~12s
@@ -329,8 +329,8 @@
 # per-file greps). Dropping any one pass-2 check saves 0.5-3.5 s — the
 # per-reference greps in check_reference_orphans, the cut the 2026-09-01
 # Batch A residue named, measured at 0 — so pass 2's floor is process count:
-# ten checks a file, each a few forks, over 227 files. A further cut is a
-# rewrite that merges the six house-style scans into one awk pass, not a
+# fourteen checks a file, each a few forks, over 227 files. A further cut is a
+# rewrite that merges the seven house-style scans into one awk pass, not a
 # trim, and is not this file's next job unless the pre-commit gate is.
 #   Pass 0 — read before any check runs, so no check's answer depends on how
 #   far the pass that asks it has got: the user-invoked set (name_is_user_invoked,
@@ -493,6 +493,28 @@ lint_lib="$repo_root/scripts/lint-lib.sh"
 FENCE_AWK='FNR == 1 { fence = 0 }
 /^[[:space:]]*```/ { fence = !fence; next }
 fence { next }
+'
+
+# The one code-span stripper, shared by every awk program that must not read
+# inside backticks (check_reference_links, check_gfm_tables): delete every
+# backtick-delimited span, taking a run of N backticks as an opener and the
+# next run of the same length as its closer, the way CommonMark does. An
+# unclosed run leaves the rest of the line intact, so a stray backtick never
+# hides a real link or a real pipe. (`shut` rather than `close` — `close` is a
+# built-in name and awk rejects it as a parameter.) Prepend to an awk program
+# the same way as FENCE_AWK: awk "$STRIP_SPANS_AWK"'{ … strip_spans($0) … }'.
+STRIP_SPANS_AWK='function strip_spans(s,   out, run, rest, shut) {
+  out = ""
+  while (match(s, /`+/)) {
+    out = out substr(s, 1, RSTART - 1)
+    run = substr(s, RSTART, RLENGTH)
+    rest = substr(s, RSTART + RLENGTH)
+    shut = index(rest, run)
+    if (shut == 0) return out rest
+    s = substr(rest, shut + length(run))
+  }
+  return out s
+}
 '
 
 # The masking the header states as one rule for both scans: fenced blocks
@@ -994,25 +1016,7 @@ check_html_transport() {
 check_reference_links() {
   local f=$1 dir link_targets lineno target
   dir=$(dirname "$f")
-  if ! link_targets=$(awk '
-    # Delete every backtick-delimited span: take a run of N backticks as an
-    # opener and the next run of the same length as its closer. An unclosed run
-    # leaves the rest of the line intact, so a stray backtick never hides a
-    # real link. (`shut` rather than `close` — `close` is a built-in name and
-    # awk rejects it as a parameter.)
-    function strip_spans(s,   out, run, rest, shut) {
-      out = ""
-      while (match(s, /`+/)) {
-        out = out substr(s, 1, RSTART - 1)
-        run = substr(s, RSTART, RLENGTH)
-        rest = substr(s, RSTART + RLENGTH)
-        shut = index(rest, run)
-        if (shut == 0) return out rest
-        s = substr(rest, shut + length(run))
-      }
-      return out s
-    }
-  '"$FENCE_AWK"'
+  if ! link_targets=$(awk "$STRIP_SPANS_AWK$FENCE_AWK"'
     {
       line = strip_spans($0)
       while (match(line, /\]\([^)]+\)/)) {
@@ -1655,47 +1659,66 @@ body_checks() {
 # GitHub counts them — split on every unescaped `|`, a leading and a trailing
 # pipe optional — so this check sees what the renderer sees, never what the
 # author meant. A row with FEWER cells than the header is left alone: GitHub
-# fills the missing cells empty and loses nothing. Scope: the numbered,
-# fence-stripped stream the six house-style checks share, so a table inside a
-# fence is an example and never read; a table whose rows span a stripped fence
-# is not a shape this repo writes.
+# fills the missing cells empty and loses nothing. A table with no leading
+# pipe (`K | V` over `--- | ---`) is out of scope: the header detector keys on
+# the leading pipe because a prose line can carry a `|` mid-sentence, and a
+# delimiter-row lookahead is the only other way to tell them apart — no body
+# here writes the pipe-less form, so the miss is accepted rather than the
+# lookahead paid for. Scope: the numbered, fence-stripped stream the seven
+# house-style checks share, so a table inside a fence is an example and never
+# read. Because the stream keeps the ORIGINAL line numbers, a gap between
+# consecutive numbers is a stripped fence, and a fence is a block boundary:
+# the table ended there, and the first line after the closing fence is prose,
+# never a row of it.
 check_gfm_tables() {
   local f=$1 scan=${2-} hits
   [ -n "${2+set}" ] || scan=$(awk "$FENCE_AWK"'{ print FNR ":" $0 }' "$f")
-  hits=$(printf '%s\n' "$scan" | awk '
+  hits=$(printf '%s\n' "$scan" | awk "$STRIP_SPANS_AWK"'
     # Cells as GitHub counts them: strip the optional leading and trailing
-    # pipe, then one cell per unescaped pipe plus one.
-    function cells(s,    i, c, prev, n) {
+    # pipe, then one cell per unescaped pipe plus one. A pipe is escaped when
+    # an ODD run of backslashes precedes it — `\\|` is an escaped backslash and
+    # then a separator.
+    function backslashes_before(s, pos,    k) {
+      k = 0
+      while (pos - k > 1 && substr(s, pos - k - 1, 1) == "\\") k++
+      return k
+    }
+    function cells(s,    i, c, bs, n) {
       gsub(/^[[:space:]]+|[[:space:]]+$/, "", s)
       sub(/^\|/, "", s)
-      if (s ~ /[^\\]\|$/ || s == "|") sub(/\|$/, "", s)
-      n = 1; prev = ""
+      if (s ~ /\|$/ && backslashes_before(s, length(s)) % 2 == 0) sub(/\|$/, "", s)
+      n = 1; bs = 0
       for (i = 1; i <= length(s); i++) {
         c = substr(s, i, 1)
-        if (c == "|" && prev != "\\") n++
-        prev = c
+        if (c == "\\") { bs++; continue }
+        if (c == "|" && bs % 2 == 0) n++
+        bs = 0
       }
       return n
     }
-    function unescaped_pipe_in_span(s,    i, c, prev, inspan) {
-      inspan = 0; prev = ""
-      for (i = 1; i <= length(s); i++) {
-        c = substr(s, i, 1)
-        if (c == "`") inspan = !inspan
-        else if (c == "|" && inspan && prev != "\\") return 1
-        prev = c
-      }
-      return 0
+    # An unescaped pipe inside a code span is one that stops counting once the
+    # spans are stripped: strip_spans does CommonMark run-length matching, so an
+    # unpaired backtick opens no span and a double-backtick span is a span.
+    function unescaped_pipe_in_span(s) {
+      return cells(s) > cells(strip_spans(s))
     }
     {
       ln = $0; sub(/:.*/, "", ln)
       txt = $0; sub(/^[0-9]*:/, "", txt)
+      # A skipped line number is a stripped fence: whatever table was open
+      # closed at it.
+      if (state != "" && ln != prevln + 1) state = ""
+      prevln = ln
       if (state == "body") {
         if (txt ~ /^[[:space:]]*$/) { state = ""; next }
-        # Another block opener ends the table; anything else is a row.
+        # A line with no pipe under a table is a swallowed row only when it
+        # reads as prose: its first character (up to three spaces of indent)
+        # is a letter or digit. Anything else — `#`, `>`, `-`, `*`, `<`, a
+        # fence, a deeper indent — opens another block, and under-reporting the
+        # rare prose line that starts with a symbol is the right direction for
+        # a gate.
         if (txt !~ /\|/) {
-          if (txt !~ /^[[:space:]]*([#>*+-]|[0-9]+[.)])([[:space:]]|$)/ && txt !~ /^[[:space:]]*```/)
-            print ln ":swallowed"
+          if (txt ~ /^ ? ? ?[[:alnum:]]/) print ln ":swallowed"
           state = ""; next
         }
         n = cells(txt)
@@ -1704,7 +1727,9 @@ check_gfm_tables() {
         next
       }
       if (state == "hdr") {
-        if (txt ~ /^[[:space:]]*\|?[[:space:]]*:?-+:?[[:space:]]*(\|[[:space:]]*:?-+:?[[:space:]]*)*\|?[[:space:]]*$/) {
+        # The delimiter row must carry a pipe of its own: a bare `---` under a
+        # `|`-leading line is a thematic break, not a one-column table.
+        if (txt ~ /\|/ && txt ~ /^[[:space:]]*\|?[[:space:]]*:?-+:?[[:space:]]*(\|[[:space:]]*:?-+:?[[:space:]]*)*\|?[[:space:]]*$/) {
           dn = cells(txt); state = "body"
           if (dn != hdrn) { print hdrln ":mismatch:" hdrn ":" dn; state = "" }
           else if (unescaped_pipe_in_span(hdr)) print hdrln ":span"
@@ -1716,12 +1741,14 @@ check_gfm_tables() {
     }
   ')
   [ -n "$hits" ] || return 0
+  # One record shape for every kind: `<line>:<kind>:<a>:<b>`, the last two
+  # empty for the kinds that carry no counts.
   local hit kind ln a b
   while IFS= read -r hit; do
-    ln=${hit%%:*}; kind=$(printf '%s' "$hit" | cut -d: -f2); a=$(printf '%s' "$hit" | cut -d: -f3); b=$(printf '%s' "$hit" | cut -d: -f4)
+    IFS=: read -r ln kind a b <<< "$hit"
     case $kind in
       mismatch) say_fail "$f table at line $ln has a header row of $a cells and a delimiter row of $b — GitHub renders none of it (the block falls back to a paragraph of pipes); make the two rows agree, and check for a stray or unescaped \`|\` in the header" ;;
-      extra)    say_fail "$f table row at line $ln has $a cells against a header of $b — GitHub drops the extra cell(s) on render; join the split cell, or write a literal separator as \\|" ;;
+      extra)    say_fail "$f table row at line $ln has $a cells against a header of $b — GitHub drops the extra cell(s) on render; widen the header to fit the row, or drop the cell (a cell split by a code-span pipe draws its own line below, with \\| as the fix)" ;;
       span)     say_fail "$f table row at line $ln carries an unescaped \`|\` inside a code span — GitHub splits the cell there regardless of the span; write it \\| (the one escape that survives, per write-skill's review checklist)" ;;
       swallowed) say_fail "$f line $ln sits directly under a table with no blank line between — GitHub renders it as a one-cell row of that table; add the blank line" ;;
     esac
@@ -1729,8 +1756,8 @@ check_gfm_tables() {
 }
 
 # The house-style checks, named once for the same reason — all SEVEN of them,
-# heading case and table rendering included. Each of the three exemptions now sits in the check
-# that owns it (check_labels skips DOMAIN.md, check_heading_case skips
+# heading case and table rendering included. Each of the three exemptions now
+# sits in the check that owns it (check_labels skips DOMAIN.md, check_heading_case skips
 # global/rules/ and CLAUDE.md), so every caller is the same single call and
 # no caller has to know which cell its class drops. Spelling them out per arm
 # had already cost the DOMAIN.md arm its read guard, 200 lines after the
@@ -1738,8 +1765,8 @@ check_gfm_tables() {
 house_style_checks() {
   # One read guard for the seven, on the taxonomy's terms: a file that cannot be
   # read is a set of checks that never ran, which is a different claim from a
-  # file that passed them. Without it an unreadable file drew six awk errors
-  # on stderr and a clean line on stdout.
+  # file that passed them. Without it an unreadable file drew one awk error
+  # per check on stderr and a clean line on stdout.
   if [ ! -r "$1" ]; then
     say_fail "$1 could not be read — the house-style checks (spelling, invocation form, artifact names, labels, section pointers, heading case, table rendering) did not run on it; this is not a verdict on the file"
     return
@@ -2461,8 +2488,9 @@ for sc in .claude/skills/*/scripts/*.sh; do
 done
 # The git hooks walk: check_script_selftest grades these too (check_hook_selftest
 # is global/hooks/ only). What makes a file here a hook is derived, not listed:
-# its first line is a shebang, the way `# Install note:` marks a PreToolUse
-# hook — so a README, a .gitignore or a *.sample beside the hooks is not held
+# its first line is a shebang, the way `# Install note:` marks a Claude Code
+# hook under global/hooks/ (three PreToolUse checks and one Stop hook today)
+# — so a README, a .gitignore or a *.sample beside the hooks is not held
 # to the pairing, and the next hook needs no roster edit.
 if [ -d scripts/git-hooks ]; then
   for sc in scripts/git-hooks/*; do

@@ -79,3 +79,25 @@ disagrees with its delimiter row is not a table at all and would hide the rows u
 | --- | --- |
 | the row above the swallowed line | — |
 this prose line has no blank line above it, so it becomes a one-cell row.
+
+## Tables whose branches the arms share
+
+One instance per BRANCH, not only per message: the header-row span check, the
+mismatch in the direction a wider header takes, and the backslash-run parity a
+`\\|` needs. Each is its own table for the reason above.
+
+| Key | `a | b` |
+| --- | --- | --- |
+| a header cell holding a code-span pipe | splits | the same |
+
+| Key | Value | Third |
+| --- | --- |
+| a header of three cells over a delimiter row of two renders as nothing |
+
+| Key | Value |
+| --- | --- |
+| an escaped backslash \\| before a pipe | leaves the pipe a separator |
+
+| Key | Value |
+| --- | --- |
+| ``a double-backtick span | with a pipe`` |

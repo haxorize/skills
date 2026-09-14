@@ -55,8 +55,10 @@
 # because the two anchors pin each other: a tree carrying one without the other
 # fails, whatever root it is.
 #
-# The nine house-style checks (round plan §5), and the table-rendering check
-# beside them (round 2026-09-12, row CR-4.27), are covered in both directions,
+# The house-style set — six of round plan §5's nine lint checks (the other
+# three, check_reattach_bytes, check_rules_bytes and check_reference_orphans,
+# sit in other passes) and the table-rendering check beside them (round
+# 2026-09-12, row CR-4.27) — is covered in both directions,
 # with one instance per ALTERNATIVE rather than one per check: British spelling
 # (a form in prose fires; the same word in a code span and in a URL stays
 # quiet), heading case (a SKILL.md H1 not in title case, and an H2 with three
@@ -76,11 +78,15 @@
 # orphaned references (one unlinked file fires; the three forms that count as a
 # pointer — a path from the skill root, a basename from a sibling reference, and
 # the installed path cited from another skill — each stay quiet), and table
-# rendering (one instance per arm fires — a header disagreeing with its
-# delimiter row, a row with more cells than the header, an unescaped pipe in a
-# code span, and a prose line straight under a table; an escaped `\|`, a row
-# with fewer cells, a table inside a fence, a pipe in a code span outside any
-# table, and a list item under a table each stay quiet). The
+# rendering (one instance per arm AND per branch fires — a header disagreeing
+# with its delimiter row in either direction, a row with more cells than the
+# header, an unescaped pipe in a code span in a body row and in the header row,
+# a double-backtick span alone, an escaped backslash before a pipe, and a prose
+# line straight under a table; an escaped `\|`, a row with fewer cells, a table
+# inside a fence, a pipe in a code span outside any table, an unpaired
+# backtick, a `|`-leading line over a bare `---`, and a list item, a fence, a
+# thematic break, an HTML comment or a heading under a table each stay
+# quiet). The
 # always-loaded byte budget and the loaded-file byte FAIL cannot be carried by a
 # committed fixture without every root paying the bytes, so each takes an
 # isolated one-edit copy of the clean root, and each row asserts the FAIL and
@@ -296,6 +302,14 @@ expect() {
 reject() {
   reject_in "$output" "the $1 check fired on a form it must exempt" "$2"
 }
+# The lib's matcher is fixed-string; a message whose check-specific tail sits
+# on the far side of a line number ("<path> line N sits directly under a
+# table") can only be named by a pattern, so this one row takes a regex.
+reject_re() {
+  if grep -qE -- "$2" <<< "$output"; then
+    selftest_fail "the $1 check fired on a form it must exempt — found a line matching: $2"
+  fi
+}
 
 # The line number is pinned, not just the path: reporting the wrong line is the
 # defect this field was added to fix. Moving that link in the fixture is meant
@@ -463,6 +477,15 @@ expect "table rendering (a row with more cells than the header)" "src/house-styl
 expect "table rendering (an unescaped pipe in a code span)" "src/house-style/SKILL.md table row at line 76 carries an unescaped \`|\` inside a code span"
 expect "table rendering (the split the code-span pipe causes)" "src/house-style/SKILL.md table row at line 76 has 3 cells against a header of 2"
 expect "table rendering (a prose line straight under a table)" "src/house-style/SKILL.md line 81 sits directly under a table with no blank line between"
+# One row per BRANCH the arms share, not only per message: the span check has
+# two call sites (header row and body row), the mismatch test two directions,
+# and cells() a backslash-run parity it must read. Each was a silent mutation
+# on 2026-09-13 (review F90) until these four landed.
+expect "table rendering (an unescaped pipe in a code span in the HEADER row)" "src/house-style/SKILL.md table row at line 89 carries an unescaped \`|\` inside a code span"
+expect "table rendering (a header WIDER than its delimiter row)" "src/house-style/SKILL.md table at line 93 has a header row of 3 cells and a delimiter row of 2"
+expect "table rendering (an escaped backslash before a pipe is still a separator)" "src/house-style/SKILL.md table row at line 99 has 3 cells against a header of 2"
+expect "table rendering (a double-backtick span hiding a pipe, span arm alone)" "src/house-style/SKILL.md table row at line 103 carries an unescaped \`|\` inside a code span"
+reject "table rendering (a double-backtick span within the header's cell count is not over-long)" "src/house-style/SKILL.md table row at line 103 has"
 expect "orphaned references" "src/broken-links/references/orphaned.md is linked from nowhere"
 expect "script selftest (missing)" "scripts/orphan-tool.sh has no selftest — write scripts/orphan-tool-selftest.sh"
 # The same pairing under a repo-local skill's own scripts/: dropping that walk
@@ -519,7 +542,7 @@ reject "reference-link resolution" "references/exempt-inner.md"
 reject "reference-link resolution" "references/exempt-fenced.md"
 reject "global-rule Depends" "global/rules/well-formed.md"
 reject "table rendering (every quiet form in one file)" "src/house-style/references/quiet-forms.md table"
-reject "table rendering (a list item under a table read as a swallowed row)" "src/house-style/references/quiet-forms.md line"
+reject_re "table rendering (a block opener or a fence under a table read as a swallowed row)" "quiet-forms\.md line [0-9]+ sits directly under a table"
 reject "global-rule Depends (path form)" "global/rules/path-cited.md"
 # Grades the check's plumbing, not its pattern: bulk-cited-dep cites early and then
 # carries a long tail, the shape that made a `grep -q` pipeline report a present
@@ -661,16 +684,17 @@ fi
 expect_rc "the lint against the fixture tree" 1 "$status"
 # The count of FAIL lines is pinned: a check that begins firing on a fixture
 # it should leave alone reds here even when no substring row names the line.
-# Last moved 2026-09-13 (round 2026-09-12, row CR-4.27): 96 → 101 — the
-# table-rendering check landed with four firing instances in
-# src/house-style/SKILL.md, one of which (the code-span pipe) draws two lines,
-# the split and the over-long row it causes. Earlier moves of this pin are in
+# Last moved 2026-09-13 (review of round 2026-09-12 batch 9, F90): 101 → 105
+# — four per-branch instances of the table-rendering check (header-row span,
+# header wider than delimiter, `\\|` parity, span arm alone) joined the four
+# per-arm ones, one of which (the code-span pipe) draws two lines, the split
+# and the over-long row it causes. Earlier moves of this pin are in
 # `git log -p -S 'expected exactly' -- scripts/lint-skills-selftest.sh` — they describe counts
 # nothing asserts any more, and stacking them here made a changelog out of the
 # one line that has to stay readable. A count that moves is read before it is
 # re-pinned.
 nfail=$(printf '%s\n' "$output" | grep -c '^FAIL: ')
-[ "$nfail" -eq 101 ] || selftest_fail "expected exactly 101 FAIL lines against the fixture tree, got $nfail"
+[ "$nfail" -eq 105 ] || selftest_fail "expected exactly 105 FAIL lines against the fixture tree, got $nfail"
 # The shared-trigger-phrase fixtures are pinned by property, as near_bytes and
 # bulk_bytes are below: every row above them asserts a FAIL that appears or a
 # FAIL that does not, and each of those readings is silently satisfied by a
@@ -773,6 +797,12 @@ quiet_pin "$quiet" "a table row with fewer cells than its header" '| a row with 
 quiet_pin "$quiet" "a pipe in a code span outside any table" '`a | b` renders as written'
 quiet_pin "$quiet" "a broken table inside a fence, which is never read" '| `x | y` | dropped | cell |'
 quiet_pin "$quiet" "a list item straight under a table, which opens a new block" '- this item opens a list, so it is not a row.'
+quiet_pin "$quiet" "a fence straight under a table, and the prose after it (the line-number gap is the block boundary)" 'this prose line follows the fence, so it is not a row.'
+quiet_pin "$quiet" "a thematic break straight under a table" '| the last row before a break | — |'
+quiet_pin "$quiet" "an HTML comment straight under a table" '<!-- a note under the table, not a row -->'
+quiet_pin "$quiet" "a heading straight under a table" '## A heading straight under a table'
+quiet_pin "$quiet" "an unpaired backtick in a row, which opens no span" '| an unpaired backtick ` in a row | — |'
+quiet_pin "$quiet" "a pipe-leading line over a bare ---, which is no table" 'prose under the thematic break is not a swallowed row.'
 quiet_pin "$quiet" "an identifier carrying its own digit" '## The Sprint2 window'
 quiet_pin "$fixtures/src/broken-links/SKILL.md" "the installed-path citation of another skill's reference, which is the orphan check's third arm" '`~/.claude/skills/house-style/references/cited-by-path.md`'
 quiet_pin "$fixtures/src/house-style/references/quiet-forms.md" "the basename link that is the orphan check's second arm" '(sibling-note.md)'
@@ -1204,9 +1234,9 @@ else
   inject_expect "line-cap read-error" "src/broken-links/references/real-reference.md could not be read for its line count"
   inject_expect "evaluation-ledger anchor read-error" "src/broken-links/references/real-reference.md could not be read for the evaluation ledger anchor"
   # ONE guard for the whole house-style set, heading case included, for the
-  # same reason: six awk programs on an unreadable file printed errors on
+  # same reason: seven awk programs on an unreadable file printed errors on
   # stderr and nothing on stdout, which reads from outside exactly like a file
-  # that passed all six. The message names all six, so a check dropped from
+  # that passed all seven. The message names all seven, so a check dropped from
   # the set is visible here and not only in the classifier.
   inject_expect "house-style read-error" "src/broken-links/references/real-reference.md could not be read — the house-style checks (spelling, invocation form, artifact names, labels, section pointers, heading case, table rendering)"
 

@@ -58,3 +58,43 @@ inside a fence is an example and is never read:
 | --- | --- |
 | the last row | — |
 - this item opens a list, so it is not a row.
+
+- A fence straight under a table is a block boundary, and the prose after it is
+  a new paragraph, not a swallowed row:
+
+| Key | Value |
+| --- | --- |
+| the last row before a fence | — |
+```
+a fenced example, stripped before the check reads the stream
+```
+this prose line follows the fence, so it is not a row.
+
+- A thematic break, an HTML comment and a heading each open a block:
+
+| Key | Value |
+| --- | --- |
+| the last row before a break | — |
+---
+
+| Key | Value |
+| --- | --- |
+| the last row before a comment | — |
+<!-- a note under the table, not a row -->
+
+| Key | Value |
+| --- | --- |
+| the last row before a heading | — |
+## A heading straight under a table
+
+- An unpaired backtick opens no span, so a pipe after it is a plain separator;
+  a `|`-leading line over a bare `---` is a paragraph and a thematic break, not
+  a one-column table:
+
+| Key | Value |
+| --- | --- |
+| an unpaired backtick ` in a row | — |
+
+| something with a leading pipe
+---
+prose under the thematic break is not a swallowed row.
