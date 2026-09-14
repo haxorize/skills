@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Self-test for friction-log.sh: a fire/quiet table over throwaway transcripts.
+# Self-test for friction-log.sh and the friction-log.py it execs: a fire/quiet table over throwaway transcripts.
 # The hook is fail-open, so a signal that quietly stops matching looks exactly
 # like a session with no corrections — this table is the only thing that tells
 # the two apart. Run it after changing a signal:
@@ -18,8 +18,9 @@
 # the transcript and reports nothing, a shorter transcript re-arms the same
 # way, the cursor silences a second run and re-arms on appended lines;
 # stop_hook_active exits at once, even over a correction; the malformed-
-# payload, bad session-id, bad FRICTION_LOG_DIR, missing-transcript and
-# scanner-crash arms allow with a breadcrumb (the crash named); the block JSON
+# payload, bad session-id, bad FRICTION_LOG_DIR, missing-transcript, no-python3,
+# no-scanner-file and scanner-crash arms allow with a breadcrumb (the crash named, by mutating a
+# copy of friction-log.py beside a copy of the wrapper); the block JSON
 # carries the line shape src/debrief/SKILL.md defines, byte for byte, in both
 # output spellings; and the instruction names the session id and the log
 # path. Not graded: what the agent does with the instruction — that is the
@@ -204,9 +205,16 @@ for baddir in "relative/dir" "$tmp/with space" "$tmp/with\$(id)"; do
   out="$(FRICTION_LOG_DIR="$baddir" run "dir" "$t")"
   [ "$out" = "rc=0" ] && grep -q "FRICTION_LOG_DIR" "$tmp/crumb" || { echo "FAIL (bad FRICTION_LOG_DIR '$baddir' must allow with its breadcrumb): $out $(cat "$tmp/crumb")"; fail=1; }
 done
-# a crash in the hook's own Python is named on stderr and allowed, never a bare rc
-crashed="$tmp/crashed.sh"
-python3 -c 'import sys; s=open(sys.argv[1]).read(); open(sys.argv[2],"w").write(s.replace("    hits = []\n", "    hits = []\n    undefined_name\n", 1))' "$hook" "$crashed"
+# the two pre-exec gates: no python3 on PATH (the wrapper is builtins-only up to the exec), and no friction-log.py beside the wrapper
+out="$(printf '{"session_id":"nopy","transcript_path":"%s"}' "$t" | PATH= "$(command -v bash)" "$hook" 2>"$tmp/crumb"; echo "rc=$?")"
+[ "$out" = "rc=0" ] && grep -q "python3 not found" "$tmp/crumb" || { echo "FAIL (no python3 must allow with its breadcrumb): $out $(cat "$tmp/crumb")"; fail=1; }
+mkdir -p "$tmp/alone"; cp "$hook" "$tmp/alone/friction-log.sh"
+out="$(printf '{"session_id":"alone","transcript_path":"%s"}' "$t" | bash "$tmp/alone/friction-log.sh" 2>"$tmp/crumb"; echo "rc=$?")"
+[ "$out" = "rc=0" ] && grep -q "friction-log.py is not beside" "$tmp/crumb" || { echo "FAIL (a wrapper with no friction-log.py beside it must allow with its breadcrumb): $out $(cat "$tmp/crumb")"; fail=1; }
+# a crash in the hook's own Python is named on stderr and allowed, never a bare rc:
+# the wrapper is copied beside a mutated friction-log.py, since it execs the one in its own directory
+mkdir -p "$tmp/crashed"; crashed="$tmp/crashed/friction-log.sh"; cp "$hook" "$crashed"
+python3 -c 'import sys; s=open(sys.argv[1]).read(); m=s.replace("    hits = []\n", "    hits = []\n    undefined_name\n", 1); assert m != s, "mutation site moved"; open(sys.argv[2],"w").write(m)' "$here/friction-log.py" "$tmp/crashed/friction-log.py"
 arm "crash"; out="$(printf '{"session_id":"crash","transcript_path":"%s","stop_hook_active":false}' "$t" | bash "$crashed" 2>"$tmp/crumb" >"$tmp/out"; echo "rc=$?")"
 [ "$out" = "rc=0" ] && [ ! -s "$tmp/out" ] && grep -q "scanner crashed (NameError" "$tmp/crumb" && grep -q "^NameError: " "$tmp/crumb" \
   || { echo "FAIL (a scanner crash must allow with its exception named on stderr): $out $(cat "$tmp/out" "$tmp/crumb")"; fail=1; }

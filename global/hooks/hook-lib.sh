@@ -18,8 +18,9 @@
 #                         and on any other non-zero exit
 #   hook_allow "<why>"  — exit 0 with a one-line stderr breadcrumb
 #                         (friction-log.sh, the one hook that reads no lib,
-#                         carries a byte-identical copy as `allow`; a change
-#                         to the message shape is made in both)
+#                         carries a byte-identical copy as `allow`, and its
+#                         scanner friction-log.py carries the same shape as
+#                         `crumb`; a change to the message shape is made in all three)
 #
 # Fail-open is the lib's rule, not each hook's: a safety hook that blocks on
 # its own errors trains the user to disable it. Silent exits (no breadcrumb)

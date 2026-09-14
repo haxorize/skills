@@ -2,7 +2,7 @@
 
 ## What this is
 
-An agent session produces work faster than it produces evidence that the work is done. This repo exists to close that gap: Claude Code skills, 5 always-on rules, and 3 hooks, installed by symlink into `~/.claude/` (the full skill map is in [`README.md`](../README.md)). A skill is a Markdown instruction pack that Claude Code loads on demand; a hook is a script the harness runs before a tool call, able to refuse it. The skills split into workflows a person types as a slash command, and disciplines the agent loads on its own when the work matches their triggers. The suite is repo-agnostic, and it works the tracker you already use (Azure DevOps or GitHub) through the `az` and `gh` CLIs you are already signed into.
+An agent session produces work faster than it produces evidence that the work is done. This repo exists to close that gap: Claude Code skills, 5 always-on rules, and 4 hooks, installed by symlink into `~/.claude/` (the full skill map is in [`README.md`](../README.md)). A skill is a Markdown instruction pack that Claude Code loads on demand; a hook is a script the harness runs at a tool call or the end of a turn, able to refuse the call or flag the turn. The skills split into workflows a person types as a slash command, and disciplines the agent loads on its own when the work matches their triggers. The suite is repo-agnostic, and it works the tracker you already use (Azure DevOps or GitHub) through the `az` and `gh` CLIs you are already signed into.
 
 Everything is plain files in a git repo: readable, editable, versioned, with no service behind it and no telemetry. The suite is its maintainer's own daily setup, and it polices itself. A linter checks every skill against the authoring conventions, and every hook ships with a selftest.
 
@@ -25,7 +25,7 @@ Everything is plain files in a git repo: readable, editable, versioned, with no 
 ## What it does not do
 
 - It does not enforce anything outside the session. Nothing runs in CI, and the hooks are per-seat: a teammate without the install has no gate. Branch protection stays your repo host's job.
-- Most of the discipline is prose the agent follows, not mechanism. The hooks cover only the three shapes a script can see (the mass edit, the bypass flag, the unreviewed push), and they fail open with a logged breadcrumb rather than blocking on their own errors.
+- Most of the discipline is prose the agent follows, not mechanism. Three of the hooks cover only the shapes a script can see before a tool call (the mass edit, the bypass flag, the unreviewed push); a fourth reads each finished turn and flags correction-shaped ones for the friction log. All fail open with a logged breadcrumb rather than blocking on their own errors.
 - It does not edit `settings.json`, rewrite git history, or push anywhere without an ask.
 - It does not replace human review. It makes the agent's self-review legible and can gate a push on it; a person still approves the PR wherever the repo requires an approver.
 - It does not carry company data. Repo-specific vocabulary, thresholds, and policies stay in each repo's own files.
