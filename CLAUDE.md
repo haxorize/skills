@@ -12,7 +12,7 @@ A repo of Claude Code skills — repo-agnostic in mechanism, with its Domain ski
 
 `to-feature`, `to-story`, `to-tasks`, `to-bug` are the artifact under development — don't invoke them against this repo's own work.
 
-## Before materially editing any skill or scanner rule
+## Before materially editing any skill, scanner rule, or lint check
 
 Check [`docs/lineage.md`](docs/lineage.md) first.
 

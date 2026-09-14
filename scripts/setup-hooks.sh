@@ -7,8 +7,9 @@ set -euo pipefail
 # *-selftest.sh — becomes live at once, and the banner below lists them from
 # the directory, never from a count kept here: each hook's `# Gate map:`
 # header lines say what it does, the way `# Install note:` does for the
-# PreToolUse hooks. Git hooks can't be committed to .git/hooks/, so we
-# version-control the hook bodies and set core.hooksPath here.
+# Claude Code hooks under global/hooks/ (PreToolUse checks and the Stop hook).
+# Git hooks can't be committed to .git/hooks/, so we version-control the hook
+# bodies and set core.hooksPath here.
 #
 # TRUST NOTE: after this runs, any hook committed under scripts/git-hooks/ —
 # now or added by a future pulled commit — executes automatically on its git

@@ -22,8 +22,9 @@ set -euo pipefail
 repo_root="$(git rev-parse --show-toplevel)"
 
 # The settings.json snippet points at this checkout's global/hooks/ directly,
-# so a pulled commit that edits a hook changes the live PreToolUse check with
-# no re-consent — and core.hooksPath points at scripts/git-hooks/ the same
+# so a pulled commit that edits a hook changes the live Claude Code hook —
+# a PreToolUse check on Bash, or the Stop hook that runs on every turn —
+# with no re-consent — and core.hooksPath points at scripts/git-hooks/ the same
 # way, so a pulled edit to a git hook runs on the next commit, merge, or
 # message. Name either, one line, so the change does not scroll past.
 # ORIG_HEAD is the pre-merge tip only when the merge set it last; a reset or
@@ -44,7 +45,8 @@ fi
 # scripts/*.sh that grade the tree rather than themselves; every other gate is
 # a selftest — scripts/*-selftest.sh (lint-skills.sh enforces that pairing, so
 # a script landing without one is named there), the git hooks' selftests
-# beside this file, and the PreToolUse hooks' the way install.sh derives them:
+# beside this file, and the Claude Code hooks' (PreToolUse and Stop alike)
+# the way install.sh derives them:
 # every global/hooks/*.sh with an `# Install note:` header line. A hook that
 # lands in either directory without a selftest is named below, not silently
 # ungated. security-selftest.sh runs here too: its last row grades every
