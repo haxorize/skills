@@ -46,14 +46,25 @@
 #     it in an ASSIGNMENT, and `set -e` aborts the installer before a single
 #     skill is linked. Measured 2026-09-01: with that line dropped a fresh
 #     install exits 1; with it, 0.
+#   - the hook snippet the fresh install prints, against the hooks' own
+#     headers: the block parses as JSON, its event keys are exactly the set the
+#     `# Event:` headers declare (PreToolUse for a hook with none) with no key
+#     printed twice, every PreToolUse entry carries a matcher, and no entry
+#     under any other event does, and each roster hook's path appears exactly
+#     once, under the event its own header declares. Read from global/hooks/
+#     rather than named, so a hook moving to a new event does not turn the
+#     row into a no-op.
 #
 # NOT covered, so a clean run here is not a claim about them: which skills the
 # recursion reaches (the trace row above grades every line it prints, not that
-# the set of lines is complete), the hook-snippet block and its
-# `# Install note:` roster, the WARN arms for a target that exists and is not a
-# symlink, and prune_owned's empty-prefix abort (no call site can reach it from
-# outside the script, so there is no row to write). Those are printing and
-# traversal, not removal, and this script was written for the removal.
+# the set of lines is complete), the `# Install note:` and `# Event:` roster
+# itself (the snippet row reads the same headers the installer does, so a hook
+# both miss the same way), the "already named" quiet path once settings.json
+# names a hook, hook_event's WARN-and-fall-back arm for an unknown event name,
+# the WARN arms for a target that exists and is not a symlink, and
+# prune_owned's empty-prefix abort (no call site can reach it from outside the
+# script, so there is no row to write). Those are printing and traversal, not
+# removal, and this script was written for the removal.
 set -uo pipefail
 
 repo_root="$(cd "$(dirname "$0")/.." && pwd)"
@@ -225,6 +236,90 @@ else
   dep $x -> $y, but src/$x/SKILL.md does not declare '$y' in its requires: line"
     done <<< "$dep_lines"
     [ -z "$bad" ] || selftest_fail "the dep trace attributed a dependency to a skill that does not declare it — link_skill's names went global, so the recursion overwrote the caller's and the caller's next dep line named the wrong skill:$bad"
+  fi
+
+  # The hook snippet. The fresh root has no settings.json, so every hook is
+  # missing and the installer prints the whole block. The JSON is the text
+  # from the first line that is exactly `{` to the first that is exactly `}`;
+  # the roster and the expected key set both come from the hooks' headers.
+  snippet=$(printf '%s\n' "$fresh_out" | sed -n '/^{$/,/^}$/p')
+  if [ -z "$snippet" ]; then
+    selftest_fail "the fresh install printed no hook snippet — a root with no settings.json must print the block for every hook, so the snippet rows below graded nothing"
+  elif ! command -v python3 >/dev/null 2>&1; then
+    selftest_skip "python3 is not on PATH — the hook-snippet rows were not exercised."
+  else
+    want_events=""
+    want_pairs=""
+    for h in $(grep -l '^# Install note: ' "$global_dir"/hooks/*.sh); do
+      e="$(grep -m1 '^# Event: ' "$h" | sed -e 's/^# Event: //' -e 's/[[:space:]]*$//' || true)"
+      e="${e:-PreToolUse}"
+      want_pairs="$want_pairs $h=$e"
+      case " $want_events " in *" $e "*) ;; *) want_events="$want_events $e" ;; esac
+    done
+    want_events="$(printf '%s\n' $want_events | sort | tr '\n' ' ')"
+    # One parse, four verdicts on stdout: the sorted key list, a flag for a
+    # key printed twice (json.load would silently keep the last, which is the
+    # failure that drops entries from the snippet the user pastes), the list
+    # of entries whose matcher presence disagrees with their event, and the
+    # roster hooks whose path is not under their own event exactly once.
+    snippet_report=$(printf '%s\n' "$snippet" | WANT_PAIRS="$want_pairs" python3 -c '
+import json, os, sys
+dup = []
+def hook(pairs):
+    seen = set()
+    for k, _ in pairs:
+        if k in seen:
+            dup.append(k)
+        seen.add(k)
+    return dict(pairs)
+d = json.load(sys.stdin, object_pairs_hook=hook)
+hooks = d["hooks"]
+print("keys:", " ".join(sorted(hooks)))
+print("dup:", " ".join(dup))
+bad = []
+for ev, entries in hooks.items():
+    for i, e in enumerate(entries):
+        if (ev == "PreToolUse") != ("matcher" in e):
+            bad.append("%s[%d]" % (ev, i))
+print("bad:", " ".join(bad))
+placed = []
+for pair in os.environ["WANT_PAIRS"].split():
+    path, ev = pair.rsplit("=", 1)
+    n = sum(
+        1
+        for k, entries in hooks.items()
+        for e in entries
+        for h in e.get("hooks", [])
+        if h.get("command") == "bash " + path and k == ev
+    )
+    total = sum(
+        1
+        for entries in hooks.values()
+        for e in entries
+        for h in e.get("hooks", [])
+        if h.get("command") == "bash " + path
+    )
+    if n != 1 or total != 1:
+        placed.append("%s=%s(under-own-event=%d,anywhere=%d)" % (os.path.basename(path), ev, n, total))
+print("placed:", " ".join(placed))
+' 2>&1)
+    snippet_rc=$?
+    if [ "$snippet_rc" -ne 0 ]; then
+      selftest_fail "the hook snippet is not valid JSON — the user pastes this into settings.json verbatim: $snippet_report"
+    else
+      got_events="$(printf '%s\n' "$snippet_report" | sed -n 's/^keys: //p') "
+      [ "$got_events" = "$want_events" ] ||
+        selftest_fail "the hook snippet's event keys are [$got_events] but the hooks' headers declare [$want_events] — a hook is grouped under the wrong event, or an event the roster names was dropped"
+      dup_keys="$(printf '%s\n' "$snippet_report" | sed -n 's/^dup: //p')"
+      [ -z "$dup_keys" ] ||
+        selftest_fail "the hook snippet prints an event key more than once ($dup_keys) — a JSON parser keeps the last, so the entries under the earlier copy are silently dropped from what the user pastes"
+      bad_entries="$(printf '%s\n' "$snippet_report" | sed -n 's/^bad: //p')"
+      [ -z "$bad_entries" ] ||
+        selftest_fail "these snippet entries have a matcher where their event takes none, or lack one where PreToolUse needs it: $bad_entries"
+      misplaced="$(printf '%s\n' "$snippet_report" | sed -n 's/^placed: //p')"
+      [ -z "$misplaced" ] ||
+        selftest_fail "these roster hooks are not in the snippet exactly once under the event their header declares: $misplaced"
+    fi
   fi
 fi
 

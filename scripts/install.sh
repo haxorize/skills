@@ -174,6 +174,35 @@ link_rules
 # hook with none is a PreToolUse check on Bash; only PreToolUse entries take
 # a matcher, so a Stop hook's entry is the bare hooks list.
 SETTINGS="${TARGET_ROOT}/.claude/settings.json"
+# hook_event <hook name> — prints the event the hook's `# Event:` header names,
+# or PreToolUse when it carries none. The value lands in a JSON key position
+# in the snippet below, so it is checked against the harness's event names
+# (https://code.claude.com/docs/en/hooks, read 2026-09-13): an unknown name
+# would print a key the harness ignores, the hook would never fire, and every
+# later run would still report it "already named" because that check greps
+# for the path. Trailing whitespace on the header is trimmed first, so
+# `# Event: Stop ` is Stop and not an unknown event. Called once per hook,
+# below; the grouping loop reads the pair that call recorded.
+hook_event() {
+  local ev
+  ev="$(grep -m1 '^# Event: ' "$GLOBAL_DIR/hooks/$1.sh" | sed -e 's/^# Event: //' -e 's/[[:space:]]*$//' || true)"
+  ev="${ev:-PreToolUse}"
+  case "$ev" in
+    SessionStart | Setup | UserPromptSubmit | UserPromptExpansion | PreToolUse | \
+    PermissionRequest | PermissionDenied | PostToolUse | PostToolUseFailure | \
+    PostToolBatch | Notification | MessageDisplay | SubagentStart | SubagentStop | \
+    TaskCreated | TaskCompleted | Stop | StopFailure | TeammateIdle | \
+    InstructionsLoaded | ConfigChange | CwdChanged | DirectoryAdded | FileChanged | \
+    WorktreeCreate | WorktreeRemove | PreCompact | PostCompact | PreModelSwitch | \
+    PostModelSwitch | Elicitation | ElicitationResult | SessionEnd)
+      ;;
+    *)
+      echo "WARN  $1 — '# Event: $ev' is not a hook event the harness knows; wiring it as PreToolUse" >&2
+      ev=PreToolUse
+      ;;
+  esac
+  printf '%s' "$ev"
+}
 hooks=""
 for f in $(grep -l '^# Install note: ' "$GLOBAL_DIR"/hooks/*.sh); do
   hooks="$hooks $(basename "$f" .sh)"
@@ -193,19 +222,22 @@ Hook snippet — paste this into ~/.claude/settings.json under "hooks" (not appl
 The paths point at this checkout: a 'git pull' that edits global/hooks/ changes the live hook.
 SNIPPET
 # One JSON object for every missing hook: a settings file holds one object,
-# so the entries are built first, grouped by event, and printed once.
+# so the entries are built first, grouped by event, and printed once. Each
+# hook's event is resolved once here, as a `hook=event` pair, so the grouping
+# loop below asks hook_event nothing and its WARN prints once.
 events=""
+hook_events=""
 for hook in $missing; do
-  ev="$(grep -m1 '^# Event: ' "$GLOBAL_DIR/hooks/$hook.sh" | sed 's/^# Event: //' || true)"
-  ev="${ev:-PreToolUse}"
+  ev="$(hook_event "$hook")"
+  hook_events="$hook_events $hook=$ev"
   case " $events " in *" $ev "*) ;; *) events="$events $ev" ;; esac
 done
 blocks=""
 for ev in $events; do
   entries=""
-  for hook in $missing; do
-    hev="$(grep -m1 '^# Event: ' "$GLOBAL_DIR/hooks/$hook.sh" | sed 's/^# Event: //' || true)"
-    [ "${hev:-PreToolUse}" = "$ev" ] || continue
+  for pair in $hook_events; do
+    [ "${pair#*=}" = "$ev" ] || continue
+    hook="${pair%%=*}"
     HOOK_PATH="$(printf '%s' "$GLOBAL_DIR/hooks/$hook.sh" | sed 's/[\\"]/\\&/g')"
     if [ "$ev" = PreToolUse ]; then
       entry="      {
@@ -224,7 +256,11 @@ for ev in $events; do
     if [ -n "$entries" ]; then entries="$entries,
 $entry"; else entries="$entry"; fi
   done
-  block="    \"$ev\": [
+  # hook_event admits only bare names, so there is nothing to escape today;
+  # the key is escaped anyway, the same way HOOK_PATH is, so the two do not
+  # differ if the case above ever widens.
+  ev_json="$(printf '%s' "$ev" | sed 's/[\\"]/\\&/g')"
+  block="    \"$ev_json\": [
 $entries
     ]"
   if [ -n "$blocks" ]; then blocks="$blocks,
