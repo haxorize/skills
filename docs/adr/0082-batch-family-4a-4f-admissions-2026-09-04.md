@@ -8,7 +8,7 @@ The family-4 review of this date (`skills-2026-09-04-batch-family-4a-4f.review.m
 
 ## Decision
 
-The admissions of batches 4a–4f are recorded here, now, one bullet per outside source; the round's closing ADR points here rather than restating them. Every source below fed local prose — no directory was ported, and nothing here enters `docs/lineage.md`'s first table — so **no swept point is recorded and the diff-before-editing trigger does not fire**, with the one exception its bullet names (compound-engineering-plugin, already a first-table upstream). Clone paths are under `~/code/lib/`; each tip is `git rev-parse --short HEAD` read this session; each license is read from the clone's license file this session, and where the round's `licences.tsv` has a row it is named (the file covers only the 31 sources cloned new this round, so the older clones have none). **Ideas only** means the clause was written fresh and takes nothing of the source's wording, and the local text says so through its row here and in `docs/lineage.md`. The transcript rows in the same batches (`T1`–`T4`, `T2`'s fast-path prose) and the park promotion `P-X4.9` have no outside source and take no row.
+The admissions of batches 4a–4f are recorded here, now, one bullet per outside source; the round's closing ADR points here rather than restating them (amended 2026-09-13: no 2026-09-04 closing record exists — see Amendments). Every source below fed local prose — no directory was ported, and nothing here enters `docs/lineage.md`'s first table — so **no swept point is recorded and the diff-before-editing trigger does not fire**, with the one exception its bullet names (compound-engineering-plugin, already a first-table upstream). Clone paths are under `~/code/lib/`; each tip is `git rev-parse --short HEAD` read this session; each license is read from the clone's license file this session, and where the round's `licences.tsv` has a row it is named (the file covers only the 31 sources cloned new this round, so the older clones have none). **Ideas only** means the clause was written fresh and takes nothing of the source's wording, and the local text says so through its row here and in `docs/lineage.md`. The transcript rows in the same batches (`T1`–`T4`, `T2`'s fast-path prose) and the park promotion `P-X4.9` have no outside source and take no row.
 
 **Batch 4a, `1717207`.**
 
@@ -60,8 +60,12 @@ The admissions of batches 4a–4f are recorded here, now, one bullet per outside
 ## Consequences
 
 - `docs/lineage.md`'s second table gains rows whose `Record` cell is this record — one per source, or per group of sources feeding one local file — and its header sentence now names this record beside `receiving-review` and `scripts/security.sh` as the case of a skill holding a row in both tables, since `codebase-design`, `validate-behavior`, `wizard`, `handoff`, `onboard-me`, and `capturing-learnings` now do.
-- The round's closing ADR points here for batches 4a–4f rather than restating the lineage. The ledger's `H43` license cell and `D1.2`'s silence on the key names are corrected by this record and not rewritten in the ledger, which is the round's artifact.
+- The round's closing ADR points here for batches 4a–4f rather than restating the lineage. The ledger's `H43` license cell and `D1.2`'s silence on the key names are corrected by this record and not rewritten in the ledger, which is the round's artifact. — corrected: see Amendments 2026-09-13
 - Two folds in these batches are counted against other records and not here: `M17`'s cost on ADR-0041 (its Amendments, this date), and the incident learning's standing as a second document kind, which is ADR-0025's ground.
 - Batches 4g–4k take the same treatment: a record per family, written inside the family's own review cycle, never after it.
 
 Revisit when: an ADR-0034 swept-point diff shows one of this family's twenty-two upstreams changed the idea a row here took as local prose, which reopens that row's fold on its merit; or a park sweep of `~/code/lib/_rounds/2026-09-04/ledger.md` finds a PARK or REJECT row from batches 4a–4f met by a later change in this repo — this record carries no verdict cell, the ledger does.
+
+## Amendments
+
+- **2026-09-13, no closing record** — The 2026-09-04 round was never called closed and has no closing ADR; the pointer above reaches nothing. [ADR-0094](0094-close-of-the-2026-09-12-mining-round.md), the 2026-09-12 round's close, names the gap and leaves the record to whoever closes that round.

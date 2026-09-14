@@ -22,7 +22,7 @@ Update [`src/which-skill/SKILL.md`](src/which-skill/SKILL.md) and `README.md`'s 
 
 ## Touching a script or hook
 
-Read [`scripts/README.md`](scripts/README.md) first. The `pre-commit` git hook runs `lint-skills.sh` and `lint-adrs.sh` on the paths a commit touches; `bash scripts/setup-hooks.sh` enables it.
+Read [`scripts/README.md`](scripts/README.md) first. The `pre-commit` git hook runs `lint-skills.sh` and `lint-adrs.sh` on the paths a commit touches, and the `-selftest.sh` beside a staged `scripts/*.sh` or git hook (every selftest when a `*-lib.sh` is staged); `bash scripts/setup-hooks.sh` enables it.
 
 ## Review lenses
 
@@ -37,14 +37,6 @@ Landing:
 - Ticket close pre-authorized: no (no tracker)
 - Review required: yes
 - Defect policy: fix, don't file
-
-## Round
-
-Round:
-- Review cadence: per batch family — the families are enumerated in the round's reconcile file
-- Deferrals register: `~/code/lib/_rounds/<round-date>/reconcile.md` § Deferrals register
-
-`feedback-loops`' close reads the first line; `committing`'s fast path greps the second. Delete the block when no round is running.
 
 ## Commit order
 

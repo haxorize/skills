@@ -21,6 +21,10 @@ The day's review fix pass (67 findings, 2026-09-04) hardened the archive walk �
 
 ## Consequences
 
-`docs/lineage.md`'s two batch-2 rows and `scripts/security.sh`'s header cite this record. The round's closing ADR, when written, points here for batch 2 rather than restating the lineage.
+`docs/lineage.md`'s two batch-2 rows and `scripts/security.sh`'s header cite this record. The round's closing ADR, when written, points here for batch 2 rather than restating the lineage. — corrected: see Amendments 2026-09-13
 
 Revisit when: an ADR-0034 swept-point diff of nvidia/skillspector shows the concealed-instruction class `inj-obfuscated` was ported from changed or retired, which reopens that rule's diff obligation — dbreunig/drskill has no swept point, as the Decision says, so no diff can fire for `md-shell-inline`; or `scripts/security-selftest.sh` first grades the local rule red on a corpus the round has already read clean, which says the rule and not the corpus moved.
+
+## Amendments
+
+- **2026-09-13, no closing record** — The 2026-09-04 round was never called closed and has no closing ADR; the pointer above reaches nothing. [ADR-0094](0094-close-of-the-2026-09-12-mining-round.md), the 2026-09-12 round's close, names the gap and leaves the record to whoever closes that round.

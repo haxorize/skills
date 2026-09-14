@@ -8,7 +8,7 @@ This amends [ADR-0045](0045-ship-commit-style-default-and-closing-contract.md): 
 
 ## Decision
 
-The admissions of batches 6 and 7 are recorded here, one bullet per outside source; the round's closing ADR points here rather than restating them. Every source fed local prose — no directory was ported, and none of the ten enters `docs/lineage.md`'s first table — so **no diff-before-editing obligation attaches to any source here** (addyosmani/agent-skills keeps the attribution-only swept point ADR-0034's 2026-09-04 ledger records for it, which takes no diff trigger). The trigger did fire on two **skills** batch 7 edited, `writing-for-agents` and `implement`, both first-table under mattpocock/skills (ADR-0034); it was discharged by ADR-0034's 2026-09-04 sweep of that upstream to `3cca18b`, which changed none of the 20 ported directories. Clone paths are under `~/code/lib/`; each tip is `git rev-parse --short HEAD` read this session with its commit date.
+The admissions of batches 6 and 7 are recorded here, one bullet per outside source; the round's closing ADR points here rather than restating them (amended 2026-09-13: no 2026-09-04 closing record exists — see Amendments). Every source fed local prose — no directory was ported, and none of the ten enters `docs/lineage.md`'s first table — so **no diff-before-editing obligation attaches to any source here** (addyosmani/agent-skills keeps the attribution-only swept point ADR-0034's 2026-09-04 ledger records for it, which takes no diff trigger). The trigger did fire on two **skills** batch 7 edited, `writing-for-agents` and `implement`, both first-table under mattpocock/skills (ADR-0034); it was discharged by ADR-0034's 2026-09-04 sweep of that upstream to `3cca18b`, which changed none of the 20 ported directories. Clone paths are under `~/code/lib/`; each tip is `git rev-parse --short HEAD` read this session with its commit date.
 
 **Batch 6, `c7470b2`.**
 
@@ -38,7 +38,7 @@ Two relocations left `work-item-shape`'s body at 14,987 B: the `:70` stop-condit
 ## Consequences
 
 - `docs/lineage.md`'s second table gains rows whose `Record` cell is this record, and its header sentence names this record beside ADR-0082 and ADR-0083, because `implement` and `writing-for-agents` — first-table under mattpocock/skills — now also hold second-table rows here.
-- The round's closing ADR points here for batches 6 and 7.
+- The round's closing ADR points here for batches 6 and 7. — corrected: see Amendments 2026-09-13
 - The ledger's four PR-body rows (`K9`, `D4.16`, `G12`, `C19`) read ADAPT-landed as of this record; their unpark condition, "`ship` gains a PR-body reference", was met by `d72bbf3`.
 - `work-item-shape`'s body sits 13 B under its cap; the next fold into it relocates first, which the register already says. — corrected: see Amendments 2026-09-13
 
@@ -47,3 +47,5 @@ Revisit when: an ADR-0034 swept-point diff of mattpocock/skills changes the sect
 ## Amendments
 
 - **2026-09-13, review fix pass** — The cap bullet's 13 B was exact at `cc2795c` (14,987 B); `df760c1` pruned the body to 14,554 B and `8e3f363` folded one routing sentence into it without relocating (`git show 8e3f363 --stat -- src/work-item-shape/SKILL.md` → 2 insertions, 0 deletions), so it stands at 14,833 B, 167 B under the cap (`git show 8e3f363:src/work-item-shape/SKILL.md | wc -c` → 14833). The Revisit line's fold-without-relocating clause, added the same day as the fold that met it, is restated above as a near-cap trigger, and its "header sentence" now names the section that carries the both-tables case.
+
+- **2026-09-13, no closing record** — The 2026-09-04 round was never called closed and has no closing ADR; the pointer above reaches nothing. [ADR-0094](0094-close-of-the-2026-09-12-mining-round.md), the 2026-09-12 round's close, names the gap and leaves the record to whoever closes that round.
