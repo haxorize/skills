@@ -40,6 +40,10 @@ Two relocations left `work-item-shape`'s body at 14,987 B: the `:70` stop-condit
 - `docs/lineage.md`'s second table gains rows whose `Record` cell is this record, and its header sentence names this record beside ADR-0082 and ADR-0083, because `implement` and `writing-for-agents` — first-table under mattpocock/skills — now also hold second-table rows here.
 - The round's closing ADR points here for batches 6 and 7.
 - The ledger's four PR-body rows (`K9`, `D4.16`, `G12`, `C19`) read ADAPT-landed as of this record; their unpark condition, "`ship` gains a PR-body reference", was met by `d72bbf3`.
-- `work-item-shape`'s body sits 13 B under its cap; the next fold into it relocates first, which the register already says.
+- `work-item-shape`'s body sits 13 B under its cap; the next fold into it relocates first, which the register already says. — corrected: see Amendments 2026-09-13
 
-Revisit when: an ADR-0034 swept-point diff of mattpocock/skills changes the sections `implement` or `writing-for-agents` hold a second-table row for here, which is the both-tables case this record's header sentence names; or `ship`'s PR-body reference is cut or moved, which re-parks the four PR-body rows (`K9`, `D4.16`, `G12`, `C19`); or `work-item-shape` takes a fold without relocating first.
+Revisit when: an ADR-0034 swept-point diff of mattpocock/skills changes the sections `implement` or `writing-for-agents` hold a second-table row for here, which is the both-tables case § Decision records and `docs/lineage.md:3`'s header sentence names; or `ship`'s PR-body reference is cut or moved, which re-parks the four PR-body rows (`K9`, `D4.16`, `G12`, `C19`); or a fold into `work-item-shape` lands within 50 B of its 15,000 B cap without relocating first — `8e3f363`'s one-sentence fold (14,554 → 14,833 B) tripped this clause's earlier wording on the room `df760c1`'s prune had made, recorded in Amendments 2026-09-13.
+
+## Amendments
+
+- **2026-09-13, review fix pass** — The cap bullet's 13 B was exact at `cc2795c` (14,987 B); `df760c1` pruned the body to 14,554 B and `8e3f363` folded one routing sentence into it without relocating (`git show 8e3f363 --stat -- src/work-item-shape/SKILL.md` → 2 insertions, 0 deletions), so it stands at 14,833 B, 167 B under the cap (`git show 8e3f363:src/work-item-shape/SKILL.md | wc -c` → 14833). The Revisit line's fold-without-relocating clause, added the same day as the fold that met it, is restated above as a near-cap trigger, and its "header sentence" now names the section that carries the both-tables case.

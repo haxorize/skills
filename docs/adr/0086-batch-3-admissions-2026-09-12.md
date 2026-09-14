@@ -37,6 +37,10 @@ The admissions of batch 3 are recorded here, one bullet per outside source; the 
 - `docs/lineage.md`'s second table gains rows whose `Record` cell is this record, and its header sentence names this record beside ADR-0082 through ADR-0084.
 - The round's closing ADR points here for batch 3.
 - The reconcile's license line for Batch 3 ("the rest MIT/Apache") is corrected by this record: `thebushidocollective/han` is FSL-1.1-ALv2 and `cursor/plugins`' `pstack` is MIT, so `CR-1.18` is ideas only and `DCB.1` need not be.
-- `diagnosing-bugs` has 201 B of headroom; the next fold into it relocates first.
+- `diagnosing-bugs` has 201 B of headroom; the next fold into it relocates first. — corrected: see Amendments 2026-09-13
 
-Revisit when: an ADR-0034 swept-point diff shows one of this batch's twelve upstreams changed the idea a row here took as local prose, which reopens that row's fold on its merit; or `thebushidocollective/han` relicenses from FSL-1.1-ALv2, which lifts `CR-1.18` from ideas only; or `diagnosing-bugs` takes a fold without relocating first, since this record measured its headroom at 201 B.
+Revisit when: an ADR-0034 swept-point diff shows one of this batch's twelve upstreams changed the idea a row here took as local prose, which reopens that row's fold on its merit; or `thebushidocollective/han` relicenses from FSL-1.1-ALv2, which lifts `CR-1.18` from ideas only; or `diagnosing-bugs` takes a fold without relocating first; its headroom is 211 B at `8e3f363` (`wc -c src/diagnosing-bugs/SKILL.md` → 14789), not the 201 B the consequence above measured before ADR-0087's prune.
+
+## Amendments
+
+- **2026-09-13, review fix pass** — The headroom bullet's 201 B predates the prune ADR-0087's amendment of this date records; `wc -c src/diagnosing-bugs/SKILL.md` → 14789 at `8e3f363`, 211 B under the cap. The Revisit line, added the same day from the bullet rather than from a measurement, is restated above at the measured figure.
