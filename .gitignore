@@ -2,6 +2,10 @@
 *.swp
 *~
 .claude/settings.local.json
+# Python bytecode: an import beside a committed `.py` (e.g. scripts/mutation-sweep.py)
+# must not sweep a `.pyc` in — the scanner reads a committed `.pyc` as a supply-chain smell.
+__pycache__/
+*.pyc
 # The two bytecode-named fixtures are the sole ground for two selftest rows;
 # a contributor's global excludes must not hide them.
 !scripts/lint-fixtures/security/injected-skill/__pycache__/

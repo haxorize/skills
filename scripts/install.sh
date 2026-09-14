@@ -168,7 +168,8 @@ link_rules
 # user pastes it. Once settings.json names the hook, stay quiet — the
 # post-merge hook (ADR-0049) re-runs this script on every merge.
 # The roster is the directory: a hook is a hooks/*.sh whose header carries an
-# `# Install note:` line (the libraries and selftests beside it carry none);
+# `# Install note:` line (the libraries, selftests, and a hook's own scanner
+# half — e.g. friction-log.py — beside it carry none);
 # that line is also its one-line install note. post-merge derives the same
 # roster the same way. A hook's event is its `# Event:` header line, and a
 # hook with none is a PreToolUse check on Bash; only PreToolUse entries take
