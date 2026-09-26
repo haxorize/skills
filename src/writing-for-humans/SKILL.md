@@ -48,7 +48,7 @@ In anything the human reads — narration, publish confirmations, reports — a 
 
 ## The close report
 
-The report that closes a piece of work is one or two sentences: what changed, and the verification and review result, deferrals named. Never a list of changed files, a restatement of the spec, or a narration of the process — the diff and the transcript already hold those. What a skill or a global rule mandates at a close — a table (`implement`'s completion audit), a stamp line (`Measured-tree:`), an ask block for a queued outward act — is exempt; the sentences sit above it. A table printed here is a data table; a record takes the **Blockquote stanza** `DOMAIN.md` registers, not a record table.
+The report that closes a piece of work states what changed, and the verification and review result, deferrals named, and nothing else. Never a list of changed files, a restatement of the spec, or a narration of the process — the diff and the transcript already hold those. What a skill or a global rule mandates at a close — a table (`implement`'s completion audit), a stamp line (`Measured-tree:`), an ask block for a queued outward act — is exempt; the report sits above it. A table printed here is a data table; a record takes the **Blockquote stanza** `DOMAIN.md` registers, not a record table.
 
 ## Core rules
 
