@@ -2535,9 +2535,10 @@ done < <({ [ -d docs ] && find docs -type f -name '*.md'
 # exist every key but one is optional — `committing` says a missing line means
 # `no`, so absence is a defined state and only a WRONG line is a defect. The
 # exception is `Review required:`, which a block that exists must name; the arm
-# at the bottom of this function carries the reason. The pre-2026-08-30
-# `pre-authorised` spelling is accepted here for the same reason `committing`
-# reads it: the key was renamed, not retired.
+# at the bottom of this function carries the reason. The `pre-authorised`
+# spelling is accepted here because `committing` reads it the same way: the
+# key was renamed 2026-08-30, and other repos' blocks flip when next touched
+# (ADR-0077).
 #
 # The three keys whose value may carry a trailing parenthetical. `Review
 # required:` is not among them and has its own arm, because the hook that reads
