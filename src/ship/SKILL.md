@@ -26,7 +26,7 @@ It does not build, refactor, or review. Arrive here with the work already green 
 
 Commits land in **lineage order — rationale before implementation**, so a reviewer meets the *why* before the *what*. The project states its own order in `CLAUDE.md` where it has one (a decision record before the code it shapes; a schema before its consumers). Where the record quotes its own implementation — a count, a command's output, a behavior the same change produces — the pair is one commit: a record false at the commit that carries it serves nobody, and a claim carrying its evidence outranks the reading order. One Task = one commit is the common case, not the ceiling — a change touching a decision record, a skill, and a glossary is three commits in that order.
 
-Two more principles shape the split:
+Three more principles shape the split:
 
 - **One attributable claim per commit.** A commit that changes a check and the code that check validates proves nothing — when the numbers move, nothing says which half moved them. The check change and the code change are separate commits.
 - **Every commit leaves the tree consistent.** Don't strand a rename from its references or a schema from its consumers mid-split; someone landing on any single commit should find a coherent tree. This shapes where the lines are drawn — it is not a mandate to run the suite once per commit.
