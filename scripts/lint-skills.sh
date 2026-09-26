@@ -309,7 +309,10 @@
 #     5,000 tokens of each", verified 2026-08-29. The FAIL below converts it to
 #     bytes at 3 bytes/token, measured 2026-08-29 on this repo's four largest
 #     bodies through `claude -p` usage deltas (2.97–3.10 bytes/token; the
-#     earlier 4-bytes/token estimate undercounted by a quarter).
+#     earlier 4-bytes/token estimate undercounted by a quarter). The cut
+#     itself was probed 2026-09-01: a 29,754-byte body came back cut at body
+#     byte 19,823, 5,442 tokens surviving — 3.64 bytes/token, and within 0.2%
+#     of a 20,000-character cut (ADR-0073 § Amendments 2026-09-01).
 #   - The 200-line caps are this repo's own (write-skill § Size constraints), a
 #     loaded-context proxy, not a platform limit.
 #
@@ -2673,8 +2676,8 @@ fi
 # three, so "each file is under its cap" was read as "the standing tax is
 # small" with the total never computed (round 2026-09-12, row I2: the control
 # three parks had waited on since 08-29). This prints the sum and a token
-# estimate at the 3.64 bytes per token src/write-skill/SKILL.md § Size
-# constraints measured on this repo — one probe, so the tokens are an
+# estimate at the 3.64 bytes per token the 2026-09-01 re-attach probe
+# measured (header, limits list) — one probe, so the tokens are an
 # estimate and the bytes are the figure. The measurement line carries no
 # status marker, so the selftest's `^(OK|FAIL|WARN):` greps stay exact; the
 # one verdict is the WARN past 30,000 bytes, the per-turn budget ADR-0079's
