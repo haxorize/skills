@@ -10,7 +10,7 @@ Use this when publishing a Task work item to Azure DevOps via `az boards work-it
 | **Description (HTML)** | `System.Description` | Body markdown converted to HTML | `--description @<file>` |
 | **Area Path** | `System.AreaPath` | From CLAUDE.md `Area path:` | `--area` |
 | **Iteration Path** | `System.IterationPath` | From CLAUDE.md `Iteration:` | `--iteration` |
-| **State** | `System.State` | From CLAUDE.md `Default state:` (typically `New`) | `--fields "System.State=..."` |
+| **State** | `System.State` | From CLAUDE.md `Default state:`; absent → `New` (optional, never a fail-fast field) | `--fields "System.State=..."` |
 | **Parent (User Story)** | (relation) | From `--parent <story-id>` arg or resolved upstream | post-create: `az boards work-item relation add --id <task-id> --relation-type Parent --target-id <story-id>` |
 | **Blocked-by (Predecessor)** | (relation) | In-project blockers identified during drafting (SKILL step 5) | post-create: `az boards work-item relation add --id <task-id> --relation-type Predecessor --target-id <blocker-id>` |
 
@@ -41,7 +41,7 @@ az boards work-item create \
   --description @description.html \
   --area "$AREA_PATH" \
   --iteration "$ITERATION" \
-  --fields "System.State=New" "System.Tags=$TAGS"
+  --fields "System.State=$STATE" "System.Tags=$TAGS"
 ```
 
 ## Notes

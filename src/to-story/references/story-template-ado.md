@@ -11,7 +11,7 @@ Use this when publishing a User Story to Azure DevOps via `az boards work-item c
 | **Acceptance Criteria** | `Microsoft.VSTS.Common.AcceptanceCriteria` | Acceptance bullets converted to HTML | `--fields "Microsoft.VSTS.Common.AcceptanceCriteria=@<file>"` |
 | **Area Path** | `System.AreaPath` | From CLAUDE.md `Area path:` | `--area` |
 | **Iteration Path** | `System.IterationPath` | From CLAUDE.md `Iteration:` | `--iteration` |
-| **State** | `System.State` | From CLAUDE.md `Default state:` (typically `New`) | `--fields "System.State=..."` |
+| **State** | `System.State` | From CLAUDE.md `Default state:`; absent → `New` (optional, never a fail-fast field) | `--fields "System.State=..."` |
 | **Parent (Feature)** | (relation) | From `--parent <feature-id>` arg | post-create: `az boards work-item relation add --id <new-story-id> --relation-type Parent --target-id <feature-id>` |
 
 Before first publish against a new ADO project, verify the field shape once per [ado-html-transport.md](ado-html-transport.md).
@@ -51,7 +51,7 @@ az boards work-item create \
   --description @description.html \
   --fields \
     "Microsoft.VSTS.Common.AcceptanceCriteria=@acceptance.html" \
-    "System.State=New" \
+    "System.State=$STATE" \
     "System.Tags=$TAGS" \
   --area "$AREA_PATH" \
   --iteration "$ITERATION"

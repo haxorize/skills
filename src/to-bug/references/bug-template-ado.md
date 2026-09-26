@@ -12,7 +12,7 @@ Use this when publishing a Bug work item to Azure DevOps via `az boards work-ite
 | **Severity** | `Microsoft.VSTS.Common.Severity` | One of `1 - Critical`, `2 - High`, `3 - Medium`, `4 - Low` | `--fields "Microsoft.VSTS.Common.Severity=..."` |
 | **Area Path** | `System.AreaPath` | From CLAUDE.md `Area path:` | `--area` |
 | **Iteration Path** | `System.IterationPath` | From CLAUDE.md `Iteration:` | `--iteration` |
-| **State** | `System.State` | From CLAUDE.md `Default state:` (typically `New`) | `--fields "System.State=..."` |
+| **State** | `System.State` | From CLAUDE.md `Default state:`; absent → `New` (optional, never a fail-fast field) | `--fields "System.State=..."` |
 | **System Info** | `Microsoft.VSTS.TCM.SystemInfo` | Environment details (optional) | `--fields "Microsoft.VSTS.TCM.SystemInfo=@<file>"` |
 | **Parent (Feature, optional)** | (relation) | From `--parent <feature-id>` arg | post-create: `az boards work-item relation add --id <bug-id> --relation-type Parent --target-id <feature-id>` |
 
@@ -43,7 +43,7 @@ az boards work-item create \
   --fields \
     "Microsoft.VSTS.TCM.ReproSteps=@repro.html" \
     "Microsoft.VSTS.Common.Severity=$SEVERITY" \
-    "System.State=New" \
+    "System.State=$STATE" \
     "System.Tags=$TAGS" \
   --area "$AREA_PATH" \
   --iteration "$ITERATION"
