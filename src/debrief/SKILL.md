@@ -36,7 +36,7 @@ The **remedy category** names where a fold would land, one of eight:
 - `navigation-pointer` — the rule exists and the run never reached it: a router line, a description trigger, or a pointer is missing.
 - `automated-check` — a hook or lint can see the exact failure, so a sentence is the wrong form.
 - `reviewer-rule` — a review lens row would have caught it; the run cannot see it before the fact.
-- `steering-removal` — a line steered the run wrong: a stored memory, a stale rule, a clause that reopened a negotiation. The fold is a cut — the stored preference that pre-empted `committing`'s split threshold, so `/ship` was never offered, is this category and not a missing rule.
+- `steering-removal` — a line steered the run wrong: a stored memory, a stale rule, a clause that reopened a negotiation. The fold is a cut — a stored preference that pre-empts `committing`'s split-shaped stop ("When the ask arrives split-shaped … say so and stop"), so `/ship` is never offered, is this category and not a missing rule.
 - `tool-economy` — the wrong tool, or too many calls, where the rule said nothing about which. The evidence is a count over the transcript, never an impression.
 - `information-access` — the run lacked a fact it had no way to reach; the fold gives it the way.
 - `new-rule` — no rule covers the moment, and a sentence in the owning skill would. It is proposed only on a second line or a dictated rule; one correction is not evidence a rule is missing, and the entry for a lone line writes Remedy as `new-rule` with "burden unmet" beside it.
