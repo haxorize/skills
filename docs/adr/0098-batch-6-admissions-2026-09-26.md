@@ -1,0 +1,52 @@
+# The 2026-09-26 round's batch 6 admits material from outside sources across twenty-one skills, all of it as local prose
+
+## Context
+
+Batch 6 of the 2026-09-26 round landed on 2026-09-26 as one commit, `f1ab054`, folding the rows of `~/code/lib/_rounds/2026-09-26/reconcile.md` § Batch 6 and grill decision 11 (Risk zones, opt-in) into thirty paths (`git show --stat --format= f1ab054 | tail -1` → `30 files changed, 68 insertions(+), 29 deletions(-)`). Two rows the plan listed are held for Batch 7: `S1-13` goes into `/exposure`'s reference (Batch 7's plan), and `DA04-3` lands with `OB5` (grill decision 8). Four subagents wrote the folds, partitioned by file; the sources below are from their reports, with each license read as the first line of the clone's `LICENSE` and each tip from `git log -1 --format='%h %cs'`. The batch is its own review family, and its review has not run yet.
+
+## Decision
+
+The admissions of batch 6 are recorded here, one bullet per landing; the round's closing ADR points here. Every source fed local prose and no directory was ported, so **no diff-before-editing obligation attaches to any source here**. The trigger fired on twelve first-table hosts (the pre-commit notice lists them). [ADR-0034](0034-branch-mining-lineage-or-dormant-main.md)'s 2026-09-26 entry discharges them: mattpocock/skills changed no ported directory (`diagnosing-bugs`, `implement`, `tdd`, `prototype`, `review-architecture`, `handoff`); oaustegard/claude-skills left `verifying-claims` and `gating` byte-unchanged (`doc-claims`, `audit-tests`) and changed `generative-thinking`, the very change `DL4.1`/`DL4.3` take (`diverging`); compound-engineering-plugin left `ce-pov` byte-unchanged (`adoption-verdict`) and added the `retire_when` field `DL2.2` takes (`capturing-learnings`); openclaw/agent-skills left `behavior-validator` untouched (`validate-behavior`).
+
+**`diagnosing-bugs` family**
+- **A contract fork, ADR or not** — everyinc/compound-engineering-plugin (MIT; `a763b39` 2026-09-25), `DL2.4` (`skills/ce-debug/references/return-to-caller.md`). Taken: reversing deliberate behavior, a test asserting intent included, is the user's decision. Local: `diagnosing-bugs` § the ADR clause.
+- **Tracker first for a filed bug** — microsoft/playwright (**Apache-2.0**; `b9a34ac` 2026-09-25), `DA03-1` (`.claude/skills/playwright-triage/SKILL.md`), and vercel-labs/issue-graph (**Apache-2.0**; `55714fa` 2026-09-25), `N1-6` (README, idea only). Taken: search by trigger, run the repro on the PR branch and the shipped release, read linked PRs and follow-ups; the `gh`/`az` commands are local. Local: `diagnosing-bugs` before Phase 1; `from-ticket` § 2. UNVERIFIED: the `az boards … --expand relations` form was not run here (`az` not installed); it matches `to-tasks:106`.
+- **Clock and contention flakes; bisect's 125** — davila7/claude-code-templates (MIT; `c9384be` 2026-09-26), `DA13-1` (`cli-tool/components/commands/testing/flaky-test-triage.md`), `DA13-2` (`…/regression-triage.md`). Local: `hard-cases.md`, `loop-shapes.md`.
+- **USE sweep and the noise floor** — thecsdoctor/brendangregg-use-tsa-skill (MIT; `b9f4dd6` 2026-07-28; mined via sickn33/agentic-awesome-skills, MIT, `14efe62`), `S2-32`; jjcm/makefaster (no license stated: ideas only), `N2-2`. Not taken: TSA and flame-graph method, the 5%/20 ms threshold. Local: `performance-regressions.md`.
+- **A reached-marker** — trailofbits/skills (**CC BY-SA 4.0**: ideas only, no text), `S2-2` (`plugins/post-patch-validation/…/SKILL.md`). Not taken: the token name and evidence model. Local: `fix-acceptance.md`.
+
+**Risk zones and the build loop**
+- **Risk zones** — Addy Osmani, "Brownfield agentic engineering" (Substack, all rights reserved: ideas only; captured at `~/code/lib/_rounds/2026-09-26/url-sources/brownfield-agentic-engineering.md`), `N10-1`, `N10-3`, reshaped by grill decision 11: opt-in, not default red. Local: `onboard-repo` § 2 item 10 and § 3; `implement` § Before building step 3; `tdd` § Closing the cycle; `DOMAIN.md`'s **Risk zone** row (defined at `ef94cfa`, its stale batch note dropped); `README.md` § Conventions.
+- **Two questions before a new test** — openclaw/openclaw (MIT; `915e37b` 2026-09-26), `N10-5` (`.agents/skills/test-audit/SKILL.md` § Authoring gate). Local: `tdd` § Philosophy.
+- **A user's scaffold is the contract** — MK27MK/no-bs-skills (MIT; `a902e59` 2026-09-25), `N2-3` (`skills/fill-the-gaps/SKILL.md`). Local: `implement` § 2.
+- **Change-type table; generated files** — ossrules.md crawl (`crawl/ossrules-all.md`, ideas only), `N11-1`, `N11-2`. Local: `feedback-loops` § What "the loop" is and § 2; `onboard-repo` § 1–3; `README.md` § Conventions.
+- **The parked ledger's offer line** — this user's transcripts, `TX4`; no source. Local: `completion-audit.md`, all three byte-identical copies (`implement`, `handoff`, `committing`).
+
+**One clause per host**
+- **Duplicate bump; the final target's needs** — vercel/next.js (MIT; `1cc0f66` 2026-09-26), `DA09-1`, `DA09-2` (`docs/01-app/02-guides/upgrading/agentic-upgrade/`). Local: `upgrade-deps` § 1 and § 3; a hop green only with a shim the target drops folds into the next hop.
+- **The door and the blast radius** — mattpocock/skills (MIT; `c55ee46`; `skills/in-progress/pr/SKILL.md` § Merge Danger, which credits Dex Horthy), `DL1.1`. Local: `ship/references/pr-body.md` § The risks.
+- **Adopt before scaffolding a commodity** — vishnujayvel/deja-vu (MIT; `967ef88` 2026-09-24), `N9-21`; ccplugins/awesome-claude-code-plugins (**Apache-2.0**; `plugins/bullpen/skills/doorman/SKILL.md`), `S3-19`. Local: `adoption-verdict` § Workflow step 1, and its description widened to reach the moment (+75 B to the catalog; `check_context_budget` → 29,534 of 30,000 B).
+- **An incident pin is never deleted** — sickn33/agentic-awesome-skills (MIT; `skills/test-guard/SKILL.md` Rule 6), `S4-20`. Local: `audit-tests` § 4.
+- **A boundary claim cites both sides** — phuryn/pm-skills (MIT; `8607e3b`; `pm-ai-shipping/skills/intended-vs-implemented/SKILL.md`), `N5-3`. Local: `doc-claims` § Judge each claim.
+- **Scoping is a query, a copy invalidates itself** — cloudflare/security-audit-skill (MIT; `c1c8a8c`), `N3-1` (the `skills/security-audit/` skill; the exact file is name-matched only). Local: `phi-safe-code` § Identifiers.
+- **Visibility before exploit detail** — k0d3x8its/dotfiles (no license stated: ideas only), `N8-4`. Local: `capturing-learnings` step 3.
+- **`retire_when:`** — everyinc/compound-engineering-plugin (MIT; `skills/ce-compound/references/yaml-schema.md`), `DL2.2`. Local: `learning-format.md` § Frontmatter; a met condition is checked by `doc-claims`.
+- **Tail sift; a named method** — oaustegard/claude-skills (MIT; `9892f18`; `generative-thinking/`), `DL4.1`, `DL4.3`. Local: `diverging` § Fire test and § Perspective shift; the stricter pass case removes the old "renamed a core object" pass.
+- **A screenshot is not the only check** — Agents365-ai/drawio-skill (MIT; `7aa92f7`), `DA08-8`. Local: `review-architecture/references/html-report.md`, `prototype` § When done.
+- **Stakeholder, exec, or launch update** — anthropics/knowledge-work-plugins (**Apache-2.0**; `da38ec1`; `product-management/skills/stakeholder-update/SKILL.md`), `N5-10`. Local: `register-by-artifact.md`, a new section, and a routing row in `writing-for-humans`' register table.
+- **Parity mode** — the Osmani article above (ideas only), `N10-4`. Local: `validate-behavior`, a new § When the change replaces an old path.
+- **One absolute `@id`** — squirrelscan/squirrelscan (MIT; `1b1e644`), `DA06-1`. **Personal branding out of scope** — anthropics/claude-plugins-community (**Apache-2.0**; `agentkit-seo-web-portfolio`), `D5.2`/`D5.3`, the scope decision only. Local: `aeo` § Structured data and § Boundary; room made by cutting a sentence `aeo:60` already covers and a clause `aeo:8` already implies (14,790 → 14,937 B).
+
+## Considered Options
+
+- **Land the `N9-21` pre-scaffold check as a global rule or an `implement` pointer**, since it must hold at a moment `adoption-verdict` does not own (`S3-19` proposed `recommend-and-proceed.md`). Not taken now: widening the description puts the moment in the model-invoked catalog at 75 B, where a global rule would cost every turn. It reopens if a scaffolded commodity lands without the skill firing.
+- **`N10-1`'s default red for an undeclared area**, as the reconcile planned. Rejected at the grill (decision 11): a repo with no block builds as it does today.
+- **`N5-3`'s cross-reference from `phi-safe-code`'s sinks table.** Not taken: the `doc-claims` bullet stands alone, and the sinks table is about where data leaks, not about doc claims.
+
+## Consequences
+
+- `docs/lineage.md`'s second table gains rows whose `Record` cell is this record, and its header sentence names this record beside ADR-0097.
+- The round's closing ADR points here for batch 6.
+- Near-cap bodies after the batch (`wc -c`): `aeo` 14,937, `diagnosing-bugs` 14,475, `writing-for-humans` 14,487, `upgrade-deps` 14,206 — the next fold into any of them relocates first.
+
+Revisit when: an ADR-0034 swept-point diff shows a ported path changed in mattpocock/skills, oaustegard/claude-skills, compound-engineering-plugin, or openclaw/agent-skills; or a commodity capability is scaffolded without `adoption-verdict` firing.
