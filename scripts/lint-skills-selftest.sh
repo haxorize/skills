@@ -205,10 +205,10 @@
 # and the classifier's unclaimed-file arm — walk_shipped_md emits only the
 # classes the arms above it claim, so no fixture can produce a path that
 # reaches its say_fail; it guards a tree added to the walk without an arm, and
-# has no input to grade it with. The FIVE name lists inside the checks are
+# has no input to grade it with. The SIX name lists inside the checks are
 # graded by property rather than by member, because a member row grades one
-# word and says nothing about the other 261: british_words, known_caps,
-# proper_nouns, invocation_verbs and artifact_name_exempt each carry a
+# word and says nothing about the other 301: british_words, british_prefixes,
+# known_caps, proper_nouns, invocation_verbs and artifact_name_exempt each carry a
 # member-count pin below, so a word silently dropped from any of them fails
 # here naming the list. What a count pin does NOT buy: which member went, or
 # that a member still has a fixture instance behind it.
@@ -258,9 +258,12 @@
 # status travels as a file, so neither shape can lose a FAIL. Three more when
 # british_prefixes landed (2026-09-27): the prefix loop emptied, the remainder
 # widened to one that only begins a listed word, and the prefix match dropped
-# so any head derives. All three red — the last only after the hypersceptical
+# so any head of a prefix's length derives. All three red — the last only after the hypersceptical
 # neighbor was written, since no American word in the dictionary ends in a
-# listed form behind a head off the list.
+# listed form behind a two-to-five-letter head off the list. Seven more on the
+# review of that change: each of pre, mis, non, dis, de, over and under
+# dropped from the list, green until each carried its own instance. The
+# two-letter head guard dropped is behavior-preserving, and correctly green.
 #
 # PARTIAL, and what it does and does not mean. Six sites can skip: three in the
 # isolated-roots block (no usable temp directory, a copy that fails, an edit
@@ -439,9 +442,10 @@ expect "British spelling (pass 4: global/README.md)" "global/README.md uses a Br
 expect "house style on a global rule" "global/rules/body-checked.md uses a British spelling"
 expect "house style at depth one under src/" "src/stray-note.md uses a British spelling"
 # A word added to british_words after its count pin lands with an instance in
-# docs/british-words-additions.md; the rendered word list is the assertion, so
-# dropping either member reds this row by name.
-expect "british_words additions (totalled through plough) and british_prefixes (untotalled, relabelled)" "docs/british-words-additions.md uses a British spelling (line(s) 5 7 9 11 13 — aluminium anaemia anaesthesia analyser analysers channelled cheque colourless cosy defenceless dialled diarrhoea enrol enrols equalled foetus fuelled funnelled gynaecology haematology haemoglobin humoured labeller labellers leukaemia levelled marshalled neighbourly oedema oesophagus oestrogen organiser organisers orthopaedic paediatric pencilled plough recognisable relabelled totalled totalling tunnelled tyre untotalled )"
+# docs/british-words-additions.md, as does each of british_prefixes; the
+# rendered word list is the assertion, so dropping any listed word or any
+# prefix reds this row by name.
+expect "british_words additions (totalled through plough) and each of british_prefixes" "docs/british-words-additions.md uses a British spelling (line(s) 5 7 9 11 13 15 — aluminium anaemia anaesthesia analyser analysers channelled cheque colourless cosy decentred defenceless dialled diarrhoea disfavour enrol enrols equalled foetus fuelled funnelled gynaecology haematology haemoglobin humoured labeller labellers leukaemia levelled marshalled misjudgement neighbourly nongrey oedema oesophagus oestrogen organiser organisers orthopaedic oversceptical paediatric pencilled plough precancelled recognisable relabelled totalled totalling tunnelled tyre underdraught untotalled )"
 expect "house style on a repo-local skill" ".claude/skills/repo-local/SKILL.md uses a British spelling"
 expect "house style on DOMAIN.md" "DOMAIN.md uses a British spelling"
 expect "house style on README.md" "README.md uses a British spelling"
@@ -673,7 +677,6 @@ reject "orphaned references (a reference cited by its installed path from anothe
 reject "British spelling (a form inside a URL)" "— behaviour )"
 reject "British spelling (a prefix whose remainder only begins a listed word)" "reprogram"
 reject "British spelling (a listed word inside a longer word, no prefix)" "greyhound"
-reject "British spelling (a prefixed American form)" "unlabeled"
 reject "British spelling (a listed word behind a head off british_prefixes)" "hypersceptical"
 reject "conventions pointer (a shebang-less library carrying it on line 1)" "scripts/quiet-lib.sh does not open with"
 reject "conventions pointer (no-pointer's own selftest carries it)" "scripts/no-pointer-selftest.sh does not open with"
@@ -743,7 +746,7 @@ phrase_pin "$fixtures/src/quoted-dep/SKILL.md" "the shared phrase in a user-invo
 phrase_pin "$clean_fixtures/src/clean-skill/SKILL.md" "one phrase quoted twice, which is not a duplicate" '"do the thing".*"do the thing"'
 phrase_pin "$clean_fixtures/src/which-skill/SKILL.md" "clean-skill's phrase in a user-invoked description, which must never be read" '"do the thing"'
 
-# The five name lists inside lint-skills.sh, pinned by MEMBER COUNT. A fixture
+# The six name lists inside lint-skills.sh, pinned by MEMBER COUNT. A fixture
 # row grades one member and says nothing about the rest: replacing
 # british_words entirely with four words left this file green, emptying
 # known_caps moved one line, and emptying proper_nouns moved nothing at all.
@@ -766,6 +769,9 @@ list_pin() {  # variable name, expected member count, separator
 # past tenses and the missing inflections and standalone words, paediatric
 # through plough. Their instances are in docs/british-words-additions.md.
 list_pin british_words 302 '|'
+# 9 since 2026-09-27, when the prefix rule landed; each has an instance in
+# docs/british-words-additions.md.
+list_pin british_prefixes 9 '|'
 # 102 → 101 on 2026-09-02: SKIPPED dropped. DOMAIN.md:77 bans the word outright
 # (UNVERIFIABLE is the registered marker), so admitting it here left check_labels
 # blind to a token the glossary forbids. Zero prose uses remain in any .md; the
@@ -790,6 +796,7 @@ quiet_pin "$quiet" "a label this tree registers" '**FIXTUREPASS**'
 quiet_pin "$quiet" "a British form inside a code span" 'an order in `cancelled`'
 quiet_pin "$quiet" "a British form inside a URL" 'https://example.invalid/docs/behaviour'
 quiet_pin "$quiet" "prefixed and compound American forms beside british_prefixes" 'we reprogram the greyhound'
+quiet_pin "$quiet" "a listed word behind a head off british_prefixes" 'a hypersceptical reader'
 # The inline exemption plan §5 specified and the batch did not build. A code
 # span is indistinguishable from an ordinary path, so a deliberate British form
 # that cannot sit in one had no way to say so — which is what let a sweep flip

@@ -232,7 +232,8 @@
 #     byte bounds above this figure is this repo's own ruling: every byte in
 #     that directory is paid on every turn of every session. The directory
 #     total is the unit, never a single file.
-#   - British spellings (ADR-0077 § House style): a word list, over src/**,
+#   - British spellings (ADR-0077 § House style): a word list and a prefix
+#     rule, over src/**,
 #     .claude/skills/**, global/rules/, global/README.md, DOMAIN.md, README.md,
 #     CLAUDE.md, docs/** and the prose READMEs under scripts/ — the one check
 #     here whose scope runs past the skill tree, because a British form in an
@@ -1138,13 +1139,15 @@ check_slash_form() {
 }
 
 
-# (see header) British spellings. The word list IS the check: a form absent
-# from it is not caught, which is why it is spelled out rather than derived
-# from a suffix rule (`-ise` alone fires on `wise`, `precise`, `concise`).
-# Prefixes are the one derivation it makes: a word that is a listed form
-# behind one of `british_prefixes` (`untotalled`, `relabelled`) fires as the
-# listed form would, since a British stem stays British under any prefix. The
-# remainder must be a whole listed word, so no American word reaches it.
+# (see header) British spellings. The word list IS the check, with one
+# derivation: a form neither listed nor a listed form behind one prefix is not
+# caught. It is spelled out rather than derived from a suffix rule (`-ise`
+# alone fires on `wise`, `precise`, `concise`). The prefix derivation: a word
+# that is a listed form behind one of `british_prefixes` (`untotalled`,
+# `relabelled`) fires as the listed form would, since a British stem stays
+# British behind a prefix. One prefix, not a stack: `reunlabelled` is missed.
+# The remainder must be a whole listed word; on 2026-09-27 every dictionary
+# word that reached the check only through a prefix was a British form.
 # Code spans and URLs are stripped first, because a state value, an
 # identifier, or a vendor path is not this repo's prose to spell —
 # `order.cancelled` in a contract example stays. global/hooks/ and scripts/
@@ -1184,9 +1187,15 @@ check_slash_form() {
 # scripts/lint-fixtures/docs/british-words-additions.md with the matching word
 # added to that fixture's `expect` row in lint-skills-selftest.sh, and the
 # `list_pin british_words` count there. Nothing checks the instance is there.
+# A word or prefix added here is also checked against a dictionary
+# (/usr/share/dict/words) for an American word the prefix rule would now
+# derive, since nothing in the selftest can know every such word. Adding a
+# prefix is the same three edits against `british_prefixes`.
 # The list is also copied verbatim into a11y-health's BRITISH_WORDS
 # (a11y-health docs/reviews/2026-09-05-whole-repo-audit-p19-spelling.md), which
-# does not follow an edit here on its own.
+# does not follow an edit here on its own. Nor does `british_prefixes`, or the
+# derivation in check_spelling's british(): a copy of the list alone is the
+# weaker check, passing `untotalled` where this one fails it.
 british_words='behaviour|behaviours|colour|colours|coloured|favour|favours|favoured|favourite|labour|honour|humour|neighbour|neighbours|rumour|endeavour|flavour|centre|centres|fibre|litre|metre|metres|theatre|licence|licences|defence|offence|pretence|analyse|analysed|analysing|paralyse|organise|organised|organises|organising|organisation|recognise|recognised|recognises|recognising|prioritise|prioritised|prioritises|prioritising|summarise|summarised|summarises|summarising|synthesise|synthesised|synthesises|synthesising|minimise|minimised|minimises|minimising|maximise|maximised|maximises|maximising|normalise|normalised|normalises|normalising|serialise|serialised|serialises|serialising|initialise|initialised|initialises|initialising|utilise|utilised|utilises|utilising|categorise|categorised|categorises|categorising|emphasise|emphasised|emphasises|emphasising|apologise|apologised|apologises|apologising|optimise|optimised|optimises|optimising|optimisation|specialise|specialised|standardise|standardised|generalise|generalised|formalise|formalised|realise|realised|realises|realising|criticise|criticised|memorise|memorised|characterise|characterised|itemise|itemised|harmonise|harmonised|tokenise|tokenised|tokenises|tokenising|tokeniser|tokenisation|cancelled|cancelling|modelling|labelling|labelled|travelled|travelling|signalled|fulfil|fulfilment|enrolment|instalment|whilst|amongst|grey|artefact|artefacts|sceptic|sceptical|scepticism|programme|programmes|judgement|judgements|acknowledgement|acknowledgements|storey|draught|practise|practised|enquire|enquiry|authorise|authorised|authorises|authorising|authorisation|authorisations|neighbouring|neighbourhood|neighbourhoods|catalogue|catalogues|catalogued|cataloguing|generalises|generalising|generalisation|generalisations|standardises|standardising|standardisation|honours|honoured|honouring|honourable|flavours|flavoured|flavouring|favourable|favourably|favourites|labours|laboured|labouring|humours|rumours|endeavours|endeavoured|endeavouring|fibres|litres|defences|offences|pretences|organisations|optimisations|specialises|specialising|specialisation|formalises|formalising|criticises|criticising|memorises|memorising|characterises|characterising|itemises|itemising|harmonises|harmonising|realisation|realisations|prioritisation|categorisation|normalisation|serialisation|initialisation|utilisation|minimisation|maximisation|summarisation|paralysed|paralyses|paralysing|modelled|signalling|fulfils|enrolments|instalments|judgemental|draughts|sceptics|storeys|enquires|enquired|enquiries|practises|practising|tokenisers|behavioural|behaviourally|colourful|colouring|manoeuvre|manoeuvres|manoeuvring|mould|moulds|moulded|counselling|counsellor|counsellors|centred|centring|licenced|totalled|totalling|labeller|labellers|paediatric|haemoglobin|haematology|anaemia|anaesthesia|leukaemia|orthopaedic|gynaecology|oedema|oesophagus|oestrogen|foetus|diarrhoea|levelled|fuelled|channelled|dialled|marshalled|funnelled|tunnelled|equalled|pencilled|enrol|enrols|recognisable|organiser|organisers|analyser|analysers|humoured|neighbourly|colourless|defenceless|cheque|tyre|aluminium|cosy|plough'
 british_prefixes='un|re|pre|mis|non|dis|de|over|under'
 check_spelling() {
@@ -1201,10 +1210,13 @@ check_spelling() {
   hits=$(printf '%s\n' "$scan" | awk -v list="$british_words" -v prefixes="$british_prefixes" '
     BEGIN {
       n = split(list, w, "|"); for (i = 1; i <= n; i++) bad[tolower(w[i])] = 1
-      np = split(prefixes, pre, "|")
+      np = split(prefixes, pre, "|"); for (j = 1; j <= np; j++) head[substr(pre[j], 1, 2)] = 1
     }
+    # The two-letter head guard keeps a token no prefix begins out of the
+    # loop; without it the loop cost the whole-tree pass about 4x.
     function british(t,   j) {
       if (t in bad) return 1
+      if (!(substr(t, 1, 2) in head)) return 0
       for (j = 1; j <= np; j++)
         if (substr(t, 1, length(pre[j])) == pre[j] && substr(t, length(pre[j]) + 1) in bad) return 1
       return 0
