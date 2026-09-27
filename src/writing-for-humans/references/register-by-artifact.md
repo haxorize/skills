@@ -48,7 +48,7 @@ Decided separated from discussed; an action is an owner plus a date or is flagge
 
 Read this section only when writing the weekly status note to a manager.
 
-One status line first — green, yellow, or red, with one sentence on where things stand — and the color matches reality: a note that is only ever green stops being read. Then what last week's note said would happen and whether it did, then four sections, each present: **wins** (what shipped, with its effect — never "made progress"), **next** (each step dated or marked undated), **risks** (each with its severity and the mitigation), **asks** (each with an owner and a by-when; "let me know if you have questions" is not an ask). A yellow or red status line names its biggest ask in the same sentence; the asks section holds the rest, never buried under wins.
+One status line first — green, yellow, or red, with one sentence on where things stand — and the color matches reality: a note that is only ever green stops being read. Then what last week's note said would happen and whether it did, then four sections, each present: **wins** (what shipped, with its effect — never "made progress"), **next** (each step dated or marked undated), **risks** (each with its severity and the mitigation), **asks** (each with an owner, a by-when, and what was already tried, so the reader can act without a round trip; "let me know if you have questions" is not an ask). A yellow or red status line names its biggest ask in the same sentence; the asks section holds the rest, never buried under wins.
 
 ## Stakeholder, exec, or launch update
 
