@@ -69,6 +69,7 @@ The first two are the same first day, different subject: `onboard-repo` wires th
 ### Ship
 
 - **`ship`** — Carry a green, reviewed change to a landed commit, a closed ticket where the repo has a tracker, and a post-deploy watch's verdict where the change deploys: proposes the commit split in lineage order and along CODEOWNERS reviewer groups where the touched paths have different owners, then lands it through a PR where someone must approve or directly where nobody must; where the change deploys, the success line, rollback trigger, window, and baseline are written before the deploy, and the watch's verdict (`references/after-landing.md`; the PR body's shape is `references/pr-body.md`) is what lifts `committing`'s `UNVERIFIED: live path`. Every claim it writes and every outward act it takes goes through the `committing` discipline it declares. Whether there's a PR turns on whether someone else must approve, not on the host. A change that resolves to one commit needs no `/ship` at all — `committing` lands it.
+- **`roll-out`** — Plan how a change reaches the people it affects: the exposure ladder (dark, internal, cohort, everyone) with a watch per rung, the kill switch pulled once before any rung opens and who may pull it, the flag's removal item, and — when the change is a bet on a number — an experiment contract frozen before the first person is exposed, read out as Ship, Extend, or Stop. Comes back to advance one rung at a time.
 
 ### Dependencies
 
