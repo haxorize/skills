@@ -33,7 +33,7 @@ Open the pass with one line — the file you picked when no path was given, and 
 
 ### 3. Fix, ask once, apply
 
-Fix the mechanical set in that order, each fix verified per `receiving-review` before the next starts. Fixes that touch disjoint files run in parallel subagents, in this working tree and never a worktree, so every fix sits in the tree step 5 stamps; a subagent's fix is verified the same way before its row reads FIXED. Findings that share a file stay in order. Then ask the batch, once. Apply the answers the same way: a proposed deferral the user says to fix now is a mechanical fix from then on. A bare "yes" to the batch resolves every entry to its recommended line.
+Fix the mechanical set in that order, each fix verified per `receiving-review` before any row reads FIXED. Fixes that touch disjoint files run in parallel subagents, in this working tree and never a worktree, so every fix sits in the tree step 5 stamps; the subagents only edit, and you verify each of their fixes after all of them land, since a check run inside one subagent sees its siblings' half-applied edits. Findings that share a file stay in order. Then ask the batch, once. Apply the answers the same way: a proposed deferral the user says to fix now is a mechanical fix from then on. A bare "yes" to the batch resolves every entry to its recommended line.
 
 Call the Skill tool with `feedback-loops` once after the last fix, not per fix — if you don't see a `Launching skill: feedback-loops` line, stop and call it again.
 

@@ -117,8 +117,8 @@
 #     skills under .claude/skills/, and DOMAIN.md and README.md, are in pass
 #     2's walk for the slash sweep, the house-style set (spelling, invocation
 #     form, artifact names, labels, section pointers, heading case, table
-#     rendering) and the evaluation-ledger consumer sweep, and for nothing
-#     else: the hoisting,
+#     rendering), the evaluation-ledger consumer sweep and, on a SKILL.md
+#     only, argument substitution, and for nothing else: the hoisting,
 #     frontmatter, ADR-citation, HTML-transport and reference-link checks do
 #     not read them, and a repo-local body draws the loaded-file byte FAIL
 #     because it is re-attached exactly as a hoisted one is. DOMAIN.md is the
@@ -338,9 +338,10 @@
 # per-file greps). Dropping any one pass-2 check saves 0.5-3.5 s — the
 # per-reference greps in check_reference_orphans, the cut the 2026-09-01
 # Batch A residue named, measured at 0 — so pass 2's floor is process count:
-# fifteen checks a file, each a few forks, over 227 files. A further cut is a
-# rewrite that merges the seven house-style scans into one awk pass, not a
-# trim, and is not this file's next job unless the pre-commit gate is.
+# fourteen checks at most a file (fifteen in the list), each a few forks, over
+# 227 files. A further cut is a rewrite that merges the seven house-style
+# scans into one awk pass, not a trim, and is not this file's next job unless
+# the pre-commit gate is.
 #   Pass 0 — read before any check runs, so no check's answer depends on how
 #   far the pass that asks it has got: the user-invoked set (name_is_user_invoked,
 #   the single predicate for that question) and both routers' text.
@@ -597,6 +598,23 @@ frontmatter_value() {
       exit
     }
   ' "$1"
+}
+
+# A file's body, for the checks that skip frontmatter: the frontmatter's lines
+# print blank, so a line number read off the output is the file's own. A file
+# whose first-line `---` never closes has no frontmatter — every line is body —
+# so an unclosed block is not a free pass. A reference file has none. Every
+# check that reads a SKILL.md body reads it through here. frontmatter_value
+# above and check_description_scalar still take the first two `---` lines
+# anywhere; pass 1 runs them only on src/*/SKILL.md, where check_name_field
+# FAILs a file with no `name:` between those lines.
+skill_body_lines() {
+  awk 'NR == 1 && $0 == "---" { fm = 1; n = 1; buf[1] = $0; next }
+       fm { buf[++n] = $0
+            if ($0 == "---") { fm = 0; for (i = 1; i <= n; i++) print "" }
+            next }
+       { print }
+       END { if (fm) for (i = 1; i <= n; i++) print buf[i] }' "$1"
 }
 
 # say_fail, the failure flag, and why the status travels as a file rather than
@@ -953,7 +971,7 @@ for f in src/*/SKILL.md; do
   dmi=""; name_is_user_invoked "$skill" && dmi=true
   [ "$dmi" = "true" ] || collect_trigger_phrases "$desc" "$skill"
   reqs=$(frontmatter_value "$f" requires | tr ',' ' ')
-  body=$(awk '/^---$/ { c++; next } c >= 2' "$f")
+  body=$(skill_body_lines "$f")
 
   check_reattach_bytes "$f"
   check_name_field "$f"
@@ -1052,38 +1070,25 @@ check_reference_links() {
   done <<< "$link_targets"
 }
 
-# A file's body, for the checks that skip frontmatter: the frontmatter's lines
-# print blank, so a line number read off the output is the file's own. A file
-# whose first-line `---` never closes has no frontmatter — every line is body —
-# so an unclosed block is not a free pass. A reference file has none.
-body_lines() {
-  awk 'NR == 1 && $0 == "---" { fm = 1; n = 1; buf[1] = $0; next }
-       fm { buf[++n] = $0
-            if ($0 == "---") { fm = 0; for (i = 1; i <= n; i++) print "" }
-            next }
-       { print }
-       END { if (fm) for (i = 1; i <= n; i++) print buf[i] }' "$1"
-}
-
-# Argument substitution (see header). Claude Code replaces `$N` in a skill body
-# with the argument at index N, and names no exemption for code blocks, so a
-# fence is swept like prose; an index with no argument stays literal, which is
-# why the corruption shows only on an invocation with enough arguments. Only a
-# SKILL.md body is substituted: the frontmatter is skipped (body_lines), and a
-# reference is never called here. `\$1` is the escaped form and stays quiet:
-# probed 2026-09-27 with `claude -p "/probe first second"` on a throwaway
-# skill, `$0` rendered `first`, `$1` `second`, `\$0` `$0`, `\$1` `$1`;
-# `\\$1` is a literal backslash and then a bare `$1`, so it fires — a `$`
-# behind an even run of backslashes is unescaped. Scope: `$` + digit only.
-# `$ARGUMENTS`, `$ARGUMENTS[N]` and `${1}` are deliberately not graded;
-# `$ARGUMENTS` substituting was seen in that probe, while `${1}` and the
-# harness's reading of `\\$1` are recalled, not run.
+# Argument substitution (see header). An index with no argument stays literal,
+# which is why the corruption shows only on an invocation with enough
+# arguments. Evidence: probed 2026-09-27 with `claude -p "/probe first second"`
+# on a throwaway skill, and read through the model's reply, not a captured
+# render — a model that dropped a backslash would read the same as a harness
+# that stripped it: `$0` came back `first`, `$1` `second`, `\$0` `$0`, `\$1`
+# `$1`, and `$ARGUMENTS` substituted. That the harness strips the backslash is
+# the lint's reading of those replies, and so is the even-run rule it grades:
+# `\\$1` is taken as a literal backslash and then a bare `$1`, so a `$` behind
+# an even run of backslashes fires; `\\$1` and `${1}` are recalled, not run.
+# The escape is a prose fix only: in a fence the stripped backslash hands the
+# shell a bare `$5`, which it expands, so a fence takes a named variable. Scope:
+# `$` + digit only; `$ARGUMENTS`, `$ARGUMENTS[N]` and `${1}` are not graded.
 check_arg_substitution() {
   local f=$1 hits badlines
-  hits=$(body_lines "$f" | grep -nE '(^|[^\\])(\\\\)*\$[0-9]')
+  hits=$(skill_body_lines "$f" | grep -nE '(^|[^\\])(\\\\)*\$[0-9]')
   if [ -n "$hits" ]; then
     badlines=$(linenos "$hits")
-    say_fail "$f fails argument substitution: a bare \$ before a digit in its body (line(s) ${badlines}) — Claude Code substitutes \$N with an argument, fenced code included; escape it as \\\$1 in prose, or pass the value through a named variable (write-skill/references/skill-package-mechanics.md)"
+    say_fail "$f fails argument substitution: a bare \$ before a digit in its body (line(s) ${badlines}) — Claude Code substitutes \$N with an argument, fenced code included; escape it as \\\$1 in prose, and in a fence pass the value through a named variable, since the harness strips the escape before the shell sees it (write-skill/references/skill-package-mechanics.md)"
   fi
 }
 
@@ -1139,7 +1144,7 @@ check_load_gate() {
 slash_exempt=' clear compact init code-review security-review simplify name old-name sweep tmp '
 check_slash_form() {
   local f=$1 scan slashed line line_exempt seen=' '
-  scan=$(body_lines "$f" | mask_examples)
+  scan=$(skill_body_lines "$f" | mask_examples)
   # Per line, because that is what the marker promises and what `spelling-exempt`
   # does: collected over the whole file instead, one marked site blesses every
   # later use of that name in the body, and the rename this check exists to
@@ -1913,9 +1918,10 @@ while IFS= read -r f; do
       check_slash_form "$f"
       ;;
     .claude/skills/*)
-      # A repo-local skill: swept for the slash form, the house style, and the
+      # A repo-local skill: swept for the slash form, the house style, the
       # loaded-file byte FAIL (it is re-attached exactly as a hoisted body
-      # is). Its frontmatter is still the author's (see header Scope).
+      # is), and on its SKILL.md argument substitution. Its frontmatter is
+      # still the author's (see header Scope).
       check_slash_form "$f"
       house_style_checks "$f"
       check_reference_bytes "$f"

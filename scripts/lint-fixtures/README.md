@@ -19,11 +19,16 @@ file under `global/rules/` goes through that arm and is graded by all four body 
 token and HTML through the shell, and it also carries the retired slash form of a
 model-invoked name under a *Must stay quiet* heading, because `global/rules/` is the
 one class the slash sweep deliberately skips and an exemption nobody exercises is not an
-exemption. `.claude/skills/repo-local/` is the only repo-local skill; the slash sweep, the whole
+exemption. `.claude/skills/repo-local/` is the repo-local skill for the arm's own checks; the slash sweep, the whole
 house-style set and the loaded-file byte FAIL reach it, and it carries an instance of
 each — the retired slash form, a British spelling, and an oversize
 `references/oversize.md` — because each of those three cells could be deleted from that
-arm with the selftest green. `lint-fixtures-clean/.claude/skills/repo-local/`
+arm with the selftest green. Two more repo-local skills grade argument substitution's
+frontmatter skip, the one check that arm runs on a `SKILL.md` alone:
+`.claude/skills/arg-no-frontmatter/` has no frontmatter and a later `---` break, so its
+`$8` on line 4 fires only if every line counts as body and only a line-1 `---` opens a
+block; `.claude/skills/arg-unclosed-frontmatter/` opens a block on line 1 that never
+closes, so its whole file is body and fires both the argument check and the slash sweep. `lint-fixtures-clean/.claude/skills/repo-local/`
 is its quiet half, naming a user-invoked skill and a built-in. `src/broken-links/references/load-gated.md`
 carries a load gate in a *reference* file under a model-invoked owner, the half of that
 check no `SKILL.md` fixture can reach. `src/stray-note.md` is a markdown file at depth

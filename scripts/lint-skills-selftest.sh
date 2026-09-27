@@ -219,73 +219,25 @@
 # its pin, and for no other list.
 #
 # What the covered list buys, stated no larger than it is: those shapes cannot
-# stop grading without this script saying so. It was measured, not assumed —
-# 31 mutations of lint-skills.sh graded by this script, 30 red and 1 silent
-# (the unclaimed-file arm above), and 24 more when the nine house-style checks
-# landed: each of the nine dropped from its caller; the H1 title-case test
-# disabled; each of the four section-pointer target arms dropped; the orphan
-# check's basename and installed-path arms dropped; the artifact-name exempt
-# list dropped; the spelling check's code-span strip and its URL strip dropped;
-# the heading-case acronym, next-token-number and own-digit exemptions dropped;
-# the label check's digit-and-underscore exemption dropped; and the DOMAIN.md
-# lookups in check_labels and check_heading_case each made to miss. All 24 red
-# — two of them only after the fixture that grades them was written, which is
-# what a mutation run is for. Ten more when the Landing: key check and the
-# per-line slash marker landed: the fence mask dropped from check_landing_key,
-# its header regex narrowed to the bare form (twice — the gate grep and the
-# in-loop one, only the second of which is graded), its bullet test narrowed to
-# `- ` at column 0, its blank-line-ends-block rule dropped, its key bold strip
-# dropped, `branch-per-ticket` dropped from the branch-policy arm, the
-# `Review required:` arm widened to take a parenthetical, the slash marker
-# collected file-wide instead of per line, and the sibling-membership check's
-# `listed -> stay quiet` branch deleted. Nine red; the gate grep's narrowing is
-# the one silent mutation, because the wrong-on-purpose root's first block
-# carries the bare header either way, so the check still runs and the in-loop
-# regex beside it is what decides which blocks it reads. The 30: each of the three ledger check calls
-# removed; the consumer sweep's process substitution turned into a pipe (red then; since
-# 2026-09-01 the status travels as a file, that mutation is behavior-preserving,
-# and it is correctly green), its
-# `hits -ge 2` loosened to `-ge 1`, its `hits -eq 3` moved to `-eq 4`, its
-# legend-owner wholesale arm removed, and its mask_examples dropped; the
-# two-legends branch, the legend's arity-3 test, and the
-# no-legend-but-a-rule-exists branch each disabled; the no-rule-site branch,
-# the two-rule-sites branch and the legend-versus-rule comparison each
-# disabled; each of the anchor regex's four alternatives dropped one at a time;
-# body_checks dropped from the global/rules arm, the depth-one src/*.md arm
-# deleted, the default arm narrowed to .claude/skills/, and the slash sweep
-# dropped from the src/*/* arm; each of the four body checks removed from
-# body_checks one at a time; the line-cap, anchor-grep and status-token
-# read-error guards each removed; the empty-walk guard removed; and the
-# consumer-sweep-did-not-run note removed from the authority-failure path.
-# Turning that
-# process substitution into a here-string instead is behavior-preserving too,
-# and correctly green: a here-string runs no subshell, and since 2026-09-01 the
-# status travels as a file, so neither shape can lose a FAIL. Three more when
-# british_prefixes landed (2026-09-27): the prefix loop emptied, the remainder
-# widened to one that only begins a listed word, and the prefix match dropped
-# so any head of a prefix's length derives. All three red — the last only after the hypersceptical
-# neighbor was written, since no American word in the dictionary ends in a
-# listed form behind a two-to-five-letter head off the list. Seven more on the
-# review of that change: each of pre, mis, non, dis, de, over and under
-# dropped from the list, green until each carried its own instance. The
-# two-letter head guard dropped is behavior-preserving, and correctly green.
-# Seven more when check_arg_substitution landed (2026-09-27), each on a copy of
-# the tree: the `^` alternative dropped, the `[^\\]` alternative dropped, the
-# escape exclusion widened to any character, the frontmatter skip disabled, the
-# call dropped from the src/ arm, the call dropped from the .claude/skills/
-# arm, and the call widened to every file under a skill (references
-# included). All seven red. And two for the british_words additions check: a
-# word appended with no instance (red, naming the word) and a word inserted
-# ahead of the baseline (red, naming the anchor). Six more on that change's
-# review, each on a copy of the tree: the even-backslash-run group dropped
-# (red, line 24 leaves the list), body_lines' END print of an unclosed block
-# dropped (red, both of arg-unclosed-frontmatter's rows), its blank lines for
-# a closed frontmatter dropped (red, the line lists shift), the call added to
-# the global/rules/ arm (red, the global-rule reject row), check_slash_form
-# put back on its own frontmatter-skip awk (red, the `/arg-gone` row), and
-# the opener widened to any first line (green by design: a block that never
-# closes is printed whole at END, so a file with no `---` still reads as
-# body — the no-frontmatter row grades a skip-until-`---` reading, not this).
+# stop grading without this script saying so. It was measured, not assumed:
+# 92 numbered mutations of lint-skills.sh, each on a copy of the tree, 88 red
+# and 4 green. The four, each standing and each why:
+#   - the classifier's unclaimed-file arm deleted: silent, because no fixture
+#     can produce a path that reaches it (see NOT covered above);
+#   - the ledger consumer sweep's process substitution turned into a pipe, and
+#     (unnumbered) into a here-string: behavior-preserving since 2026-09-01,
+#     when the status began to travel as a file;
+#   - check_landing_key's gate grep narrowed to the bare header: silent,
+#     because the wrong-on-purpose root's first block carries the bare header
+#     either way, and the in-loop regex beside it decides which blocks are read;
+#   - british_prefixes' two-letter head guard dropped: behavior-preserving.
+# Several now-red mutations went red only after the fixture that grades them
+# was written, which is what a mutation run is for. Which mutations ran, round
+# by round, and what each first returned is the removed hunk of the oldest
+# commit that
+# `git log -p -G 'numbered mutations of lint' -- scripts/lint-skills-selftest.sh`
+# lists, the one that condensed that log to these totals.
+# A new round moves the totals here and adds no paragraph.
 #
 # PARTIAL, and what it does and does not mean. Six sites can skip: three in the
 # isolated-roots block (no usable temp directory, a copy that fails, an edit
@@ -476,11 +428,14 @@ expect "house style on a repo-local skill" ".claude/skills/repo-local/SKILL.md u
 # even-run group). Line 3 carries `$9` in the frontmatter, 23 the escaped
 # `\$5` in the fence and 27 the escaped `\$4` in prose; any of them appearing
 # in the list means the frontmatter skip or the escape exemption has gone.
+# Line 23 is quiet, not safe: the harness strips the backslash, so the shell in
+# that fence receives a bare `$5` (the check's comment says why).
 expect "argument substitution (src/ skill body)" "src/unused-dep/SKILL.md fails argument substitution: a bare \$ before a digit in its body (line(s) 18 19 22 24 )"
 expect "argument substitution (repo-local skill body)" ".claude/skills/repo-local/SKILL.md fails argument substitution: a bare \$ before a digit in its body (line(s) 20 )"
 # No frontmatter at all is body from line 1, and a first-line `---` that never
-# closes is no frontmatter, so both bodies are read; before body_lines the
-# unclosed one silenced the whole file, for the slash sweep too.
+# closes is no frontmatter, so both bodies are read, for the slash sweep too.
+# The no-frontmatter fixture carries a later `---` break, so an opener widened
+# past line 1's `---` blanks its line 4 and reds this row.
 expect "argument substitution (no frontmatter)" ".claude/skills/arg-no-frontmatter/SKILL.md fails argument substitution: a bare \$ before a digit in its body (line(s) 4 )"
 expect "argument substitution (frontmatter never closes)" ".claude/skills/arg-unclosed-frontmatter/SKILL.md fails argument substitution: a bare \$ before a digit in its body (line(s) 8 )"
 expect "slash names no skill (frontmatter never closes)" ".claude/skills/arg-unclosed-frontmatter/SKILL.md writes \`/arg-gone\`"
@@ -820,14 +775,15 @@ list_pin british_prefixes 9 '|'
 # row pins what fires, and a word added to the list with no sentence carrying
 # it changes nothing that fires. The baseline is the 260 members the list held
 # before `427e6d2` (totalled, totalling), words are appended after it, and
-# member 260 is pinned by name so an insertion or a deletion ahead of it reds
-# here rather than shifting a word across the edge of the graded range.
+# members 1-260 are pinned by checksum (`cksum` of one member per line, taken
+# from `427e6d2^`), so an insertion, a deletion or a one-for-one swap ahead of
+# the edge reds here; a name pin on member 260 alone let a swap through.
 additions_baseline=260
-additions_anchor=licenced
+additions_baseline_cksum='1733392358 2736'
 british_members=$(list_members british_words '|')
-got_anchor=$(sed -n "${additions_baseline}p" <<< "$british_members")
-if [ "$got_anchor" != "$additions_anchor" ]; then
-  selftest_fail "the british_words additions anchor moved: member $additions_baseline is '$got_anchor', pinned as '$additions_anchor' — a word was inserted or removed ahead of the additions baseline; append new members at the end of the list, and move the anchor only with the baseline"
+got_cksum=$(head -n "$additions_baseline" <<< "$british_members" | cksum | tr -s ' \t' '  ')
+if [ "$got_cksum" != "$additions_baseline_cksum" ]; then
+  selftest_fail "the british_words additions baseline changed: members 1-$additions_baseline checksum to '$got_cksum', pinned as '$additions_baseline_cksum' — a word was inserted, removed or replaced ahead of the additions baseline; append new members at the end of the list, and move the checksum only with the baseline"
 fi
 additions_fired=$(grep -F 'docs/british-words-additions.md uses a British spelling' <<< "$output" | sed -E 's/.*\(line\(s\) [0-9 ]+— ([^)]*) \).*/\1/' | tr ' ' '\n')
 if [ -z "$additions_fired" ]; then

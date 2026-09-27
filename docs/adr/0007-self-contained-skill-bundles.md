@@ -19,7 +19,7 @@ Each skill's `references/` folder is self-contained. Format docs are duplicated 
 
 ## Consequences
 
-- Each skill is a portable atomic unit — symlink one directory, get everything it needs.
+- Each skill is a portable atomic unit — symlink one directory, get everything it needs. — corrected: see Amendments 2026-09-27
 - Drift is caught mechanically: `scripts/lint-skills.sh` asserts every sibling group is byte-identical, so a fix that misses a copy fails lint rather than silently diverging. (The original consequence — "editorial discipline, not a mechanism" — was superseded once the linter landed; see Amendments.)
 - Format docs stay short and stable by design — high-churn templates wouldn't survive this trade-off, so the duplication tax stays bounded.
 - Thirteen copies in total today (two of `domain-format.md`, two of `adr-format.md`, four of `naming-drift-queue.md`, four of `tracker-resolution.md`, plus the inline ADR format in `adr/SKILL.md`). Adding a new skill that writes to a shared format adds a copy and a `sibling_groups` entry in the linter. — corrected: see Amendments 2026-06-29

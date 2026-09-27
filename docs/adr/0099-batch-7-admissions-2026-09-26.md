@@ -41,7 +41,7 @@ The admissions of batch 7 are recorded here, one bullet per landing; the round's
 - `docs/lineage.md`'s first table gains the `proving-it-landed.md` row, its second table gains this batch's rows, and its header sentence names this record.
 - ADR-0034 gains a 2026-09-27 entry recording great_cto's swept point.
 - [ADR-0079](0079-per-turn-load-ceilings-are-permanent.md) gains the batch's spend: all three skills are user-invoked, so the catalog was 14,164 B at every batch commit through `4c01e65`, and F15's widening of `adr`'s description in `6ab2d3b` spent **+10 B** (`bash scripts/lint-skills.sh | grep launch-loaded` on `git archive` exports → 29,566 B at `4c01e65`, 29,576 B at `6ab2d3b`), headroom 424 B.
-- Near-cap bodies after the batch (`git show HEAD:<path> | wc -c`): `which-skill` 14,997, `respond-to-incident` 13,138. The next router line relocates first. — amended: see Amendments 2026-09-27
+- Near-cap bodies after the batch (`git show HEAD:<path> | wc -c`): `which-skill` 14,997, `respond-to-incident` 13,138. The next router line relocates first. — corrected: see Amendments 2026-09-27
 - The round's closing ADR points here for batch 7.
 
 Revisit when: an ADR-0034 swept-point diff of avelikiy/great_cto shows `skills/deploy-landed/` changed; or a review season finds the progress notes do not serve a self-assessment, which reopens `OB6`'s original form; or a design review on a member-data system asks what an attacker could do and `phi-safe-code` cannot answer, which unparks `N8-5`.
