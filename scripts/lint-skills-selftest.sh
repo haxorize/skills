@@ -436,7 +436,7 @@ expect "house style at depth one under src/" "src/stray-note.md uses a British s
 # A word added to british_words after its count pin lands with an instance in
 # docs/british-words-additions.md; the rendered word list is the assertion, so
 # dropping either member reds this row by name.
-expect "british_words additions (totalled, totalling)" "docs/british-words-additions.md uses a British spelling (line(s) 5 — totalled totalling )"
+expect "british_words additions (totalled, totalling, labeller, labellers)" "docs/british-words-additions.md uses a British spelling (line(s) 5 — labeller labellers totalled totalling )"
 expect "house style on a repo-local skill" ".claude/skills/repo-local/SKILL.md uses a British spelling"
 expect "house style on DOMAIN.md" "DOMAIN.md uses a British spelling"
 expect "house style on README.md" "README.md uses a British spelling"
@@ -752,8 +752,9 @@ list_pin() {  # variable name, expected member count, separator
   [ "$got" -eq "$want" ] || selftest_fail "${var} carries $got members, pinned at $want — a name added or dropped there changes what the whole tree is graded on, and no fixture row would have said so. Re-measure, land a fixture instance for anything added, then move this number."
 }
 # 260 → 262 on 2026-09-26: totalled, totalling (the a11y-health repos' spelling
-# flip); their instances are in docs/british-words-additions.md.
-list_pin british_words 262 '|'
+# flip); 262 → 264 on 2026-09-27: labeller, labellers (a11y-health-ui audit
+# P18-F2). Their instances are in docs/british-words-additions.md.
+list_pin british_words 264 '|'
 # 102 → 101 on 2026-09-02: SKIPPED dropped. DOMAIN.md:77 bans the word outright
 # (UNVERIFIABLE is the registered marker), so admitting it here left check_labels
 # blind to a token the glossary forbids. Zero prose uses remain in any .md; the
