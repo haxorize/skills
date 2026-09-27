@@ -8,6 +8,10 @@ State what the skill is, then list the **triggers** — one per genuinely distin
 
 **Anti-triggers:** when a model-invoked skill borders territory the model should handle without it, name the exclusion in the description ("Don't invoke this for steps the agent can perform itself") — one negative trigger is cheap; an over-firing skill is not.
 
+**Disguised triggers:** the under-firing twin. Where the task's plainest form invites "I can just do this myself" — a diff pasted inline rather than a PR named for review — name that form in the trigger list itself. Upstream, one added clause of this kind took a skill from 7 fires in 27 to 21.
+
+**Trigger on the task, never its last step.** A skill is picked when the task is read, not once a draft exists, so a skill whose rules shape the work cannot fire in time from a completion-gated trigger. Bad: `Use as the final check before a prose deliverable is sent.` Good: `Use when a task's deliverable is prose — at the task's start, before drafting.` Upstream's A/B on the same tasks: the first loaded 1 time in 9, the second 15 in 15.
+
 ## User-invoked
 
 The description is a one-line human-facing summary; the craft above does not apply. One duty binds the body instead:

@@ -24,13 +24,13 @@ Never leave the arithmetic for the member to do, in prose, about their own money
 
 > **Before:** You are responsible for coinsurance of 20% of the allowed amount after your annual deductible has been satisfied, subject to your out-of-pocket maximum.
 >
-> **After:** You owe $43.20 for this visit. That is 20 percent of the $216 your plan allows for it — the most it will pay a doctor for this kind of visit. You have already met your $2,000 deductible this year, so 20 percent is all you pay.
+> **After:** You owe \$43.20 for this visit. That is 20 percent of the \$216 your plan allows for it — the most it will pay a doctor for this kind of visit. You have already met your \$2,000 deductible this year, so 20 percent is all you pay.
 
 - **Do the arithmetic and print the result.** The figure the member will actually be billed comes first, in dollars and cents. A percentage, a rate, or a formula appears only after the figure, as the explanation of where it came from — never in place of it.
-- **Show the running state.** "You have paid $1,240 of your $2,000 deductible" tells the reader where they stand; "after your deductible is met" does not, because they do not know whether it is met. The same holds for out-of-pocket maximums, visit limits, and remaining authorized units.
-- **When the amount is not final, give the range and the reason.** "You may owe between $40 and $60, depending on what your doctor bills" is honest; a formula is not more honest for being unresolved. And when a document is not a bill, "This is not a bill" belongs beside the number, not in a footer under it.
+- **Show the running state.** "You have paid \$1,240 of your \$2,000 deductible" tells the reader where they stand; "after your deductible is met" does not, because they do not know whether it is met. The same holds for out-of-pocket maximums, visit limits, and remaining authorized units.
+- **When the amount is not final, give the range and the reason.** "You may owe between \$40 and \$60, depending on what your doctor bills" is honest; a formula is not more honest for being unresolved. And when a document is not a bill, "This is not a bill" belongs beside the number, not in a footer under it.
 - **A rate a reader cannot picture gets a comparison, not a decimal.** Where a rate is genuinely the point, "about 1 in 10 people" beats "approximately 9.7%".
-- **Zero, negative, and missing amounts are copy, not arithmetic.** "You owe $0.00" is a bill for nothing; a credit is not a negative charge; an amount the system does not have yet is not $0. Each needs its own sentence.
+- **Zero, negative, and missing amounts are copy, not arithmetic.** "You owe \$0.00" is a bill for nothing; a credit is not a negative charge; an amount the system does not have yet is not \$0. Each needs its own sentence.
 
 ## The action, the date, and the way out
 
