@@ -108,6 +108,10 @@ The first two are the same first day, different subject: `onboard-repo` wires th
 - **`ask-for-me`** — Turn a decision you can't answer alone into a Markdown questionnaire for the person who can — a brief interview about the send (who it goes to, what you need back, what silence decides), then a drafted document aimed at that gap; invoked again with the filled-in answers, it checks nothing was missed. Pairs with a `chart-course` Errand when the blocker is someone else's knowledge, and takes on the register items an `offboard-engineer` capture leaves for the departing engineer to answer in writing — pasted in as its subject, not read as an intake.
 - **`wizard`** — Generate an interactive bash wizard that walks a human through steps only they can perform — or run the same step-by-step interview in chat when a script isn't wanted.
 
+### Reporting
+
+- **`report-progress`** — Draft the recurring progress note a manager asked for, for you alone or your team: gathered from the team's repos, pull requests, tracker, releases, and incidents since the last note, checked against what that note promised, written to `writing-for-humans`' weekly status register with a link per item, and saved under `~/Documents/progress/` so the next note, and review season, start from it. Drafts only; you send it.
+
 ### Meta
 
 - **`write-skill`** — Create or revise a skill: the invocation axis, package structure, the description, the size cap, cross-session state, and a skill-surface security review, then a pressure test from wording through simulated use. Declares `writing-for-agents`, which owns the prose conventions its bodies are written to, and carries the review checklist (`references/review-checklist.md`) every skill-change review reports against.
