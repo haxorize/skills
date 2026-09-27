@@ -16,3 +16,5 @@ normalises this row before it lands.
 The oversize half of the same arm lives beneath this skill —
 [a long reference](references/oversize.md) — because dropping `check_reference_bytes`
 from this arm was invisible too.
+
+A repo-local body is substituted too, so a run priced at $5 fires here.

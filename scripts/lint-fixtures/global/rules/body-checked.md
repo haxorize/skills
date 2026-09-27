@@ -33,3 +33,5 @@ the run normalises this row before it lands.
 A reference in another skill, cited from a hoisted rule by installed path and from
 nowhere else: `~/.claude/skills/house-style/references/cited-from-global.md`. That
 citation is the only thing keeping it out of the orphan report.
+
+A global rule is not a skill body, so $7 here stays quiet.

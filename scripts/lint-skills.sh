@@ -363,6 +363,8 @@
 #     check_html_transport     no HTML through the shell
 #     check_reference_links    every inline .md link resolves
 #     check_load_gate          no "Launching skill" under a model-invoked skill
+#     check_arg_substitution   no bare `$` before a digit in a SKILL.md body
+#                              (src/ and .claude/skills/; fences included)
 #     check_slash_form         no `/name` naming a model-invoked skill, and no
 #                              `/name` naming nothing at all
 #     check_spelling           no British form outside a code span
@@ -1049,6 +1051,23 @@ check_reference_links() {
 # not appear anywhere in a model-invoked skill — body or references. The
 # caller has already established that the file sits under a model-invoked
 # skill's directory.
+# Argument substitution (see header). Claude Code replaces `$N` in a skill body
+# with the argument at index N, and names no exemption for code blocks, so a
+# fence is swept like prose; an index with no argument stays literal, which is
+# why the corruption shows only on an invocation with enough arguments. Only a
+# SKILL.md body is substituted: the frontmatter is skipped, and a reference is
+# never called here. `\$1` is the escaped form and stays quiet.
+check_arg_substitution() {
+  local f=$1 hits badlines
+  hits=$(awk 'NR == 1 && $0 == "---" { fm = 1; next }
+              fm && $0 == "---" { fm = 0; next }
+              !fm && /(^|[^\\])\$[0-9]/ { print FNR ":" $0 }' "$f")
+  if [ -n "$hits" ]; then
+    badlines=$(linenos "$hits")
+    say_fail "$f has a bare \$ before a digit in its body (line(s) ${badlines}) — Claude Code substitutes \$N with an argument, fenced code included; escape it as \\\$1 in prose, or pass the value through a named variable (write-skill/references/skill-package-mechanics.md)"
+  fi
+}
+
 check_load_gate() {
   local f=$1 gate_hits badlines
   gate_hits=$(grep -n 'Launching skill' "$f")
@@ -1186,7 +1205,9 @@ check_slash_form() {
 # Adding a word here is three edits: the word, one instance of it in
 # scripts/lint-fixtures/docs/british-words-additions.md with the matching word
 # added to that fixture's `expect` row in lint-skills-selftest.sh, and the
-# `list_pin british_words` count there. Nothing checks the instance is there.
+# `list_pin british_words` count there. The selftest checks the instance is
+# there for every member past the first 260 (the list before 2026-09-26), so
+# a new word goes at the end of the list.
 # A word or prefix added here is also checked against a dictionary
 # (/usr/share/dict/words) for an American word the prefix rule would now
 # derive, since nothing in the selftest can know every such word. Adding a
@@ -1860,6 +1881,7 @@ while IFS= read -r f; do
       house_style_checks "$f"
       case "$f" in */SKILL.md) : ;; *) check_reference_bytes "$f" ;; esac
       owner=${f#src/}; owner=${owner%%/*}
+      [ "$f" = "src/$owner/SKILL.md" ] && check_arg_substitution "$f"
       if [ -f "src/$owner/SKILL.md" ] && ! name_is_user_invoked "$owner"; then
         check_load_gate "$f"
       fi
@@ -1878,6 +1900,8 @@ while IFS= read -r f; do
       check_slash_form "$f"
       house_style_checks "$f"
       check_reference_bytes "$f"
+      local_owner=${f#.claude/skills/}; local_owner=${local_owner%%/*}
+      [ "$f" = ".claude/skills/$local_owner/SKILL.md" ] && check_arg_substitution "$f"
       ;;
     DOMAIN.md)
       # The glossary. Swept for the slash form and the house style; the label

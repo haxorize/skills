@@ -31,3 +31,5 @@ this heading and the `HTML` one below stay quiet.
   [the note](references/note.md) § The numbered half is where a step lands.
 - A citation whose name carries a comma resolves through the comma cut alone:
   [the note](references/note.md) § Sizes, and what they bind is where it lands.
+
+An escaped argument index stays literal: the figure is \$1,240.
