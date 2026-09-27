@@ -16,7 +16,7 @@ Fixation is the default state — attention concentrates on the current framing,
 
 **Stop condition:** 3+ non-trivial framings, or one framing that reorganizes the problem — one sharp surprise beats five adjacent.
 
-**Fire test.** After the move, ask: could this output have been produced without the move? If yes, the move didn't fire — commit harder (push the provocation further, re-roll the stimulus, invert on a different axis), or re-diagnose the stuck-pattern and pick the better-matched move. Re-diagnosis after a miss is not menu-rotation; menu-rotation is cycling techniques without commitment.
+**Fire test.** After the move, ask: could this output have been produced without the move? If yes, the move didn't fire — commit harder (push the provocation further, re-roll the stimulus, invert on a different axis), or re-diagnose the stuck-pattern and pick the better-matched move. Re-diagnosis after a miss is not menu-rotation; menu-rotation is cycling techniques without commitment. Run the test per candidate as a **tail sift**: take five to eight candidates from the move, write beside each the probability (0 to 1) that the pre-move frame would still have produced it, and drop every one above 0.3, lowering the bar while the survivors still read adjacent; the probabilities are self-reported, so the sift ranks distance from the old frame, never merit.
 
 ## Diagnostic → move
 
@@ -45,7 +45,7 @@ Match the stuck-pattern to the move. When unsure, default to **Reframe**.
 
 **Inversion.** Solve the inverse — "how would I guarantee this fails?", "why would an adversary want us to choose X?" — then negate; failure modes are more concrete than success paths. *Fired if* it surfaced a risk, mechanism, or incentive the forward framing hid; if negating the inversion returns what you already had, invert on a different axis (goals → incentives, user → operator).
 
-**Perspective shift.** Move the problem into a distant domain's vocabulary — how does ecology solve this coordination problem, how does ER triage handle this spike, what would a CFO or a child notice first, how is this solved at 100× or 1/100× scale? *Fired if* the borrowed vocabulary made a previously-invisible option visible or renamed a core object in a way that changes the next step; one-to-one term mapping means the domain was too close — pick a more distant one.
+**Perspective shift.** Move the problem into a distant domain's vocabulary — how does ecology solve this coordination problem, how does ER triage handle this spike, what would a CFO or a child notice first, how is this solved at 100× or 1/100× scale? Map by function, not by surface: list the problem's objects and the relations between them, find the distant domain's counterparts, and search that domain for a **named, existing method** that works on them. *Fired if* such a method transfers back as a step you could take; a renamed object or a metaphor with no method behind it is vocabulary, not a move, and one-to-one term mapping means the domain was too close — pick a more distant one.
 
 **Constraint play.** Move the constraints deliberately: **remove** ("assume infinite budget/permission" — what opens up?), **add absurd** ("must fit in a tweet", "no code"), or **invert** (the constraint becomes the feature — small budget → tiny team as the pitch). *Fired if* the relaxed solution reveals what you actually value, or the added-constraint solution is sharper than the unconstrained one; if both feel like the same answer at different budgets, the binding constraint is elsewhere — find it.
 

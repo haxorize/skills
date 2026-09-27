@@ -34,6 +34,10 @@ Three rules cut across the steps:
 - **The probes are themselves suspects.** Before trusting an all-PASS first run, force one probe to fail — feed an input that violates the contract on purpose — and confirm it reports; that red must be **content-caused**, and a probe suite that cannot produce a FAIL is mis-specified, not reassuring.
 - **A dry-run or test mode is verified by observation, not by its name.** Watch the files, the network, and the git refs for what the mode claims to skip — some dry runs still touch the network or open a browser — because the check is for an absence, and no exit code reports one.
 
+## When the change replaces an old path
+
+A migration of a surface no honest suite covers — a page, a report, a CLI's output — runs in **parity mode**: write the input set before either run, as the contract is written, drive the same inputs through the old path and the new one through the front door, and diff the observed outputs. The old path is the oracle only for what the contract leaves unchanged, so each difference is a FAIL until the contract names it as intended. Both paths still run under the rules above, and a green suite that cannot see the surface is never a substitute for the diff.
+
 ## Verdicts
 
 Every contract clause ends in exactly one state — the check isn't done while any clause has none:

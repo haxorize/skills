@@ -29,6 +29,8 @@ Resolve the project's check commands from its `CLAUDE.md` `## Commands` section.
 
 A failing check is fixed in the code — this binds all four. Editing the check's config, adding an ignore or a suppression comment, or lowering a threshold is a scope change the user asked for, or it does not happen.
 
+Where `## Commands` carries a change-type table — which checks a docs-only, tests-only, or code change runs — run the row the touched paths match, the stricter where they match two. A suite it marks opt-in (a browser or e2e suite) runs only when the touched paths call for it, and is otherwise named in the close as excluded, so its absence reads as scope rather than as green.
+
 If `## Commands` is missing or incomplete, infer the commands from the project's config (package scripts, Makefile, tool config) and note what you ran.
 
 ## Workflow
@@ -45,7 +47,7 @@ Some changes need mechanical follow-on work that's specific to the stack — a d
 
 This is where silent gaps hide — a model change that ships without its migration looks done but isn't. If the relevant convention skill exists, its finalization is not optional.
 
-Where a check fails on a **generated** artifact, the fix goes into the generator — the schema, the template, the rule set, the prompt — and the artifact is regenerated. Hand-patching generated output buys a green run that the next regeneration silently reverts, and leaves the defect in the thing that produced it.
+Where a check fails on a **generated** artifact (the `CLAUDE.md` `## Generated files` block names which paths are, where the repo has one), the fix goes into the generator — the schema, the template, the rule set, the prompt — and the artifact is regenerated. Hand-patching generated output buys a green run that the next regeneration silently reverts, and leaves the defect in the thing that produced it.
 
 Regeneration steps are also where out-of-scope failures are *born*: a generator that reads a sibling repo or an upstream schema can pull in state this change never adopted, reddening tests it doesn't touch. Re-run the checks after finalizing, and triage the result the same way.
 

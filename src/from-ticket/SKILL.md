@@ -24,7 +24,7 @@ If the user passed a tracker URL instead of a bare ID, infer the tracker from th
 Auto-detect from the ID and tracker:
 
 - **ADO:** `az boards work-item show <id> --output json --query 'fields."System.WorkItemType"'`. Read the type directly.
-- **GitHub:** `gh issue view <id> --json labels,body,title,state,comments`. Detection ladder:
+- **GitHub:** `gh issue view <id> --json labels,body,title,state,comments,closedByPullRequestsReferences`. Detection ladder:
   1. `bug` label present → **Bug**.
   2. Body contains a `## Covers` section → **Task**.
   3. Body contains `## Story Decomposition`, `## Stories underneath`, or a story-map fenced region → **Feature**. This test runs *before* the Story test: `to-feature`'s GitHub template gives every Feature a `## Acceptance criteria` section too, so a Story-first ladder returns Story for every Feature and the step-3 refusal never fires.
@@ -32,6 +32,11 @@ Auto-detect from the ID and tracker:
   5. None of the above → ask the user to confirm the type.
 
 Surface the inferred type before loading; ambiguous GitHub cases (e.g., a Bug filed without the `bug` label) need explicit confirmation.
+
+**Linked work (all types).** Before loading, read what the tracker links to the ticket beyond its body — a merged PR that already closes it, a replacement that supersedes it, an open follow-up filed back against it — and surface each hit beside the type. A ticket loaded without them can rebuild a fix that shipped, or miss the regression that fix left open.
+
+- **GitHub:** closing PRs arrived with the step 2 fetch (`closedByPullRequestsReferences`); follow-ups are the `cross-referenced` events in `gh api repos/{owner}/{repo}/issues/<id>/timeline`.
+- **ADO:** `az boards work-item show <id> --output json --expand relations` — the Related, Successor, and pull-request artifact links.
 
 ### 3. Refuse Feature / Epic
 

@@ -50,6 +50,12 @@ Read this section only when writing the weekly status note to a manager.
 
 One status line first — green, yellow, or red, with one sentence on where things stand — and the color matches reality: a note that is only ever green stops being read. Then what last week's note said would happen and whether it did, then four sections, each present: **wins** (what shipped, with its effect — never "made progress"), **next** (each step dated or marked undated), **risks** (each with its severity and the mitigation), **asks** (each with an owner and a by-when; "let me know if you have questions" is not an ask). A yellow or red status line names its biggest ask in the same sentence; the asks section holds the rest, never buried under wins.
 
+## Stakeholder, exec, or launch update
+
+Read this section only when writing a milestone or launch update to executives, cross-functional partners, or customers — never the weekly note to a manager, which is § Weekly status note.
+
+The reader owns a decision or a dependency, not the work, so the first lines carry the whole update for a reader who stops there: the outcome, the status line § Weekly status note defines, and the decision the reader owes. **Decisions needed** is its own section, each decision with its options, the recommendation, and the date it is needed by; an update that needs none says so in its first lines. Length and vocabulary follow the named audience: an executive reads under 200 words with no team-internal names; a cross-functional partner reads what lands on their team, what is needed from them, and by when; a customer reads benefits, dates, and known issues with no ticket number, codename, or internal term. One audience per draft — a second audience is a second draft, never a merged one.
+
 ## Runbook, release or migration procedure
 
 Read this section only when writing a procedure someone will execute, usually under time pressure. The register entries below come from one upstream and no local draft yet; they are provisional until two real runbooks have been drafted against them, and a draft that fights one is evidence against the entry, not against the draft.

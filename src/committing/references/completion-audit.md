@@ -49,6 +49,8 @@ Every out-of-scope observation made mid-slice and deliberately left alone. Each 
 
 **State the zero case explicitly:** `0 parked; 3 ACs checked against tests/test_scores.py and the ticket body`. An empty section and a section that was never written look the same; the count with its source does not.
 
+**The section ends on one offer line** whenever a row leaves it neither resolved nor dismissed — `Address these N parked items now? yes / no` — so the next move is asked rather than left for the user to infer; the zero case carries none.
+
 ## Judgment calls
 
 The decisions made during the build that the user did not make, each tagged with its provenance, so a reviewer reads them first and can reverse any before it hardens:
