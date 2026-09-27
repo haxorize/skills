@@ -20,6 +20,8 @@ the total reads `print $2` mid-line, and a fence is no shelter:
 
 ```bash
 URL="$3"
+ESCAPED="\$5"
+DOUBLED="\\$6"
 ```
 
 The escaped form, \$4, stays literal and quiet.

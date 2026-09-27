@@ -103,6 +103,11 @@
 #     line. A model-invoked skill has no watcher, so a miss must degrade
 #     gracefully ("Never gate inside a model-invoked skill"); its body and
 #     references must not carry the phrase.
+#   - Argument substitution (write-skill skill-package-mechanics): Claude Code
+#     replaces `$N` in a skill body with the argument at index N, fenced code
+#     included, so a bare `$` before a digit in a SKILL.md body is text the
+#     harness rewrites on any invocation with enough arguments. The escaped
+#     `\$1` stays literal; the frontmatter and references are not substituted.
 #   - Scope: the skill checks walk src/*/SKILL.md (and references beneath);
 #     the global-rules checks below walk global/rules/, the hook-selftest
 #     check global/hooks/, the script-selftest check scripts/,
@@ -333,7 +338,7 @@
 # per-file greps). Dropping any one pass-2 check saves 0.5-3.5 s — the
 # per-reference greps in check_reference_orphans, the cut the 2026-09-01
 # Batch A residue named, measured at 0 — so pass 2's floor is process count:
-# fourteen checks a file, each a few forks, over 227 files. A further cut is a
+# fifteen checks a file, each a few forks, over 227 files. A further cut is a
 # rewrite that merges the seven house-style scans into one awk pass, not a
 # trim, and is not this file's next job unless the pre-commit gate is.
 #   Pass 0 — read before any check runs, so no check's answer depends on how
@@ -1047,27 +1052,45 @@ check_reference_links() {
   done <<< "$link_targets"
 }
 
-# Load-gate placement (see header): the "Launching skill" marker phrase must
-# not appear anywhere in a model-invoked skill — body or references. The
-# caller has already established that the file sits under a model-invoked
-# skill's directory.
+# A file's body, for the checks that skip frontmatter: the frontmatter's lines
+# print blank, so a line number read off the output is the file's own. A file
+# whose first-line `---` never closes has no frontmatter — every line is body —
+# so an unclosed block is not a free pass. A reference file has none.
+body_lines() {
+  awk 'NR == 1 && $0 == "---" { fm = 1; n = 1; buf[1] = $0; next }
+       fm { buf[++n] = $0
+            if ($0 == "---") { fm = 0; for (i = 1; i <= n; i++) print "" }
+            next }
+       { print }
+       END { if (fm) for (i = 1; i <= n; i++) print buf[i] }' "$1"
+}
+
 # Argument substitution (see header). Claude Code replaces `$N` in a skill body
 # with the argument at index N, and names no exemption for code blocks, so a
 # fence is swept like prose; an index with no argument stays literal, which is
 # why the corruption shows only on an invocation with enough arguments. Only a
-# SKILL.md body is substituted: the frontmatter is skipped, and a reference is
-# never called here. `\$1` is the escaped form and stays quiet.
+# SKILL.md body is substituted: the frontmatter is skipped (body_lines), and a
+# reference is never called here. `\$1` is the escaped form and stays quiet:
+# probed 2026-09-27 with `claude -p "/probe first second"` on a throwaway
+# skill, `$0` rendered `first`, `$1` `second`, `\$0` `$0`, `\$1` `$1`;
+# `\\$1` is a literal backslash and then a bare `$1`, so it fires — a `$`
+# behind an even run of backslashes is unescaped. Scope: `$` + digit only.
+# `$ARGUMENTS`, `$ARGUMENTS[N]` and `${1}` are deliberately not graded;
+# `$ARGUMENTS` substituting was seen in that probe, while `${1}` and the
+# harness's reading of `\\$1` are recalled, not run.
 check_arg_substitution() {
   local f=$1 hits badlines
-  hits=$(awk 'NR == 1 && $0 == "---" { fm = 1; next }
-              fm && $0 == "---" { fm = 0; next }
-              !fm && /(^|[^\\])\$[0-9]/ { print FNR ":" $0 }' "$f")
+  hits=$(body_lines "$f" | grep -nE '(^|[^\\])(\\\\)*\$[0-9]')
   if [ -n "$hits" ]; then
     badlines=$(linenos "$hits")
-    say_fail "$f has a bare \$ before a digit in its body (line(s) ${badlines}) — Claude Code substitutes \$N with an argument, fenced code included; escape it as \\\$1 in prose, or pass the value through a named variable (write-skill/references/skill-package-mechanics.md)"
+    say_fail "$f fails argument substitution: a bare \$ before a digit in its body (line(s) ${badlines}) — Claude Code substitutes \$N with an argument, fenced code included; escape it as \\\$1 in prose, or pass the value through a named variable (write-skill/references/skill-package-mechanics.md)"
   fi
 }
 
+# Load-gate placement (see header): the "Launching skill" marker phrase must
+# not appear anywhere in a model-invoked skill — body or references. The
+# caller has already established that the file sits under a model-invoked
+# skill's directory.
 check_load_gate() {
   local f=$1 gate_hits badlines
   gate_hits=$(grep -n 'Launching skill' "$f")
@@ -1116,11 +1139,7 @@ check_load_gate() {
 slash_exempt=' clear compact init code-review security-review simplify name old-name sweep tmp '
 check_slash_form() {
   local f=$1 scan slashed line line_exempt seen=' '
-  # Strip frontmatter where there is any; a reference file has none.
-  scan=$(awk 'NR == 1 && $0 == "---" { fm = 1; next }
-              fm && $0 == "---" { fm = 0; next }
-              fm { next } { print }' "$f" \
-    | mask_examples)
+  scan=$(body_lines "$f" | mask_examples)
   # Per line, because that is what the marker promises and what `spelling-exempt`
   # does: collected over the whole file instead, one marked site blesses every
   # later use of that name in the body, and the rename this check exists to

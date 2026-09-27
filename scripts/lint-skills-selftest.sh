@@ -27,8 +27,9 @@
 # Covered here: reference-link resolution (both directions, including the
 # backtick-span and fenced-block exemptions), the ADR-citation ban, the
 # rich-text transport ban, argument substitution in a skill body (the
-# line-start and mid-line alternatives, a fence, both skill classes; the
-# frontmatter, an escaped `\$`, a reference and a global rule stay quiet), the
+# line-start and mid-line alternatives, a fence, a doubled `\\$`, both skill
+# classes, no frontmatter and one that never closes; the frontmatter, an
+# escaped `\$`, a reference and a global rule stay quiet), the
 # description's unquoted ': ' and ' #', load-gate placement (in a SKILL.md and
 # in a reference file beneath it), and the global-rules
 # Depends: admission check (missing line, dangling name, a dependant that never
@@ -275,7 +276,16 @@
 # arm, and the call widened to every file under a skill (references
 # included). All seven red. And two for the british_words additions check: a
 # word appended with no instance (red, naming the word) and a word inserted
-# ahead of the baseline (red, naming the anchor).
+# ahead of the baseline (red, naming the anchor). Six more on that change's
+# review, each on a copy of the tree: the even-backslash-run group dropped
+# (red, line 24 leaves the list), body_lines' END print of an unclosed block
+# dropped (red, both of arg-unclosed-frontmatter's rows), its blank lines for
+# a closed frontmatter dropped (red, the line lists shift), the call added to
+# the global/rules/ arm (red, the global-rule reject row), check_slash_form
+# put back on its own frontmatter-skip awk (red, the `/arg-gone` row), and
+# the opener widened to any first line (green by design: a block that never
+# closes is printed whole at END, so a file with no `---` still reads as
+# body — the no-frontmatter row grades a skip-until-`---` reading, not this).
 #
 # PARTIAL, and what it does and does not mean. Six sites can skip: three in the
 # isolated-roots block (no usable temp directory, a copy that fails, an edit
@@ -461,13 +471,21 @@ expect "british_words additions (totalled through plough) and each of british_pr
 expect "house style on a repo-local skill" ".claude/skills/repo-local/SKILL.md uses a British spelling"
 # Argument substitution. The line list is the assertion: 18 is `$` at the start
 # of a line (the `^` alternative), 19 mid-line after another character (the
-# `[^\\]` alternative), 22 inside a fence (no fence exemption). Line 3 carries
-# `$9` in the frontmatter and 25 the escaped `\$4`; either one appearing in
-# the list means the frontmatter skip or the escape exemption has gone.
-expect "argument substitution (src/ skill body)" "src/unused-dep/SKILL.md has a bare \$ before a digit in its body (line(s) 18 19 22 )"
-expect "argument substitution (repo-local skill body)" ".claude/skills/repo-local/SKILL.md has a bare \$ before a digit in its body (line(s) 20 )"
-reject "argument substitution (a reference is never substituted)" "shell-transport.md has a bare \$"
-reject "argument substitution (a global rule is not a skill body)" "body-checked.md has a bare \$"
+# `[^\\]` alternative), 22 inside a fence (no fence exemption), 24 `\\$6` in
+# the fence (a doubled backslash is a literal one, so the `$` is bare — the
+# even-run group). Line 3 carries `$9` in the frontmatter, 23 the escaped
+# `\$5` in the fence and 27 the escaped `\$4` in prose; any of them appearing
+# in the list means the frontmatter skip or the escape exemption has gone.
+expect "argument substitution (src/ skill body)" "src/unused-dep/SKILL.md fails argument substitution: a bare \$ before a digit in its body (line(s) 18 19 22 24 )"
+expect "argument substitution (repo-local skill body)" ".claude/skills/repo-local/SKILL.md fails argument substitution: a bare \$ before a digit in its body (line(s) 20 )"
+# No frontmatter at all is body from line 1, and a first-line `---` that never
+# closes is no frontmatter, so both bodies are read; before body_lines the
+# unclosed one silenced the whole file, for the slash sweep too.
+expect "argument substitution (no frontmatter)" ".claude/skills/arg-no-frontmatter/SKILL.md fails argument substitution: a bare \$ before a digit in its body (line(s) 4 )"
+expect "argument substitution (frontmatter never closes)" ".claude/skills/arg-unclosed-frontmatter/SKILL.md fails argument substitution: a bare \$ before a digit in its body (line(s) 8 )"
+expect "slash names no skill (frontmatter never closes)" ".claude/skills/arg-unclosed-frontmatter/SKILL.md writes \`/arg-gone\`"
+reject "argument substitution (a reference is never substituted)" "shell-transport.md fails argument substitution"
+reject "argument substitution (a global rule is not a skill body)" "body-checked.md fails argument substitution"
 expect "house style on DOMAIN.md" "DOMAIN.md uses a British spelling"
 expect "house style on README.md" "README.md uses a British spelling"
 expect "loaded-file byte FAIL on a repo-local reference" "FAIL: .claude/skills/repo-local/references/oversize.md is 21327 bytes"
@@ -721,15 +739,15 @@ fi
 expect_rc "the lint against the fixture tree" 1 "$status"
 # The count of FAIL lines is pinned: a check that begins firing on a fixture
 # it should leave alone reds here even when no substring row names the line.
-# Last moved 2026-09-27 (check_arg_substitution): 106 → 108 — its two firing
-# instances, src/unused-dep/SKILL.md and .claude/skills/repo-local/SKILL.md,
-# draw one line each. Earlier moves of this pin are in
+# Last moved 2026-09-27 (check_arg_substitution's review): 108 → 111 — the
+# no-frontmatter and unclosed-frontmatter fixtures draw one argument
+# substitution line each, and the unclosed one a slash line. Earlier moves of this pin are in
 # `git log -p -G 'expected exactly [0-9]+ FAIL' -- scripts/lint-skills-selftest.sh` — they describe counts
 # nothing asserts any more, and stacking them here made a changelog out of the
 # one line that has to stay readable. A count that moves is read before it is
 # re-pinned.
 nfail=$(printf '%s\n' "$output" | grep -c '^FAIL: ')
-[ "$nfail" -eq 108 ] || selftest_fail "expected exactly 108 FAIL lines against the fixture tree, got $nfail"
+[ "$nfail" -eq 111 ] || selftest_fail "expected exactly 111 FAIL lines against the fixture tree, got $nfail"
 # The shared-trigger-phrase fixtures are pinned by property, as near_bytes and
 # bulk_bytes are below: every row above them asserts a FAIL that appears or a
 # FAIL that does not, and each of those readings is silently satisfied by a
@@ -774,6 +792,9 @@ phrase_pin "$clean_fixtures/src/which-skill/SKILL.md" "clean-skill's phrase in a
 # The count is the property that changes when a word is dropped, whichever word
 # it is. It is not a substitute for a fixture instance — it says a member left,
 # never which — so a moved count is read before it is re-pinned.
+list_members() {  # variable name, separator; one member per line, in order
+  sed -n "s/^${1}='\\(.*\\)'$/\\1/p" scripts/lint-skills.sh | tr "$2" '\n'
+}
 list_pin() {  # variable name, expected member count, separator
   local var=$1 want=$2 sep=$3 got
   got=$(grep -cE "^${var}='" scripts/lint-skills.sh)
@@ -781,7 +802,7 @@ list_pin() {  # variable name, expected member count, separator
     selftest_fail "expected exactly one \`${var}=\` assignment in scripts/lint-skills.sh, found $got — the count pin below cannot say which one it measured"
     return
   fi
-  got=$(sed -n "s/^${var}='\\(.*\\)'$/\\1/p" scripts/lint-skills.sh | tr "$sep" '\n' | grep -c '[^[:space:]]')
+  got=$(list_members "$var" "$sep" | grep -c '[^[:space:]]')
   [ "$got" -eq "$want" ] || selftest_fail "${var} carries $got members, pinned at $want — a name added or dropped there changes what the whole tree is graded on, and no fixture row would have said so. Re-measure, land a fixture instance for anything added, then move this number."
 }
 # 260 → 262 on 2026-09-26: totalled, totalling (the a11y-health repos' spelling
@@ -795,18 +816,18 @@ list_pin british_words 302 '|'
 list_pin british_prefixes 9 '|'
 # Every british_words member past the baseline fires in the additions fixture,
 # by name. The count pin above says a member left; this says a member added
-# after 2026-09-26 has an instance behind it, which the expect row cannot: that
+# from `427e6d2` on has an instance behind it, which the expect row cannot: that
 # row pins what fires, and a word added to the list with no sentence carrying
 # it changes nothing that fires. The baseline is the 260 members the list held
 # before `427e6d2` (totalled, totalling), words are appended after it, and
-# member 260 is pinned by name so an insertion ahead of it reds here rather
-# than shifting a pre-baseline word into the graded range.
+# member 260 is pinned by name so an insertion or a deletion ahead of it reds
+# here rather than shifting a word across the edge of the graded range.
 additions_baseline=260
 additions_anchor=licenced
-british_members=$(sed -n "s/^british_words='\\(.*\\)'$/\\1/p" scripts/lint-skills.sh | tr '|' '\n')
+british_members=$(list_members british_words '|')
 got_anchor=$(sed -n "${additions_baseline}p" <<< "$british_members")
 if [ "$got_anchor" != "$additions_anchor" ]; then
-  selftest_fail "british_words member $additions_baseline is '$got_anchor', pinned as '$additions_anchor' — a word was inserted ahead of the additions baseline; append new members at the end of the list"
+  selftest_fail "the british_words additions anchor moved: member $additions_baseline is '$got_anchor', pinned as '$additions_anchor' — a word was inserted or removed ahead of the additions baseline; append new members at the end of the list, and move the anchor only with the baseline"
 fi
 additions_fired=$(grep -F 'docs/british-words-additions.md uses a British spelling' <<< "$output" | sed -E 's/.*\(line\(s\) [0-9 ]+— ([^)]*) \).*/\1/' | tr ' ' '\n')
 if [ -z "$additions_fired" ]; then
@@ -814,8 +835,8 @@ if [ -z "$additions_fired" ]; then
 else
   while IFS= read -r word; do
     [ -n "$word" ] || continue
-    grep -qxF -- "$word" <<< "$additions_fired" \
-      || selftest_fail "british_words member '$word' was added after the baseline and has no instance in $fixtures/docs/british-words-additions.md — add a sentence using it there and the word to that fixture's expect row"
+    grep -qixF -- "$word" <<< "$additions_fired" \
+      || selftest_fail "a british_words member past the additions baseline has no instance: '$word' is not used in $fixtures/docs/british-words-additions.md — add a sentence using it there and the word to that fixture's expect row"
   done < <(tail -n +"$((additions_baseline + 1))" <<< "$british_members")
 fi
 # 102 → 101 on 2026-09-02: SKIPPED dropped. DOMAIN.md:77 bans the word outright
