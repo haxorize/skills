@@ -270,8 +270,8 @@ expect_allow "$G" "git push origin main"                       "stamped tree, ex
 expect_allow "$G" "git push --force"                           "a message-only amend keeps the tree"
 ( cd "$G" && echo y > g && git add g && git commit -q -m fixup )
 expect_block "$G" "git push"                                   "a fix-up after the stamp is a new tree"
-out="$(crumb "$G" "git push")"                                 # the block names the last stamp it read
-printf '%s' "$out" | grep -q 'the last stamp read (' || { echo "FAIL (a block over stamped reports should name the last stamp read): $out"; fail=1; }
+out="$(crumb "$G" "git push")"                                 # the block names the last stamp it read — match's, not the earlier -old one
+printf '%s' "$out" | grep -qF "the last stamp read (${HEADTREE:0:12}, in gated-2026-01-01-match.review.md)" || { echo "FAIL (a block over stamped reports should name the last stamp read, ${HEADTREE:0:12}): $out"; fail=1; }
 stamp gated-2026-01-01-match.review.md "Reviewed-tree: $(cd "$G" && git rev-parse 'HEAD^{tree}')"
 expect_allow "$G" "git push"                                   "re-stamped after the fix-up (second stamp in one report)"
 ( cd "$G" && git push -q origin main 2>/dev/null )
