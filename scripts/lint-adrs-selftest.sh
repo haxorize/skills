@@ -40,8 +40,9 @@
 # and — in the clean tree — a well-formed supersession pair. Also graded, for
 # RESOLUTION and never for a verdict: the no-argument default. The exit status
 # travels as a file under TMPDIR (2026-09-01), in scripts/lint-lib.sh, which
-# scripts/lint-skills.sh sources too; graded by every exit-1 row and by the
-# unwritable-TMPDIR row, which must exit 4 before any check runs.
+# scripts/lint-skills.sh sources too; graded by every exit-1 row, by the
+# unwritable-TMPDIR row, which must exit 4 before any check runs, and by a
+# row on say_fail itself, which must exit 4 when the flag is swept mid-run.
 #
 # NOT covered, so a clean run here is not a claim about them: the number-value
 # reading (`0036` and `36` as one record) is graded only through the one
@@ -49,9 +50,10 @@
 # padding and stay green; the four-field guard in for_rows and the
 # check-name-is-not-a-function guard, both of which exit 4 and neither of which
 # any fixture can reach, since the kinds and the dispatch names are this
-# script's own; the read_rows producer-failure paths (rc 2), which no row
-# stages — an unreadable record reaches the `superseded` arm's grep first and
-# exits 4 there, so the later arms' own rc 2 is unreached rather than absent;
+# script's own; for_rows' exit 4 on a read_rows failure past the first arm —
+# an unreadable record reaches the `superseded` arm's grep first and exits 4
+# there, so each arm's own rc 2 is graded by calling read_rows directly (one
+# row per kind, below the --help rows) and never through a whole run;
 # the kind/dispatch pairing guard
 # at the foot of the linter, which fires only on an edit to the linter itself;
 # and the CONTENT of a forward pointer or a supersession summary — placement is
@@ -208,6 +210,15 @@ bash scripts/lint-adrs.sh "$fx" "$clean" >/dev/null 2>&1; expect_rc "two directo
 flag_out=$(TMPDIR="$fx/does-not-exist" bash scripts/lint-adrs.sh "$fx" 2>&1); expect_rc "an unwritable TMPDIR (the failure flag)" 4 $?
 printf '%s\n' "$flag_out" | grep -qE '^(OK|FAIL):' && selftest_fail "an unwritable TMPDIR still ran the lint — with no flag to write, every FAIL it printed left the status at 0"
 expect_in "$flag_out" "the unwritable-flag error did not name the absolute flag path — a relative TMPDIR was resolved after the chdir, so the flag would land under the linted directory" "$PWD/$fx/does-not-exist/lint-adrs."
+# The same flag, lost MID-run: the directory is made, then swept before the
+# first FAIL. say_fail's write fails, and that is exit 4 on the spot — a run
+# that carried on would end 0 over a FAIL it printed. Graded on lint-lib.sh
+# itself in a subshell, since no fixture can sweep TMPDIR partway through a
+# real lint; lint-skills.sh sources the same say_fail, so one row covers both.
+midrun_out=$( (. scripts/lint-lib.sh; lint_fail_flag_init lint-adrs.sh; rm -rf "$LINT_FAIL_DIR"; say_fail "staged"; echo "say_fail returned") 2>&1 )
+expect_rc "say_fail over a failure flag swept mid-run" 4 $?
+expect_in "$midrun_out" "say_fail did not report the mid-run flag write it could not make" "could not be written mid-run"
+reject_in "$midrun_out" "say_fail returned after its flag write failed — the run carries on to a status the FAIL never moved" "say_fail returned"
 # The no-argument default (docs/adr, resolved from this file's own path) is the
 # form scripts/git-hooks/pre-commit calls, and every row above passes something:
 # a directory, an empty string, two directories, a flag, or --help. Graded for
@@ -225,6 +236,19 @@ help_out=$(bash scripts/lint-adrs.sh --help 2>&1); expect_rc "--help" 0 $?
 expect_in "$help_out" "--help printed no Usage: line" "Usage:"
 expect_in "$help_out" "--help lost the tail of its header (the last header line is missing)" "(wrong on purpose) and scripts/lint-fixtures-clean/adr/ (right on purpose)."
 printf '%s\n' "$help_out" | grep -qE '^(OK|FAIL):' && selftest_fail "--help ran the lint"
+# read_rows' producer-failure return (2), one row per kind. A whole run cannot
+# stage it past the first arm — an unreadable record fails `superseded`'s grep
+# and exits 4 there — so each arm is called directly, lifted out of the linter
+# the way its own dispatch-pairing guard reads the kinds, over a path that does
+# not exist. An arm whose `|| return 2` is dropped returns 0: a check that
+# never ran, read as a record with no rows.
+rr_defs=$(sed -n '/^body_lines() {/,/^}/p; /^read_rows() {/,/^}/p' scripts/lint-adrs.sh)
+rr_kinds=$(printf '%s\n' "$rr_defs" | sed -nE 's/^    ([a-z]+)\)$/\1/p')
+[ "$(printf '%s\n' "$rr_kinds" | grep -c .)" -eq 8 ] || selftest_fail "read $(printf '%s\n' "$rr_kinds" | grep -c .) read_rows kinds out of scripts/lint-adrs.sh, not 8 — a kind was added (this loop grades it; raise the pin) or the extraction stopped matching"
+for kind in $rr_kinds; do
+  ( eval "$rr_defs"; read_rows "$fx/9999-does-not-exist.md" "$kind" >/dev/null 2>&1 )
+  expect_rc "read_rows over an unreadable record (the $kind arm)" 2 $?
+done
 
 if [ "$fail" -ne 0 ]; then
   echo; echo "Linter output against $fx was:"; printf '%s\n' "$output"

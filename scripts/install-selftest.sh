@@ -54,17 +54,21 @@
 #     once, under the event its own header declares. Read from global/hooks/
 #     rather than named, so a hook moving to a new event does not turn the
 #     row into a no-op.
+#   - the settings.json read: a settings file naming one roster hook reports
+#     that hook "already named" and still prints every other hook in the
+#     snippet — an existing file is not a hook named in it;
+#   - prune_owned's empty-prefix abort, on the function lifted out of the
+#     script (no call site reaches it from outside): it exits 1 and leaves a
+#     foreign dangling link that an empty prefix would otherwise match.
 #
 # NOT covered, so a clean run here is not a claim about them: which skills the
 # recursion reaches (the trace row above grades every line it prints, not that
 # the set of lines is complete), the `# Install note:` and `# Event:` roster
 # itself (the snippet row reads the same headers the installer does, so a hook
-# both miss the same way), the "already named" quiet path once settings.json
-# names a hook, hook_event's WARN-and-fall-back arm for an unknown event name,
-# the WARN arms for a target that exists and is not a symlink, and
-# prune_owned's empty-prefix abort (no call site can reach it from outside the
-# script, so there is no row to write). Those are printing and traversal, not
-# removal, and this script was written for the removal.
+# both miss the same way), hook_event's WARN-and-fall-back arm for an unknown
+# event name, and the WARN arms for a target that exists and is not a symlink.
+# Those are printing and traversal, not removal, and this script was written
+# for the removal.
 set -uo pipefail
 
 repo_root="$(cd "$(dirname "$0")/.." && pwd)"
@@ -203,6 +207,25 @@ reject_in "$out2" "the second run pruned something the first run had just linked
 reject_in "$out2" "the second run relinked a skill the first run had already linked" "$(printf 'link  %s' "$live_skill")"
 expect_in "$out2" "the second run did not report the already-linked skill as skipped" "$(printf 'skip  %s (already linked)' "$live_skill")"
 
+# prune_owned's empty-prefix abort. No call site reaches it from outside, so
+# the function is lifted out of install.sh and called with "" in a subshell,
+# against a target holding one dangling link into somewhere this checkout does
+# not own. With the abort's `exit 1` gone, the `case` arm collapses to `/*` and
+# the link is removed.
+guard_dir="$home/empty-prefix-target"
+mkdir -p "$guard_dir"
+ln -s "$home/elsewhere/gone" "$guard_dir/foreign-dangling"
+prune_src="$(sed -n '/^prune_owned() {$/,/^}$/p' scripts/install.sh)"
+if [ -z "$prune_src" ]; then
+  selftest_fail "found no 'prune_owned() {' ... '}' block in scripts/install.sh — the empty-prefix row graded nothing"
+else
+  guard_out=$(eval "$prune_src"; prune_owned "$guard_dir" "" x 2>&1)
+  expect_rc "prune_owned called with an empty owning prefix" 1 $?
+  expect_in "$guard_out" "prune_owned with an empty owning prefix did not refuse" "ERROR prune_owned called with no owning prefix"
+  [ -L "$guard_dir/foreign-dangling" ] ||
+    selftest_fail "prune_owned with an empty owning prefix removed $guard_dir/foreign-dangling — an empty prefix widens the ownership arm to every dangling absolute link"
+fi
+
 # The fresh install. A second throwaway HOME with nothing staged in it, which
 # is what a first `bash scripts/install.sh` on a new machine meets — and the
 # only shape that reaches the unmatched-glob path in either prune_owned call.
@@ -320,6 +343,27 @@ print("placed:", " ".join(placed))
       [ -z "$misplaced" ] ||
         selftest_fail "these roster hooks are not in the snippet exactly once under the event their header declares: $misplaced"
     fi
+  fi
+
+  # The settings.json read, both ways: a settings file that names one roster
+  # hook quiets that hook alone. The others are still missing, so they still
+  # print in the snippet and never as "already named" — an existing file is
+  # not a hook named in it.
+  roster_hooks=$(grep -l '^# Install note: ' "$global_dir"/hooks/*.sh | sed 's|.*/||; s|\.sh$||' | sort)
+  named_hook=$(printf '%s\n' "$roster_hooks" | head -1)
+  other_hooks=$(printf '%s\n' "$roster_hooks" | sed 1d)
+  if [ -z "$other_hooks" ]; then
+    selftest_skip "global/hooks/ has fewer than two '# Install note:' hooks — the settings.json row needs one named and one not, and was not exercised."
+  else
+    printf '{ "hooks": { "PreToolUse": [ { "matcher": "Bash", "hooks": [ { "type": "command", "command": "bash %s" } ] } ] } }\n' \
+      "$global_dir/hooks/$named_hook.sh" > "$fresh/.claude/settings.json"
+    named_out=$(TARGET_ROOT="$fresh" HOME="$fresh" bash scripts/install.sh 2>&1)
+    expect_rc "the installer against a settings.json naming one hook" 0 $?
+    expect_in "$named_out" "the hook settings.json names was not reported as already named" "hook  $named_hook already named in $fresh/.claude/settings.json"
+    for h in $other_hooks; do
+      reject_in "$named_out" "a hook settings.json does not name was reported as already named" "hook  $h already named"
+      expect_in "$named_out" "a hook settings.json does not name is missing from the snippet" "\"command\": \"bash $global_dir/hooks/$h.sh\""
+    done
   fi
 fi
 

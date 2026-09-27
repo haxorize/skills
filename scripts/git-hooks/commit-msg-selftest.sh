@@ -23,7 +23,7 @@
 # Run it after changing the hook.
 #
 # Covered here: the subject rules (the cap and its boundary, trailing period,
-# Conventional Commits prefix and every filename of the config opt-out, the
+# Conventional Commits prefix (one row per type) and every filename of the config opt-out, the
 # imperative-opener warning), the body rules (blank separator, code fence,
 # markdown heading, the wrap cap and its boundary), the exemptions (an
 # in-progress merge/revert/cherry-pick, git's generated subject prefixes,
@@ -119,6 +119,12 @@ reject_msg "trailing period"      "Add the commit-msg hook."          "ends with
 reject_msg "conventional prefix"  "feat: add the commit-msg hook"     "Conventional Commits type prefix"
 reject_msg "scoped cc prefix"     "fix(hooks): stop the bypass"       "Conventional Commits type prefix"
 reject_msg "breaking cc prefix"   "refactor!: drop the old parser"    "Conventional Commits type prefix"
+# One row per type the three above do not name, so a type dropped from the
+# alternation reds by name (the 2026-09-13 mutation sweep found `test` and
+# `chore` droppable with every row green).
+for cc_type in docs style perf test build ci chore revert; do
+  reject_msg "$cc_type cc prefix" "$cc_type: tidy the parser" "Conventional Commits type prefix"
+done
 
 # The rule names the Conventional Commits type set, so a lowercase word that is
 # not one of those types is ordinary prose and must pass — the message asserts a

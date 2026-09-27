@@ -14,7 +14,11 @@
 # compaction summary, a subagent's task notification, the hook's own reason
 # echoed as a user turn, a tool_result that is not a denial, a local-command
 # caveat, and a non-string text block never fire and never kill the sensor;
-# the hook never writes the log itself; a missing cursor arms at the end of
+# the hook never writes the log itself; a message the user typed mid-turn
+# (a queued_command attachment with origin human) is read like a user turn,
+# a curly apostrophe matches as a straight one, and a subagent's queued
+# hand-back, a queued task notification, a queued command with no origin, any
+# other attachment, and a sidechain attachment stay quiet; a missing cursor arms at the end of
 # the transcript and reports nothing, a shorter transcript re-arms the same
 # way, the cursor silences a second run and re-arms on appended lines;
 # stop_hook_active exits at once, even over a correction; the malformed-
@@ -47,6 +51,9 @@ compact()   { printf '{"type":"user","isSidechain":false,"isCompactSummary":true
 result()    { printf '{"type":"user","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"t1","content":%s}]}}\n' "$(j "$1")"; }
 errresult() { printf '{"type":"user","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"t1","is_error":true,"content":%s}]}}\n' "$(j "$1")"; }
 errlist()   { printf '{"type":"user","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"t1","is_error":true,"content":[{"type":"text","text":%s}]}]}}\n' "$(j "$1")"; }
+# A message typed while the agent was working, as the harness records it (copied 2026-09-26
+# from a real transcript): a queued_command attachment, never a user entry. queued <prompt> [origin] [mode]
+queued()    { printf '{"type":"attachment","isSidechain":false,"attachment":{"type":"queued_command","prompt":%s,"commandMode":"%s","origin":{"kind":"%s"}},"rendered":[{"content":"<system-reminder>The user sent a new message while you were working</system-reminder>"}]}\n' "$(j "$1")" "${3:-prompt}" "${2:-human}"; }
 # The harness's wording for a denied tool call, copied 2026-09-13 from two real
 # transcripts on this machine (is_error true, string content, this opening).
 denial="The user doesn't want to proceed with this tool use. The tool use was rejected (eg. if it was a file edit, the new_string was NOT written to the file). To tell you how to proceed, the user said:\nuse the script instead"
@@ -122,6 +129,30 @@ fires "why did you"      "Why did you"        "$(user "Why did you delete the fi
 fires "stop doing"       "stop doing"         "$(user "stop doing that after every edit")"
 fires "stop adding"      "stop adding"        "$(user "stop adding comments to every line")"
 fires "stop using"       "Stop using"         "$(user "Stop using sed for edits")"
+fires "hold up."         "Hold up."           "$(user "Hold up. Stop the review.")"
+fires "hold on,"         "hold on,"           "$(user "hold on, that's the wrong branch")"
+fires "hold up —"        "Hold up —"          "$(user "Hold up — why main?")"
+fires "wait, why"        "Wait, why"          "$(user "Wait, why is it on main?")"
+fires "wait, what"       "Wait, what"         "$(user "Wait, what are you doing?")"
+fires "wait. no"         "wait. no"           "$(user "wait. no, the other file")"
+fires "I don't want"     "I don't want"       "$(user "I don't want any follow-ups")"
+fires "I dont want"      "I dont want"        "$(user "I dont want a new file")"
+fires "I do not want"    "I do not want"      "$(user "I do not want docs/reviews checked in")"
+fires "you never answer" "You never answered" "$(user "You never answered that question.")"
+fires "you didn't do"    "you didn't do"      "$(user "you didn't do the rename")"
+fires "you did not run"  "you did not run"    "$(user "you did not run the selftest")"
+fires "you didnt fix"    "you didnt fix"      "$(user "you didnt fix the lint")"
+fires "you never read"   "You never read"     "$(user "You never read the handoff")"
+fires "you didn't check" "you didn't check"   "$(user "but you didn't check the log")"
+fires "are you kidding"  "Are you kidding"    "$(user "Are you kidding? We just did a review!")"
+fires "are you serious"  "are you serious"    "$(user "are you serious, another review?")"
+fires "why would I"      "Why would I"        "$(user "Why would I want to undo?")"
+fires "why would we"     "why would we"       "$(user "why would we ship that")"
+fires "why would you"    "Why would you"      "$(user "Why would you delete it?")"
+fires "can't you just"   "Can't you just"     "$(user "Can't you just resume the review?")"
+fires "cant you just"    "cant you just"      "$(user "cant you just rerun it")"
+fires "curly apostrophe" "I don't want"       "$(user "Yes, except I don’t want follow-ups.")"
+fires "typed mid-turn"   "Hold up."           "$(queued "Hold up. Stop the review.")"
 fires "text block"       "No, don't"          "$(printf '{"type":"user","message":{"role":"user","content":[{"type":"text","text":"No, don'"'"'t squash."}]}}\n')"
 fires "second turn"      "no, don't"          "$(user "looks fine")\n$(assistant "done")\n$(user "no, don't push yet")"
 fires "numeric text then a correction" "No, don't" "$(printf '{"type":"user","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"t1","is_error":true,"content":[{"type":"text","text":5}]}]}}\n')\n$(user "No, don't do that")"
@@ -147,6 +178,23 @@ quiet "revert as verb"     "$(user "revert the vendored change in the next PR")"
 quiet "I didn't see"       "$(user "I didn't see the build output")"
 quiet "why did the build"  "$(user "why did the build fail?")"
 quiet "stop word"          "$(user "add a stop word list")"
+quiet "hold up the release" "$(user "hold up the release until Friday")"
+quiet "hold on to"         "$(user "hold on to the old key for now")"
+quiet "wait, then"         "$(user "wait, then push")"
+quiet "wait for"           "$(user "wait for the build")"
+quiet "I don't mind"       "$(user "I don't mind either way")"
+quiet "do you want"        "$(user "do you want the flag?")"
+quiet "you never know"     "$(user "you never know which build wins")"
+quiet "did you run"        "$(user "did you run the selftest?")"
+quiet "are you done"       "$(user "are you done?")"
+quiet "why would the"      "$(user "why would the build fail?")"
+quiet "can you just"       "$(user "can you just rerun it?")"
+quiet "typed mid-turn, clean" "$(queued "Resolve the parked items now")"
+quiet "subagent hand-back" "$(queued "No, don't do that — hold up." peer)"
+quiet "queued notification" "$(queued "No, don't do that" "" task-notification)"
+quiet "queued, no origin"  "$(printf '{"type":"attachment","attachment":{"type":"queued_command","prompt":"No, don'"'"'t do that","commandMode":"prompt"}}\n')"
+quiet "other attachment"   "$(printf '{"type":"attachment","attachment":{"type":"edited_text_file","prompt":"No, don'"'"'t do that","origin":{"kind":"human"}}}\n')"
+quiet "sidechain queued"   "$(printf '{"type":"attachment","isSidechain":true,"attachment":{"type":"queued_command","prompt":"No, don'"'"'t do that","commandMode":"prompt","origin":{"kind":"human"}}}\n')"
 quiet "assistant says no"  "$(assistant "No, don't do that — I'll split it instead.")"
 quiet "sidechain"          "$(side "No, don't do that")"
 quiet "meta turn"          "$(meta "No, don't do that")"

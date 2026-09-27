@@ -3,8 +3,10 @@
 #
 # When the agent finishes a turn, this hook reads the session transcript from
 # where it last looked and asks one cheap question: did a user turn since then
-# look like a correction? A correction-shaped turn is the user's own text
-# matching one of the signal patterns in `SIGNALS` in friction-log.py beside this file — for example "no,
+# look like a correction? A correction-shaped turn is the user's own text —
+# typed at the prompt, or typed while the agent was working, which the harness
+# records as a `queued_command` attachment with origin `human` rather than as a
+# user entry — matching one of the signal patterns in `SIGNALS` in friction-log.py beside this file — for example "no,
 # don't", "I said", "I told you", "from now on", "that's not what", "undo
 # that"; the table is the contract, not this list — or a tool call the user
 # denied with guidance: the harness records that as a tool_result with
@@ -73,8 +75,10 @@
 # runs over a flagged question that was not a correction) the agent still
 # prefixed one sentence of its judgment before the word — never a log line,
 # never a secret, never an offer once the reply was pinned. Expect one line of
-# noise on a false positive, not silence; the signal table is kept narrow for
-# that reason.
+# noise on a false positive, not silence. The table was widened on 2026-09-26
+# against a replay of this user's own turns ("hold up.", "wait, why", "I don't
+# want", "you never answered"): it now also fires on course-changes the agent
+# then judges not to be corrections, so the one line of noise is more often paid.
 #
 # FRICTION_LOG_DIR overrides ~/.claude/friction (the selftest sandboxes with
 # it); it must be an absolute path of [A-Za-z0-9._/-], since it is quoted in

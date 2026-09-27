@@ -22,6 +22,8 @@
 # the first two exit without a breadcrumb — review-receipt.sh's own header
 # names both silent paths. So a row that must not be satisfied by a fail-open
 # is expect_quiet, never expect_allow.
+# The block message is graded once, on the fix-up row: over reports that carry
+# stamps, it names the last stamp read.
 set -u
 here="$(cd "$(dirname "$0")" && pwd)"
 hook="$here/review-receipt.sh"
@@ -268,6 +270,8 @@ expect_allow "$G" "git push origin main"                       "stamped tree, ex
 expect_allow "$G" "git push --force"                           "a message-only amend keeps the tree"
 ( cd "$G" && echo y > g && git add g && git commit -q -m fixup )
 expect_block "$G" "git push"                                   "a fix-up after the stamp is a new tree"
+out="$(crumb "$G" "git push")"                                 # the block names the last stamp it read
+printf '%s' "$out" | grep -q 'the last stamp read (' || { echo "FAIL (a block over stamped reports should name the last stamp read): $out"; fail=1; }
 stamp gated-2026-01-01-match.review.md "Reviewed-tree: $(cd "$G" && git rev-parse 'HEAD^{tree}')"
 expect_allow "$G" "git push"                                   "re-stamped after the fix-up (second stamp in one report)"
 ( cd "$G" && git push -q origin main 2>/dev/null )
@@ -336,7 +340,7 @@ REVIEW_RECEIPT_DIR= TMPDIR="$work/t m p" expect_allow "$G" "git push" "TMPDIR wi
 ( cd "$G" && git push -q origin main 2>/dev/null )
 
 # --- fail-open -----------------------------------------------------------------
-expect_allow "$G" ""                                           "empty command (no tool_input.command)"
+expect_crumb "$G" ""                                           "payload has no tool_input.command" "empty command (no tool_input.command)"
 rc="$(printf 'not json' | bash "$hook" >/dev/null 2>&1; echo $?)"
 [ "$rc" = 0 ] || { echo "FAIL (malformed payload should allow, rc=$rc)"; fail=1; }
 expect_crumb "$G" 'git push "unterminated'   "tokeniser error" "unterminated quote is a tokeniser error"

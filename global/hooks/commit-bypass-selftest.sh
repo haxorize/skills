@@ -4,7 +4,11 @@
 # command — this table is the only thing that tells the two apart. Run it after
 # changing any rule: bash global/hooks/commit-bypass-selftest.sh
 #
-# The run/expect helpers are selftest-lib.sh beside this file.
+# The run/expect helpers are selftest-lib.sh beside this file. This table is also
+# where hook-lib.sh and hook-lib.py are graded (scripts/mutation-sweep.sh pairs
+# them with the hook selftests): the "scanner shapes" rows below each pin one
+# alternative of a lib roster, and the fail-open section pins the lib's
+# empty-payload breadcrumb.
 set -u
 here="$(cd "$(dirname "$0")" && pwd)"
 hook="$here/commit-bypass.sh"
@@ -84,6 +88,11 @@ expect_block "$D" "find . -name '*.c' -exec git commit --no-verify -m x {} \\;" 
 expect_block "$D" "echo -n --no-verify | xargs git commit -m x"                "echo -n's flag is not fed"
 expect_block "$D" "caffeinate -t 600 git commit -n -m x"                       "caffeinate with a value-taking option"
 expect_block "$D" "busybox git commit -n -m x"                                 "busybox wrapper"
+# scanner shapes: one row per hook-lib.py roster alternative no other row reaches
+expect_block "$D" $'dash <<EOF\ngit commit --no-verify -m x\nEOF'            "a heredoc fed to dash (SHELL roster)"
+expect_block "$D" $'cat <<EOF | bash\ngit commit --no-verify -m x\nEOF'       "a shell word ending the heredoc line (SHELL's \$ arm)"
+expect_block "$D" '"$(command -v git)" commit --no-verify -m x'                "\$(command -v git) resolves to git"
+expect_block "$D" "true;(git commit --no-verify -m x)"                         "a mixed punctuation run ';(' splits"
 
 # --- mentions and look-alikes: allow ------------------------------------------
 expect_allow "$D" "git commit -m x"
@@ -127,6 +136,9 @@ expect_allow "$D" "python3 -c 'print(\"git commit --no-verify\")'"
 
 # --- fail-open ----------------------------------------------------------------
 expect_fail_open "$D" 'git commit -m "unterminated --no-verify'
+# an empty payload is named as such, not as a payload missing its command
+out="$( printf '' | bash "$hook" 2>&1 >/dev/null; echo "rc=$?" )"
+printf '%s' "$out" | grep -q 'empty payload, allowing' && printf '%s' "$out" | grep -q 'rc=0' || { echo "FAIL: an empty payload must allow with its own breadcrumb: $out"; fail=1; }
 # a crash in the hook's own Python is named, not mislabelled a tokeniser error
 crashed="$tmp/crashed.sh"; cp "$here/hook-lib.sh" "$here/hook-lib.py" "$tmp/"
 python3 -c 'import sys; s=open(sys.argv[1]).read(); open(sys.argv[2],"w").write(s.replace("def check_git(args):\n", "def check_git(args):\n    undefined_name\n", 1))' "$hook" "$crashed"

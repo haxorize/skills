@@ -15,8 +15,10 @@
 # truncated transcript in the fixture, the typed side from a truncated copy of
 # the history made here — and its absence when nothing is cut; the JSON shape;
 # a loaded name that is not a skill name dropped rather than printed; and the
-# exit codes, 2 for a partial run included; and an absent source per side — a
-# --history path that is not there, a --projects directory with no transcripts.
+# exit codes, 2 for a partial run included, and 3 for jq missing from PATH and
+# for a --skills-from that is not a directory; --help and -h both; and an
+# absent source per side — a --history path that is not there, a --projects
+# directory with no transcripts.
 #
 # NOT covered, so a clean run here is not a claim about them: the DEFAULT
 # --history and --projects paths (every row passes both flags, so the
@@ -121,6 +123,21 @@ if tmp="$(selftest_tmpdir)"; then
   # never render when both sides are gone, and each repeats a path the line
   # above already printed.
   [ "$(printf '%s\n' "$both_gone" | grep -c '^skill-usage.sh: ')" -eq 1 ] || selftest_fail "both sources absent printed more than the one nothing-to-count line: $both_gone"
+
+  # jq missing is a usage error named up front, not a count that failed
+  # partway. PATH is rebuilt from /bin and /usr/bin with jq left out, since
+  # jq on this machine may sit in /usr/bin beside everything else.
+  mkdir -p "$tmp/nojq"
+  for f in /bin/* /usr/bin/*; do
+    n="${f##*/}"
+    [ "$n" = jq ] || [ -e "$tmp/nojq/$n" ] || ln -s "$f" "$tmp/nojq/$n"
+  done
+  if PATH="$tmp/nojq" command -v jq >/dev/null 2>&1; then
+    selftest_skip "jq still resolved on a PATH built without it — the jq-missing row was not exercised."
+  else
+    nojq_err=$(PATH="$tmp/nojq" "$BASH" scripts/skill-usage.sh --history "$fx/history.jsonl" --projects "$fx/projects" --skills tdd 2>&1 >/dev/null); expect_rc "a PATH with no jq" 3 $?
+    expect_in "$nojq_err" "a PATH with no jq did not name jq as required" "skill-usage.sh: jq is required"
+  fi
 else
   selftest_skip "mktemp -d produced no usable directory — the --skills-from, per-side floor, and nothing-to-count rows were not exercised by this run."
 fi
@@ -134,8 +151,12 @@ reject_in "$err" "stderr names the transcript by its full path" "proj-a/sess-2-t
 run --bogus >/dev/null 2>&1; expect_rc "an unknown argument" 3 $?
 run --since 08/01/2026 >/dev/null 2>&1; expect_rc "a malformed --since" 3 $?
 run --skills tdd --skills-from "$fx" >/dev/null 2>&1; expect_rc "--skills with --skills-from" 3 $?
+nodir_err=$(bash scripts/skill-usage.sh --history "$fx/history.jsonl" --projects "$fx/projects" --skills-from "$fx/no-such-dir" 2>&1 >/dev/null); expect_rc "a --skills-from that is not a directory" 3 $?
+expect_in "$nodir_err" "a --skills-from that is not a directory was not named" "--skills-from '$fx/no-such-dir' is not a directory"
 help_out=$(bash scripts/skill-usage.sh --help 2>&1); expect_rc "--help" 0 $?
 expect_in "$help_out" "--help printed no Usage: line" "Usage:"
+short_help=$(bash scripts/skill-usage.sh -h 2>&1); expect_rc "-h" 0 $?
+expect_in "$short_help" "-h printed no Usage: line" "Usage:"
 expect_in "$help_out" "--help lost the tail of its header (the last header line is missing)" "above are the ones counted, against scripts/lint-fixtures/usage/."
 reject_in "$help_out" "--help runs no count" "$(printf 'skill\ttyped')"
 

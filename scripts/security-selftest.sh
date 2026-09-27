@@ -345,7 +345,7 @@ done <<< "$graded"
 # that stopped matching, would otherwise pass. Exact, so a fixture addition
 # is a deliberate edit here.
 ngraded=$(printf '%s\n' "$graded" | sed -n 's/^GRADED \([0-9]*\) expectations$/\1/p')
-[ "${ngraded:-0}" -eq 362 ] || selftest_fail "the grader read ${ngraded:-0} expectations from the fixtures, not the pinned 362 — a fixture instance was added (raise the pin) or lost (find it: a deleted file, or an annotation the grader no longer reads)"
+[ "${ngraded:-0}" -eq 386 ] || selftest_fail "the grader read ${ngraded:-0} expectations from the fixtures, not the pinned 386 — a fixture instance was added (raise the pin) or lost (find it: a deleted file, or an annotation the grader no longer reads)"
 
 # Every member of the scanner's homoglyph table has an instance: the table is
 # read out of the source, and each character must appear on a line under a
