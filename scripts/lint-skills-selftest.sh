@@ -433,6 +433,10 @@ expect "British spelling (pass 4: global/README.md)" "global/README.md uses a Br
 # the .claude/skills/ arm as well. These are the inputs those arms never had.
 expect "house style on a global rule" "global/rules/body-checked.md uses a British spelling"
 expect "house style at depth one under src/" "src/stray-note.md uses a British spelling"
+# A word added to british_words after its count pin lands with an instance in
+# docs/list-additions.md; the rendered word list is the assertion, so dropping
+# either member reds this row by name.
+expect "british_words additions (totalled, totalling)" "docs/list-additions.md uses a British spelling (line(s) 5 — totalled totalling )"
 expect "house style on a repo-local skill" ".claude/skills/repo-local/SKILL.md uses a British spelling"
 expect "house style on DOMAIN.md" "DOMAIN.md uses a British spelling"
 expect "house style on README.md" "README.md uses a British spelling"
@@ -684,17 +688,15 @@ fi
 expect_rc "the lint against the fixture tree" 1 "$status"
 # The count of FAIL lines is pinned: a check that begins firing on a fixture
 # it should leave alone reds here even when no substring row names the line.
-# Last moved 2026-09-13 (review of round 2026-09-12 batch 9, F90): 101 → 105
-# — four per-branch instances of the table-rendering check (header-row span,
-# header wider than delimiter, `\\|` parity, span arm alone) joined the four
-# per-arm ones, one of which (the code-span pipe) draws two lines, the split
-# and the over-long row it causes. Earlier moves of this pin are in
+# Last moved 2026-09-26 (totalled, totalling added to british_words): 105 → 106
+# — docs/list-additions.md, the firing instance for words added after the
+# count pin, draws one line. Earlier moves of this pin are in
 # `git log -p -S 'expected exactly' -- scripts/lint-skills-selftest.sh` — they describe counts
 # nothing asserts any more, and stacking them here made a changelog out of the
 # one line that has to stay readable. A count that moves is read before it is
 # re-pinned.
 nfail=$(printf '%s\n' "$output" | grep -c '^FAIL: ')
-[ "$nfail" -eq 105 ] || selftest_fail "expected exactly 105 FAIL lines against the fixture tree, got $nfail"
+[ "$nfail" -eq 106 ] || selftest_fail "expected exactly 106 FAIL lines against the fixture tree, got $nfail"
 # The shared-trigger-phrase fixtures are pinned by property, as near_bytes and
 # bulk_bytes are below: every row above them asserts a FAIL that appears or a
 # FAIL that does not, and each of those readings is silently satisfied by a
@@ -749,7 +751,9 @@ list_pin() {  # variable name, expected member count, separator
   got=$(sed -n "s/^${var}='\\(.*\\)'$/\\1/p" scripts/lint-skills.sh | tr "$sep" '\n' | grep -c '[^[:space:]]')
   [ "$got" -eq "$want" ] || selftest_fail "${var} carries $got members, pinned at $want — a name added or dropped there changes what the whole tree is graded on, and no fixture row would have said so. Re-measure, land a fixture instance for anything added, then move this number."
 }
-list_pin british_words 260 '|'
+# 260 → 262 on 2026-09-26: totalled, totalling (the a11y-health repos' spelling
+# flip); their instances are in docs/list-additions.md.
+list_pin british_words 262 '|'
 # 102 → 101 on 2026-09-02: SKIPPED dropped. DOMAIN.md:77 bans the word outright
 # (UNVERIFIABLE is the registered marker), so admitting it here left check_labels
 # blind to a token the glossary forbids. Zero prose uses remain in any .md; the
