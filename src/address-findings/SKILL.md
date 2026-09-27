@@ -33,7 +33,7 @@ Open the pass with one line — the file you picked when no path was given, and 
 
 ### 3. Fix, ask once, apply
 
-Fix the mechanical set in that order, each fix verified per `receiving-review` before the next starts. Then ask the batch, once. Apply the answers. A bare "yes" to the batch resolves every entry to its recommended line.
+Fix the mechanical set in that order, each fix verified per `receiving-review` before the next starts. Fixes that touch disjoint files, and deferrals the user answers with resolve-now, run in parallel subagents instead, each in its own worktree when it edits files; a subagent's fix is verified the same way before its row reads FIXED. Findings that share a file stay in order. Then ask the batch, once. Apply the answers. A bare "yes" to the batch resolves every entry to its recommended line.
 
 Call the Skill tool with `feedback-loops` once after the last fix, not per fix — if you don't see a `Launching skill: feedback-loops` line, stop and call it again.
 

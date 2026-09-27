@@ -49,7 +49,7 @@ Every out-of-scope observation made mid-slice and deliberately left alone. Each 
 
 **State the zero case explicitly:** `0 parked; 3 ACs checked against tests/test_scores.py and the ticket body`. An empty section and a section that was never written look the same; the count with its source does not.
 
-**The section ends on one offer** whenever a row this ticket owns stays open, neither resolved nor dismissed — an ask block in the shape `~/.claude/rules/recommend-and-proceed.md` defines, headed `Ask — address N parked items`, N counting only those rows — so the next move is asked rather than left for the user to infer. An open `outside` row is never folded into it: fixing one now is `implement`'s edit-boundary ask (Proceed, Split, Rethink). Carried in a handoff, the offer is the next session's to put to the user, never answered by the session that wrote it. The zero case carries none.
+**The section ends on one offer** whenever a row this ticket owns stays open, neither resolved nor dismissed — an ask block in the shape `~/.claude/rules/recommend-and-proceed.md` defines, headed `Ask — address N parked items`, N counting only those rows — so the next move is asked rather than left for the user to infer. An open `outside` row is never folded into it: fixing one now is `implement`'s edit-boundary ask (Proceed, Split, Rethink). Carried in a handoff, the offer is the next session's to put to the user, never answered by the session that wrote it. The zero case carries none. An item the user says to resolve now runs in a subagent, one per item where the items touch disjoint files, and its result is verified before the row closes.
 
 ## Judgment calls
 
