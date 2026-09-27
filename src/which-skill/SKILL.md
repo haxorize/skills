@@ -84,6 +84,6 @@ Each route in a line; the blurbs are in the skills repo's `README.md` skill map 
 - **`/glapi-test-pass`** — ADO only; the GLAPI production deployment gate for a Story.
 - **`/write-skill`** — conventions for writing and editing skills.
 - **`/audit-skills`** — a verdict per skill installed under `~/.claude/skills/`.
-- **`/report-progress`** — the recurring progress note to your manager, for you or your team, drafted from the repos and tracker with a link per item.
+- **`/report-progress`** — your weekly status or progress note to your manager, alone or for a team, drafted from repos and tracker, each item sourced.
 - **`/debrief <date | id | phrase>`** — the paragraph behind one friction-log line: class, remedy, proposed fix; the next mining round reads it first.
 - **`/audit-aeo <url | saved-html>`** — one public page graded as an AI agent reads it, ending in a gap list; the standards it grades against are `aeo`'s.

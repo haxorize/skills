@@ -1,12 +1,12 @@
 ---
 name: adr
-description: Architecture Decision Record — capture why a single non-obvious design choice was made. Use when the user has just made a decision and wants to record it (post code-review, mid-implementation, after a grill), wants to capture rationale for a fresh non-obvious choice, or wants a decision still being argued written as a `proposed` record for reviewers to comment on. For sweeping git history to recover un-recorded decisions, use `/backfill-adrs` instead.
+description: Architecture Decision Record — capture why a single non-obvious design or team decision was made. Use when the user has just made a decision and wants to record it (post code-review, mid-implementation, after a grill), wants to capture rationale for a fresh non-obvious choice, or wants a decision still being argued written as a `proposed` record for reviewers to comment on. For sweeping git history to recover un-recorded decisions, use `/backfill-adrs` instead.
 requires: writing-for-humans
 ---
 
 # ADR
 
-Lightweight Architecture Decision Records — capture *why* a non-obvious design choice was made, in the smallest form that preserves the rationale.
+Lightweight Architecture Decision Records — capture *why* a non-obvious design or team decision was made, in the smallest form that preserves the rationale.
 
 The file location, numbering, amend-or-write-new rule, default template, optional sections, the three-criteria gate, and a worked example all live in [references/adr-format.md](references/adr-format.md).
 

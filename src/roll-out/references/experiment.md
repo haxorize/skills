@@ -18,7 +18,7 @@ Write each field into the plan's `## Experiment` section. A field the user canno
 - **Stop, scale, and inconclusive rules** — the result that ships it, the result that kills it, what counts as inconclusive and what happens then (extend once to a stated date, or stop), and the guardrail breach that halts the test early.
 - **Readout owner** — who runs the readout and where the data comes from. Where the outcome lives in another system (support calls, claims), name the key that joins it to the arm and where the join runs: a join on a member identifier runs inside the system that already holds member data, never in the analytics sink.
 
-Before the first cohort rung opens, fire every event the metrics depend on in a lower environment and confirm each arrives carrying the arm the person was assigned to — not only the first event of a session — keyed to the same unit the experiment randomizes (an event keyed to a device, in a test randomized by member, is never attributed), and that a reload does not count it twice. A metric whose events were never seen arriving is not measured.
+Before the first cohort rung opens, fire every event the metrics depend on in a lower environment and confirm each arrives carrying the arm the person was assigned to — not only the first event of a session — keyed to the same unit the experiment randomizes (an event keyed to a device, in a test randomized by member, is never attributed) — by the pseudonymous assignment key the flag service issues for that unit, never the member identifier itself, which stays out of the analytics sink, and that a reload does not count it twice. A metric whose events were never seen arriving is not measured.
 
 While the test runs: no stopping early on a result that looks good, no change to the arms, no new traffic sources, no redefinition of success. Any of these makes a new experiment (SKILL.md step 3).
 
@@ -26,9 +26,9 @@ While the test runs: no stopping early on a result that looks good, no change to
 
 Run these in order. Each earlier check can void the ones after it.
 
-1. **Sample ratio.** Compare the count assigned to each arm against the configured split, with a statistical test sized to the counts. A mismatch means assignment or logging is broken: the result is void, the verdict is **Stop**, and the cause goes to `diagnosing-bugs`.
+1. **Sample ratio.** Compare the count assigned to each arm against the configured split, with a statistical test sized to the counts. A mismatch means assignment or logging is broken, which indicts the instrumentation, not the change: the result is void and no verdict is rendered from it. Name `diagnosing-bugs` to the user for the cause; once it is fixed the experiment runs again as a new one (SKILL.md step 3), the exposed data not counting. The kill switch is not pulled for a mismatch alone; the rungs' watches still decide that.
 2. **Sample reached.** Compare the achieved sample against the contract's. Short of it, a flat result is not evidence of no effect — say "underpowered", never "no difference".
-3. **Duration.** Whole business cycles covered, and the first days' novelty worn off: compare the effect in the first week against the rest.
+3. **Duration.** Whole business cycles covered, and the first days' novelty worn off: compare the effect in the first days against the rest of the run.
 4. **Guardrails.** Each against its threshold. A breached guardrail is **Stop**, whatever the primary metric did.
 5. **Primary metric.** The effect with its interval, in absolute and relative terms, against the smallest effect worth acting on. A significant effect smaller than that is not a reason to ship.
 
@@ -36,6 +36,6 @@ Then the verdict, exactly one of three, by the rules the contract froze:
 
 - **Ship** — the primary metric moved past the smallest effect worth acting on, every guardrail held, and checks 1–3 passed. The ladder continues to its everyone rung.
 - **Extend** — inconclusive, the contract allows one extension, and checks 1 and 4 passed. The new end date is the contract's, not chosen now.
-- **Stop** — anything else. The kill switch is pulled for the exposed cohort, and the removal item's trigger is met.
+- **Stop** — anything else past check 1. The kill switch is pulled, and the removal item's trigger is met.
 
 Write the verdict into the plan with each check's figure beside it, the population it holds for, and what it does not claim: the result speaks for the people tested and the change tested, never beyond them.
