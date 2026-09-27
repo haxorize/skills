@@ -29,7 +29,7 @@ Resolve the project's check commands from its `CLAUDE.md` `## Commands` section.
 
 A failing check is fixed in the code — this binds all four. Editing the check's config, adding an ignore or a suppression comment, or lowering a threshold is a scope change the user asked for, or it does not happen.
 
-Where `## Commands` carries a change-type table — which checks a docs-only, tests-only, or code change runs — run the row the touched paths match, the stricter where they match two. A suite it marks opt-in (a browser or e2e suite) runs only when the touched paths call for it, and is otherwise named in the close as excluded, so its absence reads as scope rather than as green.
+Where `## Commands` carries a change-type table — which checks a docs-only, tests-only, or code change runs — run every check named by any row the touched paths match. A suite it marks opt-in (a browser or e2e suite) runs only when the touched paths call for it, and is otherwise named in the close as excluded, so its absence reads as scope rather than as green.
 
 If `## Commands` is missing or incomplete, infer the commands from the project's config (package scripts, Makefile, tool config) and note what you ran.
 

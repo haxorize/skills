@@ -36,7 +36,7 @@ Three rules cut across the steps:
 
 ## When the change replaces an old path
 
-A migration of a surface no honest suite covers — a page, a report, a CLI's output — runs in **parity mode**: write the input set before either run, as the contract is written, drive the same inputs through the old path and the new one through the front door, and diff the observed outputs. The old path is the oracle only for what the contract leaves unchanged, so each difference is a FAIL until the contract names it as intended. Both paths still run under the rules above, and a green suite that cannot see the surface is never a substitute for the diff.
+A migration of a surface no honest suite covers — a page, a report, a CLI's output — runs in **parity mode**: write the input set before either run, as the contract is written, drive the same inputs through the old path and the new one through the front door, and diff the observed outputs. The old path is the oracle only for what the contract leaves unchanged, so each difference is a FAIL unless the contract named it as intended before either run, and one it did not name stays a FAIL until the user names it — never you, amending the contract after reading the diff. Both paths still run under the rules above, and a green suite that cannot see the surface is never a substitute for the diff.
 
 ## Verdicts
 

@@ -16,9 +16,9 @@ Three failure shapes the other lenses do not name. **An API that does not exist*
 
 ## `/security-review`
 
-**Trigger.** Only on **security surfaces**: endpoints/external surface, auth/permissions, raw SQL, deserialization/input boundaries, file ingest, CORS/secrets/config, new dependencies, CI and workflow config (which trigger runs whose code — a fork PR, a comment, a tag push — which secrets the job reaches, and whether untrusted text such as a branch name or PR title reaches a privileged step's shell) — and a new or bumped MCP server, whose tool descriptions are prompt text every session reads.
+**Trigger.** Only on **security surfaces**: endpoints/external surface, auth/permissions, raw SQL, deserialization/input boundaries, file ingest, CORS/secrets/config, new dependencies, CI and workflow config — and a new or bumped MCP server, whose tool descriptions are prompt text every session reads.
 
-Where the repo records a trust model — a threat-model doc, a security section in `CLAUDE.md`, trust boundaries named in a decision record — brief the lens with it, so untrusted input is judged against the boundaries this project actually claims rather than a generic set. Where nothing records one, run the lens generically; inventing boundaries produces findings against a system nobody built.
+Where the repo records a trust model — a threat-model doc, a security section in `CLAUDE.md`, trust boundaries named in a decision record — brief the lens with it, so untrusted input is judged against the boundaries this project actually claims rather than a generic set. Where nothing records one, run the lens generically; inventing boundaries produces findings against a system nobody built. Where the diff touches CI or workflow config, brief the lens with three questions: which trigger runs whose code (a fork PR, a comment, a tag push), which secrets the job reaches, and whether untrusted text such as a branch name or PR title reaches a privileged step's shell.
 
 ## Design depth
 

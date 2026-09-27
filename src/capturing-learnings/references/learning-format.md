@@ -20,7 +20,7 @@ A Learning doc's filename is slug-only kebab-case describing the problem (`vites
 | **`module`** | no | The repo area the problem lives in |
 | **`date`** | yes | Creation date (`YYYY-MM-DD`) |
 | **`last_updated`** | on update | Added when an existing doc absorbs a new occurrence |
-| **`retire_when`** | no | One line naming the outside condition the guidance holds only while — an open upstream bug, a tool or platform version, a dependency's behavior — so a later check can retire it with no repo change; a met condition is a contradiction settled per § Updating an existing doc, `doc-claims` is where a declared one is checked, and a doc that declares none is never given one by inference |
+| **`retire_when`** | no | One line naming the outside condition the guidance holds only while — an open upstream bug, a tool or platform version, a dependency's behavior — so a later check can retire it with no repo change; a met condition is a contradiction settled per § Updating an existing doc, and a doc that declares none is never given one by inference |
 
 **Quote any scalar holding a colon-space or a space-hash.** Unquoted, `: ` opens a nested mapping and ` #` starts a comment that truncates the value — and `symptoms` carries verbatim error strings (`Error: connection refused`), which is exactly the shape that corrupts. A corrupted `symptoms` value is one the symptom-keyed greps in `capturing-learnings` § Retrieval protocol cannot match.
 

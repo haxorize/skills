@@ -16,7 +16,7 @@ Enumerate the open threads by command before the sweep, and re-run the same comm
 az devops invoke --area git --resource pullRequestThreads --route-parameters project=<project> repositoryId=<repo-id> pullRequestId=<n> --api-version 7.1 --query 'value[?status!=`closed` && status!=`fixed`]'
 ```
 
-On GitHub the review threads are not the whole list: a PR's general comments come from the issue-comments stream, and a review bot that keeps one running summary edits that comment in place each cycle rather than posting anew. List the stream with `gh api repos/{owner}/{repo}/issues/<n>/comments --paginate --jq '.[] | {id, user: .user.login, created_at, updated_at}'` and read every comment whose `updated_at` is newer than your last sweep — a comment edited since reads as old by `created_at`.
+On GitHub the review threads are not the whole list: a PR's general comments come from the issue-comments stream, and a review bot that keeps one running summary edits that comment in place each cycle rather than posting anew. List the stream with `gh api repos/{owner}/{repo}/issues/<n>/comments --paginate --jq '.[] | {id, user: .user.login, created_at, updated_at}'` and read every comment whose `updated_at` is newer than your own last reply on the PR, in either stream — every comment, on the first sweep; a comment edited since reads as old by `created_at`. This list runs before and after the sweep beside the thread list, with the same evidence duty. A general comment has no thread to reply in or resolve: answer it with one new PR comment linking it, in the reply shapes below minus the resolve.
 
 ## The three reply shapes
 

@@ -52,7 +52,7 @@ One status line first — green, yellow, or red, with one sentence on where thin
 
 ## Stakeholder, exec, or launch update
 
-Read this section only when writing a milestone or launch update to executives, cross-functional partners, or customers — never the weekly note to a manager, which is § Weekly status note.
+Read this section only when writing a milestone or launch update to executives, cross-functional partners, or customers — never the weekly note to a manager, which is § Weekly status note. The register entries below come from one upstream and no local draft yet; they are provisional until two real updates have been drafted against them, and a draft that fights one is evidence against the entry, not against the draft.
 
 The reader owns a decision or a dependency, not the work, so the first lines carry the whole update for a reader who stops there: the outcome, the status line § Weekly status note defines, and the decision the reader owes. **Decisions needed** is its own section, each decision with its options, the recommendation, and the date it is needed by; an update that needs none says so in its first lines. Length and vocabulary follow the named audience: an executive reads under 200 words with no team-internal names; a cross-functional partner reads what lands on their team, what is needed from them, and by when; a customer reads benefits, dates, and known issues with no ticket number, codename, or internal term. One audience per draft — a second audience is a second draft, never a merged one.
 

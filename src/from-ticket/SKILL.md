@@ -33,10 +33,10 @@ Auto-detect from the ID and tracker:
 
 Surface the inferred type before loading; ambiguous GitHub cases (e.g., a Bug filed without the `bug` label) need explicit confirmation.
 
-**Linked work (all types).** Before loading, read what the tracker links to the ticket beyond its body — a merged PR that already closes it, a replacement that supersedes it, an open follow-up filed back against it — and surface each hit beside the type. A ticket loaded without them can rebuild a fix that shipped, or miss the regression that fix left open.
+**Linked work (all types).** Before loading, read what the tracker links to the ticket beyond its body — a PR that already closes it or is open to close it, a replacement that supersedes it, an open follow-up filed back against it — and surface each hit beside the type. A ticket loaded without them can rebuild a fix that shipped, or miss the regression that fix left open.
 
-- **GitHub:** closing PRs arrived with the step 2 fetch (`closedByPullRequestsReferences`); follow-ups are the `cross-referenced` events in `gh api repos/{owner}/{repo}/issues/<id>/timeline`.
-- **ADO:** `az boards work-item show <id> --output json --expand relations` — the Related, Successor, and pull-request artifact links.
+- **GitHub:** closing PRs arrived with the step 2 fetch (`closedByPullRequestsReferences`), open ones included and no state given, so read each with `gh pr view <n> --json state,mergedAt` before calling it shipped; follow-ups are the `cross-referenced` events in `gh api --paginate repos/{owner}/{repo}/issues/<id>/timeline` (a page holds 30 events).
+- **ADO:** `az boards work-item show <id> --output json --expand relations` — Duplicate and Duplicate Of for supersession, Related and Successor for follow-ups, and the pull-request artifact links, merged or not.
 
 ### 3. Refuse Feature / Epic
 
