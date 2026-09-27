@@ -2,7 +2,7 @@
 
 Not the built-in `/security-review`, which reviews a branch's diff: this is the authoring check for a *skill's text* — instructions an agent will execute with tools, a shell, and whatever arguments or files reach it.
 
-Where the skills repo's `scripts/security.sh --path <dir>` is at hand, run it first — from another project as `"$(dirname "$(dirname "$(readlink ~/.claude/skills/write-skill)")")"/scripts/security.sh --path <dir>`; `--help` names the rule classes it owns. The checks below are what a scanner cannot see.
+Where the skills repo's `scripts/security.sh` is at hand, run it first — `bash scripts/security.sh --path <dir>` from that repo's root, or from another project `bash "$(dirname "$(dirname "$(readlink ~/.claude/skills/write-skill)")")"/scripts/security.sh --path <dir>`; `--help` names the rule classes it owns. The checks below are what a scanner cannot see.
 
 Each check is a **FAIL / WARN / PASS** rubric. Report a FAIL as a **Blocker** — the skill does not ship until it clears — and a WARN as a **Follow-up**, which ships with the skill and is fixed on its own schedule.
 

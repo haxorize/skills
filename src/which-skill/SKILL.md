@@ -57,7 +57,7 @@ Keep steps 1–2 in **one unbroken context window** so the grilling, decompositi
 
 - **`/review-changes`** — read-only, project-aware judgment review of a **diff**, around shipping. Use it for a self-review before the change lands, on a teammate's PR, or on an already-landed commit. It produces a ranked, classified report.
 - **`/address-findings`** — act on a `/review-changes` report in one pass and re-stamp it so the `review-receipt` hook lets the fixed tree out. No argument picks the newest report for this repo. Re-review is your call; it never loops. The judgment per finding inside the pass — and the same one pass when a reviewer's comments land on *your* PR — is the `receiving-review` discipline.
-- **The bridge across sessions:** `/handoff` → fresh session → `/review-changes` → `/address-findings`, each with no argument: every file lands in `handoff`'s landing zone, and each step picks the newest of its kind.
+- **The bridge across sessions:** `/handoff` → fresh session → `/review-changes` → `/address-findings`, each with no argument: every file lands in `handoff`'s landing zone, and each step picks the newest of its kind (a handoff has no kind segment in its filename).
 - Once findings are addressed, the change lands — and in a `Review required: yes` repo the `review-receipt` hook makes the review step mechanically required, not advisory. The `committing` discipline owns what every landing shares and fires on its own for a one-commit landing; **`/ship`** is the path for a change that needs more — a commit split, a branch, or a PR someone else must approve.
 
 ## Crossing sessions

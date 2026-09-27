@@ -19,7 +19,7 @@ A rule about a branch *not* running cannot live in the file that only loads when
 
 **Load suppression** is the same failure from the other side. A block every run executes, pushed behind a pointer, competes with the pointer's own summary of it: the agent reads the summary, finds it workable, and never opens the file — so the disclosed version of an always-executed rule silently runs as a paraphrase. Keep always-executed material inline, most of all late in a sequence where attention is already on finishing, and disclose only what some branches never reach.
 
-**Describe a forbidden phrasing; never quote it.** An injection scanner another harness runs over instruction files matches exact strings and drops the whole file on one hit, including the rule that quoted the string only to forbid it.
+**In a file a harness scans before loading, describe an attack string; never quote it.** Hermes scans a project rules file (`AGENTS.md`) for prompt injection, matches exact attack strings, and drops the whole file on one hit, including the rule that quoted the string only to forbid it. A quoted example no injection scanner matches (a bad description, a writing tell) is outside this rule.
 
 ## Pruning
 

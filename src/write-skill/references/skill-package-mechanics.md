@@ -1,16 +1,16 @@
 # Skill package mechanics
 
-Branch-gated packaging rules — each section names the case that opens it; a skill that bundles no script, keeps no state, and shares no reference never reads this file.
+Branch-gated packaging rules — each section names the case that opens it; a skill that bundles no script, runs no repo script, keeps no state, shares no reference, and carries no `$` before a digit in its body never reads this file.
 
-## Scripts
+## Scripts, and a `$` before a digit
 
 Read this section only when the skill bundles a `scripts/` helper, its body tells the agent to run a script from the owning repo, or its body carries a `$` before a digit.
 
 Scripts are **black boxes**: they exist to be *run*, not read — don't ingest a large helper into context unless running it first proved a custom variant necessary. The signal to bundle one: repeated runs of the skill independently writing the same helper. A body that tells the agent to run a script living in this repo rather than in the skill's own `scripts/` (`scripts/security.sh`) states how a session in another project reaches it: the skills are symlinked into `~/.claude/skills/`, so `readlink ~/.claude/skills/<name>` names the skill's directory inside the owning repo (`…/skills/src/<name>` — the repo root is two levels up), and the invocation is written from that root — a bare `scripts/…` resolves only from this repo's root.
 
-**Spell the interpreter.** A body runs `bash scripts/foo.sh` or `python3 scripts/foo.py`, never the bare path: a packager or copy that drops the executable bit turns every bare invocation into `Permission denied`.
+**Spell the interpreter.** A body puts `bash` or `python3` before the script path, however that path is resolved (`bash <repo-root>/scripts/foo.sh`, `python3 <skill-dir>/scripts/foo.py`), never the path alone: a packager or copy that drops the executable bit turns every bare invocation into `Permission denied`.
 
-**No bare `$` before a digit in a body.** Claude Code substitutes `$N` in a skill body with the argument at index N (`$0` is the first), and the docs name no exemption for code blocks; an index with no argument stays literal, so the corruption shows only when the skill is invoked with enough arguments. `awk '{print $1}'` becomes `awk '{print <word>}'`, a prose `$1,240` loses its figure, and `URL="$1"` reads the second argument. In code, pass the value through the environment (`URL='<url>' bash -c '…"$URL"…'`) or use `cut`; in prose, escape it as `\$1,240`.
+**No bare `$` before a digit in a body.** Claude Code substitutes `$N` in a skill body with the argument at index N (`$0` is the first), and the docs name no exemption for code blocks; an index with no argument stays literal, so the corruption shows only when the skill is invoked with enough arguments. `awk '{print $1}'` becomes `awk '{print <word>}'`, a prose `$1,240` loses its figure, and `URL="$1"` reads the second argument. In code, pass the value through a named variable on a quoted heredoc (`URL='<url>' bash <<'EOF'`, the block reading `"$URL"`), so the one typed value sits in one place and anything the block fetches is read into a variable, never re-typed into shell quotes — `audit-aeo`'s fetch block is the worked case — or use `cut`; in prose, escape it as `\$1,240`.
 
 ## Skills that keep state across sessions
 
