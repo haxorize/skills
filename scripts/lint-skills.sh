@@ -1141,6 +1141,10 @@ check_slash_form() {
 # (see header) British spellings. The word list IS the check: a form absent
 # from it is not caught, which is why it is spelled out rather than derived
 # from a suffix rule (`-ise` alone fires on `wise`, `precise`, `concise`).
+# Prefixes are the one derivation it makes: a word that is a listed form
+# behind one of `british_prefixes` (`untotalled`, `relabelled`) fires as the
+# listed form would, since a British stem stays British under any prefix. The
+# remainder must be a whole listed word, so no American word reaches it.
 # Code spans and URLs are stripped first, because a state value, an
 # identifier, or a vendor path is not this repo's prose to spell —
 # `order.cancelled` in a contract example stays. global/hooks/ and scripts/
@@ -1184,6 +1188,7 @@ check_slash_form() {
 # (a11y-health docs/reviews/2026-09-05-whole-repo-audit-p19-spelling.md), which
 # does not follow an edit here on its own.
 british_words='behaviour|behaviours|colour|colours|coloured|favour|favours|favoured|favourite|labour|honour|humour|neighbour|neighbours|rumour|endeavour|flavour|centre|centres|fibre|litre|metre|metres|theatre|licence|licences|defence|offence|pretence|analyse|analysed|analysing|paralyse|organise|organised|organises|organising|organisation|recognise|recognised|recognises|recognising|prioritise|prioritised|prioritises|prioritising|summarise|summarised|summarises|summarising|synthesise|synthesised|synthesises|synthesising|minimise|minimised|minimises|minimising|maximise|maximised|maximises|maximising|normalise|normalised|normalises|normalising|serialise|serialised|serialises|serialising|initialise|initialised|initialises|initialising|utilise|utilised|utilises|utilising|categorise|categorised|categorises|categorising|emphasise|emphasised|emphasises|emphasising|apologise|apologised|apologises|apologising|optimise|optimised|optimises|optimising|optimisation|specialise|specialised|standardise|standardised|generalise|generalised|formalise|formalised|realise|realised|realises|realising|criticise|criticised|memorise|memorised|characterise|characterised|itemise|itemised|harmonise|harmonised|tokenise|tokenised|tokenises|tokenising|tokeniser|tokenisation|cancelled|cancelling|modelling|labelling|labelled|travelled|travelling|signalled|fulfil|fulfilment|enrolment|instalment|whilst|amongst|grey|artefact|artefacts|sceptic|sceptical|scepticism|programme|programmes|judgement|judgements|acknowledgement|acknowledgements|storey|draught|practise|practised|enquire|enquiry|authorise|authorised|authorises|authorising|authorisation|authorisations|neighbouring|neighbourhood|neighbourhoods|catalogue|catalogues|catalogued|cataloguing|generalises|generalising|generalisation|generalisations|standardises|standardising|standardisation|honours|honoured|honouring|honourable|flavours|flavoured|flavouring|favourable|favourably|favourites|labours|laboured|labouring|humours|rumours|endeavours|endeavoured|endeavouring|fibres|litres|defences|offences|pretences|organisations|optimisations|specialises|specialising|specialisation|formalises|formalising|criticises|criticising|memorises|memorising|characterises|characterising|itemises|itemising|harmonises|harmonising|realisation|realisations|prioritisation|categorisation|normalisation|serialisation|initialisation|utilisation|minimisation|maximisation|summarisation|paralysed|paralyses|paralysing|modelled|signalling|fulfils|enrolments|instalments|judgemental|draughts|sceptics|storeys|enquires|enquired|enquiries|practises|practising|tokenisers|behavioural|behaviourally|colourful|colouring|manoeuvre|manoeuvres|manoeuvring|mould|moulds|moulded|counselling|counsellor|counsellors|centred|centring|licenced|totalled|totalling|labeller|labellers'
+british_prefixes='un|re|pre|mis|non|dis|de|over|under'
 check_spelling() {
   local f=$1 scan=${2-} hits badlines words
   [ -n "${2+set}" ] || scan=$(awk "$FENCE_AWK"'{ print FNR ":" $0 }' "$f")
@@ -1193,8 +1198,17 @@ check_spelling() {
   # wide is matched alternative by alternative against every line, where a hash
   # lookup per word is constant. Word boundaries are grep's: a run of
   # [A-Za-z0-9_]. Emits `<line>:<word as written>`.
-  hits=$(printf '%s\n' "$scan" | awk -v list="$british_words" '
-    BEGIN { n = split(list, w, "|"); for (i = 1; i <= n; i++) bad[tolower(w[i])] = 1 }
+  hits=$(printf '%s\n' "$scan" | awk -v list="$british_words" -v prefixes="$british_prefixes" '
+    BEGIN {
+      n = split(list, w, "|"); for (i = 1; i <= n; i++) bad[tolower(w[i])] = 1
+      np = split(prefixes, pre, "|")
+    }
+    function british(t,   j) {
+      if (t in bad) return 1
+      for (j = 1; j <= np; j++)
+        if (substr(t, 1, length(pre[j])) == pre[j] && substr(t, length(pre[j]) + 1) in bad) return 1
+      return 0
+    }
     {
       line = $0
       # An inline exemption, read BEFORE the strips so it survives them:
@@ -1213,7 +1227,7 @@ check_spelling() {
       lno = line; sub(/:.*/, "", lno)
       body = line; sub(/^[0-9]*:/, "", body)
       n2 = split(body, toks, /[^A-Za-z0-9_]+/)
-      for (i = 1; i <= n2; i++) if (toks[i] != "" && tolower(toks[i]) in bad && !(tolower(toks[i]) in ok)) print lno ":" toks[i]
+      for (i = 1; i <= n2; i++) if (toks[i] != "" && british(tolower(toks[i])) && !(tolower(toks[i]) in ok)) print lno ":" toks[i]
     }
   ') || true
   if [ -n "$hits" ]; then

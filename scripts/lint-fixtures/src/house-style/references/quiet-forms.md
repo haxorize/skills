@@ -13,6 +13,10 @@ the firing instance in the body that points here.
   never leaves that state.
 - A British form inside a URL is somebody else's path, not this repo's prose:
   https://example.invalid/docs/behaviour is left alone.
+- A prefix fires only on a whole listed remainder: we reprogram the greyhound
+  kennel and the unlabeled rows stay American.
+- A head off the prefix list derives nothing, so a hypersceptical reader is
+  left alone.
 - A pointer that resolves names a heading its target carries:
   [the sibling note](sibling-note.md) § The sibling half is where it lands.
 
