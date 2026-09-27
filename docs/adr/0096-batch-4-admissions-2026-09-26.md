@@ -1,0 +1,28 @@
+# The 2026-09-26 round's batch 4 admits material from four outside sources, all of it as local prose
+
+## Context
+
+Batch 4 of the 2026-09-26 round landed on 2026-09-26 as one commit, `2137dab`, folding five rows from `~/code/lib/_rounds/2026-09-26/reconcile.md` § Batch 4 and grill decision 10 into seven paths (`git show --stat --format= 2137dab | tail -1` → `7 files changed, 9 insertions(+), 5 deletions(-)`). The batch is its own review family, and its review has not run yet. So, like [ADR-0086](0086-batch-3-admissions-2026-09-12.md) and unlike [ADR-0095](0095-batch-3-admissions-2026-09-26.md), this record sits in the unpushed range and the review reads it with the diff.
+
+## Decision
+
+The admissions of batch 4 are recorded here, one bullet per outside source; the round's closing ADR points here rather than restating them. Every source fed local prose, and no directory was ported, so **no diff-before-editing obligation attaches to any source here**. The trigger did fire on the four first-table hosts the commit edited: `review-changes`, `review-architecture`, and `implement` from mattpocock/skills, and `receiving-review` from obra/superpowers. [ADR-0034](0034-branch-mining-lineage-or-dormant-main.md)'s 2026-09-26 swept-point entry discharges all four: no ported directory changed in mattpocock/skills (`3cca18b`..`c55ee46`), and `skills/receiving-code-review` is untouched in obra/superpowers (`b36e082`..`8ca22db`). Licenses are read from each clone's `LICENSE` this session (`head -1 ~/code/lib/<dir>/LICENSE` → `MIT License` for all four).
+
+- **cloudflare/security-audit-skill** (MIT; clone `cloudflare-security-audit-skill`, tip `c1c8a8c` of 2026-09-14) — ledger `N3-2` (`skills/security-audit/SUPPLY-CHAIN-AND-RELEASE.md`). Taken: CI and workflow config is a security surface, read as which trigger runs whose code, which secrets the job reaches, and whether untrusted text reaches a privileged step's shell. The audit's other surfaces were not taken, since the lens's list already names them. Local: `src/review-changes/references/lens-briefs-code.md` § `/security-review`, one item in the surface list.
+- **obra/superpowers** (MIT; clone `obra-superpowers`, main at `8ca22db` of 2026-09-25) — ledger `DL3.1` (`skills/requesting-code-review/code-reviewer.md`, with the same idea in `writing-plans` and `executing-plans`). Taken: a spec's silence on an input is not permission for that input to break the program, so the finding is graded by what a person using the software would expect. Local: `finding-discipline.md` § Vet before presenting, one sentence after the disposing-reason rule, in both byte-identical copies (`src/review-changes/references/`, `src/review-architecture/references/`).
+- **0xNyk/council-of-high-intelligence** (MIT; clone `0xNyk-council-of-high-intelligence`, tip `dd09e28` of 2026-09-21) — ledger `N3-6` (`SKILL.md`, the Agreement check: past 70% agreement, the likeliest dissenters get a counterfactual prompt). Taken: broad agreement is a signal to recheck, not a sign of confidence. The personas, the Minority Report, and the provider machinery were not taken; they fall in the standing reject class for orchestration packs (`N3-13`). The recheck's shape is local: it mirrors `receiving-review`'s zero-accepted tripwire and turns it on the reviewer's own output. Local: `src/review-changes/SKILL.md` § 4, the **All-clean tripwire** paragraph.
+- **greptileai/skills** (MIT; clone `greptileai-skills`, tip `646e2df` of 2026-07-22) — ledger `N3-3` (`check-pr/SKILL.md`, the issue-comments paragraph). Taken: a review bot keeps one running summary and edits it in place, so a sweep reads a PR's general comments by `updated_at`, not by novelty. The Greptile CLI and the auto-fix loop were not taken. Local: `src/receiving-review/references/pr-threads.md` § The reply sweep, one paragraph. Its `gh api …/issues/<n>/comments` listing was run on `cli/cli#9000` (rc 0, one comment with `updated_at` later than `created_at`).
+- **Local, no source** — ledger `TX3` (this user's transcripts: seven corrections across five sessions) and grill decision 10. `src/implement/SKILL.md` § 6 suggests one review per work item rather than per slice, and its landing sentence no longer assumes every slice was reviewed. `src/feedback-loops/SKILL.md`'s close treats a newest `Reviewed-tree:` equal to the current tree as a finished review. Nothing to attribute.
+
+## Considered Options
+
+- **Land `TX3` in the `review-changes` body, as the reconcile's Batch 4 row planned.** Rejected at landing: the body of a user-invoked skill loads only once a review is already running, so a gate on *suggesting* a review never reaches the moment it governs. Grill decision 10 keyed the gate to `implement`, the only body that suggested a review for every slice (`grep -n -iE "slice[^|]{0,60}review"` over the skill bodies, `README.md`, and the router found no other).
+- **Take `N3-6`'s Minority Report as well, recording a dissenting lens after it is outvoted.** Rejected: `review-changes` reports per lens and never reranks across them (§ 6), so no lens is outvoted and there is no minority to record.
+
+## Consequences
+
+- `docs/lineage.md`'s second table gains four rows whose `Record` cell is this record, and its header sentence names this record beside ADR-0095.
+- The round's closing ADR points here for batch 4.
+- `review-changes` sits at 14,345 B (`wc -c`), 655 B under the 15,000 B cap.
+
+Revisit when: an ADR-0034 swept-point diff of mattpocock/skills or of obra/superpowers' `receiving-code-review` shows a ported path changed; or Risk zones come into use and a red-zone Task lands unreviewed, which grill decision 10 names as the reopening for a per-Task review suggestion.
