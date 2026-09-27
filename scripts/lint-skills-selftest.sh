@@ -441,7 +441,7 @@ expect "house style at depth one under src/" "src/stray-note.md uses a British s
 # A word added to british_words after its count pin lands with an instance in
 # docs/british-words-additions.md; the rendered word list is the assertion, so
 # dropping either member reds this row by name.
-expect "british_words additions (totalled, totalling, labeller, labellers) and british_prefixes (untotalled, relabelled)" "docs/british-words-additions.md uses a British spelling (line(s) 5 7 — labeller labellers relabelled totalled totalling untotalled )"
+expect "british_words additions (totalled through plough) and british_prefixes (untotalled, relabelled)" "docs/british-words-additions.md uses a British spelling (line(s) 5 7 9 11 13 — aluminium anaemia anaesthesia analyser analysers channelled cheque colourless cosy defenceless dialled diarrhoea enrol enrols equalled foetus fuelled funnelled gynaecology haematology haemoglobin humoured labeller labellers leukaemia levelled marshalled neighbourly oedema oesophagus oestrogen organiser organisers orthopaedic paediatric pencilled plough recognisable relabelled totalled totalling tunnelled tyre untotalled )"
 expect "house style on a repo-local skill" ".claude/skills/repo-local/SKILL.md uses a British spelling"
 expect "house style on DOMAIN.md" "DOMAIN.md uses a British spelling"
 expect "house style on README.md" "README.md uses a British spelling"
@@ -762,8 +762,10 @@ list_pin() {  # variable name, expected member count, separator
 }
 # 260 → 262 on 2026-09-26: totalled, totalling (the a11y-health repos' spelling
 # flip); 262 → 264 on 2026-09-27: labeller, labellers (a11y-health-ui audit
-# P18-F2). Their instances are in docs/british-words-additions.md.
-list_pin british_words 264 '|'
+# P18-F2); 264 → 302 on 2026-09-27: the medical ae/oe forms, the doubled-l
+# past tenses and the missing inflections and standalone words, paediatric
+# through plough. Their instances are in docs/british-words-additions.md.
+list_pin british_words 302 '|'
 # 102 → 101 on 2026-09-02: SKIPPED dropped. DOMAIN.md:77 bans the word outright
 # (UNVERIFIABLE is the registered marker), so admitting it here left check_labels
 # blind to a token the glossary forbids. Zero prose uses remain in any .md; the
