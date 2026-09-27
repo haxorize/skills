@@ -12,7 +12,7 @@ The file location, numbering, amend-or-write-new rule, default template, optiona
 
 ## When to write an ADR
 
-The **ADR gate** has three criteria (full statement, with worked examples of what qualifies and what doesn't, in the reference) — **hard to reverse**, **surprising without context**, **the result of a real trade-off**. All three must hold; open the reference's examples when the gate's outcome on the candidate isn't obvious from the criteria alone. A decision still being argued is written with `Status: proposed` and opened as a PR, so several reviewers' comments land on its lines; there is no separate RFC document. The open is gated in step 4.
+The **ADR gate** has three criteria (full statement, with worked examples of what qualifies and what doesn't, in the reference) — **hard to reverse**, **surprising without context**, **the result of a real trade-off**. All three must hold, and they are not limited to design: a team decision that clears them — a vendor, a product bet, a feature cut — is recorded the same way, with its forecast and quit condition per the reference. Open the reference's examples when the gate's outcome on the candidate isn't obvious from the criteria alone. A decision still being argued is written with `Status: proposed` and opened as a PR, so several reviewers' comments land on its lines; there is no separate RFC document. The open is gated in step 4.
 
 ## Workflow
 
