@@ -36,14 +36,14 @@ SIGNALS = [
     r"\bi didn'?t\s+(ask|say|want)\b",
     r"\bwhy did you\b",
     r"\bstop\s+(doing|adding|using)\b",
-    # added 2026-09-26 from this user's own mid-turn and typed corrections (reconcile 2026-09-26, TX2)
-    r"\bhold\s+(up|on)\s*[.,!\u2014]",
-    r"\bwait\s*[.,!\u2014]+\s*(why|what|no)\b",
-    r"\bi\s+(don'?t|do not)\s+want\b",
-    r"\byou\s+(never|didn'?t|did not)\s+(answer|do|run|fix|read|check)\w*",
-    r"\bare you (kidding|serious)\b",
-    r"\bwhy would (i|we|you)\b",
-    r"\bcan'?t you just\b",
+    # added 2026-09-26 from this user's own mid-turn and typed corrections
+    r"\bhold\s+(up|on)\s*([.,!\u2013\u2014]|-{1,2}(?!\w))",
+    r"\bwait\s*([.,!\u2013\u2014]|-{1,2})+\s*(why|what|no)\b",
+    r"\bi\s+(don'?t|do not)\s+want\b(?!\s+to\s+(bother|interrupt|pester|nag|rush|be)\b)",
+    r"\byou\s+(never|didn'?t|did not)\s+(answer(ed)?|do|run|fix(ed)?|read|check(ed)?)\b(?!\s+(anything|nothing)\s+wrong\b)",
+    r"\bare\s+you\s+(kidding|serious)\b",
+    r"\bwhy\s+would\s+(i|we|you)\b(?!\s+need\b)",
+    r"\bcan'?t\s+you\s+just\b",
 ]
 SIG = re.compile("|".join(SIGNALS), re.I)
 # The harness's own opening for a denied tool call, as recorded in real
@@ -68,6 +68,22 @@ def seed_cursor(cursor, total):
             f.write(str(total))
     except Exception:
         crumb("cannot write cursor " + cursor)
+
+def entry_content(e):
+    """The content of a user or attachment entry, or None when it carries none of the human's text."""
+    if e["type"] == "attachment":
+        # A message the user typed while the agent was working: the harness
+        # records it as a queued_command attachment, never as a user entry.
+        # Only the human's prompt counts; a subagent's hand-back (origin
+        # peer) and a task notification arrive in the same envelope.
+        a = e.get("attachment")
+        if not isinstance(a, dict) or a.get("type") != "queued_command" or a.get("commandMode") != "prompt":
+            return None
+        if not isinstance(a.get("origin"), dict) or a["origin"].get("kind") != "human" or not isinstance(a.get("prompt"), str):
+            return None
+        return a["prompt"]
+    msg = e.get("message") or {}
+    return msg.get("content") if isinstance(msg, dict) else None
 
 def main():
     raw = sys.stdin.read()
@@ -130,20 +146,7 @@ def main():
         if e.get("isMeta") or e.get("isSidechain") or e.get("isCompactSummary") or e.get("isVisibleInTranscriptOnly"):
             continue
         texts, denied = [], False
-        if e["type"] == "attachment":
-            # A message the user typed while the agent was working: the harness
-            # records it as a queued_command attachment, never as a user entry.
-            # Only the human's prompt counts; a subagent's hand-back (origin
-            # peer) and a task notification arrive in the same envelope.
-            a = e.get("attachment")
-            if not isinstance(a, dict) or a.get("type") != "queued_command" or a.get("commandMode") != "prompt":
-                continue
-            if not isinstance(a.get("origin"), dict) or a["origin"].get("kind") != "human" or not isinstance(a.get("prompt"), str):
-                continue
-            content = a["prompt"]
-        else:
-            msg = e.get("message") or {}
-            content = msg.get("content") if isinstance(msg, dict) else None
+        content = entry_content(e)
         if isinstance(content, str):
             texts.append(content)
         elif isinstance(content, list):
@@ -165,7 +168,7 @@ def main():
         for t in texts:
             if t.startswith(INJECTED_PREFIXES):
                 continue
-            m = SIG.search(t.replace("\u2019", "'"))   # a curly apostrophe, as a phone keyboard types it
+            m = SIG.search(t.replace("\u2019", "'").replace("\u2018", "'"))   # a curly apostrophe, as a phone keyboard types it
             if m:
                 hits.append('%d ("%s")' % (line_no, re.sub(r"\s+", " ", m.group(0).strip()).replace('"', "'")))
                 break

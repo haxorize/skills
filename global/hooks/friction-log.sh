@@ -5,8 +5,8 @@
 # where it last looked and asks one cheap question: did a user turn since then
 # look like a correction? A correction-shaped turn is the user's own text —
 # typed at the prompt, or typed while the agent was working, which the harness
-# records as a `queued_command` attachment with origin `human` rather than as a
-# user entry — matching one of the signal patterns in `SIGNALS` in friction-log.py beside this file — for example "no,
+# records as a `queued_command` attachment with origin `human` and
+# `commandMode` `prompt` rather than as a user entry — matching one of the signal patterns in `SIGNALS` in friction-log.py beside this file — for example "no,
 # don't", "I said", "I told you", "from now on", "that's not what", "undo
 # that"; the table is the contract, not this list — or a tool call the user
 # denied with guidance: the harness records that as a tool_result with
