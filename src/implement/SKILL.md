@@ -62,11 +62,11 @@ Most slices won't clear the gate; don't manufacture an ADR for an obvious or eas
 
 ### 6. Suggest review, then ship
 
-`review-changes` is user-invoked, like this skill, so nothing here can invoke it. **Suggest** it to the user before the change lands: "Slice built and green — consider `/review-changes` before it lands."
+`review-changes` is user-invoked, like this skill, so nothing here can invoke it. **Suggest** it once per work item, not per slice: when a Story's last Task lands, when a Story with no Tasks lands, or when a Bug fix lands — never for a single Task, never again when nothing has been committed since the last review, and never where the repo sets its own review cadence (a `## Round` block's `Review cadence:`), which decides instead. The user asks for any other review; the size of a diff worth reviewing is theirs to judge.
 
 If the user runs `/review-changes`, the findings are acted on in `/address-findings`' one pass (it runs `feedback-loops` after its last fix); a finding that pass cannot fix is a deferral the user ratifies there, never a follow-up this slice files on its own.
 
-Once the slice is reviewed and findings are addressed, it lands: a one-commit change through the `committing` discipline on the user's ask, a change that needs a split or a PR through `/ship` — suggest it, don't invoke it: "Green and reviewed — `/ship` from here."
+Once the slice is green — and, where a review ran, its findings addressed — it lands: a one-commit change through the `committing` discipline on the user's ask, a change that needs a split or a PR through `/ship` — suggest it, don't invoke it: "Green — `/ship` from here."
 
 ## Notes
 

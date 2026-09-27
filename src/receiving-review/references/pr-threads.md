@@ -16,6 +16,8 @@ Enumerate the open threads by command before the sweep, and re-run the same comm
 az devops invoke --area git --resource pullRequestThreads --route-parameters project=<project> repositoryId=<repo-id> pullRequestId=<n> --api-version 7.1 --query 'value[?status!=`closed` && status!=`fixed`]'
 ```
 
+On GitHub the review threads are not the whole list: a PR's general comments come from the issue-comments stream, and a review bot that keeps one running summary edits that comment in place each cycle rather than posting anew. List the stream with `gh api repos/{owner}/{repo}/issues/<n>/comments --paginate --jq '.[] | {id, user: .user.login, created_at, updated_at}'` and read every comment whose `updated_at` is newer than your last sweep — a comment edited since reads as old by `created_at`.
+
 ## The three reply shapes
 
 - **A fix** replies "Fixed in `<hash>` — <what changed>", citing the commit that actually contains the fix — posted only once that hash is on the remote, never before: a reply citing an unpushed commit is a dead link and a "shipped" claim. Leave the thread open: verifying the fix is the reviewer's move, not yours.

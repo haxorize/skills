@@ -61,6 +61,8 @@ Above that size, fan out per [references/fan-out.md](references/fan-out.md), ope
 
 Vet the raw findings per [references/finding-discipline.md](references/finding-discipline.md), which covers the over-report, the drop classes, the advisory, the vet's context-asymmetry default, and the **bidirectional** ADR/DOMAIN read.
 
+**All-clean tripwire:** when every lens comes back with nothing that survives the vet, re-read the dropped finding with the weakest disposing reason as if it were true — or, where no lens raised any, the changed branch you would least like to trace by hand — before the report says clean. It is `receiving-review`'s zero-accepted tripwire, turned on your own output.
+
 **Negative-space pass:** on a fanned-out diff, run it after the vet per [references/fan-out.md](references/fan-out.md) § Negative-space pass, which carries the brief and the skip rule.
 
 ### 5. Rank and classify each finding
