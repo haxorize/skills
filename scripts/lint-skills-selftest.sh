@@ -150,7 +150,10 @@
 # scripts/git-hooks/ (a hook with no selftest — with the hook-shaped remedy —
 # one whose selftest lacks the exec bit, one that lacks the exec bit itself,
 # a shebang-less README that is not a hook and must stay quiet, and a paired
-# executable hook in the clean root that must stay quiet), the conventions
+# executable hook in the clean root that must stay quiet), the same check
+# over src/*/scripts/ (an unpaired .py and an unpaired .sh fire with the
+# tree-specific remedy; a paired .py, a non-script file and a .py in a
+# fixture subdirectory, all in the clean root, stay quiet), the conventions
 # pointer (one script lacking it fires; a shebang-less library carrying it on
 # line 1, and every other fixture script carrying it on line 2, stay quiet),
 # the clean run's stderr (no "command not found"), the
@@ -503,6 +506,15 @@ expect "repo-local script selftest (missing)" ".claude/skills/repo-local/scripts
 # asserts a rule about scripts/*.sh — a glob this file does not match — so the
 # computed half was right and the justification half named the wrong tree.
 expect "repo-local script selftest (tree-specific remedy)" "(source scripts/selftest-lib.sh; every .claude/skills/*/scripts/*.sh is graded by a selftest that runs it against a fixture, the same pairing scripts/ answers to)"
+# And under a shipped skill's src/*/scripts/ (the walk ADR-0104's 2026-10-10
+# amendment records; ADR-0103 owns the bundled-script convention): one
+# instance per glob alternative, so dropping either the *.py or the *.sh half
+# of the walk reds a row. The .py
+# row's remedy names <stem>-selftest.sh, which is what proves require_selftest
+# cuts .py off the stem rather than writing orphan-bundled.py-selftest.sh.
+expect "bundled script selftest (missing .py)" "src/fixture-discipline/scripts/orphan-bundled.py has no selftest — write src/fixture-discipline/scripts/orphan-bundled-selftest.sh"
+expect "bundled script selftest (missing .sh)" "src/fixture-discipline/scripts/orphan-bundled-shell.sh has no selftest — write src/fixture-discipline/scripts/orphan-bundled-shell-selftest.sh"
+expect "bundled script selftest (tree-specific remedy)" "(source scripts/selftest-lib.sh; every src/*/scripts/*.sh and *.py a skill bundles is graded by a selftest that runs it against a fixture"
 expect "script selftest (not executable)" "scripts/unexec-tool-selftest.sh is not executable"
 expect "git-hook selftest (missing)" "scripts/git-hooks/orphan-hook has no selftest — write scripts/git-hooks/orphan-hook-selftest.sh"
 # The remedy a git hook gets is one it can follow: no *-lib.sh rename (git
@@ -694,15 +706,15 @@ fi
 expect_rc "the lint against the fixture tree" 1 "$status"
 # The count of FAIL lines is pinned: a check that begins firing on a fixture
 # it should leave alone reds here even when no substring row names the line.
-# Last moved 2026-09-27 (check_arg_substitution's review): 108 → 111 — the
-# no-frontmatter and unclosed-frontmatter fixtures draw one argument
-# substitution line each, and the unclosed one a slash line. Earlier moves of this pin are in
+# Last moved 2026-10-10 (the src/*/scripts/ walk): 111 → 113 — orphan-bundled.py
+# and orphan-bundled-shell.sh under src/fixture-discipline/scripts/ draw one
+# selftest-pairing line each. Earlier moves of this pin are in
 # `git log -p -G 'expected exactly [0-9]+ FAIL' -- scripts/lint-skills-selftest.sh` — they describe counts
 # nothing asserts any more, and stacking them here made a changelog out of the
 # one line that has to stay readable. A count that moves is read before it is
 # re-pinned.
 nfail=$(printf '%s\n' "$output" | grep -c '^FAIL: ')
-[ "$nfail" -eq 111 ] || selftest_fail "expected exactly 111 FAIL lines against the fixture tree, got $nfail"
+[ "$nfail" -eq 113 ] || selftest_fail "expected exactly 113 FAIL lines against the fixture tree, got $nfail"
 # The shared-trigger-phrase fixtures are pinned by property, as near_bytes and
 # bulk_bytes are below: every row above them asserts a FAIL that appears or a
 # FAIL that does not, and each of those readings is silently satisfied by a
@@ -934,6 +946,15 @@ expect_in "$clean_baseline" "the launch-loaded sum did not print, or its figure 
 # root stays green and the wrong-on-purpose FAIL count does not move.
 reject_in "$clean_baseline" "the .claude/skills/*/scripts/ walk reached a non-.sh file, so its *.sh boundary has been widened" "repo-local/scripts/NOTES.txt"
 reject_in "$clean_baseline" "the .claude/skills/*/scripts/ walk reached a .sh file outside a scripts/ directory, so its path has been loosened" "repo-local/tools/helper.sh"
+# The same widening half for the src/*/scripts/ walk. paired-bundled.py and its
+# selftest grade the pairing's .py stem (a derivation that cut only .sh asks
+# for paired-bundled.py-selftest.sh and FAILs here); NOTES.txt grades the
+# extension; paired-bundled-fixtures/input.py grades depth — a selftest's
+# fixtures sit one level down and are data, so a recursive walk that reached
+# them would draw a pointer and a pairing FAIL.
+reject_in "$clean_baseline" "the src/*/scripts/ walk derived a paired .py's selftest name without cutting .py" "paired-bundled.py has no selftest"
+reject_in "$clean_baseline" "the src/*/scripts/ walk reached a non-script file, so its *.sh/*.py boundary has been widened" "clean-skill/scripts/NOTES.txt"
+reject_in "$clean_baseline" "the src/*/scripts/ walk reached a file in a fixture subdirectory, so it has gone recursive" "paired-bundled-fixtures/input.py"
 
 # Argument handling, each direction: --help prints usage and runs no check;
 # an unknown argument exits 3 and runs no check; a LINT_ROOT that is not a

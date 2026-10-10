@@ -45,7 +45,8 @@ fi
 # scripts/*.sh that grade the tree rather than themselves; every other gate is
 # a selftest — scripts/*-selftest.sh (lint-skills.sh enforces that pairing, so
 # a script landing without one is named there), the git hooks' selftests
-# beside this file, and the Claude Code hooks' (PreToolUse and Stop alike)
+# beside this file, the skill-bundled scripts' selftests under src/*/scripts/,
+# and the Claude Code hooks' (PreToolUse and Stop alike)
 # the way install.sh derives them:
 # every global/hooks/*.sh with an `# Install note:` header line. A hook that
 # lands in either directory without a selftest is named below, not silently
@@ -60,6 +61,12 @@ done
 for s in "$repo_root"/scripts/git-hooks/*-selftest.sh; do
   [ -e "$s" ] || continue
   gates="$gates scripts/git-hooks/$(basename "$s")"
+done
+# A skill-bundled script's selftest (src/*/scripts/, ADR-0103) is a gate too:
+# a merge can bring in a changed classifier as easily as a changed linter.
+for s in "$repo_root"/src/*/scripts/*-selftest.sh; do
+  [ -e "$s" ] || continue
+  gates="$gates ${s#"$repo_root"/}"
 done
 for h in $(grep -l '^# Install note: ' "$repo_root"/global/hooks/*.sh 2>/dev/null); do
   gates="$gates global/hooks/$(basename "$h" .sh)-selftest.sh"

@@ -2493,7 +2493,14 @@ require_selftest() {
   local f=$1 kind=$2 what=$3 tail=$4 st
   # `st` is assigned on its own line: `local a=$1 b=${a%x}` expands every word
   # before the builtin assigns any of them, so `b` would read an outer `a`.
-  st="${f%.sh}-selftest.sh"
+  # A bundled Python script under src/*/scripts/ pairs with a shell selftest
+  # of the same stem: foo.py -> foo-selftest.sh. `${f%.sh}` leaves `.py` on,
+  # so the stem is cut per extension; a .sh file and an extensionless git hook
+  # take the second arm, unchanged.
+  case "$f" in
+    *.py) st="${f%.py}-selftest.sh" ;;
+    *) st="${f%.sh}-selftest.sh" ;;
+  esac
   if [ ! -f "$st" ]; then
     # Both messages open with a literal prefix, ahead of every interpolation:
     # discoverable-code's rule is that a message copied out of a log greps back
@@ -2553,6 +2560,9 @@ check_script_selftest() {
     .claude/skills/*/scripts/*)
       require_selftest "$sc" script "has no selftest" "(source scripts/selftest-lib.sh; every .claude/skills/*/scripts/*.sh is graded by a selftest that runs it against a fixture, the same pairing scripts/ answers to), or name the file *-lib.sh if it is a library"
       ;;
+    src/*/scripts/*)
+      require_selftest "$sc" script "has no selftest" "(source scripts/selftest-lib.sh; every src/*/scripts/*.sh and *.py a skill bundles is graded by a selftest that runs it against a fixture, the same pairing scripts/ answers to), or name a shell library *-lib.sh"
+      ;;
     *)
       require_selftest "$sc" script "has no selftest" "(source scripts/selftest-lib.sh; every scripts/*.sh is graded by a selftest that runs it against a fixture), or name the file *-lib.sh if it is a library"
       ;;
@@ -2577,6 +2587,18 @@ fi
 # was the one script nothing graded. Same contract as scripts/ — a *.sh here is
 # paired with its selftest or named *-lib.sh.
 for sc in .claude/skills/*/scripts/*.sh; do
+  [ -f "$sc" ] && check_script_selftest "$sc"
+done
+# A shipped skill's bundled scripts are walked too. ADR-0103 bundles a skill's
+# deterministic logic as a tested script under src/<skill>/scripts/; ADR-0104
+# deferred grading that tree, and its 2026-10-10 amendment closes the gap the
+# way the .claude/skills/ walk above closed it for repo-local skills: a bundled
+# script runs on every consumer's machine, so it is the last place to leave a
+# script nothing grades. Same contract — a *.sh or *.py here is paired with its
+# <stem>-selftest.sh (require_selftest cuts .py too), or a shell file is named
+# *-lib.sh. One level only: a selftest's fixtures sit in a subdirectory
+# (<stem>-fixtures/), and their .py or .sh inputs are data, not scripts.
+for sc in src/*/scripts/*.sh src/*/scripts/*.py; do
   [ -f "$sc" ] && check_script_selftest "$sc"
 done
 # The git hooks walk: check_script_selftest grades these too (check_hook_selftest

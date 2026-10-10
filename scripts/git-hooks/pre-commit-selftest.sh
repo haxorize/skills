@@ -39,8 +39,11 @@
 # pointer at scripts/README.md. The selftest map, in both directions: a staged
 # scripts/foo.sh runs the stub foo-selftest.sh beside it, a staged git hook
 # runs its own (the scripts/ path-map row doubles as that row), a staged
-# selftest runs nothing extra, a staged selftest-lib.sh runs every stub
-# selftest in both directories, one selftest queued via two staged paths runs
+# selftest runs nothing extra, a staged selftest-lib.sh (or lint-lib.sh) runs
+# every stub selftest in scripts/, scripts/git-hooks/ and src/*/scripts/, a
+# staged src/*/scripts/ .py or .sh runs its <stem>-selftest.sh, a file in its
+# <stem>-fixtures/ runs the same one, and another subdirectory, an unpaired
+# script or a staged bundled selftest runs nothing extra, one selftest queued via two staged paths runs
 # once (so dropping the dedupe reds here), and a red selftest blocks. And the
 # lineage notice: a staged src/<skill>/ path with a backticked first-cell row
 # in docs/lineage.md prints the notice — once per skill even for two staged
@@ -92,6 +95,13 @@ echo foo-selftest >> "$RAN"; exit "${SELFTEST_RC:-0}"
 STUB
 cat > "$work/scripts/git-hooks/some-hook-selftest.sh" <<'STUB'
 echo some-hook-selftest >> "$RAN"; exit "${SELFTEST_RC:-0}"
+STUB
+# A third, for a skill's bundled scripts under src/*/scripts/: the pairing
+# beside a staged src/bundle/scripts/tool.py, tool.sh, or a file in its
+# tool-fixtures/ directory.
+mkdir -p "$work/src/bundle/scripts"
+cat > "$work/src/bundle/scripts/tool-selftest.sh" <<'STUB'
+echo tool-selftest >> "$RAN"; exit "${SELFTEST_RC:-0}"
 STUB
 
 # stage <path> — creates the file and stages it, on a fresh index.
@@ -184,20 +194,39 @@ expect_rc "a staged selftest (green linters)" 0 "$rc"
 [ "$ran" = "lint-skills " ] || selftest_fail "a staged selftest ran something extra: expected 'lint-skills ', ran '$ran'"
 stage "scripts/selftest-lib.sh"; run
 expect_rc "a staged selftest-lib.sh (green gates)" 0 "$rc"
-[ "$ran" = "lint-skills foo-selftest some-hook-selftest " ] || selftest_fail "a staged selftest-lib.sh: expected every stub selftest once ('lint-skills foo-selftest some-hook-selftest '), ran '$ran'"
+[ "$ran" = "lint-skills foo-selftest some-hook-selftest tool-selftest " ] || selftest_fail "a staged selftest-lib.sh: expected every stub selftest once ('lint-skills foo-selftest some-hook-selftest tool-selftest '), ran '$ran'"
 # Every scripts/*-lib.sh runs everything, not selftest-lib.sh alone: lint-lib.sh
 # backs both linters, and under the old arm a staged copy queued NOTHING, so the
 # file both linters source could land with neither selftest run. Narrow this arm
 # back to the literal selftest-lib.sh and this row reds.
 stage "scripts/lint-lib.sh"; run
 expect_rc "a staged lint-lib.sh (green gates)" 0 "$rc"
-[ "$ran" = "lint-skills foo-selftest some-hook-selftest " ] || selftest_fail "a staged lint-lib.sh: expected every stub selftest once ('lint-skills foo-selftest some-hook-selftest '), ran '$ran'"
+[ "$ran" = "lint-skills foo-selftest some-hook-selftest tool-selftest " ] || selftest_fail "a staged lint-lib.sh: expected every stub selftest once ('lint-skills foo-selftest some-hook-selftest tool-selftest '), ran '$ran'"
 # Two paths, one selftest: foo.sh queues foo-selftest.sh directly, and
 # selftest-lib.sh queues it again through the run-everything rule; the dedupe
 # is what keeps it to one run.
 stage "scripts/foo.sh"; git -C "$work" add -- scripts/selftest-lib.sh; run
 expect_rc "one selftest queued via two staged paths (green gates)" 0 "$rc"
-[ "$ran" = "lint-skills foo-selftest some-hook-selftest " ] || selftest_fail "one selftest queued via two staged paths: expected 'lint-skills foo-selftest some-hook-selftest ' (foo-selftest once), ran '$ran'"
+[ "$ran" = "lint-skills foo-selftest some-hook-selftest tool-selftest " ] || selftest_fail "one selftest queued via two staged paths: expected 'lint-skills foo-selftest some-hook-selftest tool-selftest ' (foo-selftest once), ran '$ran'"
+# A skill's bundled scripts (src/*/scripts/). A .py and a .sh each queue
+# <stem>-selftest.sh — the .py row is the one that reds if the arm cuts only
+# .sh off the stem. A file in <stem>-fixtures/ queues the same selftest, since
+# it changes what that selftest grades; a file in any other subdirectory, a
+# staged selftest, and a script with no selftest beside it queue nothing.
+expect_run "a staged src/*/scripts/tool.py"       "src/bundle/scripts/tool.py"                       "lint-skills tool-selftest "
+expect_run "a staged src/*/scripts/tool.sh"       "src/bundle/scripts/tool.sh"                       "lint-skills tool-selftest "
+expect_run "a staged file in tool-fixtures/"      "src/bundle/scripts/tool-fixtures/case/input.csv"  "lint-skills tool-selftest "
+expect_run "a staged file in another subdir"      "src/bundle/scripts/other/x.py"                    "lint-skills "
+expect_run "a staged unpaired src/*/scripts/*.py" "src/bundle/scripts/unpaired.py"                   "lint-skills "
+git -C "$work" reset -q 2>/dev/null; git -C "$work" add -- src/bundle/scripts/tool-selftest.sh; run
+expect_rc "a staged src/*/scripts selftest (green linters)" 0 "$rc"
+[ "$ran" = "lint-skills " ] || selftest_fail "a staged src/*/scripts selftest ran something extra: expected 'lint-skills ', ran '$ran'"
+# tool.py and a fixture file both point at tool-selftest.sh: it runs once.
+stage "src/bundle/scripts/tool.py"; git -C "$work" add -- src/bundle/scripts/tool-fixtures/case/input.csv; run
+expect_rc "a bundled selftest queued via two staged paths (green gates)" 0 "$rc"
+[ "$ran" = "lint-skills tool-selftest " ] || selftest_fail "a bundled selftest queued via two staged paths: expected 'lint-skills tool-selftest ' (once), ran '$ran'"
+stage "src/bundle/scripts/tool.py"; run 0 0 1
+expect_rc "a red bundled selftest blocks" 1 "$rc"
 stage "scripts/foo.sh"; run 0 0 1
 expect_rc "a red selftest blocks" 1 "$rc"
 expect_in "$out" "the red-selftest block did not carry the advisory line" "pre-commit: FAIL"

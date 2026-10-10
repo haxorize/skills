@@ -10,15 +10,19 @@ set -uo pipefail
 #
 # Gate map: lint-skills.sh when a staged path is under src/, global/, .claude/skills/, scripts/ or docs/, or is README.md, DOMAIN.md or CLAUDE.md
 # Gate map: lint-adrs.sh when a staged path is under docs/adr/
-# Gate map: the -selftest.sh beside a staged scripts/*.sh or scripts/git-hooks/ hook, when it exists — every selftest when any scripts/*-lib.sh is staged — each once; a red one blocks
+# Gate map: the -selftest.sh beside a staged scripts/*.sh, scripts/git-hooks/ hook, or src/*/scripts/*.sh or *.py, when it exists — a staged file under src/*/scripts/<stem>-fixtures/ queues <stem>-selftest.sh — every selftest when any scripts/*-lib.sh is staged — each once; a red one blocks
 # Gate map: a stderr notice, never a block, when a staged src/<skill>/ path has a row in docs/lineage.md's FIRST table — diff the upstream before a material edit; a skill listed only in the nothing-to-diff table gets no notice
 #
 # The selftest map is derived, never kept: the pairing is scripts/README.md's
 # (scripts/<x>.sh or a git hook <h> is graded by the <x>-selftest.sh beside
 # it; a selftest, a *-lib.sh and setup-hooks.sh owe none), and a
 # pairing that does not exist is lint-skills.sh's to name, not this hook's to
-# block on — so a selftest runs only when its file is there. A staged
-# scripts/*-lib.sh runs every selftest in both directories: a library cannot
+# block on — so a selftest runs only when its file is there. A skill's bundled
+# script under src/*/scripts/ answers to the same pairing (foo.py and foo.sh
+# both to foo-selftest.sh), and so does its selftest's fixture directory: a
+# staged src/<skill>/scripts/foo-fixtures/... changes what foo-selftest.sh
+# grades, so it queues that selftest. A staged
+# scripts/*-lib.sh runs every selftest in all three places: a library cannot
 # know which scripts source it, so the safe queue is all of them. Each queued selftest runs once however many staged paths point at it,
 # through the same wrapper as the linters, so a 127 or a file that vanished
 # is named and any non-zero status blocks.
@@ -131,12 +135,30 @@ while IFS= read -r -d '' p; do
       # `lint-lib.sh` backs both linters, and the next one will back
       # something else. Naming each library here is how lint-lib.sh landed
       # able to break both linters with neither of their selftests queued.
-      for st in "$repo_root"/scripts/*-selftest.sh "$repo_root"/scripts/git-hooks/*-selftest.sh; do
+      # src/*/scripts/ selftests source scripts/selftest-lib.sh too, so they
+      # are in the queue as well.
+      for st in "$repo_root"/scripts/*-selftest.sh "$repo_root"/scripts/git-hooks/*-selftest.sh "$repo_root"/src/*/scripts/*-selftest.sh; do
         [ -f "$st" ] && queue_selftest "${st#"$repo_root"/}"
       done ;;
     scripts/*-selftest.sh | scripts/setup-hooks.sh | scripts/*/*) ;;
     scripts/*.sh)
       [ -f "$repo_root/${p%.sh}-selftest.sh" ] && queue_selftest "${p%.sh}-selftest.sh" ;;
+    # A skill's bundled scripts. Same most-specific-first order: the selftest
+    # itself queues nothing (as scripts/*-selftest.sh), a fixture-directory
+    # file queues its owner's selftest, any other subdirectory queues nothing,
+    # and only then do the *.sh and *.py arms take a direct child. `rest` is
+    # cut with the shortest-prefix `#`, so a skill named *-fixtures cannot
+    # shift the stem.
+    src/*/scripts/*-selftest.sh) ;;
+    src/*/scripts/*-fixtures/*)
+      rest=${p#src/*/scripts/}
+      st="${p%"$rest"}${rest%%-fixtures/*}-selftest.sh"
+      [ -f "$repo_root/$st" ] && queue_selftest "$st" ;;
+    src/*/scripts/*/*) ;;
+    src/*/scripts/*.sh)
+      [ -f "$repo_root/${p%.sh}-selftest.sh" ] && queue_selftest "${p%.sh}-selftest.sh" ;;
+    src/*/scripts/*.py)
+      [ -f "$repo_root/${p%.py}-selftest.sh" ] && queue_selftest "${p%.py}-selftest.sh" ;;
   esac
   # The lineage notice (see the header): one stderr line per staged skill
   # with a row, and never a change to the exit status.
