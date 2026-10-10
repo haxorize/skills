@@ -1,5 +1,7 @@
 # `from-work-item` as the implementation cold-start loader
 
+> **Amended by [ADR-0105](0105-from-ticket-confirmed-ado-activation.md):** the loader is no longer unconditionally read-only — on ADO only, it offers a confirmed ADO activation write (state, assignee, iteration) when the ticket isn't already there.
+
 ## Context
 
 The "to-X" half of the suite (`to-feature`, `to-story`, `to-tasks`, `to-bug`) pushes synthesized context *out* to the tracker. The reverse direction — pulling a published work item *back* into a fresh CC session for implementation — has no skill today. Users invoke `tdd` directly with a Task ID; `tdd` step 1 fetches acceptance criteria but does not load DOMAIN.md, ADRs touching the area, parent Feature context, or sibling Tasks for naming consistency. The result: implementation cold-start requires manual context assembly, and domain-language drift goes undetected until PR review.

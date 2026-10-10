@@ -1,13 +1,13 @@
 ---
 name: from-ticket
-description: Cold-start loader that pulls a published ticket back into the conversation as implementation context. Auto-detects Task / Story / Bug from the tracker and loads the right context for that type, then hands off for implementation. Refuses Feature / Epic IDs (containers aren't tickets — decompose first).
+description: Cold-start loader that pulls a published ticket back into the conversation as implementation context. Auto-detects Task / Story / Bug from the tracker and loads the right context for that type, then hands off for implementation. On ADO, offers a confirmed ADO activation (Active state, assignee, current iteration) when the ticket isn't already there. Refuses Feature / Epic IDs (containers aren't tickets — decompose first).
 requires: writing-for-humans
 disable-model-invocation: true
 ---
 
 # From Ticket
 
-Detects the work-item type and loads the right shape; hands off to `implement` or freeform implementation. Closes the round-trip loop with the `to-X` publishing skills.
+Detects the work-item type and loads the right shape; hands off to `implement` or freeform implementation. Closes the round-trip loop with the `to-X` publishing skills. Its one write is step 8's Confirmed ADO activation, made only on the user's confirmation.
 
 **A Feature or an Epic is refused, not loaded** — they are containers that decompose first, and step 3 carries the redirect. It is this loader's only refusal, so everything else it meets is loaded rather than argued with.
 
@@ -83,7 +83,11 @@ If the loaded ticket's `## Layers touched` references layers that don't exist in
 
 Do not block. The user decides whether the layer mismatch is intentional (cross-repo work) or a wrong-directory mistake.
 
-### 8. Hand off
+### 8. Offer a Confirmed ADO activation (ADO only)
+
+On GitHub, skip this step silently — there's no native Active state workflow and no iteration to set. On ADO, follow [references/activation.md](references/activation.md): its startable gate decides whether anything is offered, and it owns the three field checks (state, assignee, iteration), the ask, and the at-most-one update call. Declining leaves the ticket exactly as loaded.
+
+### 9. Hand off
 
 Present a concise summary of what was loaded. The summary names every work item by its title with the ID riding inside, never by a bare ID — call the Skill tool with `writing-for-humans` before writing it if it isn't already live.
 
@@ -98,12 +102,13 @@ Loaded {type} #{ID}: "{title}"
   Domain context: {DOMAIN.md path; nested context if multi-context}
   Design records: {count} comment(s) surfaced — {interface sketch / rejected alternatives} (omit when the ticket has no comments)
   Warnings: {layer-mismatch / type-confirm flags, if any}
+  Confirmed ADO activation: {fields updated / "partial: {applied}; {declined or skipped}" / "already active" / "not startable" / "declined" / "failed: {error}" / "not written, non-interactive: {fields}"} (ADO only; omit on GitHub)
 
 Ready to implement. Hand off to /implement (recommended), or proceed freeform.
 ```
 
-The skill itself doesn't build — it loads context and stops. Both are user-invoked, so `from-ticket` suggests `/implement` rather than invoking it.
+The skill itself doesn't build — it loads context, makes the step 8 offer, and stops. Both are user-invoked, so `from-ticket` suggests `/implement` rather than invoking it.
 
 ## Notes
 
-- `from-ticket` does not modify the ticket or any sibling work item, and writes no files. Revisions to tickets go through `to-story --update` / `to-tasks --update` / `to-bug --update`.
+- `from-ticket` writes no files, and the only write it ever makes to the ticket itself is step 8's Confirmed ADO activation update (state, assignee, iteration) — never the body, never an AC, and never any sibling work item. Revisions to a ticket's content go through `to-story --update` / `to-tasks --update` / `to-bug --update`.
