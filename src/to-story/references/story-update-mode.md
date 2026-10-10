@@ -48,6 +48,7 @@ If the update adds or removes ACs, changes the module list, or reshapes layers, 
     --description @description.html \
     --fields "Microsoft.VSTS.Common.AcceptanceCriteria=@acceptance.html"
   ```
+  When `--priority <1-4>` is passed, add `"Microsoft.VSTS.Common.Priority=<priority>"` to the same `--fields` list on this one update call — the same single-write-path rule as create; without it the field is left untouched. A caller that drafts priority on every run, such as `inventory-cvits`, passes it only to escalate, so an update never lowers a priority someone raised by hand.
 - **GitHub:** `gh issue edit <story-number> --title "<updated-title>" --body-file <draft>`.
 
 On ADO, read the AC field back after patching, per step 9 — empty, null, or a value beginning with `@` is a failed patch, just as on a create.

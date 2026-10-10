@@ -2,6 +2,7 @@
 name: to-story
 description: Synthesize the current conversation into a Story-level (single-feature spec) artifact and publish it to the project's tracker — most workflows start here. For scope that needs multiple stories beneath it, reach for `to-feature` instead. ADO — creates a User Story under a parent Feature. GitHub — creates an issue with a story-shaped template.
 disable-model-invocation: true
+argument-hint: "[--parent <feature-id>] [--update <story-id>] [--priority <1-4>]"
 requires: writing-for-humans, work-item-shape, diverging
 ---
 
@@ -87,7 +88,7 @@ Iterate until approved.
 The **Publish gate** in [references/publishing.md](references/publishing.md) holds first.
 
 - **GitHub:** `gh issue create --title "..." --body-file <draft>` with default labels from CLAUDE.md, plus `--label debt` when the item pays down debt (the rule is [references/work-item-tags.md](references/work-item-tags.md) § The `debt` tag; the label is GitHub's mechanism). Parent linking via template `Parent: #N` reference if `--parent` was provided. **Before creating the issue,** run the label precheck in [references/publishing.md](references/publishing.md). If a parent Feature was resolved, add the new issue as a native sub-issue of it after create — see [references/github-sub-issues.md](references/github-sub-issues.md).
-- **ADO:** publish with the create call in [references/story-template-ado.md](references/story-template-ado.md) — the **two-field split**, body into `System.Description` and acceptance bullets into `Microsoft.VSTS.Common.AcceptanceCriteria`, each converted on its own per the template. Parent linking via `az boards work-item relation add --id <new-story-id> --relation-type Parent --target-id <feature-id>`. Merge `System.Tags` into the create call's `--fields` — see [references/work-item-tags.md](references/work-item-tags.md).
+- **ADO:** publish with the create call in [references/story-template-ado.md](references/story-template-ado.md) — the **two-field split**, body into `System.Description` and acceptance bullets into `Microsoft.VSTS.Common.AcceptanceCriteria`, each converted on its own per the template. Parent linking via `az boards work-item relation add --id <new-story-id> --relation-type Parent --target-id <feature-id>`. Merge `System.Tags` into the create call's `--fields` — see [references/work-item-tags.md](references/work-item-tags.md). `--priority <1-4>` (an integer 1–4; a caller such as `inventory-cvits` decides the value) goes into the same `--fields` list as `Microsoft.VSTS.Common.Priority`. GitHub has no priority field and ignores it.
 
 Missing required CLAUDE.md fields, writes blocked on auth or policy (don't loop on auth), and **transport safety** on every create and retry all follow [references/publishing.md](references/publishing.md) — `## When a required field is missing`, `## When the write is blocked`, `## Transport safety`.
 

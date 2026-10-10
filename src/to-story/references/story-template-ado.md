@@ -12,6 +12,7 @@ Use this when publishing a User Story to Azure DevOps via `az boards work-item c
 | **Area Path** | `System.AreaPath` | From CLAUDE.md `Area path:` | `--area` |
 | **Iteration Path** | `System.IterationPath` | From CLAUDE.md `Iteration:` | `--iteration` |
 | **State** | `System.State` | From CLAUDE.md `Default state:`; absent → `New` (optional, never a fail-fast field) | `--fields "System.State=..."` |
+| **Priority** | `Microsoft.VSTS.Common.Priority` | From `--priority <1-4>`, an integer 1–4; absent → ADO's own default (optional, never a fail-fast field) | `--fields "Microsoft.VSTS.Common.Priority=..."` |
 | **Parent (Feature)** | (relation) | From `--parent <feature-id>` arg | post-create: `az boards work-item relation add --id <new-story-id> --relation-type Parent --target-id <feature-id>` |
 
 Before first publish against a new ADO project, verify the field shape once per [ado-html-transport.md](ado-html-transport.md).
@@ -55,6 +56,12 @@ az boards work-item create \
     "System.Tags=$TAGS" \
   --area "$AREA_PATH" \
   --iteration "$ITERATION"
+```
+
+**Priority (optional).** When `--priority` is passed, check it is an integer 1–4, then add this line to the same `--fields` list on the one create call — never a second `az` write after create. Absent, omit the line:
+
+```bash
+    "Microsoft.VSTS.Common.Priority=$PRIORITY" \
 ```
 
 ## Notes

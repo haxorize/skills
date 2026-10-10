@@ -68,11 +68,13 @@ For each active AC ID on the parent:
 
 Task state gates whether reconcile auto-modifies, surfaces for decision, or leaves alone:
 
-| State | ADO | GitHub | Behavior |
+ADO state names vary by work-item type and process template. Read `System.State` and map it to the role below. Stock Task states: Agile `New` / `Active` / `Closed` / `Removed`; Scrum `To Do` / `In Progress` / `Done` / `Removed`; CMMI `Proposed` / `Active` / `Resolved` / `Closed`. A customized org adds its own — one such org's Story runs `New` / `Ready to Start` / `Active` / `Resolved` / `Test Complete` / `Closed` / `Removed`.
+
+| State role | ADO | GitHub | Behavior |
 |---|---|---|---|
-| **Done / Closed** | `Done` / `Closed` / `Removed` | issue closed | Leave alone; surface as historical |
-| **In Progress / Active** | `Active` / `In Progress` / `Committed` | issue open + In-progress signal matches | Never auto-modify; surface per-Task for user decision |
-| **New / Not Started** | `New` / `To Do` / `Proposed` | issue open + In-progress signal does not match | Safe to revise body, close, or transition to Removed |
+| **Terminal** | any state that is not the not-started or in-progress state for that work-item type — typically `Closed`, `Removed`, `Resolved`, `Test Complete`, or `Done` where the template defines it. `Resolved` (a Bug awaiting verification) and `Test Complete` (a Story before `Closed`) are **deliberately** Terminal: both are reopenable and neither is being worked, so reconcile leaves them alone rather than proposing edits to someone else's verification step | issue closed | Leave alone; surface as historical |
+| **In progress** | the active state for that work-item type — typically `Active`, and `Committed` or `In Progress` where a non-Agile template uses one of those instead | issue open + In-progress signal matches | Never auto-modify; surface per-Task for user decision |
+| **Not started** | the open, not-yet-claimed state for that work-item type — typically `New`, `To Do` (Scrum), or `Proposed` (CMMI), plus any a customized org adds, such as `Ready to Start` | issue open + In-progress signal does not match | Safe to revise body, close, or transition to `Removed` (or the type's equivalent terminal state) |
 
 ### In-progress signal (GitHub)
 
