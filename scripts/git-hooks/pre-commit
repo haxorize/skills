@@ -87,7 +87,7 @@ repo_root="$(git rev-parse --show-toplevel 2>/dev/null)" || {
 # No --diff-filter: every staged entry, whatever its status letter, is a path
 # to classify. The list goes through a file because a NUL cannot live in a
 # shell variable.
-staged="$(mktemp 2>/dev/null)" || {
+staged="$(mktemp "${TMPDIR:-/tmp}/pre-commit.XXXXXX" 2>/dev/null)" || {
   echo "pre-commit: could not create a temp file for the staged-path list" >&2
   exit 1
 }

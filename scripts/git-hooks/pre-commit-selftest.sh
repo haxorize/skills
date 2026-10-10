@@ -32,7 +32,10 @@
 # line), an unreadable index (blocks — not read as empty), an empty index, a
 # merge, revert or cherry-pick in progress (skipped, red linter or not), an
 # exported LINT_ROOT (not passed through), the hook run from a subdirectory of
-# the work tree (the linters resolve from the root), and the advisory line's
+# the work tree (the linters resolve from the root), the staged-list temp file
+# honouring TMPDIR (a writable TMPDIR completes; a TMPDIR pointing at a missing
+# dir makes mktemp fail and blocks with the temp-file message, nothing linted),
+# and the advisory line's
 # pointer at scripts/README.md. The selftest map, in both directions: a staged
 # scripts/foo.sh runs the stub foo-selftest.sh beside it, a staged git hook
 # runs its own (the scripts/ path-map row doubles as that row), a staged
@@ -347,8 +350,37 @@ stage "src/ported/SKILL.md"; run
 expect_rc "no docs/lineage.md (green linters)" 0 "$rc"
 reject_in "$out" "a missing docs/lineage.md still printed a notice" "has an upstream"
 
+# --- the staged-path temp file honours TMPDIR, and its failure blocks --------
+# The hook writes the NUL-delimited staged list to mktemp "${TMPDIR:-/tmp}/
+# pre-commit.XXXXXX": a full-path template, because macOS mktemp's no-argument
+# and -t forms draw from the per-user Darwin temp dir, not $TMPDIR, and a bare
+# template resolves against the cwd. A TMPDIR pointing at a writable dir must
+# let the hook complete; a TMPDIR pointing at a missing dir makes mktemp fail,
+# which must block with the temp-file message rather than lint an unread list.
+# Direct invocations (like the LINT_ROOT row): the run helper does not thread
+# TMPDIR.
+stage "src/a/SKILL.md"
+tmptest="$tmp/tmptest"; mkdir -p "$tmptest"
+: > "$tmp/ran"
+out="$(cd "$work" && TMPDIR="$tmptest" RAN="$tmp/ran" bash "$hook" 2>&1)"; rc=$?
+ran="$(tr '\n' ' ' < "$tmp/ran")"
+expect_rc "a writable TMPDIR (green linters)" 0 "$rc"
+[ "$ran" = "lint-skills " ] || selftest_fail "a writable TMPDIR: expected to run 'lint-skills ', ran '$ran'"
+# This row proves only that the hook completes under an overridden TMPDIR. The
+# temp file is created and trap-removed before the hook returns, so its
+# presence cannot be asserted after the fact; that mktemp drew its path from
+# $TMPDIR is proved by the failure row below, where a missing TMPDIR dir — and
+# nothing else — is what makes mktemp fail.
+stage "src/a/SKILL.md"
+: > "$tmp/ran"
+out="$(cd "$work" && TMPDIR="$tmp/nonexistent-dir" RAN="$tmp/ran" bash "$hook" 2>&1)"; rc=$?
+ran="$(tr '\n' ' ' < "$tmp/ran")"
+expect_rc "a TMPDIR that does not exist blocks (mktemp fails)" 1 "$rc"
+expect_in "$out" "a failed staged-list mktemp was not named" "could not create a temp file"
+[ -z "$ran" ] || selftest_fail "a failed mktemp still ran a linter on an unread list: '$ran'"
+
 # The pointer the advisory names has to exist, or the block is not a load
 # instruction.
 [ -f "$repo_root/scripts/README.md" ] || selftest_fail "the advisory points at scripts/README.md, which does not exist"
 
-selftest_close "pre-commit self-test clean — every mapped class ran its linter under every index status, unmapped paths ran none, red blocked, green allowed, a merge in progress or an unreadable index took its own branch, the selftest map ran each staged pairing once and blocked on red, and the lineage notice printed once per ported skill, stayed silent for the nothing-to-diff table, and moved the exit status in neither direction." "pre-commit self-test PARTIAL"
+selftest_close "pre-commit self-test clean — every mapped class ran its linter under every index status, unmapped paths ran none, red blocked, green allowed, a merge in progress or an unreadable index took its own branch, the selftest map ran each staged pairing once and blocked on red, the staged-list temp file honoured a writable TMPDIR and blocked when its mktemp failed, and the lineage notice printed once per ported skill, stayed silent for the nothing-to-diff table, and moved the exit status in neither direction." "pre-commit self-test PARTIAL"
