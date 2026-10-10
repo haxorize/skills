@@ -4,10 +4,12 @@ Use this when publishing a Bug work item to Azure DevOps via `az boards work-ite
 
 ## Field mapping
 
+The body goes to `Custom.Notes`. The target ADO org customizes its Bug type: the form carries no Description field, and its rich-text fields are Repro Steps, System Info, Alt Defect Link, and **Notes**. `Custom.Notes` is a field that org added to its inherited process, not a stock ADO field, so a project on a stock Agile, Scrum, or CMMI process lacks it; these skills target that one org, so the field is fixed here rather than configured. A Bug's body field therefore differs from the Feature, Story, and Task templates' `System.Description`, and targeting `System.Description` on this org's Bug writes to a field the form does not show. Reads fall back to `System.Description` where `Custom.Notes` is empty ([bug-update-mode.md](bug-update-mode.md) § Cold-start).
+
 | ADO field (display name) | Reference name | Source | CLI flag |
 |---|---|---|---|
 | **Title** | `System.Title` | Set on command line | `--title` |
-| **Description** | `System.Description` | Body markdown converted to HTML | `--description @<file>` |
+| **Notes** | `Custom.Notes` | Body markdown converted to HTML | `--fields "Custom.Notes=@<file>"` |
 | **Repro Steps** | `Microsoft.VSTS.TCM.ReproSteps` | Repro markdown converted to HTML | `--fields "Microsoft.VSTS.TCM.ReproSteps=@<file>"` |
 | **Severity** | `Microsoft.VSTS.Common.Severity` | One of `1 - Critical`, `2 - High`, `3 - Medium`, `4 - Low` | `--fields "Microsoft.VSTS.Common.Severity=..."` |
 | **Area Path** | `System.AreaPath` | From CLAUDE.md `Area path:` | `--area` |
@@ -18,7 +20,7 @@ Use this when publishing a Bug work item to Azure DevOps via `az boards work-ite
 
 Before first publish against a new ADO project, verify the field shape once per [ado-html-transport.md](ado-html-transport.md).
 
-## Description
+## Body
 
 Author the body as Markdown from the skeleton in [bug-body.md](bug-body.md) — every skeleton section except the repro, which lives in the dedicated `Microsoft.VSTS.TCM.ReproSteps` field (authored per the skeleton's repro-steps block, converted to HTML on its own).
 
@@ -39,8 +41,8 @@ Convert each artifact per [ado-html-transport.md](ado-html-transport.md), then:
 az boards work-item create \
   --type "Bug" \
   --title "$TITLE" \
-  --description @description.html \
   --fields \
+    "Custom.Notes=@description.html" \
     "Microsoft.VSTS.TCM.ReproSteps=@repro.html" \
     "Microsoft.VSTS.Common.Severity=$SEVERITY" \
     "System.State=$STATE" \

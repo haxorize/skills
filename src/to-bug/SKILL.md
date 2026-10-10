@@ -54,7 +54,7 @@ Use the appropriate template:
 - GitHub: [references/bug-template-github.md](references/bug-template-github.md)
 - ADO: [references/bug-template-ado.md](references/bug-template-ado.md)
 
-ADO splits content across two fields: repro steps go into `Microsoft.VSTS.TCM.ReproSteps`; everything else (Expected / Actual / Scope of impact / Regression risk / Layers touched) goes into `System.Description`. GitHub puts every section in the issue body.
+ADO splits content across two fields: repro steps go into `Microsoft.VSTS.TCM.ReproSteps`; everything else (Expected / Actual / Scope of impact / Regression risk / Layers touched) goes into `Custom.Notes` — the target org's customized Bug form has no Description field ([bug-template-ado.md](references/bug-template-ado.md) § Field mapping). GitHub puts every section in the issue body.
 
 ### 6. Self-review
 

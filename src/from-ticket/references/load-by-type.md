@@ -26,7 +26,7 @@ Step 4's per-type load procedures. Open only the branch for the type step 2 dete
 ## Bug
 
 - **Bug body:**
-  - **ADO:** `az boards work-item show <bug-id> --output json --expand relations` — `System.Description`, `Microsoft.VSTS.TCM.ReproSteps`, `Microsoft.VSTS.Common.Severity`, `System.State`, and the parent relation if present.
+  - **ADO:** `az boards work-item show <bug-id> --output json --expand relations` — `Custom.Notes`, `Microsoft.VSTS.TCM.ReproSteps`, `Microsoft.VSTS.Common.Severity`, `System.State`, and the parent relation if present. A Bug's body is in `Custom.Notes`, not `System.Description` — the Bug form carries no Description field — so where `Custom.Notes` is empty, read the body from `System.Description`, which some Bugs still carry it in.
   - **GitHub:** body already fetched; severity from `sev:*` label; parent from `Parent: #N` if present.
 - **Parent Feature** (if linked): title and Problem / Goals. Bugs may be parentless — skip silently.
 - **`## Layers touched`** from the Bug body. Drives the ADR match in step 6.
