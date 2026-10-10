@@ -1,5 +1,7 @@
 # First Domain skill admitted: `phi-safe-code`, in plain `src/`
 
+> **Amended by [ADR-0106](0106-admit-the-cvit-skills-as-org-bound.md):** the generalize-past-one-employer test does not bar `inventory-cvits` and `triage-cvits`, admitted as org-bound skills.
+
 Status: accepted (2026-08-22)
 
 > **Amended by [ADR-0060](0060-third-domain-skill-accessible-ui.md):** the third admission re-decided placement (flat in `src/`, re-opened by an observed loop cost rather than a count) and fixed which model prong (a) measures.

@@ -1,5 +1,7 @@
 # Mine an enterprise plugin repo; take two skills and one fold, credit ECC
 
+> **Amended by [ADR-0106](0106-admit-the-cvit-skills-as-org-bound.md):** the org-bound bucket's deferral no longer covers the CVIT skills — `inventory-cvits` and `triage-cvits` land here as org-bound.
+
 The 2026-08-25 round re-read the Humana enterprise Claude Code plugin repo (`EnterpriseAgenticSkillsHub`), whose 353 artifacts a prior audit had scored 9 clean `Adopt` and 68 `Adopt-with-rewrite`. That audit measured intrinsic quality in Humana's context; this round re-scored for fit to *this* repo as it now stands — 51 shipped skills plus the repo-local `mine-skills` / `sweep-corpus` pair. Against fit, the landed yield was **two new skills and one fold**, everything else cut or deferred. This ADR is the durable record of those decisions and the everything-claude-code lineage the ported skills need.
 
 ## Why the yield was so much smaller than the audit projected
