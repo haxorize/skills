@@ -1,6 +1,6 @@
-# skills
+# Stormworks Skills
 
-Personal collection of agent skills — repo-agnostic in mechanism, with Domain skills that carry subject matter — hoisted into `~/.claude/skills/` for use across projects. The shortest path to running it: `bash scripts/install.sh` (see [Install](#install)).
+The Stormworks team's shared collection of agent skills — repo-agnostic in mechanism, with Domain skills that carry subject matter — hoisted into `~/.claude/skills/` for use across projects. The repository is private ([ADR-0061](docs/adr/0061-marketing-artifacts-stay-company-neutral.md), amended 2026-10-10): anyone with access installs the skills by cloning it and running the install script. Opening it to other Humana teams, who would install the same way and contribute back through a fork and a reviewed pull request, is the move [ADR-0101](docs/adr/0101-fork-and-pr-adoption-at-internal-visibility.md) proposes and has not yet happened. The shortest path to running it: `bash scripts/install.sh` (see [Install](#install)).
 
 ## Why this exists
 

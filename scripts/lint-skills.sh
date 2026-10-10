@@ -1121,7 +1121,9 @@ check_load_gate() {
 # knows which is a command Claude Code ships and which is a typo or a skill
 # that was renamed out from under the sentence.
 #   External commands, not skills in this collection:
-#     clear compact init          Claude Code built-ins
+#     clear compact init plugin   Claude Code built-ins (`plugin` is the
+#                                 `/plugin` marketplace command DOMAIN.md's
+#                                 Enterprise Agentic Skills Hub row names)
 #     code-review security-review simplify
 #                                 commands shipped outside src/ and
 #                                 .claude/skills/, named by the bodies that
@@ -1141,7 +1143,7 @@ check_load_gate() {
 # `<!-- spelling-exempt: word -->` has, so one syntax means one thing. Use it
 # for a name that is right here and wrong three paragraphs down; a name that is
 # never a command anywhere in the repo belongs in the roster above instead.
-slash_exempt=' clear compact init code-review security-review simplify name old-name sweep tmp '
+slash_exempt=' clear compact init code-review security-review simplify plugin name old-name sweep tmp '
 check_slash_form() {
   local f=$1 scan slashed line line_exempt seen=' '
   scan=$(skill_body_lines "$f" | mask_examples)

@@ -390,6 +390,17 @@ Ubiquitous-language glossary for the entire skills repo. Covers the areas of wor
 | **Requirement test suite** | An ADO test suite of `suiteType: requirementTestSuite`, scoped to one User Story (`requirementId`); created under the PI test plan's root suite during gate automation | Story suite (informal) |
 | **PI test plan** | The ADO test plan for the current Program Increment; name follows the pattern `<team>_Stories_<PI label>`. The GLAPI gate checks test points within this plan | Sprint test plan (wrong scope — PI spans multiple sprints) |
 
+## Cross-team adoption
+
+| Term | Definition | Aliases to avoid |
+| --- | --- | --- |
+| **Stormworks** | The team that maintains this repository and owns review of every change to it; the team every other term in this section is defined against (ADR-0061's 2026-10-10 amendment, ADR-0101) | Storm Works, StormWorks |
+| **Consuming team** | A team outside Stormworks that clones the repo and runs `scripts/install.sh` to link the skills into its own `~/.claude`; never holds write access (ADR-0101) | User (unscoped), Downstream team |
+| **Contributing team** | A team outside Stormworks that forks the repo, opens a pull request, and has a Stormworks reviewer merge it; distinct from a **Consuming team** by the pull request, not by write access — neither holds it (ADR-0101) | Collaborator (implies write access), Committer |
+| **Fork-and-pull-request model** | The contribution model ADR-0101 proposes for a **Contributing team**: work on a fork, land changes only through a pull request a Stormworks reviewer merges, chosen over granting write access to keep an outside change's blast radius on a fork the maintainers review before it lands. Stormworks' own changes land as the repo's `Landing:` key says, not through it | Shared-write model (the rejected alternative), Fork model (drops the review gate), Fork-and-PR (the abbreviated form; spell it out) |
+| **Internal visibility** | The repo-hosting state where the repo is readable across Humana but not on the public internet — the InnerSource model, and the target of the move into HumanaInnersource-EMU that ADR-0101 proposes; this repository is private until then; the CLAUDE.md config line that records one of three such values is the **Visibility line** | Public (readable off the internet — the rejected option), InnerSource (the model's name, not the visibility value) |
+| **Enterprise Agentic Skills Hub** | Humana's sanctioned Claude Code plugin marketplace, whose `/plugin` install copies plugin contents into `~/.claude` by its description (unverified; ADR-0102 names the check that lifts it); this repo coexists with it as a separate clone-and-install workshop rather than merging into it (ADR-0102) | The Hub (bare, in prose spanning repos), Skills marketplace (generic) |
+
 ## Drift & consistency
 
 | Term | Definition | Aliases to avoid |
