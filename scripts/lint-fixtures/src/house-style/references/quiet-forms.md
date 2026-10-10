@@ -9,6 +9,8 @@ the firing instance in the body that points here.
 - A suggestion naming a model-invoked skill stays bare: run `fixture-discipline` first.
 - A repo-convention filename is exempt from the artifact-name shape: `README.md`.
 - A registered label is not a coinage: the row reads **FIXTUREPASS** and closes.
+- A literal quoted from elsewhere is an acronym, not a label: a `PURL` names a
+  package, and `FROM` and `RUN` are Dockerfile instructions.
 - A British form inside a code span is a literal, not prose: an order in `cancelled`
   never leaves that state.
 - A British form inside a URL is somebody else's path, not this repo's prose:

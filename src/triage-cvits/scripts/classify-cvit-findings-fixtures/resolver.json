@@ -1,0 +1,31 @@
+{
+  "trees": {
+    "npm": {
+      "prod": {
+        "express": "5.0.0",
+        "axios": "1.6.0",
+        "css": "2.5.0",
+        "cssesc": "1.0.1",
+        "prerelease-pkg": "1.0.0-rc.1",
+        "undici": "8.9.0",
+        "stale-fix-pkg": "5.0.0",
+        "same-line-multipatch": "5.0.0",
+        "loop-order-check-pkg": "4.19.3",
+        "fast-uri": "4.1.2",
+        "zero-major-pkg": "0.5.0",
+        "zero-major-sameline": "0.4.2",
+        "scanned-eq-pkg": "2.0.0",
+        "semver": "7.6.0",
+        "nofix-pkg": "1.0.0",
+        "capfix-pkg": "1.6.0",
+        "vpkg": "v1.0.0",
+        "minor-keyed-pkg": "3.11.2"
+      },
+      "dev": {
+        "eslint": "8.0.0"
+      }
+    }
+  },
+  "controlled_packages": ["expat", "libcrypto3"],
+  "dockerfile_read": true
+}

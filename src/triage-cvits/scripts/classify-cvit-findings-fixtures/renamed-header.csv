@@ -1,0 +1,2 @@
+Repository,CVE ID,Packages,Package Version,PURL,Layer,Fix Status,File Path,Severity,Type
+example-img,CVE-0002-A-TOOLBUNDLE,semver,7.5.1,pkg:npm/semver@7.5.1,"{""instruction"":""ADD alpine-minirootfs-3.23.2-x86_64.tar.gz /""}",fixed in 7.5.2,/usr/local/lib/node_modules/npm/node_modules/semver,medium,nodejs

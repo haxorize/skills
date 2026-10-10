@@ -811,7 +811,12 @@ fi
 # (UNVERIFIABLE is the registered marker), so admitting it here left check_labels
 # blind to a token the glossary forbids. Zero prose uses remain in any .md; the
 # five hits in src/wizard/template.sh are a shell array name, not a label.
-list_pin known_caps 101 ' '
+# 101 → 104 on 2026-10-10: PURL, FROM, RUN admitted. All three are literals
+# quoted from elsewhere — PURL names the Package URL spec, FROM and RUN are
+# Dockerfile instructions — and `triage-cvits` backticks them in prose, where
+# label_tokens reads any backticked ALL-CAPS token as a label. They name
+# nothing a consumer matches on, so the acronym exit is the right one.
+list_pin known_caps 104 ' '
 list_pin proper_nouns 20 ' '
 list_pin invocation_verbs 15 '|'
 list_pin artifact_name_exempt 6 '|' 
@@ -828,6 +833,8 @@ quiet="$fixtures/src/house-style/references/quiet-forms.md"
 quiet_pin "$quiet" "a model-invoked name at a suggestion site" 'run `fixture-discipline` first'
 quiet_pin "$quiet" "a repo-convention filename the artifact-name shape exempts" 'the artifact-name shape: `README.md`'
 quiet_pin "$quiet" "a label this tree registers" '**FIXTUREPASS**'
+quiet_pin "$quiet" "known_caps' PURL, the instance its 101 → 104 move owes" 'a `PURL` names'
+quiet_pin "$quiet" "known_caps' FROM and RUN, the instances its 101 → 104 move owes" '`FROM` and `RUN` are Dockerfile'
 quiet_pin "$quiet" "a British form inside a code span" 'an order in `cancelled`'
 quiet_pin "$quiet" "a British form inside a URL" 'https://example.invalid/docs/behaviour'
 quiet_pin "$quiet" "prefixed and compound American forms beside british_prefixes" 'we reprogram the greyhound'

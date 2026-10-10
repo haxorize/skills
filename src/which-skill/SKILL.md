@@ -22,16 +22,16 @@ A **flow** is a path through the skills.
    - **`/to-story`** — a single-feature Story. The usual entry point.
    - **`/to-tasks`** — split a Story into vertical-slice Tasks (one Task = one commit, where the repo maps them that way).
    - A creation ask ("file a story for this") is caught by the `work-item-shape` discipline: it routes the ask to the owning publisher in a wired repo, drafting the body itself only where its rules license ad-hoc drafting — it never replaces the publishers.
-3. **Load a single ticket back into a fresh session** — **`/from-ticket <id>`**. It auto-detects Task/Story/Bug and loads the right context (parent, `DOMAIN.md`, matching ADRs, and what the tracker links to it), then summarizes it in the human-facing register — it carries `writing-for-humans` for that and writes nothing else.
+3. **Load a single ticket back into a fresh session** — **`/from-ticket <id>`**. It auto-detects Task/Story/Bug and loads the right context (parent, `DOMAIN.md`, matching ADRs, what the tracker links to it), then summarizes it in the human-facing register (`writing-for-humans`). On ADO it offers activation, on your confirm.
 4. **Build it** — **`/implement`**. Drives one vertical slice end to end: picks the build path (runs `tdd` for a testable slice, direct otherwise), refactors, closes the loop once via `feedback-loops`, and writes the completion audit in one inspection round. `discoverable-code` rides the refactor beat on either path, and `adr` is offered where the slice turned on a load-bearing decision. One Task per session.
 5. **Review before it lands** — **`/review-changes`**, then **`/address-findings`** to act on its report (see Review gate).
-6. **Land it** — a plain "commit and push" or "close #N" fires the `committing` discipline, as does any other outward act asked for outside `/ship` — a tracker write, a message, a loop: one commit, every claim checked, each act gated on your ask or the repo's `Landing:` key. A change that needs a commit split, a branch, or a PR with an approver goes through **`/ship`** (see Review gate), which delegates its claims and its outward acts to the same discipline. Where the change deploys, `/ship`'s work ends at the post-deploy watch's verdict, not at the push: the success line, rollback trigger, window, and baseline are written before the deploy, and the verdict is what lifts `committing`'s `UNVERIFIED: live path`. Work that never went through `/implement` enters the flow here.
+6. **Land it** — a plain "commit and push" or "close #N" fires the `committing` discipline, as does any other outward act asked for outside `/ship` — a tracker write, a message, a loop: one commit, every claim checked, each act gated on your ask or the repo's `Landing:` key. A change that needs a commit split, a branch, or a PR with an approver goes through **`/ship`** (see Review gate), which delegates its claims and its outward acts to the same discipline. Where the change deploys, `/ship` ends at the post-deploy watch's verdict, not at the push. Work that never went through `/implement` enters the flow here.
 
 Keep steps 1–2 in **one unbroken context window** so the grilling, decomposition, and tasks build on the same thinking. Each `/implement` then starts fresh from its ticket. If a session fills up before you've decomposed, don't push on degraded — **`/handoff`** and continue in a fresh thread.
 
 ## Meeting, and leaving, a system you did not write
 
-- Four routes to a record of a system you did not write, split by **who the record is for**: **`/onboard-repo`** writes config blocks so the *suite* can work the repo; **`/onboard-me`** teaches *you* the repo and writes `docs/inward-spec.md` only on your ask; **`/rebuild-contract`** writes what a *reimplementer* must preserve through a rewrite; **`/offboard-engineer`** captures what only the *departing person* knows. Arriving at a repo usually wants the first two in that order — they are different jobs on the same first day, neither needing the other. The full tie-breaks are in [references/inherited-systems.md](references/inherited-systems.md), opened when the ask concerns an inherited system and two of these four routes both plausibly fit.
+- Four routes to a record of a system you did not write, split by **who the record is for**: **`/onboard-repo`** writes config blocks so the *suite* can work the repo; **`/onboard-me`** teaches *you* the repo and writes `docs/inward-spec.md` only on your ask; **`/rebuild-contract`** writes what a *reimplementer* must preserve through a rewrite; **`/offboard-engineer`** captures what only the *departing person* knows. Arriving at a repo usually wants the first two in that order — they are different jobs on the same first day, neither needing the other. The full tie-breaks are in [references/inherited-systems.md](references/inherited-systems.md), opened when two of the four both plausibly fit.
 
 ## When the way isn't clear: `/chart-course`
 
@@ -68,11 +68,11 @@ Keep steps 1–2 in **one unbroken context window** so the grilling, decompositi
 
 ## If you are a PM or a designer
 
-Your entries are **`/frame-effort`** for a program with no outcome yet, **`/grill-me`** for the idea, **`/to-story`** to publish it, **`/prototype`** for a question only a running thing answers, a product description asked for by name (`product-description` answers) for what the product does today, and **`/explain`** when an answer did not land. A design decision that needs several reviewers' comments asynchronously is a `proposed` ADR opened as a PR on your ask, so comments land on lines — `adr` writes it and `/ship` opens it; there is no separate RFC document.
+Your entries are **`/frame-effort`** for a program with no outcome yet, **`/grill-me`** for the idea, **`/to-story`** to publish it, **`/prototype`** for a question only a running thing answers, a product description asked for by name (`product-description` answers) for what the product does today, and **`/explain`** when an answer did not land. A design decision needing several reviewers' async comments is a `proposed` ADR opened as a PR on your ask, so comments land on lines (`adr` writes, `/ship` opens); there is no separate RFC.
 
 ## Standalone
 
-Each route in a line; the blurbs are in the skills repo's `README.md` skill map (that root), and the tie-breaks, and the three-way split between `/teach-me`, `/explain` and `/explain <topic>`, are in [references/standalone.md](references/standalone.md), opened only when two of these both plausibly fit.
+Each route in a line; the blurbs are in the skills repo's `README.md` skill map (that root), and the tie-breaks — including the `/teach-me` vs `/explain` vs `/explain <topic>` split — are in [references/standalone.md](references/standalone.md), opened when two plausibly fit.
 
 - **`/grill-me`** — sharpen a plan or design with no repo to back it.
 - **`/teach-me <topic>`** — tutored, multi-session learning of a topic you can name.
@@ -82,8 +82,10 @@ Each route in a line; the blurbs are in the skills repo's `README.md` skill map 
 - **`/merge-quiz`** (Off-path) — before merging a change you did not watch being built.
 - **`/explain`** — the last explanation didn't land; `/explain <topic>` is the cold branch.
 - **`/glapi-test-pass`** — ADO only; the GLAPI production deployment gate for a Story.
+- **`/inventory-cvits`** — a ServiceNow container-vulnerability export into one Story per image; runs before `/triage-cvits`.
+- **`/triage-cvits`** — a Twistlock/Prisma Cloud export sorted into six buckets, one Task each under the image Story.
 - **`/write-skill`** — conventions for writing and editing skills.
 - **`/audit-skills`** — a verdict per skill installed under `~/.claude/skills/`.
-- **`/report-progress`** — your weekly status or progress note to your manager, alone or for a team, drafted from repos and tracker, each item sourced.
+- **`/report-progress`** — your weekly status or progress note to your manager, for you alone or a team, drafted from repos and tracker, each item sourced.
 - **`/debrief <date | id | phrase>`** — the paragraph behind one friction-log line: class, remedy, proposed fix; the next mining round reads it first.
 - **`/audit-aeo <url | saved-html>`** — one public page graded as an AI agent reads it, ending in a gap list; the standards it grades against are `aeo`'s.

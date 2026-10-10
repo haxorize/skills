@@ -1,0 +1,7 @@
+"number","vulnerability.summary","image_repository","risk_rating","ttr_target_date","ttr_status"
+"CVIT10","a summary, with an embedded comma","legacy-img","2 - High","2026-03-06 21:25:59","Target Missed"
+"CVIT9","another summary","legacy-img","2 - High","2026-03-06 08:00:01","Target Missed"
+"CVIT250","a medium one","legacy-img","3 - Medium","2026-11-30 12:00:00","In-flight"
+"CVIT400","object medium a","object-img","3 - Medium","2026-12-01 09:30:00","In-flight"
+"CVIT401","object medium b","object-img","3 - Medium","2026-12-01 17:45:12","In-flight"
+"CVIT999","off manifest row","not-owned-img","2 - High","2026-10-01 00:00:00","In-flight"

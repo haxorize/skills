@@ -1,0 +1,2 @@
+﻿CVE ID,Packages,Package Version,PURL,Fix Status,Package Path
+CVE-BOM-0001,axios,1.6.0,pkg:npm/axios@1.6.0,fixed in 1.8.2,/usr/app/node_modules/axios

@@ -1,0 +1,2 @@
+CVE ID,Packages,Package Version,PURL,Fix Status,Package Path
+CVE-LATIN1-0001,café,1.0.0,pkg:npm/cafe@1.0.0,fixed in 1.0.1,/usr/app/node_modules/cafe

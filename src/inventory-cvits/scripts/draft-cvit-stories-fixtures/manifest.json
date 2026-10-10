@@ -1,0 +1,5 @@
+{
+  "legacy-img": "Legacy Product",
+  "object-img": { "name": "Object Product", "tags": ["Object Product", "Extra Tag"], "subject": "ref service" },
+  "zero-img": { "name": "Zero Product", "tags": ["Zero Product"] }
+}

@@ -1,0 +1,14 @@
+Repository,CVE ID,Packages,Package Version,PURL,Layer,Fix Status,Package Path,Severity,Type
+example-img,ECO-NUGET,Newtonsoft.Json,12.0.1,pkg:nuget/Newtonsoft.Json@12.0.1,,fixed in 13.0.1,/root/.nuget/packages/newtonsoft.json/12.0.1,high,dotnet
+example-img,ECO-GRADLE,guava,30.0,pkg:gradle/com.google.guava/guava@30.0,,fixed in 32.0.0,/root/.gradle/caches/guava-30.0.jar,high,java
+example-img,ECO-MAVEN,log4j-core,2.14.0,pkg:maven/org.apache.logging.log4j/log4j-core@2.14.0,,fixed in 2.17.1,/root/.m2/repository/log4j-core-2.14.0.jar,critical,java
+example-img,ECO-PYPI,requests,2.20.0,pkg:pypi/requests@2.20.0,,fixed in 2.31.0,/usr/lib/python3.11/site-packages/requests,high,python
+example-img,ECO-UNKNOWN-GOLANG,example-mod,1.0.0,pkg:golang/example.test/example-mod@1.0.0,,fixed in 1.0.1,/usr/local/bin/app,high,go
+example-img,OS-DEB,libc6,2.36,pkg:deb/debian/libc6@2.36,,fixed in 2.37,/usr/lib/x86_64-linux-gnu/libc.so.6,high,OS
+example-img,OS-RPM,openssl-libs,3.0.7,pkg:rpm/redhat/openssl-libs@3.0.7,,fixed in 3.0.8,/usr/lib64/libssl.so.3,high,OS
+example-img,BUNDLE-USR-LIB-NPM,semver,7.5.1,pkg:npm/semver@7.5.1,,fixed in 7.5.2,/usr/lib/node_modules/npm/node_modules/semver,medium,nodejs
+example-img,NOPURL-SITE-PACKAGES,mystery,1.0,,,fixed in 2.0,/usr/lib/python3.11/site-packages/mystery,high,python
+example-img,NOPURL-NUGET,mystery,1.0,,,fixed in 2.0,/root/.nuget/packages/mystery/1.0,high,dotnet
+example-img,NOPURL-M2,mystery,1.0,,,fixed in 2.0,/root/.m2/repository/mystery-1.0.jar,high,java
+example-img,NOPURL-GRADLE,mystery,1.0,,,fixed in 2.0,/root/.gradle/caches/mystery-1.0.jar,high,java
+example-img,NPM-LIB-NAMED-PKG,inner,1.0.0,pkg:npm/inner@1.0.0,,fixed in 2.0.0,/usr/app/node_modules/lib/node_modules/inner,high,nodejs

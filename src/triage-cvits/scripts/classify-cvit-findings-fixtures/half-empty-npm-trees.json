@@ -1,0 +1,1 @@
+{"trees": {"npm": {"prod": {}, "dev": {"eslint": "8.0.0"}}}, "controlled_packages": ["expat", "libcrypto3"], "dockerfile_read": true}
