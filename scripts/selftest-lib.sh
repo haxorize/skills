@@ -66,9 +66,10 @@ expect_rc() {
   fi
 }
 
+# Temp-file template: scripts/README.md § Temp files.
 selftest_tmpdir() {
   local t
-  t="$(mktemp -d 2>/dev/null)"
+  t="$(mktemp -d "${TMPDIR:-/tmp}/selftest.XXXXXX" 2>/dev/null)"
   if [ -z "$t" ] || [ ! -d "$t" ]; then
     return 1
   fi

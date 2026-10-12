@@ -60,7 +60,8 @@
 #
 # Exit codes: 0 counted · 2 nothing to count (no history file and no
 # transcripts under --projects), or not everything counted (a source was absent
-# or did not fully parse, and a `+` marks its column) · 3 usage error.
+# or did not fully parse, and a `+` marks its column) · 3 usage error · 4 no
+# temp file could be made — nothing counted.
 #
 # Needs bash 3.2+ and jq. scripts/skill-usage-selftest.sh proves the shapes
 # above are the ones counted, against scripts/lint-fixtures/usage/.
@@ -138,10 +139,10 @@ if [ -z "$transcripts" ]; then
   loaded_partial=1
 fi
 
-events=$(mktemp -t skill-usage.XXXXXX 2>/dev/null)
-if [ -z "$events" ] || [ ! -f "$events" ]; then
-  echo "skill-usage.sh: mktemp gave no usable file — nothing counted; check TMPDIR" >&2
-  exit 2
+# Temp-file template and guard: scripts/README.md § Temp files.
+if ! events=$(mktemp "${TMPDIR:-/tmp}/skill-usage.XXXXXX" 2>/dev/null) || [ ! -f "$events" ]; then
+  echo "skill-usage.sh: mktemp ${TMPDIR:-/tmp}/skill-usage.XXXXXX failed (TMPDIR=${TMPDIR:-unset}) — nothing counted" >&2
+  exit 4
 fi
 trap 'rm -f "$events"' EXIT
 

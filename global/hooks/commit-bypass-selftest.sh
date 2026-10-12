@@ -12,7 +12,14 @@
 set -u
 here="$(cd "$(dirname "$0")" && pwd)"
 hook="$here/commit-bypass.sh"
-tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
+# Temp-file template and guard: scripts/README.md § Temp files. Spelled out
+# because global/hooks/selftest-lib.sh has no temp-directory helper.
+tmp="$(mktemp -d "${TMPDIR:-/tmp}/commit-bypass-selftest.XXXXXX" 2>/dev/null)"
+if [ -z "$tmp" ] || [ ! -d "$tmp" ]; then
+  echo "commit-bypass-selftest: no usable temp directory (TMPDIR=${TMPDIR:-unset}) — nothing ran" >&2
+  exit 4
+fi
+trap 'rm -rf "$tmp"' EXIT
 
 . "$here/selftest-lib.sh"
 D="$PWD"

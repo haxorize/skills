@@ -171,7 +171,7 @@
 # Exit codes: 0 scanned (whatever the verdicts, unless --fail-on turned them
 # into the status) · 1 the scanner crashed (no findings were produced; the
 # traceback is on stderr) · 2 nothing scanned (a --path that is not a
-# directory) · 3 usage error (no target, an unknown option, a --fail-on value
+# directory, or no temp file for the target list) · 3 usage error (no target, an unknown option, a --fail-on value
 # other than risk, review or incomplete, python3 missing, a path holding a
 # tab or newline) · 4 the --fail-on threshold was met: with risk, some
 # scanned target graded RISK; with review, some target graded REVIEW or RISK;
@@ -193,7 +193,11 @@ usage() { sed -n '2,/^$/p' "$0" | sed '$d' | sed 's/^# \{0,1\}//'; }
 
 JSON_OUTPUT=false
 FAIL_ON=""
-TARGETS_TSV=$(mktemp -t security-scan.XXXXXX)
+# Temp-file template and guard: scripts/README.md § Temp files.
+if ! TARGETS_TSV=$(mktemp "${TMPDIR:-/tmp}/security-scan.XXXXXX" 2>/dev/null) || [ ! -f "$TARGETS_TSV" ]; then
+  echo "ERROR: mktemp ${TMPDIR:-/tmp}/security-scan.XXXXXX failed (TMPDIR=${TMPDIR:-unset}) — nothing scanned" >&2
+  exit 2
+fi
 trap 'rm -f "$TARGETS_TSV"' EXIT
 
 add_target() {

@@ -41,7 +41,13 @@ repo_root="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$repo_root"
 
 hook="$repo_root/scripts/git-hooks/commit-msg"
-tmp="$(mktemp -d)"
+# Temp-file template and guard: scripts/README.md § Temp files. Spelled out
+# because this script reports its own rows rather than sourcing selftest-lib.sh.
+tmp="$(mktemp -d "${TMPDIR:-/tmp}/commit-msg-selftest.XXXXXX" 2>/dev/null)"
+if [ -z "$tmp" ] || [ ! -d "$tmp" ]; then
+  echo "commit-msg-selftest: no usable temp directory (TMPDIR=${TMPDIR:-unset}) — nothing ran" >&2
+  exit 4
+fi
 trap 'rm -rf "$tmp"' EXIT
 fail=0
 

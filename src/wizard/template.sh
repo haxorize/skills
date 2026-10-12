@@ -211,11 +211,17 @@ ask_secret() {
 }
 
 # write_env KEY VALUE — upsert KEY=VALUE into ENV_FILE (creates it; replaces
-# any existing line). Idempotent.
+# any existing line). Idempotent. Without a temp file it says so on stderr and
+# returns 1, leaving ENV_FILE as it was — under the library's -e a bare call
+# then ends the wizard after that line.
 write_env() {
   local key="$1" value="$2" tmp
   touch "$ENV_FILE"
-  tmp=$(mktemp)
+  # Temp-file template and guard: the skills repo's scripts/README.md § Temp files.
+  if ! tmp=$(mktemp "${TMPDIR:-/tmp}/wizard-env.XXXXXX" 2>/dev/null) || [ ! -f "$tmp" ]; then
+    printf '  %s✗ mktemp %s failed (TMPDIR=%s); %s not written%s\n' "$RED" "${TMPDIR:-/tmp}/wizard-env.XXXXXX" "${TMPDIR:-unset}" "$key" "$RESET" >&2
+    return 1
+  fi
   grep -vE "^${key}=" "$ENV_FILE" > "$tmp" || true
   printf '%s=%s\n' "$key" "$value" >> "$tmp"
   mv "$tmp" "$ENV_FILE"

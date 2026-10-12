@@ -4,7 +4,7 @@
 export LC_ALL=en_US.UTF-8
 LIB="${1:-$HOME/code/lib}"
 SKIP="${2:-^_rounds}"   # regex of directory names to skip (pass sources already reported)
-UNPARSED_F="$(mktemp)" || { echo "enum.sh: mktemp failed; cannot track unparsed entries" >&2; exit 3; }
+UNPARSED_F="$(mktemp "${TMPDIR:-/tmp}/enum-unparsed.XXXXXX" 2>/dev/null)" || { echo "enum.sh: mktemp ${TMPDIR:-/tmp}/enum-unparsed.XXXXXX failed (TMPDIR=${TMPDIR:-unset}) — nothing enumerated" >&2; exit 4; }   # template: scripts/README.md § Temp files
 trap 'rm -f "$UNPARSED_F"' EXIT   # entries desc_of could not parse; counted to stderr at exit (ADR-0075: the enumerator reports its own blind spot)
 SKILL_PRUNE=( -name node_modules -o -name .git -o -name docs )   # docs/<lang>/ holds translated copies of the same skills
 CMD_PRUNE=( "${SKILL_PRUNE[@]}" -o -name references -o -name reference -o -name examples -o -name templates -o -name assets -o -name scripts )

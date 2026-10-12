@@ -772,6 +772,9 @@ if ! grep -qF "Scanned: $n | RISK: 0 | REVIEW: 0 | PASS: $n" <<< "$shipped"; the
   printf '%s\n' "$shipped" | head -20
 fi
 
+notmp=$(TMPDIR="$repo_root/no-such-dir-security-selftest" bash scripts/security.sh --path src 2>&1 >/dev/null); expect_rc "a TMPDIR that does not exist is exit 2, nothing scanned" 2 $?
+expect_in "$notmp" "the temp-file failure is silent or does not name TMPDIR" "TMPDIR=$repo_root/no-such-dir-security-selftest"
+
 if [ "$fail" -ne 0 ]; then
   echo; echo "Fixture output (first 40 lines; run the scanner for the rest):"; printf '%s\n' "$out" | head -40; echo "Clean output:"; printf '%s\n' "$clean" | head -40
 fi

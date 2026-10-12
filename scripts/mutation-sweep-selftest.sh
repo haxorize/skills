@@ -238,6 +238,18 @@ mkdir -p "$tmp/nogen/scripts"; cp "$sweep" "$tmp/nogen/scripts/"
 out="$(bash "$tmp/nogen/scripts/mutation-sweep.sh" --list 2>&1)"; rc=$?
 expect_rc "a missing generator is exit 4, nothing ran" 4 "$rc"
 expect_in "$out" "the missing generator is named" "mutation-sweep.py is missing beside this script"
+out="$(TMPDIR="$tmp/no-such-dir" bash "$fx/scripts/mutation-sweep.sh" --list 2>&1)"; rc=$?
+expect_rc "a TMPDIR that does not exist is exit 4, nothing ran" 4 "$rc"
+expect_in "$out" "the failed mktemp names TMPDIR" "TMPDIR=$tmp/no-such-dir"
+mkdir -p "$fx/.tmp"
+out="$(TMPDIR="$fx/.tmp" bash "$fx/scripts/mutation-sweep.sh" --list 2>&1)"; rc=$?
+expect_rc "a TMPDIR inside the copied tree is exit 4, nothing ran" 4 "$rc"
+expect_in "$out" "the nested TMPDIR is refused by name" "is inside the tree it copies"
+rmdir "$fx/.tmp"
+# selftest_tmpdir is scripts/selftest-lib.sh's; this is the selftest that grades it.
+( TMPDIR="$tmp/no-such-dir"; selftest_tmpdir >/dev/null ) && selftest_fail "selftest_tmpdir returned 0 for a TMPDIR that does not exist — it ignored TMPDIR"
+t2="$(TMPDIR="$tmp" selftest_tmpdir)" || selftest_fail "selftest_tmpdir gave no directory under a writable TMPDIR"
+case "$t2" in "$tmp"/selftest.*) ;; *) selftest_fail "selftest_tmpdir made '$t2', not a directory under TMPDIR ($tmp)" ;; esac
 
 # --- the mutation table: each row removes one guard from a copy of the sweep and must change
 # a verdict the rows above read. The fixture is reopened (blue uncovered) for the first row.

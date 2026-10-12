@@ -8,7 +8,14 @@
 set -u
 here="$(cd "$(dirname "$0")" && pwd)"
 hook="$here/rename-safety.sh"
-tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
+# Temp-file template and guard: scripts/README.md § Temp files. Spelled out
+# because global/hooks/selftest-lib.sh has no temp-directory helper.
+tmp="$(mktemp -d "${TMPDIR:-/tmp}/rename-safety-selftest.XXXXXX" 2>/dev/null)"
+if [ -z "$tmp" ] || [ ! -d "$tmp" ]; then
+  echo "rename-safety-selftest: no usable temp directory (TMPDIR=${TMPDIR:-unset}) — nothing ran" >&2
+  exit 4
+fi
+trap 'rm -rf "$tmp"' EXIT
 opted="$tmp/opted"; plain="$tmp/plain"
 mkdir -p "$opted/.claude" "$opted/deep" "$plain"; touch "$opted/.claude/rename-safety"
 

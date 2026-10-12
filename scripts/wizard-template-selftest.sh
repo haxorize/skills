@@ -178,6 +178,12 @@ expect_rc "write_env" 0 "$rc"
 [ "$(grep -c '^KEY=' "$tmp/.env")" -eq 1 ] || selftest_fail "write_env appended a second KEY= line instead of replacing the first"
 expect_in "$(cat "$tmp/.env")" "write_env did not keep the last value" "KEY=two"
 expect_in "$(cat "$tmp/.env")" "write_env lost the other key" "OTHER=x"
+out=$(cd "$tmp" && TMPDIR="$tmp/no-such-dir" ENV_FILE="$tmp/.env" bash -c ". '$lib'; write_env KEY three; echo carried-on" 2>&1); rc=$?
+expect_rc "write_env with no usable TMPDIR ends the wizard under -e" 1 "$rc"
+expect_in "$out" "write_env failed without naming the key it did not write" "KEY not written"
+expect_in "$out" "write_env's failure does not name TMPDIR" "TMPDIR=$tmp/no-such-dir"
+reject_in "$out" "write_env carried on past a failed mktemp" "carried-on"
+expect_in "$(cat "$tmp/.env")" "write_env changed ENV_FILE when mktemp failed" "KEY=two"
 
 out=$(cd "$tmp" && NO_COLOR=1 bash -c ". '$lib'; printf '[%s%s%s%s]' \"\$BOLD\" \"\$BLUE\" \"\$GREEN\" \"\$RESET\"" 2>&1)
 [ "$out" = "[]" ] || selftest_fail "NO_COLOR=1 left a colour variable set: $out"

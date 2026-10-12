@@ -24,7 +24,13 @@ Every script under `scripts/`, every hook under `scripts/git-hooks/`, every hook
 - **3** — usage error.
 - **4** — a check never ran, so the run is not a verdict on anything: the script is broken, or the environment it needs is (an unwritable `TMPDIR` under the failure flag, say). Either fault is a different claim from the corpus being wrong.
 
+One exception: `security.sh` spends 4 on its `--fail-on` threshold, which callers gate on, so its never-ran cases (no temp file, a `--path` that is not a directory) exit 2; its `--help` says so.
+
 A `WARN` never moves the status. `scripts/git-hooks/post-merge` and `sweep-corpus` read the number alone, so the 2 is what tells a narrower clean from a whole one. A script states its own roster in `--help`; it does not restate this table. [ADR-0068](../docs/adr/0068-lint-adrs-enforces-two-way-pointers.md) set 0-3 and [ADR-0072](../docs/adr/0072-shared-trigger-phrase-check-and-never-ran-is-not-clean.md) added 4.
+
+## Temp files take a full-path template
+
+`mktemp` takes `"${TMPDIR:-/tmp}/<name>.XXXXXX"` (with `-d` for a directory), never the bare form and never `-t`: on Darwin both ignore `TMPDIR`, so they fail where `TMPDIR` is the only writable temp path. The guard tests the assignment itself, `if ! x=$(mktemp …) || [ ! -f "$x" ]; then …`, never the variable on the next line — under `set -e` a failing command substitution in a bare assignment exits before that line runs, silently. The failure message names the template and `TMPDIR`, as `lint-lib.sh`'s does, and the status is the taxonomy's 4 — for a selftest too, which prints `<script>: no usable temp directory — nothing ran`, or exits 1 instead when a row before the guard already failed. Each site carries a one-line pointer here rather than the reasoning.
 
 ## A check lands with its fixture and its mutation, in both directions
 

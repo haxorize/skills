@@ -76,7 +76,8 @@
 # Exit: 0 every graded mutant was CAUGHT; 1 at least one SILENT site; 2 no
 # SILENT site but a target was UNGRADED, or a target graded no mutant
 # (every one INVALID or HUNG or BROKE), or --list ran nothing; 3 usage;
-# 4 python3, perl, or the generator is missing, or the tree could not be copied —
+# 4 python3, perl, or the generator is missing, no temp file or directory could
+# be made, TMPDIR resolves inside the tree, or the tree could not be copied —
 # nothing ran.
 #
 # The 2026-09-04 round parked this as D2.8 until its first run found a
@@ -210,7 +211,8 @@ if [ "${one_mode:-0}" = 1 ]; then
   case "$target" in /*|../*|*/../*|*/..) echo "mutation-sweep: _one refuses target '$target' — must be a repo-relative path inside the tree" >&2; exit 3 ;; esac
   line="${id#*:}"; line="${line%%:*}"
   what="$(python3 "$gen" list "$root/$target" | awk -F'\t' -v id="$id" '$1==id{print $4}')"
-  copy="$(mktemp -d 2>/dev/null)" || { printf 'BROKE\t%s:%s\t%s\tno temp directory\n' "$target" "$line" "$id"; exit 0; }
+  # Temp-file template: scripts/README.md § Temp files.
+  copy="$(mktemp -d "${TMPDIR:-/tmp}/mutation-copy.XXXXXX" 2>/dev/null)" || { printf 'BROKE\t%s:%s\t%s\tno temp directory\n' "$target" "$line" "$id"; exit 0; }
   trap 'rm -rf "$copy"' EXIT
   copy_tree "$copy" || { printf 'BROKE\t%s:%s\t%s\tcould not copy the tree\n' "$target" "$line" "$id"; exit 0; }
   python3 "$gen" apply "$root/$target" "$id" > "$copy/$target" || { printf 'BROKE\t%s:%s\t%s\tgenerator could not apply it\n' "$target" "$line" "$id"; exit 0; }
@@ -243,8 +245,13 @@ $p"
 }"
 fi
 
-results="$(mktemp 2>/dev/null)" || { echo "mutation-sweep: no temp file — nothing ran" >&2; exit 4; }
-trap 'rm -f "$results"' EXIT
+# copy_tree tars the whole tree, so a TMPDIR inside it would nest every copy in
+# the next one, and under --jobs pick up the other jobs' in-flight copies.
+tmp_root="$(cd "${TMPDIR:-/tmp}" 2>/dev/null && pwd -P)"
+case "$tmp_root/" in "$(cd "$root" && pwd -P)/"*) echo "mutation-sweep: TMPDIR ($tmp_root) is inside the tree it copies — nothing ran; point it outside" >&2; exit 4 ;; esac
+results="$(mktemp "${TMPDIR:-/tmp}/mutation-results.XXXXXX" 2>/dev/null)" || { echo "mutation-sweep: mktemp ${TMPDIR:-/tmp}/mutation-results.XXXXXX failed (TMPDIR=${TMPDIR:-unset}) — nothing ran" >&2; exit 4; }
+base=""
+trap 'rm -f "$results"; [ -z "$base" ] || rm -rf "$base"' EXIT
 ungraded=0; nothing_graded=0; ran_any=0
 
 for target in $targets; do
@@ -269,7 +276,7 @@ for target in $targets; do
     continue
   fi
   # baseline: the paired selftest is green on an unmutated copy, and its runtime sets the timeout
-  base="$(mktemp -d 2>/dev/null)" || { echo "mutation-sweep: no temp directory — nothing ran" >&2; exit 4; }
+  base="$(mktemp -d "${TMPDIR:-/tmp}/mutation-base.XXXXXX" 2>/dev/null)" || { echo "mutation-sweep: mktemp -d ${TMPDIR:-/tmp}/mutation-base.XXXXXX failed (TMPDIR=${TMPDIR:-unset}) — nothing ran" >&2; exit 4; }
   copy_tree "$base" || { rm -rf "$base"; echo "mutation-sweep: could not copy the tree — nothing ran" >&2; exit 4; }
   tmo="${timeout_s:-}"; ok=1
   for st in $sts; do
@@ -277,7 +284,7 @@ for target in $targets; do
     if [ "$rc" != 0 ]; then echo "mutation-sweep: UNGRADED $target — $st exits $rc on the unmutated tree, so its mutants say nothing; fix the selftest first" >&2; ok=0; break; fi
     if [ -z "$timeout_s" ]; then want=$(( (t1 - t0) * 3 )); [ "$want" -ge 60 ] || want=60; [ -n "$tmo" ] && [ "$tmo" -ge "$want" ] || tmo=$want; fi
   done
-  rm -rf "$base"
+  rm -rf "$base"; base=""
   [ "$ok" = 1 ] || { ungraded=1; continue; }
   ran_any=1
   printf '%s\n' "$ids" | xargs -P "$jobs" -I '{}' bash "$0" _one "$target" '{}' "$tmo" $sts | tee -a "$results"

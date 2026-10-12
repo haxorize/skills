@@ -35,7 +35,14 @@ set -u
 here="$(cd "$(dirname "$0")" && pwd)"
 hook="$here/friction-log.sh"
 skill="$here/../../src/debrief/SKILL.md"
-tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
+# Temp-file template and guard: scripts/README.md § Temp files. Exit 4 is
+# this script's "nothing ran" status, as for a missing python3.
+tmp="$(mktemp -d "${TMPDIR:-/tmp}/friction-log-selftest.XXXXXX" 2>/dev/null)"
+if [ -z "$tmp" ] || [ ! -d "$tmp" ]; then
+  echo "friction-log-selftest: no usable temp directory (TMPDIR=${TMPDIR:-unset}) — nothing ran" >&2
+  exit 4
+fi
+trap 'rm -rf "$tmp"' EXIT
 export HOME="$tmp"
 export FRICTION_LOG_DIR="$tmp/friction"
 command -v python3 >/dev/null 2>&1 || { echo "friction-log-selftest: python3 missing, nothing ran"; exit 4; }

@@ -161,7 +161,8 @@ expect_rc "a run with a cp1252 stdout" 0 $?
 # --- Header guard (D1/D2): a renamed column exits 1 and names it ---
 err=$(python3 "$script" "$fx/renamed-header.csv" "$fx/manifest.json" 2>&1 >/dev/null); expect_rc "a renamed ttr_status header" 1 $?
 expect_in "$err" "the renamed-header error names ttr_status" "missing required column(s): ttr_status"
-tmp=$(mktemp -d) || { selftest_fail "mktemp failed"; exit 4; }
+# No temp dir: 4 (nothing more ran), unless a row above already failed.
+tmp=$(selftest_tmpdir) || { echo "draft-cvit-stories-selftest: no usable temp directory (TMPDIR=${TMPDIR:-unset}) — the rows below did not run" >&2; [ "$fail" = 0 ] || exit 1; exit 4; }
 trap 'rm -rf "$tmp"' EXIT
 sed '1s/"number"/"Number"/' "$fx/export.csv" > "$tmp/renamed-number.csv"
 err=$(python3 "$script" "$tmp/renamed-number.csv" "$fx/manifest.json" 2>&1 >/dev/null); expect_rc "a renamed number header" 1 $?
