@@ -456,8 +456,14 @@ rules each cites. With no argument, the whole tree.
                     the whole-tree checks (pass 1's shared trigger phrase, all
                     of pass 3, and pass 4's byte totals and launch-loaded sum).
                     A path is relative to the caller's directory or absolute,
-                    and must name an existing file inside the sweep root. A
-                    clean run exits 2, never 0: not everything was checked
+                    and must name an existing file inside the sweep root
+                    (a file-level link, as under ~/.claude/rules/, is followed)
+                    that some per-file check reads. Router coverage and the
+                    requires arms that read a skill's invocation flag run from
+                    every other skill when the router, README.md or that
+                    skill's SKILL.md is named, narrowed to the named file. A
+                    clean run prints `lint-skills.sh PARTIAL:` and exits 2,
+                    never 0: not everything was checked
 
   LINT_ROOT=<dir>   point the whole sweep at another tree; unset in normal use
                     (scripts/lint-skills-selftest.sh sets it to the fixture roots)
@@ -482,7 +488,8 @@ which it does not; a green selftest is not a claim about the rest.
 Exit codes: 0 clean · 1 at least one FAIL · 2 not everything checked: LINT_ROOT is
 not a directory (nothing checked), or --files ran clean with the whole-tree checks
 skipped · 3 usage error (an unknown argument, an empty one, or more than one without
---files; --files with no path, or a path that is no file inside the sweep root; a
+--files; --files with no path, a path that is no file inside the sweep root, or
+one no per-file check reads; a
 LINT_SIBLING_GROUPS naming no group or a group of one path) · 4 a check never ran, so
 this run is not a verdict on anything — today the one cause is a failure flag under
 TMPDIR that could not be written. WARN lines never change the exit code.
@@ -490,7 +497,8 @@ USAGE
 }
 # files_mode is the one switch the whole-tree checks below read: 1 means
 # --files named the files to grade, and every check that reads more than the
-# file in hand is skipped, so a clean run ends on exit 2, not 0.
+# file in hand is skipped — save the cross-file arms after pass 1, which read
+# another skill only to grade the named file — so a clean run ends on exit 2.
 files_mode=0
 if [ "${1:-}" = --files ]; then
   shift
@@ -573,10 +581,25 @@ fi
 lint_absolutize_tmpdir
 # --files paths are read here, while $PWD is still the caller's, and turned
 # into paths relative to the sweep root, the form every walk below prints, so
-# in_scope is a string match. Both sides are resolved physically (`pwd -P`): a
-# path through the ~/.claude/skills/ symlink names the same file as its src/
-# path. A path that is no file inside the root is a usage error, not a skip —
-# a quiet skip would read as a clean grade of a file nobody graded.
+# files_named is a string match. Both sides are resolved physically: the
+# directory by `pwd -P`, and the file itself through any chain of file-level
+# links first, since ~/.claude/rules/*.md are links to global/rules/*.md one
+# file at a time — a path through either ~/.claude/ tree names the same file as
+# its repo path. A path that is no file inside the root is a usage error, not a
+# skip — a quiet skip would read as a clean grade of a file nobody graded.
+# physical_file <path>: the path with every file-level link followed (relative
+# targets against the link's own directory) and the directory resolved by
+# `pwd -P`. A loop of links stops after 40 hops and is left where it stands,
+# and the root check below then rejects it.
+physical_file() {
+  local p=$1 link hops=0
+  while [ -L "$p" ] && [ "$hops" -lt 40 ]; do
+    link=$(readlink "$p")
+    case "$link" in /*) p=$link ;; *) p="$(dirname "$p")/$link" ;; esac
+    hops=$((hops + 1))
+  done
+  printf '%s/%s\n' "$(cd "$(dirname "$p")" && pwd -P)" "$(basename "$p")"
+}
 files_scope=$'\n'
 if [ "$files_mode" -eq 1 ]; then
   scan_root_phys=$(cd "$scan_root" && pwd -P)
@@ -584,17 +607,16 @@ if [ "$files_mode" -eq 1 ]; then
     if [ -z "$arg" ] || [ ! -f "$arg" ]; then
       echo "lint-skills.sh: --files '$arg' is not a file — name an existing file (a deleted one has nothing left to grade)" >&2; exit 3
     fi
-    abs="$(cd "$(dirname "$arg")" && pwd -P)/$(basename "$arg")"
+    abs=$(physical_file "$arg")
     case "$abs" in
       "$scan_root_phys"/*) files_scope="$files_scope${abs#"$scan_root_phys"/}"$'\n' ;;
       *) echo "lint-skills.sh: --files '$arg' is outside the sweep root $scan_root — nothing here grades it" >&2; exit 3 ;;
     esac
   done
 fi
-# in_scope <path>: true for every path in a whole-tree run, and in --files mode
-# only for a named one. Every per-file loop below asks it before grading.
-in_scope() {
-  [ "$files_mode" -eq 0 ] && return 0
+# files_named <path>: true when --files named the path. Only graded_list (Pass
+# 0) asks it, so the named set is applied once, where each walk is built.
+files_named() {
   case "$files_scope" in *$'\n'"$1"$'\n'*) return 0 ;; esac
   return 1
 }
@@ -702,6 +724,91 @@ for f in src/*/SKILL.md; do
   [ "$(frontmatter_value "$f" disable-model-invocation)" = "true" ] &&
     user_invoked_skills="$user_invoked_skills$skill "
 done
+
+# The graded lists. Every per-file loop below walks one of these, and each is
+# built here, once, from its walk: in a whole-tree run it is the walk itself,
+# and under --files it is cut to the named paths as it is built, so no loop
+# asks whether its file was named and a loop added later over one of these
+# lists cannot grade a file nobody named. A check that reads more than the file
+# in hand reads the uncut walk ($walked_files, the src/*/SKILL.md glob) and is
+# guarded by files_mode instead. A new per-file walk is built here through
+# graded_list, never in its own loop: that is also what lets the reach check
+# after this block know every path a per-file check will grade.
+files_reached=$'\n'
+graded_skills="" graded_md="" graded_rules="" graded_hooks="" graded_scripts=""
+graded_spelling="" graded_claude_mds="" graded_root_claude_md=""
+# graded_list <var> <newline-separated paths>: set <var> to the paths a run
+# grades — all of them, or under --files the named ones — and record each kept
+# path as reached. printf -v, so the record lands in this shell, not a
+# command substitution's.
+graded_list() {
+  local kept="" p
+  while IFS= read -r p; do
+    [ -n "$p" ] || continue
+    [ "$files_mode" -eq 0 ] || files_named "$p" || continue
+    kept="$kept$p"$'\n'
+    files_reached="$files_reached$p"$'\n'
+  done <<<"$2"
+  printf -v "$1" '%s' "$kept"
+}
+
+# One walk of the shipped markdown, produced once and passed to every
+# consumer. Pass 2 classifies it file by file; pass 3's checks need the same
+# list as a whole, and re-running the find there would be a second walk that
+# could silently disagree with this one. A find sweep rather than a fixed-depth
+# glob, so nested reference files (references/sub/*.md) are covered too.
+#
+# The set of classes this emits is closed, and the pass-2 classifier fails on a
+# path no arm claims — so adding a tree here without giving it an arm is a
+# loud error rather than a class that silently gets one check.
+walk_shipped_md() {
+  { find src -type f -name '*.md'
+    [ -d global/rules ] && find global/rules -type f -name '*.md'
+    [ -d .claude/skills ] && find .claude/skills -type f -name '*.md'
+    [ -f DOMAIN.md ] && echo DOMAIN.md
+    [ -f README.md ] && echo README.md; } | sort -u
+}
+walked_files=$(walk_shipped_md)
+
+graded_list graded_skills "$(printf '%s\n' src/*/SKILL.md)"
+graded_list graded_md "$walked_files"
+graded_list graded_rules "$(printf '%s\n' global/rules/*.md)"
+# A hook is any global/hooks/*.sh; check_hook_selftest decides which owe a
+# selftest (the `# Install note:` marker), so every one is reached.
+graded_list graded_hooks "$(for h in global/hooks/*.sh; do [ -f "$h" ] && printf '%s\n' "$h"; done)"
+# The four script trees on the one pairing contract, in the order the
+# pairing check has always printed them. scripts/git-hooks/ admits a file by
+# its shebang (see the pairing check), so a README beside the hooks is not
+# reached and --files naming it is a usage error.
+graded_list graded_scripts "$(
+  for sc in scripts/*.sh .claude/skills/*/scripts/*.sh src/*/scripts/*.sh src/*/scripts/*.py; do
+    [ -f "$sc" ] && printf '%s\n' "$sc"
+  done
+  for sc in scripts/git-hooks/*; do
+    [ -f "$sc" ] && [ "$(head -c 2 "$sc" 2>/dev/null)" = '#!' ] && printf '%s\n' "$sc"
+  done)"
+# The spelling-only trees (why these and not the fixture READMEs: pass 4).
+graded_list graded_spelling "$(
+  { [ -d docs ] && find docs -type f -name '*.md'
+    for f in global/README.md scripts/README.md; do [ -f "$f" ] && printf '%s\n' "$f"; done
+  } | sort -u)"
+# Every CLAUDE.md the Landing-key check reads (why the fixture roots are out:
+# pass 4), and the root one on its own for the root-only checks.
+graded_list graded_claude_mds "$(find . -name CLAUDE.md -not -path './.git/*' -not -path './scripts/lint-fixtures*/*' | sed 's|^\./||' | sort)"
+graded_list graded_root_claude_md "$([ -f CLAUDE.md ] && echo CLAUDE.md)"
+
+# The reach check: under --files, a named path no graded list kept is one no
+# per-file check would read — a .gitignore, a script outside the four trees.
+# Grading it would print PARTIAL over a file nothing read, so it is a usage
+# error naming the path, before any check runs.
+if [ "$files_mode" -eq 1 ]; then
+  while IFS= read -r p; do
+    [ -n "$p" ] || continue
+    case "$files_reached" in *$'\n'"$p"$'\n'*) continue ;; esac
+    echo "lint-skills.sh: --files '$p' is a file no per-file check reads — nothing here would grade it, so a run over it is no verdict; drop it, or run without --files" >&2
+    exit 3
+  done <<<"$files_scope"
+fi
 
 # DOMAIN.md, read once for the two checks that grade a body against it. The
 # registered ALL-CAPS labels are what check_labels admits; the capitalized
@@ -913,10 +1020,13 @@ check_invocation_axis() {
 }
 
 # Declared dependencies (ADR-0016): every name in a `requires:` line must
-# resolve to a skill that exists and is model-invoked.
+# resolve to a skill that exists and is model-invoked. A third argument, when
+# given, is a space-separated set of skill names: only a dep in it is graded
+# (--files naming that dep's SKILL.md — see the cross-file arms after pass 1).
 check_requires_resolve() {
-  local f=$1 reqs=$2 dep depfile
+  local f=$1 reqs=$2 only=${3:-} dep depfile
   for dep in $reqs; do
+    [ -z "$only" ] || case " $only " in *" $dep "*) : ;; *) continue ;; esac
     depfile="src/$dep/SKILL.md"
     if [ ! -f "$depfile" ]; then
       say_fail "$f requires '$dep' but src/$dep/SKILL.md does not exist"
@@ -929,8 +1039,11 @@ check_requires_resolve() {
 }
 
 # Two-way requires (see header): used-but-undeclared and declared-but-unused.
+# A fifth argument, when given, is a space-separated set of skill names: only a
+# call naming one of them is graded, and the declared-but-unused arm, which
+# reads nothing but $f, is skipped (the cross-file arms after pass 1).
 check_requires_two_way() {
-  local f=$1 skill=$2 reqs=$3 body=$4 scan used dep
+  local f=$1 skill=$2 reqs=$3 body=$4 only=${5:-} scan used dep
   scan=$(printf '%s\n' "$body" | mask_examples)
   # One clause can name more than one skill ("with `A` and `B`", "with `A`,
   # then again with `B`"), and the verb is written as imperative or gerund
@@ -939,6 +1052,7 @@ check_requires_two_way() {
   # a two-skill call as a one-skill call and leaves the second undeclared.
   for used in $(printf '%s\n' "$scan" | grep -oiE 'call(ing)? the Skill tool with `[a-z0-9-]+`(,? (and|then again with|then with|again with) `[a-z0-9-]+`)*' | grep -o '`[a-z0-9-]*`' | tr -d '`' | sort -u); do
     [ -f "src/$used/SKILL.md" ] || continue
+    [ -z "$only" ] || case " $only " in *" $used "*) : ;; *) continue ;; esac
     if name_is_user_invoked "$used"; then
       say_fail "$f calls the Skill tool with \`$used\`, but '$used' is user-invoked — a user-invoked skill's description is hidden from the model, so the call does nothing; suggest \`/$used\` for the human to type"
       continue
@@ -948,6 +1062,7 @@ check_requires_two_way() {
       say_fail "$f calls the Skill tool with \`$used\` but its requires: line does not declare '$used' — the installer will not link it"
     fi
   done
+  [ -z "$only" ] || return 0
   for dep in $reqs; do
     if ! grep -q "\`/\{0,1\}$dep\`" <<<"$body"; then
       say_fail "$f declares requires: '$dep' but the body never names it — drop the declaration, or name the skill in the body where it is used"
@@ -960,12 +1075,14 @@ check_requires_two_way() {
 # README.md's skill map is a second router — every skill must appear there
 # as a backticked code-span, same rule, so an added, renamed, or removed
 # skill can't leave the README lying. Blurb accuracy stays editorial.
+# A second argument, when given, names the routers to grade ("router",
+# "readme", or both, space-separated); with none, both.
 check_router_coverage() {
-  local name=$1 router="src/which-skill/SKILL.md" readme="README.md"
-  if [ "$name" != "which-skill" ] && ! grep -qE "\`/?${name}([^a-z0-9-]|$)" <<<"$router_text"; then
+  local name=$1 arms=" ${2:-router readme} " router="src/which-skill/SKILL.md" readme="README.md"
+  if [[ $arms == *" router "* ]] && [ "$name" != "which-skill" ] && ! grep -qE "\`/?${name}([^a-z0-9-]|$)" <<<"$router_text"; then
     say_fail "$router has no backticked mention of skill '$name' — route it or list it as standalone (CLAUDE.md § Adding, renaming, or removing a skill: update it and README.md's skill map in the same change)"
   fi
-  if ! grep -qE "\`/?${name}([^a-z0-9-]|$)" <<<"$readme_text"; then
+  if [[ $arms == *" readme "* ]] && ! grep -qE "\`/?${name}([^a-z0-9-]|$)" <<<"$readme_text"; then
     say_fail "$readme has no backticked mention of skill '$name' — list it in the README skill map (CLAUDE.md § Adding, renaming, or removing a skill: update it and src/which-skill/SKILL.md in the same change)"
   fi
 }
@@ -1012,8 +1129,9 @@ check_shared_trigger_phrase() {
       END { for (p in n) if (n[p] > 1) print p "\t" who[p] }' | sort)
 }
 
-for f in src/*/SKILL.md; do
-  in_scope "$f" || continue
+# fd 3 carries the list, so a check that reads stdin cannot eat the next path.
+while IFS= read -r f <&3; do
+  [ -n "$f" ] || continue
   skill=${f#src/}; skill=${skill%/SKILL.md}
   desc=$(frontmatter_value "$f" description)
   dmi=""; name_is_user_invoked "$skill" && dmi=true
@@ -1035,9 +1153,41 @@ for f in src/*/SKILL.md; do
   [ -n "$reqs" ] && check_requires_resolve "$f" "$reqs"
   check_requires_two_way "$f" "$skill" "$reqs" "$body"
   check_router_coverage "$skill"
-done
+done 3<<<"$graded_skills"
 # Whole-tree: a shared phrase is a pair, and --files reads one side of it.
 [ "$files_mode" -eq 0 ] && check_shared_trigger_phrase "$trigger_phrases"
+
+# The cross-file arms. Three pass-1 checks are keyed by one skill's SKILL.md
+# but read another file, so the loop above, cut to the named skills, would
+# skip the very check a named file breaks: router coverage FAILs against the
+# router or README.md, and the requires arms that ask whether a dep or a called
+# skill is user-invoked turn on that skill's own flag. Under --files those arms
+# run here over every skill the loop above did not grade, narrowed to the named
+# file — the named router only, the named skills only — so a FAIL still lands
+# on what was named and an unnamed skill's own defects stay ungraded. In a
+# whole-tree run the loop above graded every skill, and this does nothing.
+if [ "$files_mode" -eq 1 ]; then
+  cross_routers=""
+  files_named src/which-skill/SKILL.md && cross_routers="router"
+  files_named README.md && cross_routers="$cross_routers readme"
+  cross_names=""
+  while IFS= read -r f; do
+    [ -n "$f" ] || continue
+    skill=${f#src/}; skill=${skill%/SKILL.md}
+    cross_names="$cross_names $skill"
+  done <<<"$graded_skills"
+  if [ -n "$cross_routers" ] || [ -n "$cross_names" ]; then
+    for f in src/*/SKILL.md; do
+      files_named "$f" && continue
+      skill=${f#src/}; skill=${skill%/SKILL.md}
+      [ -n "$cross_routers" ] && check_router_coverage "$skill" "$cross_routers"
+      [ -n "$cross_names" ] || continue
+      reqs=$(frontmatter_value "$f" requires | tr ',' ' ')
+      [ -n "$reqs" ] && check_requires_resolve "$f" "$reqs" "$cross_names"
+      check_requires_two_way "$f" "$skill" "$reqs" "$(skill_body_lines "$f")" "$cross_names"
+    done
+  fi
+fi
 
 # ---------------------------------------------------------------------------
 # Pass 2 — every shipped markdown file, read once. The body checks run over
@@ -1754,24 +1904,6 @@ check_section_pointers() {
   done <<< "$cands"
 }
 
-# One walk, produced once and passed to every consumer. Pass 2 classifies it
-# file by file; pass 3's checks need the same list as a whole, and re-running
-# the find there would be a second walk that could silently disagree with this
-# one. A find sweep rather than a fixed-depth glob, so nested reference files
-# (references/sub/*.md) are covered too.
-#
-# The set of classes this emits is closed, and the classifier below fails on a
-# path no arm claims — so adding a tree here without giving it an arm is a
-# loud error rather than a class that silently gets one check.
-walk_shipped_md() {
-  { find src -type f -name '*.md'
-    [ -d global/rules ] && find global/rules -type f -name '*.md'
-    [ -d .claude/skills ] && find .claude/skills -type f -name '*.md'
-    [ -f DOMAIN.md ] && echo DOMAIN.md
-    [ -f README.md ] && echo README.md; } | sort -u
-}
-walked_files=$(walk_shipped_md)
-
 # The four body checks, named once. Spelling them out per arm put the same
 # four calls in three places, and a cell dropped from one arm reads identically
 # to one that never ran there.
@@ -1939,9 +2071,8 @@ house_style_checks() {
 # The walk is guarded rather than fed straight in: `printf '%s\n' ""` emits one
 # empty line, so an empty walk would otherwise run one iteration with an empty
 # filename and hand `""` to the checks.
-if [ -n "$walked_files" ]; then
+if [ -n "$graded_md" ]; then
 while IFS= read -r f; do
-  in_scope "$f" || continue
   case "$f" in
     global/rules/*)
       # Hoisted prose. Body checks and the house-style checks, and
@@ -1997,7 +2128,7 @@ while IFS= read -r f; do
       say_fail "walk_shipped_md emitted $f and no classifier arm claims it — add an arm naming that class's whole check set, or drop the tree from the walk; an unclaimed file would otherwise be graded by nothing"
       ;;
   esac
-done < <(printf '%s\n' "$walked_files")
+done < <(printf '%s' "$graded_md")
 fi
 
 # ---------------------------------------------------------------------------
@@ -2528,12 +2659,12 @@ check_rule_pointers() {
   done <<<"$ptrs"
 }
 
-for f in global/rules/*.md; do
-  in_scope "$f" && check_global_rule "$f"
-done
-while IFS= read -r f; do
-  in_scope "$f" && check_rule_pointers "$f"
-done <<<"$walked_files"
+while IFS= read -r f <&3; do
+  [ -n "$f" ] && check_global_rule "$f"
+done 3<<<"$graded_rules"
+while IFS= read -r f <&3; do
+  [ -n "$f" ] && check_rule_pointers "$f"
+done 3<<<"$graded_md"
 
 # Every hook has a selftest (global/README.md § Hooks: "Each hook has a
 # `*-selftest.sh` beside it"): a hook is a global/hooks/*.sh whose header
@@ -2626,26 +2757,18 @@ check_script_selftest() {
   esac
 }
 
-if [ -d global/hooks ]; then
-  for h in global/hooks/*.sh; do
-    [ -f "$h" ] && in_scope "$h" && check_hook_selftest "$h"
-  done
-fi
-if [ -d scripts ]; then
-  for sc in scripts/*.sh; do
-    [ -f "$sc" ] && in_scope "$sc" && check_script_selftest "$sc"
-  done
-fi
-# A repo-local skill's own scripts/ is walked too. ADR-0075:23 recorded that no
+# The hooks and the four script trees are walked in Pass 0 (graded_hooks,
+# graded_scripts); what each tree is and why it is walked follows.
+while IFS= read -r h <&3; do
+  [ -n "$h" ] && check_hook_selftest "$h"
+done 3<<<"$graded_hooks"
+# scripts/*.sh, the first tree. A repo-local skill's own scripts/ is walked too. ADR-0075:23 recorded that no
 # gate walked .claude/skills/*/scripts/, so the enumerator's stderr count landed
 # with no selftest "by that scope, not by omission" — a deliberate scope rather
 # than an oversight. Its 2026-09-01 amendment closes that: enum.sh drives the
 # first step of every mining round, so the script with the widest blast radius
 # was the one script nothing graded. Same contract as scripts/ — a *.sh here is
 # paired with its selftest or named *-lib.sh.
-for sc in .claude/skills/*/scripts/*.sh; do
-  [ -f "$sc" ] && in_scope "$sc" && check_script_selftest "$sc"
-done
 # A shipped skill's bundled scripts are walked too. ADR-0103 bundles a skill's
 # deterministic logic as a tested script under src/<skill>/scripts/; ADR-0104
 # deferred grading that tree, and its 2026-10-10 amendment closes the gap the
@@ -2655,28 +2778,23 @@ done
 # <stem>-selftest.sh (require_selftest cuts .py too), or a shell file is named
 # *-lib.sh. One level only: a selftest's fixtures sit in a subdirectory
 # (<stem>-fixtures/), and their .py or .sh inputs are data, not scripts.
-for sc in src/*/scripts/*.sh src/*/scripts/*.py; do
-  [ -f "$sc" ] && in_scope "$sc" && check_script_selftest "$sc"
-done
 # The git hooks walk: check_script_selftest grades these too (check_hook_selftest
 # is global/hooks/ only). What makes a file here a hook is derived, not listed:
 # its first line is a shebang, the way `# Install note:` marks a Claude Code
-# hook under global/hooks/ (three PreToolUse checks and one Stop hook today)
+# hook under global/hooks/
 # — so a README, a .gitignore or a *.sample beside the hooks is not held
-# to the pairing, and the next hook needs no roster edit.
-if [ -d scripts/git-hooks ]; then
-  for sc in scripts/git-hooks/*; do
-    [ -f "$sc" ] && in_scope "$sc" || continue
-    case "$(head -n 1 "$sc" 2>/dev/null)" in '#!'*) check_script_selftest "$sc" ;; esac
-  done
-fi
+# to the pairing, and the next hook needs no roster edit; Pass 0 applies the
+# shebang test as it builds the list.
+while IFS= read -r sc <&3; do
+  [ -n "$sc" ] && check_script_selftest "$sc"
+done 3<<<"$graded_scripts"
 
 # The spelling-only trees. docs/, the prose READMEs and global/README.md are
 # read by people rather than loaded as instructions, so no other check here
 # walks them — but a British form in an ADR is the same drift as one in a
 # body, and this is the one check whose scope ADR-0077 wrote wider than the
-# skill tree. A separate walk because it is a separate glob: nothing else
-# reads these files. `find docs` rather than two enumerated levels, because
+# skill tree. A separate walk (graded_spelling, built in Pass 0) because it is
+# a separate glob: nothing else reads these files. `find docs` rather than two enumerated levels, because
 # the header states the scope as `docs/**` and `capturing-learnings` writes to
 # `docs/solutions/`, which a two-level glob would never reach. The prose
 # READMEs under scripts/ are here and not in the scripts/ exclusion above:
@@ -2685,11 +2803,9 @@ fi
 # NOT in this glob: each is a fixture whose job is to carry a violation for a
 # LINT_ROOT run, so walking them from the repo's own run would report the
 # fixture's deliberate instance as this repo's defect.
-while IFS= read -r f; do
-  [ -f "$f" ] && in_scope "$f" && check_spelling "$f"
-done < <({ [ -d docs ] && find docs -type f -name '*.md'
-           printf '%s\n' global/README.md scripts/README.md
-         } | sort -u)
+while IFS= read -r f <&3; do
+  [ -n "$f" ] && check_spelling "$f"
+done 3<<<"$graded_spelling"
 
 # (see header) The `Landing:` key. `committing` § Before any outward act reads
 # six lines out of CLAUDE.md and lets four of them pre-authorize an outward
@@ -2822,12 +2938,12 @@ check_landing_key() {
 # NOT buy back is a legal-but-wrong value in a fixture — `Review required: no`
 # is well-formed vocabulary and no arm here fires on it; the property pins in
 # scripts/lint-skills-selftest.sh are what hold that line.
-while IFS= read -r claude_md; do
-  [ -n "$claude_md" ] && in_scope "${claude_md#./}" || continue
-  check_landing_key "${claude_md#./}"
-done < <(find . -name CLAUDE.md -not -path './.git/*' -not -path './scripts/lint-fixtures*/*' | sort)
+# The walk itself is graded_claude_mds, built in Pass 0.
+while IFS= read -r claude_md <&3; do
+  [ -n "$claude_md" ] && check_landing_key "$claude_md"
+done 3<<<"$graded_claude_mds"
 
-if [ -f CLAUDE.md ] && in_scope CLAUDE.md; then
+if [ -n "$graded_root_claude_md" ]; then
   check_claude_md_bytes CLAUDE.md
   # ADR-0076 left the root file as triggers and pointers; a pointer to a
   # missing file silently loads nothing, so the root file gets the same link
@@ -2893,7 +3009,7 @@ check_context_budget() {
 # pair with it, on purpose: see scripts/lint-lib.sh's header.
 [ -e "$LINT_FAIL_FLAG" ] && exit 1
 if [ "$files_mode" -eq 1 ]; then
-  echo "PARTIAL: the named files pass their per-file checks; the whole-tree checks (shared trigger phrase, pass 3, the byte totals) did not run — run without --files for a verdict on the tree."
+  echo "lint-skills.sh PARTIAL: the named files pass their per-file checks; the whole-tree checks (shared trigger phrase, pass 3, the byte totals) did not run — run without --files for a verdict on the tree."
   exit 2
 fi
 echo "OK: skill conventions clean."

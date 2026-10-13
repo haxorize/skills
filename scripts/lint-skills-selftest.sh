@@ -176,8 +176,13 @@
 # nothing and exits 0, an unknown argument, two arguments, and an empty
 # argument run nothing and exit 3, a LINT_ROOT that is not a directory runs
 # nothing and exits 2), and --files (per-file FAILs fire on the named file and
-# on no other, a pass-3 check stays silent, a clean run exits 2 with no OK, and
-# no path, a missing path and an outside path exit 3).
+# on no other, a pass-3 check stays silent, a clean run exits 2 with no OK under
+# `lint-skills.sh PARTIAL:`, a file-level link into the root is followed, both
+# absolute and relative; no path, a missing path, an outside path and a path no
+# per-file check reads exit 3, the last before any check runs; and the
+# cross-file arms — router coverage when the router or README.md is named, and
+# the requires arms that read a named skill's invocation flag — fire from the
+# unnamed skills, narrowed to the named file).
 #
 # The sibling checks are covered through LINT_SIBLING_GROUPS, the seam that
 # replaces the registry for one run (the registry names this repo's own paths,
@@ -209,8 +214,9 @@
 #
 # NOT covered, so a clean run here is not a claim about them: the 200-line caps
 # (the read-error branch is graded, the cap itself is not), description length, angle brackets, name/directory agreement, the
-# requires: resolution check (existence and model-invoked), router coverage,
-# and the classifier's unclaimed-file arm — walk_shipped_md emits only the
+# requires: resolution check (existence and model-invoked), router coverage
+# (each graded only through the --files cross-file rows, never in a
+# whole-tree run), and the classifier's unclaimed-file arm — walk_shipped_md emits only the
 # classes the arms above it claim, so no fixture can produce a path that
 # reaches its say_fail; it guards a tree added to the walk without an arm, and
 # has no input to grade it with. The SIX name lists inside the checks are
@@ -225,8 +231,11 @@
 #
 # What the covered list buys, stated no larger than it is: those shapes cannot
 # stop grading without this script saying so. It was measured, not assumed:
-# 92 numbered mutations of lint-skills.sh, each on a copy of the tree, 88 red
-# and 4 green. The four, each standing and each why:
+# 108 numbered mutations of lint-skills.sh, each on a copy of the tree, 103 red
+# and 5 green. The five, each standing and each why:
+#   - the --files cross-file loop's skip of a named skill dropped:
+#     behavior-preserving but for a repeated FAIL line, since a named skill's
+#     arms already ran in pass 1 and the cross arms are a subset of them;
 #   - the classifier's unclaimed-file arm deleted: silent, because no fixture
 #     can produce a path that reaches it (see NOT covered above);
 #   - the ledger consumer sweep's process substitution turned into a pipe, and
@@ -1018,17 +1027,43 @@ printf '%s\n' "$root_out" | grep -qE '^(OK|FAIL|WARN):' && selftest_fail "a LINT
 # missing, absent or outside path is a usage error that grades nothing.
 files_out=$(LINT_ROOT="$fixtures" bash scripts/lint-skills.sh --files "$fixtures/src/broken-links/SKILL.md" 2>&1); expect_rc "--files on a fixture file with FAILs" 1 $?
 expect_in "$files_out" "--files dropped a per-file check on the named file" "src/broken-links/SKILL.md links to 'references/does-not-exist.md' (line 14)"
-files_other=$(grep '^FAIL:' <<< "$files_out" | grep -vF 'FAIL: src/broken-links/SKILL.md ')
+# The one other file a FAIL may name is a skill whose call to or requirement of
+# broken-links turns on broken-links' own flag (the cross-file arms below).
+files_other=$(grep '^FAIL:' <<< "$files_out" | grep -vF 'FAIL: src/broken-links/SKILL.md ' | grep -vE "calls the Skill tool with \`broken-links\`|requires 'broken-links'")
 [ -z "$files_other" ] || selftest_fail "--files graded a file it was not given: $files_other"
 files_out=$(LINT_ROOT="$fixtures" bash scripts/lint-skills.sh --files "$fixtures/src/ledger-consumer/SKILL.md" 2>&1); files_rc=$?
 reject_in "$files_out" "--files ran pass 3's ledger-consumer check, a whole-tree check" "missing from src/ledger-consumer/SKILL.md"
 expect_rc "--files on a file only a whole-tree check fails" 2 "$files_rc"
 files_out=$(LINT_ROOT="$clean_fixtures" bash scripts/lint-skills.sh --files "$clean_fixtures/src/clean-skill/SKILL.md" 2>&1); expect_rc "--files on a clean file (whole-tree checks skipped)" 2 $?
-expect_in "$files_out" "--files on a clean file printed no PARTIAL line" "PARTIAL:"
+expect_in "$files_out" "--files on a clean file printed no PARTIAL line under the script's own prefix" "lint-skills.sh PARTIAL:"
 grep -q '^OK:' <<< "$files_out" && selftest_fail "--files printed OK, a whole-tree verdict it did not earn"
 LINT_ROOT="$fixtures" bash scripts/lint-skills.sh --files >/dev/null 2>&1; expect_rc "--files with no path" 3 $?
 LINT_ROOT="$fixtures" bash scripts/lint-skills.sh --files "$fixtures/src/no-such-skill/SKILL.md" >/dev/null 2>&1; expect_rc "--files on a path that is no file" 3 $?
 LINT_ROOT="$fixtures" bash scripts/lint-skills.sh --files "$clean_fixtures/src/clean-skill/SKILL.md" >/dev/null 2>&1; expect_rc "--files on a file outside the sweep root" 3 $?
+# A file inside the root that no per-file check reads is a usage error too,
+# never a PARTIAL "pass": one row per kind of unreached file — a non-script in
+# a scripts/ tree, a script one level below the pairing walk (a selftest's
+# fixture data), and a markdown file outside every markdown walk (adr/ sits
+# outside docs/). The last is named beside a file that FAILs, so exit 3 also
+# proves the refusal comes before any check runs.
+for unreached in "$clean_fixtures/.claude/skills/repo-local/scripts/NOTES.txt" \
+                 "$clean_fixtures/src/clean-skill/scripts/paired-bundled-fixtures/input.py"; do
+  files_out=$(LINT_ROOT="$clean_fixtures" bash scripts/lint-skills.sh --files "$unreached" 2>&1); expect_rc "--files on a file no per-file check reads (${unreached#"$clean_fixtures"/})" 3 $?
+  expect_in "$files_out" "--files on an unreached file did not say why it refused" "is a file no per-file check reads"
+done
+files_out=$(LINT_ROOT="$fixtures" bash scripts/lint-skills.sh --files "$fixtures/src/broken-links/SKILL.md" "$fixtures/adr/9001-dup.md" 2>&1); expect_rc "--files naming an unreached file beside a failing one" 3 $?
+printf '%s\n' "$files_out" | grep -qE '^(OK|FAIL|WARN):' && selftest_fail "--files naming an unreached file still ran the lint — the reach check must refuse before any check runs"
+# The cross-file arms. Naming a skill's SKILL.md runs, from every other skill,
+# the requires arms that read that skill's invocation flag: undeclared-dep
+# calls fixture-discipline without declaring it, a FAIL that turns on
+# fixture-discipline being model-invoked. Narrowed to the named skill, so
+# unused-dep's declared-but-unused FAIL (which reads only unused-dep) and
+# undeclared-dep's own path-cited rule stay ungraded.
+files_out=$(LINT_ROOT="$fixtures" bash scripts/lint-skills.sh --files "$fixtures/src/fixture-discipline/SKILL.md" 2>&1)
+expect_in "$files_out" "--files naming a skill dropped the requires arm another skill's call to it turns on" "src/undeclared-dep/SKILL.md calls the Skill tool with \`fixture-discipline\` but its requires: line does not declare"
+reject_in "$files_out" "--files naming a skill graded another skill's own declared-but-unused arm, which does not read the named skill" "src/unused-dep/SKILL.md declares requires"
+files_other=$(grep '^FAIL:' <<< "$files_out" | grep -vF 'fixture-discipline')
+[ -z "$files_other" ] || selftest_fail "--files naming a skill raised a FAIL that does not turn on it: $files_other"
 # The failure flag is a file in a private `mktemp -d` directory under TMPDIR
 # (scripts/lint-lib.sh), and a directory that cannot be made is a run in which
 # no FAIL could have moved the status — exit 4, before any check, never a clean
@@ -1244,6 +1279,59 @@ fi
 if isolated_run "context-budget-over" 's/\z/("x" x 23308) . "\n"/e' "CLAUDE.md"; then
   expect_in "$isolated_out" "the launch-loaded budget WARN did not print at 30,001 bytes in the isolated 'context-budget-over' root, so the boundary has loosened" "WARN: the launch-loaded surface totals 30001 bytes, over the 30,000-byte per-turn budget"
   expect_rc "the lint against the isolated 'context-budget-over' root" 0 "$isolated_rc"
+fi
+# --files and the checks keyed by one skill but failing on another file. The
+# full run over each root is the control: it must FAIL too, so a --files row
+# that FAILs is the same defect, not a --files artefact. The router and the
+# README each lose one skill's mention; naming the router (or README.md) must
+# raise that router's FAIL from the unnamed skill, and naming a third file must
+# not. A skill flipped to user-invoked must raise its callers' FAILs when it
+# alone is named.
+if isolated_run "files-router" 's/`clean-skill`, //' "src/which-skill/SKILL.md"; then
+  expect_rc "the full lint against the isolated 'files-router' root" 1 "$isolated_rc"
+  files_out=$(LINT_ROOT="$isolated_parent/files-router" bash scripts/lint-skills.sh --files "$isolated_parent/files-router/src/which-skill/SKILL.md" 2>&1); files_rc=$?
+  expect_in "$files_out" "--files naming the router dropped router coverage, whose FAIL lands on the router" "FAIL: src/which-skill/SKILL.md has no backticked mention of skill 'clean-skill'"
+  expect_rc "--files naming the router in the 'files-router' root" 1 "$files_rc"
+  files_out=$(LINT_ROOT="$isolated_parent/files-router" bash scripts/lint-skills.sh --files "$isolated_parent/files-router/src/near-cap/SKILL.md" 2>&1); files_rc=$?
+  reject_in "$files_out" "--files naming near-cap graded the router, which it did not name" "has no backticked mention of skill 'clean-skill'"
+  expect_rc "--files naming an unrelated skill in the 'files-router' root" 2 "$files_rc"
+  files_out=$(LINT_ROOT="$isolated_parent/files-router" bash scripts/lint-skills.sh --files "$isolated_parent/files-router/README.md" 2>&1); files_rc=$?
+  reject_in "$files_out" "--files naming README.md graded the router's coverage arm, which lands on a file it did not name" "has no backticked mention of skill 'clean-skill'"
+  expect_rc "--files naming README.md in the 'files-router' root" 2 "$files_rc"
+fi
+if isolated_run "files-readme" 's/`clean-skill`/clean-skill/g' "README.md"; then
+  expect_rc "the full lint against the isolated 'files-readme' root" 1 "$isolated_rc"
+  files_out=$(LINT_ROOT="$isolated_parent/files-readme" bash scripts/lint-skills.sh --files "$isolated_parent/files-readme/README.md" 2>&1); files_rc=$?
+  expect_in "$files_out" "--files naming README.md dropped router coverage, whose FAIL lands on README.md" "FAIL: README.md has no backticked mention of skill 'clean-skill'"
+  expect_rc "--files naming README.md in the 'files-readme' root" 1 "$files_rc"
+  files_out=$(LINT_ROOT="$isolated_parent/files-readme" bash scripts/lint-skills.sh --files "$isolated_parent/files-readme/src/which-skill/SKILL.md" 2>&1); files_rc=$?
+  reject_in "$files_out" "--files naming the router graded README.md's coverage arm, which lands on a file it did not name" "README.md has no backticked mention"
+  expect_rc "--files naming the router in the 'files-readme' root" 2 "$files_rc"
+fi
+flip_root="$isolated_parent/files-flip"
+if mkdir -p "$flip_root" && cp -R "$fixtures/." "$flip_root/" &&
+   perl -0pi -e 's/^(name: fixture-discipline\n)/$1disable-model-invocation: true\n/m or die' "$flip_root/src/fixture-discipline/SKILL.md" 2>/dev/null; then
+  files_out=$(LINT_ROOT="$flip_root" bash scripts/lint-skills.sh --files "$flip_root/src/fixture-discipline/SKILL.md" 2>&1)
+  expect_in "$files_out" "--files naming a skill flipped to user-invoked dropped the requires-resolution arm in the skill that requires it" "FAIL: src/unused-dep/SKILL.md requires 'fixture-discipline', but 'fixture-discipline' is user-invoked"
+  expect_in "$files_out" "--files naming a skill flipped to user-invoked dropped the user-invoked call arm in the skill that calls it" "FAIL: src/undeclared-dep/SKILL.md calls the Skill tool with \`fixture-discipline\`, but 'fixture-discipline' is user-invoked"
+  # The narrowing: naming another skill must not reach the flipped one.
+  files_out=$(LINT_ROOT="$flip_root" bash scripts/lint-skills.sh --files "$flip_root/src/broken-links/SKILL.md" 2>&1)
+  reject_in "$files_out" "--files naming broken-links graded unused-dep's requirement of fixture-discipline, a skill it did not name" "src/unused-dep/SKILL.md requires 'fixture-discipline'"
+else
+  selftest_skip "could not copy the wrong-on-purpose tree, or flip fixture-discipline in it, for the 'files-flip' case — the cross-file requires rows were not exercised."
+fi
+# A file-level link into the root: ~/.claude/rules/*.md are links one file at
+# a time, so the directory's physical path is outside the root and only the
+# link's target is inside it. One absolute link and one relative link to it,
+# so both arms of the resolver are graded.
+if ln -s "$PWD/$clean_fixtures/src/clean-skill/SKILL.md" "$isolated_parent/abs-link.md" &&
+   ln -s abs-link.md "$isolated_parent/rel-link.md"; then
+  for link in abs-link.md rel-link.md; do
+    LINT_ROOT="$clean_fixtures" bash scripts/lint-skills.sh --files "$isolated_parent/$link" >/dev/null 2>&1
+    expect_rc "--files on a file-level link ($link) to a clean file inside the root" 2 $?
+  done
+else
+  selftest_skip "could not make the file-level links for the --files link rows — they were not exercised."
 fi
 # The two absent-layer arms, which no perl edit can reach: a root with no
 # CLAUDE.md prints that layer as `absent`, not as a measured 0 that reads like
