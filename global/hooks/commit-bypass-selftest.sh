@@ -7,8 +7,9 @@
 # The run/expect helpers are selftest-lib.sh beside this file. This table is also
 # where hook-lib.sh and hook-lib.py are graded (scripts/mutation-sweep.sh pairs
 # them with the hook selftests): the "scanner shapes" rows below each pin one
-# alternative of a lib roster, and the fail-open section pins the lib's
-# empty-payload breadcrumb.
+# alternative of a lib roster, the fail-open section pins the lib's
+# empty-payload breadcrumb, and the mutation table at the end grades the lib's
+# script-file read (a shell given a script file reads its pipe as data).
 set -u
 here="$(cd "$(dirname "$0")" && pwd)"
 hook="$here/commit-bypass.sh"
@@ -100,6 +101,16 @@ expect_block "$D" $'dash <<EOF\ngit commit --no-verify -m x\nEOF'            "a 
 expect_block "$D" $'cat <<EOF | bash\ngit commit --no-verify -m x\nEOF'       "a shell word ending the heredoc line (SHELL's \$ arm)"
 expect_block "$D" '"$(command -v git)" commit --no-verify -m x'                "\$(command -v git) resolves to git"
 expect_block "$D" "true;(git commit --no-verify -m x)"                         "a mixed punctuation run ';(' splits"
+# a string piped into a shell runs unless the shell was given a script file to run instead
+expect_allow "$D" "printf 'git commit --no-verify -m x' | bash hook.sh"         "a script file reads the pipe as data"
+expect_allow "$D" "printf 'git commit --no-verify -m x' | bash -e -o pipefail hook.sh" "options before the script file"
+expect_block "$D" "printf 'git commit --no-verify -m x' | bash -s"              "-s reads commands from the pipe"
+expect_block "$D" "printf 'git commit --no-verify -m x' | bash -s hook.sh"      "-s with an argument still reads the pipe"
+expect_block "$D" "printf 'git commit --no-verify -m x' | bash /dev/stdin"      "/dev/stdin is the pipe"
+expect_block "$D" "printf 'git commit --no-verify -m x' | bash -"               "- is the pipe"
+expect_block "$D" "printf 'git commit --no-verify -m x' | bash -o pipefail"     "-o takes a value, not a script"
+expect_block "$D" "printf 'git commit --no-verify -m x' | bash --rcfile r"      "--rcfile takes a value, not a script"
+expect_block "$D" "printf 'git commit --no-verify -m x' | bash \"\$X\""          "an operand the scanner cannot expand may be empty"
 
 # --- mentions and look-alikes: allow ------------------------------------------
 expect_allow "$D" "git commit -m x"
@@ -154,6 +165,29 @@ printf '%s' "$out" | grep -q 'scanner crashed (NameError' && printf '%s' "$out" 
 # stderr names the shape
 out="$(printf '%s' '{"tool_input":{"command":"git commit --no-verify -m x"}}' | bash "$hook" 2>&1 >/dev/null)"
 printf '%s' "$out" | grep -q 'skips the repo.s hooks (--no-verify)' || { echo "FAIL: block message missing"; fail=1; }
+
+# --- mutation table: hook-lib.py's script-file read ------------------------------
+# Each row edits a copy of hook-lib.py (the hook beside it) and reruns one row;
+# the mutant must flip it, or the row grades nothing.
+mdir="$tmp/mut"; mkdir -p "$mdir"; cp "$hook" "$here/hook-lib.sh" "$mdir/"
+lib_mutant() { # lib_mutant <label> <find> <replace> <cmd> <want rc>
+  local label="$1" from="$2" to="$3" c="$4" want="$5" rc
+  python3 - "$here/hook-lib.py" "$mdir/hook-lib.py" "$from" "$to" <<'PY' || { echo "FAIL (mutant '$label': pattern not found in hook-lib.py)"; fail=1; return; }
+import sys
+src, dst, a, b = sys.argv[1:]
+s = open(src).read()
+if a not in s:
+    sys.exit(1)
+open(dst, "w").write(s.replace(a, b, 1))
+PY
+  rc="$(hook="$mdir/commit-bypass.sh" run "$D" "$c")"
+  [ "$rc" = "$want" ] || { echo "FAIL (mutant '$label' survived: rc=$rc, the row should flip to $want)"; fail=1; }
+}
+lib_mutant "never a script file"   'if runs_script_file(seg):' 'if False:' "printf 'git commit --no-verify -m x' | bash hook.sh" 2
+lib_mutant "drop the stdin paths"  'return not (t in STDIN_SCRIPTS or ' 'return not (' "printf 'git commit --no-verify -m x' | bash /dev/stdin" 0
+lib_mutant "drop the -s check"     '                return False        # -s: commands come from stdin' '                pass' "printf 'git commit --no-verify -m x' | bash -s hook.sh" 0
+lib_mutant "no value-taking options" 'k += 2 if SHELL_VALUE_OPTS.match(t) else 1' 'k += 1' "printf 'git commit --no-verify -m x' | bash -o pipefail" 0
+lib_mutant "an unexpandable operand is a script" 'any(c in t for c in "$`<>")' 'any(c in t for c in "<>")' "printf 'git commit --no-verify -m x' | bash \"\$X\"" 0
 
 if [ "$fail" -ne 0 ]; then echo "SELFTEST FAIL: commit-bypass"; exit 1; fi
 echo "OK: commit-bypass self-test clean — every tabled bypass shape blocked, every mention and look-alike allowed, fail-open holds."

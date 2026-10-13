@@ -2,11 +2,17 @@
 # it. Not run on its own: hook-lib.sh's `hook_scan` prepends this file to a
 # hook's own Python, which defines `on_command(seg, curdir)` and `emit(hit)`,
 # and appends the call that runs the scan. Besides those two names, a hook may
-# use `re`, `sys`, `os`, `shlex`, `progname`, `git_args`, `expand`, `joined`,
-# and `fed_by`; everything else here is the scanner's own and may be renamed.
+# use `re`, `sys`, `os`, `shlex`, `progname`, `git_args`, `split_git`,
+# `expand`, `joined`, `base`, `fed_by`, and `ALLOW_EXIT`; everything else here
+# is the scanner's own and may be renamed.
 # `fed_by()` names the feeders (`xargs`, `find`) the current segment runs
 # under, so a hook can tell that its file list arrives from outside the
-# segment.
+# segment. `base()` is the payload's cwd as an absolute path (hook_scan exports
+# it as PAYLOAD_CWD; a scanner run without it crashes, which fails open with
+# the exception named, rather than silently judging the hook process's own
+# directory). An `emit` that decides to allow with a breadcrumb writes the
+# breadcrumb to stdout and exits `ALLOW_EXIT` (5); hook_scan turns that into
+# hook_allow, so an allow never shares the channel a finding travels in.
 #
 # The contract, which every hook inherits: the command is tokenised the way a
 # shell would (`shlex`), split into segments at `; && || | & ( )` and newlines,
@@ -33,11 +39,20 @@
 # the hook cannot expand the target (`cd "$X"`); hooks that care read it.
 # `git_args(seg)` returns the tokens after the `git` word with a `-c
 # alias.X=…` built on the command line expanded into X's place, or None when
-# the segment is not git.
+# the segment is not git. `split_git(args, curdir)` reads those tokens the way
+# git does: (dir, subcommand, args after it, git_dir, work_tree), where dir is
+# base() moved by `curdir` and each `-C`, and `--git-dir` / `--work-tree`
+# (either spelling) are honoured as absolute paths resolved from that dir, or
+# None when absent or unexpandable.
+#
+# A shell given a script file (`… | bash hook.sh`) runs the file, and what is
+# piped in is that script's input, not commands; a shell with no operand, `-s`,
+# `-`, `/dev/stdin`, `/dev/fd/0`, or an operand the scanner cannot expand reads
+# its commands from the pipe, and the piped string is scanned.
 #
 # A tokeniser error (an unterminated quote, more than four nested shells) is
 # exit 3; any other exception is exit 4 with its name on stdout. hook-lib.sh
-# turns both into a fail-open allow with a breadcrumb.
+# turns both, and a hook's own exit 5, into a fail-open allow with a breadcrumb.
 
 import os, re, shlex, sys
 
@@ -66,6 +81,9 @@ VAR = re.compile(r"\$(?:\{([A-Za-z_][A-Za-z0-9_]*)[^}]*\}|([A-Za-z_][A-Za-z0-9_]
 GIT_VALUE_OPTS = {"-c", "-C", "--git-dir", "--work-tree", "--namespace", "--exec-path",
                   "--super-prefix", "--config-env"}
 ALIAS = re.compile(r"^alias\.([^=\s]+)=(.*)$", re.S)
+SHELL_VALUE_OPTS = re.compile(r"^(--rcfile|--init-file|[-+][A-Za-z]*[oO])$")   # its next word is a value, not a script
+STDIN_SCRIPTS = {"-", "/dev/stdin", "/dev/fd/0", "/proc/self/fd/0"}
+ALLOW_EXIT = 5
 VARS = {}
 VIA = []                           # feeders of the segment being scanned; read through fed_by()
 MAX_DEPTH = 4
@@ -288,7 +306,9 @@ def scan_segment(seg, prev, curdir, depth, fed=None):
         for k, t in enumerate(seg):
             if re.match(r"^-[A-Za-z]*c[A-Za-z]*$", t) and k + 1 < len(seg):
                 return scan(seg[k + 1], curdir, depth + 1)
-        # no -c: a string piped in from the previous segment runs here
+        if runs_script_file(seg):
+            return None             # `… | bash hook.sh`: the pipe is the script's input
+        # no -c and no script file: a string piped in from the previous segment runs here
         for t in (prev or []):
             hit = scan(t.replace("\\n", "\n"), curdir, depth + 1)
             if hit:
@@ -297,6 +317,71 @@ def scan_segment(seg, prev, curdir, depth, fed=None):
     if head == "eval":
         return scan(" ".join(seg[1:]), curdir, depth + 1)
     return _on_command(seg + (fed or []), curdir)
+
+
+def runs_script_file(seg):
+    """True when a shell segment (no -c) names a script file to run, so its
+    stdin is data. Anything that may leave the shell reading commands from
+    stdin — no operand, `-s`, a stdin path, an operand the scanner cannot
+    expand, a redirection where the operand would be — is False."""
+    k = 1
+    while k < len(seg):
+        t = seg[k]
+        if t == "--":
+            k += 1
+            break
+        if len(t) > 1 and t[0] in "-+":
+            if re.match(r"^-[A-Za-z]*s[A-Za-z]*$", t):
+                return False        # -s: commands come from stdin
+            k += 2 if SHELL_VALUE_OPTS.match(t) else 1
+            continue
+        break
+    if k >= len(seg):
+        return False
+    t = seg[k]
+    return not (t in STDIN_SCRIPTS or any(c in t for c in "$`<>"))
+
+
+def base():
+    """The payload's cwd, absolute. hook_scan exports PAYLOAD_CWD; a KeyError
+    here means a hook ran the scanner without it, and fails open named."""
+    return os.path.abspath(os.environ["PAYLOAD_CWD"])
+
+
+def split_git(args, curdir):
+    """Read the tokens after the `git` word the way git does. Returns (dir,
+    subcommand or None, args after it, git_dir, work_tree): dir is base()
+    moved by curdir (None, an unexpandable cd, leaves base()) and by each
+    `-C` (an unexpandable one is skipped); git_dir and work_tree are the
+    `--git-dir` / `--work-tree` values resolved from the final dir, or None."""
+    d = base() if curdir is None else joined(base(), curdir)
+    gd = wt = None
+    i = 0
+    while i < len(args):
+        a = args[i]
+        name, eq, val = a.partition("=") if a.startswith("--") else (a, "", "")
+        if name in GIT_VALUE_OPTS:
+            if not eq:
+                if i + 1 >= len(args):
+                    break
+                val = args[i + 1]
+                i += 1
+            i += 1
+            v = expand(val)
+            if name == "-C":
+                d = joined(d, v) or d
+            elif name == "--git-dir":
+                gd = v if v is not None else gd
+            elif name == "--work-tree":
+                wt = v if v is not None else wt
+            continue
+        if a.startswith("-"):
+            i += 1
+            continue
+        gd = joined(d, gd) if gd is not None else None
+        wt = joined(d, wt) if wt is not None else None
+        return os.path.normpath(d), a, args[i + 1:], gd and os.path.normpath(gd), wt and os.path.normpath(wt)
+    return os.path.normpath(d), None, [], None, None
 
 
 def fed_by():

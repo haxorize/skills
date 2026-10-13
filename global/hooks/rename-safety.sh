@@ -15,9 +15,11 @@
 # (`-e`, `-f`; perl `-M`; ruby `-r`, `-C`) ends the cluster and skips that token
 # (`perl -e '-i'` runs the program `-i`; `-Mstrict` names a module); a letter
 # whose value is only ever attached (sed `-l`, perl `-l -x -C -0 -d -D -F`,
-# ruby `-0 -K -F -x`) ends the cluster and skips nothing. Reads of a pipeline
-# (`xargs grep | sed -n`), and a mention in a commit message, an echo, a grep
-# pattern, a handoff, or a heredoc no shell consumes, pass.
+# ruby `-0 -K -F -x`) ends the cluster and skips nothing. A GNU sed long
+# option is read as getopt reads it, abbreviations included (`--in` is
+# `--in-place`). Reads of a pipeline (`xargs grep | sed -n`), and a mention in
+# a commit message, an echo, a grep pattern, a handoff, or a heredoc no shell
+# consumes, pass.
 #
 # How the flag may reach the program — a quoted `-i`, a `bash -c` string,
 # `eval`, a shell-fed heredoc, a variable, a wrapper, a compound statement,
@@ -33,20 +35,26 @@
 # are ignored). The file arguments are read the way the program reads them,
 # resolved from the directory the segment runs in (the payload's `cwd`, else
 # $PWD, moved by any `cd`/`pushd` the lib could expand), with `~` and `$VAR`
-# expanded from the environment. When every file lies outside an opted-in
-# directory, the edit runs: a handoff marker under $TMPDIR is not the repo.
-# When a file list is not all literal — a glob, an unexpandable variable,
-# `{}`, or files fed by `xargs` or `find -exec` — the directory the segment
-# runs in (and a glob's literal parent) is what is judged, as before.
+# expanded from the environment. Every path is judged with its symlinks
+# resolved, both where the file really lives and where the name sits, so
+# `~/.claude/skills/<skill>/…` reaching an opted-in checkout through a link is
+# judged as the checkout; $HOME and the RENAME_SAFETY_DIRS entries are
+# resolved the same way. When every file lies outside an opted-in directory,
+# the edit runs: a handoff marker under $TMPDIR is not the repo. When a file
+# list is not all literal — a glob, an unexpandable variable, `{}`, or files
+# fed by `xargs` or `find -exec` — the directory the segment runs in (and a
+# glob's literal parent) is what is judged.
 #
-# Inside an opted-in directory one shape still runs: BSD `sed -i ''` (or an
-# attached suffix, `-i.bak`) with exactly one substitution and no `g` flag,
-# on exactly one literal file, not fed by `xargs` or `find`. That is the edit
-# the harness itself suggests, and it cannot reach a file nobody listed. A
-# second file, a second expression, a `-f` script, a `g` flag, the GNU `-i
-# 's/…'` form (on BSD the expression becomes the backup suffix and the edit
-# no-ops), and every `perl -i` / `ruby -i` are blocked, and the message points
-# at the Edit tool.
+# Inside an opted-in directory one shape still runs: `sed` (not `gsed`, which
+# reads `''` as the script) in the BSD form `-i ''` (or an attached suffix,
+# `-i.bak`), with exactly one substitution whose only flags are a number or
+# `I`, on exactly one literal file, not fed by `xargs` or `find`. That is the
+# edit the harness itself suggests, and it cannot reach a file nobody listed.
+# A second file, a second expression, a `-f` script, `-n` / `--quiet` (it
+# empties the file), a `g`, `p`, `w` or `e` flag, the GNU `-i 's/…'` form (on
+# BSD the expression becomes the backup suffix and the edit no-ops), and
+# every `perl -i` / `ruby -i` are blocked, and the message points at the Edit
+# tool.
 #
 # Fail-open: a malformed payload, missing python3, a tokeniser error, or a
 # payload cwd that is not a directory lets the command through, with a
@@ -61,7 +69,7 @@
 #
 # Exit 2 blocks the call and feeds stderr back to the model; exit 0 allows it.
 # rename-safety-selftest.sh beside this file runs the expect/reject payload
-# table; run it after changing a rule.
+# table and a mutation table; run it after changing a rule.
 #
 # Depends: implement and discoverable-code (their edit-from-a-match-list lines
 # name this hook as the mechanical half where it is wired and the directory is
@@ -80,65 +88,72 @@ hook_read_payload
 # segment that may run returns None, so the scan reads on to the next one.
 # emit prints the shape name, then the file arguments of the blocked segment,
 # one per line.
-RENAME_SAFETY_CWD="$cwd"; export RENAME_SAFETY_CWD
 hook_scan '
 # Short-option letters that take a value. NEXT_TOKEN: the cluster ends there
 # and the next token is the value. ATTACHED: the cluster ends there and the
 # next token is an argument in its own right (`sed -l -i` is in place).
 NEXT_TOKEN = {"sed": set("ef"), "perl": set("eEMmI"), "ruby": set("eIrCE")}
 ATTACHED = {"sed": set("l"), "perl": set("lxC0dDF"), "ruby": set("0KFx")}
-CODE = {"sed": set("ef"), "perl": set("eE"), "ruby": set("e")}   # letters whose value is the program
+CODE = {"sed": set("e"), "perl": set("eE"), "ruby": set("e")}   # letters whose value is the program
+# GNU sed long options, so an abbreviation (`--in`, `--expr=`) is read the way
+# getopt reads it: an exact name, else the one name it is a prefix of.
+SED_LONG = {"in-place": "i", "expression": "e", "file": "f", "quiet": "n", "silent": "n",
+            "line-length": "l", "null-data": "", "zero-terminated": "", "separate": "",
+            "sandbox": "", "debug": "", "posix": "", "regexp-extended": "", "unbuffered": "",
+            "follow-symlinks": "", "binary": "", "help": "", "version": ""}
 ENVVAR = re.compile(r"\$(?:\{([A-Za-z_][A-Za-z0-9_]*)\}|([A-Za-z_][A-Za-z0-9_]*))")
 GLOB = re.compile(r"[*?\[]")
-HOME = os.path.normpath(os.environ.get("HOME") or "/")
+HOME = os.path.realpath(os.environ.get("HOME") or "/")
 
-def inplace(prog, args):
-    i = 0
-    while i < len(args):
-        a = args[i]
-        if a == "--":
-            return False
-        if prog == "sed" and a.startswith("--in-place"):
-            return True
-        if re.match(r"^-[A-Za-z]", a):
-            for ch in a[1:]:
-                if ch == "i":
-                    return True
-                if ch in NEXT_TOKEN[prog]:
-                    if ch == a[-1]:          # value is the next token
-                        i += 1
-                    break
-                if ch in ATTACHED[prog] or not ch.isalpha():
-                    break
-        i += 1
-    return False
+def sed_long(name):
+    """The short letter a GNU sed long option stands for ("" for one that
+    neither edits nor carries code), or None when it names no option."""
+    if name in SED_LONG:
+        return SED_LONG[name]
+    hits = [n for n in SED_LONG if n.startswith(name)]
+    return SED_LONG[hits[0]] if len(hits) == 1 else None
 
-def operands(prog, args):
-    """(file arguments, program texts, BSD form, script file) as the program
-    reads them. BSD form: the sed in-place suffix is attached (`-i.bak`) or is
-    the next word and empty, so BSD and GNU sed both edit in place."""
-    pos, code, bsd, script_file, i = [], [], False, False, 0
+def parse(prog, args):
+    """(in place, file arguments, program texts, BSD form, script file, quiet)
+    as the program reads its arguments. BSD form: the sed in-place suffix is
+    attached (`-i.bak`) or is the next word and empty, so BSD and GNU sed both
+    edit in place. Quiet: sed `-n`, which drops every unprinted line."""
+    inplace, pos, code, bsd, script_file, quiet, i = False, [], [], False, False, False, 0
     while i < len(args):
         a = args[i]
         if a == "--":
             pos += args[i + 1:]
             break
         if a.startswith("--"):
-            if prog == "sed" and a.startswith("--expression"):
-                code.append(a.partition("=")[2])
-            elif prog == "sed" and a.startswith("--file"):
-                script_file = True
+            if prog == "sed":
+                name, eq, val = a[2:].partition("=")
+                ch = sed_long(name)
+                if ch == "i":
+                    inplace = True
+                elif ch == "n":
+                    quiet = True
+                elif ch in ("e", "f", "l"):
+                    if not eq and i + 1 < len(args):
+                        i += 1
+                        val = args[i]
+                    if ch == "e":
+                        code.append(val)
+                    elif ch == "f":
+                        script_file = True
         elif re.match(r"^-[A-Za-z]", a):
             j = 1
             while j < len(a):
                 ch = a[j]
                 if ch == "i":
+                    inplace = True
                     if prog == "sed":
                         if a[j + 1:]:
                             bsd = True
                         elif i + 1 < len(args) and args[i + 1] == "":
                             bsd, i = True, i + 1
                     break
+                if prog == "sed" and ch == "n":
+                    quiet = True
                 if ch in NEXT_TOKEN[prog]:
                     val = a[j + 1:]
                     if not val and i + 1 < len(args):
@@ -158,10 +173,12 @@ def operands(prog, args):
     if not code and not script_file and pos:   # the first word is the program
         code.append(pos[0])
         pos = pos[1:]
-    return pos, code, bsd, script_file
+    return inplace, pos, code, bsd, script_file, quiet
 
 def one_substitution(e):
-    """One `s` command, at most a line address before it, no `g` and no `w`."""
+    """One `s` command, at most a line address before it; no flag but a
+    number or `I` (`g` reaches every match, `p` prints the line twice, `w`
+    writes a second file, `e` runs it)."""
     m = re.match(r"^(?:[0-9]+(?:,[0-9]+)?)?s([^\\\n])", e)
     if not m:
         return False
@@ -174,9 +191,9 @@ def one_substitution(e):
             return False
         parts += e[k] == d
         k += 1
-    return parts == 2 and re.fullmatch(r"[0-9pI]*", e[k:]) is not None
+    return parts == 2 and re.fullmatch(r"[0-9I]*", e[k:]) is not None
 
-def resolve(base, path):
+def resolve(start, path):
     """The absolute path a file argument names, or None when it is not literal."""
     if "`" in path or path == "{}":
         return None
@@ -191,10 +208,16 @@ def resolve(base, path):
         return None
     if "$" in path:
         return None
-    return os.path.normpath(os.path.join(base, os.path.expanduser(path)))
+    return os.path.join(start, os.path.expanduser(path))
+
+def places(p):
+    """The real directories an edit of path p writes into: the one holding the
+    file the path resolves to, and the one holding the name itself (sed and
+    perl replace a symlink there rather than write through it)."""
+    return {os.path.dirname(os.path.realpath(p)), os.path.realpath(os.path.dirname(p))}
 
 def opted(d):
-    """True when directory d is in an opted-in tree."""
+    """True when directory d (real, absolute) is in an opted-in tree."""
     walk = d
     while True:
         if os.path.isfile(os.path.join(walk, ".claude", "rename-safety")):
@@ -203,7 +226,7 @@ def opted(d):
             break
         walk = os.path.dirname(walk)
     for r in os.environ.get("RENAME_SAFETY_DIRS", "").split(":"):
-        r = os.path.normpath(r) if r else ""                       # an empty element opts in nothing
+        r = os.path.realpath(r) if r else ""                       # an empty element opts in nothing
         if r and (d == r or d.startswith(r.rstrip("/") + "/")):
             return True
     return False
@@ -211,32 +234,34 @@ def opted(d):
 def on_command(seg, curdir):
     head = progname(seg[0])
     prog = {"sed": "sed", "gsed": "sed", "perl": "perl", "ruby": "ruby"}.get(head)
-    if not prog or not inplace(prog, seg[1:]):
+    if not prog:
+        return None
+    inplace, files, code, bsd, script_file, quiet = parse(prog, seg[1:])
+    if not inplace:
         return None
     shape = "sed -i" if prog == "sed" else "perl/ruby -i"
-    cwd = os.path.normpath(os.environ.get("RENAME_SAFETY_CWD") or os.getcwd())
-    start = cwd if curdir is None else os.path.normpath(os.path.join(cwd, curdir))
+    cwd = base()
+    start = cwd if curdir is None else os.path.join(cwd, curdir)
     if not os.path.isdir(start):          # a cd to a missing dir falls back to the payload cwd
         start = cwd
-    files, code, bsd, script_file = operands(prog, seg[1:])
     paths = [resolve(start, f) if not GLOB.search(f) else None for f in files]
     literal = files and None not in paths and not fed_by()
     if literal:
-        judged = [p for p in paths if opted(os.path.dirname(p))]
+        judged = [p for p in paths if any(opted(d) for d in places(p))]
         if not judged:
             return None                   # every file lies outside an opted-in directory
     else:
-        dirs = [start]
+        dirs = [os.path.realpath(start)]
         for f in files:                   # a glob is judged by its literal parent too
             if GLOB.search(f):
                 parent = resolve(start, os.path.dirname(GLOB.split(f, 1)[0]) or ".")
                 if parent:
-                    dirs.append(parent)
+                    dirs.append(os.path.realpath(parent))
         if not any(opted(d) for d in dirs):
             return None
-    if (prog == "sed" and bsd and literal and len(files) == 1 and not script_file
+    if (head == "sed" and bsd and not quiet and literal and len(files) == 1 and not script_file
             and len(code) == 1 and one_substitution(code[0])):
-        return None                       # one substitution in one listed file
+        return None                       # one substitution in one listed file, BSD sed
     return (shape, files[:20])
 
 def emit(hit):
@@ -259,7 +284,7 @@ files=""; [ "$hook_result" != "$shape" ] && files="${hook_result#*$'\n'}"
   fi
   echo "  Use the Edit tool on each file instead: list the matches (grep -rn), edit"
   echo "  each one, and re-search the old name to zero afterwards. The hook lets"
-  echo "  through one substitution with no g flag on one listed file in the BSD"
+  echo "  through one substitution with no g or p flag on one listed file in the BSD"
   echo "  form (sed -i '' 's/old/new/' file), and any edit whose files all lie"
   echo "  outside the opted-in directory."
 } >&2

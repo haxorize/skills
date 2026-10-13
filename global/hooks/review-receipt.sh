@@ -15,8 +15,9 @@
 # `skills`.
 #
 # Which repo: the directory the push runs in, not merely the session's cwd —
-# a leading `cd <dir> &&`, `pushd <dir> &&`, `git -C <dir>`, or a `GIT_DIR=`
-# assignment moves it, and the walk starts there. A `cd` to a value the hook
+# a leading `cd <dir> &&`, `pushd <dir> &&`, `git -C <dir>`, `--git-dir`,
+# `--work-tree`, or a `GIT_DIR=` assignment moves it (hook-lib's split_git),
+# and the walk starts there. A `cd` to a value the hook
 # cannot expand (`cd "$X"`) or to a directory that does not exist falls back
 # to the payload's `cwd`. A push from inside `.git` resolves to its work tree.
 #
@@ -35,13 +36,18 @@
 # branch that is new on the remote or ahead of it. Each source's tree hash
 # (`git rev-parse <src>^{tree}`) must equal a stamp in some matching report,
 # and one unstamped source blocks the whole command; the block message names
-# the first source that failed. The stamp is the line `Reviewed-tree: <40
-# hex>` (a list marker, bold, or backticks around it are fine), read
-# anywhere in the file EXCEPT
-# inside a fenced block or behind a blockquote `>` — a report quotes hashes,
-# including this hook's own contract, and a quotation is not a receipt; the
-# opt-in scan strips fences the same way. A report may carry several stamps,
-# one per stamping, and any of them matches. The work-tree
+# the first source that failed. The stamp is a `Reviewed-tree: <40 hex>` line
+# as `src/review-changes/scripts/tree-stamp.sh --stamps` reads it — that
+# script's header owns the line shape (a list marker, bold, or backticks
+# around it; nothing inside a ``` or ~~~ fenced block or behind a blockquote
+# `>`, since a report quotes hashes, this hook's own contract included, and a
+# quotation is not a receipt), and it is the same reader `--verify` uses, so
+# the push gate and a fix pass cannot disagree about a line. This hook
+# accepts only its `Reviewed-tree` lines: a `Measured-tree:` line stamps a
+# measured report, not a review. The script is found from this hook's own
+# resolved path (`<checkout>/src/review-changes/scripts/`). The opt-in scan
+# strips ``` fences too. A report may carry several stamps, one per stamping,
+# and any of them matches. The work-tree
 # hash `review-changes` and `address-findings` write is the one
 # src/review-changes/scripts/tree-stamp.sh prints
 # (a throwaway index seeded from HEAD, so the real one is untouched and a
@@ -84,15 +90,15 @@
 # statement, `xargs git`, a `-c alias.p=push` built on the command line, and
 # how `cd`/`pushd`/`GIT_DIR=` move the directory it runs in — is hook-lib.sh /
 # hook-lib.py beside this file; the lib's header is that part of the contract.
-# `git -C <dir>` is this hook's own. This file holds only the push shape and
-# the receipt check.
+# This file holds only the push shape and the receipt check.
 #
 # Fail-open, each with a one-line stderr breadcrumb: a malformed payload, a
 # missing python3 or git, a tokeniser error (an unterminated quote, more
 # than four nested shells), a push outside a git work tree, a CLAUDE.md the
 # opt-in walk cannot read, a repo with no ref to compare against, a source ref
-# whose tree cannot be resolved, or any error counting the commits in the
-# range. A safety hook that blocks on its own errors trains the user to
+# whose tree cannot be resolved, any error counting the commits in the
+# range, a stamp reader missing from beside the checkout, or one that fails
+# on a report it could read. A safety hook that blocks on its own errors trains the user to
 # disable it. A report that cannot be read is NOT a fail-open: it is skipped
 # with a breadcrumb and the remaining reports still decide, because an
 # unreadable file can carry no stamp and failing open on one would let a
@@ -134,65 +140,53 @@ DRYRUN = re.compile(r"^(--dry-run|-[A-Za-z]*n[A-Za-z]*)$")
 DELETE = re.compile(r"^(--delete|-[A-Za-z]*d[A-Za-z]*)$")
 
 def check_git(args, curdir):
-    """args = tokens after the git word. Returns (kind, dir, remote, refspec) or None."""
-    d = curdir
-    i = 0
-    while i < len(args):
-        a = args[i]
-        if a == "-C" and i + 1 < len(args):
-            d = joined(d, expand(args[i + 1]))
-            i += 2
-            continue
-        if a in GIT_VALUE_OPTS and i + 1 < len(args):
-            i += 2
-            continue
-        if a.startswith("-"):
-            i += 1
-            continue
-        if a != "push":
-            return None
-        rest = args[i + 1:]
-        kind, remote, refspec, flags_done = "push", "", "", False
-        refspecs, pushall = [], ""
-        j = 0
-        while j < len(rest):
-            r = rest[j]
-            if r == "--":
-                flags_done = True
-                j += 1
-                continue
-            if not flags_done and r.startswith("-"):
-                if r in PUSH_VALUE_OPTS:
-                    if r == "--repo" and j + 1 < len(rest):
-                        remote = rest[j + 1]
-                    j += 2
-                    continue
-                if r.startswith("--repo="):
-                    remote = r.split("=", 1)[1]
-                    j += 1
-                    continue
-                if r.startswith("-o") and not r.startswith("--"):
-                    j += 1              # -o<value>: an attached push option
-                    continue
-                if DRYRUN.match(r):
-                    return None         # a read of the remote
-                if DELETE.match(r):
-                    kind = "delete"
-                if r in ("--all", "--mirror"):
-                    pushall = "1"     # sends every branch; no refspec appears
-                j += 1
-                continue
-            if "<" in r or ">" in r:
-                j += 1                 # a redirection the segment split left behind
-                continue
-            if not remote:
-                remote = r
-            else:
-                refspecs.append(r)     # every refspec, not just the first
+    """args = tokens after the git word. Returns (kind, dir, remote, refspec,
+    extra refspecs, all) or None. dir is where the repo is: the --git-dir when
+    the command names one, else the --work-tree, else where git runs."""
+    d, sub, rest, gd, wt = split_git(args, curdir)
+    if sub != "push":
+        return None
+    d = gd or wt or d
+    kind, remote, refspec, flags_done = "push", "", "", False
+    refspecs, pushall = [], ""
+    j = 0
+    while j < len(rest):
+        r = rest[j]
+        if r == "--":
+            flags_done = True
             j += 1
-        return (kind, d, remote, refspecs[0] if refspecs else "",
-                "\x1e".join(refspecs[1:]), pushall)
-    return None
+            continue
+        if not flags_done and r.startswith("-"):
+            if r in PUSH_VALUE_OPTS:
+                if r == "--repo" and j + 1 < len(rest):
+                    remote = rest[j + 1]
+                j += 2
+                continue
+            if r.startswith("--repo="):
+                remote = r.split("=", 1)[1]
+                j += 1
+                continue
+            if r.startswith("-o") and not r.startswith("--"):
+                j += 1              # -o<value>: an attached push option
+                continue
+            if DRYRUN.match(r):
+                return None         # a read of the remote
+            if DELETE.match(r):
+                kind = "delete"
+            if r in ("--all", "--mirror"):
+                pushall = "1"     # sends every branch; no refspec appears
+            j += 1
+            continue
+        if "<" in r or ">" in r:
+            j += 1                 # a redirection the segment split left behind
+            continue
+        if not remote:
+            remote = r
+        else:
+            refspecs.append(r)     # every refspec, not just the first
+        j += 1
+    return (kind, d, remote, refspecs[0] if refspecs else "",
+            "\x1e".join(refspecs[1:]), pushall)
 
 
 def on_command(seg, curdir):
@@ -350,7 +344,11 @@ else
   [ "${zones[0]:-}" = "/tmp/claude-handoffs" ] || zones+=("/tmp/claude-handoffs")
 fi
 
-STAMP='^[-*]*[[:space:]]*\**`?Reviewed-tree:`?\**[[:space:]]*`?[0-9a-f]{40}`?[[:space:]]*$'
+# The one stamp reader, located from this hook's real path: the same script
+# address-findings' --verify uses, so the two cannot disagree about a line.
+hook_real="$(cd "$hook_dir" 2>/dev/null && pwd -P)"
+stamp_reader="$hook_real/../../src/review-changes/scripts/tree-stamp.sh"
+[ -f "$stamp_reader" ] || hook_allow "stamp reader not found at $stamp_reader"
 reports=0
 stamps=""
 stamp_files=""
@@ -362,11 +360,14 @@ for zone in "${zones[@]}"; do
       echo "review-receipt: skipping unreadable report $f" >&2
       continue
     fi
+    found="$("${BASH:-bash}" "$stamp_reader" --stamps "$f" 2>/dev/null)"
+    case $? in
+      0) found="$(printf '%s\n' "$found" | sed -n 's/^Reviewed-tree \([0-9a-f]\{40\}\)$/\1/p')" ;;
+      2) found="" ;;
+      4) echo "review-receipt: skipping unreadable report $f" >&2; continue ;;
+      *) hook_allow "stamp reader failed on $f" ;;
+    esac
     reports=$((reports + 1))
-    found="$(awk '
-      /^[[:space:]]*```/ { fence = !fence; next }
-      fence { next }
-      { print }' "$f" 2>/dev/null | grep -E "$STAMP" | grep -oE '[0-9a-f]{40}' || true)"
     if [ -n "$found" ]; then
       stamps="$stamps
 $found"

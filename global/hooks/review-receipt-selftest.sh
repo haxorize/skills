@@ -23,7 +23,11 @@
 # names both silent paths. So a row that must not be satisfied by a fail-open
 # is expect_quiet, never expect_allow.
 # The block message is graded once, on the fix-up row: over reports that carry
-# stamps, it names the last stamp read.
+# stamps, it names the last stamp read. Stamps are read by tree-stamp.sh
+# --stamps (its own selftest grades the line shapes); the mutation table at the
+# end grades what this hook adds on top: only `Reviewed-tree` lines count, the
+# reader is the one beside the checkout, a missing reader fails open named,
+# and `--git-dir` / `--work-tree` name the repo.
 set -u
 here="$(cd "$(dirname "$0")" && pwd)"
 hook="$here/review-receipt.sh"
@@ -212,6 +216,8 @@ expect_block "$G" "cd .git && git push"                        "push from inside
 expect_block "$G" "git -C .git push"                           "-C .git"
 expect_block "$work" "GIT_DIR=$G/.git git push"                "GIT_DIR= from outside the repo"
 expect_block "$work" "GIT_DIR=$G/.git; git push"               "GIT_DIR= assigned in an earlier segment"
+expect_block "$work" "git --git-dir=$G/.git push"              "--git-dir from outside the repo names it"
+expect_block "$work" "git --git-dir $G/.git --work-tree $G push" "--git-dir and --work-tree, detached values"
 # The one-key reading, both directions. Neither row can pass by accident: the
 # first repo's block is malformed in every key but the one that matters, and
 # the second's is well-formed in every key but that one.
@@ -258,6 +264,12 @@ expect_block "$G" "git push"                                   "a hash in prose 
 printf 'quoting the contract:\n\n```\nReviewed-tree: %s\n```\n' "$HEADTREE" > "$REVIEW_RECEIPT_DIR/gated-2026-01-01-fenced.review.md"
 expect_block "$G" "git push"                                   "a stamp inside a fenced block is a quotation, not a receipt"
 rm "$REVIEW_RECEIPT_DIR/gated-2026-01-01-fenced.review.md"
+printf 'quoting the contract:\n\n~~~\nReviewed-tree: %s\n~~~\n' "$HEADTREE" > "$REVIEW_RECEIPT_DIR/gated-2026-01-01-tilde.review.md"
+expect_block "$G" "git push"                                   "a ~~~ fence is a quotation too (one reader with --verify)"
+rm "$REVIEW_RECEIPT_DIR/gated-2026-01-01-tilde.review.md"
+stamp gated-2026-01-01-measured.review.md "Measured-tree: $HEADTREE"
+expect_block "$G" "git push"                                   "a Measured-tree: stamp is not a review"
+rm "$REVIEW_RECEIPT_DIR/gated-2026-01-01-measured.review.md"
 stamp gated-2026-01-01-quoted.review.md "> Reviewed-tree: $HEADTREE"
 expect_block "$G" "git push"                                   "a blockquoted stamp is a quotation, not a receipt"
 rm "$REVIEW_RECEIPT_DIR/gated-2026-01-01-quoted.review.md"
@@ -366,6 +378,45 @@ expect_crumb "$G" "git push -u origin feat" "no remote ref"    "first push of a 
 expect_block "$G" "git push origin feat:main"                  "new branch pushed onto a tracked one is gated"
 ( cd "$G" && git checkout -q main )
 expect_crumb "$work" "git push" "not inside a git work tree"  "outside a git work tree"
+
+# --- the stamp reader is tree-stamp.sh, found from the hook's own path ---------------
+mkrepo mutrepo "$GATED_LINES"
+M="$work/mutrepo"; MTREE="$(cd "$M" && git rev-parse 'HEAD^{tree}')"
+stamp mutrepo-2026-01-01-m.review.md "Measured-tree: $MTREE"
+expect_block "$M" "git push"                                   "the mutation fixture: a Measured-tree: stamp alone blocks"
+mkdir -p "$work/lonely"; cp "$hook" "$here/hook-lib.sh" "$here/hook-lib.py" "$work/lonely/"
+out="$(hook="$work/lonely/review-receipt.sh" crumb "$M" "git push")"
+printf '%s' "$out" | grep -q 'stamp reader not found' && printf '%s' "$out" | grep -q 'rc=0' \
+  || { echo "FAIL (a hook with no tree-stamp.sh beside its checkout should allow with a breadcrumb): $out"; fail=1; }
+
+# --- mutation table -------------------------------------------------------------
+# Each row edits a copy of the hook, laid out as a checkout so the copy finds the
+# real tree-stamp.sh, and reruns one row; the mutant must flip it.
+mdir="$work/mut"; mkdir -p "$mdir/global/hooks"; ln -s "$here/../../src" "$mdir/src"
+cp "$here/hook-lib.sh" "$here/hook-lib.py" "$mdir/global/hooks/"
+mutant() { # mutant <label> <find> <replace> <cwd> <cmd> <want rc>
+  local label="$1" from="$2" to="$3" c_wd="$4" c="$5" want="$6" rc
+  python3 - "$hook" "$mdir/global/hooks/review-receipt.sh" "$from" "$to" <<'PY' || { echo "FAIL (mutant '$label': pattern not found in the hook)"; fail=1; return; }
+import sys
+src, dst, a, b = sys.argv[1:]
+s = open(src).read()
+if a not in s:
+    sys.exit(1)
+open(dst, "w").write(s.replace(a, b, 1))
+PY
+  rc="$(hook="$mdir/global/hooks/review-receipt.sh" run "$c_wd" "$c")"
+  [ "$rc" = "$want" ] || { echo "FAIL (mutant '$label' survived: rc=$rc, the row should flip to $want)"; fail=1; }
+}
+mutant "accept a Measured-tree stamp" "s/^Reviewed-tree " "s/^[A-Za-z]*-tree " "$M" "git push" 0
+# the missing-reader check, dropped: a copy with no checkout around it no longer names the missing script
+mkdir -p "$work/lonely2"; cp "$here/hook-lib.sh" "$here/hook-lib.py" "$work/lonely2/"
+python3 -c 'import sys; s=open(sys.argv[1]).read(); a="[ -f \"$stamp_reader\" ] || hook_allow"; sys.exit(1) if a not in s else open(sys.argv[2],"w").write(s.replace(a, ": ||", 1))' "$hook" "$work/lonely2/review-receipt.sh" \
+  || { echo "FAIL (mutant 'drop the missing-reader check': pattern not found in the hook)"; fail=1; }
+out="$(hook="$work/lonely2/review-receipt.sh" crumb "$M" "git push")"
+printf '%s' "$out" | grep -q 'stamp reader not found' && { echo "FAIL (mutant 'drop the missing-reader check' survived): $out"; fail=1; }
+mutant "ignore --git-dir"             'd = gd or wt or d' 'd = wt or d' "$work" "git --git-dir=$G/.git push" 0
+mutant "ignore --work-tree"           'd = gd or wt or d' 'd = gd or d' "$work" "git --work-tree=$G push" 0
+mutant "the reader is not the one beside the checkout" 'stamp_reader="$hook_real/../../src/' 'stamp_reader="$hook_real/../src/' "$M" "git push" 0
 
 if [ "$fail" -ne 0 ]; then echo "SELFTEST FAIL: review-receipt"; exit 1; fi
 echo "OK: review-receipt self-test clean — every gated push blocked, every exempt form and receipt allowed, fail-open holds."

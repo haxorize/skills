@@ -11,12 +11,14 @@
 #                         empty or malformed payload or a missing python3
 #   hook_scan "<py>"    — runs hook-lib.py's scanner over `cmd` with the hook's
 #                         own Python appended (it defines on_command and emit;
-#                         this function appends the call that runs them);
+#                         this function appends the call that runs them), with
+#                         `cwd` exported as PAYLOAD_CWD (hook-lib.py's base());
 #                         `hook_result` holds what emit wrote. Allows, with a
 #                         breadcrumb, on a tokeniser error (exit 3: an
 #                         unterminated quote, more than four nested shells),
 #                         on a scanner crash (exit 4: the exception's name),
-#                         and on any other non-zero exit
+#                         on the hook's own allow (exit 5: emit's stdout is
+#                         the breadcrumb), and on any other non-zero exit
 #   hook_allow "<why>"  — exit 0 with a one-line stderr breadcrumb
 #                         (friction-log.sh, the one hook that reads no lib,
 #                         carries a byte-identical copy as `allow`, and its
@@ -58,11 +60,13 @@ except Exception:
 
 hook_scan() {
   local rc
+  export PAYLOAD_CWD="$cwd"
   hook_result="$(printf '%s' "$cmd" | python3 -c "$(<"$hook_lib_dir/hook-lib.py")
 $1
 run_scanner(on_command, emit)" 2>/dev/null)"
   rc=$?
   [ "$rc" -ne 3 ] || hook_allow "tokeniser error"
   [ "$rc" -ne 4 ] || hook_allow "scanner crashed ($hook_result)"
+  [ "$rc" -ne 5 ] || hook_allow "$hook_result"
   [ "$rc" -eq 0 ] || hook_allow "scanner failed (rc=$rc)"
 }

@@ -1,8 +1,15 @@
 #!/usr/bin/env bash
-# Self-test for rename-safety.sh: an expect/reject payload table. The hook is
-# fail-open, so a rule that quietly stops matching looks exactly like a clean
-# command — this table is the only thing that tells the two apart. Run it after
-# changing any rule: bash global/hooks/rename-safety-selftest.sh
+# Self-test for rename-safety.sh: an expect/reject payload table, then a
+# mutation table. The hook is fail-open, so a rule that quietly stops matching
+# looks exactly like a clean command — these rows are the only thing that tells
+# the two apart. Run it after changing any rule:
+#   bash global/hooks/rename-safety-selftest.sh
+#
+# The mutation table at the end edits a copy of the hook once per check on the
+# allow path (the one-substitution carve-out, the opt-in walk, symlink
+# resolution) and requires each mutant to flip the row it names, both ways: a
+# narrowed check that stops firing, and a widened one whose clean neighbour
+# starts firing.
 #
 # The run/expect helpers are selftest-lib.sh beside this file.
 set -u
@@ -91,10 +98,28 @@ expect_block "$opted" "caffeinate -t 600 sed -i 's/a/b/' f.txt"                 
 expect_allow "$opted" "sed -i '' 's/a/b/' f.txt"                                 "BSD empty suffix"
 expect_allow "$opted" "sed -i.bak 's/a/b/' f.txt"                                "attached suffix"
 expect_allow "$opted" "sed -i '' -e 's|a/b|c|' notes.md"                         "one -e, another delimiter"
-expect_allow "$opted" "sed -i '' '3s/a/b/p' deep/f.txt"                          "line address and p flag"
+expect_allow "$opted" "sed -i '' '3s/a/b/' deep/f.txt"                           "line address"
+expect_allow "$opted" "sed -i '' 's/a/b/2I' f.txt"                               "a number and I are the flags that stay"
+expect_allow "$opted" "sed -i '' --expression='s/a/b/' f.txt"                    "--expression=<code>"
+expect_allow "$opted" "sed -i '' --expression 's/a/b/' f.txt"                    "--expression <code>"
 expect_allow "$opted" "cd deep && sed -i '' 's/a/b/' f.txt"                      "after a cd inside the opted dir"
 # ... and everything around it still blocks
 expect_block "$opted" "sed -i '' 's/a/b/g' f.txt"                                "g flag"
+expect_block "$opted" "sed -i '' '3s/a/b/p' deep/f.txt"                          "p flag prints the line twice"
+expect_block "$opted" "sed -n -i '' 's/a/b/' f.txt"                              "-n empties the file"
+expect_block "$opted" "sed -i '' -n 's/a/b/' f.txt"                              "-n after the suffix"
+expect_block "$opted" "sed -En -i '' 's/a/b/' f.txt"                             "-n inside a cluster"
+expect_block "$opted" "sed --quiet -i '' 's/a/b/' f.txt"                         "--quiet"
+expect_block "$opted" "sed --sil -i '' 's/a/b/' f.txt"                           "--silent abbreviated"
+expect_block "$opted" "sed -i '' -f 's:a:b:' f.txt"                              "-f names a script file, whatever its name looks like"
+expect_block "$opted" "gsed -i '' 's/a/b/' f.txt"                                "gsed reads '' as the script"
+expect_block "$opted" "sed -i '' --expression='s/a/b/g' f.txt"                   "--expression=<code> with a g flag"
+expect_block "$opted" "sed -i '' '/x/d;s/a/b/' f.txt"                            "a command before the substitution"
+expect_block "$opted" "sed -i '' 's/a/b/' {}"                                    "{} outside find is not a listed file"
+NL_EXPR=$'s/a/x\nd\ns/'
+expect_block "$opted" "sed -i '' '$NL_EXPR' f.txt"                               "a newline inside the substitution"
+expect_block "$opted" "sed --in 's/a/b/' f.txt"                                  "--in abbreviates --in-place"
+expect_allow "$opted" "sed --null-data -n 1p f.txt"                              "a long option that is not --in-place"
 expect_block "$opted" "sed -i '' 's/a/b/w out.txt' f.txt"                        "w flag writes a second file"
 expect_block "$opted" "sed -i '' 's/a/b/' f.txt g.txt"                           "two files"
 expect_block "$opted" "sed -i '' -e 's/a/b/' -e 's/c/d/' f.txt"                  "two expressions"
@@ -118,6 +143,17 @@ expect_block "$opted" "sed -i '' 's/a/b/' $plain/f.txt f.txt"                   
 expect_block "$plain" "sed -i 's/a/b/' $opted/f.txt"                             "file inside, run from outside"
 expect_block "$plain" "sed -i 's/a/b/' $opted/*.md"                              "glob whose parent is opted in"
 expect_allow "$plain" "sed -i 's/a/b/' *.md"                                     "glob outside, run from outside"
+# symlinks: a path is judged where it really lies (~/.claude/skills/<skill> is a link into the checkout)
+ln -s "$opted" "$plain/dirlink"; ln -s "$opted/f.txt" "$plain/filelink"
+ln -s "$plain/g.txt" "$opted/outlink"; ln -s "$tmp/elsewhere/g.txt" "$plain/outlink"
+mkdir -p "$tmp/elsewhere"; ln -s "$plain" "$tmp/plainlink"
+expect_block "$plain" "sed -i '' 's/a/b/g' dirlink/f.txt"                        "a directory symlink into the opted dir"
+expect_block "$plain" "sed -i '' 's/a/b/g' $plain/dirlink/f.txt"                 "the same, absolute"
+expect_block "$plain" "sed -i '' 's/a/b/g' filelink"                             "a file symlink into the opted dir"
+expect_block "$plain" "sed -i '' 's/a/b/g' dirlink/outlink"                      "a link inside the opted dir, pointing out"
+RENAME_SAFETY_DIRS="$plain" expect_block "$tmp" "sed -i 's/a/b/' plainlink/outlink"  "the name's own directory, resolved, is judged too"
+RENAME_SAFETY_DIRS="$tmp/plainlink" expect_block "$plain" "sed -i 's/a/b/' f.txt"   "a RENAME_SAFETY_DIRS entry reached through a link"
+RENAME_SAFETY_DIRS="$plain" expect_block "$tmp" "cd plainlink && sed -i 's/a/b/' \"\$RS_UNSET_VAR/f.txt\""  "the run directory, resolved, is judged"
 
 # --- reads and mentions: allow ------------------------------------------------
 expect_allow "$opted" "sed -n '1,5p' f.txt"
@@ -161,6 +197,13 @@ rc="$(run "$opted/deep" "sed -i 's/a/b/' f.txt")"; [ "$rc" = 2 ] || { echo "FAIL
 RENAME_SAFETY_DIRS="$plain" expect_block "$plain" "sed -i 's/a/b/' f.txt"   "RENAME_SAFETY_DIRS opts in"
 RENAME_SAFETY_DIRS=":" expect_allow "$plain" "sed -i 's/a/b/' f.txt"        "empty RENAME_SAFETY_DIRS element opts in nothing"
 RENAME_SAFETY_DIRS=":$opted" expect_allow "$plain" "sed -i 's/a/b/' f.txt"  "leading colon does not opt in \$plain"
+mkdir -p "$tmp/foo" "$tmp/foobar"
+RENAME_SAFETY_DIRS="$tmp/foo" expect_allow "$tmp/foobar" "sed -i 's/a/b/' f.txt"   "an entry opts in its own tree, not a sibling sharing its prefix"
+# the opt-in walk stops at $HOME: a marker above it opts nothing in below it
+mkdir -p "$tmp/above/.claude" "$tmp/above/home/proj" "$tmp/above/other"; touch "$tmp/above/.claude/rename-safety"
+ln -s "$tmp/above/home" "$tmp/homelink"
+HOME="$tmp/homelink" expect_allow "$tmp/above/home/proj" "sed -i 's/a/b/' f.txt"   "a marker above \$HOME (reached through a link) is not read"
+HOME="$tmp/homelink" expect_block "$tmp/above/other" "sed -i 's/a/b/' f.txt"       "the same marker opts in a directory outside \$HOME"
 # the directory a cd moved to is the one judged
 expect_block "$plain" "cd ../opted && sed -i 's/a/b/' f.txt"               "cd into an opted dir"
 expect_allow "$opted" "cd ../plain && sed -i 's/a/b/' f.txt"               "cd out of an opted dir"
@@ -193,6 +236,68 @@ printf '%s' "$out" | grep -q 'blocked an in-place edit (sed -i)' || { echo "FAIL
 printf '%s' "$out" | grep -q 'Use the Edit tool' || { echo "FAIL: block message does not point at the Edit tool"; fail=1; }
 printf '%s' "$out" | grep -q '    notes.md' || { echo "FAIL: path-shaped argument notes.md not listed"; fail=1; }
 printf '%s' "$out" | grep -qE '^    s/a/b' && { echo "FAIL: sed expression listed as a path"; fail=1; }
+
+# a script file run by a shell reads the pipe as data, not commands
+expect_allow "$opted" "printf 'sed -i s/a/b/ f.txt' | bash hook.sh"            "the pipe is the script's input"
+expect_block "$opted" "printf 'sed -i s/a/b/ f.txt' | bash -s"                 "-s reads commands from the pipe"
+
+# --- mutation table -------------------------------------------------------------
+# Each row edits a copy of the hook (the libs beside it) and reruns one fixture;
+# the mutant must flip that row's outcome, or the row above grades nothing.
+mdir="$tmp/mut"; mkdir -p "$mdir"; cp "$here/hook-lib.sh" "$here/hook-lib.py" "$mdir/"
+mutant() { # mutant <label> <find> <replace> <cwd> <cmd> <want rc>  (env prefixes pass through)
+  local label="$1" from="$2" to="$3" c_wd="$4" c="$5" want="$6" rc
+  python3 - "$hook" "$mdir/rename-safety.sh" "$from" "$to" <<'PY' || { echo "FAIL (mutant '$label': pattern not found in the hook)"; fail=1; return; }
+import sys
+src, dst, a, b = sys.argv[1:]
+s = open(src).read()
+if a not in s:
+    sys.exit(1)
+open(dst, "w").write(s.replace(a, b, 1))
+PY
+  rc="$(hook="$mdir/rename-safety.sh" run "$c_wd" "$c")"
+  [ "$rc" = "$want" ] || { echo "FAIL (mutant '$label' survived: rc=$rc, the row should flip to $want)"; fail=1; }
+}
+mutant "widen the address anchor"  'm = re.match(r"^(?:[0-9]+' 'm = re.match(r"^.*?(?:[0-9]+' "$opted" "sed -i '' '/x/d;s/a/b/' f.txt" 0
+mutant "admit the p flag"          're.fullmatch(r"[0-9I]*"' 're.fullmatch(r"[0-9pI]*"' "$opted" "sed -i '' '3s/a/b/p' deep/f.txt" 0
+mutant "admit the g flag"          're.fullmatch(r"[0-9I]*"' 're.fullmatch(r"[0-9gI]*"' "$opted" "sed -i '' 's/a/b/g' f.txt" 0
+mutant "narrow the flags"          're.fullmatch(r"[0-9I]*"' 're.fullmatch(r"[0-9]*"' "$opted" "sed -i '' 's/a/b/2I' f.txt" 2
+mutant "ignore -n"                 'bsd and not quiet and literal' 'bsd and literal' "$opted" "sed -n -i '' 's/a/b/' f.txt" 0
+mutant "ignore --quiet"            'elif ch == "n":
+                    quiet = True' 'elif ch == "n":
+                    pass' "$opted" "sed --quiet -i '' 's/a/b/' f.txt" 0
+mutant "-f carries code again"     'CODE = {"sed": set("e"),' 'CODE = {"sed": set("ef"),' "$opted" "sed -i '' -f 's:a:b:' f.txt" 0
+mutant "gsed gets the carve-out"   'if (head == "sed" and bsd' 'if (prog == "sed" and bsd' "$opted" "gsed -i '' 's/a/b/' f.txt" 0
+mutant "drop --expression code"    '                    if ch == "e":
+                        code.append(val)' '                    if False:
+                        code.append(val)' "$opted" "sed -i '' --expression='s/a/b/' f.txt" 2
+mutant "--expression takes no next token" '                    if not eq and i + 1 < len(args):
+                        i += 1
+                        val = args[i]
+                    if ch == "e":' '                    if ch == "e":' "$opted" "sed -i '' --expression 's/a/b/' f.txt" 2
+mutant "drop the {} guard"         'if "`" in path or path == "{}":' 'if "`" in path:' "$opted" "sed -i '' 's/a/b/' {}" 0
+mutant "drop the newline guard"    '        if e[k] == "\n":
+            return False' '        pass' "$opted" "sed -i '' '$NL_EXPR' f.txt" 0
+mutant "no long-option abbreviation" 'hits = [n for n in SED_LONG if n.startswith(name)]' 'hits = []' "$opted" "sed --in 's/a/b/' f.txt" 0
+mutant "every long option is in place" 'if ch == "i":
+                    inplace = True
+                elif ch == "n":' 'if True:
+                    inplace = True
+                elif ch == "n":' "$opted" "sed --null-data -n 1p f.txt" 2
+HOME="$tmp/homelink" mutant "drop the HOME stop"   'if walk in ("/", HOME):' 'if walk == "/":' "$tmp/above/home/proj" "sed -i 's/a/b/' f.txt" 2
+HOME="$tmp/homelink" mutant "HOME unresolved"      'HOME = os.path.realpath(os.environ.get("HOME") or "/")' 'HOME = os.path.normpath(os.environ.get("HOME") or "/")' "$tmp/above/home/proj" "sed -i 's/a/b/' f.txt" 2
+RENAME_SAFETY_DIRS="$tmp/foo" mutant "lose the prefix boundary" 'd.startswith(r.rstrip("/") + "/")' 'd.startswith(r.rstrip("/"))' "$tmp/foobar" "sed -i 's/a/b/' f.txt" 2
+RENAME_SAFETY_DIRS="$tmp/plainlink" mutant "DIRS entry unresolved" 'r = os.path.realpath(r) if r else ""' 'r = os.path.normpath(r) if r else ""' "$plain" "sed -i 's/a/b/' f.txt" 0
+mutant "file symlink unresolved"   'return {os.path.dirname(os.path.realpath(p)), ' 'return {os.path.dirname(p), ' "$plain" "sed -i '' 's/a/b/g' filelink" 0
+RENAME_SAFETY_DIRS="$plain" mutant "name directory unresolved" ', os.path.realpath(os.path.dirname(p))}' ', os.path.dirname(p)}' "$tmp" "sed -i 's/a/b/' plainlink/outlink" 0
+# hook-lib.sh's PAYLOAD_CWD export, which base() reads: without it the scanner crashes and fails open
+cp "$hook" "$mdir/rename-safety.sh"
+python3 -c 'import sys; p=sys.argv[1]; s=open(p).read(); a="export PAYLOAD_CWD=\"$cwd\""; assert a in s; open(p,"w").write(s.replace(a, ":", 1))' "$mdir/hook-lib.sh" \
+  || { echo "FAIL (mutant 'drop the PAYLOAD_CWD export': pattern not found in hook-lib.sh)"; fail=1; }
+rc="$(hook="$mdir/rename-safety.sh" run "$opted" "sed -i 's/a/b/' f.txt")"
+[ "$rc" = 0 ] || { echo "FAIL (mutant 'drop the PAYLOAD_CWD export' survived: rc=$rc, the row should flip to 0)"; fail=1; }
+cp "$here/hook-lib.sh" "$mdir/hook-lib.sh"
+RENAME_SAFETY_DIRS="$plain" mutant "start directory unresolved" 'dirs = [os.path.realpath(start)]' 'dirs = [start]' "$tmp" "cd plainlink && sed -i 's/a/b/' \"\$RS_UNSET_VAR/f.txt\"" 0
 
 if [ "$fail" -ne 0 ]; then echo "SELFTEST FAIL: rename-safety"; exit 1; fi
 echo "OK: rename-safety self-test clean — every in-place shape blocked, one listed substitution and every out-of-tree target allowed, every read and mention allowed, opt-in and fail-open hold."
