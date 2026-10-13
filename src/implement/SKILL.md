@@ -63,15 +63,11 @@ If any decision — a listed judgment call or not — turned on a choice that pa
 
 Most slices won't clear the gate; don't manufacture an ADR for an obvious or easily-reversed choice — but say the gate's result either way, in its own words, so a stated zero is on the record. `feedback-loops`' mechanical doc-sync does **not** cover this — recording rationale is judgment, which is why it delegates to `adr`.
 
-### 6. Close in order, then suggest review
+### 6. Close in order, then name the next step
 
 The close runs in this order, so every check describes the code that ships: `feedback-loops` and the audit (§ 4); the audit's parked offer, whose recommendation is to fix the rows in files this change touches now, in parallel helpers where the files differ, then one more `feedback-loops` run; the two fresh helpers (§ 4) on the code as that left it; the decision offer (§ 5); then the next step below. A plain "Yes" to the parked offer carries the steps after it.
 
-`review-changes` is user-invoked, like this skill, so nothing here can invoke it. **Suggest** it once per work item, not per slice: when a Story's last Task lands, when a Story with no Tasks lands, or when a Bug fix lands — never for a single Task, except where `Landing:` says `Review required: yes`, which calls for it before every push because the `review-receipt` hook refuses the push without it. Never suggest it again once the newest review report's last `Reviewed-tree:` equals the tree `feedback-loops` stamped, and never where the repo sets its own review cadence (a `## Round` block's `Review cadence:`), which decides instead, over `Review required: yes` too. The user asks for any other review; the size of a diff worth reviewing is theirs to judge.
-
-If the user runs `/review-changes`, the findings are acted on in `/address-findings`' one pass (it runs `feedback-loops` after its last fix); a finding that pass cannot fix is a deferral the user ratifies there, never a follow-up this slice files on its own.
-
-Once the slice is green it commits whenever the user asks: a one-commit change through the `committing` discipline, a change that needs a split or a PR through `/ship` — suggest it, don't invoke it: "Green — `/ship` from here." A review that ran or that `Review required: yes` calls for, its findings addressed, gates the push, never the commit.
+End on the next step: run `bash ~/.claude/skills/committing/scripts/next-step.sh` (`--mid-family` when a `## Round` block's `Review cadence:` says this close ends no batch family) and close on the `next:` line it prints. It reads the `Landing:` key and the review reports as the `review-receipt` hook does, so it never says push where the hook blocks. Outside `Review required: yes` it names no review: suggest `/review-changes` there once per work item (a Story's last Task, a Story with no Tasks, a Bug fix), never for a single Task. Every command it names is user-invoked, so suggest it, never invoke it. A finding `/address-findings` cannot fix is a deferral the user ratifies there, never a follow-up this slice files.
 
 ## Notes
 

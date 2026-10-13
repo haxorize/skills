@@ -15,7 +15,7 @@ One pass over a review report: every finding gets a disposition, nothing is defe
 ### 1. Resolve the report
 
 - **With a path** — read it.
-- **No argument** — the newest report for this repo, the file `bash ~/.claude/skills/handoff/scripts/landing.sh latest --kind review` prints.
+- **No argument** — the newest report for this repo, the file `bash ~/.claude/skills/handoff/scripts/landing.sh latest --kind review` prints; say which file you picked.
 - **No report** — stop and say so. This skill never runs a review to get one; `/review-changes` is the user's move.
 
 Read the report's stamps and compare them to the tree as it is now — but compare what the report actually carries: a review emits different stamps per target mode, and a PR-mode report says "no tree stamp" in its header, leaving nothing to compare and nothing to re-stamp later. With a **reviewed-head stamp** (`Reviewed-head: <short-sha>`), compare it to `HEAD`; with a **reviewed-tree stamp** (`Reviewed-tree: <40-hex>`), compare it to the tree *now* with `bash ~/.claude/skills/review-changes/scripts/tree-stamp.sh --verify <report>`, adding `--committed HEAD` when the report reviewed a committed target, whose stamp is a commit's tree that any untracked file would mismatch (exit 0 when any stamp line in the report matches, 1 a mismatch, 2 no stamp line to compare; the receipt contract is `review-changes`' `~/.claude/skills/review-changes/references/tree-stamp.md`) — a mismatch means edits landed between the review and this pass, so say so before the pass starts and treat every finding's line numbers as moved. When commits have landed since, say how many (`git log <stamp>..HEAD --oneline`) and which findings cite files those commits touched; the pass still runs on the report's IDs, because the report is the contract, but a finding whose line has already moved is verified against the tree as it is now.
@@ -65,4 +65,4 @@ Re-measure the count at write time — `grep -oE '\bF[0-9]+\b' <report> | sort -
 
 ### 6. Stop
 
-Stop. Landing is the user's ask: the `committing` discipline for one commit, `/ship` for a split or a PR — the usual exit after a long pass. When the findings arrived as PR review threads, `receiving-review`'s reply contract runs after the commit is on the remote, not before.
+Stop on the `next:` line `bash ~/.claude/skills/committing/scripts/next-step.sh` prints after the re-stamp, the exact next command. Landing is the user's ask: the `committing` discipline for one commit, `/ship` for a split or a PR. When the findings arrived as PR review threads, `receiving-review`'s reply contract runs after the commit is on the remote, not before.
