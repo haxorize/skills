@@ -230,8 +230,10 @@ expect_block "$work/tworemotes" "git push --repo=origin"       "--repo= names th
 expect_block "$work/noupstream" "git push"                     "no tracking branch: origin/<branch> fallback"
 
 # --- receipts ------------------------------------------------------------------
-# tree_of <repo-dir>: the work-tree hash the skills stamp (the hook header's one-liner, verbatim)
-tree_of() { ( cd "$1" && T="$(mktemp -u)"; GIT_INDEX_FILE="$T" git read-tree HEAD 2>/dev/null; GIT_INDEX_FILE="$T" git add -A :/ && GIT_INDEX_FILE="$T" git write-tree; rm -f "$T" ); }
+# tree_of <repo-dir>: the work-tree hash the skills stamp, from the script they name
+tree_stamp="$here/../../src/review-changes/scripts/tree-stamp.sh"
+[ -f "$tree_stamp" ] || { echo "FAIL (no tree-stamp script at $tree_stamp)"; exit 1; }
+tree_of() { ( cd "$1" && bash "$tree_stamp" ); }
 stamp() { printf '%s\n' "$2" >> "$REVIEW_RECEIPT_DIR/$1"; }   # stamp <file> <line>
 HEADTREE="$(cd "$G" && git rev-parse 'HEAD^{tree}')"
 [ "$(tree_of "$G")" = "$HEADTREE" ] || { echo "FAIL (tree_of on a clean tree should equal HEAD^{tree})"; fail=1; }

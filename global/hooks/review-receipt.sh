@@ -42,8 +42,8 @@
 # including this hook's own contract, and a quotation is not a receipt; the
 # opt-in scan strips fences the same way. A report may carry several stamps,
 # one per stamping, and any of them matches. The work-tree
-# hash `review-changes` and `address-findings` write is
-#   T="$(mktemp -u)"; GIT_INDEX_FILE="$T" git read-tree HEAD 2>/dev/null; GIT_INDEX_FILE="$T" git add -A :/ && GIT_INDEX_FILE="$T" git write-tree; rm -f "$T"
+# hash `review-changes` and `address-findings` write is the one
+# src/review-changes/scripts/tree-stamp.sh prints
 # (a throwaway index seeded from HEAD, so the real one is untouched and a
 # tracked-but-ignored file still counts); it equals the tree of a commit that
 # takes every tracked change and every untracked file `.gitignore` does not
