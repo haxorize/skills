@@ -250,10 +250,12 @@ rmdir "$fx/.tmp"
 ( TMPDIR="$tmp/no-such-dir"; selftest_tmpdir >/dev/null ) && selftest_fail "selftest_tmpdir returned 0 for a TMPDIR that does not exist — it ignored TMPDIR"
 t2="$(TMPDIR="$tmp" selftest_tmpdir)" || selftest_fail "selftest_tmpdir gave no directory under a writable TMPDIR"
 case "$t2" in "$tmp"/selftest.*) ;; *) selftest_fail "selftest_tmpdir made '$t2', not a directory under TMPDIR ($tmp)" ;; esac
-# selftest_no_tmpdir too: 4 when nothing ran, 1 when a row before it already failed.
-( fail=0; selftest_no_tmpdir x >/dev/null ); rc=$?
-expect_rc "selftest_no_tmpdir with no earlier FAIL" 4 "$rc"
-( fail=1; selftest_no_tmpdir x >/dev/null ); rc=$?
+# selftest_no_tmpdir too: 4 when nothing ran, 2 when rows ran and passed, 1 when a row before it already failed.
+( fail=0; selftest_rows=0; selftest_no_tmpdir x >/dev/null ); rc=$?
+expect_rc "selftest_no_tmpdir with no row run" 4 "$rc"
+( fail=0; selftest_rows=1; selftest_no_tmpdir x >/dev/null ); rc=$?
+expect_rc "selftest_no_tmpdir after a passing row" 2 "$rc"
+( fail=1; selftest_rows=1; selftest_no_tmpdir x >/dev/null ); rc=$?
 expect_rc "selftest_no_tmpdir after an earlier FAIL" 1 "$rc"
 
 # --- the mutation table: each row removes one guard from a copy of the sweep and must change

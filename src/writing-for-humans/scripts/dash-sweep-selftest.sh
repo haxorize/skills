@@ -12,12 +12,18 @@
 # What is graded. Hits, each pinned as the whole <line>:<text> row the script
 # prints, which is the masked line (a URL reads only from its query string on):
 # an em dash; a double hyphen with spaces, with no-break spaces, and with
-# one of each; an en dash after a letter, before a letter, and ending a line;
-# utm_source= surviving in a URL's query string; oaicite; turn0search; a bracketed
-# placeholder; a zero-width space. Clean neighbours, each absent from the output:
-# a double hyphen with no spaces, one with a space on one side only, an en dash
-# between digits, an em dash inside a code span, an em dash inside a URL path, a
-# lowercase bracket, a bracketed number. Exit codes: 1 with hits, 0 and no output
+# one of each; an en dash after a letter, before a letter, ending a line, and
+# opening a line before a digit; utm_source= surviving in a URL's query string;
+# oaicite; turn0search; a bracketed placeholder ending a line and mid-line; a
+# zero-width space. Clean neighbours, each absent from the output: a markdown
+# link whose text is capitalised, a double hyphen with no spaces, one with a
+# space on one side only, an en dash between digits, an em dash inside a code
+# span, an em dash inside a URL path, a lowercase bracket, a bracketed number.
+#
+# Mutations run by hand on 2026-10-13, each red here: dropping `^–` (the
+# line-opening row reds); dropping `([^(]|$)` after the placeholder (the
+# markdown-link neighbour fires); dropping `|$` from it (the line-ending
+# placeholder row reds). Exit codes: 1 with hits, 0 and no output
 # on a clean draft, 3 for no argument, two arguments, an unknown option, a
 # missing file and a directory, 0 for --help.
 #
@@ -33,10 +39,7 @@ script="src/writing-for-humans/scripts/dash-sweep.sh"
 [ -f "$script" ] || { selftest_fail "script $script is missing"; exit 1; }
 
 # Temp-file template: scripts/README.md § Temp files.
-if ! tmp=$(selftest_tmpdir); then
-  echo "dash-sweep-selftest.sh: no usable temp directory (template \${TMPDIR:-/tmp}/selftest.XXXXXX, TMPDIR=${TMPDIR:-unset}) — nothing ran"
-  exit 4
-fi
+tmp=$(selftest_tmpdir) || selftest_no_tmpdir dash-sweep-selftest.sh
 trap 'rm -rf "$tmp"' EXIT
 
 em=$'\xe2\x80\x94'; en=$'\xe2\x80\x93'; nb=$'\xc2\xa0'; zw=$'\xe2\x80\x8b'
@@ -55,6 +58,9 @@ em=$'\xe2\x80\x94'; en=$'\xe2\x80\x93'; nb=$'\xc2\xa0'; zw=$'\xe2\x80\x8b'
   printf '%s\n' "residue turn0search here"
   printf '%s\n' "Thanks, [Your Name]"
   printf '%s\n' "zero${zw}width"
+  printf '%s\n' "${en}5 to 6 opens a line"
+  printf '%s\n' "Dear [Client Name], hello"
+  printf '%s\n' "clean see [Design Doc](https://x.y/z) now"
   printf '%s\n' "clean a--b"
   printf '%s\n' "clean --flag"
   printf '%s\n' "clean pp. 3${en}4"
@@ -76,9 +82,11 @@ expect_row "$out" "oaicite" "9:residue oaicite here"
 expect_row "$out" "turn0search" "10:residue turn0search here"
 expect_row "$out" "bracketed placeholder" "11:Thanks, [Your Name]"
 expect_row "$out" "zero-width space" "12:zero${zw}width"
+expect_row "$out" "en dash opening a line before a digit" "13:${en}5 to 6 opens a line"
+expect_row "$out" "bracketed placeholder mid-line" "14:Dear [Client Name], hello"
 reject_in "$out" "a clean neighbour fired" "clean"
 n=$(grep -c . <<< "$out")
-[ "$n" -eq 12 ] || selftest_fail "a draft with hits printed $n lines, not 12"
+[ "$n" -eq 14 ] || selftest_fail "a draft with hits printed $n lines, not 14"
 
 printf '%s\n' "A plain note." "Nothing to find, pp. 3${en}4." > "$tmp/clean.md"
 out=$(bash "$script" "$tmp/clean.md" 2>&1); expect_rc "a clean draft" 0 $?
@@ -93,4 +101,4 @@ missing=$(bash "$script" "$tmp/nope.md" 2>&1); expect_rc "a missing file" 3 $?
 expect_in "$missing" "a missing file is named" "not a readable file"
 bash "$script" "$tmp" >/dev/null 2>&1; expect_rc "a directory" 3 $?
 
-selftest_close "dash-sweep: 12 hits pinned by line, 7 clean neighbours quiet, clean draft silent, usage path as pinned" ""
+selftest_close "dash-sweep: 14 hits pinned by line, 8 clean neighbours quiet, clean draft silent, usage path as pinned" ""

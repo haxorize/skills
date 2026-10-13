@@ -20,12 +20,16 @@
 #                                             since an empty prefix makes
 #                                             `cp -R x/. "$tmp/"` copy into /
 #   selftest_no_tmpdir <script>             — the close for a selftest that can
-#                                             run no row without that directory:
-#                                             exit 4, or 1 when a row before the
-#                                             guard already failed (scripts/
-#                                             README.md § Temp files). A guard
-#                                             that skips one block and goes on
-#                                             takes selftest_skip instead.
+#                                             run no further row without that
+#                                             directory (scripts/README.md
+#                                             § Temp files). Its line names the
+#                                             template and TMPDIR. No row ran
+#                                             yet: "nothing ran", exit 4. A row
+#                                             before the guard failed: exit 1.
+#                                             Rows ran and passed: SELFTEST
+#                                             PARTIAL, exit 2. A guard that
+#                                             skips one block and goes on takes
+#                                             selftest_skip instead.
 #   selftest_close <ok-line> <partial-line> — exits 1 on any FAIL, 2 on any
 #                                             SKIP with no FAIL, else 0: three
 #                                             statuses, because
@@ -40,34 +44,43 @@
 #                                             to read past to reach them
 #
 # Every FAIL sets `fail=1`, every SKIP sets `skipped=1`; a selftest reads them
-# only through selftest_close.
+# only through selftest_close. Every matcher call, FAIL and SKIP counts one in
+# `selftest_rows`, which selftest_no_tmpdir reads to tell "nothing ran" from a
+# partial run; a row hand-rolled as `[ … ] || selftest_fail` counts only when
+# it fails, so a selftest with rows before its temp-dir guard grades them
+# through the matchers.
 
 fail=0
 skipped=0
+selftest_rows=0
 
-selftest_fail() { echo "SELFTEST FAIL: $1"; fail=1; }
-selftest_skip() { echo "SELFTEST SKIP: $1"; skipped=1; }
+selftest_fail() { echo "SELFTEST FAIL: $1"; fail=1; selftest_rows=$((selftest_rows + 1)); }
+selftest_skip() { echo "SELFTEST SKIP: $1"; skipped=1; selftest_rows=$((selftest_rows + 1)); }
 
 # The haystack reaches grep as a here-string, never through a pipe: under
 # `pipefail`, `grep -q` exiting at its first match sends SIGPIPE to the writer
 # once the haystack outgrows the pipe buffer (~64 KB), and a matching
 # pipeline returns 141 — every expectation would fail, naming the wrong cause.
 expect_in() {
+  selftest_rows=$((selftest_rows + 1))
   if ! grep -qF -- "$3" <<< "$1"; then
     selftest_fail "$2 — expected a line containing: $3"
   fi
 }
 reject_in() {
+  selftest_rows=$((selftest_rows + 1))
   if grep -qF -- "$3" <<< "$1"; then
     selftest_fail "$2 — found a line containing: $3"
   fi
 }
 expect_row() {
+  selftest_rows=$((selftest_rows + 1))
   if ! grep -qxF -- "$3" <<< "$1"; then
     selftest_fail "$2 — expected the row: $3"
   fi
 }
 expect_rc() {
+  selftest_rows=$((selftest_rows + 1))
   if [ "$2" -ne "$3" ]; then
     selftest_fail "$1 exited $3, not $2"
   fi
@@ -84,8 +97,16 @@ selftest_tmpdir() {
 }
 
 selftest_no_tmpdir() {
-  echo "$1: no usable temp directory (TMPDIR=${TMPDIR:-unset}) — nothing ran"
-  [ "$fail" -ne 0 ] && exit 1
+  local why
+  why="mktemp -d \"\${TMPDIR:-/tmp}/selftest.XXXXXX\" gave no usable temp directory (TMPDIR=${TMPDIR:-unset})"
+  if [ "$fail" -ne 0 ]; then
+    echo "$1: $why — a row before it already failed; the rest did not run"
+    exit 1
+  elif [ "$selftest_rows" -gt 0 ]; then
+    echo "SELFTEST PARTIAL: $1: $why — the rows before it passed ($selftest_rows); the rest did not run"
+    exit 2
+  fi
+  echo "$1: $why — nothing ran"
   exit 4
 }
 

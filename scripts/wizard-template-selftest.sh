@@ -33,7 +33,9 @@ cd "$repo_root"
 template="src/wizard/template.sh"
 [ -f "$template" ] || { selftest_fail "$template is missing"; exit 1; }
 
-bash -n "$template" 2>/dev/null || selftest_fail "$template does not parse (bash -n)"
+# A matcher row, not `|| selftest_fail`, so a pass counts as a row ran and
+# selftest_no_tmpdir below reports PARTIAL rather than "nothing ran".
+bash -n "$template" 2>/dev/null; expect_rc "$template parses (bash -n)" 0 $?
 
 tmp="$(selftest_tmpdir)" || selftest_no_tmpdir wizard-template-selftest.sh
 trap 'rm -rf "$tmp"' EXIT
