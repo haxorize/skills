@@ -2,8 +2,11 @@
 # it. Not run on its own: hook-lib.sh's `hook_scan` prepends this file to a
 # hook's own Python, which defines `on_command(seg, curdir)` and `emit(hit)`,
 # and appends the call that runs the scan. Besides those two names, a hook may
-# use `re`, `sys`, `shlex`, `progname`, `git_args`, `expand`, and `joined`;
-# everything else here is the scanner's own and may be renamed.
+# use `re`, `sys`, `os`, `shlex`, `progname`, `git_args`, `expand`, `joined`,
+# and `fed_by`; everything else here is the scanner's own and may be renamed.
+# `fed_by()` names the feeders (`xargs`, `find`) the current segment runs
+# under, so a hook can tell that its file list arrives from outside the
+# segment.
 #
 # The contract, which every hook inherits: the command is tokenised the way a
 # shell would (`shlex`), split into segments at `; && || | & ( )` and newlines,
@@ -64,6 +67,7 @@ GIT_VALUE_OPTS = {"-c", "-C", "--git-dir", "--work-tree", "--namespace", "--exec
                   "--super-prefix", "--config-env"}
 ALIAS = re.compile(r"^alias\.([^=\s]+)=(.*)$", re.S)
 VARS = {}
+VIA = []                           # feeders of the segment being scanned; read through fed_by()
 MAX_DEPTH = 4
 _on_command = None
 
@@ -133,7 +137,7 @@ def tokens(text):
     lex.commenters = ""
     out = []
     for t in lex:
-        if all(c in ";&|()\n" for c in t):
+        if t and all(c in ";&|()\n" for c in t):       # an empty word (`sed -i ''`) is still a word
             out.extend(re.findall(r"&&|\|\||[;&|()\n]", t))
         else:
             out.append(t)
@@ -258,7 +262,11 @@ def scan_segment(seg, prev, curdir, depth, fed=None):
             fed = prev[1:]
             while fed and re.match(r"^-[neEv]+$", fed[0]):   # echo/printf's own flags
                 fed = fed[1:]
-        return scan_segment(seg[k:], prev, curdir, depth, fed)
+        VIA.append("xargs")
+        try:
+            return scan_segment(seg[k:], prev, curdir, depth, fed)
+        finally:
+            VIA.pop()
     if head == "find":
         k = 0
         while k < len(seg):
@@ -266,7 +274,11 @@ def scan_segment(seg, prev, curdir, depth, fed=None):
                 end = k + 1
                 while end < len(seg) and seg[end] not in FIND_END:
                     end += 1
-                hit = scan_segment(seg[k + 1:end], prev, curdir, depth)
+                VIA.append("find")
+                try:
+                    hit = scan_segment(seg[k + 1:end], prev, curdir, depth)
+                finally:
+                    VIA.pop()
                 if hit:
                     return hit
                 k = end
@@ -285,6 +297,12 @@ def scan_segment(seg, prev, curdir, depth, fed=None):
     if head == "eval":
         return scan(" ".join(seg[1:]), curdir, depth + 1)
     return _on_command(seg + (fed or []), curdir)
+
+
+def fed_by():
+    """The feeders (`xargs`, `find`) the segment now being scanned runs under,
+    outermost first; empty when its arguments are all on the command line."""
+    return tuple(VIA)
 
 
 def git_args(seg):

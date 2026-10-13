@@ -25,7 +25,6 @@ export HOME="$tmp"            # the opt-in walk stops at $HOME; nothing outside 
 # --- in-place shapes: block ---------------------------------------------------
 expect_block "$opted" "sed -i 's/a/b/' f.txt"
 expect_block "$opted" "sed -i'' 's/a/b/' f.txt"
-expect_block "$opted" "sed -i.bak 's/a/b/' f.txt"
 expect_block "$opted" "sed --in-place=.bak 's/a/b/' f.txt"
 expect_block "$opted" "sed -E -i 's/a/b/' f.txt"
 expect_block "$opted" "sed -n -i 's/a/b/' f.txt"
@@ -37,7 +36,6 @@ expect_block "$opted" "cd src && sed -i 's/a/b/' f.txt"
 expect_block "$opted" $'grep -l a *.md\nsed -i \'s/a/b/\' *.md'
 expect_block "$opted" "find . -name '*.md' -exec sed -i 's/a/b/' {} +"
 expect_block "$opted" $'sed \\\n  -i \'s/a/b/\' f.txt'          # backslash-newline continuation is one line to the shell
-expect_block "$opted" "sudo sed -i 's/a/b/' /etc/hosts"
 expect_block "$opted" "perl -pi -e 's/a/b/' *.md"
 expect_block "$opted" "perl -i -pe 's/a/b/' f.txt"
 expect_block "$opted" "perl -pi.bak -e 's/a/b/' f.txt"
@@ -74,7 +72,7 @@ expect_block "$opted" "printf 'sed -i s/a/b/ f.txt' | bash"                     
 expect_block "$opted" "sed -i \$'s/\\'/x/' f.txt"                                  "ANSI-C quoted expression with an escaped quote"
 expect_block "$opted" "sed \$'-i' 's/a/b/' f.txt"                                  "ANSI-C quoted flag"
 expect_block "$opted" "sed -i 's/a/b/' f.txt # read only"                          "comment after the command"
-expect_block "$opted" "sed -l -i '' 's/a/b/' f.txt"                                "BSD sed -l takes no value"
+expect_block "$opted" "sed -l -i 's/a/b/' f.txt"                                   "BSD sed -l takes no value"
 expect_block "$opted" "perl -l -pi -e 's/a/b/' f.txt"                              "perl -l takes no next token"
 expect_block "$opted" "perl -C -i -pe 's/a/b/' f.txt"                              "perl -C takes only an attached value"
 expect_block "$opted" "ruby -K -i -pe 'gsub(/a/,\"b\")' f.txt"                   "ruby -K takes only an attached value"
@@ -88,6 +86,38 @@ expect_block "$opted" "! sed -i 's/a/b/' f.txt"                                 
 expect_block "$opted" "git commit -m fi; sed -i 's/a/b/' f.txt"                    "a reserved word mid-segment is a word"
 expect_block "$opted" "busybox sed -i 's/a/b/' f.txt"                              "busybox wrapper"
 expect_block "$opted" "caffeinate -t 600 sed -i 's/a/b/' f.txt"                    "caffeinate with a value-taking option"
+
+# --- one substitution in one listed file, BSD form: allow ---------------------
+expect_allow "$opted" "sed -i '' 's/a/b/' f.txt"                                 "BSD empty suffix"
+expect_allow "$opted" "sed -i.bak 's/a/b/' f.txt"                                "attached suffix"
+expect_allow "$opted" "sed -i '' -e 's|a/b|c|' notes.md"                         "one -e, another delimiter"
+expect_allow "$opted" "sed -i '' '3s/a/b/p' deep/f.txt"                          "line address and p flag"
+expect_allow "$opted" "cd deep && sed -i '' 's/a/b/' f.txt"                      "after a cd inside the opted dir"
+# ... and everything around it still blocks
+expect_block "$opted" "sed -i '' 's/a/b/g' f.txt"                                "g flag"
+expect_block "$opted" "sed -i '' 's/a/b/w out.txt' f.txt"                        "w flag writes a second file"
+expect_block "$opted" "sed -i '' 's/a/b/' f.txt g.txt"                           "two files"
+expect_block "$opted" "sed -i '' -e 's/a/b/' -e 's/c/d/' f.txt"                  "two expressions"
+expect_block "$opted" "sed -i '' 's/a/b/; s/c/d/' f.txt"                         "two commands in one expression"
+expect_block "$opted" "sed -i '' '/x/d' f.txt"                                   "not a substitution"
+expect_block "$opted" "sed -i '' -f script.sed f.txt"                            "script file"
+expect_block "$opted" "sed -i '' 's/oldName/newName/' src/*.ts"                  "glob in the repo"
+expect_block "$opted" "echo f.txt | xargs sed -i '' 's/a/b/'"                    "file fed by xargs"
+expect_block "$opted" "find . -name f.txt -exec sed -i '' 's/a/b/' {} +"         "file fed by find"
+expect_block "$opted" "sed -i '' 's/a/b/' \"\$RS_UNSET_VAR/f.txt\""             "unexpandable variable judges the run directory"
+expect_block "$opted" "perl -pi -e 's/a/b/' f.txt"                               "perl -i on one file"
+expect_block "$opted" "sed -i 's/a/b/' f.txt"                                    "GNU form no-ops on BSD"
+
+# --- every file outside the opted-in directory: allow --------------------------
+expect_allow "$opted" "sed -i 's/a/b/g' $plain/f.txt"                           "absolute path outside"
+expect_allow "$opted" "sed -i 's/a/b/' ../plain/f.txt"                           "relative path outside"
+expect_allow "$opted" "sudo sed -i 's/a/b/' /etc/hosts"                          "system file"
+expect_allow "$opted" "perl -pi -e 's/a/b/' ~/notes.md"                          "~ outside the opted dir"
+TMPDIR="$plain" expect_allow "$opted" "sed -i '' 's/x/y/' \"\$TMPDIR/claude-handoffs/h.md\""  "\$TMPDIR handoff marker"
+expect_block "$opted" "sed -i '' 's/a/b/' $plain/f.txt f.txt"                    "one file outside, one inside"
+expect_block "$plain" "sed -i 's/a/b/' $opted/f.txt"                             "file inside, run from outside"
+expect_block "$plain" "sed -i 's/a/b/' $opted/*.md"                              "glob whose parent is opted in"
+expect_allow "$plain" "sed -i 's/a/b/' *.md"                                     "glob outside, run from outside"
 
 # --- reads and mentions: allow ------------------------------------------------
 expect_allow "$opted" "sed -n '1,5p' f.txt"
@@ -159,9 +189,10 @@ out="$( cd "$opted" && printf '%s' '{"tool_input":{"command":"sed -i s/a/b/ f"}}
 printf '%s' "$out" | grep -q 'hook-lib.sh not found' && printf '%s' "$out" | grep -q 'rc=0' || { echo "FAIL: a hook without its lib must allow with a breadcrumb: $out"; fail=1; }
 # stderr names the shape and the path-shaped argument
 out="$( cd "$opted" && printf '%s' '{"tool_input":{"command":"sed -i s/a/b/ notes.md"}}' | HOME="$tmp" bash "$hook" 2>&1 >/dev/null )"
-printf '%s' "$out" | grep -q 'blocked an in-place mass edit (sed -i)' || { echo "FAIL: block message missing"; fail=1; }
+printf '%s' "$out" | grep -q 'blocked an in-place edit (sed -i)' || { echo "FAIL: block message missing"; fail=1; }
+printf '%s' "$out" | grep -q 'Use the Edit tool' || { echo "FAIL: block message does not point at the Edit tool"; fail=1; }
 printf '%s' "$out" | grep -q '    notes.md' || { echo "FAIL: path-shaped argument notes.md not listed"; fail=1; }
 printf '%s' "$out" | grep -qE '^    s/a/b' && { echo "FAIL: sed expression listed as a path"; fail=1; }
 
 if [ "$fail" -ne 0 ]; then echo "SELFTEST FAIL: rename-safety"; exit 1; fi
-echo "OK: rename-safety self-test clean — every in-place shape blocked, every read and mention allowed, opt-in and fail-open hold."
+echo "OK: rename-safety self-test clean — every in-place shape blocked, one listed substitution and every out-of-tree target allowed, every read and mention allowed, opt-in and fail-open hold."
