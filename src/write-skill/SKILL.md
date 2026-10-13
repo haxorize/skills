@@ -3,6 +3,7 @@ name: write-skill
 description: Create or revise agent skills — classification, structure, descriptions, cross-session state, security surface, and testing them from wording through simulated use.
 disable-model-invocation: true
 requires: writing-for-agents
+argument-hint: "[<ticket-id>]"
 ---
 
 # Write Skill
@@ -11,11 +12,13 @@ The prose conventions serving predictability — information hierarchy and leadi
 
 ## Workflow
 
-1. **Classify the skill** — discipline or orchestrator? Model-invoked or user-invoked? (See *Invocation axis* — decide this first; it shapes the description and the body.) Before minting a skill, try the cheaper homes in order: a clause in an existing skill, then a reference under one, and a new skill last.
+Given a ticket id, load it first in `~/.claude/skills/implement/references/load-ticket.md`'s load-only mode.
+
+1. **Classify the skill** — discipline or orchestrator? Model-invoked or user-invoked? (Decide this first, per *Invocation axis*.) Before minting a skill, try the cheaper homes in order: a clause in an existing skill, then a reference under one, and a new skill last.
 2. **Draft the skill** — `SKILL.md` with references if needed. Creating from scratch, copy [references/skill-template.md](references/skill-template.md) (a revision never does); when the skill's process spans sessions or builds an artifact item by item, follow the cross-session-state rules in [references/skill-package-mechanics.md](references/skill-package-mechanics.md). A step whose only justification names a model, a model version, or one harness's private tool is a workaround, not a procedure: write the capability the step needs instead
 3. **Pressure-test if it carries a discipline** — when the skill encodes a rule the agent might rationalize around under pressure (an iron law, a gate, a prohibition — not a format doc, template, or router), run the micro-test loop in [references/testing-skills.md](references/testing-skills.md) before shipping — and offer that reference's wind tunnel when the skill runs a conversation with a person or keeps an artifact across turns
 4. **Skill-surface security review** — when the skill takes untrusted input, runs a shell, dispatches subagents, reads user-named paths, or deserializes external data, run the FAIL / WARN / PASS lens in [references/skill-security-review.md](references/skill-security-review.md) before shipping (not the built-in `/security-review`, which reviews a diff). A format doc, template, or router has no surface — skip it there.
-5. **Walk the review checklist** — open [references/review-checklist.md](references/review-checklist.md) and grade the draft against every row; a row that fails is fixed before the draft is shown, and the walk is from the file, never from an earlier read of it.
+5. **Walk the review checklist** — open [references/review-checklist.md](references/review-checklist.md) and grade the draft against every row; a row that fails is fixed before the draft is shown.
 6. **Show the draft and iterate** — this skill is user-invoked, so a person triggered it and is waiting on what it produced: present the body, take their corrections, and ship on their word. Nothing else in this workflow or its references puts the draft in front of them, so shipping without this step ships a skill nobody read.
 
 ## Notes
@@ -37,7 +40,7 @@ Pick model-invocation only when the agent must reach the skill on its own, or an
 
 An **orchestrator** (user-invoked) drives a workflow and delegates reusable discipline to **Discipline skills** (model-invoked) via prose. Cross-skill invocation is soft — the model reads the body and decides to call the `Skill` tool, so a dep can silently fail to load. Read [references/cross-skill-wiring.md](references/cross-skill-wiring.md) when the edit in hand writes or reworks a reference that *fires* another skill — a `Skill` tool call, a `/<name>` suggestion, a `requires:` line, or a load gate — or when which of the three forms a new mention takes is not obvious; it carries the two signals that pick the form and the two conditions a gate needs. An edit that adds a bare-backtick mention you can already place never opens it, and neither does one that leaves the existing references alone.
 
-Extract a discipline only where a **real second consumer** exists (the Extraction test) — reuse is the reason to extract, not a guess that it might be reused. A dependency earns a frontmatter `requires:` line (comma-separated skill names) when this skill will *fire* the named one — a `Skill` tool call, a lazy load, or a gated offer awaiting consent — and never for a bare mention of the register it writes in; the declaration set and the call set are the same set, so a skill that stops firing a dep drops the line. Both kinds declare: a model-invoked skill's deps are `requires:` deps too, left ungated, and the line is no orchestrator's alone. `scripts/install.sh` resolves and links those deps, and lint checks each named dep exists and is model-invoked. Inert *format* docs (a glossary format, a template) are not disciplines — they stay reference files, one copy in the owning skill, which other skills read by installed path and never declare (mechanics in [references/skill-package-mechanics.md](references/skill-package-mechanics.md), opened only when a second skill needs the same file).
+Extract a discipline only where a **real second consumer** exists (the Extraction test) — reuse is the reason to extract, not a guess that it might be reused. A dependency earns a frontmatter `requires:` line (comma-separated skill names) when this skill will *fire* the named one — a `Skill` tool call, a lazy load, or a gated offer awaiting consent — and never for a bare mention of the register it writes in; the declaration set and the call set are the same set, so a skill that stops firing a dep drops the line. Both kinds declare: a model-invoked skill's deps are `requires:` deps too, left ungated. `scripts/install.sh` resolves and links those deps, and lint checks each named dep exists and is model-invoked. Inert *format* docs (a glossary format, a template) are not disciplines — they stay reference files, one copy in the owning skill, which other skills read by installed path and never declare (mechanics in [references/skill-package-mechanics.md](references/skill-package-mechanics.md), opened only when a second skill needs the same file).
 
 ### Skill structure
 
@@ -74,7 +77,7 @@ The description is the skill's top-level **context pointer** — its wording dec
 - **Over the cap** — the remediation procedures (relocate verbatim before editing; the description cut order that never trades routing surface) are in [references/over-the-cap.md](references/over-the-cap.md); open it when a cap binds — a body over the byte bound or past 200 lines, or a description at 1024 chars.
 - **Description**: ≤1024 chars, and no angle brackets (`<` or `>`) — the platform chokes on them, so replace placeholder text like `<topic>` before shipping.
 - **Name**: ≤64 chars.
-- **One line per paragraph/bullet** — soft-wrap, no hard newlines mid-paragraph (let the editor wrap). The line cap counts lines, so a "line" should be a unit of content, not an artifact of wrapping; hard-wrapping inflates the count and renders identically. Code fences, tables, YAML frontmatter, and a **Blockquote stanza** keep their own line breaks — the stanza's are hard breaks on purpose, one label per line, and a renderer that reflows them is the defect it exists to avoid.
+- **One line per paragraph/bullet** — soft-wrap, no hard newlines mid-paragraph. The line cap counts lines, so a "line" should be a unit of content, not an artifact of wrapping; hard-wrapping inflates the count and renders identically. Code fences, tables, YAML frontmatter, and a **Blockquote stanza** keep their own line breaks — the stanza's are hard breaks on purpose, one label per line, and a renderer that reflows them is the defect it exists to avoid.
 
 ### Skill bodies don't cite repo ADRs
 

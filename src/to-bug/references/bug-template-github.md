@@ -38,4 +38,4 @@ Teams override these by declaring `## Severity definitions` in CLAUDE.md alongsi
 
 - Every label applied must already exist on the repo — SKILL step 9 reconciles missing ones before `gh issue create`.
 - Bugs do not produce child Task issues. The fix is the slice; if more structure is needed, that's a Story.
-- `from-ticket <issue-number>` recognizes a `bug`-labeled issue as a Bug and loads the Bug-shaped context.
+- `/implement <issue-number>` recognizes a `bug`-labeled issue as a Bug and loads the Bug-shaped context.

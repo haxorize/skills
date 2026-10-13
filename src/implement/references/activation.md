@@ -1,14 +1,14 @@
 # Confirmed ADO activation
 
-Opened only from step 8, and only when the resolved tracker is ADO; on GitHub, skip this file silently.
+Opened only from `load-ticket.md` step 9, when `/implement` starts building, and only when the resolved tracker is ADO; on GitHub, skip this file silently.
 
 ## Reading current state
 
-No new fetch: step 4's work-item JSON already carries `System.State`, `System.AssignedTo`, `System.IterationPath`, and `System.AreaPath`.
+No new fetch: the load's work-item JSON already carries `System.State`, `System.AssignedTo`, `System.IterationPath`, and `System.AreaPath`.
 
 ## The startable gate
 
-**Only a startable ticket gets an offer.** Applies uniformly to Task, Bug, and Story. Resolve `System.State` to a **role** first, through `to-tasks/references/maintenance-modes.md` § State-aware proposals — the single source of truth for which state names carry which role, per work-item type and process template. Offer a Confirmed ADO activation only when the role is **Not started** (`New`, and `Ready to Start` on a Story) or **In progress** (`Active`, and the `Committed` / `In Progress` a non-Agile template uses). Every other state lands in that table's **Terminal** row, which catches whatever is not named as Not started or In progress: offer nothing, say nothing, and move to the hand-off. Loading a closed ticket to read it is not a request to reopen it, and the allowlist makes a state this skill has never seen fail safe toward leaving the ticket alone.
+**Only a startable ticket gets an offer.** Applies uniformly to Task, Bug, and Story. Resolve `System.State` to a **role** first, through `to-tasks/references/maintenance-modes.md` § State-aware proposals — the single source of truth for which state names carry which role, per work-item type and process template. Offer a Confirmed ADO activation only when the role is **Not started** (`New`, and `Ready to Start` on a Story) or **In progress** (`Active`, and the `Committed` / `In Progress` a non-Agile template uses). Every other state lands in that table's **Terminal** row, which catches whatever is not named as Not started or In progress: offer nothing, say nothing, and start building. Loading a closed ticket to read it is not a request to reopen it, and the allowlist makes a state this skill has never seen fail safe toward leaving the ticket alone.
 
 ## The three checks
 
@@ -23,7 +23,7 @@ No new fetch: step 4's work-item JSON already carries `System.State`, `System.As
 This section is the one home for the `Team:` fallback chain. In order:
 
 1. **Declared** — the `Team:` line in the `Issue tracker:` block.
-2. **Area-path guess** — no `Team:` line, or no tracker block at all (step 1 asked which tracker holds the ticket for this load). Take the leaf segment of the ticket's own `System.AreaPath` (the text after the last `\`) and try `az boards iteration team list --team "<leaf>" --timeframe current`. Some orgs name every ADO Team after its area's leaf; it is a convention, not a guarantee.
+2. **Area-path guess** — no `Team:` line, or no tracker block at all (the load's step 1 asked which tracker holds the ticket for this load). Take the leaf segment of the ticket's own `System.AreaPath` (the text after the last `\`) and try `az boards iteration team list --team "<leaf>" --timeframe current`. Some orgs name every ADO Team after its area's leaf; it is a convention, not a guarantee.
 3. **Inline ask** — the guess 404s. Ask which ADO Team to use, once per session; write nothing to `CLAUDE.md` (that block belongs to `onboard-repo` — tell the user a `Team:` line added there skips the guess and the ask next time).
 
 Then `az boards iteration team list --team "<team>" --timeframe current --query '[0].path' -o tsv` gives the path to compare against and to write.
@@ -44,4 +44,4 @@ At most one call, carrying only the flags for fields that differ and were confir
 az boards work-item update --id <id> --state "<state>" --assigned-to "<uniqueName>" --iteration "<path>"
 ```
 
-A declined reassignment drops `--assigned-to` while state and iteration still apply — fewer flags, not a second call. If every flag drops out, send nothing and say what was skipped. A failed call is reported and never blocks the hand-off.
+A declined reassignment drops `--assigned-to` while state and iteration still apply — fewer flags, not a second call. If every flag drops out, send nothing and say what was skipped. A failed call is reported and never blocks the build.

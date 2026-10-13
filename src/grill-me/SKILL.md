@@ -1,9 +1,9 @@
 ---
 name: grill-me
-description: Stress-test a plan, decision, or idea through relentless interview — recording terms to DOMAIN.md and decisions as ADRs when the project keeps them; `--plain` for no document side effects. Reads the Frame `/frame-effort` wrote first, when the effort has one.
+description: Stress-test a plan, decision, or idea through relentless interview — recording terms to DOMAIN.md and decisions as ADRs when the project keeps them; `--plain` for no document side effects. Takes a ticket id to grill from. Reads the Frame `/frame-effort` wrote first, when the effort has one.
 disable-model-invocation: true
 requires: grilling, domain-modeling, writing-for-humans
-argument-hint: "[--plain]"
+argument-hint: "[--plain] [<ticket-id>]"
 ---
 
 # Grill Me
@@ -19,6 +19,8 @@ Call the Skill tool with `grilling` — its body *is* this skill's discipline: i
 Before the first question, check the working directory for `DOMAIN.md` or an ADR log (`docs/adr/`, or whatever the format doc's preflight resolves). Either one present means **recording is on**: call the Skill tool with `domain-modeling` now as well — if you did not just see a `Launching skill: domain-modeling` line, stop and call it again before the first question. Neither present, or `--plain` passed, means a plain stress-test with no document side effects — say which mode this grill is running in, in one line, so the user can override it.
 
 When a Frame exists for the effort — a `docs/frames/<slug>.md`, or the framing section of a plan document the user names — read it before the first question: the interview starts from its Open questions and its top-ranked assumptions, and its Settled decisions are read as settled — an answer that contradicts one is recorded as a new open question, never re-argued in place.
+
+Given a ticket id, a tracker URL, or `latest`, load it first through `~/.claude/skills/implement/references/load-ticket.md` in load-only mode — read-only, so the grill never activates or edits the ticket — and start from its acceptance criteria and design-record comments.
 
 ### 2. Run the grill, and record a decision inline
 

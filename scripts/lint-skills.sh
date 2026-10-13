@@ -2384,7 +2384,7 @@ check_evaluation_ledger_consumers() {
 
 sibling_groups=(
   "src/onboard-me/references/evidence-tags.md|src/offboard-engineer/references/evidence-tags.md|src/rebuild-contract/references/evidence-tags.md"
-  "src/to-bug/references/tracker-resolution.md|src/to-feature/references/tracker-resolution.md|src/to-story/references/tracker-resolution.md|src/to-tasks/references/tracker-resolution.md|src/review-architecture/references/tracker-resolution.md|src/chart-course/references/tracker-resolution.md|src/from-ticket/references/tracker-resolution.md|src/ship/references/tracker-resolution.md|src/backfill-adrs/references/tracker-resolution.md"
+  "src/to-bug/references/tracker-resolution.md|src/to-feature/references/tracker-resolution.md|src/to-story/references/tracker-resolution.md|src/to-tasks/references/tracker-resolution.md|src/review-architecture/references/tracker-resolution.md|src/chart-course/references/tracker-resolution.md|src/implement/references/tracker-resolution.md|src/ship/references/tracker-resolution.md|src/backfill-adrs/references/tracker-resolution.md"
   "src/to-bug/references/publishing.md|src/to-feature/references/publishing.md|src/to-story/references/publishing.md|src/to-tasks/references/publishing.md|src/chart-course/references/publishing.md"
   "src/review-changes/references/subagent-brief.md|src/review-architecture/references/subagent-brief.md|src/chart-course/references/subagent-brief.md|src/handoff/references/subagent-brief.md|src/work-item-shape/references/subagent-brief.md|src/adoption-verdict/references/subagent-brief.md|src/product-description/references/subagent-brief.md"
   "src/review-architecture/references/finding-discipline.md|src/review-changes/references/finding-discipline.md"

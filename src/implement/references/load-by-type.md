@@ -1,6 +1,6 @@
 # Load by type
 
-Step 4's per-type load procedures. Open only the branch for the type step 2 detected — the three type branches are mutually exclusive. § ADO comments fetch applies to all three and is read whenever the tracker is ADO.
+`load-ticket.md` step 4's per-type load procedures. Open only the branch for the type step 2 detected — the three type branches are mutually exclusive. § ADO comments fetch applies to all three and is read whenever the tracker is ADO.
 
 ## Task
 

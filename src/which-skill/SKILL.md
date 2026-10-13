@@ -22,7 +22,7 @@ A **flow** is a path through the skills.
    - **`/to-story`** — a single-feature Story. The usual entry point.
    - **`/to-tasks`** — split a Story into vertical-slice Tasks (one Task = one commit, where the repo maps them that way).
    - A creation ask ("file a story for this") is caught by the `work-item-shape` discipline: it routes the ask to the owning publisher in a wired repo, drafting the body itself only where its rules license ad-hoc drafting — it never replaces the publishers.
-3. **Load a single ticket back into a fresh session** — **`/from-ticket <id>`**. It auto-detects Task/Story/Bug and loads the right context (parent, `DOMAIN.md`, matching ADRs, what the tracker links to it), then summarizes it in the human-facing register (`writing-for-humans`). On ADO it offers activation, on your confirm.
+3. **Load a single ticket back into a fresh session** — **`/implement <id>`** loads it (type, parent, `DOMAIN.md`, matching ADRs, linked work) before building; `--load-only` stops at the summary, as do `/grill-me <id>` and `/write-skill <id>`.
 4. **Build it** — **`/implement`**. Drives one vertical slice end to end: picks the build path (`tdd` if testable, else direct), refactors, closes the loop once via `feedback-loops`, writes the completion audit, and sends fresh checkers (`doc-claims`, `/validate-behavior`). `discoverable-code` rides the refactor beat, and `adr` is offered where the slice turned on a load-bearing decision. One Task per session.
 5. **Review before it lands** — **`/review-changes`**, then **`/address-findings`** to act on its report (see Review gate).
 6. **Land it** — a plain "commit and push" or "close #N" fires the `committing` discipline, as does any other outward act asked for outside `/ship` — a tracker write, a message, a loop: one commit, every claim checked, each act gated on your ask or the repo's `Landing:` key. A change that needs a commit split, a branch, or a PR with an approver goes through **`/ship`** (see Review gate), which delegates its claims and its outward acts to the same discipline. Where the change deploys, `/ship` ends at the post-deploy watch's verdict, not at the push. Work that never went through `/implement` enters the flow here.
@@ -63,7 +63,7 @@ Keep steps 1–2 in **one unbroken context window** so the grilling, decompositi
 
 ## Crossing sessions
 
-- **`/handoff`** — fork the conversation: into a document a **fresh session** picks up, or straight to a **background agent** when the work should continue unattended. Use it when the window is full or you're branching off. The doc lands in the landing zone (see Review gate), stamped with the head it observed; `/review-changes` and `/from-ticket latest` pick the newest up without an argument. (`/compact`, the built-in, continues *in place*; `handoff` forks.)
+- **`/handoff`** — fork the conversation: into a document a **fresh session** picks up, or straight to a **background agent** when the work should continue unattended. Use it when the window is full or you're branching off. The doc lands in the landing zone (see Review gate), stamped with the head it observed; `/review-changes` and `/implement latest` pick the newest up without an argument. (`/compact`, the built-in, continues *in place*; `handoff` forks.)
 - **At any phase boundary**, the ordered five-question tree in [references/phase-boundaries.md](references/phase-boundaries.md) picks the move — Continue / `/clear` / `/handoff` / unattended / `/compact`, first yes wins.
 
 ## If you are a PM or a designer
