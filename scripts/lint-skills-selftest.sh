@@ -474,6 +474,9 @@ expect "section pointers (backticked skill name)" "cites '§ No Such Section' (l
 expect "section pointers (a ~/.claude/skills/ path)" "cites '§ Missing Skill Section' (line 27), and src/fixture-discipline/SKILL.md carries no heading"
 expect "section pointers (a ~/.claude/rules/ path)" "cites '§ Missing Rule Section' (line 28), and global/rules/body-checked.md carries no heading"
 expect "section pointers (a target that is not a file)" "cites '§ Anything' (line 30) in src/fixture-discipline/references/gone.md, which is not a file"
+# The same line draws the installed-path pointer FAIL too: each check names its
+# own repair, and the overlap is pinned in the FAIL count.
+expect "installed-path pointer in a skill body" "src/house-style/SKILL.md points at ~/.claude/skills/fixture-discipline/references/gone.md but src/fixture-discipline/references/gone.md does not exist"
 expect "section pointers (an em-dash lead-in before the citation)" "src/house-style/SKILL.md cites '§ No Such Dash Heading' (line 58), and src/house-style/references/quiet-forms.md carries no heading by that name"
 expect "section pointers (a hyphen lead-in before the citation)" "src/house-style/SKILL.md cites '§ No Such Hyphen Heading' (line 59), and src/house-style/references/quiet-forms.md carries no heading by that name"
 # One row per arm of the table check, each instance its own table in the
@@ -706,15 +709,15 @@ fi
 expect_rc "the lint against the fixture tree" 1 "$status"
 # The count of FAIL lines is pinned: a check that begins firing on a fixture
 # it should leave alone reds here even when no substring row names the line.
-# Last moved 2026-10-10 (the src/*/scripts/ walk): 111 → 113 — orphan-bundled.py
-# and orphan-bundled-shell.sh under src/fixture-discipline/scripts/ draw one
-# selftest-pairing line each. Earlier moves of this pin are in
+# Last moved 2026-10-12 (check_rule_pointers widened to every walked file):
+# 113 → 114 — src/house-style/SKILL.md:30's pointer at a missing gone.md now
+# draws the pointer FAIL beside the section-pointer one, asserted below. Earlier moves of this pin are in
 # `git log -p -G 'expected exactly [0-9]+ FAIL' -- scripts/lint-skills-selftest.sh` — they describe counts
 # nothing asserts any more, and stacking them here made a changelog out of the
 # one line that has to stay readable. A count that moves is read before it is
 # re-pinned.
 nfail=$(printf '%s\n' "$output" | grep -c '^FAIL: ')
-[ "$nfail" -eq 113 ] || selftest_fail "expected exactly 113 FAIL lines against the fixture tree, got $nfail"
+[ "$nfail" -eq 114 ] || selftest_fail "expected exactly 114 FAIL lines against the fixture tree, got $nfail"
 # The shared-trigger-phrase fixtures are pinned by property, as near_bytes and
 # bulk_bytes are below: every row above them asserts a FAIL that appears or a
 # FAIL that does not, and each of those readings is silently satisfied by a
@@ -986,8 +989,8 @@ roster_missing=$(comm -23 \
 # (for the budget) the header comment to carry that spelling.
 catalog_enforced=$(grep -oE '"\$bytes" -gt [0-9]+ \]; then$' scripts/lint-skills.sh | grep -oE '[0-9]+ \]; then$' | grep -oE '^[0-9]+' | sort -u | tr '\n' ' ')
 budget_enforced=$(grep -oE '"\$total" -gt [0-9]+ \]; then$' scripts/lint-skills.sh | grep -oE '[0-9]+' | sort -u | tr '\n' ' ')
-[ "$catalog_enforced" = "12000 14400 " ] || selftest_fail "check_rules_bytes and check_catalog_bytes compare \$bytes against something other than 12000 and 14400 (found: ${catalog_enforced:-nothing}) — if a bound moved by amendment to ADR-0079, re-pin it here and in the roster, comment and WARN literals below"
-[ "$budget_enforced" = "30000 " ] || selftest_fail "check_context_budget compares \$total against something other than 30000 (found: ${budget_enforced:-nothing}) — if the budget moved by amendment to ADR-0079, re-pin it here and in the roster, comment and WARN literals below"
+[ "$catalog_enforced" = "12000 14400 " ] || selftest_fail "check_rules_bytes and check_catalog_bytes compare \$bytes against something other than 12000 and 14400 (found: ${catalog_enforced:-nothing}) — if a bound moved by an edit to ADR-0079, re-pin it here and in the roster, comment and WARN literals below"
+[ "$budget_enforced" = "30000 " ] || selftest_fail "check_context_budget compares \$total against something other than 30000 (found: ${budget_enforced:-nothing}) — if the budget moved by an edit to ADR-0079, re-pin it here and in the roster, comment and WARN literals below"
 roster_span=$(sed -n '/^# The checks, as the named functions below/,/^#   Every FAIL goes through/p' scripts/lint-skills.sh)
 expect_in "$roster_span" "the header roster's check_catalog_bytes line no longer carries the enforced 14,400-byte figure" "14,400 bytes (ADR-0079; a WARN)"
 expect_in "$roster_span" "the header roster's check_rules_bytes line no longer carries the enforced 12,000-byte figure" "totals under 12,000 bytes"
@@ -1182,6 +1185,12 @@ isolated_case "rule-pointer-missing" 's/\z/\nProcedure: `~\/.claude\/skills\/cle
 isolated_quiet_case "rule-pointer-resolves" 's/\z/\nProcedure: `~\/.claude\/skills\/clean-skill\/references\/note.md`.\n/' \
   "global/rules/clean-rule.md" \
   "points at ~/.claude/skills/"
+# The skill-body arm: grill-me and backfill-adrs read adr-format.md by this
+# form, and with the walk narrowed back to global/rules/ a misspelled one
+# stayed green.
+isolated_case "skill-pointer-missing" 's/\z/\nFormat: `~\/.claude\/skills\/clean-skill\/references\/gone.md`.\n/' \
+  "src/clean-skill/SKILL.md" \
+  "src/clean-skill/SKILL.md points at ~/.claude/skills/clean-skill/references/gone.md but src/clean-skill/references/gone.md does not exist"
 # The launch-loaded sum's moving arms (round 2026-09-12, row I2); the clean
 # root's whole figure is pinned above, beside the baseline it reads. The first
 # copy grows the one rule file by exactly 1,000 bytes — a layer that crosses

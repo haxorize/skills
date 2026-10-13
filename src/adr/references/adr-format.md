@@ -1,5 +1,7 @@
 # ADR format
 
+Open this before writing a new decision record or editing an existing one.
+
 ADRs live in the scheme the preflight below resolves — `docs/adr/<NNNN>-<slug>.md` by default. Create the directory lazily — only when the first ADR is written.
 
 ## Convention preflight
@@ -19,16 +21,17 @@ Numbering time is the only moment a duplicate can be prevented: git merges two d
 
 Slug is a short kebab-case summary of the decision (e.g., `0007-transactional-test-isolation.md`).
 
-## Amend or write new
+## Edit or write new
 
-Before drafting, search for a record that already owns this ground — one whose *premise this decision changes*, not merely one sharing keywords. If you find one, apply **the gate below to the new content alone**:
+A record states the decision as it stands today. Before drafting, search for a record that already owns this ground — one whose *premise this decision changes*, not merely one sharing keywords. If you find one, read its title: the title states its decision.
 
-- **It doesn't clear the gate** — a refinement, a landed detail, a narrowed premise → **amend in place**. Append to the owning ADR's `## Amendments` section, dated (`- **<date>** — …`), adding a ticket reference where the repo has a tracker. No new number.
-- **It clears the gate on its own** → **new record, linked both ways**. The new ADR states `This amends [ADR N](N-slug.md)` and says what moved; the amended one gets a forward pointer at its top (`> **Amended by [ADR N](N-slug.md):** …`).
+- **The change leaves the title standing** — a refinement, a landed detail, a narrowed premise, a corrected figure → **edit the owning record in place**, so its body says what holds now. Git history is the record of what changed and when. No new number, no dated log, no marker on the old sentence. A record still carrying an `## Amendments` log from the older additive style gets that log folded into its body in the same edit — what still holds moves into the sections it belongs to, what no longer holds goes — and the log and its `— amended:`/`— corrected:`/`— settled:` markers are deleted. No bulk rewrite of records nobody is editing.
+- **The change undoes the title** → **a new record that supersedes it**. The superseded record's Status names its successor as a file link (`superseded by [ADR N](N-slug.md)`), and the successor links back to what it replaces — a bare number breaks the moment numbering shifts or files move. A superseded record is otherwise left as written.
+- **A new decision on neighboring ground** that clears the gate on its own → a new record that links to the neighbor; the neighbor is edited only if a sentence of it stops being true.
 
-**Amendment is not supersession.** An amended decision still stands on a changed premise; a superseded one is no longer in force and is marked in Status frontmatter. Reaching for supersession while the old decision survives loses that distinction. When superseding, the superseded record's Status names its successor as a file link (`superseded by [ADR N](N-slug.md)`) and the successor links back to what it replaces — a bare number breaks the moment numbering shifts or files move.
+Three titles the test does not read at sight. A topic title ("Authentication") states no decision, so the record's first decision sentence stands in for it. A compound title one clause of which is undone: the record that undoes it names that clause and links the owner, and the owner is retitled to the clause that still holds. And an edit never renames the slug — inbound links name the file.
 
-The search is a judgment call; when unsure, prefer a new record — the expensive error is amending one that should have been left alone. Amendments are additive and dated; never rewrite the original text.
+The search is a judgment call; when unsure whether a change undoes the title, prefer the new superseding record — an edit that quietly reverses a decision leaves no record that it was ever made.
 
 ## Default form
 
@@ -40,7 +43,7 @@ The search is a judgment call; when unsure, prefer a new record — the expensiv
 <1-3 sentences: what was the context, what did we decide, and why. Mention the rejected alternatives if their rejection wasn't obvious.>
 ```
 
-Where the decision fixes a value a check enforces — a cap, a count, a threshold, a vocabulary — the body names the check and where it lives (the script and function, the lint rule, the CI job), never the value alone, so the change that moves the value finds the record it amends; a record that states only the value leaves the check as the authority and itself as a comment on it.
+Where the decision fixes a value a check enforces — a cap, a count, a threshold, a vocabulary — the body names the check and where it lives (the script and function, the lint rule, the CI job), never the value alone, so the change that moves the value finds the record to edit; a record that states only the value leaves the check as the authority and itself as a comment on it.
 
 ## Optional sections
 
@@ -48,13 +51,11 @@ Only when they add real value, not for completeness:
 
 - **Status** frontmatter (`proposed | accepted | superseded by [ADR N](N-slug.md)`) — useful when revisiting, and required on a record still being argued, which carries `proposed`
 - **Considered Options** — only when rejected alternatives are worth remembering in detail. The gate's third criterion guarantees an alternative was weighed, so when the section is omitted the rationale still names that alternative and why it lost, in a clause — a record with no alternative anywhere reads, years on, as a decision nobody compared. Where a record truly has none, it says which kind it is — *forced* (no alternative existed; name the constraint — such a record fails the gate's third criterion and is written only when the constraint itself is what the next reader needs, a mandated platform or a regulation) or *unexamined* (none was weighed, as in a backfill) — because a reader re-opening the decision treats the two differently
-- **Deferred** — the open questions the decision leaves standing, one line each naming the question and the artifact that settles it (a ticket, a later ADR, a measurement); omitted when nothing is open, never padded. A line later settled stays as written and gains a trailing `— settled: see Amendments <date>`, so a reader who stops at Deferred is not left with a stale open question
+- **Deferred** — the open questions the decision leaves standing, one line each naming the question and the artifact that settles it (a ticket, a later ADR, a measurement); omitted when nothing is open, never padded. A line later settled is deleted, or rewritten as the settled fact where a reader needs it, so a reader who stops at Deferred is not left with a stale open question
 - **Revisit when:** — one line naming the assumption or trigger that would falsify the decision (a load figure, a dependency's status, a team size); `backfill-adrs`' STALE sweep reads it
 - **Expected:** — the outcomes the decision is meant to produce, each with the author's own odds where they have any (`Expected: half of new claims filed online by June — 60%`), written before any result is in, so a later reader can tell a sound call that lost from a poor one that won; a backfilled record, written after, carries none unless it quotes an `Expected:` frozen before the result, with the date it was frozen. Where `Revisit when:` names an assumption the world might break, this names what the decision itself must deliver
-- **Quit if:** — a metric, a threshold, and a date that would reverse the decision (`Quit if: under 20% of members use it by 2027-06-30`). `backfill-adrs`' STALE sweep reads it once the date has passed. When the date arrives, a decision that holds gets the result as a dated `## Amendments` entry, never written into this line, since amendments never rewrite; one that quits is superseded
-- **Consequences** — only when downstream effects are non-obvious. A bullet a later amendment corrects stays as written — amendments are additive and never rewrite — and gains a trailing `— corrected: see Amendments <date>`, so a reader who stops at Consequences is not left taking a superseded figure for the current one
-- **Body and table rows** — a bullet, row, or clause outside `## Deferred` and `## Consequences` that a later amendment narrows, extends, or supersedes stays as written and gains a trailing `— amended: see Amendments <date>`. This is the third and last of the pointer markers, and it exists because amendments never rewrite: without it a record's table keeps presenting a superseded count or a retired name with no way to flag it. The pointer is all it carries — an amendment's new normative text goes in `## Amendments`, never appended to the line it amends. **A pointer may also sit inside a `## Amendments` entry**, where a later amendment corrects an earlier one: the entry stays as written and gains the same trailing marker, because the additive rule bars rewriting an entry's text and says nothing against annotating it. Only a real marker counts — a log entry quoting the marker form to define it is a mention, not one, and it is quoted the way `scripts/lint-adrs.sh` reads quotation: inside backticks or a fenced block. Italics, a blockquote, or an indented block read as real
-- **Amendments** — the dated log an in-place amendment appends to; created on the first amendment, never up front
+- **Quit if:** — a metric, a threshold, and a date that would reverse the decision (`Quit if: under 20% of members use it by 2027-06-30`). `backfill-adrs`' STALE sweep reads it once the date has passed. When the date arrives, a decision that holds gets the result written into the record beside this line; one that quits is superseded
+- **Consequences** — only when downstream effects are non-obvious
 
 ## The gate
 
@@ -64,7 +65,7 @@ Before writing, confirm out loud which of the three criteria the decision meets,
 2. **Surprising without context** — a future reader (or AFK agent) will look at the code and wonder "why did they do it this way?"
 3. **Result of a real trade-off** — there were genuine alternatives and one was picked for specific reasons. Probe this one with the **opposite test**: state the rejected alternative as a decision of its own, and check that a rational team could have picked it. The opposite is the alternative someone argued for, never the claim negated — "validate at the handler" against "validate at the boundary and trust callers inward" is a trade-off two teams really do split on, while "we chose to write the feature" has no opposite anyone would defend, and describes the work rather than deciding anything.
 
-If any one is missing and no record owns the ground, do not write the ADR — stop and tell the user why. With an owning record, a failing gate routes to the in-place amendment per `## Amend or write new`, not to a stop.
+If any one is missing and no record owns the ground, do not write the ADR — stop and tell the user why. With an owning record the gate is not the test: the title decides between an in-place edit and a superseding record, per `## Edit or write new`.
 
 Worked examples, for when the gate's outcome on a candidate isn't obvious from the criteria alone.
 
@@ -84,6 +85,7 @@ What doesn't qualify:
 - Reversible style choices (CLAUDE.md or formatter config own this)
 - Personal-preference workflow choices (memory file owns this)
 - Routine feature additions (PR descriptions own this)
+- Logs of work done — a batch, a round, a release (git history and the changelog own this; a credit for a borrowed idea goes in the repo's attribution file, where it has one)
 
 ## Rejections are decisions
 

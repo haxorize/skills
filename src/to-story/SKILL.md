@@ -75,7 +75,7 @@ Before showing the user, check:
 - `## Layers touched` populated for each layer (`none` is a valid value; missing layers are not)
 - **Naming drift** vs. the parent's story map (where `Hierarchy: required`) — `work-item-shape`'s rule, surfaced before publish
 - User-story line matches step 6 classification (Connextra for user-facing, absent otherwise); its "so that" carries a motivation the "I want" does not restate
-- Documentation obligations, for stories that alter architecture or domain terms: ADR to write or amend, architecture-doc sections that go stale, glossary entries — each pinned as its own AC so a reviewer can't merge without them
+- Documentation obligations, for stories that alter architecture or domain terms: ADR to write or edit, architecture-doc sections that go stale, glossary entries — each pinned as its own AC so a reviewer can't merge without them
 
 Then run the **Cold-reader pass** from the `work-item-shape` discipline: the cold reader gets only the drafted body and answers "what would you build?".
 

@@ -1,3 +1,7 @@
+---
+status: superseded by [ADR-0107](0107-records-are-edited-in-place-and-rounds-get-none.md)
+---
+
 # A Consequences bullet a later amendment corrects is marked in place, and the marker is graded
 
 Amendments in this corpus are additive. A dated entry is appended to `## Amendments` and the record's original text is never rewritten, so a reader can trust the body to say what was decided at the time rather than what the author later wished had been decided. That stays. Its cost is that a `## Consequences` bullet whose figure a later amendment corrects still reads as current, and Consequences is a section readers stop at. [ADR-0072](0072-shared-trigger-phrase-check-and-never-ran-is-not-clean.md)'s bullet said nine control-clean rules had been retained on one ground; its 2026-08-29 amendment re-counted them at seven on two grounds, and the bullet stood unmarked, leaving the corpus with one place where the nine still read as the current figure. `## Deferred` already had an affordance for exactly this shape — a settled line keeps its text and gains a trailing `— settled: see Amendments <date>` — and Consequences had none. It now takes the same form, `— corrected: see Amendments <date>`, prescribed in `adr-format.md` beside the settled marker, and `scripts/lint-adrs.sh`'s `check_corrected_consequence` fails a marker whose date opens no amendment.

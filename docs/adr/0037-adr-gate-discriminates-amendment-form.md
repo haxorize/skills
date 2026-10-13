@@ -1,3 +1,7 @@
+---
+status: superseded by [ADR-0107](0107-records-are-edited-in-place-and-rounds-get-none.md)
+---
+
 # The ADR gate discriminates amendment form
 
 `adr` had one path — increment the highest number and write a new file — so a decision that changed an existing record's premise had nowhere to go but a new record. **Amendment form** is now chosen by the existing three-criteria gate applied to the *new* content: content that doesn't clear the gate on its own is an in-place amendment on the owning ADR (dated, appended to its `## Amendments` log, no new number), and content that does becomes its own record stating `This amends ADR-N`, with a forward pointer added to the amended one. "Always prefer amending" was rejected because a real corpus uses both forms; **Supersession** stays distinct, since an amended decision is still in force and a superseded one isn't.

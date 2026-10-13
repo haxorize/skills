@@ -14,11 +14,11 @@
 #     auto-invocation can fire. write-skill makes "Use when/after/only" the
 #     normative trigger marker (see "Writing the description"); this check
 #     enforces that stated rule by keying on that opener.
-#   - ADR-0007 sibling reference files must stay byte-identical. Symlink-per-
-#     skill install means we duplicate shared reference files (`adr-format.md`,
-#     `tracker-resolution.md`, and the other sibling groups below) across the
-#     skills that need them; ADR-0007 records this with mitigation
-#     "editorial discipline." This check turns the discipline into mechanism.
+#   - Sibling reference files must stay byte-identical. ADR-0108 gives a
+#     shared reference one copy, in its owner's `references/`, read by
+#     installed path (ADR-0007, which it supersedes, duplicated them); the
+#     groups below predate it and stay byte-checked until their migration
+#     batch collapses them, and this check goes with the last group.
 #   - Declared dependencies (ADR-0016): an orchestrator names the disciplines it
 #     needs in a frontmatter `requires:` line (comma-separated skill names).
 #     Each named dep must exist as a skill AND be model-invoked — prose
@@ -402,7 +402,7 @@
 #     check_catalog_bytes      model-invoked description: lines total under
 #                              14,400 bytes (ADR-0079; a WARN)
 #     check_rule_pointers      every ~/.claude/skills/<owner>/<path> pointer in
-#                              a rule resolves under src/
+#                              a walked file resolves under src/
 #     check_global_rule        Depends: resolves, and each dependant cites back
 #     check_hook_selftest      every hook has an executable selftest
 #     check_conventions_pointer  every script and git hook opens with the
@@ -416,7 +416,7 @@
 #                              (CLAUDE.md + global/rules/ + the model-invoked
 #                              catalog) and its token estimate; a measurement
 #                              line, plus a WARN past the 30,000-byte per-turn
-#                              budget ADR-0079 argues (its 2026-09-13 amendment)
+#                              budget ADR-0079 argues
 #     check_reference_links    every relative .md link in the root CLAUDE.md
 #                              resolves (pass 2's parser, pointed at the
 #                              root file)
@@ -2203,7 +2203,6 @@ check_evaluation_ledger_consumers() {
 
 sibling_groups=(
   "src/onboard-me/references/evidence-tags.md|src/offboard-engineer/references/evidence-tags.md|src/rebuild-contract/references/evidence-tags.md"
-  "src/grill-me/references/adr-format.md|src/backfill-adrs/references/adr-format.md|src/adr/references/adr-format.md"
   "src/to-bug/references/tracker-resolution.md|src/to-feature/references/tracker-resolution.md|src/to-story/references/tracker-resolution.md|src/to-tasks/references/tracker-resolution.md|src/review-architecture/references/tracker-resolution.md|src/chart-course/references/tracker-resolution.md|src/from-ticket/references/tracker-resolution.md|src/ship/references/tracker-resolution.md|src/backfill-adrs/references/tracker-resolution.md"
   "src/to-bug/references/publishing.md|src/to-feature/references/publishing.md|src/to-story/references/publishing.md|src/to-tasks/references/publishing.md|src/chart-course/references/publishing.md"
   "src/review-changes/references/subagent-brief.md|src/review-architecture/references/subagent-brief.md|src/chart-course/references/subagent-brief.md|src/handoff/references/subagent-brief.md|src/work-item-shape/references/subagent-brief.md|src/adoption-verdict/references/subagent-brief.md|src/product-description/references/subagent-brief.md"
@@ -2254,7 +2253,7 @@ check_sibling_identity() {
       if [ ! -f "$other" ]; then
         say_fail "sibling reference $other is missing"
       elif ! cmp -s "$ref" "$other"; then
-        say_fail "$other drifted from $ref (per ADR-0007 these must stay byte-identical) — copy $ref over it, or, if the divergence is deliberate, split the file under a distinct name and drop it from \`sibling_groups\` in scripts/lint-skills.sh"
+        say_fail "$other drifted from $ref (these must stay byte-identical until the group collapses to one owner's copy, ADR-0108) — copy $ref over it, or, if the divergence is deliberate, split the file under a distinct name and drop it from \`sibling_groups\` in scripts/lint-skills.sh"
       fi
     done
   done
@@ -2420,11 +2419,11 @@ check_rules_bytes
 # (see header) The other per-turn load: the `description:` line of every
 # model-invoked skill is in the catalog Claude Code loads on every turn, so
 # the SUM over src/*/SKILL.md is the figure, not any one file's (that is
-# check_description_limits' 1,024-char bound). ADR-0079's 2026-09-13
-# amendment fixes the ceiling at 14,400 bytes — a cap of its own, independent
+# check_description_limits' 1,024-char bound). ADR-0079 fixes the
+# ceiling at 14,400 bytes — a cap of its own, independent
 # of the 30,000-byte per-turn budget check_context_budget below sums on top of
 # it — and rules it a WARN where check_rules_bytes above is a FAIL: the
-# ceiling moves only by amendment to ADR-0079, never by a description's first
+# ceiling moves only by an edit to ADR-0079, never by a description's first
 # overrun.
 # The measured span is the whole `description:` line, key and value and
 # newline, which is what the 13,132 figure counted; a value-only reading
@@ -2452,7 +2451,7 @@ check_catalog_bytes() {
   done
   catalog_line_bytes=$bytes
   if [ "$bytes" -gt 14400 ]; then
-    echo "WARN: the model-invoked description lines total $bytes bytes, over the 14,400-byte ceiling ADR-0079 fixed for the catalog loaded on every turn — trim the description that grew, or trim others to pay for it; the ceiling moves only by an amendment to ADR-0079"
+    echo "WARN: the model-invoked description lines total $bytes bytes, over the 14,400-byte ceiling ADR-0079 fixed for the catalog loaded on every turn — trim the description that grew, or trim others to pay for it; the ceiling moves only by an edit to ADR-0079"
   fi
 }
 check_catalog_bytes
@@ -2462,21 +2461,26 @@ check_catalog_bytes
 # standing remedy for a rule that will not fit — and nothing else resolved it:
 # check_section_pointers reads only lines carrying `§`, check_reference_links
 # reads the `](…)` form. A rename under src/ left the always-loaded layer
-# pointing at a file that does not exist with every check green.
+# pointing at a file that does not exist with every check green. Skill bodies
+# use the same form (`grill-me` and `backfill-adrs` read `adr`'s one copy of
+# adr-format.md by it, ADR-0108), so every walked file is read, not the rules
+# alone.
 check_rule_pointers() {
   local f=$1 ptrs ptr target
   ptrs=$(grep -oE '~/\.claude/skills/[A-Za-z0-9_.-]+/[A-Za-z0-9_./-]+' "$f" | sort -u || true)
   [ -n "$ptrs" ] || return 0
   while IFS= read -r ptr; do
     target="src/$(printf '%s' "$ptr" | sed 's|^~/\.claude/skills/||')"
-    [ -f "$target" ] || say_fail "$f points at $ptr but $target does not exist — the always-loaded layer names a file no session can open; fix the path, or move the file back"
+    [ -f "$target" ] || say_fail "$f points at $ptr but $target does not exist — no session can open the file it names; fix the path, or move the file back"
   done <<<"$ptrs"
 }
 
 for f in global/rules/*.md; do
   check_global_rule "$f"
-  check_rule_pointers "$f"
 done
+while IFS= read -r f; do
+  check_rule_pointers "$f"
+done <<<"$walked_files"
 
 # Every hook has a selftest (global/README.md § Hooks: "Each hook has a
 # `*-selftest.sh` beside it"): a hook is a global/hooks/*.sh whose header
@@ -2793,8 +2797,8 @@ fi
 # measured (header, limits list) — one probe, so the tokens are an
 # estimate and the bytes are the figure. The measurement line carries no
 # status marker, so the selftest's `^(OK|FAIL|WARN):` greps stay exact; the
-# one verdict is the WARN past 30,000 bytes, the per-turn budget ADR-0079's
-# 2026-09-13 amendment argues (about 8,241 tokens, some 4% of a 200k window).
+# one verdict is the WARN past 30,000 bytes, the per-turn budget ADR-0079
+# argues (about 8,241 tokens, some 4% of a 200k window).
 # The three per-layer caps are independent of it, and do not sum to it (6,000
 # + 12,000 + 14,400 = 32,400): a tree can sit under every cap and still cross
 # this one, which is what it is for — CLAUDE.md growth and a new description
@@ -2827,7 +2831,7 @@ check_context_budget() {
   tokens=$((total * 100 / 364))
   echo "launch-loaded surface: $total bytes (CLAUDE.md $claude_md_bytes + global/rules/ $rules_dir_bytes + model-invoked catalog $catalog_line_bytes), about $tokens tokens at 3.64 bytes per token, paid on every turn of every session"
   if [ "$total" -gt 30000 ]; then
-    echo "WARN: the launch-loaded surface totals $total bytes, over the 30,000-byte per-turn budget ADR-0079 argues (2026-09-13 amendment) — the layer that grew pays: relocate procedure out of global/rules/, trim CLAUDE.md to triggers and contracts, or trim the description that grew; the budget moves only by an amendment to ADR-0079"
+    echo "WARN: the launch-loaded surface totals $total bytes, over the 30,000-byte per-turn budget ADR-0079 argues — the layer that grew pays: relocate procedure out of global/rules/, trim CLAUDE.md to triggers and contracts, or trim the description that grew; the budget moves only by an edit to ADR-0079"
   fi
 }
 check_context_budget

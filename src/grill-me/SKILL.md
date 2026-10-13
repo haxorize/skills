@@ -24,7 +24,7 @@ When a Frame exists for the effort — a `docs/frames/<slug>.md`, or the framing
 
 `domain-modeling` offers ADRs at its gate but treats recording as `adr`'s job. **Override that here:** when the gate fires and the user agrees, write the ADR file *inline* — do not delegate to `adr`. Its offer→confirm→write flow is a gated action that would interrupt the grill loop's rhythm.
 
-Use [references/adr-format.md](references/adr-format.md) as the single source of truth for the inline write — path, numbering, the amend-or-write-new search, and the template all live there. Standalone `adr` stays reserved for outside-grill use — a deliberate single record after a code review, mid-implementation, and the like — and follows the same format doc, so inline and standalone records land in one shared sequence.
+Use `~/.claude/skills/adr/references/adr-format.md` as the single source of truth for the inline write: path, numbering, the edit-or-write-new search, and the template all live there. Standalone `adr` stays reserved for outside-grill use — a deliberate single record after a code review, mid-implementation, and the like — and follows the same format doc, so inline and standalone records land in one shared sequence.
 
 ### 3. Replace what an answer invalidates
 
@@ -32,4 +32,4 @@ When a round's answer invalidates something an artifact under revision already s
 
 ### 4. The rules that bind at every write
 
-The standalone path's other rules bind inline as well: the owning-record search before a new number (the amend-or-write-new rule above), the forward pointer an amending record owes the record it amends, and the human-facing register for the rationale prose — call the Skill tool with `writing-for-humans` at the first write if it isn't already live.
+The standalone path's other rules bind inline as well: the owning-record search before a new number (the edit-or-write-new rule above), the Status link a superseded record carries to its successor and the successor's link back, and the human-facing register for the rationale prose — call the Skill tool with `writing-for-humans` at the first write if it isn't already live.

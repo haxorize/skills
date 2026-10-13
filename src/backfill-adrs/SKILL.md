@@ -7,7 +7,7 @@ requires: writing-for-humans
 
 # Backfill ADRs
 
-Recover decisions the history made and nobody recorded: sweep a window of git log, dedupe every candidate against the existing ADR log, and write up only what survives. Three things bind the whole run and are stated here because they arrive late: a candidate no record owns is rejected unless it clears the three-criteria gate in [references/adr-format.md](references/adr-format.md), a decision is recorded as standing only once its mechanism is confirmed to still exist in the tree, and nothing is written until the user has been quizzed candidate by candidate — rejected ones are dropped without argument. One fresh decision is `adr`'s, not this sweep's.
+Recover decisions the history made and nobody recorded: sweep a window of git log, dedupe every candidate against the existing ADR log, and write up only what survives. Three things bind the whole run and are stated here because they arrive late: a candidate no record owns is rejected unless it clears the three-criteria gate in `~/.claude/skills/adr/references/adr-format.md`, a decision is recorded as standing only once its mechanism is confirmed to still exist in the tree, and nothing is written until the user has been quizzed candidate by candidate — rejected ones are dropped without argument. One fresh decision is `adr`'s, not this sweep's.
 
 ## Workflow
 
@@ -38,15 +38,15 @@ Evidence order: the PR or work-item thread first, then in-repo comments, TODOs, 
 
 ### 4. Dedupe against existing ADRs, then apply the gate
 
-Read the existing ADR log first and search it for a record that already owns each candidate's ground — this runs **before** the gate, because the gate's outcome means different things depending on what you find. A candidate the log already records is done — skip it. One that only refines an existing record follows the amend-or-write-new rule in [references/adr-format.md](references/adr-format.md) instead of getting a new number. Only a candidate no record owns is rejected when it fails the three-criteria gate per the same reference.
+Read the existing ADR log first and search it for a record that already owns each candidate's ground — this runs **before** the gate, because the gate applies only when no record owns the ground. A candidate the log already records is done — skip it. One that only refines an existing record follows the edit-or-write-new rule in `~/.claude/skills/adr/references/adr-format.md` instead of getting a new number. Only a candidate no record owns is rejected when it fails the three-criteria gate per the same reference.
 
-Then verify the **decision**, not just the history: before recording a decision as standing, confirm its mechanism still exists in the tree (the files, symbols, or checks it names resolve), the work that carried it closed as *completed* (closed-as-not-planned means the decision was dropped, not decided), no material part stayed unshipped, and no later decision superseded it. A decision that fails this check is recorded as history with its outcome named, or not at all — never as a standing decision. An existing ADR whose named mechanism no longer resolves — or whose rationale rests on a fact that no longer holds, since a rule can stay right while the sentence explaining it goes false, and the next reader reasons from the explanation — is reported **STALE**, with three dispositions for the user to pick: re-confirm (a dated amendment), supersede, or a dated waiver naming the trigger that would reopen it; an ADR carrying a `Revisit when:` line is checked against that line too, and one whose `Quit if:` date has passed with no dated amendment or supersession recording the result is reported STALE.
+Then verify the **decision**, not just the history: before recording a decision as standing, confirm its mechanism still exists in the tree (the files, symbols, or checks it names resolve), the work that carried it closed as *completed* (closed-as-not-planned means the decision was dropped, not decided), no material part stayed unshipped, and no later decision superseded it. A decision that fails this check is recorded as history with its outcome named, or not at all — never as a standing decision. An existing ADR whose named mechanism no longer resolves — or whose rationale rests on a fact that no longer holds, since a rule can stay right while the sentence explaining it goes false, and the next reader reasons from the explanation — is reported **STALE**, with three dispositions for the user to pick: re-confirm (an in-place edit stating what still holds), supersede, or a waiver — an in-place edit that writes the trigger that would reopen it as the record's `Revisit when:` line; an ADR carrying a `Revisit when:` line is checked against that line too, and one whose `Quit if:` date has passed with no result written into the record and no supersession is reported STALE.
 
 ### 5. Quiz the user on the candidate list
 
 Walk through each candidate one at a time:
 
-- **Title** — the proposed slug for a new record; for a refining candidate, the record it amends and the amendment's one-line heading (format per the reference)
+- **Title** — the proposed slug for a new record; for a refining candidate, the record it edits and the one-line change (format per the reference)
 - **Why it qualifies** — which of the three criteria it meets
 - **Rationale source** — commit / PR / work item / file
 
@@ -54,7 +54,7 @@ Ask the user to confirm or refine each. Drop rejected candidates without arguing
 
 ### 6. Write approved ADRs
 
-Number and save each approved ADR per [references/adr-format.md](references/adr-format.md), in chronological order of the underlying decisions. Rationale prose follows the ADR-rationale register — call the Skill tool with `writing-for-humans` at the first write if it isn't already live.
+Number and save each approved ADR per `~/.claude/skills/adr/references/adr-format.md`, in chronological order of the underlying decisions. Rationale prose follows the ADR-rationale register — call the Skill tool with `writing-for-humans` at the first write if it isn't already live.
 
 ### 7. Stop
 

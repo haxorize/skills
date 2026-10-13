@@ -8,7 +8,7 @@ requires: writing-for-humans
 
 Lightweight Architecture Decision Records — capture *why* a non-obvious design or team decision was made, in the smallest form that preserves the rationale.
 
-The file location, numbering, amend-or-write-new rule, default template, optional sections, the three-criteria gate, and a worked example all live in [references/adr-format.md](references/adr-format.md).
+The file location, numbering, edit-or-write-new rule, default template, optional sections, the three-criteria gate, and a worked example all live in [references/adr-format.md](references/adr-format.md); open it before drafting or editing any record.
 
 ## When to write an ADR
 
@@ -18,19 +18,19 @@ The **ADR gate** has three criteria (full statement, with worked examples of wha
 
 ### 1. Check for an owning record
 
-Search the ADR directory for a record that already owns this ground, per the amend-or-write-new rule. This runs **before** the gate, because the gate's outcome means different things depending on what you find.
+Search the ADR directory for a record that already owns this ground, per the edit-or-write-new rule. This runs **before** the gate, because the gate applies only when no record owns the ground.
 
 ### 2. Apply the gate
 
-With an owning record in hand, the gate picks the amendment form per the reference. With none, a failing gate means stop — don't write the ADR, and tell the user why. Say which case you're in before writing anything.
+With an owning record in hand, the record's title picks the form per the reference: an in-place edit, or a superseding record. With none, a failing gate means stop — don't write the ADR, and tell the user why. Say which case you're in before writing anything.
 
 ### 3. Draft
 
-Number, slug, and draft per the reference. Rationale prose follows the ADR-rationale register — call the Skill tool with `writing-for-humans` at the first write if it isn't already live.
+Number, slug, and draft per the reference — or, for an in-place edit, draft the owning record's new text, folding any `## Amendments` log it still carries into its body per the reference. Rationale prose follows the ADR-rationale register — call the Skill tool with `writing-for-humans` at the first write if it isn't already live.
 
 ### 4. Show and save
 
-Show the draft to the user. Once approved, save it into the scheme the preflight resolved — `docs/adr/<NNNN>-<slug>.md` by default. When step 1 found an owning record and the new content earned its own number, also add the forward pointer at the amended record's top — the write isn't done until both files changed. A `Status: proposed` record is opened as a PR only on the user's ask or the repo's `Landing:` key (`~/.claude/rules/no-unasked-commits.md`), and the open itself is `/ship`'s, never this skill's.
+Show the draft to the user — for an in-place edit, the changed sections and what a folded log kept and dropped. Once approved, save it into the scheme the preflight resolved — `docs/adr/<NNNN>-<slug>.md` by default, or over the owning record. When the new record supersedes one, also set the superseded record's Status to its successor's file link — the write isn't done until both files changed. A `Status: proposed` record is opened as a PR only on the user's ask or the repo's `Landing:` key (`~/.claude/rules/no-unasked-commits.md`), and the open itself is `/ship`'s, never this skill's.
 
 ## Boundary
 

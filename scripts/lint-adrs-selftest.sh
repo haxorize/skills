@@ -12,42 +12,23 @@
 #
 # Every check is graded in both directions. Firing: a duplicate number; a
 # supersession whose successor never links back; a dangling supersession in
-# lower and upper case; a forward pointer missing for the link form, the bold
-# form, the unlinked prose form, and the second of two links on one line; a
-# pointer below the first heading; an amend link to a missing file; a bold form
-# naming a number nobody claims; an empty Revisit line in both forms; a settled
-# deferral with no entry, one whose only entry is `<date>-2`, and one whose
-# only entry sits under a heading other than `## Amendments`; a corrected
-# Consequences bullet in all three of those shapes; an in-log marker with no
-# matching entry, in both the `corrected:` and the `amended:` spelling and in
-# the `<date>-2` and wrong-heading shapes, and one whose sentence opens an
-# unclosed backtick run that must not hide it; a plain cross-reference to a
-# record that does not exist, and the second FAIL a dangling supersession link
-# and a dangling amend link each draw from that same check. Quiet: a
-# well-formed link-form pair, the `[ADR N]` space form, a pair whose numbers are
-# padded differently on each side, a bold-form pair with its pointer, a
-# bystander's `## Amendments` entry naming an amender and a target that carries
-# no pointer at all (the exemption is load-bearing: delete it and this fires),
-# an inline Revisit line with text, a heading-form Revisit with a paragraph,
-# the `, later` and ` — title.` settled-entry openers, both of those openers
-# on a corrected Consequences bullet, a `corrected:` marker outside
-# `## Consequences`, both amended-marker forms resolving beside an
-# `## Amendments` entry that quotes the marker with a date nothing claims, two
-# in-log markers that resolve beside the three quoted forms the in-log reader
-# must not take for pointers (a backticked marker span, the `<date>`
-# placeholder, and a fenced example entry), a cross-reference that resolves beside a relative path, an
-# outbound URL and the `[ADR N](N-slug.md)` placeholder, the unnumbered README,
-# and — in the clean tree — a well-formed supersession pair. Also graded, for
+# lower and upper case; an empty Revisit line in both forms; a plain
+# cross-reference to a record that does not exist, and the second FAIL each
+# dangling supersession link draws from that same check. Quiet: an inline
+# Revisit line with text, a heading-form Revisit with a paragraph, a
+# cross-reference that resolves beside a relative path, an outbound URL and the
+# `[ADR N](N-slug.md)` placeholder, the unnumbered README, and — in the clean
+# tree — a well-formed supersession pair, a second pair numbered under 1000
+# whose successor links back unpadded (`[ADR-990]` for `0990-…`, which is what
+# grades `num_val`: a padded number read as written goes octal in printf and
+# misses), and a resolving plain citation. Also graded, for
 # RESOLUTION and never for a verdict: the no-argument default. The exit status
 # travels as a file under TMPDIR (2026-09-01), in scripts/lint-lib.sh, which
 # scripts/lint-skills.sh sources too; graded by every exit-1 row, by the
 # unwritable-TMPDIR row, which must exit 4 before any check runs, and by a
 # row on say_fail itself, which must exit 4 when the flag is swept mid-run.
 #
-# NOT covered, so a clean run here is not a claim about them: the number-value
-# reading (`0036` and `36` as one record) is graded only through the one
-# padding-differs row, so `num_val` could stop normalizing for every other
-# padding and stay green; the four-field guard in for_rows and the
+# NOT covered, so a clean run here is not a claim about them: the four-field guard in for_rows and the
 # check-name-is-not-a-function guard, both of which exit 4 and neither of which
 # any fixture can reach, since the kinds and the dispatch names are this
 # script's own; for_rows' exit 4 on a read_rows failure past the first arm —
@@ -56,9 +37,8 @@
 # row per kind, below the --help rows) and never through a whole run;
 # the kind/dispatch pairing guard
 # at the foot of the linter, which fires only on an edit to the linter itself;
-# and the CONTENT of a forward pointer or a supersession summary — placement is
-# checked, wording is not, and the linter's own header says so. Run it after
-# changing a check.
+# and the CONTENT of a supersession summary — the link is checked, wording is
+# not, and the linter's own header says so. Run it after changing a check.
 set -uo pipefail
 
 repo_root="$(cd "$(dirname "$0")/.." && pwd)"
@@ -77,110 +57,30 @@ expect "duplicate number" "number 9001 is claimed by 2 files"
 expect "supersession back-link" "9003-successor-no-backlink.md never links back to it"
 expect "supersession dangling" "9004-superseded-dangling.md (line 2) is superseded by [ADR-9099](9099-does-not-exist.md), which does not exist"
 expect "supersession dangling (upper case)" "9004-superseded-dangling.md (line 6) is superseded by [ADR-9098](9098-upper-case-does-not-exist.md), which does not exist"
-expect "forward pointer (link form)" "9006-target-no-pointer.md carries no forward pointer above its first heading"
-expect "forward pointer (bold form)" "9008-bold-target-no-pointer.md carries no forward pointer above its first heading"
-expect "forward pointer (below the first heading)" "9010-pointer-below-heading.md carries no forward pointer above its first heading"
-expect "forward pointer (unlinked prose form)" "9020-prose-target-no-pointer.md carries no forward pointer above its first heading"
-expect "forward pointer (second link on one line)" "9022-second-target-no-pointer.md carries no forward pointer above its first heading"
-expect "amend link dangling" "9018-amender-dangling-link.md (line 3) amends [ADR-9099](9099-does-not-exist.md), which does not exist"
-expect "bold form naming no record" "9037-amender-bold-missing-number.md (line 3) amends ADR-9099, and no record claims number 9099"
 expect "revisit inline empty" "9011-revisit-empty.md (line 5) has a 'Revisit when:' line with nothing after the colon"
 expect "revisit heading empty" "9012-revisit-heading-empty.md has a '## Revisit when:' heading with no paragraph under it"
-expect "settled deferral without its amendment" "9013-settled-no-amendment.md (line 7) marks a Deferred line settled by Amendments 2026-01-01"
-expect "settled deferral (date-suffix entry is not a match)" "9013-settled-no-amendment.md (line 8) marks a Deferred line settled by Amendments 2026-07-07"
-expect "settled deferral (entry outside ## Amendments is not a match)" "9013-settled-no-amendment.md (line 9) marks a Deferred line settled by Amendments 2026-03-03"
-expect "corrected consequence without its amendment" "9038-corrected-no-amendment.md (line 7) marks a Consequences bullet corrected by Amendments 2026-01-01"
-expect "corrected consequence (date-suffix entry is not a match)" "9038-corrected-no-amendment.md (line 8) marks a Consequences bullet corrected by Amendments 2026-07-07"
-expect "corrected consequence (entry outside ## Amendments is not a match)" "9038-corrected-no-amendment.md (line 9) marks a Consequences bullet corrected by Amendments 2026-03-03"
-# The amended-marker family, one row per alternative. The last two share a
-# physical line: the reader emits one row per DISTINCT date on a line, so a
-# repeated date must not double-report and a third marker must not be swallowed
-# by the first — both readings are wrong in the obvious one-match-per-line
-# implementation, and neither shows up in a fixture with one marker per line.
-expect "amended marker without its amendment" "9042-amended-no-amendment.md (line 3) marks a claim amended by Amendments 2026-05-05"
-expect "amended marker (date-suffix entry is not a match)" "9042-amended-no-amendment.md (line 3) marks a claim amended by Amendments 2026-05-05, but no '- **2026-05-05' entry exists"
-expect "amended marker (entry outside ## Amendments is not a match)" "9042-amended-no-amendment.md (line 7) marks a claim amended by Amendments 2026-06-06"
-expect "amended marker (first of three on one line)" "9042-amended-no-amendment.md (line 9) marks a claim amended by Amendments 2026-08-08"
-expect "amended marker (a later date on the same line)" "9042-amended-no-amendment.md (line 9) marks a claim amended by Amendments 2026-09-09"
-# The in-log marker check, one row per alternative. The last row is the
-# backtick reading's other direction: 9044's fourth entry opens a backtick run
-# and never closes it, and an unclosed run must leave the rest of the line
-# intact — strip everything after a lone backtick instead and this row goes
-# quiet while 9045 stays quiet too, so nothing else would notice.
-expect "in-log marker without its amendment (corrected)" "9044-log-marker-no-amendment.md (line 18) is an ## Amendments entry pointing at Amendments 2026-10-10"
-expect "in-log marker without its amendment (amended)" "9044-log-marker-no-amendment.md (line 19) is an ## Amendments entry pointing at Amendments 2026-11-11"
-expect "in-log marker (date-suffix entry is not a match)" "9044-log-marker-no-amendment.md (line 20) is an ## Amendments entry pointing at Amendments 2026-05-05"
-expect "in-log marker (an unclosed backtick run does not hide it)" "9044-log-marker-no-amendment.md (line 22) is an ## Amendments entry pointing at Amendments 2026-10-11"
 expect "cross-reference to a record that does not exist" "9040-xref-dangling.md (line 3) links to 9099-does-not-exist.md, and no such file is in"
-# The overlap is deliberate and pinned here: a dangling supersession or amend
-# link is also a dangling citation, and each draws its own FAIL naming its own
-# repair. Neither of these lines can come from the check that owns that file.
-expect "cross-reference (a dangling supersession link is also one)" "9004-superseded-dangling.md (line 6) links to 9098-upper-case-does-not-exist.md"
-expect "cross-reference (a dangling amend link is also one)" "9018-amender-dangling-link.md (line 3) links to 9099-does-not-exist.md"
+# The overlap is deliberate and pinned here: a dangling supersession link is
+# also a dangling citation, and each draws its own FAIL naming its own repair.
+# Neither of these lines can come from the supersession check.
+expect "cross-reference (a dangling supersession link is also one)" "9004-superseded-dangling.md (line 2) links to 9099-does-not-exist.md"
+expect "cross-reference (a dangling supersession link in capitals is also one)" "9004-superseded-dangling.md (line 6) links to 9098-upper-case-does-not-exist.md"
 
-reject "forward pointer (well-formed pair)" "9015-well-formed-target.md carries no forward pointer"
-reject "forward pointer (first of two links)" "9023-two-links-first-target.md carries no forward pointer"
-reject "forward pointer (space form)" "9025-space-form-target.md"
-reject "forward pointer (padding differs)" "9031-overpadded-target.md"
-reject "forward pointer (bold form with pointer)" "9033-bold-target-with-pointer.md"
-# The log exemption: 9034's ## Amendments entry names 9035 amending 9036, and
-# 9036 carries no pointer to anyone — so the only way this line appears is the
-# exemption being gone.
-reject "forward pointer (third-party mention in an Amendments log)" "9036-third-party-target-no-pointer.md carries no forward pointer"
-reject "forward pointer (bystander amender)" "9035-third-party-amender.md"
-# 9016 also carries the two settled-entry forms that must resolve: `, later`
-# after the date and a title inside the bold after a dash.
-reject "revisit inline with text, and both settled-entry forms" "9016-revisit-and-settled-ok.md"
+reject "revisit inline with text" "9016-revisit-inline-ok.md"
 reject "revisit heading with paragraph" "9017-revisit-heading-ok.md"
-# 9039 carries a `corrected:` marker before its first heading whose date no
-# entry claims: the only way that line appears here is the `## Consequences`
-# anchoring being gone. 9041 carries the three link forms the check exempts —
-# a path out of the directory, an outbound URL, and the format file's own
-# `[ADR N](N-slug.md)` placeholder.
-reject "corrected consequence (both entry forms, and the section anchoring)" "9039-corrected-ok.md"
+# 9041 carries the three link forms the check exempts — a path out of the
+# directory, an outbound URL, and the format file's own `[ADR N](N-slug.md)`
+# placeholder.
 reject "cross-reference (resolves, beside the exempt link forms)" "9041-xref-ok.md"
-# 9043 carries both marker forms resolving — plain and bold — and its
-# `## Amendments` log QUOTES the marker with a date nothing claims. That quote
-# is the only reason the log exclusion is load-bearing here: read the log and
-# this file fires on 2026-12-12.
-reject "amended marker (both forms resolving, and the log exclusion)" "9043-amended-ok.md"
-# The two SECTION exclusions, quiet on purpose: `## Consequences` and
-# `## Deferred` each own a marker of their own (`— corrected:`, `— settled:`),
-# so an `amended:` marker in either is not this check's to read — reading it
-# would let a Consequences bullet skip the corrected-bullet check. 9042 carries
-# one in each section pointing at a date nothing claims; drop the exclusion and
-# the FAIL count below moves from 33 to 35.
-reject "amended marker (the Consequences and Deferred exclusions)" "see Amendments 2026-07-07"
-# 9045 carries two in-log markers that resolve beside the three forms the
-# reader must read as quotation: two backticked marker spans (2026-12-12 and
-# 2026-12-13), the `<date>` placeholder, and a fenced example entry
-# (2026-12-14). No entry in that file claims any of those dates, so each is a
-# FAIL the moment the backtick or the fence stripping goes — which is the trap
-# a naive widening of the log exclusion falls into.
-reject "in-log marker (a backticked marker span is a quotation)" "9045-log-marker-ok.md"
-reject "in-log marker (2026-12-12 and 2026-12-13 are quoted, not pointers)" "Amendments 2026-12-12, but"
-reject "in-log marker (a fenced example entry is a quotation)" "Amendments 2026-12-14"
-# The two shapes a fence can break, both in 9044. An odd fence count earlier in
-# the record must not carry into the log and blind it (fence state resets at the
-# heading); and a fenced example entry must not RESOLVE a live pointer, so the
-# resolver strips fences the same way the producer does. Revert either and the
-# matching row below goes quiet.
-expect "in-log marker (an odd fence above the log does not blind it)" "Amendments 2026-10-12"
-expect "in-log marker (a fenced example entry does not resolve a pointer)" "Amendments 2026-12-20, but"
 reject "unnumbered README" "README.md"
 expect_rc "the lint against the fixture tree" 1 "$status"
 # The count of `FAIL: `-prefixed lines is pinned: a new firing on a quiet
 # form, a check that starts double-reporting, or a message that loses the
 # prefix the family shares shows up here even if no substring above moves.
-# Three of the 33 are the cross-reference check's deliberate overlap with the
-# supersession and amend link checks, asserted by name above. Four of them are
-# the amended-marker check's rows in 9042; the two markers that file carries
-# inside `## Consequences` and `## Deferred` are not among them, and are what
-# the section-exclusion row above pins. Four more are the in-log check's rows
-# in 9044; none of 9045's four quoted marker forms is among them, and that is
-# what the quotation rows above pin.
+# Two of the 9 are the cross-reference check's deliberate overlap with the
+# supersession check in 9004, asserted by name above.
 nfail=$(printf '%s\n' "$output" | grep -c '^FAIL: ')
-[ "$nfail" -eq 33 ] || selftest_fail "expected exactly 33 FAIL lines against the fixture tree, got $nfail"
+[ "$nfail" -eq 9 ] || selftest_fail "expected exactly 9 FAIL lines against the fixture tree, got $nfail"
 
 clean_out=$(bash scripts/lint-adrs.sh "$clean" 2>&1); clean_status=$?
 if [ "$clean_status" -ne 0 ]; then
@@ -242,9 +142,9 @@ printf '%s\n' "$help_out" | grep -qE '^(OK|FAIL):' && selftest_fail "--help ran 
 # the way its own dispatch-pairing guard reads the kinds, over a path that does
 # not exist. An arm whose `|| return 2` is dropped returns 0: a check that
 # never ran, read as a record with no rows.
-rr_defs=$(sed -n '/^body_lines() {/,/^}/p; /^read_rows() {/,/^}/p' scripts/lint-adrs.sh)
+rr_defs=$(sed -n '/^read_rows() {/,/^}/p' scripts/lint-adrs.sh)
 rr_kinds=$(printf '%s\n' "$rr_defs" | sed -nE 's/^    ([a-z]+)\)$/\1/p')
-[ "$(printf '%s\n' "$rr_kinds" | grep -c .)" -eq 8 ] || selftest_fail "read $(printf '%s\n' "$rr_kinds" | grep -c .) read_rows kinds out of scripts/lint-adrs.sh, not 8 — a kind was added (this loop grades it; raise the pin) or the extraction stopped matching"
+[ "$(printf '%s\n' "$rr_kinds" | grep -c .)" -eq 3 ] || selftest_fail "read $(printf '%s\n' "$rr_kinds" | grep -c .) read_rows kinds out of scripts/lint-adrs.sh, not 3 — a kind was added (this loop grades it; raise the pin) or the extraction stopped matching"
 for kind in $rr_kinds; do
   ( eval "$rr_defs"; read_rows "$fx/9999-does-not-exist.md" "$kind" >/dev/null 2>&1 )
   expect_rc "read_rows over an unreadable record (the $kind arm)" 2 $?

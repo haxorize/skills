@@ -16,7 +16,7 @@ A **flow** is a path through the skills.
 
 1. **Sharpen the idea by interview.**
    - **`/frame-effort`** — when a program or feature arrives with no outcome statement: the outcome, the opportunities, the ranked assumptions, the kill evidence, and a pass/fail Fit check of candidate solutions — the page the grill reads first.
-   - **`/grill-me`** — relentless interview, opening from a `/frame-effort` Frame where one exists. With a `DOMAIN.md` or ADR log it records as it goes — `DOMAIN.md` as terms resolve, ADRs when the gate triggers; `--plain` (or no such docs) saves nothing.
+   - **`/grill-me`** — relentless interview, opening from a `/frame-effort` Frame where one exists. With a `DOMAIN.md` or ADR log it records as it goes — `DOMAIN.md` as terms resolve, ADRs in `adr`'s format when the gate triggers; `--plain` (or no such docs) saves nothing.
 2. **Decompose into tracked work** (three tiers, top-down as scope warrants):
    - **`/to-feature`** — a PRD-shaped Feature, when scope spans multiple stories; a Frame's Fit check supplies its approaches.
    - **`/to-story`** — a single-feature Story. The usual entry point.
@@ -52,7 +52,7 @@ Keep steps 1–2 in **one unbroken context window** so the grilling, decompositi
 
 ## Codebase health (upkeep, not feature work)
 
-- Eight upkeep sweeps, each named by what it is **on trial**: **`/upgrade-deps`** (the dependencies), **`/review-architecture`** (the module interfaces), **`/sweep-domain`** (the vocabulary in `DOMAIN.md`), **`/backfill-adrs`** (decisions in git history nobody recorded, and the existing log for `STALE` records), **`/verify-docs`** (sentences in prose, against what they answer to — instruction files included, audited as one stack), **`/audit-tests`** (the assertions in the suite — can they fail?), **`/delete-dead-code`** (source nothing calls, which it removes), **`/validate-behavior`** (the running product, against a contract fixed before the run). Pick by the object, not the symptom: "our docs have drifted" is `/verify-docs` when the sentences are wrong and `/sweep-domain` when the *words* are. Where two still both fit, the family boundaries are in [references/codebase-health.md](references/codebase-health.md).
+- Eight upkeep sweeps, each named by what it is **on trial**: **`/upgrade-deps`** (the dependencies), **`/review-architecture`** (the module interfaces), **`/sweep-domain`** (the vocabulary in `DOMAIN.md`), **`/backfill-adrs`** (unrecorded decisions in git history, in `adr`'s format, and the log for `STALE` records), **`/verify-docs`** (sentences in prose, against what they answer to — instruction files included, audited as one stack), **`/audit-tests`** (the assertions in the suite — can they fail?), **`/delete-dead-code`** (source nothing calls, which it removes), **`/validate-behavior`** (the running product, against a contract fixed before the run). Pick by the object, not the symptom: "our docs have drifted" is `/verify-docs` when the sentences are wrong and `/sweep-domain` when the *words* are. Where two still both fit, the family boundaries are in [references/codebase-health.md](references/codebase-health.md).
 
 ## Review gate
 

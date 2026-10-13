@@ -32,7 +32,7 @@ The route most work travels: **`/grill-me`** → **`/to-feature` / `/to-story` /
 ### Grilling
 
 - **`frame-effort`** — Frame a program or feature before it is grilled: outcome, opportunities, ranked assumptions, kill evidence, and a pass/fail Fit check of candidate solutions against numbered requirements. Runs before `grill-me`; `chart-course` only when the grill will not fit one session.
-- **`grill-me`** — Stress-testing through relentless interview, opening from an existing Frame's open questions where `/frame-effort` wrote one. In a project with a `DOMAIN.md` or an ADR log it records as it goes — glossary updates inline, ADRs when the gate triggers; `--plain` (or no such docs) saves nothing. Runs anywhere.
+- **`grill-me`** — Stress-testing through relentless interview, opening from an existing Frame's open questions where `/frame-effort` wrote one. In a project with a `DOMAIN.md` or an ADR log it records as it goes — glossary updates inline, ADRs when the gate triggers; `--plain` (or no such docs) saves nothing. Reads `adr`'s ADR format by installed path. Runs anywhere.
 
 ### Charting
 
@@ -92,7 +92,7 @@ The first two are the same first day, different subject: `onboard-repo` wires th
 - **`validate-behavior`** — Validate the running app, CLI, API, or generated artifact against a behavior contract written before testing — source-blind, with anti-cheat probes; a migration of a surface no suite covers runs in parity mode, the old and new paths diffed on inputs fixed before either run. The runtime complement to `review-changes` (the diff) and `audit-tests` (the test suite). Its *behavior contract* is one change checked against a running target by someone who did not write it — not `rebuild-contract`'s **rebuild contract**, which covers every observer at a system's boundary for someone who will never see the source.
 - **`review-architecture`** — Read-only architecture review of the whole codebase: surfaces architectural friction, reads `review-changes`' `references/smell-baseline.md` for the smell catalog, and proposes deeper module interfaces as a prioritized, vetted report. You pick a candidate; it frames the design, offers a grill (the norm, not an aside), updates `DOMAIN.md` inline, and hands the result to `/to-story` to file. Declares `adr`, so a rejected candidate's load-bearing reason gets recorded where the next review would re-propose it.
 - **`sweep-domain`** — Sweep the codebase *and the conversation* to refresh `DOMAIN.md`, closing with every entry the sweep retired or narrowed and why. Deliberate sweep mode (inline domain capture during grilling lives in `grill-me`).
-- **`backfill-adrs`** — Sweep recent git history for un-recorded architectural decisions and write the ones that pass the gate; the same sweep re-verifies the existing log, reporting an ADR whose named mechanism no longer resolves, whose trigger has fired, or whose rationale rests on a fact that no longer holds as `STALE`.
+- **`backfill-adrs`** — Sweep recent git history for un-recorded architectural decisions and write the ones that pass the gate; the same sweep re-verifies the existing log, reporting an ADR whose named mechanism no longer resolves, whose trigger has fired, or whose rationale rests on a fact that no longer holds as `STALE`. Reads `adr`'s ADR format by installed path.
 - **`verify-docs`** — Check whether a document's claims still hold, against the code and tests it describes, the running product it describes, the sources a derived document was distilled from, or — for the instruction files the harness loads every turn, audited as one stack — the other instructions in force, with per-claim verdicts and fixes. An `evaluation-ledger` is one of the documents it sweeps: a row past its Expires date is STALE. The prose-drift sibling of `sweep-domain` (vocabulary) and `backfill-adrs` (decisions).
 - **`delete-dead-code`** — A deliberate whole-repo dead-code sweep: find what nothing calls, tier it Safe / Caution / Danger, and remove it one test-verified deletion at a time — the removals `implement` parks, `review-architecture` never makes, and `/simplify` scopes to a diff.
 
@@ -134,7 +134,7 @@ The first two are the same first day, different subject: `onboard-repo` wires th
 
 ### Decisions & learnings
 
-- **`adr`** — Capture a single fresh Architecture Decision Record after a deliberate decision.
+- **`adr`** — Capture a single fresh Architecture Decision Record after a deliberate decision. Holds the one copy of the ADR format.
 - **`adoption-verdict`** — Render a project-grounded verdict on an external-adoption question ("should we use X?", "does this CVE reach us?") — exactly one grade (Adopt / Trial / Hold / Reject / Not-our-problem), gated on verified project and external facts. It forms its own position, where `grilling` extracts yours. Also fires before a commodity capability is built from scratch, naming stdlib, installed, then new candidates. Declared by `evaluation-ledger`, whose rows it reads where a project kept one, and by `upgrade-deps`, which hard-gates on it for a license change mid-upgrade.
 - **`capturing-learnings`** — Owns the per-repo `docs/solutions/` solved-problems store on both sides: captures a Learning doc when its gate holds, or an incident learning when a resolved production incident meets one of its triggers, and serves the symptom-keyed retrieval protocol any skill reads the store with — both kinds carry the `symptoms:` frontmatter the grep lands on.
 
@@ -218,13 +218,7 @@ bash scripts/install.sh
 
 It resolves declared dependencies (an orchestrator's `requires:` disciplines) and reconciles both directions: it links new skills and prunes **stale** links — symlinks it owns (pointing into this repo's `src/`) whose target no longer exists after a rename or removal. Links pointing at other sources, and real directories, are left untouched. So a rename needs only a re-run: the old name is pruned, the new one linked.
 
-Or link a single skill (run from the repo root):
-
-```bash
-ln -s "$(pwd)/src/handoff" ~/.claude/skills/
-```
-
-A bare `ln -s` links only that one directory — it does **not** resolve `requires:`. For a skill that declares dependencies (e.g. `grill-me` → `grilling`), use `install.sh` instead, or the skill will be missing the discipline that carries its job.
+It links the whole suite; there is no single-skill install. Skills reach each other's `references/` by installed path ([ADR-0108](docs/adr/0108-shared-references-have-one-owner-and-one-copy.md)), so a skill symlinked alone can find no file behind a pointer, and a hand link never resolves `requires:`.
 
 ### Committed git hooks (opt-in)
 
