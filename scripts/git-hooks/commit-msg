@@ -2,7 +2,7 @@
 # Conventions for this tree: scripts/README.md
 set -uo pipefail
 
-# Gate map: rejects a commit whose message breaks the exact rules in src/committing/references/commit-style.md — the rejection names the rule and the file
+# Gate map: re-breaks each body prose line past 72 columns in place and says how many, then rejects a commit whose message still breaks the exact rules in src/committing/references/commit-style.md — the rejection names the rule and the file
 #
 # commit-msg checks a commit message against the deterministic half of the
 # house style in src/committing/references/commit-style.md. The reasoning for
@@ -17,9 +17,10 @@ set -uo pipefail
 # Those need a reader. A green run here is a claim about shape, never about
 # prose — do not prune commit-style.md against it.
 #
-# Blocks on the exact rules, with one repair: body prose past the wrap cap is
-# folded in place (githooks(5) lets this hook edit its message file) and the
-# hook prints how many lines it folded; what it cannot fold is still rejected.
+# Blocks on the exact rules, with one repair: a body prose line past the wrap
+# cap is re-broken in place (githooks(5) lets this hook edit its message file)
+# and the hook prints how many lines it folded; what it cannot fold is still
+# rejected. A message the skip list below names is never rewritten.
 # Warns on the imperative-opener check, which is a wordlist heuristic and will
 # not always be right.
 #
@@ -105,24 +106,62 @@ done
 comment_char="$(git config --get-regexp '^core\.comment(char|string)$' 2>/dev/null | awk '{ v = $2 } END { print v }' || true)"
 case "$comment_char" in ''|auto) comment_char='#' ;; esac
 
+# read_message: sets body_all (the message with git's comments and the verbose
+# diff dropped, CRs and leading blank lines stripped) and subject (its first
+# line). Run once before the fold, for the skip test, and again after a fold.
+# A CR is stripped so it cannot survive into the subject, where it would defeat
+# the trailing-period test and count against the cap. Leading blank lines are
+# dropped so that the subject and the body agree on which physical line is
+# which: taking the subject as the first non-blank line while taking the
+# separator by line number desynchronises them, and a message that opens with
+# a blank line then fails a body rule it does not break.
+read_message() {
+  body_all="$(awk -v cc="$comment_char" '
+    /^diff --git /            { exit }
+                              { sub(/\r$/, "") }
+    index($0, cc cc) == 1     { print; next }
+    index($0, cc) == 1        { next }
+                              { print }
+  ' "$msg_file")"
+  body_all="$(printf '%s\n' "$body_all" | awk 'NF == 0 && !seen { next } { seen = 1; print }')"
+  subject="$(printf '%s\n' "$body_all" | awk 'NR == 1')"
+}
+read_message
+[ -n "$subject" ] || exit 0
+
+# fixup!/squash!/amend! and Reapply "…" are prefixes git itself generates, so
+# they are genuine text markers. Reapply is over the cap by construction for
+# any original subject of 63 characters or more. Tested before the fold, so a
+# skipped message is never rewritten either.
+case "$subject" in
+  fixup!*|squash!*|amend!*|Reapply\ \"*) exit 0 ;;
+esac
+
 # --- Body fold -------------------------------------------------------------
 
-# The wrap cap is the one rule a hook can repair rather than reject: re-breaking
-# a paragraph at the cap changes whitespace only, never a word or its order. A
-# run of plain prose lines holding a line past the cap is re-broken in place,
-# greedily at the cap. Left alone, so the wrap check below still sees them: the
-# subject, git's comments, a verbose diff from its first diff line down, any
-# paragraph holding a line git parses as a trailer, indented and fenced lines,
-# list items, headings, and a line with no space at or before the cap (a URL or
-# other unbreakable token).
+# The wrap cap is the one rule a hook can repair rather than reject. Each plain
+# prose line past the cap is re-broken on its own, greedily at the cap; it is
+# never joined with the lines around it, so a paragraph of deliberate short
+# lines ("Before: 3 calls" over "After: 1 call") keeps its breaks, and the only
+# change is a newline where a space was inside the over-long line. Left alone,
+# so the wrap check below still sees them: the subject, git's comments, a
+# verbose diff from its first diff line down, any paragraph holding a line git
+# parses as a trailer, indented lines, lines inside a ``` or ~~~ fence, list
+# items, `>` quotes, `|` table rows, headings, and a line with no space at or
+# before the cap (a URL or other unbreakable token).
+#
+# A break never lands before a word opening with the comment string: under
+# cleanup mode strip (any commit that opens an editor) git deletes that line
+# after this hook runs. Such a word stays on the line with the word before it.
 #
 # A trailer is what git says is a trailer, not a pattern that guesses: an older
 # test matched any "Word: " opener, so an ordinary paragraph beginning "Note: "
 # or "Why: " was silently exempt from the wrap rule.
 trailers="$(git interpret-trailers --parse < "$msg_file" 2>/dev/null || true)"
 nl=$'\n'
-re_fence='^[[:space:]]*```'
+re_fence='^[[:space:]]*(```|~~~)'
 re_list='^([-*+]|[0-9]+[.)])[[:space:]]'
+re_quote='^[>|]'
 re_heading='^#{1,6}[[:space:]]'
 
 is_trailer() {
@@ -138,7 +177,7 @@ over_cap_breakable() {
 }
 
 raw=() kind=() para=()
-p=0 seen_subject=0 in_fence=0 below_cut=0 protected=" "
+p=0 seen_subject=0 in_fence="" below_cut=0 protected=" "
 while IFS= read -r line || [ -n "$line" ]; do
   raw+=("$line")
   l="${line%$'\r'}"
@@ -154,8 +193,12 @@ while IFS= read -r line || [ -n "$line" ]; do
   elif [ "$seen_subject" -eq 0 ]; then
     seen_subject=1
   elif [[ "$l" =~ $re_fence ]]; then
-    in_fence=$((1 - in_fence))
-  elif [ "$in_fence" -eq 1 ] || [[ "$l" =~ ^[[:space:]] || "$l" =~ $re_list || "$l" =~ $re_heading ]]; then
+    # A fence closes only on the marker that opened it, so a ``` inside a
+    # ~~~ block is a line of that block.
+    if [ -z "$in_fence" ]; then in_fence="${BASH_REMATCH[1]}"
+    elif [ "$in_fence" = "${BASH_REMATCH[1]}" ]; then in_fence=""
+    fi
+  elif [ -n "$in_fence" ] || [[ "$l" =~ ^[[:space:]] || "$l" =~ $re_list || "$l" =~ $re_quote || "$l" =~ $re_heading ]]; then
     :
   else
     k=prose
@@ -166,71 +209,50 @@ done < "$msg_file"
 
 folded=0
 out=()
-i=0
-while [ "$i" -lt "${#raw[@]}" ]; do
-  if [ "${kind[$i]}" != prose ] || [[ "$protected" == *" ${para[$i]} "* ]]; then
-    out+=("${raw[$i]}"); i=$((i + 1)); continue
+for i in "${!raw[@]}"; do
+  l="${raw[$i]%$'\r'}"
+  if [ "${kind[$i]}" != prose ] || [[ "$protected" == *" ${para[$i]} "* ]] || ! over_cap_breakable "$l"; then
+    out+=("${raw[$i]}"); continue
   fi
-  j=$i long=0 joined=""
-  while [ "$j" -lt "${#raw[@]}" ] && [ "${kind[$j]}" = prose ]; do
-    l="${raw[$j]%$'\r'}"
-    over_cap_breakable "$l" && long=$((long + 1))
-    joined="$joined $l"
-    j=$((j + 1))
-  done
-  if [ "$long" -eq 0 ]; then
-    while [ "$i" -lt "$j" ]; do out+=("${raw[$i]}"); i=$((i + 1)); done
-    continue
-  fi
-  folded=$((folded + long))
-  read -ra words <<< "$joined"
-  cur=""
+  folded=$((folded + 1))
+  # Units, not words: a word opening with the comment string is glued to the
+  # word before it, so no break can land in front of it.
+  read -ra words <<< "$l"
+  units=()
   for w in "${words[@]}"; do
+    if [ "${#units[@]}" -gt 0 ] && [[ "$w" == "$comment_char"* ]]; then
+      units[${#units[@]} - 1]="${units[${#units[@]} - 1]} $w"
+    else
+      units+=("$w")
+    fi
+  done
+  cur=""
+  for w in "${units[@]}"; do
     if [ -z "$cur" ]; then cur="$w"
     elif [ $(( ${#cur} + 1 + ${#w} )) -le "$WRAP" ]; then cur="$cur $w"
     else out+=("$cur"); cur="$w"
     fi
   done
   out+=("$cur")
-  i=$j
 done
 
 # Written back only when something folded, so an untouched message keeps its
-# exact bytes. A failed write leaves the long lines for the check below to
-# reject: this hook fails closed (ADR-0067).
+# exact bytes. The folded text goes to a temp file beside the message and is
+# moved over it, so a write that fails partway leaves the original whole; the
+# template sits beside the message rather than under TMPDIR so the mv is a
+# rename on one filesystem (scripts/README.md § Temp files names the general
+# rule). A failed write leaves the long lines for the check below to reject:
+# this hook fails closed (ADR-0067).
 if [ "$folded" -gt 0 ]; then
-  if printf '%s\n' "${out[@]}" > "$msg_file"; then
+  if fold_tmp="$(mktemp "$msg_file.fold.XXXXXX" 2>/dev/null)" && [ -f "$fold_tmp" ] &&
+     printf '%s\n' "${out[@]}" > "$fold_tmp" && mv -f "$fold_tmp" "$msg_file"; then
     echo "commit-msg: folded $folded body lines past $WRAP columns" >&2
+    read_message
   else
-    echo "commit-msg: could not write the folded message back to $msg_file" >&2
+    [ -n "${fold_tmp:-}" ] && rm -f "$fold_tmp"
+    echo "commit-msg: could not write the folded message back to $msg_file (temp file $msg_file.fold.XXXXXX) — nothing was changed" >&2
   fi
 fi
-
-# A CR is stripped here so it cannot survive into the subject, where it would
-# defeat the trailing-period test and count against the cap.
-body_all="$(awk -v cc="$comment_char" '
-  /^diff --git /            { exit }
-                            { sub(/\r$/, "") }
-  index($0, cc cc) == 1     { print; next }
-  index($0, cc) == 1        { next }
-                            { print }
-' "$msg_file")"
-
-# Drop leading blank lines so that the subject and the body agree on which
-# physical line is which. Taking the subject as the first non-blank line while
-# taking the separator by line number desynchronises them, and a message that
-# opens with a blank line then fails a body rule it does not break.
-body_all="$(printf '%s\n' "$body_all" | awk 'NF == 0 && !seen { next } { seen = 1; print }')"
-
-subject="$(printf '%s\n' "$body_all" | awk 'NR == 1')"
-[ -n "$subject" ] || exit 0
-
-# fixup!/squash!/amend! and Reapply "…" are prefixes git itself generates, so
-# they are genuine text markers. Reapply is over the cap by construction for
-# any original subject of 63 characters or more.
-case "$subject" in
-  fixup!*|squash!*|amend!*|Reapply\ \"*) exit 0 ;;
-esac
 
 # --- Subject ---------------------------------------------------------------
 
@@ -284,7 +306,7 @@ if [ -n "$(printf '%s' "$body" | tr -d '[:space:]')" ]; then
     fail=1
   fi
 
-  if printf '%s\n' "$body" | grep -qE '^[[:space:]]*```'; then
+  if printf '%s\n' "$body" | grep -qE '^[[:space:]]*(```|~~~)'; then
     echo "commit-msg: FAIL body contains a code fence — $STYLE $BODY_ANCHOR ('No code fences')" >&2
     fail=1
   fi
@@ -304,7 +326,7 @@ if [ -n "$(printf '%s' "$body" | tr -d '[:space:]')" ]; then
   while IFS= read -r line; do
     is_trailer "$line" && continue
     over_cap_breakable "$line" || continue
-    echo "commit-msg: FAIL body line exceeds $WRAP columns and is not prose the hook folds (a list item, an indented or fenced line, or the trailer paragraph): ${line:0:60}… — $STYLE $BODY_ANCHOR" >&2
+    echo "commit-msg: FAIL body line exceeds $WRAP columns and is not prose the hook folds (a list item, a quote or table row, an indented or fenced line, or the trailer paragraph): ${line:0:60}… — $STYLE $BODY_ANCHOR" >&2
     fail=1
   done <<< "$body"
 fi

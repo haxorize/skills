@@ -25,9 +25,15 @@
 # Covered here: the subject rules (the cap and its boundary, trailing period,
 # Conventional Commits prefix (one row per type) and every filename of the config opt-out, the
 # imperative-opener warning), the body rules (blank separator, code fence,
-# markdown heading, the wrap cap and its boundary), the fold (prose re-broken
-# with its words intact; list items, indented lines and the trailer paragraph
-# left alone and still rejected), the exemptions (an
+# markdown heading, the wrap cap and its boundary), the fold (an over-long
+# prose line re-broken with its words intact and a short line beside it never
+# joined; list items, indented lines, `>` quotes, `|` table rows, lines in a
+# ~~~ fence or after a ``` inside one, and the trailer paragraph left alone
+# and still rejected; no break before a word opening with the comment string,
+# '#' or a configured one; the write through a temp file and a rename, so a
+# failed write leaves the message whole and no temp file survives a fold; a
+# generated subject never folded), a mutation table that edits a copy of the
+# hook and requires each fold-guard row to go red, the exemptions (an
 # in-progress merge/revert/cherry-pick, git's generated subject prefixes,
 # trailers, an unbreakable long token, git's own comments under each of the two
 # config names that set the comment string alone, under both names in each
@@ -196,6 +202,11 @@ reject_msg "indented code fence"  "Add the hook
   \`\`\`
   git commit
   \`\`\`"                                                              "code fence"
+reject_msg "tilde code fence"     "Add the hook
+
+~~~
+git commit
+~~~"                                                                   "code fence"
 
 # The style doc's rule is every heading, not a wordlist, so the row set has to
 # cover a word no wordlist would have carried.
@@ -273,6 +284,131 @@ run "Add the hook
 $(pad 80 'Prose after the list')"
 [ "$rc" -eq 0 ] && grep -qxF -- "- a short item" "$tmp/msg" ||
   note_fail "prose after a list item did not fold cleanly, or the item itself was re-broken"
+
+# reject_unfolded <label> <message>: rejected on the wrap rule, nothing folded,
+# and the message file left byte-for-byte as written — the shapes the fold must
+# never touch, because re-breaking them changes what they mean.
+reject_unfolded() {
+  run "$2"
+  if [ "$rc" -eq 0 ] || ! printf '%s\n' "$out" | grep -qF "exceeds $WRAP columns"; then
+    note_fail "the $1 was not rejected on the wrap rule — it must be left for the author"
+  fi
+  if printf '%s\n' "$out" | grep -qF "folded" || [ "$(cat "$tmp/msg")" != "$2" ]; then
+    note_fail "the $1 was rewritten — the fold must leave it alone"
+  fi
+}
+reject_unfolded "line inside a ~~~ fence" "Add the hook
+
+~~~
+$(pad 80 'a fenced line')
+~~~"
+# A ``` inside a ~~~ block is a line of that block: the fence closes only on
+# the marker that opened it, so the long line after it is still fenced.
+row_nested_fence() {
+  run "Add the hook
+
+~~~
+\`\`\`
+$(pad 80 'still fenced')
+~~~"
+  if printf '%s\n' "$out" | grep -qF "folded"; then
+    note_fail "a long line after a \`\`\` inside a ~~~ block was folded — the inner marker closed the fence"
+  fi
+}
+row_nested_fence
+reject_unfolded "> quote line" "Add the hook
+
+> $(pad 80 'a quoted line')"
+reject_unfolded "| table row" "Add the hook
+
+| $(pad 80 'a table cell') |"
+
+# Only the over-long line is re-broken; a short line above it in the same
+# paragraph keeps its own line, so a deliberate "Before:"/"After:" pair stays a
+# pair rather than becoming "Before: 3 calls After: …". A closing paragraph
+# follows, since git would parse a last paragraph of "Key: value" lines as
+# trailers and the fold would never reach it.
+row_short_lines() {
+  fold_msg "a short line above an over-long one" "Add the hook
+
+Before: 3 calls
+$(pad 90 'After: 1 call and')
+
+That is the whole change." 1
+  grep -qxF "Before: 3 calls" "$tmp/msg" ||
+    note_fail "the short line above an over-long one was joined into it — the fold may only break the over-long line"
+}
+row_short_lines
+
+# A generated subject is never rewritten, a long body line included: the skip
+# runs before the fold.
+for pre in "fixup!" "squash!" "amend!"; do
+  allow_unfolded "$pre subject over a long body line" "$pre Add the hook
+
+$(pad 90 'A long body line')"
+done
+allow_unfolded "Reapply subject over a long body line" "Reapply \"Add the hook\"
+
+$(pad 90 'A long body line')"
+
+# A break never lands before a word opening with the comment string: git
+# strips that line under cleanup mode strip. The pad fills the line to the cap
+# exactly, so a greedy break would put the next word first on a line.
+row_no_comment_start() {
+  fold_msg "a break before a #-word" "Add the hook
+
+$(pad "$WRAP" 'This body line') #4242 ticket here." 1
+  if grep -q '^#' "$tmp/msg"; then
+    note_fail "a fold put '#4242' at the start of a line, which git strips as a comment"
+  fi
+}
+row_no_comment_start
+# ...and the comment string is the configured one, not a literal '#'.
+row_no_comment_start_custom() {
+  printf '[core]\n\tcommentChar = ";"\n' > "$tmp/gitconfig-semi"
+  GIT_CONFIG_GLOBAL="$tmp/gitconfig-semi" fold_msg "a break before a ;-word under commentChar ';'" "Add the hook
+
+$(pad "$WRAP" 'This body line') ;4242 ticket here." 1
+  if grep -q '^;' "$tmp/msg"; then
+    note_fail "a fold put ';4242' at the start of a line under commentChar ';', which git strips as a comment"
+  fi
+}
+row_no_comment_start_custom
+
+# The folded text reaches the message through a temp file beside it and a
+# rename: a write that cannot complete leaves the message whole and is
+# rejected, and a fold that succeeds leaves no temp file behind.
+row_fold_leaves_no_temp() {
+  fold_msg "a fold's temp file" "Add the hook
+
+$(pad 80 'A long body line')" 1
+  if compgen -G "$tmp/msg.fold.*" >/dev/null; then
+    note_fail "a fold left its temp file beside the message"
+    rm -f "$tmp"/msg.fold.*
+  fi
+}
+row_fold_leaves_no_temp
+skipped=0
+row_unwritable_dir() {
+  local ro="$tmp/ro" m
+  m="Add the hook
+
+$(pad 80 'A long body line')"
+  mkdir -p "$ro"; printf '%s' "$m" > "$ro/msg"; chmod 555 "$ro"
+  if [ -w "$ro" ]; then
+    chmod 755 "$ro"
+    echo "SELFTEST SKIP: a read-only directory is writable here (root, or a filesystem ignoring modes) — the failed-write row did not run"
+    skipped=1; return
+  fi
+  out="$(cd "$work" && bash "$hook" "$ro/msg" 2>&1)"; rc=$?
+  chmod 755 "$ro"
+  [ "$rc" -ne 0 ] || note_fail "a fold that could not be written was allowed — the long line must still be rejected"
+  printf '%s\n' "$out" | grep -qF "could not write the folded message back" ||
+    note_fail "a fold that could not be written was not named"
+  [ "$(cat "$ro/msg")" = "$m" ] || note_fail "a fold that could not be written changed the message file"
+  rm -rf "$ro"
+}
+row_unwritable_dir
 
 # --- the exemptions ---------------------------------------------------------
 
@@ -544,8 +680,71 @@ Nothing checked commit message shape, so a style miss surfaced only in
 review. The hook rejects at the moment of the mistake and names the
 reference, so the block is also the load instruction."
 
+# --- mutation table -----------------------------------------------------------
+# Each mutant edits a copy of the hook in one place and reruns the row that
+# grades that place; the row must go red, or it grades nothing. Narrowing
+# (an alternative dropped) and widening (a guard loosened) both appear.
+# mutant <label> <find> <replace> <row command...>
+mutant() {
+  local label="$1" from="$2" to="$3" real_hook="$hook" saved_fail="$fail" mfail
+  shift 3
+  if ! python3 - "$real_hook" "$tmp/mutant-commit-msg" "$from" "$to" <<'PY'
+import sys
+src, dst, a, b = sys.argv[1:5]
+text = open(src).read()
+if a not in text:
+    sys.exit(1)
+open(dst, "w").write(text.replace(a, b, 1))
+PY
+  then
+    note_fail "mutant '$label': its pattern is not in the hook, so the row it guards is ungraded"
+    return
+  fi
+  fail=0; hook="$tmp/mutant-commit-msg"
+  "$@" >/dev/null
+  mfail=$fail; fail=$saved_fail; hook="$real_hook"
+  [ "$mfail" -eq 1 ] || note_fail "mutant '$label' survived — the row it targets stayed green"
+}
+mutant "skip runs without squash!" 'fixup!*|squash!*|amend!*' 'fixup!*|amend!*' \
+  allow_unfolded "squash! subject over a long body line" "squash! Add the hook
+
+$(pad 90 'A long body line')"
+mutant "fence rule drops ~~~" "grep -qE '^[[:space:]]*(\`\`\`|~~~)'" "grep -qE '^[[:space:]]*\`\`\`'" \
+  reject_msg "tilde code fence" "Add the hook
+
+~~~
+git commit
+~~~" "code fence"
+mutant "fence drops ~~~" '(```|~~~)' '(```)' \
+  reject_unfolded "line inside a ~~~ fence" "Add the hook
+
+~~~
+$(pad 80 'a fenced line')
+~~~"
+mutant "fence closes on any marker" 'elif [ "$in_fence" = "${BASH_REMATCH[1]}" ]; then' 'elif :; then' row_nested_fence
+mutant "quote drops >" "re_quote='^[>|]'" "re_quote='^[|]'" \
+  reject_unfolded "> quote line" "Add the hook
+
+> $(pad 80 'a quoted line')"
+mutant "quote drops |" "re_quote='^[>|]'" "re_quote='^[>]'" \
+  reject_unfolded "| table row" "Add the hook
+
+| $(pad 80 'a table cell') |"
+mutant "comment-word glue off" '[[ "$w" == "$comment_char"* ]]' 'false' row_no_comment_start
+mutant "glue reads a literal #" '[[ "$w" == "$comment_char"* ]]' '[[ "$w" == "#"* ]]' row_no_comment_start_custom
+mutant "write in place, no temp file" \
+  "if fold_tmp=\"\$(mktemp \"\$msg_file.fold.XXXXXX\" 2>/dev/null)\" && [ -f \"\$fold_tmp\" ] &&
+     printf '%s\\n' \"\${out[@]}\" > \"\$fold_tmp\" && mv -f \"\$fold_tmp\" \"\$msg_file\"; then" \
+  "if printf '%s\\n' \"\${out[@]}\" > \"\$msg_file\"; then" \
+  row_unwritable_dir
+mutant "temp file copied, not moved" 'mv -f "$fold_tmp" "$msg_file"' 'cp "$fold_tmp" "$msg_file"' row_fold_leaves_no_temp
+
 if [ "$fail" -ne 0 ]; then
   echo "SELFTEST FAIL: commit-msg self-test failed."
   exit 1
+fi
+if [ "$skipped" -ne 0 ]; then
+  echo "SELFTEST PARTIAL: commit-msg self-test clean except the SKIP line above."
+  exit 2
 fi
 echo "OK: commit-msg self-test clean — every bad message rejected, every exempt shape allowed."

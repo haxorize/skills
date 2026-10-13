@@ -10,7 +10,7 @@ set -uo pipefail
 #
 # Gate map: lint-skills.sh when a staged path is under src/, global/, .claude/skills/, scripts/ or docs/, or is README.md, DOMAIN.md or CLAUDE.md
 # Gate map: lint-adrs.sh when a staged path is under docs/adr/
-# Gate map: the -selftest.sh beside a staged scripts/*.sh, scripts/git-hooks/ hook, or src/*/scripts/*.sh or *.py, when it exists — a staged file under src/*/scripts/<stem>-fixtures/ queues <stem>-selftest.sh — every selftest when any scripts/*-lib.sh is staged — each once; a red one blocks
+# Gate map: the -selftest.sh beside a staged scripts/*.sh, scripts/git-hooks/ hook, src/*/scripts/*.sh or *.py, or global/hooks/*.sh or *.py, when it exists — a staged file under src/*/scripts/<stem>-fixtures/ queues <stem>-selftest.sh — a staged global/hooks/ file with no selftest of its own (a library such as hook-lib.sh) queues every global/hooks/ selftest whose own file or hook names it — a staged src/*/scripts/ script also queues every global/hooks/ selftest whose own file or hook names its path — every selftest under scripts/ and src/*/scripts/ when any scripts/*-lib.sh is staged — each once; a red one blocks
 # Gate map: a stderr notice, never a block, when a staged src/<skill>/ path has a row in docs/lineage.md's FIRST table — diff the upstream before a material edit; a skill listed only in the nothing-to-diff table gets no notice
 #
 # The selftest map is derived, never kept: the pairing is scripts/README.md's
@@ -23,7 +23,21 @@ set -uo pipefail
 # staged src/<skill>/scripts/foo-fixtures/... changes what foo-selftest.sh
 # grades, so it queues that selftest. A staged
 # scripts/*-lib.sh runs every selftest in all three places: a library cannot
-# know which scripts source it, so the safe queue is all of them. Each queued selftest runs once however many staged paths point at it,
+# know which scripts source it, so the safe queue is all of them.
+#
+# The Claude Code hooks under global/hooks/ pair the same way (foo.sh and
+# foo.py both to foo-selftest.sh). A staged file there with no selftest of its
+# own is read as a library — hook-lib.sh, hook-lib.py, global/hooks/
+# selftest-lib.sh, or whatever lib lands next — and queues each hook selftest
+# whose own file, or whose hook's .sh or .py, carries the library's stem
+# followed by a dot (`hook-lib.` covers both halves of a .sh/.py pair). The
+# match is by name rather than by a parse of `.` lines, so a hook that only
+# mentions a library in a comment is queued too: over-queuing costs seconds,
+# under-queuing ships a broken tokenizer. A staged src/*/scripts/ script also
+# queues every hook selftest naming its repo path, which is how a staged
+# src/review-changes/scripts/tree-stamp.sh reaches review-receipt-selftest.sh.
+#
+# Each queued selftest runs once however many staged paths point at it,
 # through the same wrapper as the linters, so a 127 or a file that vanished
 # is named and any non-zero status blocks.
 #
@@ -47,8 +61,10 @@ set -uo pipefail
 # The linters read the WORKING TREE, not the index: an unstaged edit in a
 # linted file is checked too, and a violation staged and then fixed only in
 # the working tree passes. Partial staging is the case this misses; it is
-# named here rather than solved, because both linters walk directories and
-# take no file list.
+# named here rather than solved, because both linters read files from the
+# working tree — lint-skills.sh's --files narrows which files it reads, not
+# where it reads them — so grading the index would mean checking the staged
+# blobs out first.
 #
 # Any non-zero status from a linter blocks — its 2 (LINT_ROOT not a directory)
 # and 3 (usage) as much as its 1 — since a linter that did not run is not a
@@ -112,6 +128,21 @@ queue_selftest() {
   case "$selftest_queue" in *" $1 "*) return ;; esac
   selftest_queue="$selftest_queue$1 "
 }
+# queue_hook_selftests_naming <fixed string>: every global/hooks/*-selftest.sh
+# whose own file, or whose hook <stem>.sh / <stem>.py, carries the string.
+queue_hook_selftests_naming() {
+  local st stem f
+  for st in "$repo_root"/global/hooks/*-selftest.sh; do
+    [ -f "$st" ] || continue
+    stem="${st%-selftest.sh}"
+    for f in "$st" "$stem.sh" "$stem.py"; do
+      if [ -f "$f" ] && grep -qF -- "$1" "$f"; then
+        queue_selftest "${st#"$repo_root"/}"
+        break
+      fi
+    done
+  done
+}
 # Skills already noticed for lineage, so two staged files under one skill
 # print one line.
 lineage_seen=" "
@@ -156,9 +187,22 @@ while IFS= read -r -d '' p; do
       [ -f "$repo_root/$st" ] && queue_selftest "$st" ;;
     src/*/scripts/*/*) ;;
     src/*/scripts/*.sh)
-      [ -f "$repo_root/${p%.sh}-selftest.sh" ] && queue_selftest "${p%.sh}-selftest.sh" ;;
+      [ -f "$repo_root/${p%.sh}-selftest.sh" ] && queue_selftest "${p%.sh}-selftest.sh"
+      queue_hook_selftests_naming "$p" ;;
     src/*/scripts/*.py)
-      [ -f "$repo_root/${p%.py}-selftest.sh" ] && queue_selftest "${p%.py}-selftest.sh" ;;
+      [ -f "$repo_root/${p%.py}-selftest.sh" ] && queue_selftest "${p%.py}-selftest.sh"
+      queue_hook_selftests_naming "$p" ;;
+    # The Claude Code hooks (see the header): a selftest queues nothing extra,
+    # a subdirectory is not a hook, a hook queues its own selftest, and a file
+    # with none is a library, queueing every hook selftest that names it.
+    global/hooks/*-selftest.sh | global/hooks/*/*) ;;
+    global/hooks/*)
+      stem="${p%.*}"
+      if [ -f "$repo_root/$stem-selftest.sh" ]; then
+        queue_selftest "$stem-selftest.sh"
+      else
+        queue_hook_selftests_naming "${stem#global/hooks/}."
+      fi ;;
   esac
   # The lineage notice (see the header): one stderr line per staged skill
   # with a row, and never a change to the exit status.

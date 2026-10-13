@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Conventions for this tree: scripts/README.md
-# Prove scripts/git-hooks/post-merge still runs every gate, reads all three
+# Prove scripts/git-hooks/post-merge still runs every gate, reads all four
 # statuses, and reaches the re-hoist whatever the gates return.
 #
 # A post-merge hook cannot abort the merge and this one discards every gate's
@@ -10,6 +10,8 @@
 # git repository holding fake gates with known exit codes, runs the hook with
 # that repository as its toplevel, and grades the lines: a gate exiting 1
 # draws the failed WARN, a gate exiting 2 draws the exit-2 WARN, a gate exiting
+# 4 draws the never-ran WARN and not the failed one (with a mutant of the hook
+# whose exit-4 arm is cut required to red that row), a gate exiting
 # 0 draws nothing, a hook whose selftest is missing draws the gate-missing
 # WARN, every gate after a failing one still runs (each fake gate leaves a
 # marker file), and the re-hoist line and the fake install.sh both run last.
@@ -53,6 +55,7 @@ gate() {
 gate scripts/lint-skills.sh 1                     # first in the roster, and it fails
 gate scripts/lint-adrs.sh 0
 gate scripts/partial-selftest.sh 2                # derived from scripts/*-selftest.sh
+gate scripts/neverran-selftest.sh 4               # the taxonomy's never-ran
 gate scripts/clean-selftest.sh 0
 gate scripts/git-hooks/commit-msg-selftest.sh 0   # derived from the git-hooks directory
 printf '#!/usr/bin/env bash\n# Install note: a fake PreToolUse hook whose selftest is missing.\nexit 0\n' > "$fake/global/hooks/orphan.sh"
@@ -64,14 +67,42 @@ out=$( cd "$fake" && bash "$hook" 2>&1 ); rc=$?
 expect_rc "the hook over a fake repo whose first gate fails" 0 "$rc"
 expect_in "$out" "a gate exiting 1 did not draw the failed WARN" "post-merge: WARN scripts/lint-skills.sh failed"
 expect_in "$out" "a gate exiting 2 did not draw the exit-2 WARN" "post-merge: WARN scripts/partial-selftest.sh exited 2"
+# row_never_ran <output>: a gate exiting 4 draws the never-ran WARN and not
+# the failed one — a temp-less run is no verdict, not a red gate.
+row_never_ran() {
+  expect_in "$1" "a gate exiting 4 did not draw the never-ran WARN" "post-merge: WARN scripts/neverran-selftest.sh exited 4 — it never ran"
+  reject_in "$1" "a gate exiting 4 was reported as failed" "WARN scripts/neverran-selftest.sh failed"
+}
+row_never_ran "$out"
 reject_in "$out" "a gate exiting 0 drew a WARN" "WARN scripts/lint-adrs.sh"
 reject_in "$out" "a gate exiting 0 drew a WARN" "WARN scripts/clean-selftest.sh"
 expect_in "$out" "a hook with no selftest did not draw the gate-missing WARN" "post-merge: WARN gate missing: global/hooks/orphan-selftest.sh"
 expect_in "$out" "the re-hoist line was not printed — the hook died before it" "post-merge: re-hoisting skills"
-for m in lint-skills.sh lint-adrs.sh partial-selftest.sh clean-selftest.sh commit-msg-selftest.sh paired-selftest.sh install.sh; do
+for m in lint-skills.sh lint-adrs.sh partial-selftest.sh neverran-selftest.sh clean-selftest.sh commit-msg-selftest.sh paired-selftest.sh install.sh; do
   [ -f "$fake/marks/$m" ] || selftest_fail "$m never ran — the hook stopped before it (a failing gate ended the loop, or the roster no longer derives it)"
 done
 reject_in "$out" "the hook ran against the real repo's gates" "$repo_root/scripts"
+
+# Mutation: a copy of the hook with the exit-4 arm cut must red the never-ran
+# row, or that row grades nothing.
+if python3 - "$hook" "$tmp/mutant-post-merge" <<'PY'
+import sys
+src, dst = sys.argv[1:3]
+text = open(src).read()
+a = '    elif [ "$gate_status" -eq 4 ]; then\n'
+if a not in text:
+    sys.exit(1)
+open(dst, "w").write(text.replace(a, '    elif false; then\n', 1))
+PY
+then
+  mout=$( cd "$fake" && bash "$tmp/mutant-post-merge" 2>&1 )
+  saved_fail=$fail; fail=0
+  row_never_ran "$mout" >/dev/null
+  mfail=$fail; fail=$saved_fail
+  [ "$mfail" -eq 1 ] || selftest_fail "mutant 'exit-4 arm cut' survived — the never-ran row stayed green"
+else
+  selftest_fail "mutant 'exit-4 arm cut': its pattern is not in the hook, so the never-ran row is ungraded"
+fi
 
 # The pulled-hook NOTE names a change under either hook directory: two commits,
 # ORIG_HEAD set to the first as a merge would leave it, one file edited under
@@ -93,5 +124,5 @@ expect_in "$note_line" "the NOTE did not name the scripts/git-hooks/ file" "scri
 reject_in "$note_line" "the NOTE named a file outside the two hook directories" "scripts/lint-adrs.sh"
 
 selftest_close \
-  "post-merge self-test clean — every gate ran whatever the one before it returned, all three statuses drew their line, the derived rosters reached a dropped-in selftest and a hook with none, and the re-hoist ran last." \
+  "post-merge self-test clean — every gate ran whatever the one before it returned, every non-zero status drew its own line, the derived rosters reached a dropped-in selftest and a hook with none, and the re-hoist ran last." \
   "post-merge self-test ran nothing; see the SKIP line above."

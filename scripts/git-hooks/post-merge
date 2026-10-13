@@ -85,8 +85,13 @@ for gate in $gates; do
     # branch unexercised (root, or a filesystem that ignores modes), or a run
     # with nothing to check — and this loop discards output, so the status is
     # the only thing that can carry either; the line names both.
+    # 4 is the taxonomy's never-ran (scripts/README.md): no usable temp
+    # directory, or a broken script or environment. It is no verdict on the
+    # tree, so it is named apart from a red gate.
     if [ "$gate_status" -eq 2 ]; then
       echo "post-merge: WARN $gate exited 2 — a partial (some checks went unexercised) or nothing checked; run 'bash $gate' to see which" >&2
+    elif [ "$gate_status" -eq 4 ]; then
+      echo "post-merge: WARN $gate exited 4 — it never ran (no usable temp directory, or a broken script or environment), so it is no verdict; run 'bash $gate' to see why" >&2
     elif [ "$gate_status" -ne 0 ]; then
       echo "post-merge: WARN $gate failed — run 'bash $gate' to see why" >&2
     fi

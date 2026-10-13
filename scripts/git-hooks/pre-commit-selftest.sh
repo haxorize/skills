@@ -44,7 +44,14 @@
 # staged src/*/scripts/ .py or .sh runs its <stem>-selftest.sh, a file in its
 # <stem>-fixtures/ runs the same one, and another subdirectory, an unpaired
 # script or a staged bundled selftest runs nothing extra, one selftest queued via two staged paths runs
-# once (so dropping the dedupe reds here), and a red selftest blocks. And the
+# once (so dropping the dedupe reds here), and a red selftest blocks. The
+# global/hooks/ arm: a staged hook .sh, and the .py half of a pair, runs its
+# selftest; a library (no selftest of its own) runs each hook selftest whose
+# own file, hook .sh or hook .py names its stem, and no other; a staged
+# src/*/scripts/ script runs a hook selftest naming its path; a staged hook
+# selftest or a file below global/hooks/ runs nothing extra; a red one
+# blocks — with a mutation table requiring each of those rows to red under a
+# one-place edit of a copy of the hook. And the
 # lineage notice: a staged src/<skill>/ path with a backticked first-cell row
 # in docs/lineage.md prints the notice — once per skill even for two staged
 # files, and on the second name of a two-name cell — a skill with no row
@@ -227,6 +234,51 @@ expect_rc "a bundled selftest queued via two staged paths (green gates)" 0 "$rc"
 [ "$ran" = "lint-skills tool-selftest " ] || selftest_fail "a bundled selftest queued via two staged paths: expected 'lint-skills tool-selftest ' (once), ran '$ran'"
 stage "src/bundle/scripts/tool.py"; run 0 0 1
 expect_rc "a red bundled selftest blocks" 1 "$rc"
+
+# The Claude Code hooks under global/hooks/. Two stub hooks with stub
+# selftests: hk.sh (names fake-lib.sh) beside hk-selftest.sh (names
+# selflib.sh), and the .sh/.py pair pyhk (pyhk.py names other-lib.py) beside
+# pyhk-selftest.sh (names src/bundle/scripts/stamp.sh). The names are what the
+# derived library rule reads, so these files are added as written, never
+# through stage(), which would overwrite them.
+mkdir -p "$work/global/hooks"
+printf '# sources fake-lib.sh\n' > "$work/global/hooks/hk.sh"
+printf '# reads other-lib.py\n' > "$work/global/hooks/pyhk.py"
+printf '# wraps pyhk.py\n' > "$work/global/hooks/pyhk.sh"
+cat > "$work/global/hooks/hk-selftest.sh" <<'STUB'
+# sources selflib.sh
+echo hk-selftest >> "$RAN"; exit "${SELFTEST_RC:-0}"
+STUB
+cat > "$work/global/hooks/pyhk-selftest.sh" <<'STUB'
+# runs src/bundle/scripts/stamp.sh
+echo pyhk-selftest >> "$RAN"; exit "${SELFTEST_RC:-0}"
+STUB
+# stage_existing <path>: stage a file as it stands, on a fresh index.
+stage_existing() { git -C "$work" reset -q 2>/dev/null; git -C "$work" add -- "$1"; }
+# expect_existing <label> <path> <expected ran-list>: expect_run without the
+# overwrite.
+expect_existing() {
+  stage_existing "$2"; run
+  expect_rc "$1 (green linters)" 0 "$rc"
+  [ "$ran" = "$3" ] || selftest_fail "$1: staged $2, expected to run '$3', ran '$ran'"
+}
+row_hook_sh()   { expect_existing "a staged global/hooks/ hook" "global/hooks/hk.sh" "lint-skills hk-selftest "; }
+row_hook_py()   { expect_existing "a staged global/hooks/ .py beside its .sh" "global/hooks/pyhk.py" "lint-skills pyhk-selftest "; }
+# A library: no selftest of its own, so every hook selftest naming it runs,
+# and only those. The .py row reds a rule that matched the staged file's
+# whole name rather than its stem, since hk.sh names fake-lib.sh alone.
+row_lib_sh()    { expect_run "a staged global/hooks/ library" "global/hooks/fake-lib.sh" "lint-skills hk-selftest "; }
+row_lib_py()    { expect_run "a staged global/hooks/ library's .py half" "global/hooks/fake-lib.py" "lint-skills hk-selftest "; }
+row_lib_in_py() { expect_run "a library named only by a hook's .py" "global/hooks/other-lib.py" "lint-skills pyhk-selftest "; }
+row_lib_in_st() { expect_run "a library named only by a hook selftest" "global/hooks/selflib.sh" "lint-skills hk-selftest "; }
+# A skill script a hook selftest runs (tree-stamp.sh and review-receipt's
+# selftest, in the real tree) queues that selftest.
+row_src_named() { expect_run "a src/*/scripts/ script a hook selftest names" "src/bundle/scripts/stamp.sh" "lint-skills pyhk-selftest "; }
+row_hook_sh; row_hook_py; row_lib_sh; row_lib_py; row_lib_in_py; row_lib_in_st; row_src_named
+expect_existing "a staged global/hooks/ selftest" "global/hooks/hk-selftest.sh" "lint-skills "
+expect_run "a staged file below global/hooks/" "global/hooks/sub/notes.md" "lint-skills "
+stage_existing "global/hooks/hk.sh"; run 0 0 1
+expect_rc "a red global/hooks/ selftest blocks" 1 "$rc"
 stage "scripts/foo.sh"; run 0 0 1
 expect_rc "a red selftest blocks" 1 "$rc"
 expect_in "$out" "the red-selftest block did not carry the advisory line" "pre-commit: FAIL"
@@ -411,5 +463,36 @@ expect_in "$out" "a failed staged-list mktemp was not named" "could not create a
 # The pointer the advisory names has to exist, or the block is not a load
 # instruction.
 [ -f "$repo_root/scripts/README.md" ] || selftest_fail "the advisory points at scripts/README.md, which does not exist"
+
+# --- mutation table: the global/hooks/ selftest map ----------------------------
+# Each mutant edits a copy of the hook in one place and reruns the row that
+# grades that place; the row must go red, or it grades nothing.
+# mutant <label> <find> <replace> <row function>
+mutant() {
+  local label="$1" from="$2" to="$3" real_hook="$hook" saved_fail="$fail" mfail
+  if ! python3 - "$real_hook" "$tmp/mutant-pre-commit" "$from" "$to" <<'PY'
+import sys
+src, dst, a, b = sys.argv[1:5]
+text = open(src).read()
+if a not in text:
+    sys.exit(1)
+open(dst, "w").write(text.replace(a, b, 1))
+PY
+  then
+    selftest_fail "mutant '$label': its pattern is not in the hook, so the row it guards is ungraded"
+    return
+  fi
+  fail=0; hook="$tmp/mutant-pre-commit"
+  "$4" >/dev/null
+  mfail=$fail; fail=$saved_fail; hook="$real_hook"
+  [ "$mfail" -eq 1 ] || selftest_fail "mutant '$label' survived — the row $4 stayed green"
+}
+mutant "hook pairing dropped"           'queue_selftest "$stem-selftest.sh"' ':' row_hook_sh
+mutant "stem cut only off .sh"          'stem="${p%.*}"' 'stem="${p%.sh}"' row_hook_py
+mutant "library matched by whole name"  'queue_hook_selftests_naming "${stem#global/hooks/}."' 'queue_hook_selftests_naming "${p#global/hooks/}"' row_lib_py
+mutant "library queues every selftest"  'if [ -f "$f" ] && grep -qF -- "$1" "$f"; then' 'if [ -f "$f" ]; then' row_lib_sh
+mutant "hook .py not read for a name"   'for f in "$st" "$stem.sh" "$stem.py"; do' 'for f in "$st" "$stem.sh"; do' row_lib_in_py
+mutant "selftest not read for a name"   'for f in "$st" "$stem.sh" "$stem.py"; do' 'for f in "$stem.sh" "$stem.py"; do' row_lib_in_st
+mutant "src script names no hook"       '      queue_hook_selftests_naming "$p" ;;' '      ;;' row_src_named
 
 selftest_close "pre-commit self-test clean — every mapped class ran its linter under every index status, unmapped paths ran none, red blocked, green allowed, a merge in progress or an unreadable index took its own branch, the selftest map ran each staged pairing once and blocked on red, the staged-list temp file honoured a writable TMPDIR and blocked when its mktemp failed, and the lineage notice printed once per ported skill, stayed silent for the nothing-to-diff table, and moved the exit status in neither direction." "pre-commit self-test PARTIAL"
