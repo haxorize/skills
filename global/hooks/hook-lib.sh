@@ -1,5 +1,6 @@
 # shellcheck shell=bash   # sourced, never executed: no shebang to read the dialect from
 # hook-lib.sh — sourced by the PreToolUse hooks beside it. Not a hook.
+# context-nudge.sh and repeat-failure.sh source it for hook_allow alone.
 #
 # A hook sets `hook_name`, sources this file, then:
 #   hook_read_payload   — reads the Bash tool payload from stdin into `cmd`
