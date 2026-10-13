@@ -17,8 +17,11 @@ set -uo pipefail
 # Those need a reader. A green run here is a claim about shape, never about
 # prose — do not prune commit-style.md against it.
 #
-# Blocks on the exact rules. Warns on the imperative-opener check, which is a
-# wordlist heuristic and will not always be right.
+# Blocks on the exact rules, with one repair: body prose past the wrap cap is
+# folded in place (githooks(5) lets this hook edit its message file) and the
+# hook prints how many lines it folded; what it cannot fold is still rejected.
+# Warns on the imperative-opener check, which is a wordlist heuristic and will
+# not always be right.
 #
 # Skipped entirely: a commit git is making for a merge, revert, or cherry-pick
 # in progress (detected from the git state, not from the subject text), a
@@ -101,6 +104,107 @@ done
 # one case where this hook sees less than git commits.
 comment_char="$(git config --get-regexp '^core\.comment(char|string)$' 2>/dev/null | awk '{ v = $2 } END { print v }' || true)"
 case "$comment_char" in ''|auto) comment_char='#' ;; esac
+
+# --- Body fold -------------------------------------------------------------
+
+# The wrap cap is the one rule a hook can repair rather than reject: re-breaking
+# a paragraph at the cap changes whitespace only, never a word or its order. A
+# run of plain prose lines holding a line past the cap is re-broken in place,
+# greedily at the cap. Left alone, so the wrap check below still sees them: the
+# subject, git's comments, a verbose diff from its first diff line down, any
+# paragraph holding a line git parses as a trailer, indented and fenced lines,
+# list items, headings, and a line with no space at or before the cap (a URL or
+# other unbreakable token).
+#
+# A trailer is what git says is a trailer, not a pattern that guesses: an older
+# test matched any "Word: " opener, so an ordinary paragraph beginning "Note: "
+# or "Why: " was silently exempt from the wrap rule.
+trailers="$(git interpret-trailers --parse < "$msg_file" 2>/dev/null || true)"
+nl=$'\n'
+re_fence='^[[:space:]]*```'
+re_list='^([-*+]|[0-9]+[.)])[[:space:]]'
+re_heading='^#{1,6}[[:space:]]'
+
+is_trailer() {
+  case "$nl$trailers$nl" in *"$nl$1$nl"*) return 0 ;; esac
+  return 1
+}
+# Over the cap with a space at or before it, so a break point exists. No
+# pipeline: under pipefail a SIGPIPE from an early grep exit would misread.
+over_cap_breakable() {
+  [ ${#1} -gt "$WRAP" ] || return 1
+  case "${1:0:$((WRAP + 1))}" in *' '*) return 0 ;; esac
+  return 1
+}
+
+raw=() kind=() para=()
+p=0 seen_subject=0 in_fence=0 below_cut=0 protected=" "
+while IFS= read -r line || [ -n "$line" ]; do
+  raw+=("$line")
+  l="${line%$'\r'}"
+  k=keep
+  if [ "$below_cut" -eq 1 ]; then
+    :
+  elif [[ "$l" == "diff --git "* ]]; then
+    below_cut=1
+  elif [[ "$l" == "$comment_char"* ]]; then
+    :
+  elif [ -z "${l//[[:space:]]/}" ]; then
+    k=blank; p=$((p + 1))
+  elif [ "$seen_subject" -eq 0 ]; then
+    seen_subject=1
+  elif [[ "$l" =~ $re_fence ]]; then
+    in_fence=$((1 - in_fence))
+  elif [ "$in_fence" -eq 1 ] || [[ "$l" =~ ^[[:space:]] || "$l" =~ $re_list || "$l" =~ $re_heading ]]; then
+    :
+  else
+    k=prose
+    is_trailer "$l" && protected="$protected$p "
+  fi
+  kind+=("$k"); para+=("$p")
+done < "$msg_file"
+
+folded=0
+out=()
+i=0
+while [ "$i" -lt "${#raw[@]}" ]; do
+  if [ "${kind[$i]}" != prose ] || [[ "$protected" == *" ${para[$i]} "* ]]; then
+    out+=("${raw[$i]}"); i=$((i + 1)); continue
+  fi
+  j=$i long=0 joined=""
+  while [ "$j" -lt "${#raw[@]}" ] && [ "${kind[$j]}" = prose ]; do
+    l="${raw[$j]%$'\r'}"
+    over_cap_breakable "$l" && long=$((long + 1))
+    joined="$joined $l"
+    j=$((j + 1))
+  done
+  if [ "$long" -eq 0 ]; then
+    while [ "$i" -lt "$j" ]; do out+=("${raw[$i]}"); i=$((i + 1)); done
+    continue
+  fi
+  folded=$((folded + long))
+  read -ra words <<< "$joined"
+  cur=""
+  for w in "${words[@]}"; do
+    if [ -z "$cur" ]; then cur="$w"
+    elif [ $(( ${#cur} + 1 + ${#w} )) -le "$WRAP" ]; then cur="$cur $w"
+    else out+=("$cur"); cur="$w"
+    fi
+  done
+  out+=("$cur")
+  i=$j
+done
+
+# Written back only when something folded, so an untouched message keeps its
+# exact bytes. A failed write leaves the long lines for the check below to
+# reject: this hook fails closed (ADR-0067).
+if [ "$folded" -gt 0 ]; then
+  if printf '%s\n' "${out[@]}" > "$msg_file"; then
+    echo "commit-msg: folded $folded body lines past $WRAP columns" >&2
+  else
+    echo "commit-msg: could not write the folded message back to $msg_file" >&2
+  fi
+fi
 
 # A CR is stripped here so it cannot survive into the subject, where it would
 # defeat the trailing-period test and count against the cap.
@@ -193,28 +297,14 @@ if [ -n "$(printf '%s' "$body" | tr -d '[:space:]')" ]; then
     fail=1
   fi
 
-  # A trailer is exempt from the wrap rule because it cannot be wrapped. What
-  # counts as one is git's decision, not a pattern that guesses: the older test
-  # matched any "Word: " opener, so an ordinary paragraph beginning "Note: " or
-  # "Why: " silently turned the wrap rule off for that line.
-  trailers="$(git interpret-trailers --parse < "$msg_file" 2>/dev/null || true)"
-
-  # Wrap at the cap. A trailer, and a line with no space at or before the cap
-  # (an unbreakable URL or token), cannot wrap and is exempt. Every offending
-  # line is reported, so one commit attempt shows the whole list.
-  nl=$'\n'
+  # Wrap at the cap, over what the fold above left. A trailer, and a line with
+  # no space at or before the cap (an unbreakable URL or token), cannot wrap and
+  # is exempt. Every offending line is reported, so one commit attempt shows
+  # the whole list.
   while IFS= read -r line; do
-    [ ${#line} -le "$WRAP" ] && continue
-    case "$nl$trailers$nl" in
-      *"$nl$line$nl"*) continue ;;
-    esac
-    # No pipeline here: under pipefail a SIGPIPE from an early grep exit would
-    # read as "exempt" and skip the line silently.
-    case "${line:0:$((WRAP + 1))}" in
-      *' '*) ;;
-      *) continue ;;
-    esac
-    echo "commit-msg: FAIL body line exceeds $WRAP columns: ${line:0:60}… — $STYLE $BODY_ANCHOR" >&2
+    is_trailer "$line" && continue
+    over_cap_breakable "$line" || continue
+    echo "commit-msg: FAIL body line exceeds $WRAP columns and is not prose the hook folds (a list item, an indented or fenced line, or the trailer paragraph): ${line:0:60}… — $STYLE $BODY_ANCHOR" >&2
     fail=1
   done <<< "$body"
 fi

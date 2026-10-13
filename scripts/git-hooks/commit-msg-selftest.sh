@@ -25,7 +25,9 @@
 # Covered here: the subject rules (the cap and its boundary, trailing period,
 # Conventional Commits prefix (one row per type) and every filename of the config opt-out, the
 # imperative-opener warning), the body rules (blank separator, code fence,
-# markdown heading, the wrap cap and its boundary), the exemptions (an
+# markdown heading, the wrap cap and its boundary), the fold (prose re-broken
+# with its words intact; list items, indented lines and the trailer paragraph
+# left alone and still rejected), the exemptions (an
 # in-progress merge/revert/cherry-pick, git's generated subject prefixes,
 # trailers, an unbreakable long token, git's own comments under each of the two
 # config names that set the comment string alone, under both names in each
@@ -114,6 +116,41 @@ warn_msg() { # warn_msg <label> <message> <expected substring>
 
 note_fail() { echo "SELFTEST FAIL: $1"; fail=1; }
 
+# allow_unfolded <label> <message> [cwd]: allowed, nothing folded, and the
+# message file left byte-for-byte as written. A comment, trailer, or diff line
+# the fold wrongly took for prose would be re-broken and pass a plain allow_msg.
+allow_unfolded() {
+  allow_msg "$@"
+  if printf '%s\n' "$out" | grep -qF "folded"; then
+    note_fail "the $1 shape was folded — the fold must leave it alone"
+  elif [ "$(cat "$tmp/msg")" != "$2" ]; then
+    note_fail "the $1 message file changed with no fold reported"
+  fi
+}
+
+# fold_msg <label> <message> <lines expected folded>: allowed, the count
+# reported, every breakable body line inside the cap afterwards, and the same
+# words in the same order — the fold may move whitespace and nothing else.
+fold_msg() {
+  run "$2"
+  if [ "$rc" -ne 0 ]; then
+    note_fail "the $1 message was rejected — its over-long prose must fold, not block"
+    echo "  got: $out"
+  elif ! printf '%s\n' "$out" | grep -qF "commit-msg: folded $3 body lines"; then
+    note_fail "the $1 message did not report 'folded $3 body lines'"
+    echo "  got: $out"
+  fi
+  if [ "$(printf '%s' "$2" | tr -s ' \n' '  ')" != "$(tr -s ' \n' '  ' < "$tmp/msg" | sed 's/ $//')" ]; then
+    note_fail "the $1 fold changed a word or its order, not only whitespace"
+  fi
+  while IFS= read -r line; do
+    [ "${#line}" -le "$WRAP" ] && continue
+    case "${line:0:$((WRAP + 1))}" in *' '*) ;; *) continue ;; esac
+    case "$line" in Claude-Session:*|Co-Authored-By:*) continue ;; esac
+    note_fail "the $1 fold left a breakable line over the cap: ${line:0:40}…"
+  done < "$tmp/msg"
+}
+
 # --- the subject cap, and both sides of its boundary ------------------------
 
 reject_msg "subject over the cap" "$(pad $((WRAP + 1)) 'Add a subject line')"  "over the $WRAP hard cap"
@@ -195,41 +232,77 @@ allow_msg "hash mid-line, not a heading" "Add the hook
 
 This fixes the parser bug, not issue ## 12, which stays open."
 
-# --- the wrap cap, and both sides of its boundary ---------------------------
+# --- the wrap cap: prose folds, the rest still rejects -----------------------
 
-reject_msg "body over the wrap cap" "Add the hook
+fold_msg  "body one over the wrap cap" "Add the hook
 
-$(pad $((WRAP + 1)) 'This body line')"                                "exceeds $WRAP columns"
-allow_msg  "body exactly at the wrap cap" "Add the hook
+$(pad $((WRAP + 1)) 'This body line')" 1
+allow_unfolded "body exactly at the wrap cap" "Add the hook
 
 $(pad "$WRAP" 'This body line')"
 
-# Every offending line is named, not only the first: one commit attempt has to
-# show the whole list.
-run "Add the hook
+# Every over-long line is counted, and a paragraph is re-broken as a whole.
+fold_msg "two over-long lines in one paragraph" "Add the hook
 
 $(pad $((WRAP + 1)) 'The first body line')
-$(pad $((WRAP + 1)) 'The second body line')"
-if [ "$(printf '%s\n' "$out" | grep -c "exceeds $WRAP columns")" -ne 2 ]; then
-  note_fail "the wrap rule reported only some of the over-long lines — every one must be named"
+$(pad $((WRAP + 1)) 'The second body line')" 2
+fold_msg "two paragraphs, one over-long line each" "Add the hook
+
+$(pad 90 'The first paragraph')
+
+$(pad 80 'The second paragraph')" 2
+
+# What the fold must not touch is still rejected, and every offending line is
+# named, so one commit attempt shows the whole list.
+run "Add the hook
+
+- $(pad $((WRAP + 1)) 'A list item')
+  $(pad $((WRAP + 1)) 'An indented line')"
+if [ "$rc" -eq 0 ] || [ "$(printf '%s\n' "$out" | grep -c "exceeds $WRAP columns")" -ne 2 ]; then
+  note_fail "an over-long list item and indented line were not both rejected — the fold must skip them and the wrap rule name each"
 fi
+reject_msg "numbered list item over the cap" "Add the hook
+
+1. $(pad $((WRAP + 1)) 'A numbered item')"                             "exceeds $WRAP columns"
+printf '%s\n' "$out" | grep -qF "folded" && note_fail "a numbered list item was folded — list items are left to the author"
+
+# A prose line under a list item is its own run and folds; the item does not.
+run "Add the hook
+
+- a short item
+$(pad 80 'Prose after the list')"
+[ "$rc" -eq 0 ] && grep -qxF -- "- a short item" "$tmp/msg" ||
+  note_fail "prose after a list item did not fold cleanly, or the item itself was re-broken"
 
 # --- the exemptions ---------------------------------------------------------
 
-# A trailer is what git says is a trailer. An ordinary paragraph that happens to
-# open "Note: " is prose and wraps like prose.
-allow_msg "trailers exempt from wrap" "Add the commit-msg hook
+# A trailer is what git says is a trailer, and the trailer paragraph is never
+# re-broken: the long session URL has a space before the cap, so only the
+# trailer test keeps it whole.
+allow_unfolded "trailers exempt from wrap and fold" "Add the commit-msg hook
 
 A short body.
 
-Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01QPc1XNoRhSh4kmSpxAfjaFxxxxxxxxxxxxxxxx"
-reject_msg "a prose line opening Key:" "Add the hook
+# ...and with prose above it that does fold, the trailer block still survives
+# byte for byte.
+fold_msg "prose folds above an intact trailer block" "Add the commit-msg hook
+
+$(pad 100 'A long body paragraph')
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01QPc1XNoRhSh4kmSpxAfjaFxxxxxxxxxxxxxxxx" 1
+grep -qxF "Claude-Session: https://claude.ai/code/session_01QPc1XNoRhSh4kmSpxAfjaFxxxxxxxxxxxxxxxx" "$tmp/msg" ||
+  note_fail "the fold re-broke the Claude-Session trailer"
+# An ordinary paragraph that happens to open "Note: " is prose and folds like
+# prose: a "Word: " pattern standing in for git's parse would exempt it.
+fold_msg "a prose line opening Key:" "Add the hook
 
 Some prose above it.
-$(pad $((WRAP + 1)) 'Note: this line')"                               "exceeds $WRAP columns"
+$(pad $((WRAP + 1)) 'Note: this line')" 1
 
-allow_msg "unbreakable long token" "Add the commit-msg hook
+allow_unfolded "unbreakable long token" "Add the commit-msg hook
 
 See
 https://example.com/a/very/long/url/that/cannot/be/wrapped/at/seventy/two/columns/at/all"
@@ -259,7 +332,7 @@ reject_msg "the same subject with no merge in progress" "Merged the feature bran
 
 # Git's own comments are not the message. These comment lines are over the cap
 # on purpose: if the strip stops working, they trip the wrap rule and this fails.
-allow_msg "comments stripped" "Add the commit-msg hook
+allow_unfolded "comments stripped" "Add the commit-msg hook
 
 # Please enter the commit message for your changes. Lines starting with '#' will be ignored.
 # An empty message aborts the commit, and this line is also well past seventy-two columns."
@@ -294,7 +367,7 @@ cfg="$tmp/gitconfig"
 
 # commentString alone.
 printf '[core]\n\tcommentString = //\n' > "$cfg"
-GIT_CONFIG_GLOBAL="$cfg" allow_msg "commentString alone, '//' is the comment" "Add the commit-msg hook
+GIT_CONFIG_GLOBAL="$cfg" allow_unfolded "commentString alone, '//' is the comment" "Add the commit-msg hook
 
 // Under commentString this line is a git comment, and it runs well past the seventy-two column cap."
 GIT_CONFIG_GLOBAL="$cfg" reject_msg "commentString alone, '#' is not the comment" "Add the commit-msg hook
@@ -306,7 +379,7 @@ GIT_CONFIG_GLOBAL="$cfg" reject_msg "commentString alone, '#' is not the comment
 # default ('' → '#'), a hook that read commentString ONLY would still be green
 # on every commentChar claim, so the row has to set the name to something else.
 printf '[core]\n\tcommentChar = ";"\n' > "$cfg"
-GIT_CONFIG_GLOBAL="$cfg" allow_msg "commentChar alone, ';' is the comment" "Add the commit-msg hook
+GIT_CONFIG_GLOBAL="$cfg" allow_unfolded "commentChar alone, ';' is the comment" "Add the commit-msg hook
 
 ; Under commentChar this line is a git comment, and it runs well past the seventy-two column cap."
 GIT_CONFIG_GLOBAL="$cfg" reject_msg "commentChar alone, '#' is not the comment" "Add the commit-msg hook
@@ -320,11 +393,11 @@ GIT_CONFIG_GLOBAL="$cfg" reject_msg "commentChar alone, '#' is not the comment" 
 # took the first value, or one name always, leaves that line unstripped and
 # reds one of the two.
 printf '[core]\n\tcommentChar = "#"\n\tcommentString = //\n' > "$cfg"
-GIT_CONFIG_GLOBAL="$cfg" allow_msg "commentChar then commentString, git takes the later '//'" "Add the commit-msg hook
+GIT_CONFIG_GLOBAL="$cfg" allow_unfolded "commentChar then commentString, git takes the later '//'" "Add the commit-msg hook
 
 // With commentString read after commentChar, this is the comment, and it runs well past the cap."
 printf '[core]\n\tcommentString = //\n\tcommentChar = "#"\n' > "$cfg"
-GIT_CONFIG_GLOBAL="$cfg" allow_msg "commentString then commentChar, git takes the later '#'" "Add the commit-msg hook
+GIT_CONFIG_GLOBAL="$cfg" allow_unfolded "commentString then commentChar, git takes the later '#'" "Add the commit-msg hook
 
 # With commentChar read after commentString, this is the comment, and it runs well past the cap."
 
@@ -335,14 +408,14 @@ cfgrepo="$tmp/cfgrepo"
 git init -q "$cfgrepo" 2>/dev/null
 git -C "$cfgrepo" config core.commentString '//'
 printf '[core]\n\tcommentChar = ";"\n' > "$cfg"
-GIT_CONFIG_GLOBAL="$cfg" allow_msg "local commentString beats a global commentChar" "Add the commit-msg hook
+GIT_CONFIG_GLOBAL="$cfg" allow_unfolded "local commentString beats a global commentChar" "Add the commit-msg hook
 
 // The local commentString is read after the global commentChar, so this is the comment, past the cap." \
   "$cfgrepo"
 
 # The verbose diff a `git commit -v` message carries is below the scissors and
 # is not the message either.
-allow_msg "git commit -v diff ignored" "Add the commit-msg hook
+allow_unfolded "git commit -v diff ignored" "Add the commit-msg hook
 
 A short body.
 
