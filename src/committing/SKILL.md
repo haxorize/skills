@@ -28,7 +28,7 @@ A comment or issue that lands under a bot or app identity — the `gh`/`az` call
 
 ## The claims rule
 
-Every assertion written into a commit message, closing comment, PR body, or end-of-turn status is checked against evidence **before** it lands in the draft. Not after, not on request.
+Every assertion written into a commit message, closing comment, PR body, or end-of-turn status is checked against evidence **before** it lands in the draft. Not after, not on request. The always-loaded `~/.claude/rules/evidence.md` governs every claim — counts, markers, trailers, and negatives, which go through [references/negative-results.md](references/negative-results.md); the rows below are the claims landing adds.
 
 | Claim | Checked against |
 |---|---|
@@ -38,18 +38,11 @@ Every assertion written into a commit message, closing comment, PR body, or end-
 | **"the user approved" / "as agreed"** | the turn where they said it; quote it. A fabricated approval is the failure this row exists for |
 | **"closes N" / "fixes N" / "done"** | the ticket body, re-read now, and the completion audit — the closing word follows [references/ticket-closure.md](references/ticket-closure.md) |
 | **"works" / "done" for a change whose effect is live — a tracker write, a deploy, an outbound call** | the live path exercised in this session, or the claim carries `UNVERIFIED: live path`; a unit or fixture run is evidence for the code, never for the effect it was standing in for. For a deployed change the marker is lifted by the post-deploy watch's verdict, quoted with its window (`~/.claude/skills/ship/references/after-landing.md`; where that file is not present, the marker stays `UNVERIFIED: live path` and the row says the watch could not run) |
-| **"I ran X" for any step** | whether it ran in this session; inspection is not execution. A result CI will produce is written as the expectation the reviewer checks the run against, in words that cannot be read as output you saw; tests added and never run say they are unrun; a result someone else recorded is attributed to them, never restated as yours; the check that proves a claim is the project's own pre-existing runner, build, or linter — never a script written in the same change to prove it (a new test that runner runs counts) |
+| **"I ran X" for any step** | a result CI will produce is written as the expectation the reviewer checks the run against, in words that cannot be read as output you saw; tests added and never run say they are unrun; a result someone else recorded is attributed to them, never restated as yours; the check that proves a claim is the project's own pre-existing runner, build, or linter — never a script written in the same change to prove it (a new test that runner runs counts) |
 | **a screenshot, recording, or image cited as evidence** | the file was opened and its contents are stated in the claim, not its filename |
 | **"blocked by X"** | the command's verbatim error output, quoted; a familiar-looking failure is not evidence of its familiar cause |
-| **any count** | re-measured now, per the evidence rule |
-
-**Read a trailer with `git interpret-trailers`, never a grep.** `grep '^Co-Authored-By:'` misses a folded continuation line and a trailer block the parser rejects for a blank line above it — the concrete case of the global `evidence` rule's parse-as-your-consumer-parses line.
 
 **Recall check: a summary of a change enumerates its commits.** Run `git log <base>..HEAD --oneline` and confirm every commit appears somewhere in the summary; a commit the summary does not reflect was missed, and the miss is reported, not absorbed. This binds any summary of a change — a commit body, a PR body, a session summary, a handoff, a status note — not only a PR body.
-
-**A claim you cannot check does not get written.** Drop it, or write the weaker claim the evidence supports. Evidence you cannot obtain, a capture that never landed, a system you cannot reach, gets its own line marked `UNVERIFIABLE`, named as `~/.claude/rules/evidence.md` requires; it never launders into a pass.
-
-A negative — "not found", "no callers", a search that came back empty — is written as a finding only through [references/negative-results.md](references/negative-results.md): the command and scope inline, and the same command shown finding a known hit first.
 
 The pressure is predictable: the work is at its end, the change is green, the summary reads plausibly. Plausible is not checked.
 
