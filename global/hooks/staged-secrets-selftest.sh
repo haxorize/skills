@@ -90,19 +90,19 @@ newrepo() { # newrepo — prints a fresh repo with one commit (called in $(…),
   r="$(mktemp -d "$tmp/repo.XXXXXX")" || { echo "FAIL: no fixture repo" >&2; return 1; }
   { git -C "$r" init -q && printf 'seed\n' > "$r/seed.txt" &&
     git -C "$r" add seed.txt && git -C "$r" -c user.email=t@t -c user.name=t commit -qm seed; } >/dev/null 2>&1
-  infixture "$r" || return 1
+  in_fixture "$r" || return 1
   printf '%s' "$r"
 }
-# infixture <dir> — true only for a git work tree of its own under $tmp, so a
+# in_fixture <dir> — true only for a git work tree of its own under $tmp, so a
 # fixture write can never land in the checkout running this selftest
-infixture() {
+in_fixture() {
   case "$1" in "$tmp"/repo.*) ;; *) echo "FAIL: fixture path '$1' is not under $tmp — stopping" >&2; exit 1 ;; esac
   [ "$(git -C "$1" rev-parse --show-toplevel 2>/dev/null)" = "$(cd "$1" && pwd -P)" ] ||
     { echo "FAIL: '$1' is not its own git work tree — stopping" >&2; exit 1; }
 }
 staged() { # staged <relpath> <content> — a repo with that file staged
   local r; r="$(newrepo)" || exit 1
-  infixture "$r"
+  in_fixture "$r"
   mkdir -p "$(dirname "$r/$1")" && printf '%s\n' "$2" > "$r/$1" && git -C "$r" add -- "$1"
   printf '%s' "$r"
 }
@@ -126,51 +126,51 @@ done
 for p in .env.example .env.sample .env.template .envrc id_rsa.pub id_dsa.pub notes.pem.txt keys.txt key.json c.p12.md .netrc.example npmrc.md; do
   expect_quiet "$(staged "$p" "x=1")" "git commit -m x" "path neighbour $p"
 done
-r="$(staged .env "x=1")"; infixture "$r"; git -C "$r" -c user.email=t@t -c user.name=t commit -qm env >/dev/null
+r="$(staged .env "x=1")"; in_fixture "$r"; git -C "$r" -c user.email=t@t -c user.name=t commit -qm env >/dev/null
 git -C "$r" rm -q --cached .env
 expect_quiet "$r" "git commit -m x" "a staged deletion of .env"
 
 # --- commit shapes ----------------------------------------------------------------
-r="$(newrepo)"; infixture "$r"; printf 'k = %s\n' "$AWS" >> "$r/seed.txt"
+r="$(newrepo)"; in_fixture "$r"; printf 'k = %s\n' "$AWS" >> "$r/seed.txt"
 expect_quiet "$r" "git commit -m x" "unstaged change, plain commit"
 expect_block "$r" "git commit -a -m x" "-a"
 expect_block "$r" "git commit -am x" "-am"
 expect_block "$r" "git commit --all -m x" "--all"
 expect_quiet "$r" "git commit -ma" "-ma: a is the message"
 expect_block "$r" "git add seed.txt && git commit -m x" "add of a tracked path in the same command"
-r="$(newrepo)"; infixture "$r"; printf 'k = %s\n' "$AWS" > "$r/new.txt"; printf 'ok\n' > "$r/other.txt"
+r="$(newrepo)"; in_fixture "$r"; printf 'k = %s\n' "$AWS" > "$r/new.txt"; printf 'ok\n' > "$r/other.txt"
 expect_block "$r" "git add new.txt && git commit -m x" "add of an untracked path"
 expect_block "$r" "git add . && git commit -m x" "add ."
 expect_block "$r" "git add -A; git commit -m x" "add -A"
 expect_quiet "$r" "git add other.txt && git commit -m x" "add names another path"
 expect_quiet "$r" "git status" "not a commit"
-r="$(newrepo)"; infixture "$r"; printf 'id\n' > "$r/id_rsa"
+r="$(newrepo)"; in_fixture "$r"; printf 'id\n' > "$r/id_rsa"
 expect_block "$r" "git add id_rsa && git commit -m x" "untracked key file added in the same command"
-r="$(staged sub/cfg.txt "k = $GHP")"; infixture "$r"
+r="$(staged sub/cfg.txt "k = $GHP")"; in_fixture "$r"
 expect_block "$tmp" "git -C $r commit -m x" "git -C"
 expect_block "$tmp" "cd $r/sub && git commit -m x" "cd then commit"
 expect_block "$r" "bash -c 'git commit -m x'" "commit inside bash -c"
-r="$(newrepo)"; infixture "$r"; printf 'k = %s\n' "$AWS" > "$r/new.txt"
+r="$(newrepo)"; in_fixture "$r"; printf 'k = %s\n' "$AWS" > "$r/new.txt"
 expect_block "$r" "git stage new.txt && git commit -m x" "git stage is git add"
 expect_block "$r" "git add other.txt \"\$F\" && git commit -m x" "an unexpandable pathspec reads the whole tree"
 # a force-added ignored file (F3)
-r="$(newrepo)"; infixture "$r"; printf 'secret.txt\n' > "$r/.gitignore"; git -C "$r" add .gitignore
+r="$(newrepo)"; in_fixture "$r"; printf 'secret.txt\n' > "$r/.gitignore"; git -C "$r" add .gitignore
 git -C "$r" -c user.email=t@t -c user.name=t commit -qm ignore; printf 'k = %s\n' "$AWS" > "$r/secret.txt"
 expect_block "$r" "git add -f secret.txt && git commit -m x" "add -f of an ignored file"
 expect_block "$r" "git add --force secret.txt && git commit -m x" "add --force of an ignored file"
 expect_quiet "$r" "git add -A && git commit -m x" "an ignored file without -f is not added"
 # git add -A from a subdirectory stages the whole tree (F4)
-r="$(newrepo)"; infixture "$r"; mkdir -p "$r/sub"; printf 'x\n' > "$r/sub/ok.txt"; printf 'k = %s\n' "$AWS" > "$r/top.txt"
+r="$(newrepo)"; in_fixture "$r"; mkdir -p "$r/sub"; printf 'x\n' > "$r/sub/ok.txt"; printf 'k = %s\n' "$AWS" > "$r/top.txt"
 expect_block "$r/sub" "git add -A && git commit -m x" "add -A from a subdirectory reads the top"
 # diff.relative would cut a tracked change outside the subdirectory out of the diff
-r="$(newrepo)"; infixture "$r"; mkdir -p "$r/sub"; printf 'x\n' > "$r/sub/ok.txt"; git -C "$r" add sub
+r="$(newrepo)"; in_fixture "$r"; mkdir -p "$r/sub"; printf 'x\n' > "$r/sub/ok.txt"; git -C "$r" add sub
 git -C "$r" -c user.email=t@t -c user.name=t commit -qm sub; git -C "$r" config diff.relative true
 printf 'k = %s\n' "$AWS" >> "$r/seed.txt"
 expect_block "$r/sub" "git add -A && git commit -m x" "diff.relative does not narrow the diff"
 # --git-dir and --work-tree are honoured (F24)
-r="$(staged cfg.txt "k = $GHP")"; infixture "$r"
+r="$(staged cfg.txt "k = $GHP")"; in_fixture "$r"
 expect_block "$tmp" "git --git-dir=$r/.git --work-tree=$r commit -m x" "--git-dir/--work-tree name the repo"
-r="$(newrepo)"; infixture "$r"; printf 'k = %s\n' "$AWS" >> "$r/seed.txt"
+r="$(newrepo)"; in_fixture "$r"; printf 'k = %s\n' "$AWS" >> "$r/seed.txt"
 expect_block "$tmp" "git --git-dir $r/.git --work-tree $r commit -a -m x" "--work-tree is where -a reads"
 
 # --- the diff is read whatever the repo's diff config says (F2) ------------------
@@ -180,7 +180,7 @@ r="$(staged cfg.txt "k = $AWS")"; git -C "$r" config diff.noprefix true
 expect_block "$r" "git commit -m x" "diff.noprefix"
 expect_block "$(staged "café.txt" "k = $AWS")" "git commit -m x" "a non-ASCII path git quotes"
 expect_block "$(staged "$(printf 'a\tb.txt')" "k = $AWS")" "git commit -m x" "a tab in the path"
-r="$(newrepo)"; infixture "$r"; printf '*.txt -diff\n' > "$r/.gitattributes"; git -C "$r" add .gitattributes
+r="$(newrepo)"; in_fixture "$r"; printf '*.txt -diff\n' > "$r/.gitattributes"; git -C "$r" add .gitattributes
 git -C "$r" -c user.email=t@t -c user.name=t commit -qm attr; printf 'k = %s\n' "$AWS" > "$r/cfg.txt"; git -C "$r" add cfg.txt
 expect_block "$r" "git commit -m x" "a -diff attribute"
 expect_block "$(staged cfg.txt "$(printf '++ x\nk = %s' "$AWS")")" "git commit -m x" "an added line starting ++ is not a header"
@@ -194,7 +194,7 @@ expect_block "$(staged "NOTREE:a.txt" "k = $AWS")" "git commit -m x" "a path tha
 mkdir -p "$tmp/marks"
 prog() { printf '#!/bin/sh\necho ran >> "%s"\nif [ -f "${1:-}" ]; then cat "$1"; elif [ $# -eq 0 ]; then cat; fi\n' "$tmp/marks/$1" > "$tmp/marks/$1.sh"; chmod +x "$tmp/marks/$1.sh"; printf '%s' "$tmp/marks/$1.sh"; }
 progrepo() {
-  local r; r="$(newrepo)" || exit 1; infixture "$r"
+  local r; r="$(newrepo)" || exit 1; in_fixture "$r"
   { printf '*.tc diff=tc\n*.ext diff=ext\n*.cln filter=cln\n' > "$r/.gitattributes"
     printf 'a\n' > "$r/f.tc"; printf 'a\n' > "$r/0.ext"; printf 'a\n' > "$r/f.cln"
     git -C "$r" add -A && git -C "$r" -c user.email=t@t -c user.name=t commit -qm progs
@@ -281,7 +281,7 @@ mutant "drop private key" 'r"-----BEGIN [A-Z ]*PRIVATE KEY-----"' 'r"-----BEGIN 
 mutant "drop jwt"         '\beyJ[A-Za-z0-9_-]{8,}\.eyJ' '\beyJ[A-Za-z0-9_-]{8,}\.eyX' "$(staged c.txt "k = $JWT")" "git commit -m x" 0
 mutant "drop sas"         '[?&]sig=' '[?&]sigX=' "$(staged c.txt "u = $SAS")" "git commit -m x" 0
 mutant "drop pem path"    '("pem-file",     re.compile(r"\.pem$")' '("pem-file",     re.compile(r"\.pemX$")' "$(staged k.pem "x")" "git commit -m x" 0
-mutant "drop untracked add" 'for p in git(ga, *others, *spec).split("\0"):' 'for p in []:' "$(r="$(newrepo)" && infixture "$r" && printf 'k = %s\n' "$AWS" > "$r/n.txt" && printf '%s' "$r")" "git add n.txt && git commit -m x" 0
+mutant "drop untracked add" 'for p in git(ga, *others, *spec).split("\0"):' 'for p in []:' "$(r="$(newrepo)" && in_fixture "$r" && printf 'k = %s\n' "$AWS" > "$r/n.txt" && printf '%s' "$r")" "git add n.txt && git commit -m x" 0
 mutant "widen aws length" '[0-9A-Z]{16}\b' '[0-9A-Z]{15}' "$(staged c.txt "k = $AWS_SHORT")" "git commit -m x" 2
 mutant "drop .pub exemption" 're.compile(r"\.pub$")' 'None' "$(staged id_rsa.pub "x")" "git commit -m x" 2
 mutant "drop .env.example exemption" 're.compile(r"^\.env\.(example|sample|template)$")' 'None' "$(staged .env.example "x")" "git commit -m x" 2
@@ -292,17 +292,17 @@ mutant "drop pfx path"    'r"\.(p12|pfx)$"' 'r"\.(p12)$"'     "$(staged c.pfx "x
 mutant "drop netrc path"  'r"^\.netrc$"' 'r"^\.netrcX$"'      "$(staged .netrc "x")" "git commit -m x" 0
 mutant "drop npmrc path"  'r"^\.npmrc$"' 'r"^\.npmrcX$"'      "$(staged .npmrc "x")" "git commit -m x" 0
 mutant "drop id_dsa path" 'id_(rsa|dsa|ecdsa|ed25519)' 'id_(rsa|ecdsa|ed25519)' "$(staged id_dsa "x")" "git commit -m x" 0
-mutant "drop git stage"   'if sub in ("add", "stage"):' 'if sub in ("add",):' "$(r="$(newrepo)" && infixture "$r" && printf 'k = %s\n' "$AWS" > "$r/n.txt" && printf '%s' "$r")" "git stage n.txt && git commit -m x" 0
-mutant "narrow on an unexpandable pathspec" 'ADDS.append((d, gd, wt, [] if wide else specs, force))' 'ADDS.append((d, gd, wt, specs, force))' "$(r="$(newrepo)" && infixture "$r" && printf 'k = %s\n' "$AWS" > "$r/n.txt" && printf '%s' "$r")" "git add o.txt \"\$F\" && git commit -m x" 0
-mutant "ignore -f"        '([] if force else ["--exclude-standard"])' '["--exclude-standard"]' "$(r="$(newrepo)" && infixture "$r" && printf 's.txt\n' > "$r/.gitignore" && printf 'k = %s\n' "$AWS" > "$r/s.txt" && printf '%s' "$r")" "git add -f s.txt && git commit -m x" 0
-mutant "-A reads only the subdirectory" '(specs or [":/"])' '(specs or [])' "$(r="$(newrepo)" && infixture "$r" && mkdir -p "$r/sub" && printf 'k = %s\n' "$AWS" > "$r/top.txt" && printf '%s' "$r/sub")" "git add -A && git commit -m x" 0
-mutant "diff.relative narrows"  '"--no-relative", ' '' "$(r="$(newrepo)" && infixture "$r" && mkdir -p "$r/sub" && git -C "$r" config diff.relative true && printf 'k = %s\n' "$AWS" >> "$r/seed.txt" && printf '%s' "$r/sub")" "git add -A && git commit -m x" 0
+mutant "drop git stage"   'if sub in ("add", "stage"):' 'if sub in ("add",):' "$(r="$(newrepo)" && in_fixture "$r" && printf 'k = %s\n' "$AWS" > "$r/n.txt" && printf '%s' "$r")" "git stage n.txt && git commit -m x" 0
+mutant "narrow on an unexpandable pathspec" 'ADDS.append((d, gd, wt, [] if wide else specs, force))' 'ADDS.append((d, gd, wt, specs, force))' "$(r="$(newrepo)" && in_fixture "$r" && printf 'k = %s\n' "$AWS" > "$r/n.txt" && printf '%s' "$r")" "git add o.txt \"\$F\" && git commit -m x" 0
+mutant "ignore -f"        '([] if force else ["--exclude-standard"])' '["--exclude-standard"]' "$(r="$(newrepo)" && in_fixture "$r" && printf 's.txt\n' > "$r/.gitignore" && printf 'k = %s\n' "$AWS" > "$r/s.txt" && printf '%s' "$r")" "git add -f s.txt && git commit -m x" 0
+mutant "-A reads only the subdirectory" '(specs or [":/"])' '(specs or [])' "$(r="$(newrepo)" && in_fixture "$r" && mkdir -p "$r/sub" && printf 'k = %s\n' "$AWS" > "$r/top.txt" && printf '%s' "$r/sub")" "git add -A && git commit -m x" 0
+mutant "diff.relative narrows"  '"--no-relative", ' '' "$(r="$(newrepo)" && in_fixture "$r" && mkdir -p "$r/sub" && git -C "$r" config diff.relative true && printf 'k = %s\n' "$AWS" >> "$r/seed.txt" && printf '%s' "$r/sub")" "git add -A && git commit -m x" 0
 r="$(staged c.txt "k = $GHP")"
 mutant "drop the git-dir"  'argv.append("--git-dir=" + gd)' 'pass' "$tmp" "git --git-dir=$r/.git --work-tree=$r commit -m x" 0
-r="$(newrepo)"; infixture "$r"; printf 'k = %s\n' "$AWS" >> "$r/seed.txt"
+r="$(newrepo)"; in_fixture "$r"; printf 'k = %s\n' "$AWS" >> "$r/seed.txt"
 mutant "drop the work-tree" 'argv.append("--work-tree=" + wt)' 'pass' "$tmp" "git --git-dir $r/.git --work-tree $r commit -a -m x" 0
 mutant "honour no prefix config" '"--src-prefix=a/", "--dst-prefix=b/"' '"--no-color"' "$(r="$(staged c.txt "k = $AWS")" && git -C "$r" config diff.noprefix true && printf '%s' "$r")" "git commit -m x" 0
-mutant "binary by attribute" '"--no-color", "--text",' '"--no-color",' "$(r="$(newrepo)" && infixture "$r" && printf '*.txt -diff\n' > "$r/.gitattributes" && git -C "$r" add .gitattributes && printf 'k = %s\n' "$AWS" > "$r/c.txt" && git -C "$r" add c.txt && printf '%s' "$r")" "git commit -m x" 0
+mutant "binary by attribute" '"--no-color", "--text",' '"--no-color",' "$(r="$(newrepo)" && in_fixture "$r" && printf '*.txt -diff\n' > "$r/.gitattributes" && git -C "$r" add .gitattributes && printf 'k = %s\n' "$AWS" > "$r/c.txt" && git -C "$r" add c.txt && printf '%s' "$r")" "git commit -m x" 0
 mutant "quoted path not unquoted" 'p = unquote(p) if p.startswith("\"") else p' 'p = p' "$(staged "$(printf 'a\tb.txt')" "k = $AWS")" "git commit -m x" 0
 mutant "+++ is a header anywhere" 'elif header and line.startswith("+++ "):' 'elif line.startswith("+++ "):' "$(staged c.txt "$(printf '++ x\nk = %s' "$AWS")")" "git commit -m x" 0
 mutant "split_git skips -C"  '            if name == "-C":
