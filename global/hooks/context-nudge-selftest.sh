@@ -8,12 +8,16 @@
 # once, then quiet; a jump straight past 200k sends only the 200k line; a
 # compaction that drops the figure does not re-arm; sidechain and
 # `<synthetic>` entries are skipped; a usage line straddling the 1 MB read
-# chunk is read whole; a 30-day-old marker is pruned; the fail-open table
-# (empty payload, not JSON, no transcript_path, a session id with a path
-# separator, a missing transcript, an unwritable state directory) exits 0
-# with a breadcrumb and no context. The mutation table narrows the sidechain
-# skip, the once-only check, the 150k boundary and the chunk join on a copy of
-# the hook, and each mutant must flip its row.
+# chunk is read whole; a 30-day-old marker is pruned; a prune that fails
+# (an old directory it cannot remove) still delivers the line, quietly; the
+# marker is mode 0600; the 150k line asks for the next phase boundary and the
+# 200k line for now; the fail-open table (empty payload, not JSON, no
+# transcript_path, a session id with a path separator, a missing transcript,
+# an unwritable state directory, a missing context-nudge.py) exits 0 with a
+# breadcrumb and no context. The mutation table narrows the sidechain skip,
+# the once-only check, the 150k boundary, the chunk join, the prune's error
+# swallowing, the 0600 write and the phase-boundary wording on a copy of
+# context-nudge.py or session-hook-lib.py, and each mutant must flip its row.
 set -u
 here="$(cd "$(dirname "$0")" && pwd)"
 hook="$here/context-nudge.sh"
@@ -111,6 +115,20 @@ touch -t 202001010000 "$HOOK_STATE_DIR/context-nudge/old"
 t="$tmp/t6.jsonl"; entry 151000 > "$t"
 nudge s6 "$t" >/dev/null
 [ ! -e "$HOOK_STATE_DIR/context-nudge/old" ] || { echo "FAIL [prune]: a 30-day-old marker survived a write"; fail=1; }
+mode="$(python3 -c 'import os,sys; print(oct(os.stat(sys.argv[1]).st_mode & 0o777))' "$HOOK_STATE_DIR/context-nudge/s6" 2>&1)"
+[ "$mode" = 0o600 ] || { echo "FAIL [marker mode]: the marker should be 0600 — $mode"; fail=1; }
+
+# a prune that fails (an old directory os.remove cannot take) still sends the line
+p_fail() { mkdir -p "$HOOK_STATE_DIR/context-nudge/olddir"; touch -t 202001010000 "$HOOK_STATE_DIR/context-nudge/olddir"
+  t="$tmp/t6b.jsonl"; entry 151000 > "$t"; nudge s6b "$t"; }
+expect "a failed prune keeps the line" "$(p_fail)" 150
+
+# the wording: 150k waits for a phase boundary, 200k does not wait
+w150() { t="$tmp/t9.jsonl"; entry 151000 > "$t"; nudge s9 "$t"; }
+w_check() { case "$(w150)" in *"At the next phase boundary, offer the user /handoff"*) ;; *) echo "FAIL [150k wording]: should ask for the next phase boundary"; fail=1 ;; esac; }
+w_check
+t="$tmp/t10.jsonl"; entry 201000 > "$t"
+case "$(nudge s10 "$t")" in *"Offer the user /handoff now, before the next step"*) ;; *) echo "FAIL [200k wording]: should say now"; fail=1 ;; esac
 
 # --- fail open --------------------------------------------------------------------
 for bad in "" "notjson" "[]"; do
@@ -124,12 +142,15 @@ expect "a missing transcript" "$(nudge s7 "$tmp/none.jsonl")" "crumb:transcript 
 mkdir -p "$tmp/ro"; chmod a-w "$tmp/ro"
 got="$(HOOK_STATE_DIR="$tmp/ro/x" nudge s8 "$t")"
 expect "an unwritable state directory" "$got" "crumb:state directory not writable"
+mkdir -p "$tmp/nopy"; cp "$here/context-nudge.sh" "$here/hook-lib.sh" "$here/session-hook-lib.py" "$tmp/nopy/"
+expect "context-nudge.py missing" "$(mhook="$tmp/nopy/context-nudge.sh" nudge s11 "$t")" "crumb:context-nudge.py is not beside the hook"
 
 # --- mutation table -------------------------------------------------------------
-mdir="$tmp/mut"; mkdir -p "$mdir"; cp "$here/hook-lib.sh" "$here/hook-lib.py" "$mdir/"
-mutant() { # mutant <label> <find> <replace> <setup fn> <want>
-  local label="$1"
-  python3 - "$hook" "$mdir/context-nudge.sh" "$2" "$3" <<'PY' || { echo "FAIL (mutant '$label': pattern not found in the hook)"; fail=1; return; }
+mdir="$tmp/mut"; mkdir -p "$mdir"
+mutant() { # mutant <label> <file> <find> <replace> <setup fn> <want> — <file> is mutated on a fresh copy of the hook's files
+  local label="$1" file="$2"; shift
+  cp "$here/context-nudge.sh" "$here/context-nudge.py" "$here/session-hook-lib.py" "$here/hook-lib.sh" "$mdir/"
+  python3 - "$here/$file" "$mdir/$file" "$2" "$3" <<'PY' || { echo "FAIL (mutant '$label': pattern not found in $file)"; fail=1; return; }
 import sys
 src, dst, a, b = sys.argv[1:]
 s = open(src).read()
@@ -147,10 +168,18 @@ m_side() { t="$tmp/m1.jsonl"; { entry 100000; entry 400000 sidechain; } > "$t"; 
 m_once() { t="$tmp/m2.jsonl"; entry 160000 > "$t"; nudge m2 "$t" >/dev/null; nudge m2 "$t"; }
 m_edge() { t="$tmp/m3.jsonl"; entry 150000 > "$t"; nudge m3 "$t"; }
 m_join() { nudge m4 "$tmp/t5.jsonl"; }
-mutant "drop the sidechain skip" 'or d.get("isSidechain")' '' m_side quiet
-mutant "fire every prompt"       'if level[0] <= sent:' 'if level[0] < sent:' m_once quiet
-mutant "150k boundary moved"     '(150000, "context-nudge' '(150001, "context-nudge' m_edge 150
-mutant "drop the chunk join"     'tail = lines[0] if start > 0 else b""' 'tail = b""' m_join 150
+m_prune() { rm -rf "$HOOK_STATE_DIR"; p_fail; }
+m_mode() { t="$tmp/m5.jsonl"; entry 151000 > "$t"; nudge m5 "$t" >/dev/null
+  [ "$(python3 -c 'import os,sys; print(oct(os.stat(sys.argv[1]).st_mode & 0o777))' "$HOOK_STATE_DIR/context-nudge/m5")" = 0o600 ] && printf 'rc=0||'; }
+m_word() { local before=$fail; fail=0; w_check >/dev/null; [ "$fail" = 0 ] && printf 'rc=0||'; fail=$before; }
+py=context-nudge.py lib=session-hook-lib.py
+mutant "drop the sidechain skip" $py 'or d.get("isSidechain")' '' m_side quiet
+mutant "fire every prompt"       $py 'if level[0] <= sent:' 'if level[0] < sent:' m_once quiet
+mutant "150k boundary moved"     $py '(150000, "context-nudge' '(150001, "context-nudge' m_edge 150
+mutant "drop the chunk join"     $py 'tail = lines[0] if start > 0 else b""' 'tail = b""' m_join 150
+mutant "a prune error escapes"   $lib $'os.remove(p)\n        except OSError:\n            pass' $'os.remove(p)\n        except OSError:\n            raise' m_prune 150
+mutant "state written 0644"      $lib 'os.replace(tmp, path)' 'os.chmod(tmp, 0o644); os.replace(tmp, path)' m_mode quiet
+mutant "150k back to breakpoint" $py 'At the next phase boundary' 'At the next clean breakpoint' m_word quiet
 
 [ "$fail" = 0 ] && echo "context-nudge-selftest: all rows pass"
 exit "$fail"
