@@ -49,7 +49,17 @@ Every out-of-scope observation made mid-slice and deliberately left alone. Each 
 
 **State the zero case explicitly:** `0 parked; 3 ACs checked against tests/test_scores.py and the ticket body`. An empty section and a section that was never written look the same; the count with its source does not.
 
-**The section ends on one offer** whenever a row this ticket owns stays open, neither resolved nor dismissed — an ask block in the shape `~/.claude/rules/recommend-and-proceed.md` defines, headed `Ask — address N parked items`, N counting only those rows — so the next move is asked rather than left for the user to infer. An open `outside` row is never folded into it: fixing one now is `implement`'s edit-boundary ask (Proceed, Split, Rethink). Carried in a handoff, the offer is the next session's to put to the user, never answered by the session that wrote it. The zero case carries none. Items the user says to fix now run as parallel subagents in the same working tree where they touch disjoint files, and in order where they share one, each result verified before its row closes.
+**The section ends on one offer** whenever a row this ticket owns stays open, neither resolved nor dismissed — an ask block in the shape `~/.claude/rules/recommend-and-proceed.md` defines, headed `Ask — address N parked items`, N counting only those rows — so the next move is asked rather than left for the user to infer. Its recommendation is to fix now every open row in a file this change already touches, `outside` rows included, and its N counts those too. An `outside` row in a file the change does not touch is never folded into it: fixing one now is `implement`'s edit-boundary ask (Proceed, Split, Rethink). Carried in a handoff, the offer is the next session's to put to the user, never answered by the session that wrote it. The zero case carries none. Items the user says to fix now run as parallel subagents in the same working tree where they touch disjoint files, and in order where they share one, each result verified before its row closes.
+
+## Claims
+
+One row per claim the change wrote, as the fresh `doc-claims` helper returned it — in a decision record, a code comment, a doc, or ticket or handoff text — so a claim the writer remembered rather than checked reaches review already graded:
+
+| Claim | Written at | Verdict | Settled by |
+|---|---|---|---|
+| "the parser rejects a bare date" | `docs/adr/0012-dates.md:9` | FAIL | `tests/test_dates.py::test_bare_date` passes a bare date |
+
+The verdict is in `doc-claims`' vocabulary; the settling line is the command and its output, or the `file:line` read. A FAIL or STALE row is fixed before the completion line is written, and the helper re-runs once over what the fix touched. **State the zero case:** `0 claims in 4 prose hunks`.
 
 ## Judgment calls
 
