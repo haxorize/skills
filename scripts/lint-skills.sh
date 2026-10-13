@@ -444,13 +444,20 @@ set -uo pipefail
 # reprinting.
 usage() {
   cat <<'USAGE'
-Usage: scripts/lint-skills.sh [--help]
+Usage: scripts/lint-skills.sh [--help | --files <path>...]
 
 Lints src/*/SKILL.md and their references against src/write-skill/SKILL.md, and
 global/rules/, global/hooks/ (one selftest per hook), scripts/, scripts/git-hooks/ and
 .claude/skills/*/scripts/ (one selftest per script or hook, and the conventions
 pointer), CLAUDE.md's size and its relative links, and the two routers against the
-rules each cites. Takes no argument but --help.
+rules each cites. With no argument, the whole tree.
+
+  --files <path>... run the per-file checks on the named files only, and skip
+                    the whole-tree checks (pass 1's shared trigger phrase, all
+                    of pass 3, and pass 4's byte totals and launch-loaded sum).
+                    A path is relative to the caller's directory or absolute,
+                    and must name an existing file inside the sweep root. A
+                    clean run exits 2, never 0: not everything was checked
 
   LINT_ROOT=<dir>   point the whole sweep at another tree; unset in normal use
                     (scripts/lint-skills-selftest.sh sets it to the fixture roots)
@@ -472,21 +479,34 @@ Each check's scope — what it deliberately does not reach — is written beside
 file's header. scripts/lint-skills-selftest.sh's header names which checks it grades and
 which it does not; a green selftest is not a claim about the rest.
 
-Exit codes: 0 clean · 1 at least one FAIL · 2 LINT_ROOT is not a directory (nothing
-checked) · 3 usage error (an unknown argument, an empty one, or more than one, or a
+Exit codes: 0 clean · 1 at least one FAIL · 2 not everything checked: LINT_ROOT is
+not a directory (nothing checked), or --files ran clean with the whole-tree checks
+skipped · 3 usage error (an unknown argument, an empty one, or more than one without
+--files; --files with no path, or a path that is no file inside the sweep root; a
 LINT_SIBLING_GROUPS naming no group or a group of one path) · 4 a check never ran, so
 this run is not a verdict on anything — today the one cause is a failure flag under
 TMPDIR that could not be written. WARN lines never change the exit code.
 USAGE
 }
-if [ $# -gt 1 ]; then
-  echo "lint-skills.sh: got $# arguments — this script takes no argument but --help" >&2; exit 3
+# files_mode is the one switch the whole-tree checks below read: 1 means
+# --files named the files to grade, and every check that reads more than the
+# file in hand is skipped, so a clean run ends on exit 2, not 0.
+files_mode=0
+if [ "${1:-}" = --files ]; then
+  shift
+  [ $# -gt 0 ] || { echo "lint-skills.sh: --files names no path — give one or more files to grade, or drop --files to lint the whole tree" >&2; exit 3; }
+  files_mode=1
+  files_args=("$@")
+else
+  if [ $# -gt 1 ]; then
+    echo "lint-skills.sh: got $# arguments — this script takes --help, --files <path>..., or nothing" >&2; exit 3
+  fi
+  case "${1:-}" in
+    "") [ $# -eq 0 ] || { echo "lint-skills.sh: an empty argument — this script takes --help, --files <path>..., or nothing" >&2; exit 3; } ;;
+    -h|--help) usage; exit 0 ;;
+    *) echo "lint-skills.sh: unknown argument '$1' — this script takes --help, --files <path>..., or nothing" >&2; exit 3 ;;
+  esac
 fi
-case "${1:-}" in
-  "") [ $# -eq 0 ] || { echo "lint-skills.sh: an empty argument — this script takes no argument but --help" >&2; exit 3; } ;;
-  -h|--help) usage; exit 0 ;;
-  *) echo "lint-skills.sh: unknown argument '$1' — this script takes no argument but --help" >&2; exit 3 ;;
-esac
 
 repo_root="$(cd "$(dirname "$0")/.." && pwd)"
 
@@ -551,6 +571,33 @@ fi
 # TMPDIR must be absolutized here, while $PWD is still the caller's; the
 # reasoning is in scripts/lint-lib.sh's header.
 lint_absolutize_tmpdir
+# --files paths are read here, while $PWD is still the caller's, and turned
+# into paths relative to the sweep root, the form every walk below prints, so
+# in_scope is a string match. Both sides are resolved physically (`pwd -P`): a
+# path through the ~/.claude/skills/ symlink names the same file as its src/
+# path. A path that is no file inside the root is a usage error, not a skip —
+# a quiet skip would read as a clean grade of a file nobody graded.
+files_scope=$'\n'
+if [ "$files_mode" -eq 1 ]; then
+  scan_root_phys=$(cd "$scan_root" && pwd -P)
+  for arg in "${files_args[@]}"; do
+    if [ -z "$arg" ] || [ ! -f "$arg" ]; then
+      echo "lint-skills.sh: --files '$arg' is not a file — name an existing file (a deleted one has nothing left to grade)" >&2; exit 3
+    fi
+    abs="$(cd "$(dirname "$arg")" && pwd -P)/$(basename "$arg")"
+    case "$abs" in
+      "$scan_root_phys"/*) files_scope="$files_scope${abs#"$scan_root_phys"/}"$'\n' ;;
+      *) echo "lint-skills.sh: --files '$arg' is outside the sweep root $scan_root — nothing here grades it" >&2; exit 3 ;;
+    esac
+  done
+fi
+# in_scope <path>: true for every path in a whole-tree run, and in --files mode
+# only for a named one. Every per-file loop below asks it before grading.
+in_scope() {
+  [ "$files_mode" -eq 0 ] && return 0
+  case "$files_scope" in *$'\n'"$1"$'\n'*) return 0 ;; esac
+  return 1
+}
 cd "$scan_root"
 
 # The description caps below are character-based (<=1024 chars, no bare ': ' and no bare ' #' — both end an unquoted YAML scalar early).
@@ -966,6 +1013,7 @@ check_shared_trigger_phrase() {
 }
 
 for f in src/*/SKILL.md; do
+  in_scope "$f" || continue
   skill=${f#src/}; skill=${skill%/SKILL.md}
   desc=$(frontmatter_value "$f" description)
   dmi=""; name_is_user_invoked "$skill" && dmi=true
@@ -988,7 +1036,8 @@ for f in src/*/SKILL.md; do
   check_requires_two_way "$f" "$skill" "$reqs" "$body"
   check_router_coverage "$skill"
 done
-check_shared_trigger_phrase "$trigger_phrases"
+# Whole-tree: a shared phrase is a pair, and --files reads one side of it.
+[ "$files_mode" -eq 0 ] && check_shared_trigger_phrase "$trigger_phrases"
 
 # ---------------------------------------------------------------------------
 # Pass 2 — every shipped markdown file, read once. The body checks run over
@@ -1892,6 +1941,7 @@ house_style_checks() {
 # filename and hand `""` to the checks.
 if [ -n "$walked_files" ]; then
 while IFS= read -r f; do
+  in_scope "$f" || continue
   case "$f" in
     global/rules/*)
       # Hoisted prose. Body checks and the house-style checks, and
@@ -2286,7 +2336,9 @@ check_sibling_membership() {
   done <<< "$refs"
 }
 
-if [ -z "${LINT_ROOT:-}" ] || [ -n "${LINT_SIBLING_GROUPS:-}" ]; then check_sibling_identity; fi
+# Pass 3 is whole-tree end to end — every check compares one file with the
+# rest — so --files skips all of it, and its exit 2 says so.
+if [ "$files_mode" -eq 0 ] && { [ -z "${LINT_ROOT:-}" ] || [ -n "${LINT_SIBLING_GROUPS:-}" ]; }; then check_sibling_identity; fi
 
 # (see header) Orphaned references. check_reference_links validates a link's
 # target and never the other direction, so a reference file nothing points at
@@ -2328,11 +2380,13 @@ check_reference_orphans() {
   done <<< "$files"
 }
 
-check_sibling_membership "$walked_files"
-check_reference_orphans "$walked_files"
-check_evaluation_ledger_authority "$walked_files"
-check_evaluation_ledger_rule_agreement "$walked_files"
-check_evaluation_ledger_consumers "$walked_files"
+if [ "$files_mode" -eq 0 ]; then
+  check_sibling_membership "$walked_files"
+  check_reference_orphans "$walked_files"
+  check_evaluation_ledger_authority "$walked_files"
+  check_evaluation_ledger_rule_agreement "$walked_files"
+  check_evaluation_ledger_consumers "$walked_files"
+fi
 
 # ---------------------------------------------------------------------------
 # Pass 4 — the other trees, each read once.
@@ -2413,7 +2467,7 @@ check_rules_bytes() {
     say_fail "global/rules/ totals $bytes bytes, over the 12,000-byte budget for the always-loaded layer — cut a rule, or move its procedure behind a reference the depending skill opens and leave a one-line verdict global (ADR-0079: the cap is permanent and a rule that cannot fit is relocated, never refused); every byte here is paid on every turn of every session"
   fi
 }
-check_rules_bytes
+[ "$files_mode" -eq 0 ] && check_rules_bytes
 
 # (see header) The other per-turn load: the `description:` line of every
 # model-invoked skill is in the catalog Claude Code loads on every turn, so
@@ -2453,7 +2507,7 @@ check_catalog_bytes() {
     echo "WARN: the model-invoked description lines total $bytes bytes, over the 14,400-byte ceiling ADR-0079 fixed for the catalog loaded on every turn — trim the description that grew, or trim others to pay for it; the ceiling moves only by an edit to ADR-0079"
   fi
 }
-check_catalog_bytes
+[ "$files_mode" -eq 0 ] && check_catalog_bytes
 
 # (see header) A global rule's relocated procedure is reached by an absolute
 # `~/.claude/skills/<owner>/<path>` pointer — the form ADR-0079 makes the
@@ -2475,10 +2529,10 @@ check_rule_pointers() {
 }
 
 for f in global/rules/*.md; do
-  check_global_rule "$f"
+  in_scope "$f" && check_global_rule "$f"
 done
 while IFS= read -r f; do
-  check_rule_pointers "$f"
+  in_scope "$f" && check_rule_pointers "$f"
 done <<<"$walked_files"
 
 # Every hook has a selftest (global/README.md § Hooks: "Each hook has a
@@ -2574,12 +2628,12 @@ check_script_selftest() {
 
 if [ -d global/hooks ]; then
   for h in global/hooks/*.sh; do
-    [ -f "$h" ] && check_hook_selftest "$h"
+    [ -f "$h" ] && in_scope "$h" && check_hook_selftest "$h"
   done
 fi
 if [ -d scripts ]; then
   for sc in scripts/*.sh; do
-    [ -f "$sc" ] && check_script_selftest "$sc"
+    [ -f "$sc" ] && in_scope "$sc" && check_script_selftest "$sc"
   done
 fi
 # A repo-local skill's own scripts/ is walked too. ADR-0075:23 recorded that no
@@ -2590,7 +2644,7 @@ fi
 # was the one script nothing graded. Same contract as scripts/ — a *.sh here is
 # paired with its selftest or named *-lib.sh.
 for sc in .claude/skills/*/scripts/*.sh; do
-  [ -f "$sc" ] && check_script_selftest "$sc"
+  [ -f "$sc" ] && in_scope "$sc" && check_script_selftest "$sc"
 done
 # A shipped skill's bundled scripts are walked too. ADR-0103 bundles a skill's
 # deterministic logic as a tested script under src/<skill>/scripts/; ADR-0104
@@ -2602,7 +2656,7 @@ done
 # *-lib.sh. One level only: a selftest's fixtures sit in a subdirectory
 # (<stem>-fixtures/), and their .py or .sh inputs are data, not scripts.
 for sc in src/*/scripts/*.sh src/*/scripts/*.py; do
-  [ -f "$sc" ] && check_script_selftest "$sc"
+  [ -f "$sc" ] && in_scope "$sc" && check_script_selftest "$sc"
 done
 # The git hooks walk: check_script_selftest grades these too (check_hook_selftest
 # is global/hooks/ only). What makes a file here a hook is derived, not listed:
@@ -2612,7 +2666,7 @@ done
 # to the pairing, and the next hook needs no roster edit.
 if [ -d scripts/git-hooks ]; then
   for sc in scripts/git-hooks/*; do
-    [ -f "$sc" ] || continue
+    [ -f "$sc" ] && in_scope "$sc" || continue
     case "$(head -n 1 "$sc" 2>/dev/null)" in '#!'*) check_script_selftest "$sc" ;; esac
   done
 fi
@@ -2632,7 +2686,7 @@ fi
 # LINT_ROOT run, so walking them from the repo's own run would report the
 # fixture's deliberate instance as this repo's defect.
 while IFS= read -r f; do
-  [ -f "$f" ] && check_spelling "$f"
+  [ -f "$f" ] && in_scope "$f" && check_spelling "$f"
 done < <({ [ -d docs ] && find docs -type f -name '*.md'
            printf '%s\n' global/README.md scripts/README.md
          } | sort -u)
@@ -2769,11 +2823,11 @@ check_landing_key() {
 # is well-formed vocabulary and no arm here fires on it; the property pins in
 # scripts/lint-skills-selftest.sh are what hold that line.
 while IFS= read -r claude_md; do
-  [ -n "$claude_md" ] || continue
+  [ -n "$claude_md" ] && in_scope "${claude_md#./}" || continue
   check_landing_key "${claude_md#./}"
 done < <(find . -name CLAUDE.md -not -path './.git/*' -not -path './scripts/lint-fixtures*/*' | sort)
 
-if [ -f CLAUDE.md ]; then
+if [ -f CLAUDE.md ] && in_scope CLAUDE.md; then
   check_claude_md_bytes CLAUDE.md
   # ADR-0076 left the root file as triggers and pointers; a pointer to a
   # missing file silently loads nothing, so the root file gets the same link
@@ -2833,10 +2887,14 @@ check_context_budget() {
     echo "WARN: the launch-loaded surface totals $total bytes, over the 30,000-byte per-turn budget ADR-0079 argues — the layer that grew pays: relocate procedure out of global/rules/, trim CLAUDE.md to triggers and contracts, or trim the description that grew; the budget moves only by an edit to ADR-0079"
   fi
 }
-check_context_budget
+[ "$files_mode" -eq 0 ] && check_context_budget
 
 # The one read of the flag, and the whole exit. There is no `fail` variable to
 # pair with it, on purpose: see scripts/lint-lib.sh's header.
 [ -e "$LINT_FAIL_FLAG" ] && exit 1
+if [ "$files_mode" -eq 1 ]; then
+  echo "PARTIAL: the named files pass their per-file checks; the whole-tree checks (shared trigger phrase, pass 3, the byte totals) did not run — run without --files for a verdict on the tree."
+  exit 2
+fi
 echo "OK: skill conventions clean."
 exit 0

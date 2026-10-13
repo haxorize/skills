@@ -19,6 +19,13 @@
 #                                             path is built on the result,
 #                                             since an empty prefix makes
 #                                             `cp -R x/. "$tmp/"` copy into /
+#   selftest_no_tmpdir <script>             — the close for a selftest that can
+#                                             run no row without that directory:
+#                                             exit 4, or 1 when a row before the
+#                                             guard already failed (scripts/
+#                                             README.md § Temp files). A guard
+#                                             that skips one block and goes on
+#                                             takes selftest_skip instead.
 #   selftest_close <ok-line> <partial-line> — exits 1 on any FAIL, 2 on any
 #                                             SKIP with no FAIL, else 0: three
 #                                             statuses, because
@@ -74,6 +81,12 @@ selftest_tmpdir() {
     return 1
   fi
   printf '%s' "$t"
+}
+
+selftest_no_tmpdir() {
+  echo "$1: no usable temp directory (TMPDIR=${TMPDIR:-unset}) — nothing ran"
+  [ "$fail" -ne 0 ] && exit 1
+  exit 4
 }
 
 selftest_close() {

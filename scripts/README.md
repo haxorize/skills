@@ -9,6 +9,7 @@ Every `scripts/<name>.sh` and `scripts/git-hooks/<name>` that is not a selftest,
 - After changing a script or hook, run its `-selftest.sh`.
 - After changing a check in `lint-skills.sh` or `lint-adrs.sh`, run that linter's selftest: a lint gate that quietly stopped matching looks identical to a repo with no violations. Each selftest's header names what it grades and what it does not, and that list is the authority.
 - After touching `scripts/selftest-lib.sh`, run every `scripts/*-selftest.sh`, every `scripts/git-hooks/*-selftest.sh` and every `src/*/scripts/*-selftest.sh` — each sources it.
+- Between edits, `lint-skills.sh --files <path>…` grades just the named files in about a second; a clean run exits 2, since the whole-tree checks (pass 3, the byte totals) did not run, so it never stands in for the full run before a commit.
 - After touching `scripts/lint-lib.sh`, run `lint-skills-selftest.sh` and `lint-adrs-selftest.sh` — both linters source it for `say_fail` and the failure flag, and `pre-commit`'s derived gate map queues no selftest for a `*-lib.sh`.
 - A file no gate walks is gated only by the selftest that runs it: touch such a file, run that selftest.
 
@@ -30,7 +31,7 @@ A `WARN` never moves the status. `scripts/git-hooks/post-merge` and `sweep-corpu
 
 ## Temp files take a full-path template
 
-`mktemp` takes `"${TMPDIR:-/tmp}/<name>.XXXXXX"` (with `-d` for a directory), never the bare form and never `-t`: on Darwin both ignore `TMPDIR`, so they fail where `TMPDIR` is the only writable temp path. The guard tests the assignment itself, `if ! x=$(mktemp …) || [ ! -f "$x" ]; then …`, never the variable on the next line — under `set -e` a failing command substitution in a bare assignment exits before that line runs, silently. The failure message names the template and `TMPDIR`, as `lint-lib.sh`'s does, and the status is the taxonomy's 4 — for a selftest too, which prints `<script>: no usable temp directory — nothing ran`, or exits 1 instead when a row before the guard already failed. Each site carries a one-line pointer here rather than the reasoning.
+`mktemp` takes `"${TMPDIR:-/tmp}/<name>.XXXXXX"` (with `-d` for a directory), never the bare form and never `-t`: on Darwin both ignore `TMPDIR`, so they fail where `TMPDIR` is the only writable temp path. The guard tests the assignment itself, `if ! x=$(mktemp …) || [ ! -f "$x" ]; then …`, never the variable on the next line — under `set -e` a failing command substitution in a bare assignment exits before that line runs, silently. The failure message names the template and `TMPDIR`, as `lint-lib.sh`'s does, and the status is the taxonomy's 4 — for a selftest too, which prints `<script>: no usable temp directory — nothing ran`, or exits 1 instead when a row before the guard already failed; `selftest-lib.sh`'s `selftest_no_tmpdir` is that close. Each site carries a one-line pointer here rather than the reasoning.
 
 ## A check lands with its fixture and its mutation, in both directions
 

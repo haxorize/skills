@@ -35,10 +35,7 @@ template="src/wizard/template.sh"
 
 bash -n "$template" 2>/dev/null || selftest_fail "$template does not parse (bash -n)"
 
-if ! tmp="$(selftest_tmpdir)"; then
-  selftest_skip "mktemp -d produced no usable directory — the library rows were not exercised by this run."
-  selftest_close "" "wizard-template self-test parsed the file and ran nothing else; see the SKIP line above."
-fi
+tmp="$(selftest_tmpdir)" || selftest_no_tmpdir wizard-template-selftest.sh
 trap 'rm -rf "$tmp"' EXIT
 lib="$tmp/lib.sh"
 sed -n '1,/^# STAGES/p' "$template" | sed '$d' > "$lib"

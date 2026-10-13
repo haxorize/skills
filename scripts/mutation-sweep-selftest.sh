@@ -34,7 +34,7 @@ cd "$repo_root" || exit 4
 . scripts/selftest-lib.sh
 command -v python3 >/dev/null 2>&1 || { echo "mutation-sweep-selftest: python3 missing, nothing ran"; exit 4; }
 
-tmp="$(selftest_tmpdir)" || { selftest_skip "mktemp gave no usable directory — nothing ran"; selftest_close "" "mutation-sweep self-test ran nothing"; }
+tmp="$(selftest_tmpdir)" || selftest_no_tmpdir mutation-sweep-selftest.sh
 trap 'rm -rf "$tmp"' EXIT
 
 # --- the fixture tree: the sweep resolves its root from its own location ---------
@@ -250,6 +250,11 @@ rmdir "$fx/.tmp"
 ( TMPDIR="$tmp/no-such-dir"; selftest_tmpdir >/dev/null ) && selftest_fail "selftest_tmpdir returned 0 for a TMPDIR that does not exist — it ignored TMPDIR"
 t2="$(TMPDIR="$tmp" selftest_tmpdir)" || selftest_fail "selftest_tmpdir gave no directory under a writable TMPDIR"
 case "$t2" in "$tmp"/selftest.*) ;; *) selftest_fail "selftest_tmpdir made '$t2', not a directory under TMPDIR ($tmp)" ;; esac
+# selftest_no_tmpdir too: 4 when nothing ran, 1 when a row before it already failed.
+( fail=0; selftest_no_tmpdir x >/dev/null ); rc=$?
+expect_rc "selftest_no_tmpdir with no earlier FAIL" 4 "$rc"
+( fail=1; selftest_no_tmpdir x >/dev/null ); rc=$?
+expect_rc "selftest_no_tmpdir after an earlier FAIL" 1 "$rc"
 
 # --- the mutation table: each row removes one guard from a copy of the sweep and must change
 # a verdict the rows above read. The fixture is reopened (blue uncovered) for the first row.

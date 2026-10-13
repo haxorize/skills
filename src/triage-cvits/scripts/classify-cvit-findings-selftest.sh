@@ -209,7 +209,7 @@ expect_rejected() {  # <label> <needle> <csv> <json>
 expect_rejected "a renamed Package Path" "Package Path" "$fx/renamed-header.csv" "$fx/resolver.json"
 expect_rejected "a non-UTF-8 byte" "is not UTF-8" "$fx/not-utf8.csv" "$fx/resolver.json"
 
-tmp=$(selftest_tmpdir) || { selftest_fail "mktemp gave no usable directory"; selftest_close "" ""; }
+tmp=$(selftest_tmpdir) || selftest_no_tmpdir classify-cvit-findings-selftest.sh
 trap 'rm -rf "$tmp"' EXIT
 header=$(head -n 1 "$fx/export.csv")
 for col in "CVE ID" "Packages" "Package Version" "PURL" "Package Path" "Fix Status"; do

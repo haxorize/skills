@@ -67,7 +67,7 @@ repo_root="$(cd "$(dirname "$0")/../.." && pwd)"
 . "$repo_root/scripts/selftest-lib.sh"
 
 hook="$repo_root/scripts/git-hooks/pre-commit"
-tmp="$(selftest_tmpdir)" || { selftest_skip "no usable temp directory; no row ran"; selftest_close "pre-commit self-test clean" "pre-commit self-test PARTIAL"; }
+tmp="$(selftest_tmpdir)" || selftest_no_tmpdir pre-commit-selftest.sh
 trap 'rm -rf "$tmp"' EXIT
 
 work="$tmp/work"

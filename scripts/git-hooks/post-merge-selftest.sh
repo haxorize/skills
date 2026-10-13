@@ -40,10 +40,7 @@ cd "$repo_root"
 hook="$repo_root/scripts/git-hooks/post-merge"
 [ -f "$hook" ] || { selftest_fail "hook $hook is missing"; exit 1; }
 
-if ! tmp="$(selftest_tmpdir)"; then
-  selftest_skip "mktemp -d produced no usable directory — nothing here could run"
-  selftest_close "" "post-merge self-test ran nothing: no temp directory"
-fi
+tmp="$(selftest_tmpdir)" || selftest_no_tmpdir post-merge-selftest.sh
 trap 'rm -rf "$tmp"' EXIT
 fake="$tmp/repo"
 mkdir -p "$fake/scripts/git-hooks" "$fake/global/hooks" "$fake/marks"

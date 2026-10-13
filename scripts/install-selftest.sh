@@ -78,16 +78,7 @@ cd "$repo_root"
 skills_dir="$repo_root/src"
 global_dir="$repo_root/global"
 
-if ! home="$(selftest_tmpdir)"; then
-  # selftest_skip has already set skipped=1, so this close can only take the
-  # PARTIAL arm; the clean string is passed because the helper's signature
-  # requires it, and never prints. selftest_close exits on every path, so
-  # nothing follows it here.
-  selftest_skip "mktemp -d produced no usable directory — no row in this script was exercised."
-  selftest_close \
-    "install self-test clean — both prune arms removed what they own and left everything else alone." \
-    "install self-test PARTIAL — see the SKIP lines above for what went ungraded."
-fi
+home="$(selftest_tmpdir)" || selftest_no_tmpdir install-selftest.sh
 trap 'chmod -R u+rwX "$home" 2>/dev/null; rm -rf "$home"' EXIT INT TERM
 
 skills_target="$home/.claude/skills"

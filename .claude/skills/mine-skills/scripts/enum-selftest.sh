@@ -63,16 +63,7 @@ repo_root="$(cd "$(dirname "$0")/../../../.." && pwd)"
 . "$repo_root/scripts/selftest-lib.sh"
 
 enum="$repo_root/.claude/skills/mine-skills/scripts/enum.sh"
-if ! tmp="$(selftest_tmpdir)"; then
-  # selftest_skip has already set skipped=1, so this close can only take the
-  # PARTIAL arm; the clean string is passed because the helper's signature
-  # requires it, and never prints. selftest_close exits on every path, so
-  # nothing follows it here.
-  selftest_skip "mktemp -d produced no usable directory — no row in this script was exercised."
-  selftest_close \
-    "enum.sh self-test clean" \
-    "enum.sh self-test PARTIAL — see the SKIP lines above for what went ungraded."
-fi
+tmp="$(selftest_tmpdir)" || selftest_no_tmpdir enum-selftest.sh
 [ -n "${ENUM_SELFTEST_KEEP:-}" ] || trap 'rm -rf "$tmp"' EXIT
 [ -z "${ENUM_SELFTEST_KEEP:-}" ] || echo "keeping $tmp" >&2
 

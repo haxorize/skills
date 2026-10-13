@@ -175,7 +175,9 @@
 # even when no substring row names it), and argument handling (--help runs
 # nothing and exits 0, an unknown argument, two arguments, and an empty
 # argument run nothing and exit 3, a LINT_ROOT that is not a directory runs
-# nothing and exits 2).
+# nothing and exits 2), and --files (per-file FAILs fire on the named file and
+# on no other, a pass-3 check stays silent, a clean run exits 2 with no OK, and
+# no path, a missing path and an outside path exit 3).
 #
 # The sibling checks are covered through LINT_SIBLING_GROUPS, the seam that
 # replaces the registry for one run (the registry names this repo's own paths,
@@ -1009,6 +1011,24 @@ LINT_ROOT="$fixtures" bash scripts/lint-skills.sh --help --bogus >/dev/null 2>&1
 LINT_ROOT="$fixtures" bash scripts/lint-skills.sh "" >/dev/null 2>&1; expect_rc "an empty argument" 3 $?
 root_out=$(LINT_ROOT="$fixtures/does-not-exist" bash scripts/lint-skills.sh 2>&1); expect_rc "a LINT_ROOT that is not a directory" 2 $?
 printf '%s\n' "$root_out" | grep -qE '^(OK|FAIL|WARN):' && selftest_fail "a LINT_ROOT that is not a directory still ran the lint"
+# --files, each direction: a named file's per-file FAILs still fire, and no
+# FAIL names a file it was not given; a whole-tree check stays silent even on
+# a file it fails in a full run (the ledger consumer, pass 3); a clean named
+# file exits 2, never 0, because the whole-tree checks did not run; and a
+# missing, absent or outside path is a usage error that grades nothing.
+files_out=$(LINT_ROOT="$fixtures" bash scripts/lint-skills.sh --files "$fixtures/src/broken-links/SKILL.md" 2>&1); expect_rc "--files on a fixture file with FAILs" 1 $?
+expect_in "$files_out" "--files dropped a per-file check on the named file" "src/broken-links/SKILL.md links to 'references/does-not-exist.md' (line 14)"
+files_other=$(grep '^FAIL:' <<< "$files_out" | grep -vF 'FAIL: src/broken-links/SKILL.md ')
+[ -z "$files_other" ] || selftest_fail "--files graded a file it was not given: $files_other"
+files_out=$(LINT_ROOT="$fixtures" bash scripts/lint-skills.sh --files "$fixtures/src/ledger-consumer/SKILL.md" 2>&1); files_rc=$?
+reject_in "$files_out" "--files ran pass 3's ledger-consumer check, a whole-tree check" "missing from src/ledger-consumer/SKILL.md"
+expect_rc "--files on a file only a whole-tree check fails" 2 "$files_rc"
+files_out=$(LINT_ROOT="$clean_fixtures" bash scripts/lint-skills.sh --files "$clean_fixtures/src/clean-skill/SKILL.md" 2>&1); expect_rc "--files on a clean file (whole-tree checks skipped)" 2 $?
+expect_in "$files_out" "--files on a clean file printed no PARTIAL line" "PARTIAL:"
+grep -q '^OK:' <<< "$files_out" && selftest_fail "--files printed OK, a whole-tree verdict it did not earn"
+LINT_ROOT="$fixtures" bash scripts/lint-skills.sh --files >/dev/null 2>&1; expect_rc "--files with no path" 3 $?
+LINT_ROOT="$fixtures" bash scripts/lint-skills.sh --files "$fixtures/src/no-such-skill/SKILL.md" >/dev/null 2>&1; expect_rc "--files on a path that is no file" 3 $?
+LINT_ROOT="$fixtures" bash scripts/lint-skills.sh --files "$clean_fixtures/src/clean-skill/SKILL.md" >/dev/null 2>&1; expect_rc "--files on a file outside the sweep root" 3 $?
 # The failure flag is a file in a private `mktemp -d` directory under TMPDIR
 # (scripts/lint-lib.sh), and a directory that cannot be made is a run in which
 # no FAIL could have moved the status — exit 4, before any check, never a clean
