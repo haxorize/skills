@@ -4,17 +4,17 @@ Open this only when a stamp is about to be taken or checked — a review's first
 
 ## The stamp command
 
-A stamp of the working tree comes from the script beside this file, run from anywhere in the repo; `--committed <rev>` prints a commit's tree, and `--verify <report>` says whether any stamp in a report equals the tree now. `--help` carries the exit codes:
+A stamp of the working tree comes from this skill's `scripts/tree-stamp.sh`, run from anywhere in the repo; `--committed <rev>` prints a commit's tree, and `--verify <report>` says whether any stamp in a report equals the tree now. `--help` carries the exit codes:
 
 ```
 bash ~/.claude/skills/review-changes/scripts/tree-stamp.sh
 ```
 
-It seeds a throwaway index from `HEAD` and adds everything, so uncommitted and untracked non-ignored files count, and a tracked-but-ignored file still counts. The real index and every open file are untouched; the run adds unreachable blobs and one tree to the object store that `git gc` collects. The stamp is one line, exactly `Reviewed-tree: <40-hex>` — **nothing after the hash**, because the `review-receipt` hook's pattern anchors at end of line, so a stamp carrying an appended clause ("the tree as reviewed", a date, a note) is invisible to it and the push is refused against an older report.
+It seeds a throwaway index from `HEAD` and adds everything, so uncommitted and untracked non-ignored files count, and a tracked-but-ignored file still counts. The real index and every open file are untouched; the run adds unreachable blobs and one tree to the object store that `git gc` collects. The stamp is one line, exactly `Reviewed-tree: <40-hex>` — **nothing after the hash**, because the stamp reader the `review-receipt` hook and `--verify` share (`tree-stamp.sh --stamps`) anchors at end of line, so a stamp carrying an appended clause ("the tree as reviewed", a date, a note) is invisible to it and the push is refused against an older report.
 
 **Why clearing untracked files before the stamp is a stop, not a tidy-up.** Once the stamp has folded a file in, the only documented way past the gate is to commit it — and a gate that talks the author into committing a secret has inverted its own purpose.
 
-**A producer outside a review writes the same hash as `Measured-tree:`.** A handoff, an `audit-skills` run, a `sweep-corpus` health report — anything the global `evidence` rule sends here for the stamp — labels the line `Measured-tree:` and never `Reviewed-tree:`, which belongs to a review and to the receipt hook that reads it. Everything below about comparing against a reviewed commit is a review's business: a `Measured-tree:` producer has no reviewed target, so the committed-work substitution in the next paragraph does not apply to it — it stamps the working tree with the script above.
+**A producer outside a review writes the same hash as `Measured-tree:`.** A handoff, an `audit-skills` run, a `sweep-corpus` health report — any report the global `evidence` rule asks to name the tree it measured — labels the line `Measured-tree:` and never `Reviewed-tree:`, which belongs to a review and to the receipt hook that reads it. Everything below about comparing against a reviewed commit is a review's business: a `Measured-tree:` producer has no reviewed target, so the committed-work substitution in the next paragraph does not apply to it — it stamps the working tree with the script above.
 
 **A report written into the tree it names spells that hash `git rev-parse HEAD^{tree}`.** A review report lives in the landing zone, outside the repo; a `sweep-corpus` health report lives at `docs/health/<date>.md`, inside it. The working-tree stamp would fold the half-written report into its own hash and name a state that exists for one instant, so the producer runs on a clean working tree and writes `HEAD^{tree}` instead. This is a spelling, not a second rule: on a clean tree the script returns exactly `HEAD^{tree}`, so the two agree at the moment of measurement and `HEAD^{tree}` is the one that stays re-derivable after the report lands. A producer that cannot start clean has no stamp to write and says so.
 

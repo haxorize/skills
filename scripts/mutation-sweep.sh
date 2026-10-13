@@ -44,8 +44,8 @@
 #                                        → the selftests of every non-selftest
 #                                          script in its directory that names
 #                                          the file (grep -l), so hook-lib.py
-#                                          is graded by the three hooks that
-#                                          source it
+#                                          is graded by every hook that
+#                                          sources hook-lib.sh
 # A target with no selftest is reported and UNGRADED; the pairing lint owns
 # that failure, not this sweep.
 #
@@ -164,7 +164,7 @@ selftests_for() {
   esac
   # a library: the selftests of the non-selftest scripts in its directory that
   # name it, plus those of any script naming a library that names it (one hop:
-  # hook-lib.py is named only by hook-lib.sh, which the three hooks source)
+  # hook-lib.py is named by hook-lib.sh, which every hook but friction-log sources)
   local names="$base" f2
   for f in "$root/$d"/*-lib.sh; do
     [ -f "$f" ] && [ "${f##*/}" != "$base" ] && grep -v '^[[:space:]]*#' "$f" | grep -q -F -- "$base" && names="$names ${f##*/}"

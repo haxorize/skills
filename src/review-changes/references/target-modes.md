@@ -12,7 +12,7 @@ In PR mode the review's conventions — `DOMAIN.md`, `docs/adr/`, `CLAUDE.md`'s 
 
 ## An already-landed commit
 
-Audit a merged change; base = the commit's parent (or merge-base). The tree stamp for committed work — a landed commit, or a self-review whose changes are already committed — is `git rev-parse <target>^{tree}` (`tree-stamp.sh --committed <target>`), the tree the diff actually covered. The working-tree stamp is wrong here: it folds in uncommitted dirt the review never read, so the stamp would never equal the reviewed commit's tree and the push of the reviewed work would block until the *unreviewed* dirt was committed too.
+Audit a merged change; base = the commit's parent (or merge-base). The tree stamp for committed work — a landed commit, or a self-review whose changes are already committed — is `git rev-parse <target>^{tree}` (`bash ~/.claude/skills/review-changes/scripts/tree-stamp.sh --committed <target>`), the tree the diff actually covered. The working-tree stamp is wrong here: it folds in uncommitted dirt the review never read, so the stamp would never equal the reviewed commit's tree and the push of the reviewed work would block until the *unreviewed* dirt was committed too.
 
 ## Fixes already on top of the change
 

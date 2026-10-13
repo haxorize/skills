@@ -73,13 +73,13 @@ Work that never went through `/implement` — docs, skills, config, a synced lib
 
 **Deleting a branch** — local or remote, after a merge or on an ask — follows [references/branch-deletion.md](references/branch-deletion.md): a squash merge hides a landed branch from `--merged`, so the check is on content, and the deletion still needs an ask.
 
-In a repo that ships a `commit-msg` git hook, most of the exact rules in [references/commit-style.md](references/commit-style.md) block at the commit: the message is rejected, the rejection names the rule and the file. The imperative-opener rule only **warns** — it is a wordlist heuristic — so a clean run is not evidence the subject passed it. The check is over shape only — it says nothing about register or the tell catalog, so a green run never stands in for the read. The status report step 5 ends with is governed by `~/.claude/rules/evidence.md`.
+In a repo that ships a `commit-msg` git hook, most of the exact rules in [references/commit-style.md](references/commit-style.md) block at the commit: a body prose line past the cap is re-broken in place, and what still breaks a rule is rejected, naming the rule and the file. The imperative-opener rule only **warns** — it is a wordlist heuristic — so a clean run is not evidence the subject passed it. The check is over shape only — it says nothing about register or the tell catalog, so a green run never stands in for the read. The status report step 5 ends with is governed by `~/.claude/rules/evidence.md`.
 
 ## When an action is blocked
 
 When a commit, push, or tracker write fails for an environmental reason (auth, sandbox, policy, network), or a `commit-msg` hook rejects the message, open [references/blocked-actions.md](references/blocked-actions.md) and follow it. Never `--no-verify`.
 
-The `commit-bypass` hook under `global/hooks/` is this protocol's mechanical half: a failing `pre-commit` git hook is a blocked action to report, never a reason for `--no-verify`, and the hook refuses the bypass shapes before they run. The `review-receipt` hook beside it is the "reviewed" row's mechanical half at the push.
+The `commit-bypass` hook under `global/hooks/` is this protocol's mechanical half: a failing `pre-commit` git hook is a blocked action to report, never a reason for `--no-verify`, and the hook refuses the bypass shapes before they run. The `review-receipt` hook beside it is the "reviewed" row's mechanical half at the push, and `staged-secrets` the rotate-first rule's at the commit.
 
 ## Boundary
 
