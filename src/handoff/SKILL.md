@@ -15,21 +15,9 @@ This skill **forks** the conversation — you don't continue in place. It has tw
 
 ## Where to write it
 
-This section defines two things, and is the only place either is defined: the **landing zone** and the filename shape every cross-session artifact takes, which every pickup points here for rather than spelling its own glob; and the **per-section file mechanics** that every multi-section document in the suite runs, which the global `large-write-chunking` rule and every document citing this section point here for. Editing either contract reaches well past this skill, and `grep -rl 'Where to write it' src global .claude *.md` is the blast radius — a count written here instead goes stale the first time someone cites the section.
+This section is the one home of two contracts the suite points here for, and `grep -rl 'Where to write it' src global .claude *.md` is the blast radius of editing either: the **landing zone** and filename shape of every cross-session file, and the **per-section file mechanics** of every multi-section document.
 
-One filename shape, `<repo>-<date>-<slug>.<kind>.<ext>`, and **a handoff is the one kind with no kind segment at all**:
-
-- a handoff: `<repo>-<date>-<slug>.md` — **no kind segment**
-- a `review-changes` report: `<repo>-<date>-<slug>.review.md`
-- an `audit-skills` working file: `skills-<date>-<slug>.audit.md`
-- an `ask-for-me` questionnaire: `<repo>-<date>-<slug>.questionnaire.md`
-- a `review-architecture` report: `<repo>-<date>-<slug>-<HHMMSS>.design-review.html`
-
-where `<date>` is `YYYY-MM-DD`, `<slug>` names the focus, and `<repo>` is the basename of `git rev-parse --show-toplevel` — except for the `.audit.md` kind, whose subject is the installed skill suite rather than a repo and which therefore takes the fixed word `skills`, so two audits run from different working directories resolve to the same name. The `.design-review.html` kind additionally carries the run's time (`HHMMSS`) at the end of its slug, because that report is timestamped per run and frozen at pick-time, and a date alone would let a second run overwrite the first. A new kind takes a new segment here rather than a name of its own shape.
-
-**Picking one up: a handoff is the file with no kind segment.** Match `<repo>-<date>-<slug>.md` where `<slug>` carries no `.`; that is the positive rule, and it is what keeps "the newest handoff" from resolving to a report, an audit working file, or a questionnaire, all three of which are `.md` files sharing the same prefix. A handoff is throwaway — the durable content lives in the artifacts the doc points at — and the fixed names are what let `/review-changes` and `/implement latest` pick up the newest handoff, and `/address-findings` the newest report, without a pasted path.
-
-One fixed **landing zone**, `claude-handoffs/` under the platform temp dir (`$TMPDIR` on macOS, `/tmp` on Linux, `%TEMP%` on Windows; `mkdir -p` it), for the first three kinds. The other two share the shape and land elsewhere, which is stated here rather than left to be discovered from the two skills: an `ask-for-me` questionnaire lands **in the current directory**, because it is handed to a person rather than picked up by a later session, and a `review-architecture` report lands in the **temp root**, not `claude-handoffs/`, because nothing globs for it — it is opened once, by path, in the session that wrote it.
+**Paths come from the script, never by hand.** Run `bash ~/.claude/skills/handoff/scripts/landing.sh` — `dir` for the zone, `path <slug> [--kind review|audit]` for a new file's absolute path, `latest [--kind …]` for the newest of a kind for this repo — never a path built from `$TMPDIR` or a temp dir guessed. The zone is `claude-handoffs/` under the temp dir; the shape is `<repo>-<date>-<slug>.<kind>.<ext>`, and **a handoff is the one kind with no kind segment**, which keeps "the newest handoff" from resolving to a report. The kinds, the two that land elsewhere (an `ask-for-me` questionnaire, a `review-architecture` report), and why, are in [references/landing-zone.md](references/landing-zone.md).
 
 This section also owns the **per-section file mechanics** the global `large-write-chunking` rule (`~/.claude/rules/large-write-chunking.md`) points here for — for a long handoff and for every other multi-section document a skill writes (an audit, an offboarding record, a rebuild contract, an evaluation memo, a work-item draft). The trigger is observable: a document with more than three planned sections, or any of those kinds, lands this way rather than in one write.
 
@@ -40,7 +28,7 @@ This section also owns the **per-section file mechanics** the global `large-writ
 
 **Escape hatch:** if the user names a path or asks for a durable target, honor it. Only then does the doc land in the workspace.
 
-**The close names the file's absolute path** — resolved, `$TMPDIR` expanded, never a bare filename or a `$TMPDIR/…` form — and stops there: the pickup-by-name line above is this skill's mechanism, not something the close repeats or turns into a next step for the user.
+**The close names the file's absolute path** — resolved, `$TMPDIR` expanded, never a bare filename or a `$TMPDIR/…` form — and stops there: pickup through `landing.sh latest` is this skill's mechanism, not something the close repeats or turns into a next step for the user.
 
 ## Workflow
 

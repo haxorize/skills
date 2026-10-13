@@ -10,7 +10,7 @@ Pulls a published ticket back into the conversation: detects the work-item type,
 
 Resolve the tracker per [tracker-resolution.md](tracker-resolution.md), in **Declared** mode only — a reader never bootstraps: with no tracker block, ask which tracker holds the ticket for this load and write nothing (a publisher run bootstraps the block).
 
-If the user passed a tracker URL instead of a bare ID, infer the tracker from the URL host and proceed. If they passed `latest`, take the ID from the newest handoff for this repo in the landing zone `handoff` defines (its "Where to write it" section fixes the directory and the filename shape; a handoff is the one kind with **no kind segment**, so an `.audit.md` or `.questionnaire.md` sharing the prefix is not one; `handoff` names work items with their ID attached) and say which file and ID you resolved before loading. A reference that could name two items — a bare number in a repo whose `Issue tracker:` block names more than one tracker, say — is asked about, never guessed.
+If the user passed a tracker URL instead of a bare ID, infer the tracker from the URL host and proceed. If they passed `latest`, take the ID from the newest handoff for this repo, the file `bash ~/.claude/skills/handoff/scripts/landing.sh latest` prints (`handoff` names work items with their ID attached), and say which file and ID you resolved before loading. A reference that could name two items — a bare number in a repo whose `Issue tracker:` block names more than one tracker, say — is asked about, never guessed.
 
 ## 2. Detect work-item type
 

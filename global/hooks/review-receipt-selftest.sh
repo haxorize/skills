@@ -346,11 +346,15 @@ expect_allow "$G" "git push --all origin"                      "and --all allows
 rm "$REVIEW_RECEIPT_DIR/gated-2026-01-07-all.review.md"
 ( cd "$G" && git branch -q -D nostamp )
 ( cd "$G" && git branch -q -D side )
-# a landing zone with a space in its path (unset the override so the TMPDIR path is searched)
+# a landing zone with a space in its path (unset the override so the TMPDIR path is searched).
+# The report path comes from handoff's landing.sh, the writers' resolver, so a
+# zone or filename the two disagree on reds this row.
 ( cd "$G" && echo q > q && git add q && git commit -q -m q )
-mkdir -p "$work/t m p/claude-handoffs"
-printf 'Reviewed-tree: %s\n' "$(cd "$G" && git rev-parse 'HEAD^{tree}')" > "$work/t m p/claude-handoffs/gated-2026-12-31-x.review.md"
-REVIEW_RECEIPT_DIR= TMPDIR="$work/t m p" expect_allow "$G" "git push" "TMPDIR with a space"
+landing="$here/../../src/handoff/scripts/landing.sh"
+report="$(cd "$G" && TMPDIR="$work/t m p" bash "$landing" path x --kind review)" \
+  || { echo "FAIL (landing.sh gave no report path)"; fail=1; }
+printf 'Reviewed-tree: %s\n' "$(cd "$G" && git rev-parse 'HEAD^{tree}')" > "$report"
+REVIEW_RECEIPT_DIR= TMPDIR="$work/t m p" expect_quiet "$G" "git push" "TMPDIR with a space, report path from landing.sh"
 ( cd "$G" && git push -q origin main 2>/dev/null )
 
 # --- fail-open -----------------------------------------------------------------
