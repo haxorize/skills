@@ -101,3 +101,7 @@ mismatch in the direction a wider header takes, and the backslash-run parity a
 | Key | Value |
 | --- | --- |
 | ``a double-backtick span | with a pipe`` |
+
+## A chained citation
+
+- The second name inherits the first one's target: [the quiet forms](references/quiet-forms.md) § The quiet half and § No Such Chained Heading.

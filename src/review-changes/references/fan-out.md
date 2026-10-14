@@ -2,6 +2,16 @@
 
 Opened from §3 only when the diff exceeds the in-process threshold — more than 5 files, or any code hunk. A small prose-only diff runs its lenses in-process and never opens this file.
 
+## Size tier
+
+Count the changed lines first: insertions plus deletions from `git diff --shortstat` over the range §1 resolved, plus `wc -l` of any untracked file in scope. **300 or fewer** dispatches four subagents at most: `/code-review`, one **combined checklist lens** carrying the DOMAIN, ADR and (with a work item) AC briefs in one prompt, the falsification lens when a handoff is the input, and the negative-space pass below. Every other lens the triage picked runs in-process, under §3's ordering rule, and still ends on its not-examined line. **Over 300**, every lens is its own subagent, as the rest of this file says. No path exception: a rule or skill body under 300 lines takes the tier too (Nick, 2026-10-12: 14 of 28 reviews were this size and dispatched 143 subagents; the tier makes it about 56).
+
+## Checklist model
+
+The checklist lenses named here dispatch with the model `printenv REVIEW_CHECKLIST_MODEL` prints, passed as the dispatch's own `model`; unset or empty, they inherit the session model. The key is per machine, in that machine's `~/.claude/settings.json` `env`; `CLAUDE_CODE_SUBAGENT_MODEL` is never set, since it moves every subagent in every repo. The combined lens takes the key only when every lens it carries is named. Every other lens, the negative-space pass and the vet keep the session model. A lens is named only after a re-run on that model over three past reviews recovered at least 80% of its HIGH and MED findings and missed no Blocker: none — Sonnet's 2026-10-14 re-run recovered 11–63% per lens and missed a Blocker on five of six (AC untested; no report had a work item).
+
+## Dispatch
+
 Run each **custom lens** (DOMAIN, ADR, AC, design depth, discoverability, smell baseline, verification gap, instruction-file, amendment bookends, falsification) as its own **read-only subagent** that returns *findings only* — keeps the caller's context clean. Built-ins that already self-parallelize (`/code-review`, `/security-review`) may run at top level rather than wrapped in a subagent.
 
 **Every finder is briefed diff-only.** The handoff's narrative goes to the falsification lens alone ([lens-briefs-docs.md](lens-briefs-docs.md) § Falsification lens), run last, after the diff lenses return; every other finder judges the change without the author's framing, so the framing cannot steer it.

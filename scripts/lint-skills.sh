@@ -1785,6 +1785,8 @@ check_heading_case() {
 # run-on cut truncated the citation at the same character. That is also the
 # check's limit — a heading that is a prefix of a longer sibling can be cited
 # by the shorter name and pass.
+# A chained citation ("§ A and § B", "§ A, § B") resolves B from A's target,
+# so a one-line index of a reference's sections is graded pointer by pointer.
 # Not graded: a `§` whose target is named only as "that file" earlier in the
 # sentence, and a `§` naming a section of the file it sits in.
 section_pointer_candidates() {
@@ -1846,12 +1848,25 @@ check_section_pointers() {
   # Every trim below is a parameter expansion, not a `sed`: three forks per
   # citation and one per heading of its target were most of this check's cost
   # (about 3.5 s of a 32 s run, measured 2026-09-01 by dropping the check).
-  local short headings
+  local short headings prev_line="" prev_target=""
   while IFS=$'\t' read -r lineno before name; do
     [ -z "$name" ] && continue
     rtrim_lead_in "$before"; tail=$rtrimmed
     target=""
-    if [[ "$tail" =~ $section_link_re ]]; then
+    # A chained citation ("§ A and § B", "§ A, § B") names its target once,
+    # before the first `§`; the later ones inherit it when nothing between
+    # them names another file. `before` holds only the text since the last
+    # `§` on the line (section_pointer_candidates consumes as it goes).
+    if [ "$lineno" = "$prev_line" ] && [ -n "$prev_target" ]; then
+      rtrim_space "$before"
+      case "$rtrimmed" in
+        *']('*|*'~/.claude/'*) : ;;
+        *' and'|*' or'|*,) target=$prev_target ;;
+      esac
+    fi
+    if [ -n "$target" ]; then
+      :
+    elif [[ "$tail" =~ $section_link_re ]]; then
       target="$dir/${BASH_REMATCH[1]%%#*}"
     elif [[ "$tail" =~ $section_skills_re ]]; then
       target="src/${BASH_REMATCH[1]}/${BASH_REMATCH[2]}"
@@ -1864,9 +1879,12 @@ check_section_pointers() {
       target="$dir/${BASH_REMATCH[2]%%#*}"
     fi
     [ -z "$target" ] && continue
+    prev_line=$lineno; prev_target=$target
     # The citation runs on into its sentence, so it is cut at the first
-    # sentence end; `short` cuts harder, at a comma or a closing paren, and is
-    # tried only as a fallback — a heading may legitimately carry either.
+    # sentence end and at the next `§`, which no heading carries; `short` cuts
+    # harder, at a comma or a closing paren, and is tried only as a fallback —
+    # a heading may legitimately carry either.
+    name=${name%% §*}
     name=${name%%. *}
     rtrim_space "$name"; name=${rtrimmed%.}
     [ -z "$name" ] && continue

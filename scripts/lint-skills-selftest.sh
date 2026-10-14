@@ -490,6 +490,9 @@ expect "section pointers (a target that is not a file)" "cites '§ Anything' (li
 expect "installed-path pointer in a skill body" "src/house-style/SKILL.md points at ~/.claude/skills/fixture-discipline/references/gone.md but src/fixture-discipline/references/gone.md does not exist"
 expect "section pointers (an em-dash lead-in before the citation)" "src/house-style/SKILL.md cites '§ No Such Dash Heading' (line 58), and src/house-style/references/quiet-forms.md carries no heading by that name"
 expect "section pointers (a hyphen lead-in before the citation)" "src/house-style/SKILL.md cites '§ No Such Hyphen Heading' (line 59), and src/house-style/references/quiet-forms.md carries no heading by that name"
+# A chained citation names its target once; the name after the second `§`
+# resolves from the first one's, or it is graded nowhere.
+expect "section pointers (a chained citation)" "src/house-style/SKILL.md cites '§ No Such Chained Heading' (line 107), and src/house-style/references/quiet-forms.md carries no heading by that name"
 # One row per arm of the table check, each instance its own table in the
 # appended block at the end of src/house-style/SKILL.md, since a header that
 # disagrees with its delimiter row is not a table and would hide rows under it.
@@ -720,15 +723,15 @@ fi
 expect_rc "the lint against the fixture tree" 1 "$status"
 # The count of FAIL lines is pinned: a check that begins firing on a fixture
 # it should leave alone reds here even when no substring row names the line.
-# Last moved 2026-10-12 (check_rule_pointers widened to every walked file):
-# 113 → 114 — src/house-style/SKILL.md:30's pointer at a missing gone.md now
-# draws the pointer FAIL beside the section-pointer one, asserted below. Earlier moves of this pin are in
+# Last moved 2026-10-14 (check_section_pointers grades a chained citation):
+# 114 → 115 — the fixture's last line, a chained pointer at a missing heading.
+# Earlier moves of this pin are in
 # `git log -p -G 'expected exactly [0-9]+ FAIL' -- scripts/lint-skills-selftest.sh` — they describe counts
 # nothing asserts any more, and stacking them here made a changelog out of the
 # one line that has to stay readable. A count that moves is read before it is
 # re-pinned.
 nfail=$(printf '%s\n' "$output" | grep -c '^FAIL: ')
-[ "$nfail" -eq 114 ] || selftest_fail "expected exactly 114 FAIL lines against the fixture tree, got $nfail"
+[ "$nfail" -eq 115 ] || selftest_fail "expected exactly 115 FAIL lines against the fixture tree, got $nfail"
 # The shared-trigger-phrase fixtures are pinned by property, as near_bytes and
 # bulk_bytes are below: every row above them asserts a FAIL that appears or a
 # FAIL that does not, and each of those readings is silently satisfied by a
@@ -863,6 +866,7 @@ quiet_pin "$clean_fixtures/src/clean-skill/SKILL.md" "a numbered heading cited w
 quiet_pin "$clean_fixtures/src/clean-skill/references/note.md" "the numbered heading that citation resolves to" '## 2. The numbered half'
 quiet_pin "$clean_fixtures/src/clean-skill/SKILL.md" "a citation whose name carries a comma (the short fallback)" '§ Sizes, and what they bind'
 quiet_pin "$clean_fixtures/src/clean-skill/references/note.md" "the heading only the comma cut reaches" '## Sizes and shapes'
+quiet_pin "$clean_fixtures/src/clean-skill/SKILL.md" "a chained citation whose first name is cut at the next § (else 'Sizes and § Note' matches no heading)" '§ Sizes and § Note.'
 quiet_pin "$quiet" "an acronym mid-heading" '## The HTML half'
 # check_reference_orphans' `global` scan root. Deleting the line that adds it left
 # this file green: the installed-path arm was graded only from src/, so a

@@ -22,7 +22,7 @@ Read the report's stamps and compare them to the tree as it is now — but compa
 
 ### 2. Partition the findings
 
-Read every finding once, by its `F<n>` ID, and sort it into one of two sets before touching anything — the read is whole-report first because findings couple, and `receiving-review`'s clarify-all-before-implementing-any rule holds here.
+Sort every finding into one of two sets before touching anything, working from the report's index (`review-changes` § 6), one line per `F<n>`: its tag, causation and `file:line` place most findings and show which share a file. Open a finding's entry in the body where its line cannot decide the set, and always before fixing or asking it. The sort is whole-report first because findings couple, and `receiving-review`'s clarify-all-before-implementing-any rule holds here. A report with no index is read whole.
 
 - **Mechanical** — verified real, local to the change, inside its scope, with one obvious fix and no contract fork. Fix without asking.
 - **Ask** — a design call, an escalation, a finding you would push back on, a fix that would outgrow the change it serves, a deferral you want to propose, a finding `receiving-review` routes away from a local fix (an out-of-scope instruction-file finding, a spec-level defect), or a finding whose claim you could not verify either way. These go into **one batched question**, each entry carrying a recommendation in the ask-block shape the global recommend-and-proceed rule defines (`~/.claude/rules/recommend-and-proceed.md`) — not one question per finding, and not a question for the mechanical set.
@@ -47,12 +47,12 @@ Close with one row per finding, every `F<n>` in the report present, in ID order:
 |---|---|---|
 | F1 | FIXED | `src/api/scores.py:112` — the N+1 is gone: one query per page, `test_scores.py::test_page_queries` asserts the count |
 | F2 | DECLINED | the ADR at `docs/adr/0012` records the sync call as deliberate; the finding is by-design |
-| F3 | DEFERRED (proposed) | touches the repository layer this change does not own; would go on the `repo-layer-pagination` story as a new AC — needs the user's ratification |
+| F3 | DEFERRED (proposed) | touches the repository layer this change does not own; would go on the `repo-layer-pagination` story as a new AC, picked up when that story starts — needs the user's ratification |
 | F4 | ABANDON | started the rename, three call sites resist it without a contract change; reverted, tree clean, the contract change is a question for the user |
 
 - **FIXED** carries the hunk or SHA *and* a statement that the cited deficiency is gone — not that an edit was made. A fix that addresses the finding's line but not its claim is not FIXED: it is DEFERRED, with what remains named.
 - **DECLINED** carries a reason that disposes *that* claim, with the same verification read a FIXED row gets — the dismissal standard is `review-changes`' [finding-discipline.md](../review-changes/references/finding-discipline.md)'s — a claim is disposed by the evidence that refutes it, never by its confidence or its author. Verifying before implementing is `receiving-review`'s, gated by its § Clarify all before implementing any.
-- **DEFERRED** is a proposal the human ratifies in the same message. The row names where the work would go; if they do not ratify, it is not deferred.
+- **DEFERRED** is a proposal the human ratifies in the same message. The row names the record the work would go to and the event that picks it up; if they do not ratify, it is not deferred.
 - **ABANDON** is the visible form of "I tried and stopped": what was attempted, why it did not land, what state was left. A finding that is neither fixed nor explicitly disposed is this row, never an omission.
 
 Before the count, the size line: `git diff --stat <Reviewed-head>` (or `<Reviewed-head>..HEAD` once committed), insertions plus deletions, beside the same sum from `git diff --stat <base>...<Reviewed-head>` — where the fix touched a file the review never graded or runs past half that sum, **offer** a re-review, per `receiving-review`, and never start one.

@@ -18,4 +18,6 @@ Audit a merged change; base = the commit's parent (or merge-base). The tree stam
 
 The base is a choice, so make it out loud: the pre-fix base reviews the whole change with its fixes folded in, while the fix commits alone review only what the last round produced. Both are legitimate targets; an unstated one isn't, because the reader can't tell reviewed-and-clean from never-looked-at. Name the base and the file set it covers in the report.
 
+**A re-review after a fix pass covers the delta.** Its lenses read `git diff <stamp> <now>`, where `<now>` is the tree this review stamps (§1) and `<stamp>` is the earlier report's first `Reviewed-tree:` line (the tree that review read; a later line is a fix pass's re-stamp), plus every finding that report's disposition table left short of FIXED, each re-listed per [finding-discipline.md](finding-discipline.md) § Finding format. When `git cat-file -e <stamp>` fails, diff from its `Reviewed-head:` and say so. A new finding outside the delta is reported only as a Blocker, and a lesser one is left out, never demoted to an advisory. The header names the delta and the carried IDs.
+
 A re-review withdraws a blocking finding only when the revision contains a concrete fix for the exact deficiency, or the original application of the criteria was mistaken — the author's disagreement alone never downgrades it.
