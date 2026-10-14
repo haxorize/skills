@@ -8,14 +8,14 @@ No new fetch: the load's work-item JSON already carries `System.State`, `System.
 
 ## The startable gate
 
-**Only a startable ticket gets an offer.** Applies uniformly to Task, Bug, and Story. Resolve `System.State` to a **role** first, through `to-tasks/references/maintenance-modes.md` § State-aware proposals — the single source of truth for which state names carry which role, per work-item type and process template. Offer a Confirmed ADO activation only when the role is **Not started** (`New`, and `Ready to Start` on a Story) or **In progress** (`Active`, and the `Committed` / `In Progress` a non-Agile template uses). Every other state lands in that table's **Terminal** row, which catches whatever is not named as Not started or In progress: offer nothing, say nothing, and start building. Loading a closed ticket to read it is not a request to reopen it, and the allowlist makes a state this skill has never seen fail safe toward leaving the ticket alone.
+**Only a startable ticket gets an offer.** Applies uniformly to Task, Bug, and Story. Resolve `System.State` to a **role** first, through `to-tasks/references/maintenance-modes.md` § State-aware proposals — the single source of truth for which state names carry which role, per work-item type and process template. Offer a Confirmed ADO activation only when the role is **Not started** (`New`, and `Ready to Start` on a Story) or **In progress** (`Active`, and the `Committed` / `In Progress` a non-Agile template uses). Every other state lands in that table's **Terminal** row, which catches whatever is not named as Not started or In progress: offer nothing, say nothing, and start building. Building on a closed ticket is not a request to reopen it, and the allowlist makes a state this skill has never seen fail safe toward leaving the ticket alone.
 
 ## The three checks
 
 | Field | Already matches when | Target value |
 |---|---|---|
 | **State** | the role is already **In progress** — a `Committed` or `In Progress` ticket is not rewritten to a literal `Active` | `Active` by default. If the update call rejects it, report the exact error (it names the valid states for this type) and let the user supply the state for this run |
-| **Assignee** | `System.AssignedTo.uniqueName` equals the signed-in user, compared case-insensitively | `az account show --query user.name -o tsv`, used only when it returns a UPN (contains `@`). A display name never matches and would re-fire the offer every load, so on a non-UPN value leave Assignee out of the offer and say why |
+| **Assignee** | `System.AssignedTo.uniqueName` equals the signed-in user, compared case-insensitively | `az account show --query user.name -o tsv`, used only when it returns a UPN (contains `@`). A display name never matches and would re-fire the offer every build start, so on a non-UPN value leave Assignee out of the offer and say why |
 | **Iteration** | `System.IterationPath` equals the Team's current iteration — or the role is already **In progress**: once a ticket is being worked, its iteration is the team's planning call, so an Active ticket filed against a PI-level `Iteration:` path is never re-offered a move | the Team's current iteration, below. When that lookup returns nothing, leave Iteration out of the offer; never send `--iteration ""` |
 
 ## Resolving the Team's current iteration

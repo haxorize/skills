@@ -19,7 +19,7 @@
 - **Story body:**
   - **ADO:** `az boards work-item show <story-id> --output json --expand relations` — `System.Description`, `Microsoft.VSTS.Common.AcceptanceCriteria`, the parent Feature relation, and dependency relations (blockers as `System.LinkTypes.Dependency-Reverse`, dependents as `System.LinkTypes.Dependency-Forward`). Surface blocker Stories as cold-start context.
   - **GitHub:** body already fetched; resolve parent via the `Parent: #N` line.
-- **All active ACs:** load the full AC list. The Story-level loader does not filter by `## Covers` — there's no per-Task narrowing yet.
+- **All active ACs:** load the full AC list. The Story-level load does not filter by `## Covers` — there's no per-Task narrowing yet.
 - **Parent Feature:** title, Problem / Goals, and the story map's `### Naming consistency` section — the canonical shared names; a deferred sibling rename surfaces here.
 - **`## Layers touched`** from the Story body. Drives the ADR match in step 6.
 

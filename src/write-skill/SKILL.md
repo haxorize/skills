@@ -2,8 +2,8 @@
 name: write-skill
 description: Create or revise agent skills — classification, structure, descriptions, cross-session state, security surface, and testing them from wording through simulated use.
 disable-model-invocation: true
-requires: writing-for-agents
-argument-hint: "[<ticket-id>]"
+requires: writing-for-agents, writing-for-humans
+argument-hint: "[<ticket id, tracker URL, or latest>]"
 ---
 
 # Write Skill
@@ -12,7 +12,7 @@ The prose conventions serving predictability — information hierarchy and leadi
 
 ## Workflow
 
-Given a ticket id, load it first in `~/.claude/skills/implement/references/load-ticket.md`'s load-only mode.
+Given a ticket id, a tracker URL, or `latest`, load it first in `~/.claude/skills/implement/references/load-ticket.md`'s load-only mode, whose summary fires `writing-for-humans`.
 
 1. **Classify the skill** — discipline or orchestrator? Model-invoked or user-invoked? (Decide this first, per *Invocation axis*.) Before minting a skill, try the cheaper homes in order: a clause in an existing skill, then a reference under one, and a new skill last.
 2. **Draft the skill** — `SKILL.md` with references if needed. Creating from scratch, copy [references/skill-template.md](references/skill-template.md) (a revision never does); when the skill's process spans sessions or builds an artifact item by item, follow the cross-session-state rules in [references/skill-package-mechanics.md](references/skill-package-mechanics.md). A step whose only justification names a model, a model version, or one harness's private tool is a workaround, not a procedure: write the capability the step needs instead
@@ -71,8 +71,8 @@ The description is the skill's top-level **context pointer** — its wording dec
 
 ### Size constraints
 
-- **SKILL.md**: ≤15,000 bytes — the bound that binds first, at the 3 bytes per token measured on this repo's largest bodies. Past it, move detail into `references/`. A second cap of ≤200 lines is lint's proxy and passes bodies the byte bound fails, so it is never the all-clear: after auto-compaction, Claude Code re-attaches each invoked skill cut to roughly its first 5,000 tokens, inside a documented 25,000-token budget shared newest-first across every skill invoked. **The cut may be character-shaped rather than token-shaped** (near 20,000 characters), so the 5,000 is a budget, not an observed bound; what is observed is that nothing has been cut below 19,823 bytes, and the shared-budget consequence below is untested. Two consequences: the rules a body cannot afford to lose — its hard stops, its close-out steps — sit early, and a numbered workflow that must end with them states them in its opening paragraph as well; and no skill relies on an early sibling still being attached late in a long session, since the shared budget drops the oldest whole. The re-attach figures are Claude Code's, not this repo's, and `scripts/lint-skills.sh` fails at the byte bound, for a body and for a reference alike; its header names where and when each figure was verified, so a release that moves them is a header re-date plus both `15000` literals in the script and the selftest pin that grades the threshold.
-- **Reference files**: ≤15,000 bytes each — the body's bound, on the same terms and equally a lint failure: a reference loads whole when its pointer is followed, so past it the remedy is a split at a heading, never a trim. ≤200 lines each as well. Split by topic, not arbitrarily.
+- **SKILL.md**: ≤15,000 bytes — the bound that binds first, at the 3 bytes per token measured on this repo's largest bodies. Past it, move detail into `references/`. A second cap of ≤200 lines is lint's proxy and passes bodies the byte bound fails, so it is never the all-clear: after auto-compaction, Claude Code re-attaches each invoked skill cut to roughly its first 5,000 tokens, inside a documented 25,000-token budget shared newest-first across every skill invoked. **The cut may be character-shaped rather than token-shaped** (near 20,000 characters), so the 5,000 is a budget, not an observed bound; what is observed is that nothing has been cut below 19,823 bytes, and the shared-budget consequence below is untested. Two consequences: the rules a body cannot afford to lose — its hard stops, its close-out steps — sit early, and a numbered workflow that must end with them states them in its opening paragraph as well; and no skill relies on an early sibling still being attached late in a long session, since the shared budget drops the oldest whole. The re-attach figures are Claude Code's, not this repo's, and `scripts/lint-skills.sh` fails at the byte bound; its header names where and when each figure was verified, so a release that moves them is a header re-date plus both `15000` literals in the script and the selftest pin that grades the threshold.
+- **Reference files**: ≤15,000 bytes each — the body's bound, on the same terms and equally a lint failure: a reference loads whole when its pointer is followed, so past it the remedy is a split at a heading, never a trim. ≤200 lines each as well.
 - **The caps measure loaded context.** Extracting prose into a reference the body then tells the agent to always read shrinks the file without shrinking what loads — that games the cap, it doesn't satisfy it. And a cap is never raised because content is approaching it — past the cap, cut or restructure.
 - **Over the cap** — the remediation procedures (relocate verbatim before editing; the description cut order that never trades routing surface) are in [references/over-the-cap.md](references/over-the-cap.md); open it when a cap binds — a body over the byte bound or past 200 lines, or a description at 1024 chars.
 - **Description**: ≤1024 chars, and no angle brackets (`<` or `>`) — the platform chokes on them, so replace placeholder text like `<topic>` before shipping.
@@ -81,4 +81,4 @@ The description is the skill's top-level **context pointer** — its wording dec
 
 ### Skill bodies don't cite repo ADRs
 
-A skill is hoisted out of this repo and runs from the user's project, where a relative `../../docs/adr/…` link and a bare "See ADR-N" both resolve to nothing. Lineage runs ADR → skill: each ADR names the skills it shapes — that is the durable record, and a skill body never writes the reverse pointer, as a link or as a bare "See ADR-N". (`scripts/lint-skills.sh` enforces this — a skill body matching `ADR-<digit>` fails lint.)
+A skill is hoisted out of this repo and runs from the user's project, where a relative `../../docs/adr/…` link and a bare "See ADR-N" both resolve to nothing. Lineage runs ADR → skill: each ADR names the skills it shapes — that is the durable record, and a skill body never writes the reverse pointer. (`scripts/lint-skills.sh` enforces this — a skill body matching `ADR-<digit>` fails lint.)

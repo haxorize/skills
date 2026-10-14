@@ -25,7 +25,7 @@ Resolve the project's check commands from its `CLAUDE.md` `## Commands` section.
 - **Format** — apply the project's formatter.
 - **Lint** — run the linter; fix what it flags.
 - **Typecheck** — run the type checker; fix what it flags.
-- **Test** — re-run the test command after any fix above, to confirm nothing broke. A green run is spent the moment it completes — never re-run for reassurance without an intervening change. **Zero ran is not green**: a filter that selected nothing (`pytest -k`, `vitest -t`, a path that no longer exists) exits clean and proves only that the runner started, so the count of tests that ran is part of the evidence, and a count of zero is a red, as is a count lower than this branch's last run, unless the diff deletes those tests by name.
+- **Test** — re-run the test command after any fix above, to confirm nothing broke. A green run is spent the moment it completes — never re-run for reassurance without an intervening change. **Zero ran is not green**: a filter that selected nothing (`pytest -k`, `vitest -t`, a path that no longer exists) exits clean and proves only that the runner started, so the count of tests that ran is part of the evidence, and a count of zero is a red, as is a count lower than the same command's count at the base SHA, unless the diff deletes those tests by name.
 
 A failing check is fixed in the code — this binds all four. Editing the check's config, adding an ignore or a suppression comment, or lowering a threshold is a scope change the user asked for, or it does not happen.
 
@@ -57,7 +57,7 @@ Start from what the diff removed: grep `README.md`, `CLAUDE.md`, `DOMAIN.md`, an
 
 ### 4. Close once, at the outermost invocation: state the tree, then name the next act
 
-When another skill called this one mid-loop, that skill's close is the close; this step runs once, when `feedback-loops` is the last thing running. State the tree, then name the next act: the `Measured-tree:` line the global rule `~/.claude/rules/evidence.md` defines and the count of dirty paths, then the `next:` line `bash ~/.claude/skills/committing/scripts/next-step.sh` prints, last (`--mid-family` when a `## Round` block's `Review cadence:` says this close ends no batch family). It reads the `Landing:` key and the review reports as the push hook does: a required review gates the push, never the commit, and a tree already stamped goes to the commit or push `committing` lands.
+When another skill called this one mid-loop, that skill's close is the close; this step runs once, when `feedback-loops` is the last thing running. State the tree, then name the next act: the `Measured-tree:` line the global rule `~/.claude/rules/evidence.md` defines and the count of dirty paths, then the `next:` line `bash ~/.claude/skills/committing/scripts/next-step.sh` prints, last (`--mid-family` when a `## Round` block's `Review cadence:` says this close ends no batch family). It never says push where the `review-receipt` hook blocks: a required review gates the push, never the commit, and a tree already stamped goes to the commit or push `committing` lands.
 
 ## Boundary
 

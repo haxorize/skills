@@ -1,10 +1,10 @@
-# Load a ticket
+# Cold-start loader
 
-Pulls a published ticket back into the conversation: detects the work-item type, loads the right shape, and summarizes it. Closes the round-trip loop with the `to-X` publishing skills.
+Open this when a ticket id, tracker URL, or `latest` is passed to `/implement`, `/grill-me`, or `/write-skill`. The cold-start loader pulls a published ticket back into the conversation: detects the work-item type, loads the right shape, and summarizes it. Closes the round-trip loop with the `to-X` publishing skills.
 
 **Two modes.** `/implement <id>` runs every step, and step 9's Confirmed ADO activation is offered when building starts. **Load-only** stops at step 8's summary and writes nothing: `/implement <id> --load-only`, and every other caller that reads this file by path (`/grill-me <id>`, `/write-skill <id>`). Only `/implement`, building, ever writes to the ticket.
 
-**A Feature or an Epic is refused for building, not loaded** — they are containers that decompose first, and step 3 carries the redirect. It is this loader's only refusal, so everything else it meets is loaded rather than argued with.
+**A Feature or an Epic is refused for building, not loaded** — they are containers that decompose first, and step 3 carries the redirect. It is the cold-start loader's only refusal, so everything else it meets is loaded rather than argued with.
 
 ## 1. Resolve tracker
 
@@ -104,4 +104,4 @@ Loaded {type} #{ID}: "{title}"
 
 ## Writes
 
-The loader writes no files, and the only write it ever makes to the ticket itself is step 9's Confirmed ADO activation update (state, assignee, iteration) — never the body, never an AC, never any sibling work item, and never in load-only mode. Revisions to a ticket's content go through `to-story --update` / `to-tasks --update` / `to-bug --update`.
+The cold-start loader writes no files, and the only write it ever makes to the ticket itself is step 9's Confirmed ADO activation update (state, assignee, iteration) — never the body, never an AC, never any sibling work item, and never in load-only mode. Revisions to a ticket's content go through `to-story --update` / `to-tasks --update` / `to-bug --update`.

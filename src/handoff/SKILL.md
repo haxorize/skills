@@ -17,7 +17,7 @@ This skill **forks** the conversation — you don't continue in place. It has tw
 
 This section is the one home of two contracts the suite points here for, and `grep -rl 'Where to write it' src global .claude *.md` is the blast radius of editing either: the **landing zone** and filename shape of every cross-session file, and the **per-section file mechanics** of every multi-section document.
 
-**Paths come from the script, never by hand.** Run `bash ~/.claude/skills/handoff/scripts/landing.sh` — `dir` for the zone, `path <slug> [--kind review|audit]` for a new file's absolute path, `latest [--kind …]` for the newest of a kind for this repo — never a path built from `$TMPDIR` or a temp dir guessed. The zone is `claude-handoffs/` under the temp dir; the shape is `<repo>-<date>-<slug>.<kind>.<ext>`, and **a handoff is the one kind with no kind segment**, which keeps "the newest handoff" from resolving to a report. The kinds, the two that land elsewhere (an `ask-for-me` questionnaire, a `review-architecture` report), and why, are in [references/landing-zone.md](references/landing-zone.md).
+**Paths come from the script, never by hand.** Run `bash ~/.claude/skills/handoff/scripts/landing.sh` — `dir` for the zone, `path <slug> [--kind <kind>]` for a new file's absolute path, `latest [--kind …]` for the newest of a kind for this repo — never a path built from `$TMPDIR` or a temp dir guessed. The zone is `claude-handoffs/` under the temp dir; the shape is `<repo>-<date>-<slug>.<kind>.<ext>`, and **a handoff is the one kind with no kind segment**, which keeps "the newest handoff" from resolving to a report. The script owns the shape and the kinds; the kinds that land elsewhere, and why, are in [references/landing-zone.md](references/landing-zone.md).
 
 This section also owns the **per-section file mechanics** the global `large-write-chunking` rule (`~/.claude/rules/large-write-chunking.md`) points here for — for a long handoff and for every other multi-section document a skill writes (an audit, an offboarding record, a rebuild contract, an evaluation memo, a work-item draft). The trigger is observable: a document with more than three planned sections, or any of those kinds, lands this way rather than in one write.
 
@@ -62,7 +62,7 @@ Do **not** duplicate their content, and do **not** invent a scratch location to 
 
 ### When to offer it
 
-Offer `/handoff` at the next phase boundary once the context passes about 150k tokens, and at once past 200k: quality degrades past 200k, and a fresh session on a handoff costs less than a degraded one. The agent cannot see its own token count; the `context-nudge` hook under `global/hooks/` adds the figure where it is wired.
+The `context-nudge` hook under `global/hooks/` owns the offer: where it is wired, it adds the token count and says when to offer `/handoff`.
 
 ### `handoff` vs `/compact`
 

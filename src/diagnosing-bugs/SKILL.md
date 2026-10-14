@@ -10,7 +10,7 @@ A discipline for hard bugs, performance regressions, flakes, and CI failures —
 
 **No red-capable command, no Phase 2.** Reading code to build a theory before Phase 1's one command exists is the exact failure this skill prevents — stop.
 
-**The third identical failure is structural.** When the same command fails the same way three times, stop retrying variations and hand the user the exact command and error. The `repeat-failure` hook under `global/hooks/` says so where it is wired; this line is for everywhere else.
+**The third identical unplanned failure is structural.** When the same command fails the same way three times, stop retrying variations and hand the user the exact command and error; the Phase 1 loop command's expected red is not a retry. The `repeat-failure` hook under `global/hooks/` says so where it is wired.
 
 When exploring, read `DOMAIN.md` (if present) for the project's vocabulary and check `docs/adr/` in the area you're touching — a behavior an ADR records as deliberate is not a bug. A fix that would reverse a contract, or edit a test asserting intended behavior until it passes, is a contract fork whether an ADR records it or not: put it to the user in the ask block of the global recommend-and-proceed rule (`~/.claude/rules/recommend-and-proceed.md`), never apply it. If `docs/solutions/` exists, call the Skill tool with `capturing-learnings` and run its retrieval protocol on the reported symptom — a match seeds a Phase 3 hypothesis, never a reason to skip Phases 1–2.
 

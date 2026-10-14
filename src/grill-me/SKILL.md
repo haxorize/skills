@@ -1,9 +1,9 @@
 ---
 name: grill-me
-description: Stress-test a plan, decision, or idea through relentless interview — recording terms to DOMAIN.md and decisions as ADRs when the project keeps them; `--plain` for no document side effects. Takes a ticket id to grill from. Reads the Frame `/frame-effort` wrote first, when the effort has one.
+description: Stress-test a plan, decision, or idea through relentless interview — recording terms to DOMAIN.md and decisions as ADRs when the project keeps them; `--plain` for no document side effects. Takes a ticket id, tracker URL, or `latest` to grill from. Reads the Frame `/frame-effort` wrote first, when the effort has one.
 disable-model-invocation: true
 requires: grilling, domain-modeling, writing-for-humans
-argument-hint: "[--plain] [<ticket-id>]"
+argument-hint: "[--plain] [<ticket id, tracker URL, or latest>]"
 ---
 
 # Grill Me
@@ -20,18 +20,20 @@ Before the first question, check the working directory for `DOMAIN.md` or an ADR
 
 When a Frame exists for the effort — a `docs/frames/<slug>.md`, or the framing section of a plan document the user names — read it before the first question: the interview starts from its Open questions and its top-ranked assumptions, and its Settled decisions are read as settled — an answer that contradicts one is recorded as a new open question, never re-argued in place.
 
-Given a ticket id, a tracker URL, or `latest`, load it first through `~/.claude/skills/implement/references/load-ticket.md` in load-only mode — read-only, so the grill never activates or edits the ticket — and start from its acceptance criteria and design-record comments.
+### 2. Load the ticket, when one is passed
 
-### 2. Run the grill, and record a decision inline
+Given a ticket id, a tracker URL, or `latest`, load it before the first question through `~/.claude/skills/implement/references/load-ticket.md` in load-only mode — read-only, so the grill never activates or edits the ticket — and start from its acceptance criteria and design-record comments.
+
+### 3. Run the grill, and record a decision inline
 
 `domain-modeling` offers ADRs at its gate but treats recording as `adr`'s job. **Override that here:** when the gate fires and the user agrees, write the ADR file *inline* — do not delegate to `adr`. Its offer→confirm→write flow is a gated action that would interrupt the grill loop's rhythm.
 
 Use `~/.claude/skills/adr/references/adr-format.md` as the single source of truth for the inline write: path, numbering, the edit-or-write-new search, and the template all live there. Standalone `adr` stays reserved for outside-grill use — a deliberate single record after a code review, mid-implementation, and the like — and follows the same format doc, so inline and standalone records land in one shared sequence.
 
-### 3. Replace what an answer invalidates
+### 4. Replace what an answer invalidates
 
 When a round's answer invalidates something an artifact under revision already says — a plan paragraph or a draft body — **replace** it where it stands, never append the correction beside it — the same move `domain-modeling` makes on a `DOMAIN.md` entry, stated here for every artifact this skill revises.
 
-### 4. The rules that bind at every write
+### 5. The rules that bind at every write
 
 The standalone path's other rules bind inline as well: the owning-record search before a new number (the edit-or-write-new rule above), the Status link a superseded record carries to its successor and the successor's link back, and the human-facing register for the rationale prose — call the Skill tool with `writing-for-humans` at the first write if it isn't already live.
