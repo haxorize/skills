@@ -27,7 +27,8 @@
 # imperative-opener warning), the body rules (blank separator, code fence,
 # markdown heading, the wrap cap and its boundary), the fold (an over-long
 # prose line re-broken with its words intact and a short line beside it never
-# joined; list items, indented lines, `>` quotes, `|` table rows, lines in a
+# joined; a run of spaces and a tab kept byte for byte, and a line with no
+# lone space left whole and rejected; list items, indented lines, `>` quotes, `|` table rows, lines in a
 # ~~~ fence or after a ``` inside one, and the trailer paragraph left alone
 # and still rejected; no break before a word opening with the comment string,
 # '#' or a configured one; the write through a temp file and a rename, so a
@@ -50,13 +51,16 @@ cd "$repo_root"
 
 hook="$repo_root/scripts/git-hooks/commit-msg"
 # Temp-file template and guard: scripts/README.md § Temp files. Spelled out
-# because this script reports its own rows rather than sourcing selftest-lib.sh.
+# because this script reports its own rows; it sources selftest-lib.sh below
+# for the mutation table's selftest_mutate and selftest_expect_killed alone.
 tmp="$(mktemp -d "${TMPDIR:-/tmp}/commit-msg-selftest.XXXXXX" 2>/dev/null)"
 if [ -z "$tmp" ] || [ ! -d "$tmp" ]; then
   echo "commit-msg-selftest: no usable temp directory (TMPDIR=${TMPDIR:-unset}) — nothing ran" >&2
   exit 4
 fi
 trap 'rm -rf "$tmp"' EXIT
+# shellcheck source=../selftest-lib.sh
+. "$repo_root/scripts/selftest-lib.sh"
 fail=0
 
 # The hook reads git config, so every row is graded against config this script
@@ -375,6 +379,32 @@ $(pad "$WRAP" 'This body line') ;4242 ticket here." 1
 }
 row_no_comment_start_custom
 
+# A break lands only at a lone space: a run of spaces and a tab survive the
+# fold byte for byte, and rejoining the folded lines with one space gives the
+# line back. The pad fills the line to the cap, so the run sits at the break.
+row_fold_keeps_runs() {
+  local long
+  long="$(pad "$WRAP" 'This body line')  next and a"$'\t'"tab run on past the seventy two column cap here."
+  fold_msg "a line with a run of spaces and a tab" "Add the hook
+
+$long" 1
+  if [ "$(tail -n +3 "$tmp/msg" | paste -sd ' ' -)" != "$long" ]; then
+    note_fail "the fold changed a run of spaces or a tab, not only a lone space to a newline"
+  fi
+  if grep -q '^ ' "$tmp/msg"; then
+    note_fail "the fold broke inside a run of spaces, leaving a line that opens with a space"
+  fi
+}
+row_fold_keeps_runs
+# A line whose only spaces sit in runs has no break point: not folded, not
+# rewritten, and rejected by the wrap rule.
+row_no_lone_space() {
+  reject_unfolded "line with no lone space to break at" "Add the hook
+
+$(printf 'abcdefgh  %.0s' 1 2 3 4 5 6 7 8 9 10)end"
+}
+row_no_lone_space
+
 # The folded text reaches the message through a temp file beside it and a
 # rename: a write that cannot complete leaves the message whole and is
 # rejected, and a fold that succeeds leaves no temp file behind.
@@ -686,24 +716,10 @@ reference, so the block is also the load instruction."
 # (an alternative dropped) and widening (a guard loosened) both appear.
 # mutant <label> <find> <replace> <row command...>
 mutant() {
-  local label="$1" from="$2" to="$3" real_hook="$hook" saved_fail="$fail" mfail
+  local label="$1"
+  selftest_mutate "$hook" "$tmp/mutant-commit-msg" "$2" "$3" || return
   shift 3
-  if ! python3 - "$real_hook" "$tmp/mutant-commit-msg" "$from" "$to" <<'PY'
-import sys
-src, dst, a, b = sys.argv[1:5]
-text = open(src).read()
-if a not in text:
-    sys.exit(1)
-open(dst, "w").write(text.replace(a, b, 1))
-PY
-  then
-    note_fail "mutant '$label': its pattern is not in the hook, so the row it guards is ungraded"
-    return
-  fi
-  fail=0; hook="$tmp/mutant-commit-msg"
-  "$@" >/dev/null
-  mfail=$fail; fail=$saved_fail; hook="$real_hook"
-  [ "$mfail" -eq 1 ] || note_fail "mutant '$label' survived — the row it targets stayed green"
+  hook="$tmp/mutant-commit-msg" selftest_expect_killed "$label" "$@"
 }
 mutant "skip runs without squash!" 'fixup!*|squash!*|amend!*' 'fixup!*|amend!*' \
   allow_unfolded "squash! subject over a long body line" "squash! Add the hook
@@ -730,6 +746,8 @@ mutant "quote drops |" "re_quote='^[>|]'" "re_quote='^[>]'" \
   reject_unfolded "| table row" "Add the hook
 
 | $(pad 80 'a table cell') |"
+mutant "run-of-spaces glue off" '[ -z "$w" ] || [ -z "${fields[$((j - 1))]}" ] || ' '' row_fold_keeps_runs
+mutant "a line with no break point still counted" 'if [ "${#pieces[@]}" -eq 1 ]; then' 'if false; then' row_no_lone_space
 mutant "comment-word glue off" '[[ "$w" == "$comment_char"* ]]' 'false' row_no_comment_start
 mutant "glue reads a literal #" '[[ "$w" == "$comment_char"* ]]' '[[ "$w" == "#"* ]]' row_no_comment_start_custom
 mutant "write in place, no temp file" \

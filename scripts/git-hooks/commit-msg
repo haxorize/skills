@@ -143,12 +143,13 @@ esac
 # prose line past the cap is re-broken on its own, greedily at the cap; it is
 # never joined with the lines around it, so a paragraph of deliberate short
 # lines ("Before: 3 calls" over "After: 1 call") keeps its breaks, and the only
-# change is a newline where a space was inside the over-long line. Left alone,
-# so the wrap check below still sees them: the subject, git's comments, a
-# verbose diff from its first diff line down, any paragraph holding a line git
-# parses as a trailer, indented lines, lines inside a ``` or ~~~ fence, list
-# items, `>` quotes, `|` table rows, headings, and a line with no space at or
-# before the cap (a URL or other unbreakable token).
+# change is a newline where a lone space was inside the over-long line (a run
+# of spaces, or a tab, is kept as written). Left alone, so the wrap check below
+# still sees them: the subject, git's comments, a verbose diff from its first
+# diff line down, any paragraph holding a line git parses as a trailer,
+# indented lines, lines inside a ``` or ~~~ fence, list items, `>` quotes, `|`
+# table rows, headings, and a line with no space at or before the cap (a URL
+# or other unbreakable token) or no lone space to break at.
 #
 # A break never lands before a word opening with the comment string: under
 # cleanup mode strip (any commit that opens an editor) git deletes that line
@@ -214,26 +215,38 @@ for i in "${!raw[@]}"; do
   if [ "${kind[$i]}" != prose ] || [[ "$protected" == *" ${para[$i]} "* ]] || ! over_cap_breakable "$l"; then
     out+=("${raw[$i]}"); continue
   fi
-  folded=$((folded + 1))
-  # Units, not words: a word opening with the comment string is glued to the
-  # word before it, so no break can land in front of it.
-  read -ra words <<< "$l"
+  # Units, not words: the line splits at each single space, and a field that
+  # is empty (a run of spaces) or opens with the comment string is glued back
+  # to the one before it, so a break lands only at a lone space and never in
+  # front of a comment-string word. A tab never splits. Every byte but the
+  # space a newline replaces survives.
+  fields=() rest="$l"
+  while [[ "$rest" == *' '* ]]; do fields+=("${rest%% *}"); rest="${rest#* }"; done
+  fields+=("$rest")
   units=()
-  for w in "${words[@]}"; do
-    if [ "${#units[@]}" -gt 0 ] && [[ "$w" == "$comment_char"* ]]; then
+  for j in "${!fields[@]}"; do
+    w="${fields[$j]}"
+    if [ "$j" -gt 0 ] && { [ -z "$w" ] || [ -z "${fields[$((j - 1))]}" ] || [[ "$w" == "$comment_char"* ]]; }; then
       units[${#units[@]} - 1]="${units[${#units[@]} - 1]} $w"
     else
       units+=("$w")
     fi
   done
-  cur=""
+  pieces=() cur=""
   for w in "${units[@]}"; do
     if [ -z "$cur" ]; then cur="$w"
     elif [ $(( ${#cur} + 1 + ${#w} )) -le "$WRAP" ]; then cur="$cur $w"
-    else out+=("$cur"); cur="$w"
+    else pieces+=("$cur"); cur="$w"
     fi
   done
-  out+=("$cur")
+  pieces+=("$cur")
+  # A line whose only spaces sit in runs has no break point: it stays whole
+  # and uncounted, for the wrap check below to reject.
+  if [ "${#pieces[@]}" -eq 1 ]; then
+    out+=("${raw[$i]}"); continue
+  fi
+  folded=$((folded + 1))
+  out+=("${pieces[@]}")
 done
 
 # Written back only when something folded, so an untouched message keeps its

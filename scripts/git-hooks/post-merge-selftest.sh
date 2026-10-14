@@ -85,23 +85,9 @@ reject_in "$out" "the hook ran against the real repo's gates" "$repo_root/script
 
 # Mutation: a copy of the hook with the exit-4 arm cut must red the never-ran
 # row, or that row grades nothing.
-if python3 - "$hook" "$tmp/mutant-post-merge" <<'PY'
-import sys
-src, dst = sys.argv[1:3]
-text = open(src).read()
-a = '    elif [ "$gate_status" -eq 4 ]; then\n'
-if a not in text:
-    sys.exit(1)
-open(dst, "w").write(text.replace(a, '    elif false; then\n', 1))
-PY
-then
+if selftest_mutate "$hook" "$tmp/mutant-post-merge" $'    elif [ "$gate_status" -eq 4 ]; then\n' $'    elif false; then\n'; then
   mout=$( cd "$fake" && bash "$tmp/mutant-post-merge" 2>&1 )
-  saved_fail=$fail; fail=0
-  row_never_ran "$mout" >/dev/null
-  mfail=$fail; fail=$saved_fail
-  [ "$mfail" -eq 1 ] || selftest_fail "mutant 'exit-4 arm cut' survived — the never-ran row stayed green"
-else
-  selftest_fail "mutant 'exit-4 arm cut': its pattern is not in the hook, so the never-ran row is ungraded"
+  selftest_expect_killed "exit-4 arm cut (the never-ran row)" row_never_ran "$mout"
 fi
 
 # The pulled-hook NOTE names a change under either hook directory: two commits,

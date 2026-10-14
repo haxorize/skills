@@ -38,7 +38,8 @@
 # stamp line is the label (`Reviewed-tree:` or `Measured-tree:`), a list
 # marker, bold or backticks allowed around it, the hash, nothing after it. A
 # line inside a fenced block (a fence is a line starting, after optional
-# whitespace, with ``` or ~~~) is a quotation, never a stamp, and one behind
+# whitespace, with ``` or ~~~, and closes only on the marker that opened it)
+# is a quotation, never a stamp, and one behind
 # `>` fails the pattern's start. Any stamp in the report matching passes
 # --verify, since a fix pass appends one per stamping.
 #
@@ -59,8 +60,12 @@ usage() {
 # per stamp outside a fence and returns awk's status.
 read_stamps() {
   awk '
-    /^[[:space:]]*(```|~~~)/ { fence = !fence; next }
-    fence { next }
+    match($0, /^[[:space:]]*(```|~~~)/) {
+      marker = substr($0, RSTART + RLENGTH - 3, 3)
+      if (fence == "") { fence = marker; next }
+      if (marker == fence) { fence = ""; next }
+    }
+    fence != "" { next }
     /^[-*]*[[:space:]]*\**`?(Reviewed|Measured)-tree:`?\**[[:space:]]*`?[0-9a-f]{40}`?[[:space:]]*$/ {
       label = ($0 ~ /Reviewed-tree:/) ? "Reviewed-tree" : "Measured-tree"
       if (match($0, /[0-9a-f]{40}/)) print label " " substr($0, RSTART, RLENGTH)

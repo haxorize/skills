@@ -1,15 +1,32 @@
 # Conventions for this tree: scripts/README.md
 # shellcheck shell=bash   # sourced, never executed: no shebang to read the dialect from
 # selftest-lib.sh — sourced by the scripts/*-selftest.sh scripts beside it. Not
-# a test. The one home for the matcher, the FAIL/SKIP wording, and the
-# three-state close, so a fix to any of them lands once; a failing line pasted
-# into a search finds one definition. global/hooks/selftest-lib.sh is the hook
-# selftests' library — a payload-driven shape this one does not share.
+# a test. The one home for the matcher, the FAIL/SKIP wording, the three-state
+# close and the mutant pair, so a fix to any of them lands once; a failing line
+# pasted into a search finds one definition. global/hooks/selftest-lib.sh is
+# the hook selftests' library — a payload-driven shape this one does not
+# share — but every global/hooks/ selftest with a mutation table sources this
+# file too, by its repo path, for selftest_mutate and selftest_expect_killed.
 #
 #   expect_in <haystack> <label> <needle>   — FAIL unless <needle> is a substring
 #   reject_in <haystack> <label> <needle>   — FAIL if <needle> is a substring
 #   expect_row <haystack> <label> <line>    — FAIL unless <line> is a whole line
 #   expect_rc <label> <expected> <actual>   — FAIL unless the codes agree
+#   selftest_check <label> <cmd…>           — FAIL unless <cmd…> exits 0; the
+#                                             row a hand-rolled `[ … ]` takes
+#   selftest_mutate <src> <dst> <from> <to> — writes <src> to <dst> with its
+#                                             first <from> replaced by <to>.
+#                                             A <from> no longer in <src> (a
+#                                             stale mutant) is a FAIL naming
+#                                             it, and returns 1 so the caller
+#                                             skips the row it would grade
+#   selftest_expect_killed <label> <cmd…>   — one row: runs <cmd…>, the row a
+#                                             mutant targets, with `fail`
+#                                             cleared and stdout dropped; FAIL
+#                                             "survived" unless it exited
+#                                             nonzero or set `fail`. It counts
+#                                             one row; the rows it ran do not
+#                                             count, and their SKIPs drop
 #   selftest_fail <message>                 — a FAIL line in the shared wording
 #   selftest_skip <message>                 — a SKIP line; the run ends PARTIAL
 #   selftest_tmpdir                         — prints a fresh temp directory, or
@@ -44,11 +61,13 @@
 #                                             to read past to reach them
 #
 # Every FAIL sets `fail=1`, every SKIP sets `skipped=1`; a selftest reads them
-# only through selftest_close. Every matcher call, FAIL and SKIP counts one in
+# only through selftest_close. Every matcher call (selftest_check and
+# selftest_expect_killed included), FAIL and SKIP counts one in
 # `selftest_rows`, which selftest_no_tmpdir reads to tell "nothing ran" from a
-# partial run; a row hand-rolled as `[ … ] || selftest_fail` counts only when
-# it fails, so a selftest with rows before its temp-dir guard grades them
-# through the matchers.
+# partial run; a row hand-rolled as
+# `[ … ] || selftest_fail` counts only when it fails, so a row before the
+# temp-dir guard is a matcher or `selftest_check <label> [ … ]`.
+# selftest-lib-selftest.sh grades this file.
 
 fail=0
 skipped=0
@@ -83,6 +102,51 @@ expect_rc() {
   selftest_rows=$((selftest_rows + 1))
   if [ "$2" -ne "$3" ]; then
     selftest_fail "$1 exited $3, not $2"
+  fi
+}
+
+selftest_check() {
+  local label=$1
+  shift
+  selftest_rows=$((selftest_rows + 1))
+  if ! "$@"; then
+    selftest_fail "$label"
+  fi
+}
+
+# Python -I, so a module in the caller's cwd cannot shadow sys. Exit 3 is the
+# stale pattern; any other failure (an unreadable <src>, an unwritable <dst>)
+# names itself instead of posing as one.
+selftest_mutate() {
+  local rc=0
+  python3 -I - "$@" <<'PY' || rc=$?
+import sys
+src, dst, a, b = sys.argv[1:5]
+text = open(src).read()
+if a not in text:
+    sys.exit(3)
+open(dst, "w").write(text.replace(a, b, 1))
+PY
+  if [ "$rc" -eq 3 ]; then
+    selftest_fail "stale mutant: its pattern is not in $1, so the row it guards is ungraded: $3"
+    return 1
+  elif [ "$rc" -ne 0 ]; then
+    selftest_fail "mutant of $1 not written to $2 (python3 exited $rc)"
+    return 1
+  fi
+}
+
+selftest_expect_killed() {
+  local label=$1 saved_fail=$fail saved_skipped=$skipped saved_rows=$selftest_rows killed=0
+  shift
+  fail=0
+  if ! "$@" >/dev/null; then
+    killed=1
+  fi
+  [ "$fail" -eq 0 ] || killed=1
+  fail=$saved_fail; skipped=$saved_skipped; selftest_rows=$((saved_rows + 1))
+  if [ "$killed" -eq 0 ]; then
+    selftest_fail "mutant '$label' survived — the row it targets stayed green"
   fi
 }
 

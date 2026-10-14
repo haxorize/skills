@@ -7,7 +7,8 @@
 # (script → selftest, git hook → selftest, Install-note hook → selftest, a
 # hook without the note left out, a .py beside a .sh, a *-lib.sh and a
 # *-lib.py reaching the selftests of the scripts that source them, a comment
-# mention not counting as sourcing); the generator emits each operator on
+# mention, whole-line or trailing, and a longer file name ending in the
+# lib's, not counting as sourcing); the generator emits each operator on
 # the fixture and its --max sample is the same ids twice; a planted hole (one
 # alternative no fixture exercises) is reported SILENT with its file:line, id
 # and description, and the run exits 1; closing the hole makes the same run
@@ -73,6 +74,10 @@ printf '# fixture: a python lib named only by helper-lib.sh\n' > "$fx/scripts/ot
 printf '\n# other-lib.py is prepended by helper()\n: "$(dirname "$0")/other-lib.py"\n' >> "$fx/scripts/helper-lib.sh"
 printf '#!/usr/bin/env bash\n# fixture: names helper-lib.sh in a comment only\necho ok\n' > "$fx/scripts/mention.sh"
 printf '#!/usr/bin/env bash\nexit 0\n' > "$fx/scripts/mention-selftest.sh"
+printf '#!/usr/bin/env bash\necho ok   # a trailing comment naming helper-lib.sh\n' > "$fx/scripts/trailing.sh"
+printf '#!/usr/bin/env bash\nexit 0\n' > "$fx/scripts/trailing-selftest.sh"
+printf '#!/usr/bin/env bash\n. "$(dirname "$0")/other-helper-lib.sh"\n' > "$fx/scripts/prefixed.sh"
+printf '#!/usr/bin/env bash\nexit 0\n' > "$fx/scripts/prefixed-selftest.sh"
 printf '#!/usr/bin/env bash\n# fixture git hook\nexit 0\n' > "$fx/scripts/git-hooks/pre-x"
 printf '#!/usr/bin/env bash\nexit 0\n' > "$fx/scripts/git-hooks/pre-x-selftest.sh"
 printf 'not a hook: no shebang\n' > "$fx/scripts/git-hooks/README"
@@ -97,6 +102,7 @@ expect_in "$out" "a .py beside a .sh takes that script's selftest" "scripts/guar
 expect_in "$out" "a *-lib.sh reaches the selftests of the scripts that source it" "scripts/helper-lib.sh ← scripts/guard-selftest.sh"
 expect_in "$out" "a *-lib.py reaches them through the lib that names it" "scripts/other-lib.py ← scripts/guard-selftest.sh"
 reject_in "$out" "a comment mention of the lib is not sourcing it" "scripts/helper-lib.sh ← scripts/guard-selftest.sh scripts/mention-selftest.sh"
+expect_row "$out" "a comment mention (whole-line or trailing), or a longer name ending in the lib's, is not sourcing it" "scripts/helper-lib.sh ← scripts/guard-selftest.sh"
 expect_in "$out" "the sweep names itself ungraded rather than hiding it" "UNGRADED scripts/mutation-sweep.sh"
 
 # --- the generator on the fixture --------------------------------------------------
@@ -246,17 +252,7 @@ out="$(TMPDIR="$fx/.tmp" bash "$fx/scripts/mutation-sweep.sh" --list 2>&1)"; rc=
 expect_rc "a TMPDIR inside the copied tree is exit 4, nothing ran" 4 "$rc"
 expect_in "$out" "the nested TMPDIR is refused by name" "is inside the tree it copies"
 rmdir "$fx/.tmp"
-# selftest_tmpdir is scripts/selftest-lib.sh's; this is the selftest that grades it.
-( TMPDIR="$tmp/no-such-dir"; selftest_tmpdir >/dev/null ) && selftest_fail "selftest_tmpdir returned 0 for a TMPDIR that does not exist — it ignored TMPDIR"
-t2="$(TMPDIR="$tmp" selftest_tmpdir)" || selftest_fail "selftest_tmpdir gave no directory under a writable TMPDIR"
-case "$t2" in "$tmp"/selftest.*) ;; *) selftest_fail "selftest_tmpdir made '$t2', not a directory under TMPDIR ($tmp)" ;; esac
-# selftest_no_tmpdir too: 4 when nothing ran, 2 when rows ran and passed, 1 when a row before it already failed.
-( fail=0; selftest_rows=0; selftest_no_tmpdir x >/dev/null ); rc=$?
-expect_rc "selftest_no_tmpdir with no row run" 4 "$rc"
-( fail=0; selftest_rows=1; selftest_no_tmpdir x >/dev/null ); rc=$?
-expect_rc "selftest_no_tmpdir after a passing row" 2 "$rc"
-( fail=1; selftest_rows=1; selftest_no_tmpdir x >/dev/null ); rc=$?
-expect_rc "selftest_no_tmpdir after an earlier FAIL" 1 "$rc"
+# selftest_tmpdir and selftest_no_tmpdir are graded by scripts/selftest-lib-selftest.sh.
 
 # --- the mutation table: each row removes one guard from a copy of the sweep and must change
 # a verdict the rows above read. The fixture is reopened (blue uncovered) for the first row.

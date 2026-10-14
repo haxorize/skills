@@ -20,11 +20,14 @@
 #     `tree-stamp.sh: MATCH <tree>`); `Measured-tree:` matches; any of several
 #     stamps matches; a mismatch exits 1 (`tree-stamp.sh: NO MATCH …`); a stamp
 #     only inside a ``` fence, a ~~~ fence or an indented fence, behind `>`, or
-#     with text after the hash is no stamp (exit 2); a missing report exits 3.
-#   --stamps — the same five no-stamp reports exit 2; a report with a Reviewed
+#     with text after the hash is no stamp (exit 2), nor is one inside a ```
+#     fence after a ~~~ line, or inside a ~~~ fence after a ``` line; a missing
+#     report exits 3; an unreadable report, and awk failing, exit 4.
+#   --stamps — the same seven no-stamp reports exit 2; a report with a Reviewed
 #     and a Measured stamp outside a fence and a third inside a ~~~ fence prints
 #     exactly the two, labelled; it reads outside any repo; a missing report
-#     exits 4; another flag beside it, or no path, exits 3.
+#     exits 4, as do an unreadable report (skipped as root) and awk failing;
+#     another flag beside it (--committed or --verify), or no path, exits 3.
 #   usage and never-ran — an unknown flag exits 3; outside a repo exits 4; an
 #     unusable TMPDIR exits 4; a relative TMPDIR from a subdirectory stamps.
 #
@@ -34,7 +37,12 @@
 #   read-tree seed (the tracked-but-ignored row reds). On 2026-10-13: dropping
 #   `|~~~` from the fence pattern (the tilde rows red); dropping the relative
 #   TMPDIR fix (the relative-TMPDIR row reds); printing every label as
-#   Reviewed-tree (the Measured-tree row reds).
+#   Reviewed-tree (the Measured-tree row reds); toggling the fence on either
+#   marker (the two mixed-fence rows red); dropping `[ -n "$report" ] ||` (the
+#   --stamps-with---verify row reds). Dropping `|| [ ! -r "$stamps_of" ]` is
+#   an equivalent mutant on this machine's awk, which exits non-zero on an
+#   unreadable file, so the awk-failed exit 4 catches it; the unreadable rows
+#   pin the 4 whichever guard fires.
 #
 # NOT covered: the review-receipt hook itself (its own selftest calls this
 # script for its expected trees), and the work machine's sandbox.
@@ -109,7 +117,9 @@ printf '~~~\nReviewed-tree: %s\n~~~\n' "$dirty" > "$tmp/tilde.md"
 printf '  ```text\nReviewed-tree: %s\n  ```\n' "$dirty" > "$tmp/indented.md"
 printf '> Reviewed-tree: %s\n' "$dirty" > "$tmp/quoted.md"
 printf 'Reviewed-tree: %s (the tree as reviewed)\n' "$dirty" > "$tmp/tail.md"
-for f in fenced tilde indented quoted tail; do
+printf '```\n~~~\nReviewed-tree: %s\n```\n' "$dirty" > "$tmp/mixedfence.md"
+printf '~~~\n```\nReviewed-tree: %s\n~~~\n' "$dirty" > "$tmp/mixedtilde.md"
+for f in fenced tilde indented quoted tail mixedfence mixedtilde; do
   stamp --verify "$tmp/$f.md" >/dev/null; rc=$?
   expect_rc "--verify on the $f report (no stamp line)" 2 "$rc"
   stamp --stamps "$tmp/$f.md" >/dev/null 2>&1; rc=$?
@@ -139,6 +149,25 @@ stamp --stamps "$tmp/bare.md" --committed HEAD >/dev/null 2>&1; rc=$?
 expect_rc "--stamps with another flag" 3 "$rc"
 stamp --stamps >/dev/null 2>&1; rc=$?
 expect_rc "--stamps with no path" 3 "$rc"
+stamp --stamps "$tmp/bare.md" --verify "$tmp/bare.md" >/dev/null 2>&1; rc=$?
+expect_rc "--stamps with --verify beside it" 3 "$rc"
+# An unreadable report never reads as "no stamp" (2): it is the hook's
+# fail-closed input. Root reads a 000 file, so the rows skip there.
+if [ "$(id -u)" -ne 0 ]; then
+  cp "$tmp/bare.md" "$tmp/unreadable.md"; chmod 000 "$tmp/unreadable.md"
+  stamp --stamps "$tmp/unreadable.md" >/dev/null 2>&1; rc=$?
+  expect_rc "--stamps on an unreadable report" 4 "$rc"
+  stamp --verify "$tmp/unreadable.md" >/dev/null 2>&1; rc=$?
+  expect_rc "--verify on an unreadable report (awk fails)" 4 "$rc"
+  chmod 600 "$tmp/unreadable.md"
+fi
+# An awk that fails on a readable report: both readers exit 4.
+mkdir -p "$tmp/badawk"
+printf '#!/bin/sh\nexit 2\n' > "$tmp/badawk/awk"; chmod +x "$tmp/badawk/awk"
+( cd "$tmp/repo" && PATH="$tmp/badawk:$PATH" bash "$script" --stamps "$tmp/bare.md" ) >/dev/null 2>&1; rc=$?
+expect_rc "--stamps when awk fails" 4 "$rc"
+( cd "$tmp/repo" && PATH="$tmp/badawk:$PATH" bash "$script" --verify "$tmp/bare.md" ) >/dev/null 2>&1; rc=$?
+expect_rc "--verify when awk fails" 4 "$rc"
 
 stamp --verify "$tmp/absent.md" >/dev/null 2>&1; rc=$?
 expect_rc "--verify on a missing report" 3 "$rc"

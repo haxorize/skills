@@ -10,7 +10,7 @@ set -uo pipefail
 #
 # Gate map: lint-skills.sh when a staged path is under src/, global/, .claude/skills/, scripts/ or docs/, or is README.md, DOMAIN.md or CLAUDE.md
 # Gate map: lint-adrs.sh when a staged path is under docs/adr/
-# Gate map: the -selftest.sh beside a staged scripts/*.sh, scripts/git-hooks/ hook, src/*/scripts/*.sh or *.py, or global/hooks/*.sh or *.py, when it exists — a staged file under src/*/scripts/<stem>-fixtures/ queues <stem>-selftest.sh — a staged global/hooks/ file with no selftest of its own (a library such as hook-lib.sh) queues every global/hooks/ selftest whose own file or hook names it — a staged src/*/scripts/ script also queues every global/hooks/ selftest whose own file or hook names its path — every selftest under scripts/ and src/*/scripts/ when any scripts/*-lib.sh is staged — each once; a red one blocks
+# Gate map: the -selftest.sh beside a staged scripts/*.sh, scripts/git-hooks/ hook, src/*/scripts/*.sh or *.py, or global/hooks/*.sh or *.py, when it exists — a staged file under src/*/scripts/<stem>-fixtures/ queues <stem>-selftest.sh — a staged global/hooks/ file with no selftest of its own (a library such as hook-lib.sh) queues every global/hooks/ selftest whose own file or hook names it — a staged src/*/scripts/ script also queues every global/hooks/ selftest whose own file or hook names its path — every selftest under scripts/ and src/*/scripts/, and every global/hooks/ selftest naming its path, when any scripts/*-lib.sh is staged — each once; a red one blocks
 # Gate map: a stderr notice, never a block, when a staged src/<skill>/ path has a row in docs/lineage.md's FIRST table — diff the upstream before a material edit; a skill listed only in the nothing-to-diff table gets no notice
 #
 # The selftest map is derived, never kept: the pairing is scripts/README.md's
@@ -23,7 +23,9 @@ set -uo pipefail
 # staged src/<skill>/scripts/foo-fixtures/... changes what foo-selftest.sh
 # grades, so it queues that selftest. A staged
 # scripts/*-lib.sh runs every selftest in all three places: a library cannot
-# know which scripts source it, so the safe queue is all of them.
+# know which scripts source it, so the safe queue is all of them. It also
+# queues every global/hooks/ selftest naming its repo path, the way a src/
+# script does: the hook mutation tables source scripts/selftest-lib.sh.
 #
 # The Claude Code hooks under global/hooks/ pair the same way (foo.sh and
 # foo.py both to foo-selftest.sh). A staged file there with no selftest of its
@@ -170,7 +172,7 @@ while IFS= read -r -d '' p; do
       # are in the queue as well.
       for st in "$repo_root"/scripts/*-selftest.sh "$repo_root"/scripts/git-hooks/*-selftest.sh "$repo_root"/src/*/scripts/*-selftest.sh; do
         [ -f "$st" ] && queue_selftest "${st#"$repo_root"/}"
-      done ;;
+      done; queue_hook_selftests_naming "$p" ;;
     scripts/*-selftest.sh | scripts/setup-hooks.sh | scripts/*/*) ;;
     scripts/*.sh)
       [ -f "$repo_root/${p%.sh}-selftest.sh" ] && queue_selftest "${p%.sh}-selftest.sh" ;;

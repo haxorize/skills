@@ -43,7 +43,8 @@
 #   any other *-lib.sh or *.py under scripts/ or global/hooks/
 #                                        → the selftests of every non-selftest
 #                                          script in its directory that names
-#                                          the file (grep -l), so hook-lib.py
+#                                          the file outside a comment (names(),
+#                                          below), so hook-lib.py
 #                                          is graded by every hook that
 #                                          sources hook-lib.sh
 # A target with no selftest is reported and UNGRADED; the pairing lint owns
@@ -151,6 +152,14 @@ run_selftest() {
     exit(($? & 127) ? 128 + ($? & 127) : $? >> 8)' "$3" bash "$2" ) >/dev/null 2>&1; echo $?
 }
 
+# names <file> <name> — <file> names <name> outside a comment (whole-line or
+# trailing: a `#` opening the line or after whitespace), and as a whole file
+# name, so a script that only mentions a library in a comment, or names
+# session-hook-lib.py, does not read as sourcing hook-lib.py
+names() {
+  sed -E 's/(^|[[:space:]])#.*$//' "$1" | grep -qE -- "(^|[^[:alnum:]_.-])${2//./\\.}([^[:alnum:]_.-]|$)"
+}
+
 # selftests_for <target> — the space-separated selftests that grade it, or nothing
 selftests_for() {
   local t=$1 d stem base st out="" f
@@ -165,14 +174,14 @@ selftests_for() {
   # a library: the selftests of the non-selftest scripts in its directory that
   # name it, plus those of any script naming a library that names it (one hop:
   # hook-lib.py is named by hook-lib.sh, which every hook but friction-log sources)
-  local names="$base" f2
+  local libnames="$base" f2
   for f in "$root/$d"/*-lib.sh; do
-    [ -f "$f" ] && [ "${f##*/}" != "$base" ] && grep -v '^[[:space:]]*#' "$f" | grep -q -F -- "$base" && names="$names ${f##*/}"
+    [ -f "$f" ] && [ "${f##*/}" != "$base" ] && names "$f" "$base" && libnames="$libnames ${f##*/}"
   done
   for f in "$root/$d"/*.sh; do
     [ -f "$f" ] || continue
     case "$f" in *-selftest.sh|*-lib.sh) continue ;; esac
-    for f2 in $names; do grep -v '^[[:space:]]*#' "$f" | grep -q -F -- "$f2" && break; done || continue   # a mention in a comment is not a source
+    for f2 in $libnames; do names "$f" "$f2" && break; done || continue   # a mention in a comment is not a source
     st="${f%.sh}-selftest.sh"; st="${st#$root/}"
     [ -f "$root/$st" ] && case " $out " in *" $st "*) ;; *) out="$out $st" ;; esac
   done

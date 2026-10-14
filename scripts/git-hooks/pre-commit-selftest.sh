@@ -48,7 +48,8 @@
 # global/hooks/ arm: a staged hook .sh, and the .py half of a pair, runs its
 # selftest; a library (no selftest of its own) runs each hook selftest whose
 # own file, hook .sh or hook .py names its stem, and no other; a staged
-# src/*/scripts/ script runs a hook selftest naming its path; a staged hook
+# src/*/scripts/ script, or a scripts/*-lib.sh, runs a hook selftest naming
+# its path; a staged hook
 # selftest or a file below global/hooks/ runs nothing extra; a red one
 # blocks — with a mutation table requiring each of those rows to red under a
 # one-place edit of a copy of the hook. And the
@@ -237,7 +238,7 @@ expect_rc "a red bundled selftest blocks" 1 "$rc"
 
 # The Claude Code hooks under global/hooks/. Two stub hooks with stub
 # selftests: hk.sh (names fake-lib.sh) beside hk-selftest.sh (names
-# selflib.sh), and the .sh/.py pair pyhk (pyhk.py names other-lib.py) beside
+# selflib.sh and scripts/selftest-lib.sh), and the .sh/.py pair pyhk (pyhk.py names other-lib.py) beside
 # pyhk-selftest.sh (names src/bundle/scripts/stamp.sh). The names are what the
 # derived library rule reads, so these files are added as written, never
 # through stage(), which would overwrite them.
@@ -246,7 +247,7 @@ printf '# sources fake-lib.sh\n' > "$work/global/hooks/hk.sh"
 printf '# reads other-lib.py\n' > "$work/global/hooks/pyhk.py"
 printf '# wraps pyhk.py\n' > "$work/global/hooks/pyhk.sh"
 cat > "$work/global/hooks/hk-selftest.sh" <<'STUB'
-# sources selflib.sh
+# sources selflib.sh and scripts/selftest-lib.sh
 echo hk-selftest >> "$RAN"; exit "${SELFTEST_RC:-0}"
 STUB
 cat > "$work/global/hooks/pyhk-selftest.sh" <<'STUB'
@@ -274,7 +275,10 @@ row_lib_in_st() { expect_run "a library named only by a hook selftest" "global/h
 # A skill script a hook selftest runs (tree-stamp.sh and review-receipt's
 # selftest, in the real tree) queues that selftest.
 row_src_named() { expect_run "a src/*/scripts/ script a hook selftest names" "src/bundle/scripts/stamp.sh" "lint-skills pyhk-selftest "; }
-row_hook_sh; row_hook_py; row_lib_sh; row_lib_py; row_lib_in_py; row_lib_in_st; row_src_named
+# A scripts/ library a hook selftest sources by its repo path queues that
+# selftest beside the scripts/ ones.
+row_scripts_lib() { expect_run "a scripts/*-lib.sh a hook selftest names" "scripts/selftest-lib.sh" "lint-skills foo-selftest some-hook-selftest tool-selftest hk-selftest "; }
+row_hook_sh; row_hook_py; row_lib_sh; row_lib_py; row_lib_in_py; row_lib_in_st; row_src_named; row_scripts_lib
 expect_existing "a staged global/hooks/ selftest" "global/hooks/hk-selftest.sh" "lint-skills "
 expect_run "a staged file below global/hooks/" "global/hooks/sub/notes.md" "lint-skills "
 stage_existing "global/hooks/hk.sh"; run 0 0 1
@@ -469,23 +473,8 @@ expect_in "$out" "a failed staged-list mktemp was not named" "could not create a
 # grades that place; the row must go red, or it grades nothing.
 # mutant <label> <find> <replace> <row function>
 mutant() {
-  local label="$1" from="$2" to="$3" real_hook="$hook" saved_fail="$fail" mfail
-  if ! python3 - "$real_hook" "$tmp/mutant-pre-commit" "$from" "$to" <<'PY'
-import sys
-src, dst, a, b = sys.argv[1:5]
-text = open(src).read()
-if a not in text:
-    sys.exit(1)
-open(dst, "w").write(text.replace(a, b, 1))
-PY
-  then
-    selftest_fail "mutant '$label': its pattern is not in the hook, so the row it guards is ungraded"
-    return
-  fi
-  fail=0; hook="$tmp/mutant-pre-commit"
-  "$4" >/dev/null
-  mfail=$fail; fail=$saved_fail; hook="$real_hook"
-  [ "$mfail" -eq 1 ] || selftest_fail "mutant '$label' survived — the row $4 stayed green"
+  selftest_mutate "$hook" "$tmp/mutant-pre-commit" "$2" "$3" || return
+  hook="$tmp/mutant-pre-commit" selftest_expect_killed "$1 (row $4)" "$4"
 }
 mutant "hook pairing dropped"           'queue_selftest "$stem-selftest.sh"' ':' row_hook_sh
 mutant "stem cut only off .sh"          'stem="${p%.*}"' 'stem="${p%.sh}"' row_hook_py
@@ -494,5 +483,6 @@ mutant "library queues every selftest"  'if [ -f "$f" ] && grep -qF -- "$1" "$f"
 mutant "hook .py not read for a name"   'for f in "$st" "$stem.sh" "$stem.py"; do' 'for f in "$st" "$stem.sh"; do' row_lib_in_py
 mutant "selftest not read for a name"   'for f in "$st" "$stem.sh" "$stem.py"; do' 'for f in "$stem.sh" "$stem.py"; do' row_lib_in_st
 mutant "src script names no hook"       '      queue_hook_selftests_naming "$p" ;;' '      ;;' row_src_named
+mutant "scripts lib names no hook"      'done; queue_hook_selftests_naming "$p" ;;' 'done ;;' row_scripts_lib
 
 selftest_close "pre-commit self-test clean — every mapped class ran its linter under every index status, unmapped paths ran none, red blocked, green allowed, a merge in progress or an unreadable index took its own branch, the selftest map ran each staged pairing once and blocked on red, the staged-list temp file honoured a writable TMPDIR and blocked when its mktemp failed, and the lineage notice printed once per ported skill, stayed silent for the nothing-to-diff table, and moved the exit status in neither direction." "pre-commit self-test PARTIAL"
