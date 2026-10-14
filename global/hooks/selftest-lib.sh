@@ -18,6 +18,16 @@
 #                                            table allows, and <cmd> (an
 #                                            unterminated quote) allows with its
 #                                            "tokeniser error" breadcrumb
+#   hook_rc_not <want> <cwd> <cmd>         — exits 0 unless the hook exits
+#                                            <want>; prints nothing
+#   crumb_has <cwd> <cmd> <pattern>        — exits 0 when the hook's stderr
+#                                            contains <pattern>; prints nothing
+#
+# The last two are rows a mutant targets, for selftest_expect_killed: a
+# mutation table sources scripts/selftest-lib.sh as well, for selftest_mutate
+# and selftest_expect_killed, and grades a mutant as
+#   selftest_mutate "$hook" "$mdir/<hook>.sh" <from> <to> &&
+#     hook="$mdir/<hook>.sh" selftest_expect_killed <label> hook_rc_not <want> <cwd> <cmd>
 #
 # HOOK_SELFTEST_VERBOSE=1 shows each row's stderr.
 
@@ -61,6 +71,11 @@ expect_quiet() {
   local cwd="$1" cmd="$2"; _label="${3:-}"
   local out; out="$(crumb "$cwd" "$cmd")"
   [ "$out" = "rc=0" ] || { echo "FAIL (should allow with no breadcrumb)$(_tag): $cmd — $out"; fail=1; }
+}
+hook_rc_not() { [ "$(run "$2" "$3")" != "$1" ]; }
+crumb_has() {
+  case "$(crumb "$1" "$2")" in *"$3"*) return 0 ;; esac
+  return 1
 }
 expect_fail_open() {
   [ $# -ge 2 ] || { echo "FAIL: expect_fail_open needs <cwd> <cmd>"; fail=1; return; }

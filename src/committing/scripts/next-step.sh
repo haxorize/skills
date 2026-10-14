@@ -2,8 +2,8 @@
 # Conventions for this tree: scripts/README.md
 # next-step.sh — print the landing order this repo's `Landing:` key sets, and
 # the one next act for the tree as it stands: commit, review, fix pass, or
-# push. Every orchestrator's close ends on its `next:` line, so the order lives
-# here once instead of in four skill bodies that drifted apart.
+# push. `implement`, `address-findings` and `feedback-loops` close on its
+# `next:` line, so the order lives here once instead of in four places.
 #
 #   next-step.sh                 the order and the next act, from the repo here
 #   next-step.sh --mid-family    this close does not end a `## Round` batch
@@ -13,35 +13,55 @@
 # Output, one `key: value` per line, `next:` always last:
 #   review:  required | not required   (the `Review required:` line)
 #   tree:    <12-hex>, <n> dirty path(s) | <12-hex>, clean
-#   receipt: stamped by <report> | none of <n> report(s) stamps it
-#   ahead:   <n> of <upstream> | ? (no upstream)
+#   receipt: stamped by <report> | HEAD's tree stamped by <report>, not the
+#            <n> uncommitted path(s) | none of <n> report(s) stamps it
+#   ahead:   <n> of <upstream>[, <m> behind] | ? (no upstream) |
+#            ? (detached HEAD) | ? (no remote)
 #   order:   the whole landing order for this repo
 #   next:    the one act, a literal `/command <args>` where one exists
 #
-# It reads what the review-receipt hook reads, by the same means, so it cannot
-# say "push" where the hook blocks: the nearest CLAUDE.md carrying a
+# It reads what the review-receipt hook reads, by the same means, so it never
+# says "push" where the hook blocks: the nearest CLAUDE.md carrying a
 # `Review required:` line, walking from here up to the repo top (the hook's
-# pattern, copied with its anchors); the `<repo>-YYYY-*.review.md` reports in
-# $REVIEW_RECEIPT_DIR, else `claude-handoffs/` under $TMPDIR and /tmp (the
-# hook's zones); and their `Reviewed-tree` lines through tree-stamp.sh
-# --stamps, the one stamp reader. The tree compared is the working-tree
-# stamp: HEAD's tree when the tree is clean, and the tree a commit of the
-# whole tree reproduces when it is not. Where nothing stamps it and the newest report carries one
-# stamp, not the tree of the upstream tip, that report's findings are taken as
-# unaddressed and the next act is `/address-findings <it>`; a second stamp is
-# the fix pass's, so an edit after it is a new review.
+# pattern and fence rule, copied with their anchors — global/hooks/
+# review-receipt.sh; next-step-selftest.sh's parity section runs both on one
+# fixture); the review reports `landing.sh list --kind review` prints, from
+# the zones `landing.sh zones` owns; and their `Reviewed-tree` lines through
+# tree-stamp.sh --stamps, the one stamp reader. A `Review cadence:` line is
+# read the same way, from the nearest CLAUDE.md carrying one. A report
+# answers when it stamps the working-tree stamp (HEAD's tree when the tree is
+# clean, and the tree a commit of the whole tree reproduces when it is not),
+# or HEAD's tree, which is what a bare `git push` sends: the commits then
+# push, and the uncommitted paths are named as left out. Where nothing stamps
+# it, the newest report is taken as this branch's unaddressed review, and the
+# next act is `/address-findings <it>`, only when all of these hold: it
+# carries one stamp (every fix pass appends one, its close marker, so a second
+# means the pass ran and an edit after it is a new review), and that stamp is
+# not the upstream tip's tree; it names at least one `F<n>` finding at the
+# start of a line outside a fence; and its `Reviewed-head:` is HEAD, or an
+# ancestor of HEAD that is the upstream tip or is not reachable from the
+# upstream (with no upstream, any ancestor of HEAD) — so a report from
+# another branch, or one whose head the upstream has moved past, is not.
+# Anything else falls through to `/review-changes`. "push" is said only with
+# an upstream to push to and nothing behind it: no remote, a detached HEAD, no
+# upstream, and a diverged branch each get their own act.
+#
+# The two scripts it runs, tree-stamp.sh (review-changes) and landing.sh
+# (handoff), are read at the installed path ~/.claude/skills/<owner>/scripts/
+# (ADR-0108), else beside this checkout when that path is absent.
 #
 # Why a script: the order was prose in implement, feedback-loops, handoff and
-# address-findings, and agents retyped the second command of fixed pairs
+# scripts/README.md, and agents retyped the second command of fixed pairs
 # 24 of 50 times (2026-10-12 round, Batch 10).
 #
 # Exit: 0 printed · 3 usage error · 4 never ran (not inside a git work tree,
-# or the stamp script missing or failing).
+# or tree-stamp.sh or landing.sh missing or failing).
 set -uo pipefail
+unset CDPATH   # an exported CDPATH makes `cd` print the path into the captured value
 
 usage() {
   sed -n '8,11p' "$0" | sed 's/^# \{0,1\}//'
-  echo "Exit: 0 printed; 3 usage; 4 never ran (no repo, or the stamp script failed)."
+  echo "Exit: 0 printed; 3 usage; 4 never ran (no repo, or tree-stamp.sh or landing.sh failed)."
 }
 
 mid=""
@@ -55,76 +75,134 @@ done
 
 top="$(git rev-parse --show-toplevel 2>/dev/null)" || { echo "next-step.sh: not inside a git work tree" >&2; exit 4; }
 here_real="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
-stamp="$here_real/../../review-changes/scripts/tree-stamp.sh"
+# sibling <owner> <file>: the installed path, else the copy beside this checkout
+sibling() {
+  local inst="${HOME:-}/.claude/skills/$1/scripts/$2"
+  if [ -n "${HOME:-}" ] && [ -f "$inst" ]; then printf '%s\n' "$inst"; else printf '%s\n' "$here_real/../../$1/scripts/$2"; fi
+}
+stamp="$(sibling review-changes tree-stamp.sh)"
+landing="$(sibling handoff landing.sh)"
 [ -f "$stamp" ] || { echo "next-step.sh: stamp script not found at $stamp" >&2; exit 4; }
+[ -f "$landing" ] || { echo "next-step.sh: landing.sh not found at $landing" >&2; exit 4; }
 
-# unfenced <file>: the file without its ``` blocks, as the hook scans it
-unfenced() { awk '/^[[:space:]]*```/ { fence = !fence; next } fence { next } { print }' "$1" 2>/dev/null; }
+# unfenced <file>: the file outside its fences, by tree-stamp.sh's rule (a ``` or
+# ~~~ line opens a fence, and only the same marker closes it), as the hook scans it
+unfenced() {
+  awk '
+    match($0, /^[[:space:]]*(```|~~~)/) {
+      marker = substr($0, RSTART + RLENGTH - 3, 3)
+      if (fence == "") { fence = marker; next }
+      if (marker == fence) { fence = ""; next }
+    }
+    fence != "" { next }
+    { print }' "$1" 2>/dev/null
+}
+# nearest <pattern>: the first matching line of the nearest CLAUDE.md that has
+# one, walking from here up to the repo top
+top_phys="$(cd "$top" && pwd -P)"
+nearest() {
+  local dir line
+  dir="$(pwd -P)"
+  while :; do
+    if [ -f "$dir/CLAUDE.md" ]; then
+      line="$(unfenced "$dir/CLAUDE.md" | grep -iE "$1" | head -1)"
+      [ -n "$line" ] && { printf '%s\n' "$line"; return 0; }
+    fi
+    { [ "$dir" = "$top_phys" ] || [ "$dir" = "/" ]; } && return 0
+    dir="$(dirname "$dir")"
+  done
+}
 
 OPT_IN='^[-* >]*\**`?Review required:`?\**[[:space:]]*\**`?(yes|no)`?\**[[:space:]]*$'
+CADENCE='^[-* >]*\**`?Review cadence:`?\**[[:space:]]*[^[:space:]]'
 required=""
-dir="$(pwd -P)"
-top_phys="$(cd "$top" && pwd -P)"
-while :; do
-  if [ -f "$dir/CLAUDE.md" ]; then
-    line="$(unfenced "$dir/CLAUDE.md" | grep -iE "$OPT_IN" | head -1)"
-    if [ -n "$line" ]; then
-      printf '%s\n' "$line" | grep -qi 'yes' && required=1
-      break
-    fi
-  fi
-  { [ "$dir" = "$top_phys" ] || [ "$dir" = "/" ]; } && break
-  dir="$(dirname "$dir")"
-done
-cadence=""
-[ -f "$top/CLAUDE.md" ] && cadence="$(unfenced "$top/CLAUDE.md" | sed -n 's/^[-* ]*Review cadence:[[:space:]]*//p' | head -1)"
+nearest "$OPT_IN" | grep -qi 'yes' && required=1
+cadence="$(nearest "$CADENCE" | sed -E 's/^[^:]*:[`*]*[[:space:]]*//; s/[[:space:]]*\*\*[[:space:]]*$//')"
 
-dirty="$(git -C "$top" status --porcelain 2>/dev/null | wc -l | tr -d ' ')"
+# untracked files counted whatever status.showUntrackedFiles says, as the stamp counts them
+status="$(git -C "$top" status --porcelain --untracked-files=normal 2>/dev/null)"
+dirty="$(printf '%s' "$status" | grep -c . || true)"
 tree="$(cd "$top" && bash "$stamp")" || { echo "next-step.sh: tree-stamp.sh failed" >&2; exit 4; }
+head_tree="$(git -C "$top" rev-parse --verify -q 'HEAD^{tree}' 2>/dev/null || true)"
 treeline="${tree:0:12}, $dirty dirty path(s)"
 [ "$dirty" -gt 0 ] || treeline="${tree:0:12}, clean"
 
+branch="$(git -C "$top" symbolic-ref --short -q HEAD 2>/dev/null || true)"
+remotes="$(git -C "$top" remote 2>/dev/null || true)"
+remote="$(printf '%s\n' "$remotes" | grep -qx origin && echo origin || printf '%s\n' "$remotes" | head -1)"
 up="$(git -C "$top" rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null)" || up=""
+ahead="?" behind=0 up_tree=""
 if [ -n "$up" ]; then
-  ahead="$(git -C "$top" rev-list --count "$up..HEAD" 2>/dev/null || echo '?')"
+  lr="$(git -C "$top" rev-list --left-right --count "$up...HEAD" 2>/dev/null)" || lr=""
+  if [ -n "$lr" ]; then behind="${lr%%[[:space:]]*}" ahead="${lr##*[[:space:]]}"; fi
   up_tree="$(git -C "$top" rev-parse --verify -q "$up^{tree}" 2>/dev/null || true)"
   aheadline="$ahead of $up"
-else
-  ahead="?" up_tree="" aheadline="? (no upstream)"
-fi
+  [ "$behind" -gt 0 ] && aheadline="$aheadline, $behind behind"
+elif [ -z "$remotes" ]; then aheadline="? (no remote)"
+elif [ -z "$branch" ]; then aheadline="? (detached HEAD)"
+else aheadline="? (no upstream)"; fi
+
+# push_act: the push itself, as the remote and the upstream allow it
+push_act() {
+  if [ -n "$up" ]; then
+    if [ "$behind" -gt 0 ]; then echo "pull first: $up has $behind commit(s) HEAD lacks (git pull --rebase), then push"
+    else echo "push"; fi
+  elif [ -z "$remotes" ]; then echo "none (no remote)"
+  elif [ -z "$branch" ]; then echo "none until HEAD is on a branch: it is detached (git switch -c <name>)"
+  else echo "git push -u $remote $branch"; fi
+}
 
 # --- the receipt: every report for this repo, as the hook finds them ---------
 repo="$(basename "$top")"
-zones=()
-if [ -n "${REVIEW_RECEIPT_DIR:-}" ]; then
-  zones=("$REVIEW_RECEIPT_DIR")
-else
-  [ -n "${TMPDIR:-}" ] && zones+=("${TMPDIR%/}/claude-handoffs")
-  [ "${zones[0]:-}" = "/tmp/claude-handoffs" ] || zones+=("/tmp/claude-handoffs")
-fi
-reports=0 stamped_by="" newest="" newest_stamps=""
-for zone in "${zones[@]}"; do
-  [ -d "$zone" ] || continue
-  for f in "$zone"/"$repo"-[0-9][0-9][0-9][0-9]-*.review.md; do
-    [ -f "$f" ] && [ -r "$f" ] || continue
-    found="$(bash "$stamp" --stamps "$f" 2>/dev/null)"
-    case $? in
-      0|2) ;;
-      *) continue ;;
-    esac
-    found="$(printf '%s\n' "$found" | sed -n 's/^Reviewed-tree \([0-9a-f]\{40\}\)$/\1/p')"
-    reports=$((reports + 1))
-    if [ -n "$tree" ] && [ -z "$stamped_by" ] && printf '%s\n' "$found" | grep -qx "$tree"; then
-      stamped_by="$f"
-    fi
-    if [ -z "$newest" ] || [ "$f" -nt "$newest" ]; then newest="$f" newest_stamps="$found"; fi
-  done
-done
+list="$(bash "$landing" list --kind review --repo "$repo")" || { echo "next-step.sh: landing.sh list failed" >&2; exit 4; }
+reports=0 stamped_by="" head_by="" newest="" newest_stamps=""
+while IFS= read -r f; do
+  [ -n "$f" ] && [ -f "$f" ] || continue
+  if [ ! -r "$f" ]; then echo "next-step.sh: skipping unreadable report $f" >&2; continue; fi
+  found="$(bash "$stamp" --stamps "$f" 2>/dev/null)"
+  rc=$?
+  case $rc in
+    0|2) ;;
+    *) echo "next-step.sh: tree-stamp.sh --stamps failed on $f (exit $rc)" >&2; exit 4 ;;
+  esac
+  found="$(printf '%s\n' "$found" | sed -n 's/^Reviewed-tree \([0-9a-f]\{40\}\)$/\1/p')"
+  reports=$((reports + 1))
+  if [ -n "$tree" ] && [ -z "$stamped_by" ] && printf '%s\n' "$found" | grep -qx "$tree"; then
+    stamped_by="$f"
+  fi
+  if [ -n "$head_tree" ] && [ -z "$head_by" ] && printf '%s\n' "$found" | grep -qx "$head_tree"; then
+    head_by="$f"
+  fi
+  if [ -z "$newest" ] || [ "$f" -nt "$newest" ]; then newest="$f" newest_stamps="$found"; fi
+done <<< "$list"
+left_out="$(printf '%s\n' "$status" | cut -c4- | grep . | head -5 | tr '\n' ' ' | sed 's/ $//')"
+[ "$dirty" -gt 5 ] && left_out="$left_out and $((dirty - 5)) more"
 if [ -n "$stamped_by" ]; then
   receiptline="stamped by $stamped_by"
+elif [ -n "$head_by" ]; then
+  receiptline="HEAD's tree stamped by $head_by, not the $dirty uncommitted path(s)"
 else
   receiptline="none of $reports report(s) stamps it"
 fi
+
+# addressable <report>: the report holds this branch's unaddressed findings —
+# an `F<n>` line, and a Reviewed-head that is HEAD, or an ancestor of HEAD that
+# is the upstream tip or that the upstream has not reached (header above)
+addressable() {
+  local body h hc head_c up_c
+  body="$(unfenced "$1")"
+  printf '%s\n' "$body" | grep -qE '^[[:space:]#>*|-]*F[0-9]+([^0-9A-Za-z_]|$)' || return 1
+  h="$(printf '%s\n' "$body" | sed -n -E 's/^Reviewed-head: ([0-9a-f]{4,40})[[:space:]]*$/\1/p' | head -1)"
+  [ -n "$h" ] || return 1
+  hc="$(git -C "$top" rev-parse --verify -q "$h^{commit}" 2>/dev/null)" || return 1
+  head_c="$(git -C "$top" rev-parse --verify -q HEAD 2>/dev/null)" || return 1
+  [ "$hc" = "$head_c" ] && return 0
+  git -C "$top" merge-base --is-ancestor "$hc" "$head_c" 2>/dev/null || return 1
+  [ -n "$up" ] || return 0
+  up_c="$(git -C "$top" rev-parse --verify -q "$up^{commit}" 2>/dev/null)" || return 0
+  [ "$hc" = "$up_c" ] && return 0
+  ! git -C "$top" merge-base --is-ancestor "$hc" "$up_c" 2>/dev/null
+}
 
 # --- the order and the next act -----------------------------------------------
 if [ -z "$required" ]; then
@@ -132,22 +210,29 @@ if [ -z "$required" ]; then
   order="commit, then push"
   if [ "$dirty" -gt 0 ]; then next="commit (or /ship for a split or a PR)"
   elif [ "$ahead" = 0 ]; then next="none, nothing to land"
-  else next="push"; fi
+  else next="$(push_act)"; fi
 else
   reviewline="required"
-  order="commit when you like, then /review-changes and /address-findings, then push; the last Reviewed-tree must equal the tree pushed, so an edit after it needs a fresh stamp"
-  [ -n "$cadence" ] && order="$order (Review cadence: $cadence)"
+  if [ -n "$cadence" ]; then
+    order="commit at the end of every batch, then /review-changes and /address-findings at the family's end, then push; the last Reviewed-tree must equal the tree pushed, so an edit after it needs a fresh stamp (Review cadence: $cadence)"
+  else
+    order="commit when you like, then /review-changes and /address-findings, then push; the last Reviewed-tree must equal the tree pushed, so an edit after it needs a fresh stamp"
+  fi
   n_stamps="$(printf '%s' "$newest_stamps" | grep -c . || true)"
   if [ -n "$mid" ] && [ -n "$cadence" ]; then
     if [ "$dirty" -gt 0 ]; then next="commit this batch"; else next="the next batch; the cadence reviews at the family's end"; fi
   elif [ -n "$stamped_by" ]; then
-    if [ "$dirty" -gt 0 ]; then next="commit the whole tree, then push"
+    if [ "$dirty" -gt 0 ]; then next="commit the whole tree, then $(push_act)"
     elif [ "$ahead" = 0 ]; then next="none, nothing to land"
-    else next="push"; fi
+    else next="$(push_act)"; fi
+  elif [ -n "$head_by" ] && [ "$ahead" != 0 ]; then
+    next="$(push_act); it sends the stamped commits, not the uncommitted path(s), which need their own review: $left_out"
   elif [ "$dirty" -eq 0 ] && [ "$ahead" = 0 ]; then
     next="none, nothing to land"
-  elif [ -n "$newest" ] && [ "$n_stamps" -eq 1 ] && [ "$newest_stamps" != "$up_tree" ]; then
+  elif [ -n "$newest" ] && [ "$n_stamps" -eq 1 ] && [ "$newest_stamps" != "$up_tree" ] && addressable "$newest"; then
     next="/address-findings $newest"
+  elif [ "$dirty" -gt 0 ] && [ -n "$cadence" ]; then
+    next="commit this batch, then /review-changes"
   elif [ "$dirty" -gt 0 ]; then
     next="commit when you like; /review-changes before the push"
   else

@@ -26,8 +26,10 @@
 # stamps, it names the last stamp read. Stamps are read by tree-stamp.sh
 # --stamps (its own selftest grades the line shapes); the mutation table at the
 # end grades what this hook adds on top: only `Reviewed-tree` lines count, the
-# reader is the one beside the checkout, a missing reader fails open named,
-# and `--git-dir` / `--work-tree` name the repo.
+# reader and landing.sh are the ones beside the checkout, a missing or failing
+# one blocks named (an opted-in repo is never ungated by a broken install),
+# and `--git-dir` / `--work-tree` name the repo. Whether next-step.sh agrees
+# with this hook is next-step-selftest.sh's parity section.
 set -u
 here="$(cd "$(dirname "$0")" && pwd)"
 hook="$here/review-receipt.sh"
@@ -62,6 +64,9 @@ mkrepo boldval '# repo\n\n- **Review required:** **yes**\n'
 mkrepo ticks '# repo\n\n- Review required: `yes`\n'
 mkrepo planned '# repo\n\n- Review required: yes (planned)\n'
 mkrepo fenced '# repo\n\n```\n- Review required: yes\n```\n'
+mkrepo tildefenced '# repo\n\n~~~\n- Review required: yes\n~~~\n'
+# a ~~~ block quoting a ``` line closes only on ~~~, so the line after it is live
+mkrepo mixedfence '# repo\n\n~~~\n```\n~~~\n- Review required: yes\n'
 # The scope of this hook's Landing: reading, made explicit and graded. GATED_LINES
 # carries three keys under its header and the hook reads ONE — everything but `Review required:` is
 # decoration here, which made the fixture look like it modeled a Landing block
@@ -91,6 +96,8 @@ mkrepo tworemotes "$GATED_LINES"
 mkrepo noupstream "$GATED_LINES"
 ( cd "$work/noupstream" && git branch -q --unset-upstream )
 
+# shellcheck source=../../scripts/selftest-lib.sh
+. "$here/../../scripts/selftest-lib.sh"   # selftest_mutate, selftest_expect_killed
 . "$here/selftest-lib.sh"
 G="$work/gated"; P="$work/plain"
 
@@ -177,6 +184,14 @@ expect_crumb "$G" "git push --delete origin feat" "sends no commits" "--delete s
 expect_crumb "$G" "git push -d origin feat"  "sends no commits" "-d sends no commits"
 ( cd "$G" && git tag v1.0 )
 expect_crumb "$G" "git push origin v1.0"     "tag push"         "a tag push sends no branch commits"
+# a delete or a tag first in the list is dropped, not a pass for the refspecs after it
+expect_block "$G" "git push origin :gone main"                 "a delete refspec first does not pass the branch after it"
+expect_block "$G" "git push origin v1.0 main"                  "a tag first does not pass the branch after it"
+expect_crumb "$G" "git push origin :gone v1.0" "tag push"      "a delete and a tag together send no branch commits"
+# every push in a chained command is judged, not only the first
+expect_block "$G" "git push origin :gone; git push origin main" "a delete push, then a branch push"
+expect_block "$G" "git push origin v1.0 && git push"           "a tag push, then a bare push"
+expect_allow "$G" "git push origin :gone; cd ../plain && git push" "a delete push, then a push from a repo not opted in"
 
 # --- the opt-in ---------------------------------------------------------------
 expect_allow "$P" "git push"                                   "no opt-in"
@@ -192,6 +207,8 @@ expect_block "$work/ticks" "git push"                          "backticked value
 # code fence and never reaches the pattern at all.
 expect_quiet "$work/planned" "git push"                        "'yes (planned)' is not yes"
 expect_quiet "$work/fenced" "git push"                         "line inside a fence is not read"
+expect_quiet "$work/tildefenced" "git push"                    "line inside a ~~~ fence is not read"
+expect_block "$work/mixedfence" "git push"                     "a backtick fence line inside a ~~~ fence does not close it (tree-stamp.sh's fence rule)"
 expect_block "$work/mono/pkg" "git push"                       "monorepo: root line gates a package dir"
 expect_block "$work/mono" "git push"                           "monorepo root"
 expect_allow "$work/mono/optout" "git push"                    "monorepo: nearest CLAUDE.md saying no opts a package out"
@@ -234,6 +251,8 @@ expect_block "$work/tworemotes" "git push origin main"         "named remote is 
 expect_block "$work/tworemotes" "git push --repo origin"       "--repo names the remote"
 expect_block "$work/tworemotes" "git push --repo=origin"       "--repo= names the remote"
 expect_block "$work/noupstream" "git push"                     "no tracking branch: origin/<branch> fallback"
+expect_block "$work/tworemotes" "git push other main && git push origin main" "a fully pushed remote, then a behind one: the second push decides"
+expect_allow "$work/tworemotes" "git push other main; git push other main"    "two pushes with nothing to send"
 
 # --- receipts ------------------------------------------------------------------
 # tree_of <repo-dir>: the work-tree hash the skills stamp, from the script they name
@@ -351,7 +370,7 @@ rm "$REVIEW_RECEIPT_DIR/gated-2026-01-07-all.review.md"
 # zone or filename the two disagree on reds this row.
 ( cd "$G" && echo q > q && git add q && git commit -q -m q )
 landing="$here/../../src/handoff/scripts/landing.sh"
-report="$(cd "$G" && TMPDIR="$work/t m p" bash "$landing" path x --kind review)" \
+report="$(cd "$G" && REVIEW_RECEIPT_DIR= TMPDIR="$work/t m p" bash "$landing" path x --kind review)" \
   || { echo "FAIL (landing.sh gave no report path)"; fail=1; }
 printf 'Reviewed-tree: %s\n' "$(cd "$G" && git rev-parse 'HEAD^{tree}')" > "$report"
 REVIEW_RECEIPT_DIR= TMPDIR="$work/t m p" expect_quiet "$G" "git push" "TMPDIR with a space, report path from landing.sh"
@@ -390,37 +409,78 @@ stamp mutrepo-2026-01-01-m.review.md "Measured-tree: $MTREE"
 expect_block "$M" "git push"                                   "the mutation fixture: a Measured-tree: stamp alone blocks"
 mkdir -p "$work/lonely"; cp "$hook" "$here/hook-lib.sh" "$here/hook-lib.py" "$work/lonely/"
 out="$(hook="$work/lonely/review-receipt.sh" crumb "$M" "git push")"
-printf '%s' "$out" | grep -q 'stamp reader not found' && printf '%s' "$out" | grep -q 'rc=0' \
-  || { echo "FAIL (a hook with no tree-stamp.sh beside its checkout should allow with a breadcrumb): $out"; fail=1; }
+printf '%s' "$out" | grep -q 'stamp reader is not at' && printf '%s' "$out" | grep -q 'rc=2' \
+  || { echo "FAIL (a hook with no tree-stamp.sh beside its checkout should block, naming it): $out"; fail=1; }
+# a checkout copy with the stamp reader but no landing.sh, then each script failing
+fakeco() { # fakeco <dir> <stamp-reader body or 'real'> <landing body or 'real' or 'none'>
+  mkdir -p "$1/global/hooks" "$1/src/review-changes/scripts" "$1/src/handoff/scripts"
+  cp "$hook" "$here/hook-lib.sh" "$here/hook-lib.py" "$1/global/hooks/"
+  if [ "$2" = real ]; then cp "$here/../../src/review-changes/scripts/tree-stamp.sh" "$1/src/review-changes/scripts/"
+  else printf '%s\n' "$2" > "$1/src/review-changes/scripts/tree-stamp.sh"; fi
+  case "$3" in
+    real) cp "$here/../../src/handoff/scripts/landing.sh" "$1/src/handoff/scripts/" ;;
+    none) ;;
+    *) printf '%s\n' "$3" > "$1/src/handoff/scripts/landing.sh" ;;
+  esac
+}
+fakeco "$work/nolanding" real none
+out="$(hook="$work/nolanding/global/hooks/review-receipt.sh" crumb "$M" "git push")"
+printf '%s' "$out" | grep -q 'landing.sh is not at' && printf '%s' "$out" | grep -q 'rc=2' \
+  || { echo "FAIL (a checkout with no landing.sh should block, naming it): $out"; fail=1; }
+fakeco "$work/badlanding" real 'exit 1'
+out="$(hook="$work/badlanding/global/hooks/review-receipt.sh" crumb "$M" "git push")"
+printf '%s' "$out" | grep -q 'landing.sh zones failed' && printf '%s' "$out" | grep -q 'rc=2' \
+  || { echo "FAIL (a failing landing.sh should block, naming it): $out"; fail=1; }
+fakeco "$work/badreader" 'exit 1' real
+out="$(hook="$work/badreader/global/hooks/review-receipt.sh" crumb "$M" "git push")"
+printf '%s' "$out" | grep -q 'the stamp reader failed on' && printf '%s' "$out" | grep -q 'rc=2' \
+  || { echo "FAIL (a stamp reader that fails on a readable report should block, naming it): $out"; fail=1; }
+# ...and a repo not opted in never reaches either script
+out="$(hook="$work/nolanding/global/hooks/review-receipt.sh" crumb "$P" "git push")"
+[ "$out" = "rc=0" ] || { echo "FAIL (a repo not opted in should allow silently with landing.sh missing): $out"; fail=1; }
+# the mutation fixture's companion: a Reviewed-tree stamp, which the real hook accepts quietly
+mkrepo mutok "$GATED_LINES"
+MOK="$work/mutok"
+stamp mutok-2026-01-01-m.review.md "Reviewed-tree: $(cd "$MOK" && git rev-parse 'HEAD^{tree}')"
+expect_quiet "$MOK" "git push"                                 "the mutation companion: a Reviewed-tree stamp allows quietly"
 
 # --- mutation table -------------------------------------------------------------
 # Each row edits a copy of the hook, laid out as a checkout so the copy finds the
 # real tree-stamp.sh, and reruns one row; the mutant must flip it.
+# The fixture each row runs on must make the real hook give the other answer, or
+# the row grades nothing: by this point $G's main is pushed ("nothing to push")
+# and $work is not a repo, so every row aimed at $G would allow either way. An
+# unpushed, unstamped commit on $G's main makes each of those block on the real
+# hook; the rows below pin that before the table relies on it.
+( cd "$G" && echo u > u && git add u && git commit -q -m unstamped )
+expect_block "$work" "git --git-dir=$G/.git push"              "the mutation fixture: --git-dir names an unstamped repo"
+expect_block "$work" "git --work-tree=$G push"                 "the mutation fixture: --work-tree names an unstamped repo"
+expect_block "$G" "git push origin :gone; git push origin main" "the mutation fixture: the second push is unstamped"
+expect_block "$G" "git push origin :gone main"                 "the mutation fixture: the branch after a delete is unstamped"
+expect_block "$G" "git push origin v1.0 main"                  "the mutation fixture: the branch after a tag is unstamped"
 mdir="$work/mut"; mkdir -p "$mdir/global/hooks"; ln -s "$here/../../src" "$mdir/src"
 cp "$here/hook-lib.sh" "$here/hook-lib.py" "$mdir/global/hooks/"
 mutant() { # mutant <label> <find> <replace> <cwd> <cmd> <want rc>
-  local label="$1" from="$2" to="$3" c_wd="$4" c="$5" want="$6" rc
-  python3 - "$hook" "$mdir/global/hooks/review-receipt.sh" "$from" "$to" <<'PY' || { echo "FAIL (mutant '$label': pattern not found in the hook)"; fail=1; return; }
-import sys
-src, dst, a, b = sys.argv[1:]
-s = open(src).read()
-if a not in s:
-    sys.exit(1)
-open(dst, "w").write(s.replace(a, b, 1))
-PY
-  rc="$(hook="$mdir/global/hooks/review-receipt.sh" run "$c_wd" "$c")"
-  [ "$rc" = "$want" ] || { echo "FAIL (mutant '$label' survived: rc=$rc, the row should flip to $want)"; fail=1; }
+  selftest_mutate "$hook" "$mdir/global/hooks/review-receipt.sh" "$2" "$3" || return
+  hook="$mdir/global/hooks/review-receipt.sh" selftest_expect_killed "$1" hook_rc_not "$6" "$4" "$5"
 }
 mutant "accept a Measured-tree stamp" "s/^Reviewed-tree " "s/^[A-Za-z]*-tree " "$M" "git push" 0
 # the missing-reader check, dropped: a copy with no checkout around it no longer names the missing script
 mkdir -p "$work/lonely2"; cp "$here/hook-lib.sh" "$here/hook-lib.py" "$work/lonely2/"
-python3 -c 'import sys; s=open(sys.argv[1]).read(); a="[ -f \"$stamp_reader\" ] || hook_allow"; sys.exit(1) if a not in s else open(sys.argv[2],"w").write(s.replace(a, ": ||", 1))' "$hook" "$work/lonely2/review-receipt.sh" \
-  || { echo "FAIL (mutant 'drop the missing-reader check': pattern not found in the hook)"; fail=1; }
-out="$(hook="$work/lonely2/review-receipt.sh" crumb "$M" "git push")"
-printf '%s' "$out" | grep -q 'stamp reader not found' && { echo "FAIL (mutant 'drop the missing-reader check' survived): $out"; fail=1; }
+selftest_mutate "$hook" "$work/lonely2/review-receipt.sh" '[ -f "$stamp_reader" ] || hold' ': ||' \
+  && hook="$work/lonely2/review-receipt.sh" selftest_expect_killed "drop the missing-reader check" crumb_has "$M" "git push" 'stamp reader is not at'
 mutant "ignore --git-dir"             'd = gd or wt or d' 'd = wt or d' "$work" "git --git-dir=$G/.git push" 0
 mutant "ignore --work-tree"           'd = gd or wt or d' 'd = gd or d' "$work" "git --work-tree=$G push" 0
-mutant "the reader is not the one beside the checkout" 'stamp_reader="$hook_real/../../src/' 'stamp_reader="$hook_real/../src/' "$M" "git push" 0
+mutant "the reader is not the one beside the checkout" 'stamp_reader="$hook_real/../../src/' 'stamp_reader="$hook_real/../src/' "$MOK" "git push" 2
+mutant "landing.sh is not the one beside the checkout" 'landing="$hook_real/../../src/' 'landing="$hook_real/../src/' "$MOK" "git push" 2
+# the missing-reader hold, turned into an allow: graded from a copy with no
+# checkout around it (the $mdir copy finds the real reader and never reaches the
+# hold), pushing the opted-in $M, whose real-hook answer is the hold's rc 2
+selftest_mutate "$hook" "$work/lonely2/review-receipt.sh" 'hold "the stamp reader is not at' 'rec_allow "x"; return 0; hold "' \
+  && hook="$work/lonely2/review-receipt.sh" selftest_expect_killed "a missing reader allows" hook_rc_not 0 "$M" "git push"
+mutant "judge only the first push"    'judge "${records[$((ri - 1))]}"' 'judge "${records[0]}"' "$G" "git push origin :gone; git push origin main" 0
+mutant "a delete first passes the rest" 'case "$r" in :*|+:*) dropped=1; continue ;; esac' 'case "$r" in :*|+:*) rec_allow x; return 0 ;; esac' "$G" "git push origin :gone main" 0
+mutant "a tag first passes the rest"  'is_tag "$r" && continue;' 'is_tag "$r" && { rec_allow x; return 0; };' "$G" "git push origin v1.0 main" 0
 
 if [ "$fail" -ne 0 ]; then echo "SELFTEST FAIL: review-receipt"; exit 1; fi
 echo "OK: review-receipt self-test clean — every gated push blocked, every exempt form and receipt allowed, fail-open holds."
