@@ -1,14 +1,18 @@
-# `/implement` makes one confirmed ADO activation write when building starts
+---
+status: superseded by [ADR-0109](0109-implement-makes-the-confirmed-ado-activation-when-building-starts.md)
+---
 
-The ticket loader [ADR-0004](0004-from-work-item-cold-start-loader.md) records is read-only except for this one write, and only `/implement` makes it. The no-write contract it narrows was set by [ADR-0077](0077-tightening-round-one-house-style.md) (line 123: "`from-ticket` narrowing to Declared-mode-only with no file writes"); the no-file-writes half stands.
+# `from-ticket` gains one confirmed ADO activation write
+
+This amends [ADR-0004](0004-from-work-item-cold-start-loader.md): the loader is no longer unconditionally read-only. The no-write contract it narrows was set by [ADR-0077](0077-tightening-round-one-house-style.md) (line 123: "`from-ticket` narrowing to Declared-mode-only with no file writes"); the no-file-writes half stands.
 
 ## Context
 
-Picking up a ticket to start work carries ADO housekeeping nobody wants to do by hand but nobody wants done silently either: move it to the Active state (`Active`), assign it to the person loading it, and set the current iteration. The loader already has every fact that check needs — the full work-item JSON from its load step — so the check runs on what it holds rather than re-reading the ticket.
+Picking up a ticket to start work carries ADO housekeeping nobody wants to do by hand but nobody wants done silently either: move it to the Active state (`Active`), assign it to the person loading it, and set the current iteration. `from-ticket` already has every fact that check needs — the full work-item JSON from its load step — so performing the check elsewhere would mean a second tool re-reading the same ticket.
 
 ## Decision
 
-On ADO only, once `/implement` has loaded the ticket and confirmed it is one slice, before the first edit, it compares the ticket's `System.State`, `System.AssignedTo`, and `System.IterationPath` against the Active state, the signed-in user, and the Team's current iteration `az boards iteration team list --timeframe current` names. If all three already match, it says nothing. If any differ, it presents an ask block naming only the fields that would actually change and applies the update only on confirmation — never automatically. GitHub is untouched: it has no native Active state workflow and no iteration.
+On ADO only, after loading, `from-ticket` compares the ticket's `System.State`, `System.AssignedTo`, and `System.IterationPath` against the Active state, the signed-in user, and the Team's current iteration `az boards iteration team list --timeframe current` names. If all three already match, it says nothing. If any differ, it presents an ask block naming only the fields that would actually change and applies the update only on confirmation — never automatically. GitHub is untouched: it has no native Active state workflow and no iteration.
 
 Three things bound that compare:
 
@@ -23,11 +27,11 @@ Resolving the current iteration needs an ADO Team name, which the `Issue tracker
 
 ## Considered Options
 
-- **A separate `/activate-ticket` skill** — rejected. It would need to re-fetch and re-parse the same work-item JSON the loader already holds, splitting one ticket's state across two tools for no behavioral gain.
-- **Offer it on every load** — the form this record took until 2026-10-12, rejected then (grill Q36). Loading is not starting: a grill, a skill draft, or a reviewer reading a teammate's `New` ticket loads it too, and an offer to take it is noise at best. The miss it guarded against — a ticket built without `/implement` never being activated — is now the rarer case, since the loader lives in `/implement`, and the user can still move the ticket on the board.
+- **A separate `/activate-ticket` skill** — rejected. It would need to re-fetch and re-parse the same work-item JSON `from-ticket` already holds after loading, splitting one ticket's state across two tools for no behavioral gain.
+- **Offer it when `/implement` starts** — rejected, though it is where "I'm starting this" is most surely true. Loading is not always starting: a reviewer or estimator loading a teammate's `New` ticket is offered to take it here. But `/implement` would re-fetch what the loader already holds, and a ticket loaded without `/implement` (a hand-driven slice, a `tdd` session) would never be activated; the per-use confirmation makes the stray offer one declined prompt, which costs less than the miss.
 - **An automatic write, no confirmation** — rejected. An ADO state/assignee/iteration change is an outward act against a shared system; every outward act in this suite goes through an explicit per-use confirmation unless the repo's `Landing:` block pre-authorizes it, and no `Landing:` key covers a Confirmed ADO activation (`Ticket close pre-authorized` is the only tracker-state key, and it governs closing, not state/assignee/iteration).
 
 ## Consequences
 
-- The loader's contract (`implement`'s `references/load-ticket.md` § Writes): it writes no files, and the only write it ever makes to the ticket itself is step 9's Confirmed ADO activation update (state, assignee, iteration) — never the body, never an AC, never any sibling work item, and never in load-only mode (`/grill-me <id>`, `/write-skill <id>`, `/implement <id> --load-only`).
+- `from-ticket`'s Notes contract narrows from "writes no files" (unconditional) to "`from-ticket` writes no files, and the only write it ever makes to the ticket itself is step 8's Confirmed ADO activation update (state, assignee, iteration) — never the body, never an AC, and never any sibling work item."
 - The Area-path-leaf-equals-team-name fallback is a naming convention some orgs follow, not an ADO guarantee; a project where it doesn't hold falls through to the inline ask instead of silently guessing wrong.
