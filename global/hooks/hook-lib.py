@@ -1,10 +1,21 @@
 # hook-lib.py — the command-line scanner shared by the PreToolUse hooks beside
-# it. Not run on its own: hook-lib.sh's `hook_scan` prepends this file to a
-# hook's own Python, which defines `on_command(seg, curdir)` and `emit(hit)`,
-# and appends the call that runs the scan. Besides those two names, a hook may
-# use `re`, `sys`, `os`, `shlex`, `progname`, `git_args`, `split_git`,
-# `expand`, `joined`, `base`, `fed_by`, and `ALLOW_EXIT`; everything else here
-# is the scanner's own and may be renamed.
+# it, and the segmenter repeat-failure.py loads. Not run on its own; it has two
+# kinds of consumer.
+#   - A PreToolUse hook: hook-lib.sh's `hook_scan` prepends this file to the
+#     hook's own Python, which defines `on_command(seg, curdir)` and
+#     `emit(hit)`, and may define `finish()` (called once after a scan in
+#     which no `on_command` returned a hit; what it returns is the hit), then
+#     appends `run_scanner(on_command, emit, finish)`, the process entry: it
+#     reads the command from stdin and owns the exit codes below.
+#   - A loader by path (repeat-failure.py, through importlib): it calls
+#     `program_segments(cmd)`, which returns every program segment the command
+#     runs, in order — each one `on_command` would be handed, plus each
+#     segment the scanner reads itself and hands to no hook (a shell given a
+#     script file, a `find` with no `-exec` clause), as written — and raises
+#     `TokeniseError` on a tokeniser error. It reads no stdin and never exits.
+# Besides those names, a hook may use `re`, `sys`, `os`, `shlex`, `progname`,
+# `git_args`, `split_git`, `expand`, `joined`, `base`, `fed_by`, and
+# `ALLOW_EXIT`; everything else here is the scanner's own and may be renamed.
 # `fed_by()` names the feeders (`xargs`, `find`) the current segment runs
 # under, so a hook can tell that its file list arrives from outside the
 # segment. `base()` is the payload's cwd as an absolute path (hook_scan exports
@@ -36,7 +47,10 @@
 # heuristic: a program not on it that runs another program (`busybox` is on
 # it; `docker exec`, `script`, `setsid -w` are not) hides the command. `cd`,
 # `pushd`, and `GIT_DIR=` move `curdir`, which starts empty and is None where
-# the hook cannot expand the target (`cd "$X"`); hooks that care read it.
+# the hook cannot expand the target; hooks that care read it. `expand(path)`
+# expands `~`, and `$X` / `${X}` from the hook's environment (the one the
+# session's shell inherits); a variable that is unset there, any other
+# `${…}` form, a `$(…)`, or a backtick makes the path unexpandable (None).
 # `git_args(seg)` returns the tokens after the `git` word with a `-c
 # alias.X=…` built on the command line expanded into X's place, or None when
 # the segment is not git. `split_git(args, curdir)` reads those tokens the way
@@ -48,16 +62,20 @@
 # A shell given a script file (`… | bash hook.sh`) runs the file, and what is
 # piped in is that script's input, not commands; a shell with no operand, `-s`,
 # `-`, `/dev/stdin`, `/dev/fd/0`, or an operand the scanner cannot expand reads
-# its commands from the pipe, and the piped string is scanned.
+# its commands from the pipe, and the piped string is scanned. A here-string
+# into a shell with no script file (`bash <<< "…"`) is its commands too, and
+# is scanned. A heredoc's delimiter may be quoted (`<<'EOF'`, `<<"EOF"`) or
+# backslash-escaped (`<<\EOF`).
 #
-# A tokeniser error (an unterminated quote, more than four nested shells) is
-# exit 3; any other exception is exit 4 with its name on stdout. hook-lib.sh
-# turns both, and a hook's own exit 5, into a fail-open allow with a breadcrumb.
+# In run_scanner, a tokeniser error (an unterminated quote, more than four
+# nested shells) is exit 3; any other exception is exit 4 with its name on
+# stdout. hook-lib.sh turns both, and a hook's own exit 5, into a fail-open
+# allow with a breadcrumb.
 
 import os, re, shlex, sys
 
 SHELL = re.compile(r"(^|[;&|(\s])(bash|sh|zsh|dash|ksh|eval|source|\.)(\s|$)")
-HEREDOC = re.compile(r"<<-?\s*[\x27\"]?([A-Za-z_][A-Za-z0-9_]*)[\x27\"]?[^\n]*\n.*?\n\t*\1(?=\n|$)", re.S)
+HEREDOC = re.compile(r"<<-?\s*\\?[\x27\"]?([A-Za-z_][A-Za-z0-9_]*)[\x27\"]?[^\n]*\n.*?\n\t*\1(?=\n|$)", re.S)
 SHELLS = {"bash", "sh", "zsh", "dash", "ksh"}
 WRAPPERS = {                       # wrapper -> its options whose value is skipped, not scanned
     "env": {"-u", "-C"}, "command": set(), "exec": {"-a"}, "nohup": set(),
@@ -78,6 +96,7 @@ XARGS_VALUE_OPTS = {"-n", "-I", "-L", "-P", "-s", "-d", "-E", "-a", "-J", "-R", 
 DECLARERS = {"export", "declare", "local", "typeset", "readonly"}
 ASSIGN = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)=(.*)$", re.S)
 VAR = re.compile(r"\$(?:\{([A-Za-z_][A-Za-z0-9_]*)[^}]*\}|([A-Za-z_][A-Za-z0-9_]*))")
+ENV_VAR = re.compile(r"\$(?:\{([A-Za-z_][A-Za-z0-9_]*)\}|([A-Za-z_][A-Za-z0-9_]*))")   # expand(): no ${x:-…} forms
 GIT_VALUE_OPTS = {"-c", "-C", "--git-dir", "--work-tree", "--namespace", "--exec-path",
                   "--super-prefix", "--config-env"}
 ALIAS = re.compile(r"^alias\.([^=\s]+)=(.*)$", re.S)
@@ -88,6 +107,11 @@ VARS = {}
 VIA = []                           # feeders of the segment being scanned; read through fed_by()
 MAX_DEPTH = 4
 _on_command = None
+_on_opaque = None                  # program_segments' collector for the segments no hook is handed
+
+
+class TokeniseError(Exception):
+    """An unterminated quote, or more than four nested shells."""
 
 
 def drop_heredocs(s):
@@ -202,13 +226,22 @@ def subst(seg):
 
 
 def expand(path):
-    if path is None:
+    """`~` and `$X` / `${X}` from the environment expanded; None when the
+    path holds anything else the hook cannot expand."""
+    if path is None or "`" in path:
         return None
-    if path.startswith("~"):
-        return os.path.expanduser(path)
-    if "$" in path or "`" in path:
-        return None                 # cannot expand; caller falls back to cwd
-    return path
+    def env(m):
+        v = os.environ.get(m.group(1) or m.group(2))
+        if v is None:
+            raise KeyError(m.group(0))
+        return v
+    try:
+        path = ENV_VAR.sub(env, path)
+    except KeyError:
+        return None                 # unset here: the caller treats the path as unknown
+    if "$" in path:
+        return None                 # `$(…)`, `${x:-…}`: cannot expand
+    return os.path.expanduser(path) if path.startswith("~") else path
 
 
 def joined(base, path):
@@ -286,6 +319,8 @@ def scan_segment(seg, prev, curdir, depth, fed=None):
         finally:
             VIA.pop()
     if head == "find":
+        if not any(t in FIND_EXEC for t in seg):
+            _opaque(seg)            # no clause runs a program: find is the program
         k = 0
         while k < len(seg):
             if seg[k] in FIND_EXEC:
@@ -307,8 +342,15 @@ def scan_segment(seg, prev, curdir, depth, fed=None):
             if re.match(r"^-[A-Za-z]*c[A-Za-z]*$", t) and k + 1 < len(seg):
                 return scan(seg[k + 1], curdir, depth + 1)
         if runs_script_file(seg):
+            _opaque(seg)
             return None             # `… | bash hook.sh`: the pipe is the script's input
-        # no -c and no script file: a string piped in from the previous segment runs here
+        # no -c and no script file: a here-string, or a string piped in from the previous segment, runs here
+        for k, t in enumerate(seg):
+            body = seg[k + 1] if t == "<<<" and k + 1 < len(seg) else t[3:] if t.startswith("<<<") else ""
+            if body:
+                hit = scan(body, curdir, depth + 1)
+                if hit:
+                    return hit
         for t in (prev or []):
             hit = scan(t.replace("\\n", "\n"), curdir, depth + 1)
             if hit:
@@ -424,13 +466,46 @@ def git_args(seg):
     return args
 
 
-def run_scanner(on_command, emit):
+def _opaque(seg):
+    if _on_opaque:
+        _on_opaque(seg)
+
+
+def scan_command(text, on_command):
+    """Scan one command line, calling on_command(seg, curdir) per program
+    segment; the first truthy return is the hit. Raises TokeniseError."""
     global _on_command
     _on_command = on_command
-    s = drop_heredocs(sys.stdin.read())
+    VARS.clear()
+    del VIA[:]
     try:
-        hit = scan(s, "")
-    except (ValueError, RuntimeError):
+        return scan(drop_heredocs(text), "")
+    except (ValueError, RuntimeError) as e:
+        raise TokeniseError(str(e))
+
+
+def program_segments(cmd):
+    """Every program segment cmd runs, in order, with the segments the scanner
+    reads itself (a shell given a script file, a find with no -exec clause)
+    as written. Pure: no stdin, no exit. Raises TokeniseError."""
+    global _on_opaque
+    segs = []
+    _on_opaque = segs.append
+    try:
+        scan_command(cmd, lambda seg, curdir: segs.append(seg))
+    finally:
+        _on_opaque = None
+    return segs
+
+
+def run_scanner(on_command, emit, finish=None):
+    """The process entry hook_scan appends: the command from stdin, the exit
+    codes in the header, and emit(hit) on a hit from on_command or finish()."""
+    try:
+        hit = scan_command(sys.stdin.read(), on_command)
+        if not hit and finish:
+            hit = finish()
+    except TokeniseError:
         sys.exit(3)                  # a tokeniser error: an unterminated quote, more than four nested shells
     except Exception as e:
         sys.stdout.write("%s: %s" % (type(e).__name__, e))

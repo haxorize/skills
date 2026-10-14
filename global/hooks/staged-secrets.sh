@@ -5,7 +5,9 @@
 # token-shaped string or a key-shaped file. A credential that reaches a commit
 # is in every clone and reflog; deleting it later un-leaks nothing.
 #
-# What it reads, at the moment the commit command is about to run:
+# What it reads, at the moment the commit command is about to run (every
+# `git commit` in the command, each in its own repo, with every `git add`
+# before the last one):
 #   - the staged diff's added lines (`git diff --cached -U0`);
 #   - with `git commit -a`/`--all`, or a `git add` / `git stage` earlier in the
 #     same command, the unstaged added lines of tracked files too (`git diff
@@ -63,8 +65,9 @@
 # What it does not see: a commit the user runs in a terminal (no git hook
 # scans for secrets), pathspecs given to `git commit` itself (`git commit -m x
 # f.txt`), `git commit --amend`'s already-committed lines, which files a
-# `git add "$F"` or `--pathspec-from-file` names (the whole tree is read
-# instead), a git alias from a config file (`git ci` where `~/.gitconfig`
+# `git add "$F"` (with `F` unset in the hook's environment) or a
+# `--pathspec-from-file` (`=` or a separate word) names (the whole tree is
+# read instead), a git alias from a config file (`git ci` where `~/.gitconfig`
 # says `ci = commit`; an alias built on the command line with `-c
 # alias.ci=commit` is seen), a `GIT_DIR=` assignment pointing at a `.git`
 # directory, and binary or 1 MB+ untracked files.
@@ -75,8 +78,11 @@
 # file; this file holds only the commit and add shapes and the patterns.
 #
 # Fail-open: a malformed payload, a missing python3 or git, a tokeniser error,
-# a git call that fails, or a directory that is not a git work tree lets the
-# command through, with a one-line stderr breadcrumb. A safety hook that blocks
+# a git call that fails (the `git config` read of the filters included), a
+# directory that is not a git work tree, or a `git add` / `git commit` after a
+# `cd` the hook cannot expand (`cd "$(…)"`, an unset variable: the repo is
+# unknown, and scanning the payload's cwd instead would judge the wrong one)
+# lets the command through, with a one-line stderr breadcrumb. A safety hook that blocks
 # on its own errors trains the user to disable it.
 #
 # Install note: always on — no opt-in.
@@ -100,12 +106,15 @@ hook_read_payload
 command -v git >/dev/null 2>&1 || hook_allow "git not found"
 
 # --- commit shape, then the scan --------------------------------------------
-# on_command records each `git add` and returns at the first `git commit`;
-# emit runs the scan in the commit's repo and prints one finding a line, or
-# exits ALLOW_EXIT with the breadcrumb when that is not a git work tree.
+# on_command records each `git add` and each `git commit` in the command, and
+# finish hands them to emit once the whole command is read; emit scans each
+# commit's repo and prints one finding a line, or exits ALLOW_EXIT with the
+# breadcrumb when no repo is a git work tree or one's location is unknown.
 hook_scan '
 import subprocess
 ADDS = []
+COMMITS = []
+UNPLACED = []                       # add/commit subcommands that follow a cd the scanner could not expand
 ALLOW = "secret-scan: allow"
 CONTENT_RULES = [
     ("aws-key",        re.compile(r"\b(?:AKIA|ASIA)[0-9A-Z]{16}\b")),
@@ -135,11 +144,22 @@ DIFF = ["--no-ext-diff", "--no-textconv", "--no-renames", "--no-relative", "--ig
 PATCH = DIFF + ["-U0", "--no-color", "--text", "--src-prefix=a/", "--dst-prefix=b/"]
 NAMES = DIFF + ["--name-only", "--diff-filter=d", "-z"]
 
+def placed(args, rest, curdir):
+    """False when git runs in a directory that follows a cd the scanner could
+    not expand and no absolute -C before the subcommand names one instead."""
+    if curdir is not None:
+        return True
+    pre = args[:len(args) - len(rest) - 1]
+    return any(a == "-C" and os.path.isabs(expand(b) or "") for a, b in zip(pre, pre[1:]))
+
 def on_command(seg, curdir):
     args = git_args(seg)
     if args is None:
         return None
     d, sub, rest, gd, wt = split_git(args, curdir)
+    if sub in ("add", "stage", "commit") and not placed(args, rest, curdir):
+        UNPLACED.append(sub)
+        return None
     if sub in ("add", "stage"):
         specs, force, wide, dashdash = [], False, False, False
         for a in rest:
@@ -154,14 +174,21 @@ def on_command(seg, curdir):
             elif a.startswith("--"):
                 name = a.split("=", 1)[0]
                 if len(name) > 2 and "--force".startswith(name):
-                    force = True            # --pathspec-from-file takes no other pathspec: the whole tree
+                    force = True
+                elif len(name) > len("--pathspec-f") and "--pathspec-from-file".startswith(name):
+                    wide = True             # the pathspecs are in a file this hook does not read: the whole tree
             elif "f" in a[1:]:
                 force = True
         ADDS.append((d, gd, wt, [] if wide else specs, force))
         return None
     if sub == "commit":
-        return (d, gd, wt, any(commits_all(a) for a in rest))
+        COMMITS.append((d, gd, wt, any(commits_all(a) for a in rest), len(ADDS)))
     return None
+
+def finish():
+    """Every add and commit is recorded once the command is read; a commit
+    anywhere in it (`git commit -m a; git add f; git commit -m b`) is a scan."""
+    return bool(COMMITS) or "commit" in UNPLACED
 
 def commits_all(a):
     """`-a`/`--all`, or `a` in a short-option cluster before an option that
@@ -181,7 +208,7 @@ def run(argv):
     r = subprocess.run(argv, capture_output=True, stdin=subprocess.DEVNULL)
     return r.returncode, r.stdout.decode("utf-8", "replace")
 
-def gitopts(d, gd, wt):
+def gitbase(d, gd, wt):
     """`git -C d` plus the options that keep the repo from running its own
     programs, and the repo location the command named."""
     argv = ["git", "-C", d] + SAFE
@@ -189,7 +216,16 @@ def gitopts(d, gd, wt):
         argv.append("--git-dir=" + gd)
     if wt:
         argv.append("--work-tree=" + wt)
+    return argv
+
+def gitopts(d, gd, wt):
+    """gitbase, plus each clean/smudge/process filter the repo configures
+    blanked. A config read that fails (rc 2 or more; 1 is no filter) is a
+    named fail-open: a filter left unblanked would run."""
+    argv = gitbase(d, gd, wt)
     rc, out = run(argv + ["config", "--name-only", "--get-regexp", r"^filter\..*\.(clean|smudge|process)$"])
+    if rc not in (0, 1):
+        raise OSError("git config failed (rc=%d), so the repo filters could not be blanked" % rc)
     for drv in sorted({n[len("filter."):].rsplit(".", 1)[0] for n in out.split("\n") if n.startswith("filter.")}):
         for key, val in (("clean", ""), ("smudge", ""), ("process", ""), ("required", "false")):
             argv += ["-c", "filter.%s.%s=%s" % (drv, key, val)]
@@ -256,19 +292,40 @@ def path_hit(path):
     return None
 
 def emit(hit):
+    if UNPLACED:
+        sys.stdout.write("a git %s follows a cd the hook cannot expand, so the repo it runs in is unknown" % UNPLACED[0])
+        sys.exit(ALLOW_EXIT)
+    targets, out, outside = [], [], []
+    for c in COMMITS:
+        if c[:3] not in targets:
+            targets.append(c[:3])
+    adds = ADDS[:COMMITS[-1][4]]           # an add after the last commit stages nothing this command commits
     try:
-        scan_commit(*hit)
+        for t in targets:
+            hits = scan_commit(t, any(c[3] for c in COMMITS if c[:3] == t), adds)
+            if hits is None:
+                outside.append(t[0])
+            else:
+                out.extend(hits)
     except (OSError, ValueError) as e:
         sys.stdout.write(str(e))
         sys.exit(4)
+    seen = []
+    for h in out:
+        if h not in seen:
+            seen.append(h)
+    if not seen and outside:
+        sys.stdout.write("not a git work tree (%s)" % outside[0])
+        sys.exit(ALLOW_EXIT)
+    sys.stdout.write("\n".join(seen))
 
-def scan_commit(d, gd, wt, commit_all):
-    g = gitopts(d, gd, wt)
-    rc, top = run(g + ["rev-parse", "--show-toplevel"])   # fails inside .git and in a bare repo
+def scan_commit(target, commit_all, adds):
+    """The findings for one commit target, or None when it is not a work tree."""
+    d, gd, wt = target
+    rc, top = run(gitbase(d, gd, wt) + ["rev-parse", "--show-toplevel"])   # fails inside .git and in a bare repo
     top = top.strip()
     if rc != 0 or not top:
-        sys.stdout.write("not a git work tree (%s)" % d)
-        sys.exit(ALLOW_EXIT)
+        return None
     g = gitopts(top, gd, wt)
     out = []
     paths = set(git(g, "diff", "--cached", *NAMES).split("\0")) - {""}
@@ -276,7 +333,7 @@ def scan_commit(d, gd, wt, commit_all):
     if commit_all:
         diffs.append(git(g, "diff", *PATCH))
         paths |= set(git(g, "diff", *NAMES).split("\0")) - {""}
-    for ad, agd, awt, specs, force in ADDS:
+    for ad, agd, awt, specs, force in adds:
         ga = gitopts(ad, agd, awt)
         atop = git(ga, "rev-parse", "--show-toplevel").strip()
         spec = ["--"] + (specs or [":/"])
@@ -305,11 +362,7 @@ def scan_commit(d, gd, wt, commit_all):
         h = path_hit(p)
         if h:
             out.append(h)
-    seen = []
-    for h in out:
-        if h not in seen:
-            seen.append(h)
-    sys.stdout.write("\n".join(seen))
+    return out
 '
 findings="$hook_result"
 [ -n "$findings" ] || exit 0

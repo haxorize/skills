@@ -1,16 +1,17 @@
-# session-hook-lib.py — the scaffolding shared by the two session hooks beside
-# it, context-nudge.py and repeat-failure.py. Not a hook and not run on its
-# own: each hook's .py loads it by path through importlib (a hyphenated file
-# name cannot be imported by name), and each hook's .sh wrapper checks it is
-# readable before it runs the .py. It carries no `# Install note:` line, so
-# install.sh, post-merge and lint-skills.sh's selftest pairing read it as a
-# library, as they read hook-lib.py; mutation-sweep.sh grades it through the
-# selftests of the two wrappers that name it.
+# session-hook-lib.py — the scaffolding shared by the three session hooks
+# beside it, context-nudge.py, repeat-failure.py and friction-log.py. Not a
+# hook and not run on its own: each hook's .py loads it by path through
+# importlib (a hyphenated file name cannot be imported by name), and each
+# hook's .sh wrapper checks it is readable before it runs the .py. It carries
+# no `# Install note:` line, so install.sh, post-merge and lint-skills.sh's
+# selftest pairing read it as a library, as they read hook-lib.py;
+# mutation-sweep.sh grades it through the selftests of the three wrappers
+# that name it.
 #
 # What a session hook gets here, and the contract each name keeps:
 #   crumb(why)            stderr `<hook>: <why>, allowing`, exit 0 — the shape
-#                         of hook-lib.sh's hook_allow and friction-log.py's
-#                         crumb, and the same meaning: a breadcrumb written
+#                         of hook-lib.sh's hook_allow and friction-log.sh's
+#                         allow, and the same meaning: a breadcrumb written
 #                         directly, never a stdout sentinel
 #   read_payload()        the stdin payload as a dict; crumbs on an empty
 #                         payload, one that is not JSON, or one that is not an
@@ -22,8 +23,9 @@
 #                         under a 0700 directory; raises OSError for the caller
 #   prune(dir)            removes files in dir older than 30 days; never raises
 #                         and never exits, so it runs after the hook's output
-#   emit(event, text)     the hookSpecificOutput.additionalContext JSON on
-#                         stdout, flushed
+#   emit_additional_context(event, text)
+#                         the hookSpecificOutput.additionalContext JSON on
+#                         stdout, flushed (not the PreToolUse hooks' `emit(hit)`)
 #   run(main)             runs main(); a crash is a breadcrumb naming the
 #                         exception, never a non-zero exit
 #
@@ -104,7 +106,7 @@ def prune(d):
             pass
 
 
-def emit(event, text):
+def emit_additional_context(event, text):
     sys.stdout.write(json.dumps({"hookSpecificOutput": {"hookEventName": event, "additionalContext": text}}) + "\n")
     sys.stdout.flush()
 

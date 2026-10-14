@@ -14,8 +14,9 @@
 # flag (`-pi.bak`, `-Ei`); a letter that takes the next token as its value
 # (`-e`, `-f`; perl `-M`; ruby `-r`, `-C`) ends the cluster and skips that token
 # (`perl -e '-i'` runs the program `-i`; `-Mstrict` names a module); a letter
-# whose value is only ever attached (sed `-l`, perl `-l -x -C -0 -d -D -F`,
-# ruby `-0 -K -F -x`) ends the cluster and skips nothing. A GNU sed long
+# whose value is only ever attached (sed `-l`, perl `-x -C -d -D -F`, ruby
+# `-K -F -x`) ends the cluster and skips nothing; perl `-0 -l` and ruby `-0`
+# take only digits, so the cluster goes on after them (`perl -0pi`). A GNU sed long
 # option is read as getopt reads it, abbreviations included (`--in` is
 # `--in-place`). Reads of a pipeline (`xargs grep | sed -n`), and a mention in
 # a commit message, an echo, a grep pattern, a handoff, or a heredoc no shell
@@ -43,7 +44,11 @@
 # the edit runs: a handoff marker under $TMPDIR is not the repo. When a file
 # list is not all literal — a glob, an unexpandable variable, `{}`, or files
 # fed by `xargs` or `find -exec` — the directory the segment runs in (and a
-# glob's literal parent) is what is judged.
+# glob's literal parent) is what is judged. After a `cd` the lib cannot
+# expand (`cd "$(…)"`, a variable unset in the hook's environment) the
+# payload's cwd stands in for that directory: an edit judged opted in there
+# is blocked, and one that is not runs with a breadcrumb saying it was not
+# judged where it runs, unless every file it names is absolute.
 #
 # Inside an opted-in directory one shape still runs: `sed` (not `gsed`, which
 # reads `''` as the script) in the BSD form `-i ''` (or an attached suffix,
@@ -95,6 +100,9 @@ hook_scan '
 NEXT_TOKEN = {"sed": set("ef"), "perl": set("eEMmI"), "ruby": set("eIrCE")}
 ATTACHED = {"sed": set("l"), "perl": set("lxC0dDF"), "ruby": set("0KFx")}
 CODE = {"sed": set("e"), "perl": set("eE"), "ruby": set("e")}   # letters whose value is the program
+# Letters whose attached value is only digits (`-0777`, `-0x1F`, `-l012`), so
+# the cluster goes on after them: `perl -0pi` and `-lpi` are in place.
+DIGITS = {"sed": set(), "perl": set("0l"), "ruby": set("0")}
 # GNU sed long options, so an abbreviation (`--in`, `--expr=`) is read the way
 # getopt reads it: an exact name, else the one name it is a prefix of.
 SED_LONG = {"in-place": "i", "expression": "e", "file": "f", "quiet": "n", "silent": "n",
@@ -104,6 +112,7 @@ SED_LONG = {"in-place": "i", "expression": "e", "file": "f", "quiet": "n", "sile
 ENVVAR = re.compile(r"\$(?:\{([A-Za-z_][A-Za-z0-9_]*)\}|([A-Za-z_][A-Za-z0-9_]*))")
 GLOB = re.compile(r"[*?\[]")
 HOME = os.path.realpath(os.environ.get("HOME") or "/")
+UNJUDGED = []                       # in-place edits whose directory follows a cd the scanner could not expand
 
 def sed_long(name):
     """The short letter a GNU sed long option stands for ("" for one that
@@ -140,10 +149,14 @@ def parse(prog, args):
                         code.append(val)
                     elif ch == "f":
                         script_file = True
-        elif re.match(r"^-[A-Za-z]", a):
+        elif re.match(r"^-[A-Za-z0-9]", a):
             j = 1
             while j < len(a):
                 ch = a[j]
+                if ch in DIGITS[prog]:
+                    m = re.match(r"x[0-9A-Fa-f]+|[0-7]*", a[j + 1:]) if ch == "0" else re.match(r"[0-7]*", a[j + 1:])
+                    j += 1 + m.end()
+                    continue
                 if ch == "i":
                     inplace = True
                     if prog == "sed":
@@ -241,7 +254,8 @@ def on_command(seg, curdir):
         return None
     shape = "sed -i" if prog == "sed" else "perl/ruby -i"
     cwd = base()
-    start = cwd if curdir is None else os.path.join(cwd, curdir)
+    unknown = curdir is None              # a cd the lib could not expand: the cwd stands in for it
+    start = cwd if unknown else os.path.join(cwd, curdir)
     if not os.path.isdir(start):          # a cd to a missing dir falls back to the payload cwd
         start = cwd
     paths = [resolve(start, f) if not GLOB.search(f) else None for f in files]
@@ -249,6 +263,8 @@ def on_command(seg, curdir):
     if literal:
         judged = [p for p in paths if any(opted(d) for d in places(p))]
         if not judged:
+            if unknown and not all(os.path.isabs(os.path.expanduser(f)) for f in files):
+                UNJUDGED.append(shape)    # a relative file under an unknown directory: not judged, and said so
             return None                   # every file lies outside an opted-in directory
     else:
         dirs = [os.path.realpath(start)]
@@ -258,13 +274,21 @@ def on_command(seg, curdir):
                 if parent:
                     dirs.append(os.path.realpath(parent))
         if not any(opted(d) for d in dirs):
+            if unknown:
+                UNJUDGED.append(shape)
             return None
     if (head == "sed" and bsd and not quiet and literal and len(files) == 1 and not script_file
             and len(code) == 1 and one_substitution(code[0])):
         return None                       # one substitution in one listed file, BSD sed
     return (shape, files[:20])
 
+def finish():
+    return ("unjudged", UNJUDGED[0]) if UNJUDGED else None
+
 def emit(hit):
+    if hit[0] == "unjudged":
+        sys.stdout.write("%s after a cd the hook cannot expand, judged against the payload cwd, which is not opted in" % hit[1])
+        sys.exit(ALLOW_EXIT)
     shape, files = hit
     sys.stdout.write(shape + "".join("\n" + f for f in files))
 '

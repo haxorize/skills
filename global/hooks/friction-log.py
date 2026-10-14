@@ -20,8 +20,25 @@
 # FRICTION_LOG_DIR is the one directory name, read from the environment with
 # no default: the wrapper sets it, the selftest sandboxes through it, and a
 # run without it reports so rather than touching ~/.claude/friction.
+#
+# The payload read, the session-id rule, the breadcrumb and the cursor write
+# are session-hook-lib.py's (loaded by path, as context-nudge.py loads it), so
+# one rule says what a file-safe session id is and every cursor lands through
+# a 0600 temp file renamed into place. The crash handler below stays this
+# file's: it keeps the traceback the lib's run() drops.
 
-import json, os, re, sys, datetime, traceback
+import datetime, importlib.util, json, os, re, sys, traceback
+
+try:
+    _spec = importlib.util.spec_from_file_location(
+        "session_hook_lib", os.path.join(os.path.dirname(os.path.abspath(__file__)), "session-hook-lib.py"))
+    lib = importlib.util.module_from_spec(_spec)
+    _spec.loader.exec_module(lib)
+except Exception as e:
+    sys.stderr.write("friction-log: session-hook-lib.py did not load (%s), allowing\n" % type(e).__name__)
+    sys.exit(0)
+lib.init("friction-log")
+crumb = lib.crumb
 
 SIGNALS = [
     r"\bno[,.!]?\s+(don'?t|do not|never|stop|not)\b",
@@ -55,17 +72,12 @@ DENIAL_PREFIX = "the user doesn't want to proceed with this tool use"
 # quotes the signal it matched).
 INJECTED_PREFIXES = ("<local-command-caveat>", "<command-name>", "<task-notification>", "<system-reminder>", "friction-log:")
 
-def crumb(msg):
-    sys.stderr.write("friction-log: " + msg + ", allowing\n")   # the same shape as the wrapper's allow
-    sys.exit(0)
-
 def seed_cursor(cursor, total):
     """Write the transcript line count to the cursor file; on a write failure it
     breadcrumbs and exits 0 — it never returns on failure, so a caller that has
     output to emit must emit it before calling this."""
     try:
-        with open(cursor, "w") as f:
-            f.write(str(total))
+        lib.write_state(cursor, str(total))
     except Exception:
         crumb("cannot write cursor " + cursor)
 
@@ -86,23 +98,14 @@ def entry_content(e):
     return msg.get("content") if isinstance(msg, dict) else None
 
 def main():
-    raw = sys.stdin.read()
-    if not raw.strip():
-        crumb("empty payload")
-    try:
-        d = json.loads(raw)
-    except Exception:
-        crumb("payload is not JSON")
-    if not isinstance(d, dict):
-        crumb("payload is not an object")
+    d = lib.read_payload()
     if d.get("stop_hook_active") is True:
         sys.exit(0)  # the agent is answering this hook's own instruction: never re-fire
-    sid = d.get("session_id")
     path = d.get("transcript_path")
-    if not isinstance(sid, str) or not sid or not isinstance(path, str) or not path:
+    if not isinstance(d.get("session_id"), str) or not d["session_id"] or not isinstance(path, str) or not path:
         crumb("payload has no session_id or transcript_path")
-    # one path component that is not . or .., and nothing the instruction cannot quote
-    if sid in (".", "..") or "/" in sid or not re.fullmatch(r"[A-Za-z0-9._-]+", sid):
+    sid = lib.session_id(d)   # the lib's one rule: one path component, nothing the instruction cannot quote
+    if sid is None:
         crumb("session_id is not a file-safe name")
     if not os.path.isfile(path):
         crumb("transcript not on disk")
@@ -113,7 +116,7 @@ def main():
     seen_dir = os.path.join(fdir, ".seen")
     cursor = os.path.join(seen_dir, sid)
     try:
-        os.makedirs(seen_dir, exist_ok=True)
+        os.makedirs(seen_dir, mode=0o700, exist_ok=True)
     except Exception:
         crumb("cannot create " + seen_dir)
     start = None

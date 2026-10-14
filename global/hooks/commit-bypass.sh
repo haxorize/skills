@@ -76,7 +76,7 @@ def check_git(args):
             if CONFIG_ENV.match(a):
                 sub = find_sub(args[i + 1:])
                 return None if sub in READONLY else "--config-env core.hooksPath="
-            if a in ("-c", "-C", "--config-env"):
+            if a in GIT_VALUE_OPTS:      # its value is the next word (`--git-dir .git`)
                 i += 2
                 continue
             if a.startswith("-"):
@@ -101,7 +101,7 @@ def find_sub(args):
     i = 0
     while i < len(args):
         a = args[i]
-        if a in ("-c", "-C", "--config-env"):
+        if a in GIT_VALUE_OPTS:
             i += 2
             continue
         if a.startswith("-"):

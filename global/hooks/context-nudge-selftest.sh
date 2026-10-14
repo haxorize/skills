@@ -10,14 +10,16 @@
 # `<synthetic>` entries are skipped; a usage line straddling the 1 MB read
 # chunk is read whole; a 30-day-old marker is pruned; a prune that fails
 # (an old directory it cannot remove) still delivers the line, quietly; the
-# marker is mode 0600; the 150k line asks for the next phase boundary and the
-# 200k line for now; the fail-open table (empty payload, not JSON, no
-# transcript_path, a session id with a path separator, a missing transcript,
-# an unwritable state directory, a missing context-nudge.py) exits 0 with a
-# breadcrumb and no context. The mutation table narrows the sidechain skip,
+# marker is mode 0600, and a 0755 state directory is tightened to 0700; the
+# 150k line asks for the next phase boundary and the 200k line for now; the
+# fail-open table (empty payload, not JSON, no transcript_path, a session id
+# with a path separator, a missing transcript, an unwritable state
+# directory, a missing context-nudge.py) exits 0 with a breadcrumb and no
+# context. The mutation table narrows the sidechain skip, the synthetic skip,
 # the once-only check, the 150k boundary, the chunk join, the prune's error
-# swallowing, the 0600 write and the phase-boundary wording on a copy of
-# context-nudge.py or session-hook-lib.py, and each mutant must flip its row.
+# swallowing, the 0600 write, the 0700 tightening and the phase-boundary
+# wording on a copy of context-nudge.py or session-hook-lib.py, and each
+# mutant must flip its row.
 set -u
 here="$(cd "$(dirname "$0")" && pwd)"
 hook="$here/context-nudge.sh"
@@ -30,6 +32,8 @@ fi
 trap 'chmod -R u+w "$tmp" 2>/dev/null; rm -rf "$tmp"' EXIT
 command -v python3 >/dev/null 2>&1 || { echo "context-nudge-selftest: python3 not found — nothing ran" >&2; exit 4; }
 fail=0
+# shellcheck source=../../scripts/selftest-lib.sh
+. "$here/../../scripts/selftest-lib.sh"   # selftest_mutate, selftest_expect_killed
 export HOOK_STATE_DIR="$tmp/state"
 
 # entry <tokens> [sidechain|synthetic] — one transcript line
@@ -95,7 +99,7 @@ expect "then 160k" "$(nudge s2 "$t")" quiet
 
 t="$tmp/t3.jsonl"; { entry 100000; entry 400000 sidechain; } > "$t"
 expect "a sidechain entry is skipped" "$(nudge s3 "$t")" quiet
-t="$tmp/t4.jsonl"; { entry 180000; printf '{"type":"assistant","message":{"model":"<synthetic>","usage":{"input_tokens":0,"output_tokens":0}}}\n'; } > "$t"
+t="$tmp/t4.jsonl"; { entry 180000; entry 400000 synthetic; } > "$t"   # non-zero usage: only the model check skips it
 expect "a synthetic entry is skipped" "$(nudge s4 "$t")" 150
 
 # a usage line straddling the 1 MB chunk boundary
@@ -117,6 +121,11 @@ nudge s6 "$t" >/dev/null
 [ ! -e "$HOOK_STATE_DIR/context-nudge/old" ] || { echo "FAIL [prune]: a 30-day-old marker survived a write"; fail=1; }
 mode="$(python3 -c 'import os,sys; print(oct(os.stat(sys.argv[1]).st_mode & 0o777))' "$HOOK_STATE_DIR/context-nudge/s6" 2>&1)"
 [ "$mode" = 0o600 ] || { echo "FAIL [marker mode]: the marker should be 0600 — $mode"; fail=1; }
+# a state directory an older version made 0755 is tightened to 0700 on the next write
+d_mode() { rm -rf "$HOOK_STATE_DIR"; mkdir -p "$HOOK_STATE_DIR/context-nudge"; chmod 755 "$HOOK_STATE_DIR/context-nudge"
+  t="$tmp/t6c.jsonl"; entry 151000 > "$t"; nudge s6c "$t" >/dev/null
+  [ "$(python3 -c 'import os,sys; print(oct(os.stat(sys.argv[1]).st_mode & 0o777))' "$HOOK_STATE_DIR/context-nudge")" = 0o700 ] && printf 'rc=0||'; }
+[ "$(d_mode)" = "rc=0||" ] || { echo "FAIL [state directory mode]: a 0755 directory should be tightened to 0700"; fail=1; }
 
 # a prune that fails (an old directory os.remove cannot take) still sends the line
 p_fail() { mkdir -p "$HOOK_STATE_DIR/context-nudge/olddir"; touch -t 202001010000 "$HOOK_STATE_DIR/context-nudge/olddir"
@@ -150,19 +159,10 @@ mdir="$tmp/mut"; mkdir -p "$mdir"
 mutant() { # mutant <label> <file> <find> <replace> <setup fn> <want> — <file> is mutated on a fresh copy of the hook's files
   local label="$1" file="$2"; shift
   cp "$here/context-nudge.sh" "$here/context-nudge.py" "$here/session-hook-lib.py" "$here/hook-lib.sh" "$mdir/"
-  python3 - "$here/$file" "$mdir/$file" "$2" "$3" <<'PY' || { echo "FAIL (mutant '$label': pattern not found in $file)"; fail=1; return; }
-import sys
-src, dst, a, b = sys.argv[1:]
-s = open(src).read()
-if a not in s:
-    sys.exit(1)
-open(dst, "w").write(s.replace(a, b, 1))
-PY
+  selftest_mutate "$here/$file" "$mdir/$file" "$2" "$3" || return
   rm -rf "$HOOK_STATE_DIR"
   local got; got="$(mhook="$mdir/context-nudge.sh" "$4")"
-  local before=$fail; fail=0
-  expect "mutant: $label" "$got" "$5" >/dev/null
-  if [ "$fail" = 0 ]; then echo "FAIL (mutant '$label' survived)"; fail=1; else fail=$before; fi
+  selftest_expect_killed "$label" expect "mutant: $label" "$got" "$5"
 }
 m_side() { t="$tmp/m1.jsonl"; { entry 100000; entry 400000 sidechain; } > "$t"; nudge m1 "$t"; }
 m_once() { t="$tmp/m2.jsonl"; entry 160000 > "$t"; nudge m2 "$t" >/dev/null; nudge m2 "$t"; }
@@ -174,6 +174,9 @@ m_mode() { t="$tmp/m5.jsonl"; entry 151000 > "$t"; nudge m5 "$t" >/dev/null
 m_word() { local before=$fail; fail=0; w_check >/dev/null; [ "$fail" = 0 ] && printf 'rc=0||'; fail=$before; }
 py=context-nudge.py lib=session-hook-lib.py
 mutant "drop the sidechain skip" $py 'or d.get("isSidechain")' '' m_side quiet
+m_synth() { t="$tmp/m6.jsonl"; { entry 180000; entry 400000 synthetic; } > "$t"; nudge m6 "$t"; }
+mutant "drop the synthetic skip" $py ' or m.get("model") == "<synthetic>"' '' m_synth 150
+mutant "keep a 0755 directory"   $lib '        os.chmod(d, 0o700)  ' '        pass  ' d_mode quiet
 mutant "fire every prompt"       $py 'if level[0] <= sent:' 'if level[0] < sent:' m_once quiet
 mutant "150k boundary moved"     $py '(150000, "context-nudge' '(150001, "context-nudge' m_edge 150
 mutant "drop the chunk join"     $py 'tail = lines[0] if start > 0 else b""' 'tail = b""' m_join 150

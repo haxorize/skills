@@ -14,7 +14,10 @@
 # marker, and a block message that does not offer it; the commit shapes
 # (staged file, `-a`/`-am`, `git add <path>`, `git add .`, `git stage`, an
 # unexpandable pathspec, `add -f` of an ignored file, `add -A` from a
-# subdirectory, `git -C`, `cd … &&`, `--git-dir`/`--work-tree`); a diff read
+# subdirectory, `git -C`, `cd … &&`, `--git-dir`/`--work-tree`,
+# `--pathspec-from-file` in both spellings, every commit in a chain and the
+# adds before the last, a `cd` the scanner cannot expand, a failed `git
+# config` read of the filters); a diff read
 # whatever the repo's diff config says (prefixes, `diff.relative`, a `-diff`
 # attribute, quoted paths, an added line starting `++`); a repo whose config
 # names a program on every path the scan takes (fsmonitor, textconv, a diff
@@ -41,6 +44,8 @@ fi
 trap 'rm -rf "$tmp"' EXIT
 command -v git >/dev/null 2>&1 || { echo "staged-secrets-selftest: git not found — nothing ran" >&2; exit 4; }
 
+# shellcheck source=../../scripts/selftest-lib.sh
+. "$here/../../scripts/selftest-lib.sh"   # selftest_mutate, selftest_expect_killed
 . "$here/selftest-lib.sh"
 
 rep() { printf "%${2}s" "" | tr ' ' "$1"; }   # rep <char> <n>
@@ -153,13 +158,13 @@ expect_block "$r" "bash -c 'git commit -m x'" "commit inside bash -c"
 r="$(newrepo)"; in_fixture "$r"; printf 'k = %s\n' "$AWS" > "$r/new.txt"
 expect_block "$r" "git stage new.txt && git commit -m x" "git stage is git add"
 expect_block "$r" "git add other.txt \"\$F\" && git commit -m x" "an unexpandable pathspec reads the whole tree"
-# a force-added ignored file (F3)
+# a force-added ignored file
 r="$(newrepo)"; in_fixture "$r"; printf 'secret.txt\n' > "$r/.gitignore"; git -C "$r" add .gitignore
 git -C "$r" -c user.email=t@t -c user.name=t commit -qm ignore; printf 'k = %s\n' "$AWS" > "$r/secret.txt"
 expect_block "$r" "git add -f secret.txt && git commit -m x" "add -f of an ignored file"
 expect_block "$r" "git add --force secret.txt && git commit -m x" "add --force of an ignored file"
 expect_quiet "$r" "git add -A && git commit -m x" "an ignored file without -f is not added"
-# git add -A from a subdirectory stages the whole tree (F4)
+# git add -A from a subdirectory stages the whole tree
 r="$(newrepo)"; in_fixture "$r"; mkdir -p "$r/sub"; printf 'x\n' > "$r/sub/ok.txt"; printf 'k = %s\n' "$AWS" > "$r/top.txt"
 expect_block "$r/sub" "git add -A && git commit -m x" "add -A from a subdirectory reads the top"
 # diff.relative would cut a tracked change outside the subdirectory out of the diff
@@ -167,13 +172,31 @@ r="$(newrepo)"; in_fixture "$r"; mkdir -p "$r/sub"; printf 'x\n' > "$r/sub/ok.tx
 git -C "$r" -c user.email=t@t -c user.name=t commit -qm sub; git -C "$r" config diff.relative true
 printf 'k = %s\n' "$AWS" >> "$r/seed.txt"
 expect_block "$r/sub" "git add -A && git commit -m x" "diff.relative does not narrow the diff"
-# --git-dir and --work-tree are honoured (F24)
+# --git-dir and --work-tree are honoured
 r="$(staged cfg.txt "k = $GHP")"; in_fixture "$r"
 expect_block "$tmp" "git --git-dir=$r/.git --work-tree=$r commit -m x" "--git-dir/--work-tree name the repo"
 r="$(newrepo)"; in_fixture "$r"; printf 'k = %s\n' "$AWS" >> "$r/seed.txt"
 expect_block "$tmp" "git --git-dir $r/.git --work-tree $r commit -a -m x" "--work-tree is where -a reads"
+# --pathspec-from-file names files this hook does not read: the whole tree, in either spelling
+r="$(newrepo)"; in_fixture "$r"; printf 'k = %s\n' "$AWS" > "$r/new.txt"; printf 'new.txt\n' > "$r/list.txt"
+expect_block "$r" "git add --pathspec-from-file=list.txt && git commit -m x" "--pathspec-from-file=<file>"
+expect_block "$r" "git add --pathspec-from-file list.txt && git commit -m x" "--pathspec-from-file <file>"
+# every commit in the command is scanned, with the adds before the last one
+expect_block "$r" "git commit --allow-empty -m a; git add new.txt; git commit -m b" "an add between two commits"
+expect_quiet "$r" "git commit --allow-empty -m a; git add new.txt" "an add after the last commit stages nothing it commits"
+r2="$(staged c.txt "k = $GHP")"; in_fixture "$r2"
+expect_block "$tmp" "git -C $r commit --allow-empty -m a; git -C $r2 commit -m b" "a second commit in another repo"
+# a cd the scanner cannot expand: the repo is unknown, so the hook says so instead of judging the cwd
+r3="$(newrepo)"; in_fixture "$r3"
+expect_crumb "$r3" "cd \"\$(echo $r2)\" && git commit -m x" "follows a cd the hook cannot expand" "a cd through \$(…)"
+R2="$r2" expect_block "$r3" 'cd "$R2" && git commit -m x' "a cd through a variable set in the environment"
+expect_block "$r3" "cd \"\$(echo x)\" && git -C $r2 commit -m x" "an absolute -C after an unknown cd"
+# a git config read that fails is a named fail-open, not a scan with the filters left in place
+mkdir -p "$tmp/fakegit"; realgit="$(command -v git)"
+printf '#!/bin/sh\ncase " $* " in *" config --name-only --get-regexp "*) exit 3 ;; esac\nexec "%s" "$@"\n' "$realgit" > "$tmp/fakegit/git"; chmod +x "$tmp/fakegit/git"
+PATH="$tmp/fakegit:$PATH" expect_crumb "$(staged c.txt "k = $AWS")" "git commit -m x" "git config failed" "a git config read that fails"
 
-# --- the diff is read whatever the repo's diff config says (F2) ------------------
+# --- the diff is read whatever the repo's diff config says ------------------
 r="$(staged cfg.txt "k = $AWS")"; git -C "$r" config diff.mnemonicPrefix true
 expect_block "$r" "git commit -m x" "diff.mnemonicPrefix"
 r="$(staged cfg.txt "k = $AWS")"; git -C "$r" config diff.noprefix true
@@ -184,9 +207,9 @@ r="$(newrepo)"; in_fixture "$r"; printf '*.txt -diff\n' > "$r/.gitattributes"; g
 git -C "$r" -c user.email=t@t -c user.name=t commit -qm attr; printf 'k = %s\n' "$AWS" > "$r/cfg.txt"; git -C "$r" add cfg.txt
 expect_block "$r" "git commit -m x" "a -diff attribute"
 expect_block "$(staged cfg.txt "$(printf '++ x\nk = %s' "$AWS")")" "git commit -m x" "an added line starting ++ is not a header"
-expect_block "$(staged "NOTREE:a.txt" "k = $AWS")" "git commit -m x" "a path that looks like the old not-a-tree sentinel (F22)"
+expect_block "$(staged "NOTREE:a.txt" "k = $AWS")" "git commit -m x" "a path that looks like the old not-a-tree sentinel"
 
-# --- programs the target repo configures do not run (F19) -------------------------
+# --- programs the target repo configures do not run -------------------------
 # progrepo — a repo whose config names a program on each path the scan takes; each
 # writes its own marker under $tmp/marks when it runs. 0.ext sorts first, so its
 # diff driver runs before the blanked diff.external would stop a diff that lost
@@ -244,18 +267,10 @@ expect_fail_open "$tmp/plain" "git commit -m 'unterminated"
 # the mutant must flip that row's outcome, or the row above grades nothing.
 mdir="$tmp/mut"; mkdir -p "$mdir"; cp "$here/hook-lib.sh" "$here/hook-lib.py" "$mdir/"
 mutant() { # mutant <label> <python find> <python replace> <fixture repo> <cmd> <want rc> [file to mutate]
-  local label="$1" from="$2" to="$3" repo="$4" c="$5" want="$6" file="${7:-staged-secrets.sh}" rc
+  local label="$1" from="$2" to="$3" repo="$4" c="$5" want="$6" file="${7:-staged-secrets.sh}"
   cp "$hook" "$here/hook-lib.sh" "$here/hook-lib.py" "$mdir/"
-  python3 - "$here/$file" "$mdir/$file" "$from" "$to" <<'PY' || { echo "FAIL (mutant '$label': pattern not found in $file)"; fail=1; return; }
-import sys
-src, dst, a, b = sys.argv[1:]
-s = open(src).read()
-if a not in s:
-    sys.exit(1)
-open(dst, "w").write(s.replace(a, b, 1))
-PY
-  rc="$(hook="$mdir/staged-secrets.sh" run "$repo" "$c")"
-  [ "$rc" = "$want" ] || { echo "FAIL (mutant '$label' survived: rc=$rc, the row should flip to $want)"; fail=1; }
+  selftest_mutate "$here/$file" "$mdir/$file" "$from" "$to" || return
+  hook="$mdir/staged-secrets.sh" selftest_expect_killed "$label" hook_rc_not "$want" "$repo" "$c"
 }
 mutant "drop ASIA"        '(?:AKIA|ASIA)' '(?:AKIA)'          "$(staged c.txt "k = $ASIA")" "git commit -m x" 0
 mutant "drop AKIA"        '(?:AKIA|ASIA)' '(?:ASIA)'          "$(staged c.txt "k = $AWS")" "git commit -m x" 0
@@ -308,20 +323,25 @@ mutant "+++ is a header anywhere" 'elif header and line.startswith("+++ "):' 'el
 mutant "split_git skips -C"  '            if name == "-C":
                 d = joined(d, v) or d' '            if False:
                 pass' "$tmp" "git -C $(staged c.txt "k = $GHP") commit -m x" 0 hook-lib.py
+r="$(newrepo)"; in_fixture "$r"; printf 'k = %s\n' "$AWS" > "$r/new.txt"; printf 'new.txt\n' > "$r/list.txt"
+mutant "--pathspec-from-file narrows" '                    wide = True             # the pathspecs are in a file' '                    pass             # the pathspecs are in a file' "$r" "git add --pathspec-from-file list.txt && git commit -m x" 0
+mutant "only the first commit" '        COMMITS.append((d, gd, wt, any(commits_all(a) for a in rest), len(ADDS)))' '        COMMITS.append((d, gd, wt, any(commits_all(a) for a in rest), len(ADDS))) if not COMMITS else None' "$r" "git commit --allow-empty -m a; git add new.txt; git commit -m b" 0
+r3="$(newrepo)"; in_fixture "$r3"; r2="$(staged c.txt "k = $GHP")"
+mutant "an unknown cd judged as the cwd" '    if curdir is not None:
+        return True' '    if True:
+        return True' "$r2" "cd \"\$(echo $r3)\" && git commit -m x" 2
+PATH="$tmp/fakegit:$PATH" mutant "a failed config read ignored" 'if rc not in (0, 1):' 'if False:' "$(staged c.txt "k = $AWS")" "git commit -m x" 2
 # the scan's own breadcrumb rides exit 5, not the findings channel
 cp "$hook" "$here/hook-lib.py" "$mdir/"
-python3 -c 'import sys; s=open(sys.argv[1]).read(); a="[ \"$rc\" -ne 5 ] || hook_allow \"$hook_result\""; sys.exit(1) if a not in s else open(sys.argv[2],"w").write(s.replace(a, ":", 1))' "$here/hook-lib.sh" "$mdir/hook-lib.sh" \
-  || { echo "FAIL (mutant 'drop exit 5': pattern not found in hook-lib.sh)"; fail=1; }
-out="$(hook="$mdir/staged-secrets.sh" crumb "$tmp/plain" "git commit -m x")"
-case "$out" in *"not a git work tree"*) echo "FAIL (mutant 'drop exit 5' survived: $out)"; fail=1 ;; esac
+selftest_mutate "$here/hook-lib.sh" "$mdir/hook-lib.sh" '[ "$rc" -ne 5 ] || hook_allow "$hook_result"' ':' \
+  && hook="$mdir/staged-secrets.sh" selftest_expect_killed "drop exit 5" crumb_has "$tmp/plain" "git commit -m x" "not a git work tree"
 # each neutralizer, dropped, lets its program run on the progrepo fixture
 mark_mutant() { # mark_mutant <label> <find> <replace> <marker>
   local label="$1" r m
   cp "$hook" "$here/hook-lib.sh" "$here/hook-lib.py" "$mdir/"
-  python3 -c 'import sys; s=open(sys.argv[1]).read(); a=sys.argv[3]; sys.exit(1) if a not in s else open(sys.argv[2],"w").write(s.replace(a, sys.argv[4], 1))' "$hook" "$mdir/staged-secrets.sh" "$2" "$3" \
-    || { echo "FAIL (mutant '$label': pattern not found in the hook)"; fail=1; return; }
+  selftest_mutate "$hook" "$mdir/staged-secrets.sh" "$2" "$3" || return
   r="$(progrepo)"; hook="$mdir/staged-secrets.sh" run "$r" "git commit -a -m x" >/dev/null
-  [ -e "$tmp/marks/$4" ] || { echo "FAIL (mutant '$label' survived: $4 did not run)"; fail=1; }
+  selftest_expect_killed "$label ($4 did not run)" [ ! -e "$tmp/marks/$4" ]
 }
 mark_mutant "keep fsmonitor"     '"-c", "core.fsmonitor=false", ' '' fsmonitor
 mark_mutant "keep textconv"      'DIFF = ["--no-ext-diff", "--no-textconv", ' 'DIFF = ["--no-ext-diff", ' textconv

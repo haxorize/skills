@@ -22,10 +22,12 @@
 # the transcript and reports nothing, a shorter transcript re-arms the same
 # way, the cursor silences a second run and re-arms on appended lines;
 # stop_hook_active exits at once, even over a correction; the malformed-
-# payload, bad session-id, bad FRICTION_LOG_DIR, missing-transcript, no-python3,
-# no-scanner-file and scanner-crash arms allow with a breadcrumb (the crash named, by mutating a
-# copy of friction-log.py beside a copy of the wrapper); the block JSON
-# carries the line shape src/debrief/SKILL.md defines, byte for byte, in both
+# payload, bad session-id (`.`, `..`, a slash, and session-hook-lib.py's rule:
+# a dot inside, or past 128 characters), bad FRICTION_LOG_DIR,
+# missing-transcript, no-python3, no-scanner-file, no or unloadable
+# session-hook-lib.py, and scanner-crash arms allow with a breadcrumb (the crash named, by mutating a
+# copy of friction-log.py beside a copy of the wrapper); the cursor is
+# written 0600 under a 0700 .seen with no temp file left; the block JSON carries the line shape src/debrief/SKILL.md defines, byte for byte, in both
 # output spellings; and the instruction names the session id and the log
 # path. Not graded: what the agent does with the instruction — that is the
 # skill's micro-test, not the hook's.
@@ -273,6 +275,24 @@ done
 for sid in "." ".."; do
   [ ! -e "$FRICTION_LOG_DIR/.seen/$sid" ] || [ -d "$FRICTION_LOG_DIR/.seen/$sid" ] || { echo "FAIL: session id '$sid' must not name a cursor"; fail=1; }
 done
+# the session-id rule is session-hook-lib.py's, the one the other session hooks
+# keep: a dot, or a name past 128 characters, is not file-safe, over a real
+# transcript holding a correction
+n=$((n+1)); t="$tmp/t$n.jsonl"; user "No, don't" > "$t"
+for sid in "a.b" "$(printf '%0129d' 0 | tr 0 a)"; do
+  out="$(run "$sid" "$t")"
+  [ "$out" = "rc=0" ] && grep -q "session_id is not a file-safe name" "$tmp/crumb" && [ ! -e "$FRICTION_LOG_DIR/.seen/$sid" ] \
+    || { echo "FAIL (session id '${sid:0:12}' (${#sid} chars) must allow as not file-safe and name no cursor): $out $(cat "$tmp/crumb")"; fail=1; }
+done
+# the cursor lands through session-hook-lib.py's write_state: a 0600 file in a
+# 0700 directory (arm made it with mkdir's default mode), no temp file left
+mode() { python3 -c 'import os, sys; print(oct(os.stat(sys.argv[1]).st_mode & 0o777))' "$1"; }
+n=$((n+1)); t="$tmp/t$n.jsonl"; user "a plain question" > "$t"; arm "modes"; chmod 755 "$FRICTION_LOG_DIR/.seen"
+out="$(run "modes" "$t")"
+[ "$out" = "rc=0" ] && [ "$(cat "$FRICTION_LOG_DIR/.seen/modes")" = "1" ] || { echo "FAIL (modes row: the cursor must advance to 1): $out"; fail=1; }
+[ "$(mode "$FRICTION_LOG_DIR/.seen/modes")" = "0o600" ] || { echo "FAIL: the cursor file is $(mode "$FRICTION_LOG_DIR/.seen/modes"), not 0o600"; fail=1; }
+[ "$(mode "$FRICTION_LOG_DIR/.seen")" = "0o700" ] || { echo "FAIL: the cursor directory is $(mode "$FRICTION_LOG_DIR/.seen"), not 0o700"; fail=1; }
+ls -A "$FRICTION_LOG_DIR/.seen" | grep -q '^\.tmp-' && { echo "FAIL: a cursor write left a temp file in .seen"; fail=1; }
 out="$(run "gone" "$tmp/does-not-exist.jsonl")"
 [ "$out" = "rc=0" ] && grep -q "transcript not on disk" "$tmp/crumb" || { echo "FAIL (missing transcript must allow with its breadcrumb): $out $(cat "$tmp/crumb")"; fail=1; }
 n=$((n+1)); t="$tmp/t$n.jsonl"; user "No, don't" > "$t"
@@ -288,9 +308,16 @@ out="$(printf '{"session_id":"nopy","transcript_path":"%s"}' "$t" | PATH= "$(com
 mkdir -p "$tmp/alone"; cp "$hook" "$tmp/alone/friction-log.sh"
 out="$(printf '{"session_id":"alone","transcript_path":"%s"}' "$t" | bash "$tmp/alone/friction-log.sh" 2>"$tmp/crumb"; echo "rc=$?")"
 [ "$out" = "rc=0" ] && grep -q "friction-log.py is not beside" "$tmp/crumb" || { echo "FAIL (a wrapper with no friction-log.py beside it must allow with its breadcrumb): $out $(cat "$tmp/crumb")"; fail=1; }
+# no session-hook-lib.py beside the wrapper, and one that does not load: each a breadcrumb
+mkdir -p "$tmp/nolib"; cp "$hook" "$here/friction-log.py" "$tmp/nolib/"
+out="$(printf '{"session_id":"nolib","transcript_path":"%s"}' "$t" | bash "$tmp/nolib/friction-log.sh" 2>"$tmp/crumb"; echo "rc=$?")"
+[ "$out" = "rc=0" ] && grep -q "session-hook-lib.py is not beside" "$tmp/crumb" || { echo "FAIL (a wrapper with no session-hook-lib.py beside it must allow with its breadcrumb): $out $(cat "$tmp/crumb")"; fail=1; }
+printf 'def broken(:\n' > "$tmp/nolib/session-hook-lib.py"
+out="$(printf '{"session_id":"nolib","transcript_path":"%s"}' "$t" | bash "$tmp/nolib/friction-log.sh" 2>"$tmp/crumb"; echo "rc=$?")"
+[ "$out" = "rc=0" ] && grep -q "friction-log: session-hook-lib.py did not load (SyntaxError), allowing" "$tmp/crumb" || { echo "FAIL (a session-hook-lib.py that does not load must allow with its breadcrumb): $out $(cat "$tmp/crumb")"; fail=1; }
 # a crash in the hook's own Python is named on stderr and allowed, never a bare rc:
 # the wrapper is copied beside a mutated friction-log.py, since it execs the one in its own directory
-mkdir -p "$tmp/crashed"; crashed="$tmp/crashed/friction-log.sh"; cp "$hook" "$crashed"
+mkdir -p "$tmp/crashed"; crashed="$tmp/crashed/friction-log.sh"; cp "$hook" "$here/session-hook-lib.py" "$tmp/crashed/"
 python3 -c 'import sys; s=open(sys.argv[1]).read(); m=s.replace("    hits = []\n", "    hits = []\n    undefined_name\n", 1); assert m != s, "mutation site moved"; open(sys.argv[2],"w").write(m)' "$here/friction-log.py" "$tmp/crashed/friction-log.py"
 arm "crash"; out="$(printf '{"session_id":"crash","transcript_path":"%s","stop_hook_active":false}' "$t" | bash "$crashed" 2>"$tmp/crumb" >"$tmp/out"; echo "rc=$?")"
 [ "$out" = "rc=0" ] && [ ! -s "$tmp/out" ] && grep -q "scanner crashed (NameError" "$tmp/crumb" && grep -q "^NameError: " "$tmp/crumb" \

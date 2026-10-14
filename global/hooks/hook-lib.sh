@@ -10,8 +10,9 @@
 #                         hook to judge); allows, with a breadcrumb, on an
 #                         empty or malformed payload or a missing python3
 #   hook_scan "<py>"    — runs hook-lib.py's scanner over `cmd` with the hook's
-#                         own Python appended (it defines on_command and emit;
-#                         this function appends the call that runs them), with
+#                         own Python appended (it defines on_command and emit,
+#                         and may define finish; this function appends the
+#                         run_scanner call that runs them), with
 #                         `cwd` exported as PAYLOAD_CWD (hook-lib.py's base());
 #                         `hook_result` holds what emit wrote. Allows, with a
 #                         breadcrumb, on a tokeniser error (exit 3: an
@@ -20,16 +21,26 @@
 #                         on the hook's own allow (exit 5: emit's stdout is
 #                         the breadcrumb), and on any other non-zero exit
 #   hook_allow "<why>"  — exit 0 with a one-line stderr breadcrumb
-#                         (friction-log.sh, the one hook that reads no lib,
-#                         carries a byte-identical copy as `allow`, and its
-#                         scanner friction-log.py carries the same shape as
-#                         `crumb`; a change to the message shape is made in all three)
+#                         (friction-log.sh, the one hook that sources no
+#                         shell lib, carries a byte-identical copy as
+#                         `allow`, and session-hook-lib.py's `crumb` carries
+#                         the same shape for the three session hooks' Python,
+#                         friction-log.py's included; a change to the message
+#                         shape is made in all three, and in the one-line
+#                         load-failure fallbacks that cannot reach a lib:
+#                         friction-log.py's, and each hook's own "hook-lib.sh
+#                         not found" line)
 #
 # Fail-open is the lib's rule, not each hook's: a safety hook that blocks on
 # its own errors trains the user to disable it. Silent exits (no breadcrumb)
 # are the hook's own: the command is not its shape, or the directory is not
 # opted in. selftest-lib.sh's expect_fail_open asserts the malformed-payload
 # table and the "tokeniser error" breadcrumb named here.
+#
+# Both Python calls run isolated (`python3 -I`): the hook runs in the session's
+# cwd, a cloned repo's, and a `json.py` or `re.py` there would otherwise be
+# imported in place of the standard module, running its code and switching
+# the gate off.
 
 hook_lib_dir="${BASH_SOURCE[0]%/*}"   # builtins only: a hook may run with an empty PATH
 
@@ -40,7 +51,7 @@ hook_read_payload() {
   payload="$(cat 2>/dev/null || true)"
   [ -n "$payload" ] || hook_allow "empty payload"
   command -v python3 >/dev/null 2>&1 || hook_allow "python3 not found"
-  parsed="$(printf '%s' "$payload" | python3 -c '
+  parsed="$(printf '%s' "$payload" | python3 -I -c '
 import json, sys
 try:
     d = json.load(sys.stdin)
@@ -61,9 +72,9 @@ except Exception:
 hook_scan() {
   local rc
   export PAYLOAD_CWD="$cwd"
-  hook_result="$(printf '%s' "$cmd" | python3 -c "$(<"$hook_lib_dir/hook-lib.py")
+  hook_result="$(printf '%s' "$cmd" | python3 -I -c "$(<"$hook_lib_dir/hook-lib.py")
 $1
-run_scanner(on_command, emit)" 2>/dev/null)"
+run_scanner(on_command, emit, globals().get('finish'))" 2>/dev/null)"
   rc=$?
   [ "$rc" -ne 3 ] || hook_allow "tokeniser error"
   [ "$rc" -ne 4 ] || hook_allow "scanner crashed ($hook_result)"

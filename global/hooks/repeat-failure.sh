@@ -5,9 +5,9 @@
 # On a failed Bash call it reduces the call to a key — the command's head and
 # the error's class — and counts how many failures in a row this session have
 # carried that key. On the third, and on every one after, it adds one line of
-# context: the failure is structural, so stop retrying variations and hand the
-# user the exact command and error. A failure with a different key starts the
-# count again at one.
+# context: unless this is the expected red of a test loop, the failure is
+# structural, so stop retrying variations and hand the user the exact command
+# and error. A failure with a different key starts the count again at one.
 #
 #   head   the program of the segment that failed, by basename, plus its
 #          first argument when that argument is a lower-case word (a
@@ -15,7 +15,9 @@
 #          or value is not part of the head, so retrying the same program with
 #          different flags is the same head. The command is segmented by
 #          hook-lib.py's scanner (quotes respected, wrappers such as `sudo` and
-#          `timeout 30` peeled, `bash -c` bodies read). The failing segment is
+#          `timeout 30` peeled, `bash -c` bodies read; a shell given a script
+#          file, `bash t.sh`, and a `find` with no `-exec` are programs in their
+#          own right, so their head is `bash` or `find`). The failing segment is
 #          an `exit N` whose N is the reported exit code, else the last
 #          segment whose program the error names as `<prog>:`, else the first
 #          program that is not `cd`, `pushd`, `export`, `source`, `set`,
@@ -24,12 +26,14 @@
 #          ten hex characters of the command's SHA-256 — never its text.
 #   class  the error's `Exit code N` line plus its last non-empty line, with
 #          token-shaped strings masked first (`ghp_`, `github_pat_`, `sk-`,
-#          `sk_live_`, `AKIA`, `xox?-`, `glpat-`, `AIza`, `npm_`, a JWT, a
-#          `Bearer` value, a `token=`/`password:` value, and any run of 24 or
-#          more base64 or hex characters carrying a digit and a letter), then
-#          lower-cased, with runs of four or more digits and hex strings of
-#          eight or more characters replaced by `#`, cut at 120 characters —
-#          a request id or timestamp does not make two 401s different.
+#          `sk_live_`, `AKIA`, `xox?-`, `glpat-`, `AIza`, `npm_`, a JWT, an
+#          Azure SAS `sig=`, a `Bearer` value, a `token=`/`password:` value,
+#          and any run of 24 or more base64 or hex characters carrying a digit
+#          and a letter), then lower-cased, with runs of four or more digits
+#          and hex strings of eight or more characters replaced by `#`, cut at
+#          120 characters — a request id or timestamp does not make two 401s
+#          different. Every content shape staged-secrets.sh blocks is masked
+#          here; the selftest reads its CONTENT_RULES to check that.
 #
 # What it does not see: a command the harness refuses before running it — a
 # permission denial or a sandbox block fires no PostToolUseFailure
@@ -76,8 +80,8 @@ hook_name="repeat-failure"
 [[ ${BASH_SOURCE[0]} == */* ]] && hook_dir="${BASH_SOURCE[0]%/*}" || hook_dir=.
 . "$hook_dir/hook-lib.sh" 2>/dev/null || { echo "$hook_name: hook-lib.sh not found beside the hook, allowing" >&2; exit 0; }
 command -v python3 >/dev/null 2>&1 || hook_allow "python3 not found"
-for f in session-hook-lib.py hook-lib.py repeat-failure.py; do
-  [ -r "$hook_dir/$f" ] || hook_allow "$f is not beside the hook or is not readable"
-done
+[ -r "$hook_dir/session-hook-lib.py" ] || hook_allow "session-hook-lib.py is not beside the hook or is not readable"
+[ -r "$hook_dir/hook-lib.py" ] || hook_allow "hook-lib.py is not beside the hook or is not readable"
+[ -r "$hook_dir/repeat-failure.py" ] || hook_allow "repeat-failure.py is not beside the hook or is not readable"
 python3 "$hook_dir/repeat-failure.py" || hook_allow "repeat-failure.py failed (rc=$?)"   # stdin is the payload; the Python writes its own breadcrumbs
 exit 0

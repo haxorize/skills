@@ -66,9 +66,11 @@
 # each allows the stop with a one-line stderr breadcrumb, never blocks. A
 # sensor that blocks on its own errors trains the user to disable it. The
 # scan itself lives in friction-log.py beside this file, which this wrapper
-# execs once python3 and the directory check out; the Python reads the
-# payload, writes its own breadcrumbs in the same shape, and never exits
-# non-zero on its own account.
+# execs once python3, session-hook-lib.py and the directory check out; the
+# Python reads the payload, writes its own breadcrumbs in the same shape, and
+# never exits non-zero on its own account. The session-id rule and the cursor
+# write (a 0600 file renamed into place, under a 0700 directory) are
+# session-hook-lib.py's, shared with the other session hooks.
 #
 # What the agent says back is the one soft edge: the instruction pins the
 # reply to one word, and in fixture reps (2026-09-13, three fresh-context
@@ -101,11 +103,12 @@
 
 set -u
 hook_name="friction-log"
-allow() { echo "$hook_name: $1, allowing" >&2; exit 0; }   # a copy of hook-lib.sh's hook_allow; this hook reads no lib
+allow() { echo "$hook_name: $1, allowing" >&2; exit 0; }   # a copy of hook_allow: this wrapper sources no shell library
 case "${BASH_SOURCE[0]}" in */*) here="${BASH_SOURCE[0]%/*}" ;; *) here=. ;; esac   # builtins only: a hook may run with an empty PATH
 
 command -v python3 >/dev/null 2>&1 || allow "python3 not found"
 [ -r "$here/friction-log.py" ] || allow "friction-log.py is not beside this script or is not readable"
+[ -r "$here/session-hook-lib.py" ] || allow "session-hook-lib.py is not beside this script or is not readable"
 
 # ~/.claude/friction/ and the log line shape in friction-log.py are bound by every line
 # already written, on every machine, and by `debrief`'s reads: renaming the

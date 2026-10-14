@@ -9,7 +9,9 @@
 # them with the hook selftests): the "scanner shapes" rows below each pin one
 # alternative of a lib roster, the fail-open section pins the lib's
 # empty-payload breadcrumb, and the mutation table at the end grades the lib's
-# script-file read (a shell given a script file reads its pipe as data).
+# script-file read (a shell given a script file reads its pipe as data), its
+# here-string read, its `<<\EOF` delimiter, hook-lib.sh's `python3 -I`, and
+# this hook's skip of git's separate-word option values.
 set -u
 here="$(cd "$(dirname "$0")" && pwd)"
 hook="$here/commit-bypass.sh"
@@ -22,6 +24,8 @@ if [ -z "$tmp" ] || [ ! -d "$tmp" ]; then
 fi
 trap 'rm -rf "$tmp"' EXIT
 
+# shellcheck source=../../scripts/selftest-lib.sh
+. "$here/../../scripts/selftest-lib.sh"   # selftest_mutate, selftest_expect_killed
 . "$here/selftest-lib.sh"
 D="$PWD"
 
@@ -111,6 +115,17 @@ expect_block "$D" "printf 'git commit --no-verify -m x' | bash -"               
 expect_block "$D" "printf 'git commit --no-verify -m x' | bash -o pipefail"     "-o takes a value, not a script"
 expect_block "$D" "printf 'git commit --no-verify -m x' | bash --rcfile r"      "--rcfile takes a value, not a script"
 expect_block "$D" "printf 'git commit --no-verify -m x' | bash \"\$X\""          "an operand the scanner cannot expand may be empty"
+expect_block "$D" 'bash <<< "git commit --no-verify -m x"'                    "a here-string into a shell is its commands"
+expect_block "$D" 'bash <<<"git commit -n -m x"'                               "a here-string attached to <<<"
+expect_allow "$D" 'bash hook.sh <<< "git commit --no-verify -m x"'             "a here-string into a script file is its input"
+expect_allow "$D" 'cat <<< "git commit --no-verify -m x"'                      "a here-string into a program that is not a shell"
+expect_block "$D" $'cat <<\\EOF > notes.txt\ndon\'t\nEOF\ngit commit -n -m x'      "a backslash-quoted heredoc delimiter, an apostrophe in the body"
+# the separate-word forms of git's value-taking options are skipped to reach the subcommand
+expect_block "$D" "git --git-dir .git commit -n -m x"                          "--git-dir as a separate word"
+expect_block "$D" "git --work-tree . commit -n -m x"                           "--work-tree as a separate word"
+expect_block "$D" "git --git-dir .git -c core.hooksPath=/dev/null commit -m x" "--git-dir before -c core.hooksPath"
+expect_block "$D" "git --namespace x -c core.hooksPath=/dev/null commit -m x"  "--namespace before -c core.hooksPath"
+expect_allow "$D" "git --git-dir .git log -n 3"                                "--git-dir's value is not the subcommand"
 
 # --- mentions and look-alikes: allow ------------------------------------------
 expect_allow "$D" "git commit -m x"
@@ -162,6 +177,13 @@ crashed="$tmp/crashed.sh"; cp "$here/hook-lib.sh" "$here/hook-lib.py" "$tmp/"
 python3 -c 'import sys; s=open(sys.argv[1]).read(); open(sys.argv[2],"w").write(s.replace("def check_git(args):\n", "def check_git(args):\n    undefined_name\n", 1))' "$hook" "$crashed"
 out="$( printf '%s' '{"tool_input":{"command":"git commit -m x"}}' | bash "$crashed" 2>&1 >/dev/null; echo "rc=$?" )"
 printf '%s' "$out" | grep -q 'scanner crashed (NameError' && printf '%s' "$out" | grep -q 'rc=0' || { echo "FAIL: a scanner crash must allow with its exception named: $out"; fail=1; }
+# a module in the session's cwd named like a standard one is never imported (python3 -I)
+mkdir -p "$tmp/shadow"
+for m in json re shlex os; do printf 'open("%s/PWNED-%s", "w").write("x")\n' "$tmp/shadow" "$m" > "$tmp/shadow/$m.py"; done
+payload="$(_payload "$tmp/shadow" "git commit --no-verify -m x")"
+rc="$( cd "$tmp/shadow" && printf '%s' "$payload" | bash "$hook" >/dev/null 2>&1; echo $? )"
+[ "$rc" = 2 ] || { echo "FAIL (should block, rc=$rc) [a json.py in the cwd]: git commit --no-verify -m x"; fail=1; }
+! ls "$tmp/shadow"/PWNED-* >/dev/null 2>&1 || { echo "FAIL: a module in the cwd ran as code: $(ls "$tmp/shadow")"; fail=1; }
 # stderr names the shape
 out="$(printf '%s' '{"tool_input":{"command":"git commit --no-verify -m x"}}' | bash "$hook" 2>&1 >/dev/null)"
 printf '%s' "$out" | grep -q 'skips the repo.s hooks (--no-verify)' || { echo "FAIL: block message missing"; fail=1; }
@@ -171,23 +193,26 @@ printf '%s' "$out" | grep -q 'skips the repo.s hooks (--no-verify)' || { echo "F
 # the mutant must flip it, or the row grades nothing.
 mdir="$tmp/mut"; mkdir -p "$mdir"; cp "$hook" "$here/hook-lib.sh" "$mdir/"
 lib_mutant() { # lib_mutant <label> <find> <replace> <cmd> <want rc>
-  local label="$1" from="$2" to="$3" c="$4" want="$5" rc
-  python3 - "$here/hook-lib.py" "$mdir/hook-lib.py" "$from" "$to" <<'PY' || { echo "FAIL (mutant '$label': pattern not found in hook-lib.py)"; fail=1; return; }
-import sys
-src, dst, a, b = sys.argv[1:]
-s = open(src).read()
-if a not in s:
-    sys.exit(1)
-open(dst, "w").write(s.replace(a, b, 1))
-PY
-  rc="$(hook="$mdir/commit-bypass.sh" run "$D" "$c")"
-  [ "$rc" = "$want" ] || { echo "FAIL (mutant '$label' survived: rc=$rc, the row should flip to $want)"; fail=1; }
+  selftest_mutate "$here/hook-lib.py" "$mdir/hook-lib.py" "$2" "$3" || return
+  hook="$mdir/commit-bypass.sh" selftest_expect_killed "$1" hook_rc_not "$5" "$D" "$4"
 }
 lib_mutant "never a script file"   'if runs_script_file(seg):' 'if False:' "printf 'git commit --no-verify -m x' | bash hook.sh" 2
 lib_mutant "drop the stdin paths"  'return not (t in STDIN_SCRIPTS or ' 'return not (' "printf 'git commit --no-verify -m x' | bash /dev/stdin" 0
 lib_mutant "drop the -s check"     '                return False        # -s: commands come from stdin' '                pass' "printf 'git commit --no-verify -m x' | bash -s hook.sh" 0
 lib_mutant "no value-taking options" 'k += 2 if SHELL_VALUE_OPTS.match(t) else 1' 'k += 1' "printf 'git commit --no-verify -m x' | bash -o pipefail" 0
+lib_mutant "no here-string read"   'body = seg[k + 1] if t == "<<<"' 'body = "" if True' 'bash <<< "git commit --no-verify -m x"' 0
+lib_mutant "no backslash delimiter" '<<-?\s*\\?[' '<<-?\s*[' $'cat <<\\EOF > notes.txt\ndon\'t\nEOF\ngit commit -n -m x' 0
 lib_mutant "an unexpandable operand is a script" 'any(c in t for c in "$`<>")' 'any(c in t for c in "<>")' "printf 'git commit --no-verify -m x' | bash \"\$X\"" 0
+# hook-lib.sh's isolated Python, and the hook's own value-option skip, on copies beside the real lib
+sdir="$tmp/mut-sh"; mkdir -p "$sdir"; cp "$hook" "$here/hook-lib.py" "$sdir/"
+python3 -c 'import sys; s=open(sys.argv[1]).read(); assert s.count("python3 -I -c") == 2; open(sys.argv[2],"w").write(s.replace("python3 -I -c", "python3 -c"))' "$here/hook-lib.sh" "$sdir/hook-lib.sh" \
+  || { echo "FAIL (mutant 'no -I': pattern not found in hook-lib.sh)"; fail=1; }
+rm -f "$tmp/shadow"/PWNED-*
+( cd "$tmp/shadow" && printf '%s' "$payload" | bash "$sdir/commit-bypass.sh" >/dev/null 2>&1 )
+ls "$tmp/shadow"/PWNED-* >/dev/null 2>&1 || { echo "FAIL (mutant 'no -I' survived: no module in the cwd ran)"; fail=1; }
+cp "$here/hook-lib.sh" "$sdir/"
+selftest_mutate "$hook" "$sdir/commit-bypass.sh" 'if a in GIT_VALUE_OPTS:      # its value' 'if a in ("-c", "-C", "--config-env"):      # its value' \
+  && hook="$sdir/commit-bypass.sh" selftest_expect_killed "three value options" hook_rc_not 0 "$D" "git --git-dir .git commit -n -m x"
 
 if [ "$fail" -ne 0 ]; then echo "SELFTEST FAIL: commit-bypass"; exit 1; fi
 echo "OK: commit-bypass self-test clean — every tabled bypass shape blocked, every mention and look-alike allowed, fail-open holds."

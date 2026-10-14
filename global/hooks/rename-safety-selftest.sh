@@ -26,6 +26,8 @@ trap 'rm -rf "$tmp"' EXIT
 opted="$tmp/opted"; plain="$tmp/plain"
 mkdir -p "$opted/.claude" "$opted/deep" "$plain"; touch "$opted/.claude/rename-safety"
 
+# shellcheck source=../../scripts/selftest-lib.sh
+. "$here/../../scripts/selftest-lib.sh"   # selftest_mutate, selftest_expect_killed
 . "$here/selftest-lib.sh"
 export HOME="$tmp"            # the opt-in walk stops at $HOME; nothing outside the sandbox is read
 
@@ -46,6 +48,10 @@ expect_block "$opted" $'sed \\\n  -i \'s/a/b/\' f.txt'          # backslash-newl
 expect_block "$opted" "perl -pi -e 's/a/b/' *.md"
 expect_block "$opted" "perl -i -pe 's/a/b/' f.txt"
 expect_block "$opted" "perl -pi.bak -e 's/a/b/' f.txt"
+expect_block "$opted" "perl -0pi -e 's/a/b/' f.txt"
+expect_block "$opted" "perl -0777 -pi -e 's/a/b/' f.txt"
+expect_block "$opted" "perl -l012pi -e 's/a/b/' f.txt"
+expect_block "$opted" "ruby -0pi -e 'gsub(/a/,%q(b))' f.txt"
 expect_block "$opted" "ruby -pi -e 'gsub(/a/,\"b\")' f.txt"
 expect_block "$opted" "grep -rl a . | xargs sed -i 's/a/b/'"
 expect_block "$opted" "find . -name '*.py' -print0 | xargs -0 sed -i '' 's/a/b/'"
@@ -209,6 +215,10 @@ expect_block "$plain" "cd ../opted && sed -i 's/a/b/' f.txt"               "cd i
 expect_allow "$opted" "cd ../plain && sed -i 's/a/b/' f.txt"               "cd out of an opted dir"
 expect_block "$opted" "cd ../nope && sed -i 's/a/b/' f.txt"                "cd to a missing dir falls back to cwd"
 expect_block "$opted" 'cd "$X" && sed -i s/a/b/ f.txt'                      "unexpandable cd falls back to cwd"
+RS_TARGET="$opted" expect_block "$plain" 'cd "$RS_TARGET" && sed -i s/a/b/ f.txt' "a cd through a variable set in the environment"
+expect_crumb "$plain" 'cd "$RS_UNSET_VAR" && sed -i s/a/b/ f.txt' "after a cd the hook cannot expand"   "an unknown cd from a plain cwd is said, not silent"
+expect_crumb "$plain" 'cd "$(git rev-parse --show-toplevel)" && sed -i s/a/b/ f.txt' "after a cd the hook cannot expand" "a cd through \$(…)"
+expect_quiet "$plain" "cd \"\$RS_UNSET_VAR\" && sed -i s/a/b/ $plain/f.txt"   "an unknown cd before an absolute file judges the file"
 # payload cwd wins over the process directory
 payload="$(python3 -c 'import json,sys; print(json.dumps({"cwd":sys.argv[1],"tool_input":{"command":"sed -i s/a/b/ f"}}))' "$opted")"
 rc="$( cd "$plain" && printf '%s' "$payload" | HOME="$tmp" bash "$hook" >/dev/null 2>&1; echo $? )"
@@ -246,17 +256,8 @@ expect_block "$opted" "printf 'sed -i s/a/b/ f.txt' | bash -s"                 "
 # the mutant must flip that row's outcome, or the row above grades nothing.
 mdir="$tmp/mut"; mkdir -p "$mdir"; cp "$here/hook-lib.sh" "$here/hook-lib.py" "$mdir/"
 mutant() { # mutant <label> <find> <replace> <cwd> <cmd> <want rc>  (env prefixes pass through)
-  local label="$1" from="$2" to="$3" c_wd="$4" c="$5" want="$6" rc
-  python3 - "$hook" "$mdir/rename-safety.sh" "$from" "$to" <<'PY' || { echo "FAIL (mutant '$label': pattern not found in the hook)"; fail=1; return; }
-import sys
-src, dst, a, b = sys.argv[1:]
-s = open(src).read()
-if a not in s:
-    sys.exit(1)
-open(dst, "w").write(s.replace(a, b, 1))
-PY
-  rc="$(hook="$mdir/rename-safety.sh" run "$c_wd" "$c")"
-  [ "$rc" = "$want" ] || { echo "FAIL (mutant '$label' survived: rc=$rc, the row should flip to $want)"; fail=1; }
+  selftest_mutate "$hook" "$mdir/rename-safety.sh" "$2" "$3" || return
+  hook="$mdir/rename-safety.sh" selftest_expect_killed "$1" hook_rc_not "$6" "$4" "$5"
 }
 mutant "widen the address anchor"  'm = re.match(r"^(?:[0-9]+' 'm = re.match(r"^.*?(?:[0-9]+' "$opted" "sed -i '' '/x/d;s/a/b/' f.txt" 0
 mutant "admit the p flag"          're.fullmatch(r"[0-9I]*"' 're.fullmatch(r"[0-9pI]*"' "$opted" "sed -i '' '3s/a/b/p' deep/f.txt" 0
@@ -292,11 +293,11 @@ mutant "file symlink unresolved"   'return {os.path.dirname(os.path.realpath(p))
 RENAME_SAFETY_DIRS="$plain" mutant "name directory unresolved" ', os.path.realpath(os.path.dirname(p))}' ', os.path.dirname(p)}' "$tmp" "sed -i 's/a/b/' plainlink/outlink" 0
 # hook-lib.sh's PAYLOAD_CWD export, which base() reads: without it the scanner crashes and fails open
 cp "$hook" "$mdir/rename-safety.sh"
-python3 -c 'import sys; p=sys.argv[1]; s=open(p).read(); a="export PAYLOAD_CWD=\"$cwd\""; assert a in s; open(p,"w").write(s.replace(a, ":", 1))' "$mdir/hook-lib.sh" \
-  || { echo "FAIL (mutant 'drop the PAYLOAD_CWD export': pattern not found in hook-lib.sh)"; fail=1; }
-rc="$(hook="$mdir/rename-safety.sh" run "$opted" "sed -i 's/a/b/' f.txt")"
-[ "$rc" = 0 ] || { echo "FAIL (mutant 'drop the PAYLOAD_CWD export' survived: rc=$rc, the row should flip to 0)"; fail=1; }
+selftest_mutate "$here/hook-lib.sh" "$mdir/hook-lib.sh" 'export PAYLOAD_CWD="$cwd"' ':' \
+  && hook="$mdir/rename-safety.sh" selftest_expect_killed "drop the PAYLOAD_CWD export" hook_rc_not 0 "$opted" "sed -i 's/a/b/' f.txt"
 cp "$here/hook-lib.sh" "$mdir/hook-lib.sh"
+selftest_mutate "$hook" "$mdir/rename-safety.sh" '                UNJUDGED.append(shape)    # a relative file' '                pass    # a relative file' \
+  && hook="$mdir/rename-safety.sh" selftest_expect_killed "an unknown cd stays silent" crumb_has "$plain" 'cd "$RS_UNSET_VAR" && sed -i s/a/b/ f.txt' "cannot expand"
 RENAME_SAFETY_DIRS="$plain" mutant "start directory unresolved" 'dirs = [os.path.realpath(start)]' 'dirs = [start]' "$tmp" "cd plainlink && sed -i 's/a/b/' \"\$RS_UNSET_VAR/f.txt\"" 0
 
 if [ "$fail" -ne 0 ]; then echo "SELFTEST FAIL: rename-safety"; exit 1; fi

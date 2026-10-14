@@ -6,11 +6,12 @@
 # stated once, in repeat-failure.sh's header; this file is where the key is
 # built so the selftest can mutate it as a file.
 #
-# The command is segmented by hook-lib.py's scanner (its public entry,
-# run_scanner, fed the command on a swapped stdin), so a separator inside
-# quotes does not split, wrappers are peeled, and `bash -c` bodies are read.
+# The command is segmented by hook-lib.py's scanner (its public
+# program_segments, named in its header), so a separator inside quotes does
+# not split, wrappers are peeled, `bash -c` bodies are read, and a shell given
+# a script file or a `find` with no `-exec` is a program in its own right.
 
-import contextlib, hashlib, importlib.util, io, json, os, re, sys
+import hashlib, importlib.util, json, os, re, sys
 
 _here = os.path.dirname(os.path.abspath(__file__))
 
@@ -43,6 +44,7 @@ SECRETS = [
     re.compile(r"\bAIza[0-9A-Za-z_-]{30,}"),
     re.compile(r"\bnpm_[A-Za-z0-9]{30,}"),
     re.compile(r"\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]*"),   # a JWT
+    re.compile(r"[?&]sig=[A-Za-z0-9%/+=]{20,}"),               # an Azure SAS signature
     re.compile(r"(?i)\b(bearer|basic)\s+\S+"),
     re.compile(r"(?i)\b(token|secret|password|passwd|pwd|api[_-]?key|auth)\b(\s*[=:]\s*)\S+"),
     re.compile(r"(?=[A-Za-z0-9+_=-]*[0-9])(?=[A-Za-z0-9+_=-]*[A-Za-z])[A-Za-z0-9+_=-]{24,}"),   # a long base64/hex run
@@ -61,24 +63,13 @@ def mask(line):
 
 
 def programs(cmd):
-    """The program segments the command runs, in order, as hook-lib.py's
-    scanner hands them to on_command; [] on a tokeniser error."""
-    segs = []
-
-    def on_command(seg, curdir):
-        segs.append(seg)
-        return None                  # never a hit: walk every segment
-
-    stdin = sys.stdin
-    sys.stdin = io.StringIO(cmd)
+    """The program segments the command runs, in order, from hook-lib.py's
+    program_segments; [] on a tokeniser error. Any other exception is a broken
+    scanner, and reaches lib.run's breadcrumb rather than a degraded key."""
     try:
-        with contextlib.redirect_stdout(io.StringIO()):
-            scanner.run_scanner(on_command, lambda hit: None)
-    except SystemExit:
-        pass                         # exit 3/4: a tokeniser error or a scanner crash; what was walked stands
-    finally:
-        sys.stdin = stdin
-    return segs
+        return scanner.program_segments(cmd)
+    except scanner.TokeniseError:
+        return []
 
 
 def name_of(seg):
@@ -154,11 +145,12 @@ def main():
     except OSError:
         lib.crumb("state directory not writable (%s)" % state)
     if count >= FIRE_AT:
-        lib.emit("PostToolUseFailure",
+        lib.emit_additional_context("PostToolUseFailure",
                  "repeat-failure: `%s` has now failed %d times in a row with the same error (%s). "
-                 "Treat it as structural: stop retrying variations and stop guessing at causes. Tell the user "
-                 "the exact command, the exact error, and what only they can do (a credential, access, the "
-                 "network, a sandbox rule)." % (key.split(" :: ")[0], count, eclass.split(" | ")[0] or "no exit code"))
+                 "If this was not the expected red of a test loop, treat it as structural: stop retrying "
+                 "variations and stop guessing at causes. Tell the user the exact command, the exact error, "
+                 "and what only they can do, if anything (a credential, access, the network, a sandbox rule)."
+                 % (key.split(" :: ")[0], count, eclass.split(" | ")[0] or "no exit code"))
     lib.prune(state)
 
 

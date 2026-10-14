@@ -83,7 +83,7 @@ def main():
         lib.write_state(marker, "%d\n" % level[0])
     except OSError:
         lib.crumb("state directory not writable (%s)" % state)
-    lib.emit("UserPromptSubmit", level[1].format(k=n // 1000))
+    lib.emit_additional_context("UserPromptSubmit", level[1].format(k=n // 1000))
     lib.prune(state)
 
 
