@@ -21,4 +21,4 @@ A change that touches a published interface — anything something outside the c
 
 ## Before and after
 
-A change to what renders carries a before and an after capture in the body, at the same viewport and crop. The before is the one `implement` § Before building took before the first edit; where none was taken, the body says so rather than carrying one rebuilt afterwards. Each caption names where it was captured, under the captured-never-composed rule (`~/.claude/rules/evidence.md`). How a capture is uploaded is the project's convention skill's.
+A change to what renders carries a before and an after capture in the body, at the same viewport and crop. The before is the one `implement` § Before building took before the first edit; where none was taken, the body says so rather than carrying one rebuilt afterwards. Each caption names where it was captured, from the running thing — never a mockup or an assembled image. How a capture is uploaded is the project's convention skill's.

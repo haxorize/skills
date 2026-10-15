@@ -129,8 +129,11 @@
 #     about those. CLAUDE.md is read by two checks — its byte WARN, and the
 #     reference-link resolution pass 4 points at the root file — and by
 #     nothing else.
-#   - Global rules (ADR-0053): every global/rules/*.md carries a `Depends:`
-#     line naming at least one existing skill under src/ — the admission rule
+#   - Global rules (ADR-0053): every global/rules/*.md has an entry in the
+#     global/rules/DEPENDS sidecar (`<stem>: <skill>, <skill>`; the rule file
+#     itself carries no `Depends:` line, since a rule's bytes load on every
+#     turn and the sidecar's never do, and every entry names a rule that
+#     exists) naming at least one existing skill under src/ — the admission rule
 #     in global/README.md (only rules a skill depends on). A rule with no
 #     resolvable dependant has lost its reason to load on every turn. Each
 #     named dependant must also cite the rule by name somewhere under
@@ -403,7 +406,9 @@
 #                              14,400 bytes (ADR-0079; a WARN)
 #     check_rule_pointers      every ~/.claude/skills/<owner>/<path> pointer in
 #                              a walked file resolves under src/
-#     check_global_rule        Depends: resolves, and each dependant cites back
+#     check_global_rule        the DEPENDS entry resolves, and each dependant
+#                              cites back
+#     check_depends_entries    every DEPENDS entry names a rule that exists
 #     check_hook_selftest      every hook has an executable selftest
 #     check_conventions_pointer  every script and git hook opens with the
 #                              `# Conventions for this tree:` line (line 2 after
@@ -2541,18 +2546,26 @@ fi
 # Pass 4 — the other trees, each read once.
 # ---------------------------------------------------------------------------
 
-# Global rules admission (see header): a `Depends:` line naming skills that
-# exist under src/. Names are read as backticked or bare comma-separated slugs.
+# Global rules admission (see header): an entry in global/rules/DEPENDS naming
+# skills that exist under src/. Names are read as backticked or bare
+# comma-separated slugs.
 check_global_rule() {
   local f=$1 dep_line deps resolved stem dep bodies
-  dep_line=$(grep -m1 -E '^Depends:' "$f" || true)
-  if [ -z "$dep_line" ]; then
-    say_fail "$f has no 'Depends:' line — a global rule must name the skill(s) that depend on it (global/README.md admission rule), or leave global/"
+  stem=$(basename "$f" .md)
+  if grep -qE '^Depends:' "$f"; then
+    say_fail "$f still carries a 'Depends:' line — the dependants live in global/rules/DEPENDS, which no session loads; move the names there and delete the line, since every byte in a rule is paid on every turn"
+  fi
+  if [ ! -f global/rules/DEPENDS ]; then
+    say_fail "$f has no entry because global/rules/DEPENDS does not exist — a global rule must name the skill(s) that depend on it there (global/README.md admission rule), or leave global/"
     return
   fi
-  deps=$(printf '%s' "${dep_line#Depends:}" | tr -d '`' | tr ',' ' ')
+  dep_line=$(grep -m1 -E "^${stem}:" global/rules/DEPENDS || true)
+  if [ -z "$dep_line" ]; then
+    say_fail "$f has no entry in global/rules/DEPENDS — a global rule must name the skill(s) that depend on it there as '$stem: <skill>, <skill>' (global/README.md admission rule), or leave global/"
+    return
+  fi
+  deps=$(printf '%s' "${dep_line#"${stem}":}" | tr -d '`' | tr ',' ' ')
   resolved=0
-  stem=$(basename "$f" .md)
   for dep in $deps; do
     if [ -f "src/$dep/SKILL.md" ]; then
       resolved=$((resolved + 1))
@@ -2570,16 +2583,16 @@ check_global_rule() {
       # of being read as a violation; find's status is checked separately
       # from grep's.
       if ! bodies=$(find "src/$dep" -type f -name '*.md' -exec awk "$FENCE_AWK"'{ print }' {} +); then
-        say_fail "$f Depends: names '$dep' but src/$dep/ could not be read, so the '$stem' citation was never checked — this is not a verdict on the citation; fix the permissions or the path and re-run"
+        say_fail "$f DEPENDS entry names '$dep' but src/$dep/ could not be read, so the '$stem' citation was never checked — this is not a verdict on the citation; fix the permissions or the path and re-run"
       elif ! grep -qE "~/\.claude/rules/${stem}\.md|\`${stem}\`" <<<"$bodies"; then
-        say_fail "$f Depends: names '$dep' but src/$dep/ never cites the rule — write '~/.claude/rules/$stem.md' or the backticked stem '\`$stem\`' where the skill leans on it, or drop the name"
+        say_fail "$f DEPENDS entry names '$dep' but src/$dep/ never cites the rule — write '~/.claude/rules/$stem.md' or the backticked stem '\`$stem\`' where the skill leans on it, or drop the name"
       fi
     else
-      say_fail "$f Depends: names '$dep' but src/$dep/SKILL.md does not exist — names are bare or backticked slugs, comma-separated; fix the name or drop it"
+      say_fail "$f DEPENDS entry names '$dep' but src/$dep/SKILL.md does not exist — names are bare or backticked slugs, comma-separated; fix the name or drop it"
     fi
   done
   if [ "$resolved" -eq 0 ]; then
-    say_fail "$f Depends: resolves to no existing skill — a global rule with no dependant leaves global/ (global/README.md admission rule)"
+    say_fail "$f DEPENDS entry resolves to no existing skill — a global rule with no dependant leaves global/ (global/README.md admission rule)"
   fi
 }
 
@@ -2680,6 +2693,18 @@ check_rule_pointers() {
 while IFS= read -r f <&3; do
   [ -n "$f" ] && check_global_rule "$f"
 done 3<<<"$graded_rules"
+# A DEPENDS entry whose rule file is gone keeps a dependant list for nothing,
+# and reads to the next author as a rule that still loads. Whole-tree only:
+# --files grades the named rules, not the sidecar.
+check_depends_entries() {
+  local stem
+  [ -f global/rules/DEPENDS ] || return 0
+  while IFS= read -r stem; do
+    [ -f "global/rules/$stem.md" ] ||
+      say_fail "global/rules/DEPENDS has an entry for '$stem' but global/rules/$stem.md does not exist — delete the entry, or restore the rule"
+  done < <(grep -oE '^[A-Za-z0-9_-]+:' global/rules/DEPENDS | tr -d ':')
+}
+[ "$files_mode" -eq 0 ] && check_depends_entries
 while IFS= read -r f <&3; do
   [ -n "$f" ] && check_rule_pointers "$f"
 done 3<<<"$graded_md"

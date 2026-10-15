@@ -1,5 +1,3 @@
 # Clean rule
 
-Depends: `clean-skill`
-
-A well-formed rule: it names a skill that exists, and that skill cites it back.
+A well-formed rule: its DEPENDS entry names a skill that exists, and the skill cites this rule by name.

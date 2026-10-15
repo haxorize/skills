@@ -25,7 +25,7 @@ The load-gate fixture beneath this skill is pointed at from here, so only
 [the gated reference](references/load-gated.md).
 
 A dependant of a global rule that cites it by stem is not a finding either: the global
-`well-formed` rule.
+`well-formed` rule, and the `inline-depends` one.
 
 Backtick spans hold deliberate placeholders, so none of these three may be flagged — the
 one-backtick, two-backtick, and inner-backtick forms each broke a previous version of the

@@ -32,7 +32,8 @@
 # escaped `\$`, a reference and a global rule stay quiet), the
 # description's unquoted ': ' and ' #', load-gate placement (in a SKILL.md and
 # in a reference file beneath it), and the global-rules
-# Depends: admission check (missing line, dangling name, a dependant that never
+# DEPENDS admission check (missing entry, a `Depends:` line left in the rule,
+# an entry for a rule that is gone, dangling name, a dependant that never
 # cites the rule outside a fence, a dependant that cites only another rule's
 # path, and the three well-formed forms that must stay quiet — backticked stem,
 # path, and a citation in the opening lines of a body whose tail the producer is
@@ -316,12 +317,14 @@ expect "rich-text transport ban" "src/unused-dep/references/shell-transport.md p
 expect "description colon" "description has unquoted ': '"
 expect "description hash" "description has unquoted ' #'"
 expect "load-gate placement" "carries a load gate ('Launching skill'"
-expect "global-rule Depends (missing)" "global/rules/no-depends.md has no 'Depends:' line"
-expect "global-rule Depends (dangling)" "global/rules/dangling-depends.md Depends: names 'no-such-skill'"
-expect "global-rule Depends (uncited)" "global/rules/uncited-depends.md Depends: names 'quoted-dep' but src/quoted-dep/ never cites the rule"
-expect "global-rule Depends (directory only)" "global/rules/dir-only-cited.md Depends: names 'unused-dep' but src/unused-dep/ never cites the rule"
-expect "global-rule Depends (other rule's path)" "global/rules/other-path-cited.md Depends: names 'unused-dep' but src/unused-dep/ never cites the rule"
-expect "global-rule Depends (unmarked stem)" "global/rules/bare-stem-cited.md Depends: names 'unused-dep' but src/unused-dep/ never cites the rule"
+expect "global-rule Depends (missing)" "global/rules/no-depends.md has no entry in global/rules/DEPENDS"
+expect "global-rule Depends (line left in the rule)" "global/rules/inline-depends.md still carries a 'Depends:' line"
+expect "global-rule Depends (stale entry)" "global/rules/DEPENDS has an entry for 'ghost-rule' but global/rules/ghost-rule.md does not exist"
+expect "global-rule Depends (dangling)" "global/rules/dangling-depends.md DEPENDS entry names 'no-such-skill'"
+expect "global-rule Depends (uncited)" "global/rules/uncited-depends.md DEPENDS entry names 'quoted-dep' but src/quoted-dep/ never cites the rule"
+expect "global-rule Depends (directory only)" "global/rules/dir-only-cited.md DEPENDS entry names 'unused-dep' but src/unused-dep/ never cites the rule"
+expect "global-rule Depends (other rule's path)" "global/rules/other-path-cited.md DEPENDS entry names 'unused-dep' but src/unused-dep/ never cites the rule"
+expect "global-rule Depends (unmarked stem)" "global/rules/bare-stem-cited.md DEPENDS entry names 'unused-dep' but src/unused-dep/ never cites the rule"
 expect "two-way requires (undeclared)" "src/undeclared-dep/SKILL.md calls the Skill tool with \`fixture-discipline\` but its requires: line does not declare"
 # The gerund and the two-name clause are separate matcher reaches: the first name
 # grades 'calling', the second grades that the clause does not end at name one.
@@ -371,7 +374,7 @@ expect "ledger anchor (evaluation-ledger slug)" "missing from src/ledger-consume
 expect "ledger anchor (Evaluation ledger in prose)" "missing from src/ledger-consumer/references/anchor-prose-form.md"
 expect "ledger anchor (a bare ledger.md file name)" "missing from src/ledger-consumer/references/anchor-file-name.md"
 expect "load-gate placement (reference file)" "src/broken-links/references/load-gated.md carries a load gate"
-expect "body checks on a global rule (link)" "global/rules/body-checked.md links to 'references/no-such-rule-file.md' (line 12)"
+expect "body checks on a global rule (link)" "global/rules/body-checked.md links to 'references/no-such-rule-file.md' (line 11)"
 expect "body checks on a global rule (ADR)" "global/rules/body-checked.md cites a repo ADR by number"
 expect "slash-on-model-invoked (repo-local skill)" ".claude/skills/repo-local/SKILL.md writes \`/fixture-discipline\`"
 # The classifier's other three cells, each the only input its arm has. Without
@@ -723,15 +726,16 @@ fi
 expect_rc "the lint against the fixture tree" 1 "$status"
 # The count of FAIL lines is pinned: a check that begins firing on a fixture
 # it should leave alone reds here even when no substring row names the line.
-# Last moved 2026-10-14 (check_section_pointers grades a chained citation):
-# 114 → 115 — the fixture's last line, a chained pointer at a missing heading.
+# Last moved 2026-10-15 (global rules' dependants moved to global/rules/DEPENDS):
+# 115 → 117 — inline-depends.md's leftover `Depends:` line and the sidecar's
+# ghost-rule entry, a rule file that is gone.
 # Earlier moves of this pin are in
 # `git log -p -G 'expected exactly [0-9]+ FAIL' -- scripts/lint-skills-selftest.sh` — they describe counts
 # nothing asserts any more, and stacking them here made a changelog out of the
 # one line that has to stay readable. A count that moves is read before it is
 # re-pinned.
 nfail=$(printf '%s\n' "$output" | grep -c '^FAIL: ')
-[ "$nfail" -eq 115 ] || selftest_fail "expected exactly 115 FAIL lines against the fixture tree, got $nfail"
+[ "$nfail" -eq 117 ] || selftest_fail "expected exactly 117 FAIL lines against the fixture tree, got $nfail"
 # The shared-trigger-phrase fixtures are pinned by property, as near_bytes and
 # bulk_bytes are below: every row above them asserts a FAIL that appears or a
 # FAIL that does not, and each of those readings is silently satisfied by a
@@ -1380,7 +1384,7 @@ fi
 # the trees, break one file's mode in each copy, and grade the messages.
 # ---------------------------------------------------------------------------
 # One `chmod 000` reaches four of them because the file sits under `src/broken-links/`,
-# which `global/rules/well-formed.md` names in its Depends: line — the link
+# which `global/rules/well-formed.md`'s DEPENDS entry names — the link
 # extractor reads the file directly, and the citation check reads it through
 # the find/awk pipeline over that dep's directory.
 # `set -e` is deliberately off in this script, so an empty inject_root would not
@@ -1422,7 +1426,7 @@ else
     expect_in "$inject_output" "the $1 branch did not fire on an unreadable file" "$2"
   }
   inject_expect "reference-link extractor read-error" "src/broken-links/references/real-reference.md — the reference-link extractor errored"
-  inject_expect "Depends: citation read-error" "Depends: names 'broken-links' but src/broken-links/ could not be read"
+  inject_expect "Depends: citation read-error" "DEPENDS entry names 'broken-links' but src/broken-links/ could not be read"
   # Two more branches reach the same unreadable file, and each says the check did
   # not run rather than that it found nothing. Both are silent-pass shapes: a
   # count the cap was never applied to, and an anchor grep whose status 2 read as
@@ -1445,7 +1449,7 @@ else
   clean_output=$(LINT_ROOT="$clean_root" bash scripts/lint-skills.sh 2>&1)
   expect_rc "the lint against an otherwise-clean tree holding one unreadable file (a read error on its own must force exit 1)" 1 $?
   expect_in "$clean_output" "the reference-link extractor read-error did not fire on an otherwise-clean tree" "src/clean-skill/references/note.md — the reference-link extractor errored"
-  expect_in "$clean_output" "the Depends: citation read-error did not fire on an otherwise-clean tree" "Depends: names 'clean-skill' but src/clean-skill/ could not be read"
+  expect_in "$clean_output" "the Depends: citation read-error did not fire on an otherwise-clean tree" "DEPENDS entry names 'clean-skill' but src/clean-skill/ could not be read"
   expect_in "$clean_output" "the line-cap read-error did not fire on an otherwise-clean tree" "src/clean-skill/references/note.md could not be read for its line count"
   expect_in "$clean_output" "the evaluation-ledger anchor read-error did not fire on an otherwise-clean tree" "src/clean-skill/references/note.md could not be read for the evaluation ledger anchor"
   expect_in "$clean_output" "the evaluation-ledger status-token read-error did not fire on an unreadable file inside the legend's own skill" "src/ledger-legend/references/complete-consumer.md could not be read for evaluation ledger statuses"

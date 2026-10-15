@@ -1,6 +1,5 @@
 # A global rule that the pass-2 body checks must read (fixture)
 
-Depends: `broken-links`
 Why not a hook or lint: this file is the only place the body checks are graded on a
 rule rather than a skill. `global/rules/` is hoisted the same way `src/` is, so it
 takes the same caps and bans — and it is the one class that appeared in two of the
