@@ -52,21 +52,9 @@
 # its path; a staged hook
 # selftest or a file below global/hooks/ runs nothing extra; a red one
 # blocks — with a mutation table requiring each of those rows to red under a
-# one-place edit of a copy of the hook. And the
-# lineage notice: a staged src/<skill>/ path with a backticked first-cell row
-# in docs/lineage.md prints the notice — once per skill even for two staged
-# files, and on the second name of a two-name cell — a skill with no row
-# prints nothing, a skill whose only row is under the second H2 (the
-# nothing-to-diff table) prints nothing, a tree with no docs/lineage.md prints
-# nothing and exits 0, and the notice moves the exit status in neither
-# direction (red stays red, green stays green). NOT covered: the
-# working-tree-versus-index gap the hook's header names, whether the real
-# linters and selftests are correct,
-# and whether the fixture lineage row's shape — or docs/lineage.md's HEADING
-# ORDER, which the first-table scope now depends on — still matches the real
-# file's (both verified against it on 2026-09-02: preamble to :8, first H2 at
-# :9 opening the ported table). The fixture cannot catch a heading inserted
-# above that one; only this re-read can.
+# one-place edit of a copy of the hook. NOT covered: the
+# working-tree-versus-index gap the hook's header names, and whether the
+# real linters and selftests are correct.
 
 set -uo pipefail
 
@@ -382,59 +370,6 @@ expect_rc "the hook run from a subdirectory (green linters)" 0 "$rc"
 [ "$ran" = "lint-skills " ] || selftest_fail "the hook run from a subdirectory: expected to run 'lint-skills ', ran '$ran'"
 run_cwd="$work"
 
-# --- the lineage notice --------------------------------------------------------
-# One stderr line per staged skill with a docs/lineage.md row, never a block.
-# The fixture row matches the real table's shape: a first cell of backticked,
-# comma-separated names between pipes. It carries BOTH tables, because the
-# notice is scoped to the first one — a row under the second H2 is attribution
-# for a skill with no upstream to diff, and must stay silent.
-notice() { printf 'pre-commit: src/%s has an upstream — see docs/lineage.md before a material edit (ADR-0034 swept point)' "$1"; }
-cat > "$work/docs/lineage.md" <<'ROWS'
-# Lineage — fixture
-
-## Ported — diff before editing
-
-| Local | Upstream | Name there | Licence | Record |
-| --- | --- | --- | --- | --- |
-| `ported`, `also-ported` | someone/skills | same name | MIT | ADR-0001 |
-
-## Synthesized or ideas only — nothing to diff
-
-| Local | Upstream | Rule | Record |
-| --- | --- | --- | --- |
-| `attributed` | someone/skills | ideas only | ADR-0002 |
-ROWS
-stage "src/ported/SKILL.md"; run
-expect_rc "a staged ported skill (green linters)" 0 "$rc"
-expect_in "$out" "the lineage notice did not print for a skill with a row" "$(notice ported)"
-# The second name in a two-name first cell is still a first-cell match.
-stage "src/also-ported/SKILL.md"; run
-expect_in "$out" "the lineage notice did not print for the second name in a two-name cell" "$(notice also-ported)"
-# A skill with no row prints nothing.
-stage "src/local/SKILL.md"; run
-reject_in "$out" "the lineage notice printed for a skill with no row" "has an upstream"
-# A skill whose only row is in the second table prints nothing: that table is
-# headed "nothing to diff", so the notice would name an upstream the file
-# denies. A mutation that widens the awk back to the whole file reds here.
-stage "src/attributed/SKILL.md"; run
-reject_in "$out" "the lineage notice printed for a skill in the nothing-to-diff table" "$(notice attributed)"
-# Two staged files under one skill: once.
-stage "src/ported/SKILL.md"
-mkdir -p "$work/src/ported/references"; printf 'x\n' > "$work/src/ported/references/extra.md"
-git -C "$work" add -- src/ported/references/extra.md; run
-notice_count=$(printf '%s\n' "$out" | grep -cF "$(notice ported)")
-[ "$notice_count" -eq 1 ] || selftest_fail "two staged files under src/ported/ printed the lineage notice $notice_count times, not once"
-# The notice never moves the exit status: red stays red with the notice
-# printed, and the green rows above already stayed green with it printed.
-stage "src/ported/SKILL.md"; run 1 0
-expect_rc "a red linter under a printing notice" 1 "$rc"
-expect_in "$out" "the notice did not print alongside a red linter" "$(notice ported)"
-# No docs/lineage.md: nothing printed, exit 0.
-rm -f "$work/docs/lineage.md"
-stage "src/ported/SKILL.md"; run
-expect_rc "no docs/lineage.md (green linters)" 0 "$rc"
-reject_in "$out" "a missing docs/lineage.md still printed a notice" "has an upstream"
-
 # --- the staged-path temp file honours TMPDIR, and its failure blocks --------
 # The hook writes the NUL-delimited staged list to mktemp "${TMPDIR:-/tmp}/
 # pre-commit.XXXXXX": a full-path template, because macOS mktemp's no-argument
@@ -485,4 +420,4 @@ mutant "selftest not read for a name"   'for f in "$st" "$stem.sh" "$stem.py"; d
 mutant "src script names no hook"       '      queue_hook_selftests_naming "$p" ;;' '      ;;' row_src_named
 mutant "scripts lib names no hook"      'done; queue_hook_selftests_naming "$p" ;;' 'done ;;' row_scripts_lib
 
-selftest_close "pre-commit self-test clean — every mapped class ran its linter under every index status, unmapped paths ran none, red blocked, green allowed, a merge in progress or an unreadable index took its own branch, the selftest map ran each staged pairing once and blocked on red, the staged-list temp file honoured a writable TMPDIR and blocked when its mktemp failed, and the lineage notice printed once per ported skill, stayed silent for the nothing-to-diff table, and moved the exit status in neither direction." "pre-commit self-test PARTIAL"
+selftest_close "pre-commit self-test clean — every mapped class ran its linter under every index status, unmapped paths ran none, red blocked, green allowed, a merge in progress or an unreadable index took its own branch, the selftest map ran each staged pairing once and blocked on red, and the staged-list temp file honoured a writable TMPDIR and blocked when its mktemp failed." "pre-commit self-test PARTIAL"

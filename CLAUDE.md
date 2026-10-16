@@ -12,9 +12,9 @@ A repo of Claude Code skills — repo-agnostic in mechanism, with its Domain ski
 
 `to-feature`, `to-story`, `to-tasks`, `to-bug` are the artifact under development — don't invoke them against this repo's own work.
 
-## Before materially editing any skill, scanner rule, or lint check
+## Before writing or rewriting instruction prose
 
-Check [`docs/lineage.md`](docs/lineage.md) first. Writing or rewriting instruction prose (a skill, reference, rule, or this file): call the Skill tool with `writing-for-agents` first.
+A skill, reference, rule, or this file: call the Skill tool with `writing-for-agents` first.
 
 ## Adding, renaming, or removing a skill, or changing how one fits the flows
 

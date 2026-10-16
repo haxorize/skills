@@ -128,7 +128,7 @@
 # The 2026-08-29 additions (hex blob, drop site, download-then-exec,
 # minified, npmrc, install hook, binary, remote instructions) follow the
 # pattern classes in zcaceres/skills' investigate-repo skill (MIT, swept at
-# b7213839; ADR-0034 keeps the lineage), rewritten
+# b7213839; docs/lineage.md credits it), rewritten
 # here; the same day's second set (metadata endpoint, agent config,
 # persistence, TLS off,
 # environment dump, homoglyph, bytecode) follows nvidia/skillspector and
