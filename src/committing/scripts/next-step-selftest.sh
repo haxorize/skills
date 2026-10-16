@@ -35,11 +35,11 @@
 #     line does not close a ~~~ fence, nor a shorter ``` run a ```` fence; a
 #     staged rename is named by its new path, unquoted; a report in the TMPDIR zone with
 #     REVIEW_RECEIPT_DIR unset, written by landing.sh path.
-#   cadence — --mid-family under a `Review cadence:` line (bold, or
-#     backticked, read from a subdirectory too): commit this batch, or the next
-#     batch when clean; --mid-family with no cadence line changes nothing; the
-#     family's end: commit this batch, then /review-changes; the order line
-#     carries the cadence.
+#   round — under a `Deferrals register:` line (bold, or backticked, read
+#     from a subdirectory too), dirty: commit this batch; clean and ahead: the
+#     next batch, or /review-changes before the push; a report stamping the
+#     tree still says push; the order line names a commit per batch and the
+#     running round; the retired --mid-family flag exits 3.
 #   the scripts it runs — a copy laid out as a checkout runs the tree-stamp.sh
 #     beside it, never one under ~/.claude/skills/; a --stamps read that fails
 #     exits 4 and names the report, and one that exits 4 skips the report;
@@ -48,7 +48,7 @@
 #   parity — the review-receipt hook and this script run on one fixture each,
 #     and agree on push or hold: bold, backticked and planned `Review
 #     required:` lines, a fenced line of each kind, a subdirectory walk both
-#     ways, a bold cadence line under --mid-family, fenced and live stamps, the
+#     ways, a bold round line, fenced and live stamps, the
 #     TMPDIR zone and an override pointing elsewhere, and HEAD's tree stamped
 #     beside a scratch file. A push the hook allows here must be a quiet allow
 #     (a stamp, or no opt-in), never a fail-open.
@@ -59,8 +59,7 @@
 #   second-stamp row reds); the upstream-tree check dropped (the pushed-report
 #   row reds); `grep -qi yes` dropped (the opt-out row reds). And, on the
 #   second pass: the clean-and-up-to-date arm dropped (the fresh gated row);
-#   the stamped nothing-ahead arm dropped (the pushed row); `&& [ -n "$cadence"
-#   ]` dropped from --mid-family (the no-cadence row); the walk replaced by
+#   the stamped nothing-ahead arm dropped (the pushed row); the walk replaced by
 #   one directory (the subdirectory rows); unfenced dropped (the fence rows);
 #   the HEAD-tree match dropped (the scratch-file rows); push_act's behind
 #   check dropped (the diverged row); --untracked-files=normal dropped (the
@@ -69,7 +68,8 @@
 #   ancestor-of-HEAD test dropped (the other-branch row); the upstream-tip
 #   case dropped (the r1 rows); the not-reachable test dropped (the
 #   moved-past row); no upstream treated as not addressable (the no-upstream
-#   row). Against the script before `addressable`, the no-finding, fenced,
+#   row). Run 2026-10-16: round detection disabled (the six round rows red).
+#   Against the script before `addressable`, the no-finding, fenced,
 #   other-branch and moved-past rows red; the positive and decline-all rows
 #   are green there too (the decline-all fix is address-findings' always-on
 #   stamp, which the row's fixture writes).
@@ -169,7 +169,7 @@ mkrepo gated "$GATED"
 expect_row "$(next_of gated)" "required, clean, nothing ahead, no report" "none, nothing to land"
 echo x > "$tmp/gated/f"
 expect_row "$(next_of gated)" "required, dirty, no report" "commit when you like; /review-changes before the push"
-expect_in "$(line_of order "$tmp/gated")" "the order names the review before the push" "then /review-changes and /address-findings, then push"
+expect_in "$(line_of order "$tmp/gated")" "the order names the review before the push" "then one /review-changes and /address-findings over everything unpushed, then push"
 report other x "Reviewed-tree: $(treestamp gated)" >/dev/null
 mv "$REVIEW_RECEIPT_DIR/other-2026-01-01-x.review.md" "$REVIEW_RECEIPT_DIR/gatedx-2026-01-01-x.review.md"
 expect_row "$(next_of gated)" "another repo's report is not read" "commit when you like; /review-changes before the push"
@@ -254,20 +254,23 @@ out="$( cd "$tmp/tmpzone" && REVIEW_RECEIPT_DIR= TMPDIR="$tmp/t" bash "$script" 
 expect_row "$out" "a report in the TMPDIR zone, written by landing.sh path" "push"
 expect_row "$(next_of tmpzone)" "and REVIEW_RECEIPT_DIR elsewhere does not see it" "/review-changes"
 
-# --- cadence ---
-mkrepo round '# repo\n\nLanding:\n- Review required: yes\n\nRound:\n- **Review cadence:** per batch family\n'
-expect_row "$(next_of round --mid-family)" "mid-family, clean, under a cadence" "the next batch; the cadence reviews at the family's end"
+# --- round ---
+mkrepo round '# repo\n\nLanding:\n- Review required: yes\n\nRound:\n- **Deferrals register:** `reconcile.md` § Deferrals register\n'
 echo x > "$tmp/round/f"
-expect_row "$(next_of round --mid-family)" "mid-family under a bold cadence line" "commit this batch"
-expect_row "$(next_of round)" "the family's end under a cadence" "commit this batch, then /review-changes"
-expect_in "$(line_of order "$tmp/round")" "the order carries the cadence" "(Review cadence: per batch family)"
-expect_in "$(line_of order "$tmp/round")" "and a commit per batch" "commit at the end of every batch"
+expect_row "$(next_of round)" "dirty under a bold round line" "commit this batch"
+expect_in "$(line_of order "$tmp/round")" "the order names a commit per batch" "commit at the end of every batch"
+expect_in "$(line_of order "$tmp/round")" "and the running round" "(a round is running)"
 mkdir -p "$tmp/round/sub"
-expect_row "$(line_of next "$tmp/round/sub" --mid-family)" "the cadence line read from a subdirectory" "commit this batch"
-mkrepo ticked '# repo\n\n- Review required: yes\n- `Review cadence:` per family\n'
+expect_row "$(line_of next "$tmp/round/sub")" "the round line read from a subdirectory" "commit this batch"
+commit round
+expect_row "$(next_of round)" "clean and ahead under a round" "the next batch, or /review-changes over everything unpushed before the push"
+report round stamped "Reviewed-tree: $(treestamp round)" >/dev/null
+expect_row "$(next_of round)" "a stamped tree under a round still pushes" "push"
+mkrepo ticked '# repo\n\n- Review required: yes\n- `Deferrals register:` reconcile.md\n'
 echo x > "$tmp/ticked/f"
-expect_row "$(next_of ticked --mid-family)" "a backticked cadence key" "commit this batch"
-expect_row "$(next_of gated --mid-family)" "--mid-family with no cadence line changes nothing" "/review-changes"
+expect_row "$(next_of ticked)" "a backticked round key" "commit this batch"
+( cd "$tmp/gated" && bash "$script" --mid-family ) >/dev/null 2>&1; rc=$?
+expect_rc "the retired --mid-family flag" 3 "$rc"
 
 # --- the scripts it runs ---
 # A copy laid out as a checkout reads the two scripts beside it, as the hook
@@ -341,9 +344,8 @@ parity "a backtick line inside a ~~~ fence" hold "$tmp/mixed"
 parity "a shorter backtick run inside a four-backtick fence" push "$tmp/longf"
 parity "a subdirectory walks up to the gated root" hold "$tmp/walk/pkg"
 parity "a subdirectory saying no" hold "$tmp/optout/pkg"
-mkahead pcad '# repo\n\n- Review required: yes\n- **Review cadence:** per batch family\n'
-parity "a bold cadence line, mid-family" hold "$tmp/pcad" --mid-family
-parity "a bold cadence line, the family's end" hold "$tmp/pcad"
+mkahead pcad '# repo\n\n- Review required: yes\n- **Deferrals register:** reconcile.md\n'
+parity "a bold round line" hold "$tmp/pcad"
 mkahead pstamp "$GATED"
 report pstamp fenced 'quoting:' '```' "Reviewed-tree: $(treestamp pstamp)" '```' >/dev/null
 parity "a stamp inside a fence is a quotation" hold "$tmp/pstamp"

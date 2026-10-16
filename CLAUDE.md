@@ -41,10 +41,9 @@ Landing:
 ## Round
 
 Round:
-- Review cadence: per batch family — the families are enumerated in the round's `reconcile.md`
 - Deferrals register: `~/code/lib/_rounds/2026-10-12/reconcile.md` § Deferrals register
 
-`feedback-loops`' close reads the first line; `committing`'s fast path greps the file the second names for a row dated today. Delete the block when no round is running.
+`committing`'s fast path greps the file it names for a row dated today, and while the key is present `next-step.sh` names the batch's commit at each close. Delete the block when no round is running.
 
 ## Commit order
 

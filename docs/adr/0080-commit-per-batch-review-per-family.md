@@ -1,3 +1,7 @@
+---
+status: superseded by [ADR-0112](0112-commit-per-batch-review-everything-unpushed.md)
+---
+
 # Each batch is committed unreviewed; review runs per batch family; the push waits for the receipt
 
 This amends [ADR-0059](0059-review-receipt-hook.md) § Decision (the order review → fix → commit → push): the grain moves to a commit per batch, with a review's fixes landing as their own commit, while the receipt still gates the push exactly as that record requires.

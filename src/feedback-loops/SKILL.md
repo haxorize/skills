@@ -57,7 +57,7 @@ Start from what the diff removed: grep `README.md`, `CLAUDE.md`, `DOMAIN.md`, an
 
 ### 4. Close once, at the outermost invocation: state the tree, then name the next act
 
-When another skill called this one mid-loop, that skill's close is the close; this step runs once, when `feedback-loops` is the last thing running. State the tree, then name the next act: the `Measured-tree:` line the global rule `~/.claude/rules/evidence.md` defines and the count of dirty paths, then the `next:` line `bash ~/.claude/skills/committing/scripts/next-step.sh` prints, last (`--mid-family` when a `## Round` block's `Review cadence:` says this close ends no batch family). It never says push where the `review-receipt` hook blocks: a required review gates the push, never the commit, and a tree already stamped goes to the commit or push `committing` lands.
+When another skill called this one mid-loop, that skill's close is the close; this step runs once, when `feedback-loops` is the last thing running. State the tree, then name the next act: the `Measured-tree:` line the global rule `~/.claude/rules/evidence.md` defines and the count of dirty paths, then the `next:` line `bash ~/.claude/skills/committing/scripts/next-step.sh` prints, last; while a `## Round` block runs, that line names the batch's commit, since one review covers everything unpushed before the push. It never says push where the `review-receipt` hook blocks: a required review gates the push, never the commit, and a tree already stamped goes to the commit or push `committing` lands.
 
 ## Boundary
 

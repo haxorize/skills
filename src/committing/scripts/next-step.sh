@@ -6,9 +6,6 @@
 # `next:` line, so the order lives here once instead of in four places.
 #
 #   next-step.sh                 the order and the next act, from the repo here
-#   next-step.sh --mid-family    this close does not end a `## Round` batch
-#                                family, so under a `Review cadence:` line the
-#                                next act is the batch's commit, not a review
 #
 # Output, one `key: value` per line, `next:` always last:
 #   review:  required | not required   (the `Review required:` line)
@@ -29,9 +26,11 @@
 # the zones `landing.sh zones` owns (a zone landing.sh refuses fails `list`,
 # and this script exits 4 with landing.sh's reason); and their
 # `Reviewed-tree` lines through tree-stamp.sh --stamps, the one stamp reader,
-# skipping a report it cannot read (exit 4) as the hook does. A `Review
-# cadence:` line is read the same way, from the nearest CLAUDE.md carrying
-# one. A report
+# skipping a report it cannot read (exit 4) as the hook does. A round is
+# running when the nearest CLAUDE.md carrying a `Deferrals register:` line (the
+# `## Round` block's key, read the same way) has one; then an unreviewed
+# close's next act is the batch's commit, since one review covers everything
+# unpushed before the push (ADR-0112). A report
 # answers when it stamps the working-tree stamp (HEAD's tree when the tree is
 # clean, and the tree a commit of the whole tree reproduces when it is not),
 # or HEAD's tree, which is what a bare `git push` sends: the commits then
@@ -68,14 +67,12 @@ set -uo pipefail
 unset CDPATH   # an exported CDPATH makes `cd` print the path into the captured value
 
 usage() {
-  sed -n '8,11p' "$0" | sed 's/^# \{0,1\}//'
+  sed -n '8p' "$0" | sed 's/^# \{0,1\}//'
   echo "Exit: 0 printed; 3 usage; 4 never ran (no repo, or tree-stamp.sh or landing.sh failed)."
 }
 
-mid=""
 while [ $# -gt 0 ]; do
   case "$1" in
-    --mid-family) mid=1; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "next-step.sh: unknown argument: $1" >&2; usage >&2; exit 3 ;;
   esac
@@ -120,12 +117,12 @@ nearest() {
 }
 
 OPT_IN='^[-* >]*\**`?Review required:`?\**[[:space:]]*\**`?(yes|no)`?\**[[:space:]]*$'
-CADENCE='^[-* >]*\**`?Review cadence:`?\**[[:space:]]*[^[:space:]]'
+ROUND='^[-* >]*\**`?Deferrals register:`?\**[[:space:]]*[^[:space:]]'
 required=""
 if [ -f "$top_phys/CLAUDE.md" ]; then
   unfenced "$top_phys/CLAUDE.md" | grep -iE "$OPT_IN" | head -1 | grep -qi 'yes' && required=1
 fi
-cadence="$(nearest "$CADENCE" | sed -E 's/^[^:]*:[`*]*[[:space:]]*//; s/[[:space:]]*\*\*[[:space:]]*$//')"
+round="$(nearest "$ROUND")"
 
 # untracked files counted whatever status.showUntrackedFiles says, as the stamp
 # counts them; read NUL-separated, so a rename names its new path and a path
@@ -232,15 +229,13 @@ if [ -z "$required" ]; then
   else next="$(push_act)"; fi
 else
   reviewline="required"
-  if [ -n "$cadence" ]; then
-    order="commit at the end of every batch, then /review-changes and /address-findings at the family's end, then push; the last Reviewed-tree must equal the tree pushed, so an edit after it needs a fresh stamp (Review cadence: $cadence)"
+  if [ -n "$round" ]; then
+    order="commit at the end of every batch, then one /review-changes and /address-findings over everything unpushed, then push; the last Reviewed-tree must equal the tree pushed, so an edit after it needs a fresh stamp (a round is running)"
   else
-    order="commit when you like, then /review-changes and /address-findings, then push; the last Reviewed-tree must equal the tree pushed, so an edit after it needs a fresh stamp"
+    order="commit when you like, then one /review-changes and /address-findings over everything unpushed, then push; the last Reviewed-tree must equal the tree pushed, so an edit after it needs a fresh stamp"
   fi
   n_stamps="$(printf '%s' "$newest_stamps" | grep -c . || true)"
-  if [ -n "$mid" ] && [ -n "$cadence" ]; then
-    if [ "$dirty" -gt 0 ]; then next="commit this batch"; else next="the next batch; the cadence reviews at the family's end"; fi
-  elif [ -n "$stamped_by" ]; then
+  if [ -n "$stamped_by" ]; then
     if [ "$dirty" -gt 0 ]; then next="commit the whole tree, then $(push_act)"
     elif [ "$ahead" = 0 ]; then next="none, nothing to land"
     else next="$(push_act)"; fi
@@ -250,8 +245,10 @@ else
     next="none, nothing to land"
   elif [ -n "$newest" ] && [ "$n_stamps" -eq 1 ] && [ "$newest_stamps" != "$up_tree" ] && addressable "$newest"; then
     next="/address-findings $newest"
-  elif [ "$dirty" -gt 0 ] && [ -n "$cadence" ]; then
-    next="commit this batch, then /review-changes"
+  elif [ "$dirty" -gt 0 ] && [ -n "$round" ]; then
+    next="commit this batch"
+  elif [ -n "$round" ]; then
+    next="the next batch, or /review-changes over everything unpushed before the push"
   elif [ "$dirty" -gt 0 ]; then
     next="commit when you like; /review-changes before the push"
   else
