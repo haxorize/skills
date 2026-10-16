@@ -16,7 +16,8 @@ set -u
 here="$(cd "$(dirname "$0")" && pwd)"
 hook="$here/commit-bypass.sh"
 # Temp-file template and guard: scripts/README.md § Temp files. Spelled out
-# because global/hooks/selftest-lib.sh has no temp-directory helper.
+# rather than selftest_tmpdir, which both selftest libs below now provide:
+# this block runs before either is sourced and has not moved yet.
 tmp="$(mktemp -d "${TMPDIR:-/tmp}/commit-bypass-selftest.XXXXXX" 2>/dev/null)"
 if [ -z "$tmp" ] || [ ! -d "$tmp" ]; then
   echo "commit-bypass-selftest: no usable temp directory (TMPDIR=${TMPDIR:-unset}) — nothing ran" >&2
@@ -190,11 +191,12 @@ printf '%s' "$out" | grep -q 'skips the repo.s hooks (--no-verify)' || { echo "F
 
 # --- mutation table: hook-lib.py's script-file read ------------------------------
 # Each row edits a copy of hook-lib.py (the hook beside it) and reruns one row;
-# the mutant must flip it, or the row grades nothing.
+# the row must pass on the real hook and flip on the mutant, or it grades
+# nothing.
 mdir="$tmp/mut"; mkdir -p "$mdir"; cp "$hook" "$here/hook-lib.sh" "$mdir/"
 lib_mutant() { # lib_mutant <label> <find> <replace> <cmd> <want rc>
   selftest_mutate "$here/hook-lib.py" "$mdir/hook-lib.py" "$2" "$3" || return
-  hook="$mdir/commit-bypass.sh" selftest_expect_killed "$1" hook_rc_not "$5" "$D" "$4"
+  selftest_expect_killed --mutant hook "$mdir/commit-bypass.sh" "$1" hook_rc_not "$5" "$D" "$4"
 }
 lib_mutant "never a script file"   'if runs_script_file(seg):' 'if False:' "printf 'git commit --no-verify -m x' | bash hook.sh" 2
 lib_mutant "drop the stdin paths"  'return not (t in STDIN_SCRIPTS or ' 'return not (' "printf 'git commit --no-verify -m x' | bash /dev/stdin" 0
@@ -205,14 +207,18 @@ lib_mutant "no backslash delimiter" '<<-?\s*\\?[' '<<-?\s*[' $'cat <<\\EOF > not
 lib_mutant "an unexpandable operand is a script" 'any(c in t for c in "$`<>")' 'any(c in t for c in "<>")' "printf 'git commit --no-verify -m x' | bash \"\$X\"" 0
 # hook-lib.sh's isolated Python, and the hook's own value-option skip, on copies beside the real lib
 sdir="$tmp/mut-sh"; mkdir -p "$sdir"; cp "$hook" "$here/hook-lib.py" "$sdir/"
-python3 -c 'import sys; s=open(sys.argv[1]).read(); assert s.count("python3 -I -c") == 2; open(sys.argv[2],"w").write(s.replace("python3 -I -c", "python3 -c"))' "$here/hook-lib.sh" "$sdir/hook-lib.sh" \
-  || { echo "FAIL (mutant 'no -I': pattern not found in hook-lib.sh)"; fail=1; }
-rm -f "$tmp/shadow"/PWNED-*
-( cd "$tmp/shadow" && printf '%s' "$payload" | bash "$sdir/commit-bypass.sh" >/dev/null 2>&1 )
-ls "$tmp/shadow"/PWNED-* >/dev/null 2>&1 || { echo "FAIL (mutant 'no -I' survived: no module in the cwd ran)"; fail=1; }
+# row_no_cwd_module: green when the hook, run from the shadow dir, imported
+# none of the cwd's modules.
+row_no_cwd_module() {
+  rm -f "$tmp/shadow"/PWNED-*
+  ( cd "$tmp/shadow" && printf '%s' "$payload" | bash "$hook" >/dev/null 2>&1 )
+  ! ls "$tmp/shadow"/PWNED-* >/dev/null 2>&1
+}
+selftest_mutate "$here/hook-lib.sh" "$sdir/hook-lib.sh" "python3 -I -c" "python3 -c" 2 \
+  && selftest_expect_killed --mutant hook "$sdir/commit-bypass.sh" "no -I" row_no_cwd_module
 cp "$here/hook-lib.sh" "$sdir/"
 selftest_mutate "$hook" "$sdir/commit-bypass.sh" 'if a in GIT_VALUE_OPTS:      # its value' 'if a in ("-c", "-C", "--config-env"):      # its value' \
-  && hook="$sdir/commit-bypass.sh" selftest_expect_killed "three value options" hook_rc_not 0 "$D" "git --git-dir .git commit -n -m x"
+  && selftest_expect_killed --mutant hook "$sdir/commit-bypass.sh" "three value options" hook_rc_not 0 "$D" "git --git-dir .git commit -n -m x"
 
 if [ "$fail" -ne 0 ]; then echo "SELFTEST FAIL: commit-bypass"; exit 1; fi
 echo "OK: commit-bypass self-test clean — every tabled bypass shape blocked, every mention and look-alike allowed, fail-open holds."

@@ -26,7 +26,7 @@ Two things no `outdated` command reports are read from files rather than from th
 
 Before the step list is fixed, look for the same bump already done or in flight — the open PRs on the repo host (the diff of a likely match read, not its title) and the local and remote branches — and stop on a match rather than duplicate it; a lookup that could not run (no host auth, no remote) is reported with its reason and the run asks before going on, since git history is not the host lookup.
 
-Discovery fixes the run's step list — each security-flagged package its own step, each major its own step (a multi-major jump one step per stop, § 3), one below-major batch. Now put the commit ask, once, with the count in it: "N steps, one commit per step, on this branch?" A yes is the ask the `committing` discipline needs for those N commits and no more — a step added later gets its own ask; a no means the tree is left clean at each step and nothing is committed until asked. The push stays on the `Landing:` key or a separate ask.
+Discovery fixes the run's step list — each security-flagged package its own step, each major its own step (a multi-major jump one step per stop, § 3), one below-major batch. Now put the commit ask, once, with the count in it: "N steps, one commit per step, on this branch?" This one line replaces the ask block of `recommend-and-proceed` for this question. A yes is the ask the `committing` discipline needs for those N commits and no more — a step added later gets its own ask; a no means the tree is left clean at each step and nothing is committed until asked. The push stays on the `Landing:` key or a separate ask.
 
 ### 2. Audit each package before it touches the lockfile
 

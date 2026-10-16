@@ -77,13 +77,21 @@
 # the repo it runs in (split_git) — is hook-lib.sh / hook-lib.py beside this
 # file; this file holds only the commit and add shapes and the patterns.
 #
+# A `git add` / `git commit` after a `cd` the hook cannot expand (`cd "$(…)"`,
+# `cd -`, a variable unset in the hook's environment or one the shell keeps
+# itself) runs in an unknown repo, unless an absolute `-C`, or a `--git-dir` /
+# `--work-tree` whose every value is absolute, names it. The hook scans the
+# session directory's repo in its place, after every placed commit and add has
+# been scanned: a hit there blocks under a line saying the cd could not be
+# followed, a clean scan allows with a breadcrumb saying so, and a session
+# directory that is not a git work tree allows with a breadcrumb naming the
+# unknown repo. An add of either kind after the last commit is not read.
+#
 # Fail-open: a malformed payload, a missing python3 or git, a tokeniser error,
-# a git call that fails (the `git config` read of the filters included), a
-# directory that is not a git work tree, or a `git add` / `git commit` after a
-# `cd` the hook cannot expand (`cd "$(…)"`, an unset variable: the repo is
-# unknown, and scanning the payload's cwd instead would judge the wrong one)
-# lets the command through, with a one-line stderr breadcrumb. A safety hook that blocks
-# on its own errors trains the user to disable it.
+# a git call that fails (the `git config` read of the filters included), or a
+# directory that is not a git work tree lets the command through, with a
+# one-line stderr breadcrumb. A safety hook that blocks on its own errors
+# trains the user to disable it.
 #
 # Install note: always on — no opt-in.
 #
@@ -106,15 +114,17 @@ hook_read_payload
 command -v git >/dev/null 2>&1 || hook_allow "git not found"
 
 # --- commit shape, then the scan --------------------------------------------
-# on_command records each `git add` and each `git commit` in the command, and
+# on_command records each `git add` and each `git commit` in the command, in
+# order, each marked blind when it follows a cd the scanner could not expand;
 # finish hands them to emit once the whole command is read; emit scans each
-# commit's repo and prints one finding a line, or exits ALLOW_EXIT with the
-# breadcrumb when no repo is a git work tree or one's location is unknown.
+# commit's repo and each add before the last commit, the blind ones in the
+# session directory's repo, and prints one finding a line, or exits ALLOW_EXIT
+# with the breadcrumb when nothing it scanned held a finding but a repo was not
+# a git work tree or a blind scan ran.
 hook_scan '
 import subprocess
-ADDS = []
-COMMITS = []
-UNPLACED = []                       # add/commit subcommands that follow a cd the scanner could not expand
+ADDS = []                           # (dir, git_dir, work_tree, pathspecs, force, blind)
+COMMITS = []                        # (dir, git_dir, work_tree, all, adds before it, blind)
 ALLOW = "secret-scan: allow"
 CONTENT_RULES = [
     ("aws-key",        re.compile(r"\b(?:AKIA|ASIA)[0-9A-Z]{16}\b")),
@@ -146,20 +156,32 @@ NAMES = DIFF + ["--name-only", "--diff-filter=d", "-z"]
 
 def placed(args, rest, curdir):
     """False when git runs in a directory that follows a cd the scanner could
-    not expand and no absolute -C before the subcommand names one instead."""
+    not expand and nothing before the subcommand names the repo instead: an
+    absolute -C, or a --git-dir / --work-tree (either spelling) whose every
+    value is absolute."""
     if curdir is not None:
         return True
     pre = args[:len(args) - len(rest) - 1]
-    return any(a == "-C" and os.path.isabs(expand(b) or "") for a, b in zip(pre, pre[1:]))
+    repo = []
+    for i, a in enumerate(pre):
+        name, eq, val = a.partition("=") if a.startswith("--") else (a, "", "")
+        if name in ("-C", "--git-dir", "--work-tree"):
+            v = val if eq else (pre[i + 1] if i + 1 < len(pre) else None)
+            absolute = os.path.isabs(expand(v) or "")
+            if name == "-C" and absolute:
+                return True
+            if name != "-C":
+                repo.append(absolute)
+    return bool(repo) and all(repo)
 
 def on_command(seg, curdir):
     args = git_args(seg)
     if args is None:
         return None
     d, sub, rest, gd, wt = split_git(args, curdir)
-    if sub in ("add", "stage", "commit") and not placed(args, rest, curdir):
-        UNPLACED.append(sub)
-        return None
+    blind = sub in ("add", "stage", "commit") and not placed(args, rest, curdir)
+    if blind:
+        d, gd, wt = base(), None, None      # the repo is unknown: scan the session directory instead
     if sub in ("add", "stage"):
         specs, force, wide, dashdash = [], False, False, False
         for a in rest:
@@ -179,16 +201,16 @@ def on_command(seg, curdir):
                     wide = True             # the pathspecs are in a file this hook does not read: the whole tree
             elif "f" in a[1:]:
                 force = True
-        ADDS.append((d, gd, wt, [] if wide else specs, force))
+        ADDS.append((d, gd, wt, [] if wide else specs, force, blind))
         return None
     if sub == "commit":
-        COMMITS.append((d, gd, wt, any(commits_all(a) for a in rest), len(ADDS)))
+        COMMITS.append((d, gd, wt, any(commits_all(a) for a in rest), len(ADDS), blind))
     return None
 
 def finish():
     """Every add and commit is recorded once the command is read; a commit
     anywhere in it (`git commit -m a; git add f; git commit -m b`) is a scan."""
-    return bool(COMMITS) or "commit" in UNPLACED
+    return bool(COMMITS)
 
 def commits_all(a):
     """`-a`/`--all`, or `a` in a short-option cluster before an option that
@@ -292,72 +314,128 @@ def path_hit(path):
     return None
 
 def emit(hit):
-    if UNPLACED:
-        sys.stdout.write("a git %s follows a cd the hook cannot expand, so the repo it runs in is unknown" % UNPLACED[0])
-        sys.exit(ALLOW_EXIT)
-    targets, out, outside = [], [], []
+    """Scan every commit target, and every add before the last commit, once
+    each, then decide. A placed hit blocks. A blind one (scanned in the repo
+    of the session directory, since its own is unknown) blocks under a line
+    saying so.
+    Only when nothing held a finding does a blind entry whose session directory
+    is not a work tree, a placed target outside one, or a clean blind scan,
+    allow with its breadcrumb. `hit` is the True finish() returned: the records
+    are the globals."""
+    targets = []
     for c in COMMITS:
-        if c[:3] not in targets:
-            targets.append(c[:3])
+        if c[:3] + c[5:] not in targets:
+            targets.append(c[:3] + c[5:])
     adds = ADDS[:COMMITS[-1][4]]           # an add after the last commit stages nothing this command commits
+    found, blind_found, outside, blind_subs, blind_top = [], [], [], [], None
     try:
-        for t in targets:
-            hits = scan_commit(t, any(c[3] for c in COMMITS if c[:3] == t), adds)
-            if hits is None:
-                outside.append(t[0])
+        for d, gd, wt, blind in targets:
+            commit_all = any(c[3] for c in COMMITS if c[:3] + c[5:] == (d, gd, wt, blind))
+            top, hits = scan_commit((d, gd, wt), commit_all)
+            if blind:
+                blind_subs.append("commit")
+                blind_top = blind_top or top
+                blind_found.extend(hits or [])
+            elif hits is None:
+                outside.append(d)
             else:
-                out.extend(hits)
+                found.extend(hits)
+        for a in adds:
+            top, hits = scan_add(a)
+            if a[5]:
+                blind_subs.append("add")
+                blind_top = blind_top or top
+                blind_found.extend(hits or [])
+            else:
+                found.extend(hits or [])     # an add outside a work tree fails, and stages nothing
     except (OSError, ValueError) as e:
         sys.stdout.write(str(e))
         sys.exit(4)
     seen = []
-    for h in out:
+    for h in found:
         if h not in seen:
             seen.append(h)
-    if not seen and outside:
+    blind_seen = []
+    for h in blind_found:
+        if h not in seen and h not in blind_seen:
+            blind_seen.append(h)
+    if blind_seen:
+        seen.append("the hook could not follow a cd before a git %s, so it scanned the session directory\x27s repo (%s) instead:" % (blind_subs[0], blind_top))
+        seen.extend(blind_seen)
+    if seen:
+        sys.stdout.write("\n".join(seen))
+        return
+    if blind_subs and blind_top is None:
+        sys.stdout.write("a git %s follows a cd the hook cannot expand, so the repo it runs in is unknown, and the session directory is not a git work tree" % blind_subs[0])
+        sys.exit(ALLOW_EXIT)
+    if outside:
         sys.stdout.write("not a git work tree (%s)" % outside[0])
         sys.exit(ALLOW_EXIT)
-    sys.stdout.write("\n".join(seen))
+    if blind_subs:
+        sys.stdout.write("a git %s follows a cd the hook cannot expand; the session directory\x27s repo (%s) was scanned instead and is clean" % (blind_subs[0], blind_top))
+        sys.exit(ALLOW_EXIT)
 
-def scan_commit(target, commit_all, adds):
-    """The findings for one commit target, or None when it is not a work tree."""
-    d, gd, wt = target
+def toplevel(d, gd, wt):
+    """The work tree top git would run in, or None when it is not a work tree."""
     rc, top = run(gitbase(d, gd, wt) + ["rev-parse", "--show-toplevel"])   # fails inside .git and in a bare repo
     top = top.strip()
-    if rc != 0 or not top:
-        return None
+    return top if rc == 0 and top else None
+
+def scan_commit(target, commit_all):
+    """(top, findings) for the staged lines of one commit target, and with -a its
+    unstaged ones; (None, None) when it is not a work tree."""
+    d, gd, wt = target
+    top = toplevel(d, gd, wt)
+    if top is None:
+        return None, None
     g = gitopts(top, gd, wt)
-    out = []
     paths = set(git(g, "diff", "--cached", *NAMES).split("\0")) - {""}
     diffs = [git(g, "diff", "--cached", *PATCH)]
     if commit_all:
         diffs.append(git(g, "diff", *PATCH))
         paths |= set(git(g, "diff", *NAMES).split("\0")) - {""}
-    for ad, agd, awt, specs, force in adds:
-        ga = gitopts(ad, agd, awt)
-        atop = git(ga, "rev-parse", "--show-toplevel").strip()
-        spec = ["--"] + (specs or [":/"])
-        diffs.append(git(ga, "diff", *PATCH, *spec))
-        paths |= set(git(ga, "diff", *NAMES, *spec).split("\0")) - {""}
-        others = ["ls-files", "--others", "--full-name", "-z"] + ([] if force else ["--exclude-standard"])
-        for p in git(ga, *others, *spec).split("\0"):
-            if not p:
+    return top, diff_hits(diffs) + path_hits(paths)
+
+def scan_add(add):
+    """(top, findings) for what one git add would stage: the unstaged lines
+    of tracked files and the untracked files its pathspecs name; (None, None)
+    when it runs outside a work tree."""
+    ad, agd, awt, specs, force, blind = add
+    atop = toplevel(ad, agd, awt)
+    if atop is None:
+        return None, None
+    ga = gitopts(ad, agd, awt)
+    out = []
+    spec = ["--"] + (specs or [":/"])
+    diffs = [git(ga, "diff", *PATCH, *spec)]
+    paths = set(git(ga, "diff", *NAMES, *spec).split("\0")) - {""}
+    others = ["ls-files", "--others", "--full-name", "-z"] + ([] if force else ["--exclude-standard"])
+    for p in git(ga, *others, *spec).split("\0"):
+        if not p:
+            continue
+        paths.add(p)
+        full = os.path.join(atop, p)
+        try:
+            if os.path.getsize(full) > 1 << 20:
                 continue
-            paths.add(p)
-            full = os.path.join(atop, p)
-            try:
-                if os.path.getsize(full) > 1 << 20:
-                    continue
-                data = open(full, "rb").read()
-            except OSError:
-                continue
-            if b"\0" in data:
-                continue
-            for i, text in enumerate(data.decode("utf-8", "replace").split("\n"), 1):
-                out.extend(content_hits(p, i, text))
+            data = open(full, "rb").read()
+        except OSError:
+            continue
+        if b"\0" in data:
+            continue
+        for i, text in enumerate(data.decode("utf-8", "replace").split("\n"), 1):
+            out.extend(content_hits(p, i, text))
+    return atop, out + diff_hits(diffs) + path_hits(paths)
+
+def diff_hits(diffs):
+    out = []
     for diff in diffs:
         for path, n, text in added_lines(diff):
             out.extend(content_hits(path, n, text))
+    return out
+
+def path_hits(paths):
+    out = []
     for p in sorted(paths):
         h = path_hit(p)
         if h:

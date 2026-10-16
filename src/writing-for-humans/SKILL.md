@@ -25,7 +25,23 @@ Every passage is **procedural** (instructions — the reader will *do* something
 
 ## Register by artifact
 
-Every artifact's register is a row in [references/register-by-artifact.md](references/register-by-artifact.md) § The register table — a ticket, doc, README, guide, ADR rationale, session summary, incident report, shift note, release note, error message, commit or PR body, review reply, recap, status note, launch update, or runbook. Open it before writing one. A recap drawn from a transcript also reads [references/recap-from-transcript.md](references/recap-from-transcript.md). Outbound as the user takes the user's own voice and **no em dashes, none**: open [references/outbound-as-the-user.md](references/outbound-as-the-user.md) before drafting.
+Admit a row only with a named typist — the role that writes the artifact, and how often — never for an artifact nobody here produces; admit a register entry inside a row after two sightings in real drafts, never one.
+
+| Artifact | Register |
+| --- | --- |
+| **Ticket body, doc** | Neutral and plain; contractions fine — but avoid negative ones ("cannot", not "can't": readers misread them as their opposite) |
+| **README, and a guide (a how-to, a tutorial)** | Same register, plus the first-screen and guide structure rules in [references/register-by-artifact.md](references/register-by-artifact.md) — open it before writing one |
+| **ADR rationale** | Descriptive, and it takes a position — "strike a balance" and "it depends" prose is the decision dodging itself; name who decided and why |
+| **Session summary, incident report** | Outcome first, the unknown stated as "unknown"; the tense and first-and-last-line rules in [references/register-by-artifact.md](references/register-by-artifact.md) — open it before writing one |
+| **On-call shift note (the outgoing on-call, per shift)** | Handover, not diary; the five sections in [references/register-by-artifact.md](references/register-by-artifact.md) — open it before writing one |
+| **Changelog entry, release note** | Notable-to-users only; the ordering, citation, and file rules in [references/register-by-artifact.md](references/register-by-artifact.md) — open it before writing one |
+| **Error message, UX microcopy** | Calm, zero playfulness; the five-question shape in [references/register-by-artifact.md](references/register-by-artifact.md) — open it before writing one |
+| **Commit message, PR body, review reply, closing comment** | Impersonal and matter-of-fact; the person and mood rules, and the catalog family that fires here, in [references/register-by-artifact.md](references/register-by-artifact.md) — open it before writing one |
+| **Meeting notes (whoever posts the recap)** | Actions owned and dated or flagged; the decided-from-discussed and verbatim rules in [references/register-by-artifact.md](references/register-by-artifact.md), and a recap drawn from a transcript or recording reads it under [references/recap-from-transcript.md](references/recap-from-transcript.md) — open them before writing one |
+| **Weekly status note to a manager (any engineer, weekly)** | Progress, not activity: one status line, then what last week's note promised and whether it happened, then the four sections in [references/register-by-artifact.md](references/register-by-artifact.md) — open it before writing one; `/report-progress` drafts one from the repos and tracker |
+| **Stakeholder, exec, or launch update (the milestone's lead, per milestone)** | The whole update in its first lines, then the decisions needed, each with options and a date; one audience per draft, in [references/register-by-artifact.md](references/register-by-artifact.md) — open it before writing one |
+| **Runbook, release or migration procedure (its owning engineer, per change)** | From a real run, never the desk; the skeleton in [references/register-by-artifact.md](references/register-by-artifact.md) — open it before writing one |
+| **Outbound as the user — email, Teams message, memo, proposal, questionnaire** | The user's own voice, matched from a writing sample they supply, with their own sentences kept over composed ones; **no em dashes, none**, and the full tell catalog swept at maximum strictness. The rules, and the sweep's script (§ The dash sweep), are in [references/outbound-as-the-user.md](references/outbound-as-the-user.md) — open it before drafting |
 
 ## Referring to work items
 

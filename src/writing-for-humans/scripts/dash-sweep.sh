@@ -9,10 +9,13 @@
 # tracking residue lives); the grep finds an em dash, a double hyphen with a space
 # or no-break space on each side, an en dash not between digits (one opening a
 # line counts, even before a digit), tool residue (utm_source=, oaicite,
-# turn0search, a bracketed placeholder such as [Your Name], but not the text of
-# a link: `](#`, `][`, `]:`, and `](http`, which the URL mask has already cut to
-# `]()` or `](?`, so `[Insert Date](optional)` still hits) and a zero-width
-# space. The no-break and zero-width spaces are
+# turn0search, a bracketed placeholder such as [Your Name], and a zero-width
+# space. A placeholder is not the text of a link: `](#`, `](` holding a `.`, `/`,
+# `:` or `@` (`[The guide](guide.md)`, `[Contact Us](mailto:a@b.c)`), and
+# `](http`, which the URL mask has already cut to `]()` or `](?`. So
+# `[Insert Date](optional)` still hits, and so does `[Your Name][1]` mid-line.
+# A `[Name]:` is a reference definition only with nothing but spaces before it
+# on its line; `Dear [Name]: hello` hits. The no-break and zero-width spaces are
 # written as byte escapes so BSD grep matches them too. This line is the one copy
 # of the pipeline: edit it here, never retype it elsewhere, and run
 # dash-sweep-selftest.sh after.
@@ -40,7 +43,7 @@ if [ ! -f "$1" ] || [ ! -r "$1" ]; then
   exit 3
 fi
 
-sed -E -e 's/`[^`]*`//g' -e 's#https?://[^ )>?]*##g' "$1" | grep -nE '—|( |'$'\xc2\xa0'')--( |'$'\xc2\xa0'')|^–|[^0-9]–|–[^0-9]|–$|utm_source=|oaicite|turn0search|\[[A-Z][A-Za-z ]*\]([^(:[]|\(([^)?#]|$)|$)|'$'\xe2\x80\x8b'
+sed -E -e 's/`[^`]*`//g' -e 's#https?://[^ )>?]*##g' "$1" | grep -nE '—|( |'$'\xc2\xa0'')--( |'$'\xc2\xa0'')|^–|[^0-9]–|–[^0-9]|–$|utm_source=|oaicite|turn0search|\[[A-Z][A-Za-z ]*\]([^(:]|\(([^)?#./:@][^).:/@]*(\)|$)|$)|$)|[^ ] *\[[A-Z][A-Za-z ]*\]:|'$'\xe2\x80\x8b'
 
 status=("${PIPESTATUS[@]}")
 if [ "${status[0]}" -ne 0 ]; then

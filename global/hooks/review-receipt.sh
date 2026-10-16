@@ -16,7 +16,8 @@
 # count as this user's (owned by `id -u`, neither group- nor world-writable)
 # are src/handoff/scripts/landing.sh's: this hook reads `landing.sh zones` and
 # `landing.sh list --kind review --repo <repo>`, the lookup the writers use,
-# so a zone landing.sh refuses prints no zone here and the push holds.
+# so a zone landing.sh refuses prints no zone here (and fails `list`) and the
+# push holds, carrying landing.sh's own reason in the block message.
 #
 # Which repo: the directory the push runs in, not merely the session's cwd —
 # a leading `cd <dir> &&`, `pushd <dir> &&`, `git -C <dir>`, `--git-dir`,
@@ -25,9 +26,9 @@
 # cannot expand (`cd "$X"`) or to a directory that does not exist falls back
 # to the payload's `cwd`. A push from inside `.git` resolves to its work tree.
 #
-# Opt-in by repo: walking from that directory up to the repo top, the nearest
-# `CLAUDE.md` carrying a `Review required:` line decides — `yes` gates the
-# push, `no` does not (so a package can opt out under a gated root). The line
+# Opt-in by repo: the repo top's `CLAUDE.md` alone decides — a `Review
+# required: yes` line gates the push, `no` or no line does not. A push sends
+# the whole branch, so a `CLAUDE.md` in a subdirectory never opts out. The line
 # is read anywhere in the file outside a fenced block, not only inside the
 # `Landing:` block it belongs in; bold, backticks, or a list marker around the
 # key or the value are fine; `yes (…)` is not yes. A repo with no such line is
@@ -40,7 +41,7 @@
 # Which tree: EVERY source the push would send, because git sends them all.
 # For refspecs, each one's source (`feat:main`, `HEAD:main`, a bare `main`, a
 # leading `+` dropped) — a second refspec is gated exactly like the first —
-# else `HEAD`. For `--all`, `--mirror`, or a wildcard refspec, every local
+# else `HEAD`. A negative refspec (`^…`) sends nothing and is dropped. For `--all`, `--mirror`, or a wildcard refspec, every local
 # branch that is new on the remote or ahead of it. Each source's tree hash
 # (`git rev-parse <src>^{tree}`) must equal a stamp in some matching report,
 # and one unstamped source blocks the whole command; the block message names
@@ -55,8 +56,9 @@
 # measured report, not a review. The script is found from this hook's own
 # resolved path (`<checkout>/src/review-changes/scripts/`), and landing.sh
 # the same way (`<checkout>/src/handoff/scripts/`). The opt-in scan strips
-# fences by tree-stamp.sh's rule: ``` or ~~~ opens one, and only the same
-# marker closes it. A report may carry several stamps, one per stamping,
+# fences by tree-stamp.sh's rule: a run of three or more ` or ~ opens one,
+# and only a run of the same character at least as long closes it. A report
+# may carry several stamps, one per stamping,
 # and any of them matches. The work-tree
 # hash `review-changes` and `address-findings` write is the one
 # src/review-changes/scripts/tree-stamp.sh prints
@@ -75,14 +77,20 @@
 # Which range, for "nothing to push": only for a single-source push —
 # `<remote>/<dst>..<src>` when the command names a remote (as an argument or
 # `--repo`) and the refspec's destination, else `@{upstream}..HEAD`, else
-# `origin/<branch>..<src>`. With nothing to push, or no ref to compare
-# against, the command runs with a breadcrumb. A multi-refspec or `--all`
+# `origin/<branch>..<src>`. With nothing to push the command runs with a
+# breadcrumb. With no ref to compare against — a push to a URL, a branch's
+# first push, a repo with no remote — there is no range and no shortcut: the
+# receipt decides, since every commit is new there. A multi-refspec or `--all`
 # push skips this shortcut: "is anything being sent" is already answered by
 # whether any branch is ahead, and applying one branch's range to all of them
 # is what let every unreviewed branch out before. A refspec that sends no
 # branch commits — a delete (`:dst`) or a tag — is dropped from the sources,
 # not taken as the whole push's answer; a push left with no refspec, and a
-# `--delete` push, runs with a breadcrumb.
+# `--delete` push, runs with a breadcrumb. A refspec is a tag push when its
+# source is a tag (`refs/tags/…`, or a name that is a tag and not a branch)
+# and its destination is absent or under `refs/tags/`; the destination's name
+# alone never decides, so `wip:v1` is a branch push where a tag `v1` exists,
+# and a tag source sent to a branch (`v1:main`) is gated like any other.
 #
 # What it does not see: whether `review-changes` wrote the stamp — a hash
 # typed into a file by hand matches as well as one the review computed, and
@@ -105,26 +113,33 @@
 #
 # Fail-open, each with a one-line stderr breadcrumb: a malformed payload, a
 # missing python3 or git, a tokeniser error (an unterminated quote, more
-# than four nested shells), a push outside a git work tree, a CLAUDE.md the
-# opt-in walk cannot read, a repo with no ref to compare against, a source ref
-# whose tree cannot be resolved, or any error counting the commits in the
-# range. A safety hook that blocks on its own errors trains the user to
-# disable it. Fail-closed, in an opted-in repo only: the stamp reader or
-# landing.sh missing from beside the checkout, or either failing (a reader
-# failing on a report it could read, `zones` or `list` exiting non-zero) —
-# a copy of this directory made outside the checkout would otherwise ungate
-# every push with only a breadcrumb, which is a broken install, not an error
-# in the hook. A report that cannot be read is NOT a fail-open: it is skipped
+# than four nested shells), a push outside a git work tree, or any error
+# counting the commits in the range. A top-level CLAUDE.md the hook cannot
+# read holds the push: an unreadable opt-in line must not ungate a repo. A
+# safety hook that blocks on its own errors trains the user to disable it.
+# Fail-closed, in an opted-in repo only: a source whose tree git cannot
+# resolve (a push git would refuse anyway, and allowing it let a negative
+# refspec ungate the rest); the stamp reader or landing.sh missing from
+# beside the checkout, or either failing (a reader failing on a report it
+# could read, `zones` printing no zone or `zones` or `list` exiting non-zero,
+# landing.sh's stderr carried into the block) — a copy of this directory
+# made outside the checkout would otherwise ungate every push with only a
+# breadcrumb, which is a broken install, not an error in the hook, and a zone
+# landing.sh refuses is the user's to fix. A report that cannot be read, or
+# that the stamp reader exits 4 on, is NOT a fail-open: it is skipped
 # with a breadcrumb and the remaining reports still decide, because an
 # unreadable file can carry no stamp and failing open on one would let a
-# planted `chmod 000` file disable the gate. Silent exits (no breadcrumb):
+# planted `chmod 000` file disable the gate; skipping can only drop stamps, so
+# it never lets a push through that reading would have held, and holding on
+# it instead would let the same planted file block every push. next-step.sh
+# skips such a report too. Silent exits (no breadcrumb):
 # the command is not a push, or the repo is not opted in.
 #
 # REVIEW_RECEIPT_DIR, when set, replaces the landing-zone search (the selftest
 # uses it; a user with a non-standard temp dir can too); landing.sh's header
 # owns that zone policy.
 #
-# Install note: opt a repo in with a 'Review required: yes' line in its CLAUDE.md Landing: block (nearest CLAUDE.md wins; 'no' opts a directory out).
+# Install note: opt a repo in with a 'Review required: yes' line in its top-level CLAUDE.md Landing: block.
 #
 # Wire it in ~/.claude/settings.json (scripts/install.sh prints the block):
 #   hooks.PreToolUse[] = { matcher: "Bash",
@@ -155,9 +170,10 @@ command -v git >/dev/null 2>&1 || hook_allow "git not found"
 # Prints one "kind<US>dir<US>remote<US>refspec<US>extra-refspecs<US>all<GS>"
 # record per push (US = 0x1f, GS = 0x1d, extras RS-separated) — kind is `push`
 # or `delete`; `all` is set for --all/--mirror; any field may be empty —
-# nothing otherwise. on_command writes each record itself and returns no hit,
-# so the scan runs to the end of the command instead of stopping at its
-# first push: `git push origin other && git push origin main` is two pushes.
+# nothing otherwise. on_command collects each push and returns no hit, so the
+# scan runs to the end of the command instead of stopping at its first push
+# (`git push origin other && git push origin main` is two pushes); finish()
+# hands the list to emit as the one hit, and an empty list emits nothing.
 hook_scan '
 PUSH_VALUE_OPTS = {"-o", "--push-option", "--receive-pack", "--exec", "--repo"}
 DRYRUN = re.compile(r"^(--dry-run|-[A-Za-z]*n[A-Za-z]*)$")
@@ -213,17 +229,22 @@ def check_git(args, curdir):
             "\x1e".join(refspecs[1:]), pushall)
 
 
+PUSHES = []
+
 def on_command(seg, curdir):
     args = git_args(seg)
     hit = check_git(args, curdir) if args is not None else None
     if hit:
-        kind, d, remote, refspec, extras, pushall = hit
+        PUSHES.append(hit)
+    return None                    # no hit: the scan goes on to the next push
+
+def finish():
+    return list(PUSHES)            # every push, as one hit; empty means none
+
+def emit(pushes):
+    for kind, d, remote, refspec, extras, pushall in pushes:
         sys.stdout.write("%s\x1f%s\x1f%s\x1f%s\x1f%s\x1f%s\x1d"
                          % (kind, d or "", remote, refspec, extras, pushall))
-    return None
-
-def emit(hit):
-    pass                           # never reached: on_command returns no hit
 '
 records=()
 while IFS= read -r -d $'\x1d' rec; do records+=("$rec"); done < <(printf '%s' "$hook_result")
@@ -247,27 +268,41 @@ rec_allow() {
   fi
 }
 
-# hold <why>: in an opted-in repo, a receipt this hook cannot check blocks.
+# hold <why> [<remedy>]: in an opted-in repo, a receipt this hook cannot check
+# blocks. The remedy defaults to the broken-install one.
 hold() {
   {
     echo "review-receipt: blocked a push from $repo — $1, so the receipt cannot be checked."
     echo "  command: $cmd"
-    echo "  This repo's Landing key says 'Review required: yes'. The hook reads its stamp reader and"
-    echo "  landing.sh from the skills checkout it lives in (global/hooks/ beside src/); run it from that"
-    echo "  checkout (scripts/install.sh wires it), or push from your own terminal."
+    if [ -n "${2:-}" ]; then
+      printf '%s\n' "$2" | sed 's/^/  /'
+    else
+      echo "  This repo's Landing key says 'Review required: yes'. The hook reads its stamp reader and"
+      echo "  landing.sh from the skills checkout it lives in (global/hooks/ beside src/); run it from that"
+      echo "  checkout (scripts/install.sh wires it), or push from your own terminal."
+    fi
   } >&2
   exit 2
 }
 
-# is_tag <refspec>: the refspec's destination is a tag, not a branch
+# landing_why <args>: landing.sh's own stderr for a call, on one line — its
+# reason for refusing a zone, which the hold carries rather than blaming the install
+landing_why() { "${BASH:-bash}" "$landing" "$@" 2>&1 >/dev/null | tr '\n' ' ' | sed 's/ *$//'; }
+landing_fix="landing.sh gives its reason above. A landing zone it refuses (owned by another uid, or
+group- or world-writable) is fixed or removed, then the review report written again; or push from
+your own terminal."
+
+# is_tag <refspec>: the refspec sends a tag, not branch commits — its source
+# is a tag (refs/tags/…, or a name that is a tag and not a branch) and its
+# destination is absent or under refs/tags/. The destination's name never
+# decides alone: `wip:v1` sends a branch even where a tag v1 exists.
 is_tag() {
-  local r="${1#+}" d
-  case "$r" in *:*) d="${r#*:}" ;; *) d="$r" ;; esac
-  case "$d" in refs/tags/*) return 0 ;; esac
-  d="${d#refs/heads/}"
-  [ -n "$d" ] || return 1
-  ! git -C "$top" rev-parse --verify -q "refs/heads/$d" >/dev/null 2>&1 \
-    && git -C "$top" rev-parse --verify -q "refs/tags/$d" >/dev/null 2>&1
+  local r="${1#+}" s d=""
+  case "$r" in *:*) s="${r%%:*}" d="${r#*:}" ;; *) s="$r" ;; esac
+  case "$d" in ""|refs/tags/*) ;; *) return 1 ;; esac
+  case "$s" in refs/tags/?*) return 0 ;; refs/*|"") return 1 ;; esac
+  ! git -C "$top" rev-parse --verify -q "refs/heads/$s" >/dev/null 2>&1 \
+    && git -C "$top" rev-parse --verify -q "refs/tags/$s" >/dev/null 2>&1
 }
 
 # judge <record>: returns when this push passes, exits 2 when it is blocked.
@@ -276,7 +311,8 @@ judge() {
   IFS=$'\x1f' read -r kind pushdir remote refspec extras pushall <<< "$1"
   [ "$kind" = "delete" ] && { rec_allow "a delete sends no commits"; return 0; }
 
-  # every refspec, the first and the extras; a delete refspec (`:dst`) sends no commits
+  # every refspec, the first and the extras; a delete refspec (`:dst`) sends no
+  # commits, and a negative one (`^…`) excludes refs rather than sending one
   rs=()
   [ -n "$refspec" ] && rs+=("$refspec")
   if [ -n "$extras" ]; then
@@ -285,6 +321,7 @@ judge() {
   kept=() dropped=""
   for r in ${rs[@]+"${rs[@]}"}; do
     case "$r" in :*|+:*) dropped=1; continue ;; esac
+    case "$r" in ^*) continue ;; esac
     kept+=("$r")
   done
   [ -n "$dropped" ] && [ "${#kept[@]}" -eq 0 ] && { rec_allow "a delete refspec sends no commits"; return 0; }
@@ -310,35 +347,27 @@ judge() {
   [ -n "$top" ] || { rec_allow "not inside a git work tree"; return 0; }
   repo="$(basename "$top")"
 
-  # --- opt-in: the nearest CLAUDE.md carrying the line, from the push directory up ---
-  # The fence rule is tree-stamp.sh's: a ``` or ~~~ line opens a fence, and
-  # only the same marker closes it. next-step.sh's unfenced is the same awk.
+  # --- opt-in: the repo top's CLAUDE.md alone decides --------------------------
+  # The fence rule is tree-stamp.sh's: a run of three or more ` or ~ opens a
+  # fence, and only a run of the same character at least as long closes it.
+  # next-step.sh's unfenced is the same awk.
   OPT_IN='^[-* >]*\**`?Review required:`?\**[[:space:]]*\**`?(yes|no)`?\**[[:space:]]*$'
   gated=""
-  dir="$(cd "$start" && pwd -P)"
-  top_phys="$(cd "$top" && pwd -P)"
-  while :; do
-    if [ -f "$dir/CLAUDE.md" ]; then
-      unfenced="$(awk '
-        match($0, /^[[:space:]]*(```|~~~)/) {
-          marker = substr($0, RSTART + RLENGTH - 3, 3)
-          if (fence == "") { fence = marker; next }
-          if (marker == fence) { fence = ""; next }
-        }
-        fence != "" { next }
-        { print }' "$dir/CLAUDE.md" 2>/dev/null)" || { rec_allow "could not read $dir/CLAUDE.md"; return 0; }
-      line="$(printf '%s\n' "$unfenced" | grep -iE "$OPT_IN" | head -1; exit "${PIPESTATUS[1]}")"
-      grc=$?
-      [ "$grc" -le 1 ] || { rec_allow "could not scan $dir/CLAUDE.md (grep rc=$grc)"; return 0; }
-      if [ -n "$line" ]; then
-        # the nearest CLAUDE.md that carries the line decides, either value
-        printf '%s\n' "$line" | grep -qi 'yes' && gated=1
-        break
-      fi
-    fi
-    [ "$dir" = "$top_phys" ] || [ "$dir" = "/" ] && break
-    dir="$(dirname "$dir")"
-  done
+  optin="$top/CLAUDE.md"
+  if [ -e "$optin" ]; then
+    unfenced="$(awk '
+      match($0, /^[[:space:]]*(```+|~~~+)/) {
+        run = substr($0, RSTART, RLENGTH); sub(/^[[:space:]]*/, "", run)
+        if (fence == "") { fence = run; next }
+        if (substr(run, 1, 1) == substr(fence, 1, 1) && length(run) >= length(fence)) { fence = ""; next }
+      }
+      fence != "" { next }
+      { print }' "$optin" 2>/dev/null)" || hold "could not read $optin" "Make $optin readable, or push from your own terminal."
+    line="$(printf '%s\n' "$unfenced" | grep -iE "$OPT_IN" | head -1; exit "${PIPESTATUS[1]}")"
+    grc=$?
+    [ "$grc" -le 1 ] || hold "could not scan $optin (grep rc=$grc)" "Push from your own terminal."
+    printf '%s\n' "$line" | grep -qi 'yes' && gated=1
+  fi
   [ -n "$gated" ] || return 0
 
   # --- the refspecs that send branch commits: a tag refspec sends none ------------
@@ -347,8 +376,7 @@ judge() {
     for r in "${rs[@]}"; do is_tag "$r" && continue; kept+=("$r"); done
     [ "${#kept[@]}" -gt 0 ] || { rec_allow "a tag push sends no branch commits"; return 0; }
   fi
-  refspec="${kept[0]:-}" extras=""
-  [ "${#kept[@]}" -gt 1 ] && extras="$(printf '%s\036' "${kept[@]:1}")"
+  refspec="${kept[0]:-}"
 
   # --- the range the push would send --------------------------------------------
   branch="$(git -C "$top" symbolic-ref --short -q HEAD 2>/dev/null || true)"
@@ -395,6 +423,18 @@ judge() {
     done
   fi
 
+  # --- the tree(s) the push would send ---------------------------------------------
+  # Every source must be stamped; one unstamped source blocks the whole command,
+  # because git sends them all. Resolved before the range, so a source git
+  # cannot resolve holds here rather than failing open on the commit count.
+  trees=()
+  for s in "${srcs[@]}"; do
+    t="$(git -C "$top" rev-parse --verify -q "$s^{tree}" 2>/dev/null || true)"
+    [ -n "$t" ] || hold "git cannot resolve the tree of $s" "Check the refspec (git would refuse a source it cannot resolve), or push from your own terminal."
+    trees+=("$t")
+  done
+  tree="${trees[0]}"
+
   range=""
   if [ -n "$remote" ] && [ -n "$dst" ] && git -C "$top" rev-parse --verify -q "$remote/$dst" >/dev/null 2>&1; then
     range="$remote/$dst..$src"
@@ -403,9 +443,10 @@ judge() {
   elif [ -n "$branch" ] && git -C "$top" rev-parse --verify -q "origin/$branch" >/dev/null 2>&1; then
     range="origin/$branch..$src"
   fi
+  # no range (a URL, a branch's first push, no remote): every commit is new
+  # there, so there is no "nothing to push" shortcut and the receipt decides
   count="?"
-  if [ "${#srcs[@]}" -eq 1 ] && [ -z "$wide" ]; then
-    [ -n "$range" ] || { rec_allow "no remote ref to compare against"; return 0; }
+  if [ "${#srcs[@]}" -eq 1 ] && [ -z "$wide" ] && [ -n "$range" ]; then
     count="$(git -C "$top" rev-list --count "$range" 2>/dev/null || echo '?')"
     case "$count" in
       ''|0)       rec_allow "nothing to push on this branch"; return 0 ;;
@@ -413,28 +454,25 @@ judge() {
     esac
   fi
 
-  # --- the tree(s) the push would send ---------------------------------------------
-  # Every source must be stamped; one unstamped source blocks the whole command,
-  # because git sends them all.
-  trees=()
-  for s in "${srcs[@]}"; do
-    t="$(git -C "$top" rev-parse --verify -q "$s^{tree}" 2>/dev/null || true)"
-    [ -n "$t" ] || { rec_allow "could not resolve the tree of $s"; return 0; }
-    trees+=("$t")
-  done
-  tree="${trees[0]}"
-
   # --- the receipt ---------------------------------------------------------------
   # The zones and the report list are landing.sh's; a reader that is missing
   # or fails holds the push rather than waving it through.
   [ -f "$stamp_reader" ] || hold "the stamp reader is not at $stamp_reader"
   [ -f "$landing" ] || hold "landing.sh is not at $landing"
-  zones_out="$("${BASH:-bash}" "$landing" zones 2>/dev/null)" || hold "landing.sh zones failed"
+  if ! zones_out="$("${BASH:-bash}" "$landing" zones 2>/dev/null)"; then
+    why="$(landing_why zones)"
+    hold "landing.sh zones failed${why:+ ($why)}" "${why:+$landing_fix}"
+  fi
   zones=()
   while IFS= read -r z; do [ -n "$z" ] && zones+=("$z"); done <<< "$zones_out"
-  [ "${#zones[@]}" -gt 0 ] || hold "landing.sh zones printed no zone"
-  list_out="$("${BASH:-bash}" "$landing" list --kind review --repo "$repo" 2>/dev/null)" \
-    || hold "landing.sh list --kind review failed"
+  if [ "${#zones[@]}" -eq 0 ]; then
+    why="$(landing_why zones)"
+    hold "landing.sh zones printed no zone${why:+ ($why)}" "${why:+$landing_fix}"
+  fi
+  if ! list_out="$("${BASH:-bash}" "$landing" list --kind review --repo "$repo" 2>/dev/null)"; then
+    why="$(landing_why list --kind review --repo "$repo")"
+    hold "landing.sh list --kind review failed${why:+ ($why)}" "${why:+$landing_fix}"
+  fi
   reports=0
   stamps=""
   stamp_files=""
@@ -471,9 +509,11 @@ $h $f"
   done
   [ -n "$unstamped" ] || return 0
   src="$unstamped"
+  sent="$count unpushed commit(s) in $range"
+  [ -n "$range" ] || sent="no remote ref to compare against, so every commit is new there"
 
   {
-    echo "review-receipt: blocked a push from $repo — no review report stamps the tree the push would send ($src^{tree} = ${tree:0:12}; $count unpushed commit(s) in $range)."
+    echo "review-receipt: blocked a push from $repo — no review report stamps the tree the push would send ($src^{tree} = ${tree:0:12}; $sent)."
     echo "  command: $cmd"
     if [ "$reports" -gt 0 ]; then
       last_line="$(printf '%s\n' "$stamp_files" | grep -E '^[0-9a-f]{40} ' | tail -1)"

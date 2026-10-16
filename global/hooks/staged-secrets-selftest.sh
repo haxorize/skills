@@ -16,8 +16,12 @@
 # unexpandable pathspec, `add -f` of an ignored file, `add -A` from a
 # subdirectory, `git -C`, `cd … &&`, `--git-dir`/`--work-tree`,
 # `--pathspec-from-file` in both spellings, every commit in a chain and the
-# adds before the last, a `cd` the scanner cannot expand, a failed `git
-# config` read of the filters); a diff read
+# adds before the last, a `cd` the scanner cannot expand — the session
+# directory's repo scanned in its place, blocking on a hit there, allowing
+# with a breadcrumb when clean or not a work tree, never before the placed
+# commits are scanned, an absolute `-C` / `--git-dir` / `--work-tree` in
+# either spelling placing the command — a failed `git config` read of the
+# filters); a diff read
 # whatever the repo's diff config says (prefixes, `diff.relative`, a `-diff`
 # attribute, quoted paths, an added line starting `++`); a repo whose config
 # names a program on every path the scan takes (fsmonitor, textconv, a diff
@@ -33,6 +37,9 @@
 # does not grade: hook-lib's command shapes (commit-bypass-selftest.sh owns
 # those).
 set -u
+# git exports GIT_INDEX_FILE=.git/index (and more) to a pre-commit hook; inherited,
+# it points each fixture's git at the cwd's index rather than the one --git-dir names.
+unset $(git rev-parse --local-env-vars)
 here="$(cd "$(dirname "$0")" && pwd)"
 hook="$here/staged-secrets.sh"
 # Temp-file template and guard: scripts/README.md § Temp files.
@@ -186,11 +193,28 @@ expect_block "$r" "git commit --allow-empty -m a; git add new.txt; git commit -m
 expect_quiet "$r" "git commit --allow-empty -m a; git add new.txt" "an add after the last commit stages nothing it commits"
 r2="$(staged c.txt "k = $GHP")"; in_fixture "$r2"
 expect_block "$tmp" "git -C $r commit --allow-empty -m a; git -C $r2 commit -m b" "a second commit in another repo"
-# a cd the scanner cannot expand: the repo is unknown, so the hook says so instead of judging the cwd
+# a cd the scanner cannot expand: the repo is unknown, so the session directory's repo is scanned in its place
 r3="$(newrepo)"; in_fixture "$r3"
-expect_crumb "$r3" "cd \"\$(echo $r2)\" && git commit -m x" "follows a cd the hook cannot expand" "a cd through \$(…)"
+r4="$(newrepo)"; in_fixture "$r4"; printf 'k = %s\n' "$AWS" > "$r4/new.txt"
+mkdir -p "$tmp/plain"
+expect_crumb "$r3" "cd \"\$(echo $r2)\" && git commit -m x" "follows a cd the hook cannot expand" "a cd through \$(…), the session repo clean"
+expect_block "$r2" "cd \"\$(echo $r3)\" && git commit -m x" "a cd through \$(…), a hit in the session repo"
+expect_block "$r4" 'cd "$(git rev-parse --show-toplevel)" && git add new.txt && git commit -m x' "a cd to the top through \$(…), an add the session repo holds"
+expect_block "$r2" "cd - && git commit -m x" "cd - is unknown, a hit in the session repo"
+expect_crumb "$tmp/plain" "cd \"\$(echo $r2)\" && git commit -m x" "the session directory is not a git work tree" "an unknown cd from a directory that is not a repo"
+out="$(crumb "$r2" "cd \"\$(echo $r3)\" && git commit -m x")"
+printf '%s' "$out" | grep -q "could not follow a cd" || { echo "FAIL: a hit in the session repo should say the cd was not followed — $out"; fail=1; }
 R2="$r2" expect_block "$r3" 'cd "$R2" && git commit -m x' "a cd through a variable set in the environment"
+HOME="$r2" expect_block "$r3" "cd && git commit -m x" "a bare cd goes to HOME, not the session repo"
 expect_block "$r3" "cd \"\$(echo x)\" && git -C $r2 commit -m x" "an absolute -C after an unknown cd"
+expect_block "$r3" "cd \"\$(echo x)\" && git --git-dir=$r2/.git --work-tree=$r2 commit -m x" "an absolute --git-dir=/--work-tree= after an unknown cd"
+expect_block "$r3" "cd \"\$(echo x)\" && git --git-dir $r2/.git --work-tree $r2 commit -m x" "an absolute --git-dir/--work-tree as separate words after an unknown cd"
+expect_crumb "$r3" "cd \"\$(echo x)\" && git --git-dir=$r2/.git --work-tree=. commit -m x" "follows a cd the hook cannot expand" "a relative --work-tree does not place the command"
+# the placed commits are scanned before an unknown cd is decided, and an add after the last commit is not read
+expect_block "$tmp/plain" "git -C $r2 commit -m a; cd \"\$(echo x)\" && git add f" "an unknown cd's add after a placed commit"
+expect_block "$tmp/plain" "cd \"\$(echo x)\" && git commit -m a; git -C $r2 commit -m b" "an unknown cd's commit before a placed commit"
+expect_block "$r4" "cd \"\$(echo x)\" && git add new.txt && git -C $r3 commit -m x" "an unknown cd's add before a placed commit"
+expect_quiet "$r4" "git -C $r3 commit --allow-empty -m a; cd \"\$(echo x)\" && git add new.txt" "an unknown cd's add after the last commit is not read"
 # a git config read that fails is a named fail-open, not a scan with the filters left in place
 mkdir -p "$tmp/fakegit"; realgit="$(command -v git)"
 printf '#!/bin/sh\ncase " $* " in *" config --name-only --get-regexp "*) exit 3 ;; esac\nexec "%s" "$@"\n' "$realgit" > "$tmp/fakegit/git"; chmod +x "$tmp/fakegit/git"
@@ -258,7 +282,6 @@ case "$out" in *"$GHP"*) echo "FAIL: the block message carries the token value";
 printf '%s' "$out" | grep -q 'cfg.txt:1 github-token' || { echo "FAIL: the block message should name cfg.txt:1 github-token — $out"; fail=1; }
 
 # --- fail open ------------------------------------------------------------------
-mkdir -p "$tmp/plain"
 expect_crumb "$tmp/plain" "git commit -m x" "not a git work tree" "outside a repo"
 expect_fail_open "$tmp/plain" "git commit -m 'unterminated"
 
@@ -308,7 +331,7 @@ mutant "drop netrc path"  'r"^\.netrc$"' 'r"^\.netrcX$"'      "$(staged .netrc "
 mutant "drop npmrc path"  'r"^\.npmrc$"' 'r"^\.npmrcX$"'      "$(staged .npmrc "x")" "git commit -m x" 0
 mutant "drop id_dsa path" 'id_(rsa|dsa|ecdsa|ed25519)' 'id_(rsa|ecdsa|ed25519)' "$(staged id_dsa "x")" "git commit -m x" 0
 mutant "drop git stage"   'if sub in ("add", "stage"):' 'if sub in ("add",):' "$(r="$(newrepo)" && in_fixture "$r" && printf 'k = %s\n' "$AWS" > "$r/n.txt" && printf '%s' "$r")" "git stage n.txt && git commit -m x" 0
-mutant "narrow on an unexpandable pathspec" 'ADDS.append((d, gd, wt, [] if wide else specs, force))' 'ADDS.append((d, gd, wt, specs, force))' "$(r="$(newrepo)" && in_fixture "$r" && printf 'k = %s\n' "$AWS" > "$r/n.txt" && printf '%s' "$r")" "git add o.txt \"\$F\" && git commit -m x" 0
+mutant "narrow on an unexpandable pathspec" 'ADDS.append((d, gd, wt, [] if wide else specs, force, blind))' 'ADDS.append((d, gd, wt, specs, force, blind))' "$(r="$(newrepo)" && in_fixture "$r" && printf 'k = %s\n' "$AWS" > "$r/n.txt" && printf '%s' "$r")" "git add o.txt \"\$F\" && git commit -m x" 0
 mutant "ignore -f"        '([] if force else ["--exclude-standard"])' '["--exclude-standard"]' "$(r="$(newrepo)" && in_fixture "$r" && printf 's.txt\n' > "$r/.gitignore" && printf 'k = %s\n' "$AWS" > "$r/s.txt" && printf '%s' "$r")" "git add -f s.txt && git commit -m x" 0
 mutant "-A reads only the subdirectory" '(specs or [":/"])' '(specs or [])' "$(r="$(newrepo)" && in_fixture "$r" && mkdir -p "$r/sub" && printf 'k = %s\n' "$AWS" > "$r/top.txt" && printf '%s' "$r/sub")" "git add -A && git commit -m x" 0
 mutant "diff.relative narrows"  '"--no-relative", ' '' "$(r="$(newrepo)" && in_fixture "$r" && mkdir -p "$r/sub" && git -C "$r" config diff.relative true && printf 'k = %s\n' "$AWS" >> "$r/seed.txt" && printf '%s' "$r/sub")" "git add -A && git commit -m x" 0
@@ -325,11 +348,23 @@ mutant "split_git skips -C"  '            if name == "-C":
                 pass' "$tmp" "git -C $(staged c.txt "k = $GHP") commit -m x" 0 hook-lib.py
 r="$(newrepo)"; in_fixture "$r"; printf 'k = %s\n' "$AWS" > "$r/new.txt"; printf 'new.txt\n' > "$r/list.txt"
 mutant "--pathspec-from-file narrows" '                    wide = True             # the pathspecs are in a file' '                    pass             # the pathspecs are in a file' "$r" "git add --pathspec-from-file list.txt && git commit -m x" 0
-mutant "only the first commit" '        COMMITS.append((d, gd, wt, any(commits_all(a) for a in rest), len(ADDS)))' '        COMMITS.append((d, gd, wt, any(commits_all(a) for a in rest), len(ADDS))) if not COMMITS else None' "$r" "git commit --allow-empty -m a; git add new.txt; git commit -m b" 0
+mutant "only the first commit" '        COMMITS.append((d, gd, wt, any(commits_all(a) for a in rest), len(ADDS), blind))' '        COMMITS.append((d, gd, wt, any(commits_all(a) for a in rest), len(ADDS), blind)) if not COMMITS else None' "$r" "git commit --allow-empty -m a; git add new.txt; git commit -m b" 0
+mutant "an add after the last commit read" 'adds = ADDS[:COMMITS[-1][4]]' 'adds = ADDS' "$r" "git commit --allow-empty -m a; git add new.txt" 2
 r3="$(newrepo)"; in_fixture "$r3"; r2="$(staged c.txt "k = $GHP")"
-mutant "an unknown cd judged as the cwd" '    if curdir is not None:
-        return True' '    if True:
-        return True' "$r2" "cd \"\$(echo $r3)\" && git commit -m x" 2
+r4="$(newrepo)"; in_fixture "$r4"; printf 'k = %s\n' "$AWS" > "$r4/new.txt"
+mutant "a hit in the session repo dropped" 'if blind_seen:' 'if False:' "$r2" "cd \"\$(echo $r3)\" && git commit -m x" 0
+mutant "an unknown cd allowed before the placed scan" '    targets = []
+    for c in COMMITS:' '    if any(c[5] for c in COMMITS) or any(a[5] for a in ADDS):
+        sys.exit(ALLOW_EXIT)
+    targets = []
+    for c in COMMITS:' "$tmp/plain" "cd \"\$(echo x)\" && git commit -m a; git -C $r2 commit -m b" 0
+mutant "an unknown cd add scanned after the last commit" 'adds = ADDS[:COMMITS[-1][4]]' 'adds = ADDS[:COMMITS[-1][4]] + [a for a in ADDS[COMMITS[-1][4]:] if a[5]]' "$r4" "git -C $r3 commit --allow-empty -m a; cd \"\$(echo x)\" && git add new.txt" 2
+mutant "an absolute --git-dir/--work-tree does not place" 'return bool(repo) and all(repo)' 'return False' "$r3" "cd \"\$(echo x)\" && git --git-dir=$r2/.git --work-tree=$r2 commit -m x" 0
+mutant "a relative --work-tree places" 'return bool(repo) and all(repo)' 'return bool(repo) and any(repo)' "$r3" "cd \"\$(echo x)\" && git --git-dir=$r2/.git --work-tree=. commit -m x" 2
+mutant "the separate-word spelling ignored" 'v = val if eq else (pre[i + 1] if i + 1 < len(pre) else None)' 'v = val' "$r3" "cd \"\$(echo x)\" && git --git-dir $r2/.git --work-tree $r2 commit -m x" 0
+cp "$hook" "$here/hook-lib.sh" "$here/hook-lib.py" "$mdir/"
+selftest_mutate "$hook" "$mdir/staged-secrets.sh" 'if blind_subs and blind_top is None:' 'if False:' \
+  && hook="$mdir/staged-secrets.sh" selftest_expect_killed "a session directory outside a repo not named" crumb_has "$tmp/plain" "cd \"\$(echo $r2)\" && git commit -m x" "not a git work tree"
 PATH="$tmp/fakegit:$PATH" mutant "a failed config read ignored" 'if rc not in (0, 1):' 'if False:' "$(staged c.txt "k = $AWS")" "git commit -m x" 2
 # the scan's own breadcrumb rides exit 5, not the findings channel
 cp "$hook" "$here/hook-lib.py" "$mdir/"

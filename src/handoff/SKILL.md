@@ -62,7 +62,7 @@ Do **not** duplicate their content, and do **not** invent a scratch location to 
 
 ### When to offer it
 
-The `context-nudge` hook under `global/hooks/` owns the offer: where it is wired, it adds the token count and says when to offer `/handoff`.
+The `context-nudge` hook under `global/hooks/` owns the offer: where it is wired, it adds the token count and says when to offer `/handoff`. Where it is not wired, the token count is invisible to you, so offer `/handoff` at the next phase boundary once the session has auto-compacted or the user reports its context past 150k tokens, and at once past 200k.
 
 ### `handoff` vs `/compact`
 

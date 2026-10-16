@@ -30,6 +30,18 @@
 #     hook="$mdir/<hook>.sh" selftest_expect_killed <label> hook_rc_not <want> <cwd> <cmd>
 #
 # HOOK_SELFTEST_VERBOSE=1 shows each row's stderr.
+#
+# This file sources scripts/selftest-lib.sh first, by its repo path, so every
+# hook selftest has its matchers, selftest_mutate, selftest_expect_killed,
+# selftest_tmpdir, selftest_no_tmpdir and selftest_close whether or not it
+# sources that file itself. Source this file before any row runs: both files
+# reset `fail`.
+
+# shellcheck source=../../scripts/selftest-lib.sh
+. "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../../scripts/selftest-lib.sh" || {
+  echo "selftest-lib.sh: scripts/selftest-lib.sh did not source — nothing ran" >&2
+  exit 4
+}
 
 fail=0
 

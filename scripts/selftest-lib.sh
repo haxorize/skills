@@ -5,8 +5,10 @@
 # close and the mutant pair, so a fix to any of them lands once; a failing line
 # pasted into a search finds one definition. global/hooks/selftest-lib.sh is
 # the hook selftests' library — a payload-driven shape this one does not
-# share — but every global/hooks/ selftest with a mutation table sources this
-# file too, by its repo path, for selftest_mutate and selftest_expect_killed.
+# share — and it sources this file by its repo path, so every hook selftest
+# that sources it has these helpers too; a global/hooks/ selftest that does
+# not still sources this file itself, for selftest_mutate and
+# selftest_expect_killed.
 #
 #   expect_in <haystack> <label> <needle>   — FAIL unless <needle> is a substring
 #   reject_in <haystack> <label> <needle>   — FAIL if <needle> is a substring
@@ -14,19 +16,36 @@
 #   expect_rc <label> <expected> <actual>   — FAIL unless the codes agree
 #   selftest_check <label> <cmd…>           — FAIL unless <cmd…> exits 0; the
 #                                             row a hand-rolled `[ … ]` takes
-#   selftest_mutate <src> <dst> <from> <to> — writes <src> to <dst> with its
-#                                             first <from> replaced by <to>.
-#                                             A <from> no longer in <src> (a
-#                                             stale mutant) is a FAIL naming
+#   selftest_mutate <src> <dst> <from> <to> [<n>|all]
+#                                           — writes <src> to <dst> with its
+#                                             first <from> replaced by <to>;
+#                                             `all` replaces every match, and
+#                                             <n> does too once <src> holds
+#                                             exactly <n>. A <from> no longer
+#                                             in <src>, or not <n> times (a
+#                                             stale mutant), is a FAIL naming
 #                                             it, and returns 1 so the caller
 #                                             skips the row it would grade
-#   selftest_expect_killed <label> <cmd…>   — one row: runs <cmd…>, the row a
+#   selftest_expect_killed [--mutant <var> <path>] <label> <cmd…>
+#                                           — one row: runs <cmd…>, the row a
 #                                             mutant targets, with `fail`
 #                                             cleared and stdout dropped; FAIL
 #                                             "survived" unless it exited
-#                                             nonzero or set `fail`. It counts
-#                                             one row; the rows it ran do not
-#                                             count, and their SKIPs drop
+#                                             nonzero or set `fail`. With
+#                                             --mutant it first runs <cmd…>
+#                                             as the caller left <var> (the
+#                                             unmutated code) and FAILs
+#                                             "graded nothing" unless that run
+#                                             is green, then runs it again with
+#                                             <var> set to <path>, exported.
+#                                             Without it, a `var=… ` prefix on
+#                                             the call carries the mutant and
+#                                             no unmutated run happens, for a
+#                                             row whose command does not read
+#                                             the mutant itself. It counts one
+#                                             row, kill or FAIL; the rows it
+#                                             ran do not count, and their
+#                                             SKIPs drop
 #   selftest_fail <message>                 — a FAIL line in the shared wording
 #   selftest_skip <message>                 — a SKIP line; the run ends PARTIAL
 #   selftest_tmpdir                         — prints a fresh temp directory, or
@@ -115,20 +134,31 @@ selftest_check() {
 }
 
 # Python -I, so a module in the caller's cwd cannot shadow sys. Exit 3 is the
-# stale pattern; any other failure (an unreadable <src>, an unwritable <dst>)
-# names itself instead of posing as one.
+# stale pattern, with the match count on stdout; any other failure (an
+# unreadable <src>, an unwritable <dst>) names itself instead of posing as one.
 selftest_mutate() {
-  local rc=0
-  python3 -I - "$@" <<'PY' || rc=$?
+  local rc=0 seen
+  case "${5:-}" in
+    ''|all) ;;
+    *[!0-9]*|0) selftest_fail "selftest_mutate: the count is a number above 0 or all, not '$5'"; return 1 ;;
+  esac
+  seen=$(python3 -I - "$@" <<'PY'
 import sys
 src, dst, a, b = sys.argv[1:5]
+want = sys.argv[5] if len(sys.argv) > 5 else ""
 text = open(src).read()
-if a not in text:
+n = text.count(a)
+if n == 0 or (want not in ("", "all") and n != int(want)):
+    print(n)
     sys.exit(3)
-open(dst, "w").write(text.replace(a, b, 1))
+open(dst, "w").write(text.replace(a, b, 1) if want == "" else text.replace(a, b))
 PY
-  if [ "$rc" -eq 3 ]; then
+) || rc=$?
+  if [ "$rc" -eq 3 ] && [ "$seen" = 0 ]; then
     selftest_fail "stale mutant: its pattern is not in $1, so the row it guards is ungraded: $3"
+    return 1
+  elif [ "$rc" -eq 3 ]; then
+    selftest_fail "stale mutant: its pattern is in $1 $seen times, not $5, so the row it guards is ungraded: $3"
     return 1
   elif [ "$rc" -ne 0 ]; then
     selftest_fail "mutant of $1 not written to $2 (python3 exited $rc)"
@@ -136,17 +166,34 @@ PY
   fi
 }
 
+# The mutant's variable is set by `local -x` under the caller's name, so the
+# row's functions read it through bash's dynamic scope and child processes
+# through the environment, and the caller's own value returns with this call.
 selftest_expect_killed() {
-  local label=$1 saved_fail=$fail saved_skipped=$skipped saved_rows=$selftest_rows killed=0
-  shift
-  fail=0
-  if ! "$@" >/dev/null; then
-    killed=1
+  local _sek_var="" _sek_path="" _sek_green=1 _sek_killed=0
+  local saved_fail=$fail saved_skipped=$skipped saved_rows=$selftest_rows
+  if [ "${1:-}" = "--mutant" ]; then
+    _sek_var=$2 _sek_path=$3
+    shift 3
   fi
-  [ "$fail" -eq 0 ] || killed=1
-  fail=$saved_fail; skipped=$saved_skipped; selftest_rows=$((saved_rows + 1))
-  if [ "$killed" -eq 0 ]; then
-    selftest_fail "mutant '$label' survived — the row it targets stayed green"
+  local _sek_label=$1
+  shift
+  if [ -n "$_sek_var" ]; then
+    fail=0
+    "$@" >/dev/null || _sek_green=0
+    [ "$fail" -eq 0 ] || _sek_green=0
+    local -x "$_sek_var=$_sek_path"
+  fi
+  fail=0
+  "$@" >/dev/null || _sek_killed=1
+  [ "$fail" -eq 0 ] || _sek_killed=1
+  fail=$saved_fail; skipped=$saved_skipped; selftest_rows=$saved_rows
+  if [ "$_sek_green" -eq 0 ]; then
+    selftest_fail "mutant '$_sek_label' graded nothing — the row it targets is red on the unmutated code too"
+  elif [ "$_sek_killed" -eq 0 ]; then
+    selftest_fail "mutant '$_sek_label' survived — the row it targets stayed green"
+  else
+    selftest_rows=$((saved_rows + 1))
   fi
 }
 

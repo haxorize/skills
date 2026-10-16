@@ -33,7 +33,7 @@ The admissions of batch 7 are recorded here, one bullet per landing; the round's
 ## Considered Options
 
 - **Rewrite `proving-it-landed.md` in local words** rather than record it as a port. Not taken: its structure and four checks are the source's, so a rewrite would still be derived while dropping the diff obligation that keeps it current with upstream.
-- **`OB6` as `/self-review`, as grill 4(ii) admitted it.** Rejected at `/write-skill`: once or twice a year, and `evidence.md`'s period-scoped summary already covers the moment; the progress notes feed it.
+- **`OB6` as `/self-review`, as grill 4(ii) admitted it.** Rejected at `/write-skill`: once or twice a year, and the period-scoped summary in `writing-for-humans`' register reference § Weekly status note already covers the moment; the progress notes feed it.
 - **`OB1`'s cheaper form, `ship/references/exposure-plan.md`.** Not taken: the experiment contract and readout have no host in `ship`, and grill 4(i) said `ship` gains nothing but the pointer.
 
 ## Consequences

@@ -33,7 +33,9 @@
 # description's unquoted ': ' and ' #', load-gate placement (in a SKILL.md and
 # in a reference file beneath it), and the global-rules
 # DEPENDS admission check (missing entry, a `Depends:` line left in the rule,
-# an entry for a rule that is gone, dangling name, a dependant that never
+# an entry for a rule that is gone, a second entry for one stem, and on
+# isolated clean roots a missing sidecar firing, a CRLF sidecar and a fenced
+# `Depends:` line staying quiet; dangling name, a dependant that never
 # cites the rule outside a fence, a dependant that cites only another rule's
 # path, and the three well-formed forms that must stay quiet — backticked stem,
 # path, and a citation in the opening lines of a body whose tail the producer is
@@ -78,7 +80,9 @@
 # check reads the glossary rather than its own list), section pointers (all four
 # target forms fire — an inline link, a backticked skill name, a
 # `~/.claude/skills/` path and a `~/.claude/rules/` path — as does the branch
-# where the target names no file; a pointer that resolves stays quiet), and
+# where the target names no file; a pointer that resolves stays quiet; a
+# chained name inherits its target across ` and`, ` or` and `,`, and a link,
+# an installed path or an unresolved citation between ends the chain), and
 # orphaned references (one unlinked file fires; the three forms that count as a
 # pointer — a path from the skill root, a basename from a sibling reference, and
 # the installed path cited from another skill — each stay quiet), and table
@@ -110,8 +114,8 @@
 # literals in the roster, comments and WARN text are pinned to the comparisons.
 #
 # All four read-error branches are covered, by a runtime `chmod 000` on
-# throwaway copies rather than by a fixture: the link extractor's, the Depends:
-# citation check's, the line cap's, and the ledger checks' two (the anchor grep,
+# throwaway copies rather than by a fixture: the link extractor's, the DEPENDS
+# dependant-citation check's, the line cap's, and the ledger checks' two (the anchor grep,
 # and the status-token read on a file inside the legend's own skill, which is
 # the only place that branch is reachable — everywhere else the anchor grep
 # fails first). Each reports that a check never ran rather than that it passed.
@@ -320,6 +324,9 @@ expect "load-gate placement" "carries a load gate ('Launching skill'"
 expect "global-rule Depends (missing)" "global/rules/no-depends.md has no entry in global/rules/DEPENDS"
 expect "global-rule Depends (line left in the rule)" "global/rules/inline-depends.md still carries a 'Depends:' line"
 expect "global-rule Depends (stale entry)" "global/rules/DEPENDS has an entry for 'ghost-rule' but global/rules/ghost-rule.md does not exist"
+# One reader serves both DEPENDS checks, and a second entry for a stem is
+# never read by it, so the second line's names are graded nowhere.
+expect "global-rule Depends (duplicate stem)" "global/rules/DEPENDS has a second entry for 'well-formed' (line 13)"
 expect "global-rule Depends (dangling)" "global/rules/dangling-depends.md DEPENDS entry names 'no-such-skill'"
 expect "global-rule Depends (uncited)" "global/rules/uncited-depends.md DEPENDS entry names 'quoted-dep' but src/quoted-dep/ never cites the rule"
 expect "global-rule Depends (directory only)" "global/rules/dir-only-cited.md DEPENDS entry names 'unused-dep' but src/unused-dep/ never cites the rule"
@@ -496,6 +503,15 @@ expect "section pointers (a hyphen lead-in before the citation)" "src/house-styl
 # A chained citation names its target once; the name after the second `§`
 # resolves from the first one's, or it is graded nowhere.
 expect "section pointers (a chained citation)" "src/house-style/SKILL.md cites '§ No Such Chained Heading' (line 107), and src/house-style/references/quiet-forms.md carries no heading by that name"
+# One row per joiner the chain accepts (` and` above, ` or` and `,` here), and
+# one per way a chain ends: a link or an installed path between the two names,
+# and a middle citation that resolved to nothing. Each of the last three would
+# otherwise hand the first link's target to a name that never cited it.
+expect "section pointers (an or-joined chain)" "src/house-style/SKILL.md cites '§ No Such Or Heading' (line 108), and src/house-style/references/quiet-forms.md carries no heading by that name"
+expect "section pointers (a comma-joined chain)" "src/house-style/SKILL.md cites '§ No Such Comma Heading' (line 109), and src/house-style/references/quiet-forms.md carries no heading by that name"
+reject "section pointers (a link ends the chain)" "cites '§ No Such Linked Heading'"
+reject "section pointers (an installed path ends the chain)" "cites '§ No Such Tilde Heading'"
+reject "section pointers (an unresolved citation ends the chain)" "cites '§ No Such Reset Heading'"
 # One row per arm of the table check, each instance its own table in the
 # appended block at the end of src/house-style/SKILL.md, since a header that
 # disagrees with its delimiter row is not a table and would hide rows under it.
@@ -726,16 +742,16 @@ fi
 expect_rc "the lint against the fixture tree" 1 "$status"
 # The count of FAIL lines is pinned: a check that begins firing on a fixture
 # it should leave alone reds here even when no substring row names the line.
-# Last moved 2026-10-15 (global rules' dependants moved to global/rules/DEPENDS):
-# 115 → 117 — inline-depends.md's leftover `Depends:` line and the sidecar's
-# ghost-rule entry, a rule file that is gone.
+# Last moved 2026-10-15 (review fixes F8 and F9 of 0061afe): 117 → 120 — the
+# or-joined and comma-joined chained citations in src/house-style/SKILL.md
+# (lines 108, 109) and the fixture DEPENDS's second well-formed entry.
 # Earlier moves of this pin are in
 # `git log -p -G 'expected exactly [0-9]+ FAIL' -- scripts/lint-skills-selftest.sh` — they describe counts
 # nothing asserts any more, and stacking them here made a changelog out of the
 # one line that has to stay readable. A count that moves is read before it is
 # re-pinned.
 nfail=$(printf '%s\n' "$output" | grep -c '^FAIL: ')
-[ "$nfail" -eq 117 ] || selftest_fail "expected exactly 117 FAIL lines against the fixture tree, got $nfail"
+[ "$nfail" -eq 120 ] || selftest_fail "expected exactly 120 FAIL lines against the fixture tree, got $nfail"
 # The shared-trigger-phrase fixtures are pinned by property, as near_bytes and
 # bulk_bytes are below: every row above them asserts a FAIL that appears or a
 # FAIL that does not, and each of those readings is silently satisfied by a
@@ -918,11 +934,8 @@ grep -q '](README.md)' "$clean_fixtures/CLAUDE.md" || selftest_fail "the clean r
 # direction AND the base the two isolated rows below edit, so those readings die
 # silently if someone trims it out of the fixture. Its keys carry the forms the
 # check must exempt: a parenthetical after a yes/no value, an apostrophe in a
-# free-text value, and a key written in bold. `Review required:` is `yes` here
-# rather than `no` because this directory sits inside a gated repo and
-# global/hooks/review-receipt.sh reads the nearest CLAUDE.md from the push
-# directory up — a committed `no` opts the directory out of this repo's own push
-# gate. The `no` value is exercised in the throwaway copy below instead.
+# free-text value, and a key written in bold. `Review required:` is `yes` here;
+# the `no` value is exercised in the throwaway copy below.
 grep -q '^Landing:$' "$clean_fixtures/CLAUDE.md" || selftest_fail "the clean root's CLAUDE.md no longer carries a 'Landing:' block — check_landing_key's quiet direction went ungraded, and the two isolated rows below have nothing to edit"
 grep -q '^- Review required: yes$' "$clean_fixtures/CLAUDE.md" || selftest_fail "the clean root's CLAUDE.md Landing: block no longer carries '- Review required: yes' — that is the line the isolated 'landing-no-review' and 'landing-review-no' rows edit, so the missing-key arm and the negative value both went ungraded"
 grep -q '^- Ticket close pre-authorized: no (no tracker)$' "$clean_fixtures/CLAUDE.md" || selftest_fail "the clean root's CLAUDE.md Landing: block no longer carries a yes/no value with a trailing parenthetical — that exemption went ungraded"
@@ -1221,11 +1234,8 @@ isolated_case "proper-noun-unregistered" 's/\*\*Cold-reader pass\*\*/**Fresh-eye
 isolated_case "landing-no-review" 's/^- Review required: yes\n//m' \
   "CLAUDE.md" \
   "has a Landing: block with no 'Review required:' line"
-# The negative value, which must stay quiet. It cannot be exercised in a
-# committed fixture: global/hooks/review-receipt.sh walks up from the push
-# directory and the nearest CLAUDE.md carrying the line decides in either
-# direction, so a `no` under scripts/ opts that directory out of this repo's own
-# push gate. A throwaway copy carries it instead.
+# The negative value, which must stay quiet, carried by a throwaway copy so
+# the committed fixture keeps its one `yes` row.
 isolated_quiet_case "landing-review-no" 's/^- Review required: yes$/- Review required: no/m' \
   "CLAUDE.md" \
   "Landing:"
@@ -1249,11 +1259,29 @@ isolated_case "rule-pointer-missing" 's/\z/\nProcedure: `~\/.claude\/skills\/cle
 isolated_quiet_case "rule-pointer-resolves" 's/\z/\nProcedure: `~\/.claude\/skills\/clean-skill\/references\/note.md`.\n/' \
   "global/rules/clean-rule.md" \
   "points at ~/.claude/skills/"
-# The per-description WARN (TD-6), pinned one byte each side on clean-skill's
-# 436-byte description: grown by 264 bytes to exactly 700 it is quiet (the
-# bound is -gt), by 265 to 701 it WARNs. A user-invoked description never
-# loads, so which-skill grown past the bound stays quiet. A WARN never moves
-# the exit, so all three rows exit 0.
+# The DEPENDS reader's edges, each on the clean root with one edit. A CRLF
+# sidecar reads as the LF one (a CR left on a name is a skill that does not
+# exist); a `Depends:` line inside a ``` fence in a rule is an example, not a
+# leftover; and a missing sidecar FAILs every rule by name rather than passing
+# them all.
+isolated_quiet_case "depends-crlf" 's/\n/\r\n/g' "global/rules/DEPENDS" "DEPENDS entry names"
+isolated_quiet_case "depends-fenced-line" 's/\z/\n```\nDepends: `clean-skill`\n```\n/' "global/rules/clean-rule.md" "still carries a 'Depends:' line"
+if isolated_run "depends-missing" 's/\A/# removed below\n/' "global/rules/DEPENDS"; then
+  if rm -f "$isolated_parent/depends-missing/global/rules/DEPENDS"; then
+    isolated_out=$(LINT_ROOT="$isolated_parent/depends-missing" bash scripts/lint-skills.sh 2>&1); isolated_rc=$?
+    expect_in "$isolated_out" "a missing global/rules/DEPENDS did not FAIL the rule it leaves without an entry in the 'depends-missing' root" "global/rules/clean-rule.md has no entry because global/rules/DEPENDS does not exist"
+    expect_rc "the lint against the isolated 'depends-missing' root" 1 "$isolated_rc"
+  else
+    selftest_skip "could not remove global/rules/DEPENDS from the 'depends-missing' copy — that row was not exercised."
+  fi
+fi
+# The per-description WARN (ADR-0079), pinned one byte each side on
+# clean-skill's 436-byte description: grown by 264 bytes to exactly 700 it is
+# quiet (the bound is -gt), by 265 to 701 it WARNs. The same two sizes wrapped
+# in YAML single quotes count as the value loads, without the two quote bytes:
+# 700 stays quiet and 701 WARNs as 701, not 703. A user-invoked description
+# never loads, so which-skill grown past the bound stays quiet. A WARN never
+# moves the exit, so every row exits 0.
 desc_warn="description is 701 bytes, over the 700-byte per-description bound"
 if isolated_run "description-at-bound" 's/(so that must stay quiet\.)/$1 . ("x" x 264)/e' "src/clean-skill/SKILL.md"; then
   reject_in "$isolated_out" "the per-description WARN fired at exactly 700 bytes in the 'description-at-bound' root (the bound is -gt 700)" "over the 700-byte per-description bound"
@@ -1262,6 +1290,14 @@ fi
 if isolated_run "description-over-bound" 's/(so that must stay quiet\.)/$1 . ("x" x 265)/e' "src/clean-skill/SKILL.md"; then
   expect_in "$isolated_out" "the per-description WARN did not fire at 701 bytes in the 'description-over-bound' root" "WARN: src/clean-skill/SKILL.md $desc_warn"
   expect_rc "the lint against the isolated 'description-over-bound' root" 0 "$isolated_rc"
+fi
+if isolated_run "description-quoted-at-bound" 's/^(description: )(.*so that must stay quiet\.)$/$1 . "\x27" . $2 . ("x" x 264) . "\x27"/me' "src/clean-skill/SKILL.md"; then
+  reject_in "$isolated_out" "the per-description WARN counted the YAML quotes of a quoted 700-byte description in the 'description-quoted-at-bound' root" "over the 700-byte per-description bound"
+  expect_rc "the lint against the isolated 'description-quoted-at-bound' root" 0 "$isolated_rc"
+fi
+if isolated_run "description-quoted-over-bound" 's/^(description: )(.*so that must stay quiet\.)$/$1 . "\x27" . $2 . ("x" x 265) . "\x27"/me' "src/clean-skill/SKILL.md"; then
+  expect_in "$isolated_out" "the per-description WARN did not count a quoted 701-byte description as 701 in the 'description-quoted-over-bound' root" "WARN: src/clean-skill/SKILL.md $desc_warn"
+  expect_rc "the lint against the isolated 'description-quoted-over-bound' root" 0 "$isolated_rc"
 fi
 if isolated_run "description-user-invoked" 's/^(description: .*)$/$1 . ("x" x 496)/me' "src/which-skill/SKILL.md"; then
   reject_in "$isolated_out" "the per-description WARN fired on a user-invoked description, which never loads" "per-description bound"
@@ -1445,7 +1481,7 @@ else
     expect_in "$inject_output" "the $1 branch did not fire on an unreadable file" "$2"
   }
   inject_expect "reference-link extractor read-error" "src/broken-links/references/real-reference.md — the reference-link extractor errored"
-  inject_expect "Depends: citation read-error" "DEPENDS entry names 'broken-links' but src/broken-links/ could not be read"
+  inject_expect "DEPENDS dependant-citation read-error" "DEPENDS entry names 'broken-links' but src/broken-links/ could not be read"
   # Two more branches reach the same unreadable file, and each says the check did
   # not run rather than that it found nothing. Both are silent-pass shapes: a
   # count the cap was never applied to, and an anchor grep whose status 2 read as
@@ -1468,7 +1504,7 @@ else
   clean_output=$(LINT_ROOT="$clean_root" bash scripts/lint-skills.sh 2>&1)
   expect_rc "the lint against an otherwise-clean tree holding one unreadable file (a read error on its own must force exit 1)" 1 $?
   expect_in "$clean_output" "the reference-link extractor read-error did not fire on an otherwise-clean tree" "src/clean-skill/references/note.md — the reference-link extractor errored"
-  expect_in "$clean_output" "the Depends: citation read-error did not fire on an otherwise-clean tree" "DEPENDS entry names 'clean-skill' but src/clean-skill/ could not be read"
+  expect_in "$clean_output" "the DEPENDS dependant-citation read-error did not fire on an otherwise-clean tree" "DEPENDS entry names 'clean-skill' but src/clean-skill/ could not be read"
   expect_in "$clean_output" "the line-cap read-error did not fire on an otherwise-clean tree" "src/clean-skill/references/note.md could not be read for its line count"
   expect_in "$clean_output" "the evaluation-ledger anchor read-error did not fire on an otherwise-clean tree" "src/clean-skill/references/note.md could not be read for the evaluation ledger anchor"
   expect_in "$clean_output" "the evaluation-ledger status-token read-error did not fire on an unreadable file inside the legend's own skill" "src/ledger-legend/references/complete-consumer.md could not be read for evaluation ledger statuses"

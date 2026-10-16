@@ -36,7 +36,8 @@
 # are ignored). The file arguments are read the way the program reads them,
 # resolved from the directory the segment runs in (the payload's `cwd`, else
 # $PWD, moved by any `cd`/`pushd` the lib could expand), with `~` and `$VAR`
-# expanded from the environment. Every path is judged with its symlinks
+# expanded by the lib's `expand()`, whose header names the variables it
+# leaves unexpanded. Every path is judged with its symlinks
 # resolved, both where the file really lives and where the name sits, so
 # `~/.claude/skills/<skill>/…` reaching an opted-in checkout through a link is
 # judged as the checkout; $HOME and the RENAME_SAFETY_DIRS entries are
@@ -98,7 +99,7 @@ hook_scan '
 # and the next token is the value. ATTACHED: the cluster ends there and the
 # next token is an argument in its own right (`sed -l -i` is in place).
 NEXT_TOKEN = {"sed": set("ef"), "perl": set("eEMmI"), "ruby": set("eIrCE")}
-ATTACHED = {"sed": set("l"), "perl": set("lxC0dDF"), "ruby": set("0KFx")}
+ATTACHED = {"sed": set("l"), "perl": set("xCdDF"), "ruby": set("KFx")}
 CODE = {"sed": set("e"), "perl": set("eE"), "ruby": set("e")}   # letters whose value is the program
 # Letters whose attached value is only digits (`-0777`, `-0x1F`, `-l012`), so
 # the cluster goes on after them: `perl -0pi` and `-lpi` are in place.
@@ -109,7 +110,6 @@ SED_LONG = {"in-place": "i", "expression": "e", "file": "f", "quiet": "n", "sile
             "line-length": "l", "null-data": "", "zero-terminated": "", "separate": "",
             "sandbox": "", "debug": "", "posix": "", "regexp-extended": "", "unbuffered": "",
             "follow-symlinks": "", "binary": "", "help": "", "version": ""}
-ENVVAR = re.compile(r"\$(?:\{([A-Za-z_][A-Za-z0-9_]*)\}|([A-Za-z_][A-Za-z0-9_]*))")
 GLOB = re.compile(r"[*?\[]")
 HOME = os.path.realpath(os.environ.get("HOME") or "/")
 UNJUDGED = []                       # in-place edits whose directory follows a cd the scanner could not expand
@@ -207,21 +207,10 @@ def one_substitution(e):
     return parts == 2 and re.fullmatch(r"[0-9I]*", e[k:]) is not None
 
 def resolve(start, path):
-    """The absolute path a file argument names, or None when it is not literal."""
-    if "`" in path or path == "{}":
-        return None
-    def env(m):
-        v = os.environ.get(m.group(1) or m.group(2))
-        if v is None:
-            raise KeyError
-        return v
-    try:
-        path = ENVVAR.sub(env, path)
-    except KeyError:
-        return None
-    if "$" in path:
-        return None
-    return os.path.join(start, os.path.expanduser(path))
+    """The absolute path a file argument names, or None when it is not literal
+    (expand() from hook-lib.py cannot expand it, or it is the find `{}`)."""
+    p = None if path == "{}" else expand(path)
+    return None if p is None else os.path.join(start, p)
 
 def places(p):
     """The real directories an edit of path p writes into: the one holding the

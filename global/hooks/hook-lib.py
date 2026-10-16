@@ -49,8 +49,11 @@
 # `pushd`, and `GIT_DIR=` move `curdir`, which starts empty and is None where
 # the hook cannot expand the target; hooks that care read it. `expand(path)`
 # expands `~`, and `$X` / `${X}` from the hook's environment (the one the
-# session's shell inherits); a variable that is unset there, any other
-# `${…}` form, a `$(…)`, or a backtick makes the path unexpandable (None).
+# session's shell inherits); a variable that is unset there, one the shell
+# keeps itself (`PWD`, `OLDPWD`), one this command line assigned, declared,
+# unset, or read into (`unset`, `read`, `for`) before the use, any other
+# `${…}` form (`${X:-y}`), a `$(…)`, or a backtick makes the path
+# unexpandable (None).
 # `git_args(seg)` returns the tokens after the `git` word with a `-c
 # alias.X=…` built on the command line expanded into X's place, or None when
 # the segment is not git. `split_git(args, curdir)` reads those tokens the way
@@ -96,6 +99,9 @@ XARGS_VALUE_OPTS = {"-n", "-I", "-L", "-P", "-s", "-d", "-E", "-a", "-J", "-R", 
 DECLARERS = {"export", "declare", "local", "typeset", "readonly"}
 ASSIGN = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)=(.*)$", re.S)
 VAR = re.compile(r"\$(?:\{([A-Za-z_][A-Za-z0-9_]*)[^}]*\}|([A-Za-z_][A-Za-z0-9_]*))")
+NAME = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+SHELL_KEPT = {"PWD", "OLDPWD"}     # the session shell maintains these; the hook's copies name the hook's own directory
+BINDERS = {"unset", "read"}        # every name after them is rebound; `for`/`select` rebind the one word after
 ENV_VAR = re.compile(r"\$(?:\{([A-Za-z_][A-Za-z0-9_]*)\}|([A-Za-z_][A-Za-z0-9_]*))")   # expand(): no ${x:-…} forms
 GIT_VALUE_OPTS = {"-c", "-C", "--git-dir", "--work-tree", "--namespace", "--exec-path",
                   "--super-prefix", "--config-env"}
@@ -104,6 +110,7 @@ SHELL_VALUE_OPTS = re.compile(r"^(--rcfile|--init-file|[-+][A-Za-z]*[oO])$")   #
 STDIN_SCRIPTS = {"-", "/dev/stdin", "/dev/fd/0", "/proc/self/fd/0"}
 ALLOW_EXIT = 5
 VARS = {}
+TOUCHED = set()                    # names this command rebinds; expand() leaves them unexpanded
 VIA = []                           # feeders of the segment being scanned; read through fed_by()
 MAX_DEPTH = 4
 _on_command = None
@@ -231,14 +238,15 @@ def expand(path):
     if path is None or "`" in path:
         return None
     def env(m):
-        v = os.environ.get(m.group(1) or m.group(2))
+        name = m.group(1) or m.group(2)
+        v = None if name in SHELL_KEPT or name in TOUCHED else os.environ.get(name)
         if v is None:
             raise KeyError(m.group(0))
         return v
     try:
         path = ENV_VAR.sub(env, path)
     except KeyError:
-        return None                 # unset here: the caller treats the path as unknown
+        return None                 # unset here, or the session shell's own: the caller treats the path as unknown
     if "$" in path:
         return None                 # `$(…)`, `${x:-…}`: cannot expand
     return os.path.expanduser(path) if path.startswith("~") else path
@@ -254,15 +262,18 @@ def joined(base, path):
 
 def take_assignments(seg, curdir):
     """Record leading NAME=value tokens (after an optional declarer and its
-    options) into VARS; return the rest of the segment and the curdir."""
+    options) into VARS, and every name they or the declarer bind into
+    TOUCHED; return the rest of the segment and the curdir."""
     k = 0
     if seg and seg[0] in DECLARERS:
         k = 1
         while k < len(seg) and seg[k].startswith("-"):
             k += 1
+        TOUCHED.update(t.split("=", 1)[0] for t in seg[k:] if NAME.fullmatch(t.split("=", 1)[0]))
     while k < len(seg) and ASSIGN.match(seg[k]):
         name, value = ASSIGN.match(seg[k]).groups()
         VARS[name] = value
+        TOUCHED.add(name)
         if name == "GIT_DIR":
             curdir = joined(curdir, expand(value))
         k += 1
@@ -276,9 +287,13 @@ def scan(text, curdir, depth=0):
     for seg in segments(tokens(text)):
         seg, curdir = take_assignments(subst(seg), curdir)
         head = progname(seg[0]) if seg else ""
+        if head in BINDERS:
+            TOUCHED.update(t for t in seg[1:] if NAME.fullmatch(t))
+        elif head in ("for", "select") and len(seg) > 1:
+            TOUCHED.add(seg[1])
         if head in ("cd", "pushd"):
             rest = [t for t in seg[1:] if t == "-" or not t.startswith("-")]
-            target = rest[0] if rest else None
+            target = rest[0] if rest else ("$HOME" if head == "cd" else None)
             curdir = joined(curdir, expand(target)) if target and target != "-" else None
             prev = seg
             continue
@@ -477,6 +492,7 @@ def scan_command(text, on_command):
     global _on_command
     _on_command = on_command
     VARS.clear()
+    TOUCHED.clear()
     del VIA[:]
     try:
         return scan(drop_heredocs(text), "")

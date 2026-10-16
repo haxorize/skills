@@ -1,6 +1,6 @@
 # Over the cap
 
-Remediation procedures, opened only when a cap binds — the body is over the 15,000-byte re-attach bound or past 200 lines, or the description is at its 1024-char cap. Bytes are the bound that binds in practice; a body reaches it long before 200 lines. The caps themselves stay in `write-skill` § Size constraints.
+Remediation procedures, opened only when a cap binds — the body is over the 15,000-byte re-attach bound or past 200 lines, or a model-invoked description is past the 700-byte bound `scripts/lint-skills.sh` WARNs on (every description loads on every turn) or at the 1024-char cap it fails. Bytes are the bound that binds in practice; a body reaches it long before 200 lines. The caps themselves stay in `write-skill` § Size constraints.
 
 ## An over-cap body
 
@@ -8,4 +8,4 @@ Remediation procedures, opened only when a cap binds — the body is over the 15
 
 ## A description at its cap
 
-When the cap binds, routing surface is never traded for anything else. The cut comes from the non-trigger half first: the synonyms the description craft already bans, then the what-it-is preamble shortened to a clause (that section asks for it, not for its length); at zero headroom, with no preamble left, from each branch's own wording — a shorter phrase for the same branch. A distinct trigger branch is the last thing cut, and a `Not for…` tail is routing, not padding.
+When the 700-byte bound or the 1024-char cap binds, routing surface is never traded for anything else. The cut comes from the non-trigger half first: the synonyms the description craft already bans, then the what-it-is preamble shortened to a clause (that section asks for it, not for its length); at zero headroom, with no preamble left, from each branch's own wording — a shorter phrase for the same branch. A distinct trigger branch is the last thing cut, and a `Not for…` tail is routing, not padding.

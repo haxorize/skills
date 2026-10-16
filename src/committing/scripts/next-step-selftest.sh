@@ -32,15 +32,19 @@
 #     from another branch, one whose head the upstream moved past, or one
 #     carrying a decline-all pass's second, equal stamp; the opt-in walks up
 #     from a subdirectory; a fenced line (``` or ~~~) is not read, and a ```
-#     line does not close a ~~~ fence; a report in the TMPDIR zone with
+#     line does not close a ~~~ fence, nor a shorter ``` run a ```` fence; a
+#     staged rename is named by its new path, unquoted; a report in the TMPDIR zone with
 #     REVIEW_RECEIPT_DIR unset, written by landing.sh path.
 #   cadence — --mid-family under a `Review cadence:` line (bold, or
 #     backticked, read from a subdirectory too): commit this batch, or the next
 #     batch when clean; --mid-family with no cadence line changes nothing; the
 #     family's end: commit this batch, then /review-changes; the order line
 #     carries the cadence.
-#   the scripts it runs — the installed tree-stamp.sh is preferred when it
-#     exists; a --stamps read that fails exits 4 and names the report.
+#   the scripts it runs — a copy laid out as a checkout runs the tree-stamp.sh
+#     beside it, never one under ~/.claude/skills/; a --stamps read that fails
+#     exits 4 and names the report, and one that exits 4 skips the report;
+#     landing.sh list failing exits 4 with landing.sh's reason; a world-
+#     writable zone exits 4.
 #   parity — the review-receipt hook and this script run on one fixture each,
 #     and agree on push or hold: bold, backticked and planned `Review
 #     required:` lines, a fenced line of each kind, a subdirectory walk both
@@ -72,8 +76,7 @@
 #
 # NOT covered: the stamp line shapes (tree-stamp-selftest.sh), the zone list
 # itself (landing-selftest.sh), and the push gate's other rules
-# (review-receipt-selftest.sh); a landing.sh missing from both the installed
-# path and the checkout.
+# (review-receipt-selftest.sh); a landing.sh missing from beside the checkout.
 set -uo pipefail
 
 repo_root="$(cd "$(dirname "$0")/../../.." && pwd)"
@@ -92,7 +95,7 @@ trap 'rm -rf "$tmp"' EXIT
 tmp="$(cd "$tmp" && pwd -P)"
 export REVIEW_RECEIPT_DIR="$tmp/zone"
 mkdir -p "$REVIEW_RECEIPT_DIR" "$tmp/home"
-# no installed suite: the scripts resolve beside this checkout, as the hook's do
+# no installed suite under HOME; the scripts resolve beside this checkout either way, as the hook's do
 export HOME="$tmp/home"
 export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null
 export GIT_AUTHOR_NAME=t GIT_AUTHOR_EMAIL=t@t GIT_COMMITTER_NAME=t GIT_COMMITTER_EMAIL=t@t
@@ -142,7 +145,7 @@ echo x > "$tmp/planned/f"; commit planned
 expect_row "$(next_of planned)" "yes (planned) is not yes" "push"
 mkrepo optout "$GATED"
 mkdir -p "$tmp/optout/pkg"; printf 'Review required: no\n' > "$tmp/optout/pkg/CLAUDE.md"; commit optout
-expect_row "$(line_of next "$tmp/optout/pkg")" "a nested no opts its directory out" "push"
+expect_row "$(line_of next "$tmp/optout/pkg")" "a nested no never opts out; the top decides" "/review-changes"
 
 # --- the push itself: remote, upstream, branch, divergence ---
 mkahead noup '# repo\n'; ( cd "$tmp/noup" && git branch -q --unset-upstream )
@@ -183,6 +186,11 @@ expect_row "$(next_of gated)" "a scratch file beside a stamped HEAD: push, namin
   "push; it sends the stamped commits, not the uncommitted path(s), which need their own review: scratch"
 expect_row "$(line_of receipt "$tmp/gated")" "the receipt names HEAD's tree" "HEAD's tree stamped by $r1, not the 1 uncommitted path(s)"
 rm "$tmp/gated/scratch"
+mkahead renamed "$GATED"
+report renamed head "Reviewed-tree: $( cd "$tmp/renamed" && git rev-parse 'HEAD^{tree}' )" >/dev/null
+( cd "$tmp/renamed" && git mv a "b c" )
+expect_row "$(next_of renamed)" "a staged rename beside a stamped HEAD names its new path, unquoted" \
+  "push; it sends the stamped commits, not the uncommitted path(s), which need their own review: b c"
 echo y >> "$tmp/gated/f"; commit gated
 expect_row "$(next_of gated)" "a commit after a one-stamp report" "/address-findings $r1"
 echo w >> "$tmp/gated/f"
@@ -236,6 +244,8 @@ mkahead tilde '# repo\n\n~~~\n- Review required: yes\n~~~\n'
 expect_row "$(next_of tilde)" "a line inside a ~~~ fence is not read" "push"
 mkahead mixed '# repo\n\n~~~\n```\n~~~\n- Review required: yes\n'
 expect_row "$(next_of mixed)" "a backtick line does not close a ~~~ fence" "/review-changes"
+mkahead longf '# repo\n\n````\n```\n- Review required: yes\n```\n````\n'
+expect_row "$(next_of longf)" "a shorter backtick run does not close a four-backtick fence" "push"
 
 mkahead tmpzone "$GATED"
 tz_report="$( cd "$tmp/tmpzone" && REVIEW_RECEIPT_DIR= TMPDIR="$tmp/t" bash "$landing" path done --kind review )"
@@ -260,18 +270,46 @@ expect_row "$(next_of ticked --mid-family)" "a backticked cadence key" "commit t
 expect_row "$(next_of gated --mid-family)" "--mid-family with no cadence line changes nothing" "/review-changes"
 
 # --- the scripts it runs ---
-mkdir -p "$tmp/fakehome/.claude/skills/review-changes/scripts"
-cat > "$tmp/fakehome/.claude/skills/review-changes/scripts/tree-stamp.sh" <<EOF
-touch "$tmp/installed-used"
-[ "\${1:-}" = --stamps ] && [ -n "\${FAKE_STAMPS_FAIL:-}" ] && exit 1
-exec bash "$stamp" "\$@"
-EOF
-out="$( cd "$tmp/gated" && HOME="$tmp/fakehome" bash "$script" | sed -n 's/^next: //p' )"
-expect_row "$out" "the installed tree-stamp.sh gives the same answer" "/review-changes"
-[ -f "$tmp/installed-used" ] || selftest_fail "the installed tree-stamp.sh was not the one run"
-out="$( cd "$tmp/gated" && HOME="$tmp/fakehome" FAKE_STAMPS_FAIL=1 bash "$script" 2>&1 )"; rc=$?
+# A copy laid out as a checkout reads the two scripts beside it, as the hook
+# reads its own, and never a copy under ~/.claude/skills/ (HOME points at a
+# decoy that records any run).
+mkco() { # mkco <dir> <tree-stamp body or 'real'> <landing body or 'real'>
+  mkdir -p "$1/src/committing/scripts" "$1/src/review-changes/scripts" "$1/src/handoff/scripts"
+  cp "$script" "$1/src/committing/scripts/"
+  if [ "$2" = real ]; then cp "$stamp" "$1/src/review-changes/scripts/"; else printf '%s\n' "$2" > "$1/src/review-changes/scripts/tree-stamp.sh"; fi
+  if [ "$3" = real ]; then cp "$landing" "$1/src/handoff/scripts/"; else printf '%s\n' "$3" > "$1/src/handoff/scripts/landing.sh"; fi
+}
+mkdir -p "$tmp/fakehome/.claude/skills/review-changes/scripts" "$tmp/fakehome/.claude/skills/handoff/scripts"
+printf 'touch "%s/installed-used"; exit 1\n' "$tmp" > "$tmp/fakehome/.claude/skills/review-changes/scripts/tree-stamp.sh"
+printf 'touch "%s/installed-used"; exit 1\n' "$tmp" > "$tmp/fakehome/.claude/skills/handoff/scripts/landing.sh"
+mkco "$tmp/co" "touch \"$tmp/beside-used\"
+[ \"\${1:-}\" = --stamps ] && [ -n \"\${FAKE_STAMPS_RC:-}\" ] && exit \"\$FAKE_STAMPS_RC\"
+exec bash \"$stamp\" \"\$@\"" real
+co_script="$tmp/co/src/committing/scripts/next-step.sh"
+out="$( cd "$tmp/gated" && HOME="$tmp/fakehome" bash "$co_script" | sed -n 's/^next: //p' )"
+expect_row "$out" "the tree-stamp.sh beside the checkout gives the same answer" "/review-changes"
+[ -f "$tmp/beside-used" ] || selftest_fail "the tree-stamp.sh beside the checkout copy was not the one run"
+[ -f "$tmp/installed-used" ] && selftest_fail "a decoy script under the fake HOME was run in place of the one beside the checkout"
+selftest_rows=$((selftest_rows + 1))
+out="$( cd "$tmp/gated" && HOME="$tmp/fakehome" FAKE_STAMPS_RC=1 bash "$co_script" 2>&1 )"; rc=$?
 expect_rc "a --stamps read that fails" 4 "$rc"
 expect_in "$out" "and it names the report" "tree-stamp.sh --stamps failed on $REVIEW_RECEIPT_DIR/gated-2026-01-01-"
+# a --stamps exit 4 (a report it could not read) skips that report, as the hook does
+out="$( cd "$tmp/gated" && HOME="$tmp/fakehome" FAKE_STAMPS_RC=4 bash "$co_script" 2>&1 )"; rc=$?
+expect_rc "a --stamps read that exits 4" 0 "$rc"
+expect_in "$out" "skips the report, naming it" "next-step.sh: skipping unreadable report $REVIEW_RECEIPT_DIR/gated-2026-01-01-"
+expect_in "$out" "and counts no report read" "receipt: none of 0 report(s) stamps it"
+# landing.sh list failing exits 4, carrying landing.sh's own reason
+mkco "$tmp/co2" real "[ \"\$1\" = list ] && { echo 'landing.sh: list refused here' >&2; exit 4; }; exec bash \"$landing\" \"\$@\""
+out="$( cd "$tmp/gated" && bash "$tmp/co2/src/committing/scripts/next-step.sh" 2>&1 )"; rc=$?
+expect_rc "landing.sh list failing" 4 "$rc"
+expect_in "$out" "names landing.sh's reason" "landing.sh: list refused here"
+expect_in "$out" "and its own" "next-step.sh: landing.sh list failed (exit 4)"
+# a zone landing.sh refuses is a never-ran, not "none of 0 reports"
+mkdir -p "$tmp/wzone"; chmod o+w "$tmp/wzone"
+out="$( cd "$tmp/gated" && REVIEW_RECEIPT_DIR="$tmp/wzone" bash "$script" 2>&1 )"; rc=$?
+expect_rc "a world-writable zone" 4 "$rc"
+expect_in "$out" "names the refused zone" "is not this user's alone"
 
 # --- parity with the review-receipt hook ---
 # parity <label> <push|hold> <dir> [next-step args]: the hook judges a bare
@@ -300,8 +338,9 @@ parity "yes (planned)" push "$tmp/planned"
 parity "a line in a backtick fence" push "$tmp/fenced"
 parity "a line in a ~~~ fence" push "$tmp/tilde"
 parity "a backtick line inside a ~~~ fence" hold "$tmp/mixed"
+parity "a shorter backtick run inside a four-backtick fence" push "$tmp/longf"
 parity "a subdirectory walks up to the gated root" hold "$tmp/walk/pkg"
-parity "a subdirectory saying no" push "$tmp/optout/pkg"
+parity "a subdirectory saying no" hold "$tmp/optout/pkg"
 mkahead pcad '# repo\n\n- Review required: yes\n- **Review cadence:** per batch family\n'
 parity "a bold cadence line, mid-family" hold "$tmp/pcad" --mid-family
 parity "a bold cadence line, the family's end" hold "$tmp/pcad"

@@ -1,4 +1,4 @@
-# Fixture data. Each rule's dependants, one line per rule: `<stem>: <skill>, <skill>`. no-depends has no entry and ghost-rule has no rule file, on purpose.
+# Fixture data. Each rule's dependants, one line per rule: `<stem>: <skill>, <skill>`. no-depends has no entry, ghost-rule has no rule file, and well-formed has a second entry (never read), on purpose.
 bare-stem-cited: `unused-dep`
 body-checked: `broken-links`
 dangling-depends: `no-such-skill`
@@ -10,3 +10,4 @@ other-path-cited: `unused-dep`
 path-cited: `undeclared-dep`
 uncited-depends: `quoted-dep`
 well-formed: `broken-links`
+well-formed: `no-such-skill`

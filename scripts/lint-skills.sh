@@ -130,7 +130,8 @@
 #     reference-link resolution pass 4 points at the root file — and by
 #     nothing else.
 #   - Global rules (ADR-0053): every global/rules/*.md has an entry in the
-#     global/rules/DEPENDS sidecar (`<stem>: <skill>, <skill>`; the rule file
+#     global/rules/DEPENDS sidecar (`<stem>: <skill>, <skill>`, one entry
+#     per stem, `#` and blank lines skipped; the rule file
 #     itself carries no `Depends:` line, since a rule's bytes load on every
 #     turn and the sidecar's never do, and every entry names a rule that
 #     exists) naming at least one existing skill under src/ — the admission rule
@@ -980,15 +981,21 @@ check_description_limits() {
       say_fail "$f description contains angle brackets (< or >) — disallowed in the description field"
       ;;
   esac
-  # The per-description WARN (round 2026-10-12, TD-6): a model-invoked
-  # description loads on every turn, and past 700 bytes the bytes are preamble
-  # and synonym lists rather than triggers. Bytes, not characters, because the
-  # catalog's cost is bytes. A user-invoked description never loads.
+  # The per-description WARN (ADR-0079): a model-invoked description loads on
+  # every turn, and past 700 bytes the bytes are preamble and synonym lists
+  # rather than triggers. Bytes, not characters, because the catalog's cost is
+  # bytes. A user-invoked description never loads. A whole-value YAML quote is
+  # counted as the value it loads as, wrapper and escapes gone, so quoting a
+  # description does not move it across the bound.
   case " $user_invoked_skills " in
     *" $(basename "$(dirname "$f")") "*) : ;;
     *)
-      local desc_bytes
-      desc_bytes=$(printf '%s' "$desc" | LC_ALL=C wc -c | tr -d ' ')
+      local desc_bytes loaded=$desc
+      case "$loaded" in
+        \"*\") loaded=${loaded#?}; loaded=${loaded%?}; loaded=${loaded//\\\"/\"} ;;
+        \'*\') loaded=${loaded#?}; loaded=${loaded%?}; loaded=${loaded//\'\'/\'} ;;
+      esac
+      desc_bytes=$(printf '%s' "$loaded" | LC_ALL=C wc -c | tr -d ' ')
       if [ "$desc_bytes" -gt 700 ]; then
         echo "WARN: $f description is $desc_bytes bytes, over the 700-byte per-description bound — cut the what-it-is preamble, synonym lists and second 'Not for…' tails, moving a dropped tail into the body's boundary section; keep every trigger"
       fi
@@ -1898,7 +1905,9 @@ check_section_pointers() {
       name="${BASH_REMATCH[1]}"
       target="$dir/${BASH_REMATCH[2]%%#*}"
     fi
-    [ -z "$target" ] && continue
+    # An unresolved citation ends the chain: a later "§ B" after "… § A, § B"
+    # names A's target, not one from before A.
+    [ -z "$target" ] && { prev_target=""; continue; }
     prev_line=$lineno; prev_target=$target
     # The citation runs on into its sentence, so it is cut at the first
     # sentence end and at the next `§`, which no heading carries; `short` cuts
@@ -2561,25 +2570,40 @@ fi
 # Pass 4 — the other trees, each read once.
 # ---------------------------------------------------------------------------
 
+# The one reader of global/rules/DEPENDS, for check_global_rule and
+# check_depends_entries alike, so the two cannot disagree on what an entry is:
+# a line `<stem>: <names>`, a trailing CR stripped, blank lines and `#`
+# comments skipped. Prints `<line>\t<stem>\t<names>` per entry, in file order.
+depends_entries() {
+  awk '{ sub(/\r$/, "") }
+    /^[[:space:]]*(#|$)/ { next }
+    match($0, /^[A-Za-z0-9_-]+:/) { print FNR "\t" substr($0, 1, RLENGTH - 1) "\t" substr($0, RLENGTH + 1) }
+  ' global/rules/DEPENDS
+}
+depends_table=""
+[ -f global/rules/DEPENDS ] && depends_table=$(depends_entries)
+
 # Global rules admission (see header): an entry in global/rules/DEPENDS naming
 # skills that exist under src/. Names are read as backticked or bare
-# comma-separated slugs.
+# comma-separated slugs. A `Depends:` line inside a ``` fence is an example,
+# not a leftover.
 check_global_rule() {
   local f=$1 dep_line deps resolved stem dep bodies
   stem=$(basename "$f" .md)
-  if grep -qE '^Depends:' "$f"; then
+  if [ "$(awk "$FENCE_AWK"'/^Depends:/ { print "y"; exit }' "$f")" = y ]; then
     say_fail "$f still carries a 'Depends:' line — the dependants live in global/rules/DEPENDS, which no session loads; move the names there and delete the line, since every byte in a rule is paid on every turn"
   fi
   if [ ! -f global/rules/DEPENDS ]; then
     say_fail "$f has no entry because global/rules/DEPENDS does not exist — a global rule must name the skill(s) that depend on it there (global/README.md admission rule), or leave global/"
     return
   fi
-  dep_line=$(grep -m1 -E "^${stem}:" global/rules/DEPENDS || true)
+  # The `entry:` prefix tells an entry with no names from no entry at all.
+  dep_line=$(awk -F'\t' -v s="$stem" '$2 == s { print "entry:" $3; exit }' <<<"$depends_table")
   if [ -z "$dep_line" ]; then
     say_fail "$f has no entry in global/rules/DEPENDS — a global rule must name the skill(s) that depend on it there as '$stem: <skill>, <skill>' (global/README.md admission rule), or leave global/"
     return
   fi
-  deps=$(printf '%s' "${dep_line#"${stem}":}" | tr -d '`' | tr ',' ' ')
+  deps=$(printf '%s' "${dep_line#entry:}" | tr -d '`' | tr ',' ' ')
   resolved=0
   for dep in $deps; do
     if [ -f "src/$dep/SKILL.md" ]; then
@@ -2709,15 +2733,22 @@ while IFS= read -r f <&3; do
   [ -n "$f" ] && check_global_rule "$f"
 done 3<<<"$graded_rules"
 # A DEPENDS entry whose rule file is gone keeps a dependant list for nothing,
-# and reads to the next author as a rule that still loads. Whole-tree only:
-# --files grades the named rules, not the sidecar.
+# and reads to the next author as a rule that still loads; a second entry for
+# one stem is never read, since check_global_rule takes the first. Whole-tree
+# only: --files grades the named rules, not the sidecar.
 check_depends_entries() {
-  local stem
+  local line stem names seen=" "
   [ -f global/rules/DEPENDS ] || return 0
-  while IFS= read -r stem; do
+  while IFS=$'\t' read -r line stem names; do
+    [ -n "$stem" ] || continue
+    case "$seen" in
+      *" $stem "*)
+        say_fail "global/rules/DEPENDS has a second entry for '$stem' (line $line) — only the first is read, so these names are checked nowhere; merge the two lines" ;;
+    esac
+    seen="$seen$stem "
     [ -f "global/rules/$stem.md" ] ||
       say_fail "global/rules/DEPENDS has an entry for '$stem' but global/rules/$stem.md does not exist — delete the entry, or restore the rule"
-  done < <(grep -oE '^[A-Za-z0-9_-]+:' global/rules/DEPENDS | tr -d ':')
+  done <<<"$depends_table"
 }
 [ "$files_mode" -eq 0 ] && check_depends_entries
 while IFS= read -r f <&3; do

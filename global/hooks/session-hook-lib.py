@@ -63,7 +63,7 @@ def read_payload():
 
 def session_id(d):
     sid = d.get("session_id")
-    return sid if isinstance(sid, str) and SID.match(sid) else None
+    return sid if isinstance(sid, str) and SID.fullmatch(sid) else None
 
 
 def state_dir():

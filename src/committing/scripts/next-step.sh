@@ -21,14 +21,17 @@
 #   next:    the one act, a literal `/command <args>` where one exists
 #
 # It reads what the review-receipt hook reads, by the same means, so it never
-# says "push" where the hook blocks: the nearest CLAUDE.md carrying a
-# `Review required:` line, walking from here up to the repo top (the hook's
+# says "push" where the hook blocks: the `Review required:` line of the repo
+# top's CLAUDE.md alone, never a subdirectory's (the hook's
 # pattern and fence rule, copied with their anchors — global/hooks/
 # review-receipt.sh; next-step-selftest.sh's parity section runs both on one
 # fixture); the review reports `landing.sh list --kind review` prints, from
-# the zones `landing.sh zones` owns; and their `Reviewed-tree` lines through
-# tree-stamp.sh --stamps, the one stamp reader. A `Review cadence:` line is
-# read the same way, from the nearest CLAUDE.md carrying one. A report
+# the zones `landing.sh zones` owns (a zone landing.sh refuses fails `list`,
+# and this script exits 4 with landing.sh's reason); and their
+# `Reviewed-tree` lines through tree-stamp.sh --stamps, the one stamp reader,
+# skipping a report it cannot read (exit 4) as the hook does. A `Review
+# cadence:` line is read the same way, from the nearest CLAUDE.md carrying
+# one. A report
 # answers when it stamps the working-tree stamp (HEAD's tree when the tree is
 # clean, and the tree a commit of the whole tree reproduces when it is not),
 # or HEAD's tree, which is what a bare `git push` sends: the commits then
@@ -47,8 +50,13 @@
 # upstream, and a diverged branch each get their own act.
 #
 # The two scripts it runs, tree-stamp.sh (review-changes) and landing.sh
-# (handoff), are read at the installed path ~/.claude/skills/<owner>/scripts/
-# (ADR-0108), else beside this checkout when that path is absent.
+# (handoff), are found the way the hook finds them: from this script's own
+# resolved path, `<owner>/scripts/` two levels up from its directory, with no
+# second place to look. Run through the installed link
+# ~/.claude/skills/committing/ (ADR-0108), that is the owner's one copy
+# beside it, which a symlinked install resolves into the checkout; so this
+# script and the hook in the same checkout read the same two files, and a
+# missing one exits 4 here as it holds the push there.
 #
 # Why a script: the order was prose in implement, feedback-loops, handoff and
 # scripts/README.md, and agents retyped the second command of fixed pairs
@@ -74,25 +82,23 @@ while [ $# -gt 0 ]; do
 done
 
 top="$(git rev-parse --show-toplevel 2>/dev/null)" || { echo "next-step.sh: not inside a git work tree" >&2; exit 4; }
+# the two scripts, from this script's own resolved path, as the hook resolves its
+# own (header): <owner>/scripts/ beside committing/ here
 here_real="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
-# sibling <owner> <file>: the installed path, else the copy beside this checkout
-sibling() {
-  local inst="${HOME:-}/.claude/skills/$1/scripts/$2"
-  if [ -n "${HOME:-}" ] && [ -f "$inst" ]; then printf '%s\n' "$inst"; else printf '%s\n' "$here_real/../../$1/scripts/$2"; fi
-}
-stamp="$(sibling review-changes tree-stamp.sh)"
-landing="$(sibling handoff landing.sh)"
+stamp="$here_real/../../review-changes/scripts/tree-stamp.sh"
+landing="$here_real/../../handoff/scripts/landing.sh"
 [ -f "$stamp" ] || { echo "next-step.sh: stamp script not found at $stamp" >&2; exit 4; }
 [ -f "$landing" ] || { echo "next-step.sh: landing.sh not found at $landing" >&2; exit 4; }
 
-# unfenced <file>: the file outside its fences, by tree-stamp.sh's rule (a ``` or
-# ~~~ line opens a fence, and only the same marker closes it), as the hook scans it
+# unfenced <file>: the file outside its fences, by tree-stamp.sh's rule (a run of
+# three or more ` or ~ opens a fence, and only a run of the same character at
+# least as long closes it), as the hook scans it
 unfenced() {
   awk '
-    match($0, /^[[:space:]]*(```|~~~)/) {
-      marker = substr($0, RSTART + RLENGTH - 3, 3)
-      if (fence == "") { fence = marker; next }
-      if (marker == fence) { fence = ""; next }
+    match($0, /^[[:space:]]*(```+|~~~+)/) {
+      run = substr($0, RSTART, RLENGTH); sub(/^[[:space:]]*/, "", run)
+      if (fence == "") { fence = run; next }
+      if (substr(run, 1, 1) == substr(fence, 1, 1) && length(run) >= length(fence)) { fence = ""; next }
     }
     fence != "" { next }
     { print }' "$1" 2>/dev/null
@@ -116,12 +122,22 @@ nearest() {
 OPT_IN='^[-* >]*\**`?Review required:`?\**[[:space:]]*\**`?(yes|no)`?\**[[:space:]]*$'
 CADENCE='^[-* >]*\**`?Review cadence:`?\**[[:space:]]*[^[:space:]]'
 required=""
-nearest "$OPT_IN" | grep -qi 'yes' && required=1
+if [ -f "$top_phys/CLAUDE.md" ]; then
+  unfenced "$top_phys/CLAUDE.md" | grep -iE "$OPT_IN" | head -1 | grep -qi 'yes' && required=1
+fi
 cadence="$(nearest "$CADENCE" | sed -E 's/^[^:]*:[`*]*[[:space:]]*//; s/[[:space:]]*\*\*[[:space:]]*$//')"
 
-# untracked files counted whatever status.showUntrackedFiles says, as the stamp counts them
-status="$(git -C "$top" status --porcelain --untracked-files=normal 2>/dev/null)"
-dirty="$(printf '%s' "$status" | grep -c . || true)"
+# untracked files counted whatever status.showUntrackedFiles says, as the stamp
+# counts them; read NUL-separated, so a rename names its new path and a path
+# git would C-quote prints as it is
+paths=()
+skip_from=""
+while IFS= read -r -d '' e; do
+  if [ -n "$skip_from" ]; then skip_from=""; continue; fi   # a rename's or copy's source path
+  case "${e:0:2}" in R?|?R|C?|?C) skip_from=1 ;; esac
+  paths+=("${e:3}")
+done < <(git -C "$top" status --porcelain -z --untracked-files=normal 2>/dev/null)
+dirty="${#paths[@]}"
 tree="$(cd "$top" && bash "$stamp")" || { echo "next-step.sh: tree-stamp.sh failed" >&2; exit 4; }
 head_tree="$(git -C "$top" rev-parse --verify -q 'HEAD^{tree}' 2>/dev/null || true)"
 treeline="${tree:0:12}, $dirty dirty path(s)"
@@ -154,7 +170,8 @@ push_act() {
 
 # --- the receipt: every report for this repo, as the hook finds them ---------
 repo="$(basename "$top")"
-list="$(bash "$landing" list --kind review --repo "$repo")" || { echo "next-step.sh: landing.sh list failed" >&2; exit 4; }
+# a zone landing.sh refuses exits 4 there, its reason on stderr above this line
+list="$(bash "$landing" list --kind review --repo "$repo")" || { echo "next-step.sh: landing.sh list failed (exit $?)" >&2; exit 4; }
 reports=0 stamped_by="" head_by="" newest="" newest_stamps=""
 while IFS= read -r f; do
   [ -n "$f" ] && [ -f "$f" ] || continue
@@ -163,6 +180,7 @@ while IFS= read -r f; do
   rc=$?
   case $rc in
     0|2) ;;
+    4) echo "next-step.sh: skipping unreadable report $f" >&2; continue ;;   # as the hook skips it
     *) echo "next-step.sh: tree-stamp.sh --stamps failed on $f (exit $rc)" >&2; exit 4 ;;
   esac
   found="$(printf '%s\n' "$found" | sed -n 's/^Reviewed-tree \([0-9a-f]\{40\}\)$/\1/p')"
@@ -175,7 +193,8 @@ while IFS= read -r f; do
   fi
   if [ -z "$newest" ] || [ "$f" -nt "$newest" ]; then newest="$f" newest_stamps="$found"; fi
 done <<< "$list"
-left_out="$(printf '%s\n' "$status" | cut -c4- | grep . | head -5 | tr '\n' ' ' | sed 's/ $//')"
+left_out=""
+[ "$dirty" -gt 0 ] && left_out="${paths[*]:0:5}"
 [ "$dirty" -gt 5 ] && left_out="$left_out and $((dirty - 5)) more"
 if [ -n "$stamped_by" ]; then
   receiptline="stamped by $stamped_by"

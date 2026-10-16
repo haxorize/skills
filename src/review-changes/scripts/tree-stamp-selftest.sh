@@ -21,9 +21,12 @@
 #     stamps matches; a mismatch exits 1 (`tree-stamp.sh: NO MATCH …`); a stamp
 #     only inside a ``` fence, a ~~~ fence or an indented fence, behind `>`, or
 #     with text after the hash is no stamp (exit 2), nor is one inside a ```
-#     fence after a ~~~ line, or inside a ~~~ fence after a ``` line; a missing
+#     fence after a ~~~ line, or inside a ~~~ fence after a ``` line, or
+#     inside a ```` fence after a shorter ``` line; a ```` fence closed, and
+#     a ``` fence closed by a longer ```` run, leave the stamp after it live
+#     (--stamps reads it); a missing
 #     report exits 3; an unreadable report, and awk failing, exit 4.
-#   --stamps — the same seven no-stamp reports exit 2; a report with a Reviewed
+#   --stamps — the same eight no-stamp reports exit 2; a report with a Reviewed
 #     and a Measured stamp outside a fence and a third inside a ~~~ fence prints
 #     exactly the two, labelled; it reads outside any repo; a missing report
 #     exits 4, as do an unreadable report (skipped as root) and awk failing;
@@ -119,11 +122,23 @@ printf '> Reviewed-tree: %s\n' "$dirty" > "$tmp/quoted.md"
 printf 'Reviewed-tree: %s (the tree as reviewed)\n' "$dirty" > "$tmp/tail.md"
 printf '```\n~~~\nReviewed-tree: %s\n```\n' "$dirty" > "$tmp/mixedfence.md"
 printf '~~~\n```\nReviewed-tree: %s\n~~~\n' "$dirty" > "$tmp/mixedtilde.md"
-for f in fenced tilde indented quoted tail mixedfence mixedtilde; do
+printf '````\n```\nReviewed-tree: %s\n```\n````\n' "$dirty" > "$tmp/longfence.md"
+for f in fenced tilde indented quoted tail mixedfence mixedtilde longfence; do
   stamp --verify "$tmp/$f.md" >/dev/null; rc=$?
   expect_rc "--verify on the $f report (no stamp line)" 2 "$rc"
   stamp --stamps "$tmp/$f.md" >/dev/null 2>&1; rc=$?
   expect_rc "--stamps on the $f report (no stamp line)" 2 "$rc"
+done
+
+# A fence closes on a run of its own character at least as long as the one
+# that opened it (CommonMark): a shorter inner run is quoted text, a longer
+# closing run closes it.
+printf '````\n```\n````\nReviewed-tree: %s\n' "$dirty" > "$tmp/longclosed.md"
+printf '```\n````\nReviewed-tree: %s\n' "$dirty" > "$tmp/longercloses.md"
+for f in longclosed longercloses; do
+  out="$(stamp --stamps "$tmp/$f.md")"; rc=$?
+  expect_rc "--stamps on the $f report (a live stamp after the fence)" 0 "$rc"
+  expect_row "$out" "--stamps on the $f report reads the stamp" "Reviewed-tree $dirty"
 done
 
 # --stamps: the one reader, labelled, in report order, outside fences only.

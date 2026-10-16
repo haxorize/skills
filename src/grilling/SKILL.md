@@ -1,6 +1,6 @@
 ---
 name: grilling
-description: The relentless-interview discipline for stress-testing a plan, decision, or idea. Use when thinking needs to be pressure-tested before acting on it (however simple it looks), or when another skill needs the core grill loop.
+description: The relentless-interview discipline for stress-testing a plan, decision, or idea. Use when thinking needs to be pressure-tested before acting on it (however simple it looks), when the user says "grill me" or "grill this", or when another skill needs the core grill loop.
 ---
 
 # Grilling
@@ -21,7 +21,7 @@ When the user wants the plan blessed rather than tested, name that out loud and 
 
 ## Ask the load-bearing question first
 
-Within a round, order questions load-bearing-first — an assumption that sinks the plan if it's false is read before any nice-to-have refinement — and the same ordering picks which branches to expand first. Format every question:
+Within a round, order questions load-bearing-first — an assumption that sinks the plan if it's false is read before any nice-to-have refinement — and the same ordering picks which branches to expand first. The format below replaces the global ask block for every grill question. Format every question:
 
 ❓ **Q1 — [short title]**: [the question; letter the alternatives (a/b/c) when it offers any]
 

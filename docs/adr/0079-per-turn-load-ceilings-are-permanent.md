@@ -6,7 +6,7 @@ Three sets of text load on every turn in every project: this repo's `CLAUDE.md`,
 
 ## Decision
 
-All four ceilings are enforced by `scripts/lint-skills.sh`:
+All five ceilings are enforced by `scripts/lint-skills.sh`:
 
 - **The 12,000-byte rules cap is permanent**, a FAIL in `check_rules_bytes`. Nick ruled it so on 2026-09-04; it is not raised again.
 - **The model-invoked catalog has a total ceiling of 14,400 bytes**, a WARN in `check_catalog_bytes`. It measures whole `description:` lines (key, space, value, newline). A user-invoked skill costs the catalog nothing.
@@ -28,7 +28,11 @@ The catalog ceiling started on 2026-09-04 at 13,200 bytes, the day's sum of 13,1
 
 The 30,000-byte budget was argued on the same day as the whole surface. At the tree that admitted `aeo` the `launch-loaded` line read 29,385 B: `CLAUDE.md` 3,266 + `global/rules/` 11,974 + catalog 14,145, about 8,072 tokens.
 
-On 2026-10-15 the 2026-10-12 round cut both layers without moving either figure: the rules lost their `Depends:` lines to a sidecar and were condensed, and seven descriptions were trimmed with every trigger kept. The `launch-loaded` line then read 23,580 B: `CLAUDE.md` 3,368 + `global/rules/` 8,161 + catalog 12,051. The one description still over 700 bytes, `health-literacy`, waits on a re-probe of its triggers.
+On 2026-10-15 the 2026-10-12 round cut both layers without moving either figure. The rules lost their `Depends:` lines to the `global/rules/DEPENDS` sidecar and were condensed, and the longest descriptions were trimmed toward their trigger halves. The one description still over 700 bytes, `health-literacy`, waits on a re-probe of its triggers.
+
+The condensing displaced clauses, and Nick ratified each disposition on 2026-10-15. Relocated: the period-scoped summary's `git log --author --since --until` command to `writing-for-humans`' register reference § Weekly status note; "after a failed build the artifact is the previous build's" to `feedback-loops`' test check; and the dash sweep's "by that path, never a pipeline retyped from memory" and "never a score or a whole-draft rewrite" to the outbound reference's § The dash sweep. Cut as carried elsewhere or no longer needed: `evidence.md`'s "where two files could match, both are opened" and "including the ones used to check the others", the narrowing of "captured, never composed" to PR bodies, and `outbound-dash-sweep.md`'s "whether or not any skill is loaded", which an always-loaded rule never needed.
+
+The trims dropped triggers too. Restored in the fix pass: `grilling`'s "grill me" and `phi-safe-code`'s audit-trail trigger, each the only model-reachable route to a body section. Left dropped: `doc-claims`' docs-match-the-code trigger and `writing-for-humans`' terminal-narration trigger.
 
 ## Considered Options
 

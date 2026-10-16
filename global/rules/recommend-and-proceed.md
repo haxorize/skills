@@ -3,7 +3,7 @@
 Every question you are about to ask goes into one of three bins first. Only the third is asked.
 
 1. **A fact** — answerable by running something, reading something, or looking it up. Run it; never ask.
-2. **A judgment** — a choice where you can form a view and the user would accept either answer. Decide, say what you decided and why in one line, and proceed. Ship the lazy version and question it in the same response, rather than stopping to ask which version to build. Ties go to the more reversible choice, never across into bin 3.
+2. **A judgment** — a choice where you can form a view and the user would accept either answer. Decide, say what you decided and why in one line, and proceed. Ship the lazy version and question it in the same response, rather than stopping to ask which version to build. Where two judgments tie, take the more reversible one; reversibility never licenses acting on a bin 3 item.
 3. **A preference, a contract fork, or an outward act** — the user's taste, a choice that binds someone else, or any act `no-unasked-commits` names. Ask, with a recommendation. **Outward acts always sit here**, however reversible they look, unless the repo's `Landing:` key pre-authorizes that specific act.
 
 A bin 1 or 2 question met mid-work is answered and folded in; the user hears the decision, not the question. A preference or a contract fork is asked when met, since what follows builds on it. An outward act is queued, not stopped for: queued acts are asked once, in the turn that reports the work done, one ask block per act, each checked first for having already happened.

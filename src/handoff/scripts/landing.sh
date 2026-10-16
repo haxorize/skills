@@ -24,9 +24,11 @@
 # and fails that check (a note on stderr, nothing printed), and creates
 # nothing. The landing zone is that zone: `dir`, `path` and `latest` create it
 # (`mkdir -m 700`; an existing zone's mode is left alone), refuse one that
-# fails the check, and print it as `cd … && pwd` resolves it. `latest` and
-# `list` search it when it exists and passes, print each file under it
-# resolved the same way, and skip a file that fails the check. <repo> is the
+# fails the check, and print it as `cd … && pwd` resolves it. `list` creates
+# nothing and refuses a zone that exists and fails the check, exiting 4 as the
+# others do, so a reader cannot take a refused zone for an empty one. `latest`
+# and `list` search the zone, print each file under it resolved the same way,
+# and skip a file that fails the check. <repo> is the
 # basename of `git rev-parse --show-toplevel`; the audit kind takes the fixed
 # word `skills`, so `--kind audit` with `--repo` is a usage error. <date> is
 # today, YYYY-MM-DD. A file of a kind is `<repo>-YYYY-MM-DD-<slug>` plus `.md`
@@ -49,7 +51,8 @@
 # file of that kind · 3 usage error (bad subcommand or flag, a slug with `/`
 # or `.` or a leading `-`, an unknown kind, --repo with the audit kind, no repo
 # and no --repo) · 4 the zone could not be created, or is not this user's
-# alone (owned by another uid, or group- or world-writable).
+# alone (owned by another uid, or group- or world-writable) — for `list` too,
+# whose zone it does not create; `zones` alone prints nothing and exits 0.
 set -uo pipefail
 unset CDPATH   # an exported CDPATH makes `cd` print the path into the captured value
 
@@ -132,7 +135,8 @@ fi
 best=""
 if [ -d "$zone" ]; then
   if ! private "$zone"; then
-    refuse_note "$zone"
+    echo "landing.sh: the landing zone $zone is not this user's alone (owner other than uid $uid, or group- or world-writable); fix or remove it" >&2
+    exit 4
   elif zr="$(cd "$zone" 2>/dev/null && pwd)"; then
     for f in "$zr/$repo"-[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-*"$suffix"; do
       [ -f "$f" ] || continue

@@ -105,3 +105,8 @@ mismatch in the direction a wider header takes, and the backslash-run parity a
 ## A chained citation
 
 - The second name inherits the first one's target: [the quiet forms](references/quiet-forms.md) § The quiet half and § No Such Chained Heading.
+- An or-joined name inherits it too: [the quiet forms](references/quiet-forms.md) § The quiet half or § No Such Or Heading.
+- A comma-joined name inherits it too: [the quiet forms](references/quiet-forms.md) § The quiet half, § No Such Comma Heading.
+- A link between ends the chain: [the quiet forms](references/quiet-forms.md) § The quiet half, then [the sibling note](references/sibling-note.md) and § No Such Linked Heading.
+- A path between ends the chain: [the quiet forms](references/quiet-forms.md) § The quiet half, per `~/.claude/rules/body-checked.md` and § No Such Tilde Heading.
+- An unresolved citation ends the chain: [the quiet forms](references/quiet-forms.md) § The quiet half, then the guide § Mid, § No Such Reset Heading.

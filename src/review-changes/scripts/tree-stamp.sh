@@ -37,11 +37,16 @@
 # accepting only the `Reviewed-tree` lines, so there is no second parser. A
 # stamp line is the label (`Reviewed-tree:` or `Measured-tree:`), a list
 # marker, bold or backticks allowed around it, the hash, nothing after it. A
-# line inside a fenced block (a fence is a line starting, after optional
-# whitespace, with ``` or ~~~, and closes only on the marker that opened it)
-# is a quotation, never a stamp, and one behind
+# line inside a fenced block (a fence opens on a line starting, after optional
+# whitespace, with a run of three or more ` or ~, and closes only on a run of
+# the same character at least as long, as CommonMark has it) is a quotation,
+# never a stamp, and one behind
 # `>` fails the pattern's start. Any stamp in the report matching passes
 # --verify, since a fix pass appends one per stamping.
+#
+# The fence rule in read_stamps' awk has two hand-synced copies, the opt-in
+# scan in global/hooks/review-receipt.sh and `unfenced` in
+# src/committing/scripts/next-step.sh; a change to it here is made in both.
 #
 # Exit: 0 stamp printed, --verify matched, or --stamps found a stamp · 1
 # --verify found stamps and none matched · 2 --verify or --stamps found no
@@ -60,10 +65,10 @@ usage() {
 # per stamp outside a fence and returns awk's status.
 read_stamps() {
   awk '
-    match($0, /^[[:space:]]*(```|~~~)/) {
-      marker = substr($0, RSTART + RLENGTH - 3, 3)
-      if (fence == "") { fence = marker; next }
-      if (marker == fence) { fence = ""; next }
+    match($0, /^[[:space:]]*(```+|~~~+)/) {
+      run = substr($0, RSTART, RLENGTH); sub(/^[[:space:]]*/, "", run)
+      if (fence == "") { fence = run; next }
+      if (substr(run, 1, 1) == substr(fence, 1, 1) && length(run) >= length(fence)) { fence = ""; next }
     }
     fence != "" { next }
     /^[-*]*[[:space:]]*\**`?(Reviewed|Measured)-tree:`?\**[[:space:]]*`?[0-9a-f]{40}`?[[:space:]]*$/ {

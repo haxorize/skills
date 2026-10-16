@@ -28,7 +28,8 @@
 # markdown heading, the wrap cap and its boundary), the fold (an over-long
 # prose line re-broken with its words intact and a short line beside it never
 # joined; a run of spaces and a tab kept byte for byte, and a line with no
-# lone space left whole and rejected; list items, indented lines, `>` quotes, `|` table rows, lines in a
+# lone space left whole and rejected under that reason, a list item under its
+# own; list items, indented lines, `>` quotes, `|` table rows, lines in a
 # ~~~ fence or after a ``` inside one, and the trailer paragraph left alone
 # and still rejected; no break before a word opening with the comment string,
 # '#' or a configured one; the write through a temp file and a rename, so a
@@ -397,13 +398,28 @@ $long" 1
 }
 row_fold_keeps_runs
 # A line whose only spaces sit in runs has no break point: not folded, not
-# rewritten, and rejected by the wrap rule.
+# rewritten, and rejected by the wrap rule under that reason, never as a list
+# item, quote, table row or fenced line it is not.
 row_no_lone_space() {
   reject_unfolded "line with no lone space to break at" "Add the hook
 
 $(printf 'abcdefgh  %.0s' 1 2 3 4 5 6 7 8 9 10)end"
+  printf '%s\n' "$out" | grep -qF "is prose with no lone space to break at" ||
+    note_fail "a prose line with no lone space was rejected without naming that cause"
+  if printf '%s\n' "$out" | grep -qF "is not prose the hook folds"; then
+    note_fail "a prose line with no lone space was rejected as a shape the fold never touches"
+  fi
 }
 row_no_lone_space
+# ...and a shape the fold never touches keeps its own reason.
+row_list_item_reason() {
+  reject_unfolded "over-long list item" "Add the hook
+
+- $(pad 80 'a list item')"
+  printf '%s\n' "$out" | grep -qF "is not prose the hook folds" ||
+    note_fail "an over-long list item was rejected without naming it as a shape the fold never touches"
+}
+row_list_item_reason
 
 # The folded text reaches the message through a temp file beside it and a
 # rename: a write that cannot complete leaves the message whole and is
@@ -712,14 +728,15 @@ reference, so the block is also the load instruction."
 
 # --- mutation table -----------------------------------------------------------
 # Each mutant edits a copy of the hook in one place and reruns the row that
-# grades that place; the row must go red, or it grades nothing. Narrowing
-# (an alternative dropped) and widening (a guard loosened) both appear.
+# grades that place; the row must be green on the hook and go red on the
+# mutant, or it grades nothing. Narrowing (an alternative dropped) and
+# widening (a guard loosened) both appear.
 # mutant <label> <find> <replace> <row command...>
 mutant() {
   local label="$1"
   selftest_mutate "$hook" "$tmp/mutant-commit-msg" "$2" "$3" || return
   shift 3
-  hook="$tmp/mutant-commit-msg" selftest_expect_killed "$label" "$@"
+  selftest_expect_killed --mutant hook "$tmp/mutant-commit-msg" "$label" "$@"
 }
 mutant "skip runs without squash!" 'fixup!*|squash!*|amend!*' 'fixup!*|amend!*' \
   allow_unfolded "squash! subject over a long body line" "squash! Add the hook
@@ -748,6 +765,8 @@ mutant "quote drops |" "re_quote='^[>|]'" "re_quote='^[>]'" \
 | $(pad 80 'a table cell') |"
 mutant "run-of-spaces glue off" '[ -z "$w" ] || [ -z "${fields[$((j - 1))]}" ] || ' '' row_fold_keeps_runs
 mutant "a line with no break point still counted" 'if [ "${#pieces[@]}" -eq 1 ]; then' 'if false; then' row_no_lone_space
+mutant "an unbreakable line not recorded" '    unbreakable="$unbreakable$nl$l$nl"' '    :' row_no_lone_space
+mutant "every over-cap line read as unbreakable" '    case "$unbreakable" in' '    case "$nl$line$nl" in' row_list_item_reason
 mutant "comment-word glue off" '[[ "$w" == "$comment_char"* ]]' 'false' row_no_comment_start
 mutant "glue reads a literal #" '[[ "$w" == "$comment_char"* ]]' '[[ "$w" == "#"* ]]' row_no_comment_start_custom
 mutant "write in place, no temp file" \

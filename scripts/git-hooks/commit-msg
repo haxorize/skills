@@ -210,6 +210,7 @@ done < "$msg_file"
 
 folded=0
 out=()
+unbreakable=""   # prose lines the fold could not break, newline-delimited
 for i in "${!raw[@]}"; do
   l="${raw[$i]%$'\r'}"
   if [ "${kind[$i]}" != prose ] || [[ "$protected" == *" ${para[$i]} "* ]] || ! over_cap_breakable "$l"; then
@@ -241,8 +242,9 @@ for i in "${!raw[@]}"; do
   done
   pieces+=("$cur")
   # A line whose only spaces sit in runs has no break point: it stays whole
-  # and uncounted, for the wrap check below to reject.
+  # and uncounted, for the wrap check below to reject under its own reason.
   if [ "${#pieces[@]}" -eq 1 ]; then
+    unbreakable="$unbreakable$nl$l$nl"
     out+=("${raw[$i]}"); continue
   fi
   folded=$((folded + 1))
@@ -335,11 +337,18 @@ if [ -n "$(printf '%s' "$body" | tr -d '[:space:]')" ]; then
   # Wrap at the cap, over what the fold above left. A trailer, and a line with
   # no space at or before the cap (an unbreakable URL or token), cannot wrap and
   # is exempt. Every offending line is reported, so one commit attempt shows
-  # the whole list.
+  # the whole list, under the reason the fold left it: prose with no lone space
+  # to break at, or a shape the fold never touches.
   while IFS= read -r line; do
     is_trailer "$line" && continue
     over_cap_breakable "$line" || continue
-    echo "commit-msg: FAIL body line exceeds $WRAP columns and is not prose the hook folds (a list item, a quote or table row, an indented or fenced line, or the trailer paragraph): ${line:0:60}… — $STYLE $BODY_ANCHOR" >&2
+    case "$unbreakable" in
+      *"$nl${line%$'\r'}$nl"*)
+        why="is prose with no lone space to break at (its spaces sit in runs of two or more, or open a comment-string word), so the hook could not fold it" ;;
+      *)
+        why="is not prose the hook folds (a list item, a quote or table row, an indented or fenced line, or the trailer paragraph)" ;;
+    esac
+    echo "commit-msg: FAIL body line exceeds $WRAP columns and $why: ${line:0:60}… — $STYLE $BODY_ANCHOR" >&2
     fail=1
   done <<< "$body"
 fi

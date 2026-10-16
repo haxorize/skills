@@ -16,7 +16,7 @@ set -u
 here="$(cd "$(dirname "$0")" && pwd)"
 hook="$here/rename-safety.sh"
 # Temp-file template and guard: scripts/README.md § Temp files. Spelled out
-# because global/hooks/selftest-lib.sh has no temp-directory helper.
+# because the libraries are sourced after this block.
 tmp="$(mktemp -d "${TMPDIR:-/tmp}/rename-safety-selftest.XXXXXX" 2>/dev/null)"
 if [ -z "$tmp" ] || [ ! -d "$tmp" ]; then
   echo "rename-safety-selftest: no usable temp directory (TMPDIR=${TMPDIR:-unset}) — nothing ran" >&2
@@ -219,6 +219,14 @@ RS_TARGET="$opted" expect_block "$plain" 'cd "$RS_TARGET" && sed -i s/a/b/ f.txt
 expect_crumb "$plain" 'cd "$RS_UNSET_VAR" && sed -i s/a/b/ f.txt' "after a cd the hook cannot expand"   "an unknown cd from a plain cwd is said, not silent"
 expect_crumb "$plain" 'cd "$(git rev-parse --show-toplevel)" && sed -i s/a/b/ f.txt' "after a cd the hook cannot expand" "a cd through \$(…)"
 expect_quiet "$plain" "cd \"\$RS_UNSET_VAR\" && sed -i s/a/b/ $plain/f.txt"   "an unknown cd before an absolute file judges the file"
+# ${X} reads the environment; ${X:-y}, the shell's own PWD, and a name the command rebinds are not expanded
+RS_TARGET="$opted" expect_block "$plain" 'cd "${RS_TARGET}" && sed -i s/a/b/ f.txt' "\${X} expands from the environment"
+RS_TARGET="$opted" expect_crumb "$plain" 'cd "${RS_TARGET:-x}" && sed -i s/a/b/ f.txt' "after a cd the hook cannot expand" "\${X:-y} is not expanded"
+expect_crumb "$plain" 'cd ../opted && cd "$PWD" && sed -i s/a/b/ f.txt' "after a cd the hook cannot expand" "\$PWD is the session shell's, not the hook's"
+expect_allow "$opted" 'cd ../plain && sed -i s/a/b/g "$PWD/f.txt"'                "a \$PWD file argument is judged by the run directory"
+RS_TARGET="$opted" expect_crumb "$plain" 'unset RS_TARGET; cd "$RS_TARGET" && sed -i s/a/b/ f.txt' "after a cd the hook cannot expand" "a name the command unsets"
+RS_TARGET="$opted" expect_crumb "$plain" 'read RS_TARGET < list; cd "$RS_TARGET" && sed -i s/a/b/ f.txt' "after a cd the hook cannot expand" "a name the command reads into"
+RS_TARGET="$opted" expect_crumb "$plain" 'for RS_TARGET in x; do cd "$RS_TARGET" && sed -i s/a/b/ f.txt; done' "after a cd the hook cannot expand" "a for loop variable"
 # payload cwd wins over the process directory
 payload="$(python3 -c 'import json,sys; print(json.dumps({"cwd":sys.argv[1],"tool_input":{"command":"sed -i s/a/b/ f"}}))' "$opted")"
 rc="$( cd "$plain" && printf '%s' "$payload" | HOME="$tmp" bash "$hook" >/dev/null 2>&1; echo $? )"
@@ -276,7 +284,7 @@ mutant "--expression takes no next token" '                    if not eq and i +
                         i += 1
                         val = args[i]
                     if ch == "e":' '                    if ch == "e":' "$opted" "sed -i '' --expression 's/a/b/' f.txt" 2
-mutant "drop the {} guard"         'if "`" in path or path == "{}":' 'if "`" in path:' "$opted" "sed -i '' 's/a/b/' {}" 0
+mutant "drop the {} guard"         'p = None if path == "{}" else expand(path)' 'p = expand(path)' "$opted" "sed -i '' 's/a/b/' {}" 0
 mutant "drop the newline guard"    '        if e[k] == "\n":
             return False' '        pass' "$opted" "sed -i '' '$NL_EXPR' f.txt" 0
 mutant "no long-option abbreviation" 'hits = [n for n in SED_LONG if n.startswith(name)]' 'hits = []' "$opted" "sed --in 's/a/b/' f.txt" 0
@@ -298,6 +306,17 @@ selftest_mutate "$here/hook-lib.sh" "$mdir/hook-lib.sh" 'export PAYLOAD_CWD="$cw
 cp "$here/hook-lib.sh" "$mdir/hook-lib.sh"
 selftest_mutate "$hook" "$mdir/rename-safety.sh" '                UNJUDGED.append(shape)    # a relative file' '                pass    # a relative file' \
   && hook="$mdir/rename-safety.sh" selftest_expect_killed "an unknown cd stays silent" crumb_has "$plain" 'cd "$RS_UNSET_VAR" && sed -i s/a/b/ f.txt' "cannot expand"
+# hook-lib.py's expand(): the shell-kept and rebound names it leaves unexpanded
+cp "$hook" "$mdir/rename-safety.sh"
+hooklib_mutant() { # hooklib_mutant <label> <find> <replace> <cwd> <cmd>  (the row must lose its breadcrumb)
+  selftest_mutate "$here/hook-lib.py" "$mdir/hook-lib.py" "$2" "$3" \
+    && hook="$mdir/rename-safety.sh" selftest_expect_killed "$1" crumb_has "$4" "$5" "cannot expand"
+  cp "$here/hook-lib.py" "$mdir/hook-lib.py"
+}
+hooklib_mutant "read PWD from the hook"   'name in SHELL_KEPT or name in TOUCHED' 'name in TOUCHED' "$plain" 'cd ../opted && cd "$PWD" && sed -i s/a/b/ f.txt'
+RS_TARGET="$opted" hooklib_mutant "unset rebinds nothing" 'BINDERS = {"unset", "read"}' 'BINDERS = {"read"}' "$plain" 'unset RS_TARGET; cd "$RS_TARGET" && sed -i s/a/b/ f.txt'
+RS_TARGET="$opted" hooklib_mutant "read rebinds nothing" 'BINDERS = {"unset", "read"}' 'BINDERS = {"unset"}' "$plain" 'read RS_TARGET < list; cd "$RS_TARGET" && sed -i s/a/b/ f.txt'
+RS_TARGET="$opted" hooklib_mutant "for rebinds nothing" 'elif head in ("for", "select")' 'elif head in ("select",)' "$plain" 'for RS_TARGET in x; do cd "$RS_TARGET" && sed -i s/a/b/ f.txt; done'
 RENAME_SAFETY_DIRS="$plain" mutant "start directory unresolved" 'dirs = [os.path.realpath(start)]' 'dirs = [start]' "$tmp" "cd plainlink && sed -i 's/a/b/' \"\$RS_UNSET_VAR/f.txt\"" 0
 
 if [ "$fail" -ne 0 ]; then echo "SELFTEST FAIL: rename-safety"; exit 1; fi
