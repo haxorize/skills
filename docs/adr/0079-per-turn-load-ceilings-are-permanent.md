@@ -10,6 +10,7 @@ All four ceilings are enforced by `scripts/lint-skills.sh`:
 
 - **The 12,000-byte rules cap is permanent**, a FAIL in `check_rules_bytes`. Nick ruled it so on 2026-09-04; it is not raised again.
 - **The model-invoked catalog has a total ceiling of 14,400 bytes**, a WARN in `check_catalog_bytes`. It measures whole `description:` lines (key, space, value, newline). A user-invoked skill costs the catalog nothing.
+- **A model-invoked description is bounded at 700 bytes**, a WARN in `check_description_limits`. Past that, the bytes are preamble and synonym lists rather than triggers.
 - **`CLAUDE.md` is bounded at 6,000 bytes**, a WARN in `check_claude_md_bytes`.
 - **The three layers together get a budget of 30,000 bytes per turn**, about 8,240 tokens at the 3.64 bytes per token `write-skill` § Size constraints measured, some 4% of a 200,000-token window. It is a WARN in `check_context_budget`, which prints the sum as the `launch-loaded surface` line. The per-layer caps are independent of it and of each other (6,000 + 12,000 + 14,400 = 32,400), so a tree can pass every per-layer check and still trip the combined WARN. That is the point: `CLAUDE.md` growth and a new description compete for the same bytes.
 
@@ -26,6 +27,8 @@ A headroom figure is true only at the tree that measured it. The session budgeti
 The catalog ceiling started on 2026-09-04 at 13,200 bytes, the day's sum of 13,132 over 22 description lines rounded up. That was never a budget argued from load, which is why it was a WARN and why it could move. On 2026-09-13 the 948-byte description of the `aeo` Domain skill took the catalog from 13,197 to 14,145 B. Nick chose to raise the ceiling to 14,400 rather than trim about 950 B across the other 22 descriptions: those had already been cut to their trigger halves in the 2026-09-04 fix passes, and trading routing surface for a number nobody argued is the wrong side of the bargain.
 
 The 30,000-byte budget was argued on the same day as the whole surface. At the tree that admitted `aeo` the `launch-loaded` line read 29,385 B: `CLAUDE.md` 3,266 + `global/rules/` 11,974 + catalog 14,145, about 8,072 tokens.
+
+On 2026-10-15 the 2026-10-12 round cut both layers without moving either figure: the rules lost their `Depends:` lines to a sidecar and were condensed, and seven descriptions were trimmed with every trigger kept. The `launch-loaded` line then read 23,580 B: `CLAUDE.md` 3,368 + `global/rules/` 8,161 + catalog 12,051. The one description still over 700 bytes, `health-literacy`, waits on a re-probe of its triggers.
 
 ## Considered Options
 

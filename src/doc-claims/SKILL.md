@@ -1,6 +1,6 @@
 ---
 name: doc-claims
-description: Checking what a document claims against what it answers to — the code and tests, the running product, the sources it was derived from, or, for an instruction file (a `CLAUDE.md`, a rules directory), the other instructions in force — one verdict per claim, never an impression of the whole. Use when judging whether a README, guide, reference, spec, or instruction file is still true, when prose may have drifted after a refactor, rename, or removal, when a derived document needs grounding against its sources, when a sweep or another skill needs per-claim verdicts, when someone asks whether the docs or the `CLAUDE.md` still match the code, or when an evaluation ledger's rows and expiry dates need checking. Not for updating docs the current change just made stale, which is feedback-loops at every close. Not a merge gate — a fallible judgment, a triggered review, never CI.
+description: Checking a document's claims, one verdict per claim, against what it answers to — code and tests, the running product, its sources, or for an instruction file the other instructions in force. Use when judging whether a README, guide, spec, CLAUDE.md, or instruction file is still true, when prose may have drifted after a refactor, rename, or removal, when a derived document needs grounding, when a sweep or skill needs per-claim verdicts, or when evaluation-ledger rows and expiry dates need checking. Not for updating docs this change made stale (feedback-loops'); never a merge gate.
 ---
 
 # Doc Claims
@@ -46,4 +46,4 @@ This discipline does not verify the tests themselves — bad tests produce a con
 
 ## Boundary
 
-This discipline judges what a document claims; it never rewrites the document. Updating docs the change in hand just made stale is `feedback-loops`' close, and drafting the prose is `writing-for-humans`'. Flipping a product description from `drafted` to `verified` stays `product-description`'s verification pass, which owns the footer this skill's verdicts inform.
+This discipline judges what a document claims; it never rewrites the document, and it is never a merge gate: a fallible judgment, run on a trigger, never in CI. Updating docs the change in hand just made stale is `feedback-loops`' close, and drafting the prose is `writing-for-humans`'. Flipping a product description from `drafted` to `verified` stays `product-description`'s verification pass, which owns the footer this skill's verdicts inform.

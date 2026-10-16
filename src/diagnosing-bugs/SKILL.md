@@ -1,6 +1,6 @@
 ---
 name: diagnosing-bugs
-description: Diagnosis loop for hard bugs, performance and metric regressions. Use when the user says "diagnose"/"debug this", reports something broken, a flaky test, or a metric or performance regression, when a CI failure needs triage (one branch red, many red, or a sporadic flake), or when a build turns up a failure you can't quickly explain.
+description: Diagnosis loop for hard bugs, performance and metric regressions. Use when the user says "diagnose"/"debug this", reports something broken, a flaky test, or a metric or performance regression, when a CI failure needs triage (one branch red, many red, or a sporadic flake), when a tool, auth, or environment error survives a first fix, or when a build turns up a failure you can't quickly explain.
 requires: adr, capturing-learnings
 ---
 

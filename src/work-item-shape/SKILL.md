@@ -1,6 +1,6 @@
 ---
 name: work-item-shape
-description: The shape of a well-formed work item — an outcome goal instead of an activity, acceptance criteria a check can settle, an honest AFK/HITL readiness call, right-sized scope, ambiguities surfaced instead of papered over. Use when filing a ticket or issue, drafting or editing any story, feature, task, or bug body, judging whether an item is ready to hand to an agent, or sizing a rider or arriving bug against the item in progress. In repos wired for the `to-*` publishers, routes creation asks to the right publisher instead of drafting a lookalike.
+description: The shape of a well-formed work item — an outcome goal, acceptance criteria a check can settle, an honest AFK/HITL call, right-sized scope, ambiguities surfaced. Use when filing a ticket or issue, drafting or editing any story, feature, task, or bug body, judging whether an item is ready for an agent, or sizing a rider or arriving bug against the item in progress. In repos wired for the `to-*` publishers, routes creation asks to the right publisher.
 requires: writing-for-humans
 ---
 

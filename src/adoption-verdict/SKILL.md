@@ -1,6 +1,6 @@
 ---
 name: adoption-verdict
-description: Render a graded, project-grounded verdict on an external-adoption question — a library, tool, service, or practice this project might take on. Use when asked "should we adopt/use/switch to X?", "is X worth it for us?", "should we migrate off Y?", "give me a verdict on X", when asked whether to take one dependency's major-version bump, when a CVE or deprecation raises "does this reach us?", or when a plan hinges on an unexamined adopt-or-build call, such as writing a rate limiter, retry, cache, or auth flow from scratch. Not for casual technology curiosity ("what is X?" — answer normally), generating alternatives (`diverging`), or stress-testing the user's own thinking (`grilling`) — this skill forms and defends its own position.
+description: A graded, project-grounded verdict on adopting a library, tool, service, or practice. Use when asked "should we adopt/use/switch to X?", "is X worth it for us?", "should we migrate off Y?", "give me a verdict on X", whether to take a dependency's major-version bump, when a CVE or deprecation raises "does this reach us?", or when a plan hinges on an unexamined adopt-or-build call (a hand-written rate limiter, retry, cache, or auth flow). Not "what is X?", generating alternatives (diverging), or stress-testing the user's own plan (grilling).
 requires: capturing-learnings, adr, diverging
 ---
 

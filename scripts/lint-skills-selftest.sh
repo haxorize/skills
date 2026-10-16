@@ -940,12 +940,13 @@ if ! clean_baseline=$(LINT_ROOT="$clean_fixtures" bash scripts/lint-skills.sh 2>
 fi
 
 # The clean root draws no WARN either. The loaded-file bound is a FAIL, so the
-# WARNs this linter emits are CLAUDE.md's 6,000-byte one, the catalog ceiling,
-# and the launch-loaded budget, and the clean root sits under all three; an
+# WARNs this linter emits are CLAUDE.md's 6,000-byte one, the per-description
+# bound, the catalog ceiling, and the launch-loaded budget, and the clean root
+# sits under all four; an
 # over-bound near-cap would FAIL here, caught by the exit-0 assertion above
 # rather than by this grep.
 if printf '%s\n' "$clean_baseline" | grep -q '^WARN:'; then
-  selftest_fail "the clean fixture drew a WARN line; the linter's three WARNs are CLAUDE.md's 6,000-byte bound, the 14,400-byte catalog ceiling and the 30,000-byte launch-loaded budget, and the clean root sits under all three — the WARN text above names which moved"
+  selftest_fail "the clean fixture drew a WARN line; the linter's four WARNs are CLAUDE.md's 6,000-byte bound, the 700-byte per-description bound, the 14,400-byte catalog ceiling and the 30,000-byte launch-loaded budget, and the clean root sits under all four — the WARN text above names which moved"
 fi
 # And no shell noise: the baseline is captured with 2>&1, so a header line that
 # lost its `#` and ran as a command lands here as "command not found" — with
@@ -1248,6 +1249,24 @@ isolated_case "rule-pointer-missing" 's/\z/\nProcedure: `~\/.claude\/skills\/cle
 isolated_quiet_case "rule-pointer-resolves" 's/\z/\nProcedure: `~\/.claude\/skills\/clean-skill\/references\/note.md`.\n/' \
   "global/rules/clean-rule.md" \
   "points at ~/.claude/skills/"
+# The per-description WARN (TD-6), pinned one byte each side on clean-skill's
+# 436-byte description: grown by 264 bytes to exactly 700 it is quiet (the
+# bound is -gt), by 265 to 701 it WARNs. A user-invoked description never
+# loads, so which-skill grown past the bound stays quiet. A WARN never moves
+# the exit, so all three rows exit 0.
+desc_warn="description is 701 bytes, over the 700-byte per-description bound"
+if isolated_run "description-at-bound" 's/(so that must stay quiet\.)/$1 . ("x" x 264)/e' "src/clean-skill/SKILL.md"; then
+  reject_in "$isolated_out" "the per-description WARN fired at exactly 700 bytes in the 'description-at-bound' root (the bound is -gt 700)" "over the 700-byte per-description bound"
+  expect_rc "the lint against the isolated 'description-at-bound' root" 0 "$isolated_rc"
+fi
+if isolated_run "description-over-bound" 's/(so that must stay quiet\.)/$1 . ("x" x 265)/e' "src/clean-skill/SKILL.md"; then
+  expect_in "$isolated_out" "the per-description WARN did not fire at 701 bytes in the 'description-over-bound' root" "WARN: src/clean-skill/SKILL.md $desc_warn"
+  expect_rc "the lint against the isolated 'description-over-bound' root" 0 "$isolated_rc"
+fi
+if isolated_run "description-user-invoked" 's/^(description: .*)$/$1 . ("x" x 496)/me' "src/which-skill/SKILL.md"; then
+  reject_in "$isolated_out" "the per-description WARN fired on a user-invoked description, which never loads" "per-description bound"
+  expect_rc "the lint against the isolated 'description-user-invoked' root" 0 "$isolated_rc"
+fi
 # The skill-body arm: grill-me and backfill-adrs read adr-format.md by this
 # form, and with the walk narrowed back to global/rules/ a misspelled one
 # stayed green.

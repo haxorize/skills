@@ -1,6 +1,26 @@
-# Register by artifact — the fat rows
+# Register by artifact
 
-The register table in the skill body routes every artifact; this file holds the rows whose rules outgrow a table cell, except the Meeting-notes row's transcript reading, which is [recap-from-transcript.md](recap-from-transcript.md). Open the section for the artifact at hand and no other.
+The register table routes every artifact; the sections after it hold the rows whose rules outgrow a table cell, except the Meeting-notes row's transcript reading, which is [recap-from-transcript.md](recap-from-transcript.md). Read the table, then the section for the artifact at hand and no other.
+
+## The register table
+
+Admit a row only with a named typist — the role that writes the artifact, and how often — never for an artifact nobody here produces; admit a register entry inside a row after two sightings in real drafts, never one.
+
+| Artifact | Register |
+| --- | --- |
+| **Ticket body, doc** | Neutral and plain; contractions fine — but avoid negative ones ("cannot", not "can't": readers misread them as their opposite) |
+| **README, and a guide (a how-to, a tutorial)** | Same register, plus the first-screen and guide structure rules in § README, and a guide (a how-to, a tutorial) below |
+| **ADR rationale** | Descriptive, and it takes a position — "strike a balance" and "it depends" prose is the decision dodging itself; name who decided and why |
+| **Session summary, incident report** | Outcome first, the unknown stated as "unknown"; the tense and first-and-last-line rules in § Session summary, incident report below |
+| **On-call shift note (the outgoing on-call, per shift)** | Handover, not diary; the five sections in § On-call shift note below |
+| **Changelog entry, release note** | Notable-to-users only; the ordering, citation, and file rules in § Changelog entry, release note below |
+| **Error message, UX microcopy** | Calm, zero playfulness; the five-question shape in § Error messages and UX microcopy below |
+| **Commit message, PR body, review reply, closing comment** | Impersonal and matter-of-fact; the person and mood rules, and the catalog family that fires here, in § Commit message, PR body, review reply, closing comment below |
+| **Meeting notes (whoever posts the recap)** | Actions owned and dated or flagged; the decided-from-discussed and verbatim rules in § Meeting notes below, and a recap drawn from a transcript or recording reads it under [recap-from-transcript.md](recap-from-transcript.md) |
+| **Weekly status note to a manager (any engineer, weekly)** | Progress, not activity: one status line, then what last week's note promised and whether it happened, then the four sections in § Weekly status note below; `/report-progress` drafts one from the repos and tracker |
+| **Stakeholder, exec, or launch update (the milestone's lead, per milestone)** | The whole update in its first lines, then the decisions needed, each with options and a date; one audience per draft, in § Stakeholder, exec, or launch update below |
+| **Runbook, release or migration procedure (its owning engineer, per change)** | From a real run, never the desk; the skeleton in § Runbook, release or migration procedure below |
+| **Outbound as the user — email, Teams message, memo, proposal, questionnaire** | The user's own voice, matched from a writing sample they supply, with their own sentences kept over composed ones; **no em dashes, none**, and the full tell catalog swept at maximum strictness. The rules, and the sweep's script (§ The dash sweep), are in [outbound-as-the-user.md](outbound-as-the-user.md), opened before drafting |
 
 ## README, and a guide (a how-to, a tutorial)
 

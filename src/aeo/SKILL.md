@@ -1,6 +1,6 @@
 ---
 name: aeo
-description: Making a public site readable, navigable, and accurately extractable by AI answer engines and agentic browsers — the served DOM as a rendered contract, structured data that declares only what the prose carries, extraction-shaped content, and a per-class crawl and access policy. Use when building or changing a public, unauthenticated page or template, when writing or reviewing a robots.txt, WAF, or bot-management rule, when adding or editing JSON-LD, when a plan, benefit, price, or copay fact is rendered for a public page, when someone asks whether an AI assistant reads, cites, or misquotes a page, when llms.txt, a Markdown mirror, or an agent feed or action is proposed, or when an audit names an answer-engine gap.
+description: Making a public site readable, navigable, and accurately extractable by AI answer engines and agentic browsers. Use when building or changing a public, unauthenticated page or template, when writing or reviewing a robots.txt, WAF, or bot-management rule, when adding or editing JSON-LD, when a plan, benefit, price, or copay fact renders on a public page, when someone asks whether an AI assistant reads, cites, or misquotes a page, when llms.txt, a Markdown mirror, or an agent feed or action is proposed, or when an audit names an answer-engine gap.
 ---
 
 # AEO

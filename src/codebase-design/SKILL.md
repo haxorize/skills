@@ -1,6 +1,6 @@
 ---
 name: codebase-design
-description: Shared vocabulary and principles for designing deep modules. Use when designing or improving a module's interface, finding deepening opportunities, deciding where a seam goes, placing a language model inside a system behind a typed interface, gating a model's writes to user-owned data, writing a script or CLI an agent or CI will drive, changing a published interface, making code more testable, judging a design doc, diagram, or spec against the code, or when another skill needs the deep-module vocabulary.
+description: Shared vocabulary and principles for designing deep modules. Use when designing or improving a module's interface, finding deepening opportunities, deciding where a seam goes, placing a language model inside a system behind a typed interface, gating a model's writes to user-owned data, writing a script or CLI an agent or CI will drive, changing a published interface, making code more testable, or judging a design doc, diagram, or spec against the code.
 ---
 
 # Codebase Design

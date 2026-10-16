@@ -1,6 +1,6 @@
 ---
 name: discoverable-code
-description: Naming and placing code so a plain-text search finds it — identifiers as search queries, whole string literals, one definition site, a doc line the natural-language grep lands on. Use when naming or renaming an exported symbol, type, file, error message, event name, flag, or a field holding an identifier another system minted, when moving code between files, when a search for a concept returns nothing or a wall of hits, when the code deliberately leaves out something a reader would search for, when reviewing a diff for names the next session will not find, or when another skill needs the discoverability vocabulary.
+description: Naming and placing code so a plain-text search finds it — identifiers as search queries, whole string literals, one definition site, a doc line the natural-language grep lands on. Use when naming or renaming an exported symbol, type, file, error message, event name, flag, or a field holding an identifier another system minted, when moving code between files, when a search for a concept returns nothing or a wall of hits, when the code deliberately leaves out something a reader would search for, or when reviewing a diff for names the next session will not find.
 ---
 
 # Discoverable Code

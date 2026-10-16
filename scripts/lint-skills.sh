@@ -352,7 +352,8 @@
 #     check_reattach_bytes     the 15,000-byte FAIL
 #     check_name_field         present, <= 64 chars, mirrors the directory
 #     check_description_scalar present, on one line, no block indicator
-#     check_description_limits <= 1024 chars, no bare ': ' or ' #', no < >
+#     check_description_limits <= 1024 chars, no bare ': ' or ' #', no < >;
+#                              a model-invoked one over 700 bytes WARNs
 #     check_invocation_axis    the flag and the "Use when" opener agree
 #     check_requires_resolve   each declared dep exists and is model-invoked
 #     check_requires_two_way   every Skill-tool call declared, every
@@ -977,6 +978,20 @@ check_description_limits() {
   case "$desc" in
     *[\<\>]*)
       say_fail "$f description contains angle brackets (< or >) — disallowed in the description field"
+      ;;
+  esac
+  # The per-description WARN (round 2026-10-12, TD-6): a model-invoked
+  # description loads on every turn, and past 700 bytes the bytes are preamble
+  # and synonym lists rather than triggers. Bytes, not characters, because the
+  # catalog's cost is bytes. A user-invoked description never loads.
+  case " $user_invoked_skills " in
+    *" $(basename "$(dirname "$f")") "*) : ;;
+    *)
+      local desc_bytes
+      desc_bytes=$(printf '%s' "$desc" | LC_ALL=C wc -c | tr -d ' ')
+      if [ "$desc_bytes" -gt 700 ]; then
+        echo "WARN: $f description is $desc_bytes bytes, over the 700-byte per-description bound — cut the what-it-is preamble, synonym lists and second 'Not for…' tails, moving a dropped tail into the body's boundary section; keep every trigger"
+      fi
       ;;
   esac
 }
