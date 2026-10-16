@@ -14,7 +14,7 @@ A repo of Claude Code skills — repo-agnostic in mechanism, with its Domain ski
 
 ## Before materially editing any skill, scanner rule, or lint check
 
-Check [`docs/lineage.md`](docs/lineage.md) first.
+Check [`docs/lineage.md`](docs/lineage.md) first. Writing or rewriting instruction prose (a skill, reference, rule, or this file): call the Skill tool with `writing-for-agents` first.
 
 ## Adding, renaming, or removing a skill, or changing how one fits the flows
 
@@ -26,7 +26,7 @@ Read [`scripts/README.md`](scripts/README.md) first. The `pre-commit` git hook r
 
 ## Review lenses
 
-The instruction-file lens in this repo also runs a **pruning test** against the **Deletion grounds** in [`src/writing-for-agents/SKILL.md`](src/writing-for-agents/SKILL.md): for every rule the diff adds or edits, report keep / condense / move / delete, with the covering rule named for anything but keep (the rule elsewhere that already says it, or the reason nothing does). A skill-change review that never reports this ran the lens on another repo's terms. The same lens also reports, row by row, conformance with the house-style rows in [`src/write-skill/references/review-checklist.md`](src/write-skill/references/review-checklist.md) — the single home of the judgment conventions (voice, spine, label families, relocation condition, table shape).
+The instruction-file lens here adds a pruning test and a house-style conformance report, both specified in [`docs/review-lenses.md`](docs/review-lenses.md); quote that file whole into the lens brief.
 
 ## Landing
 
