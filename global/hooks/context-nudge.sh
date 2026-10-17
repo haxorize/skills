@@ -6,7 +6,9 @@
 # main-thread assistant entry that carries a `usage` block (sidechain entries
 # and the harness's `<synthetic>` entries skipped) and sums its input,
 # cache-creation, cache-read and output tokens — the context the next request
-# starts from. Past 150k it adds one line of context telling the agent to
+# starts from. A `compact_boundary` entry met first ends the walk with its
+# `compactMetadata.postTokens` (0 when absent): a compaction writes no usage
+# entry, so the last one is the pre-compaction figure until the next reply. Past 150k it adds one line of context telling the agent to
 # offer `/handoff` at the next phase boundary; past 200k, one more line
 # saying to offer it now, before the next step: past 200k a session cannot
 # afford to wait for a boundary. Each threshold fires once per climb: a figure

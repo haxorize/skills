@@ -22,7 +22,9 @@ CHUNK = 1 << 20
 
 
 def last_usage(path):
-    """Context tokens of the last main-thread assistant entry with usage."""
+    """Context tokens of the last main-thread assistant entry with usage, or
+    of the compaction after it: a compaction writes no usage entry, so the
+    newest one predates it until the next reply lands."""
     with open(path, "rb") as f:
         f.seek(0, 2)
         end = f.tell()
@@ -34,12 +36,17 @@ def last_usage(path):
             lines = buf.split(b"\n")
             tail = lines[0] if start > 0 else b""   # a partial first line waits for the next chunk
             for line in reversed(lines[1:] if start > 0 else lines):
-                if b"\"usage\"" not in line:
+                boundary = b"\"compact_boundary\"" in line
+                if not boundary and b"\"usage\"" not in line:
                     continue
                 try:
                     d = json.loads(line)
                 except ValueError:
                     continue
+                if boundary and isinstance(d, dict) and d.get("subtype") == "compact_boundary":
+                    meta = d.get("compactMetadata")
+                    post = meta.get("postTokens") if isinstance(meta, dict) else None
+                    return post if isinstance(post, int) and post >= 0 else 0
                 if not isinstance(d, dict) or d.get("type") != "assistant" or d.get("isSidechain"):
                     continue
                 m = d.get("message") or {}

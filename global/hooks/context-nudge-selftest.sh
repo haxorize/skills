@@ -8,7 +8,9 @@
 # once, then quiet; a jump straight past 200k sends only the 200k line; a
 # compaction that leaves the figure at or above 150k does not re-arm, and one
 # that drops it under 150k re-arms both lines; sidechain and
-# `<synthetic>` entries are skipped; a usage line straddling the 1 MB read
+# `<synthetic>` entries are skipped; a compaction boundary after the last usage
+# entry reads as its postTokens (0 when absent) and re-arms, and a reply after
+# it counts again; a usage line straddling the 1 MB read
 # chunk is read whole; a 30-day-old marker is pruned; a prune that fails
 # (an old directory it cannot remove) still delivers the line, quietly; the
 # marker is mode 0600, and a 0755 state directory is tightened to 0700; the
@@ -17,7 +19,7 @@
 # with a path separator, a missing transcript, an unwritable state
 # directory, a missing context-nudge.py) exits 0 with a breadcrumb and no
 # context. The mutation table narrows the sidechain skip, the synthetic skip,
-# the once-only check, the re-arm, the 150k boundary, the chunk join, the prune's error
+# the once-only check, the re-arm, the boundary read, the 150k boundary, the chunk join, the prune's error
 # swallowing, the 0600 write, the 0700 tightening and the phase-boundary
 # wording on a copy of context-nudge.py or session-hook-lib.py, and each
 # mutant must flip its row.
@@ -46,6 +48,14 @@ print(json.dumps({"type": "assistant", "isSidechain": kind == "sidechain",
   "message": {"model": "<synthetic>" if kind == "synthetic" else "claude-x",
               "usage": {"input_tokens": 2, "cache_creation_input_tokens": 1000,
                         "cache_read_input_tokens": n - 1502, "output_tokens": 500}}}))' "$1" "${2:-main}"
+}
+# boundary [postTokens] — a compaction entry; no argument leaves postTokens out
+boundary() {
+  python3 -c '
+import json, sys
+meta = {"trigger": "auto", "preTokens": 207024}
+if len(sys.argv) > 1: meta["postTokens"] = int(sys.argv[1])
+print(json.dumps({"type": "system", "subtype": "compact_boundary", "isSidechain": False, "compactMetadata": meta}))' "$@"
 }
 user_line() { printf '{"type":"user","message":{"role":"user","content":"hi"}}\n'; }
 
@@ -98,6 +108,18 @@ entry 160000 >> "$t"
 expect "after a compaction, past 150k again" "$(nudge s1 "$t")" 150
 entry 210000 >> "$t"
 expect "after a compaction, past 200k again" "$(nudge s1 "$t")" 200
+
+# a compaction writes no usage entry: the boundary's postTokens stands in until the next reply
+t="$tmp/t1c.jsonl"; entry 206000 > "$t"
+expect "past 200k before a compaction" "$(nudge s1c "$t")" 200
+boundary 22713 >> "$t"
+expect "a compaction boundary after 206k" "$(nudge s1c "$t")" quiet
+entry 210000 >> "$t"
+expect "past 200k after the boundary re-armed" "$(nudge s1c "$t")" 200
+t="$tmp/t1d.jsonl"; { entry 206000; boundary; } > "$t"
+expect "a boundary with no postTokens" "$(nudge s1d "$t")" quiet
+t="$tmp/t1e.jsonl"; { entry 30000; boundary 22713; entry 160000; } > "$t"
+expect "a reply after the boundary counts" "$(nudge s1e "$t")" 150
 
 t="$tmp/t2.jsonl"; entry 230000 > "$t"
 expect "jump past both" "$(nudge s2 "$t")" 200
@@ -175,6 +197,7 @@ m_side() { t="$tmp/m1.jsonl"; { entry 100000; entry 400000 sidechain; } > "$t"; 
 m_once() { t="$tmp/m2.jsonl"; entry 160000 > "$t"; nudge m2 "$t" >/dev/null; nudge m2 "$t"; }
 m_rearm() { t="$tmp/m7.jsonl"; entry 205000 > "$t"; nudge m7 "$t" >/dev/null
   entry 30000 >> "$t"; nudge m7 "$t" >/dev/null; entry 201000 >> "$t"; nudge m7 "$t"; }
+m_bound() { t="$tmp/m8.jsonl"; { entry 206000; boundary 22713; } > "$t"; nudge m8 "$t"; }
 m_edge() { t="$tmp/m3.jsonl"; entry 150000 > "$t"; nudge m3 "$t"; }
 m_join() { nudge m4 "$tmp/t5.jsonl"; }
 m_prune() { rm -rf "$HOOK_STATE_DIR"; p_fail; }
@@ -188,6 +211,7 @@ mutant "drop the synthetic skip" $py ' or m.get("model") == "<synthetic>"' '' m_
 mutant "keep a 0755 directory"   $lib '        os.chmod(d, 0o700)  ' '        pass  ' d_mode quiet
 mutant "fire every prompt"       $py 'if level[0] <= sent:' 'if level[0] < sent:' m_once quiet
 mutant "never re-arm"            $py '        if sent:' '        if False:' m_rearm 200
+mutant "skip the compaction boundary" $py '                boundary = b"\"compact_boundary\"" in line' '                boundary = False' m_bound quiet
 mutant "150k boundary moved"     $py '(150000, "context-nudge' '(150001, "context-nudge' m_edge 150
 mutant "drop the chunk join"     $py 'tail = lines[0] if start > 0 else b""' 'tail = b""' m_join 150
 mutant "a prune error escapes"   $lib $'os.remove(p)\n        except OSError:\n            pass' $'os.remove(p)\n        except OSError:\n            raise' m_prune 150
