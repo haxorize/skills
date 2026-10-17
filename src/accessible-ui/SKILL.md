@@ -1,6 +1,6 @@
 ---
 name: accessible-ui
-description: Building UI a keyboard and assistive technology can operate, claiming no more than the evidence supports. Use when building or changing anything a person operates in a web or native app — a form, field, button, menu, dialog, tabs, table, toast, or chart; when a change alters focus, visibility, motion, color, contrast, target size, text scaling, or reading order, or renders in another repo; when asked whether a change is accessible, meets WCAG, or can ship; when writing a PR's accessibility line or reading a scan result. Not register or reading level (writing-for-humans', health-literacy's); not a VPAT or PDF remediation.
+description: Building UI a keyboard and assistive technology can operate, claiming only what evidence supports. Use when building or changing anything a person operates in a web or native app — a form, field, button, menu, dialog, tabs, table, toast, or chart; when a change alters focus, visibility, motion, color, contrast, target size, text scaling, or reading order, or renders in another repo; when asked whether a change is accessible, meets WCAG, or can ship; when writing a PR's accessibility line or reading a scan result. Not register or reading level (writing-for-humans', health-literacy's); not a VPAT or PDF remediation; not the repo's scanner, CI, or component library (its convention skill's).
 ---
 
 # Accessible UI

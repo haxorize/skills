@@ -1,6 +1,6 @@
 ---
 name: writing-for-humans
-description: Writing conventions for human-facing prose — tickets, docs, READMEs, ADR rationale, summaries, incident reports, recaps, on-call notes, status and launch updates, runbooks, release notes, error messages, and outbound messages drafted for the user. Use when writing or editing prose a person must understand, when auditing a draft for AI tells, or when picking an artifact's register. Not agent instruction files (writing-for-agents'), member copy (health-literacy's), or code.
+description: Writing conventions for human-facing prose — tickets, docs, READMEs, ADR rationale, summaries, incident reports, recaps, on-call notes, status and launch updates, runbooks, release notes, error messages, outbound messages drafted for the user, and the narration, publish confirmations, and reports the user reads in the terminal. Use when writing or editing prose a person must understand, when narrating work or confirming a publish back to the user, when auditing a draft for AI tells, or when picking an artifact's register. Not agent instruction files (writing-for-agents'), member copy (health-literacy's), or code.
 ---
 
 # Writing for Humans

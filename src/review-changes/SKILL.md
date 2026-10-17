@@ -7,7 +7,7 @@ requires: codebase-design, discoverable-code
 
 # Review Changes
 
-Judgment review of a **diff** — never the conversation, never the working tree's intent as you remember it. The diff *is* the handoff. This skill is **read-only**: it runs review lenses at the size the diff sets (§3) — in-process on a small prose-only diff, at most four subagents up to 300 changed lines with the rest in-process, one subagent per lens above that — vets what comes back, and presents a ranked, classified report.
+Judgment review of a **diff** — never the conversation, never the working tree's intent as you remember it. The diff *is* the handoff. This skill is **read-only**: it runs review lenses at the size the diff sets (§3; the subagent counts are [references/fan-out.md](references/fan-out.md) § Fan-out budget's), vets what comes back, and presents a ranked, classified report.
 
 It closes on a ranked per-lens report written to the landing zone and stamped `Reviewed-tree:` with the tree this machine reviewed (§1) — the step the `review-receipt` hook reads at the push, and the reason a review that never reached its report has not run. Its value over the raw built-ins is **project awareness**: generic quality goes to `/code-review`, generic security to `/security-review`, and this skill adds the lenses they can't supply (§2).
 
@@ -47,7 +47,7 @@ Don't run every lens on every diff. Triage from the diff:
 - **Conditional:** **AC conformance** — only when a work item is loaded (does the diff satisfy its acceptance criteria?).
 - **Conditional — code-gated:** a diff that touches code opens [references/lens-briefs-code.md](references/lens-briefs-code.md) — each code lens's trigger and brief, two of which fire `codebase-design` and `discoverable-code`. A docs- or config-only diff never opens it.
 - **Conditional — document- and handoff-gated:** a diff that touches a document, a skill, or an instruction file — a `SKILL.md`, a `references/*.md`, `CLAUDE.md`, a rule under `global/rules/` or `~/.claude/rules/`, or a hook — or a handoff input — opens [references/lens-briefs-docs.md](references/lens-briefs-docs.md): each lens's trigger and brief.
-- **Repo-declared lenses** — only when the repo's `CLAUDE.md` carries a `## Review lenses` block. That block, or the file it points to, quoted into the brief, may add lenses or specialize these (an a11y lens for an accessibility product; this repo's block adds the pruning test to the instruction-file lens). It never changes the contract: finding format, severities, IDs, the evidence rules, and the read-only stance stay this skill's.
+- **Repo-declared lenses** — only when the repo's `CLAUDE.md` carries a `## Review lenses` block. That block, or the file it points to, quoted into the brief, may add lenses or specialize these (an a11y lens for an accessibility product; this repo's block points to `docs/review-lenses.md`, which adds the pruning test and a house-style conformance report to the instruction-file lens). It never changes the contract: finding format, severities, IDs, the evidence rules, and the read-only stance stay this skill's.
 
 **A blocked built-in degrades; it never aborts the review.** When a built-in lens can't run here — e.g. `/security-review` needs a Bash permission for `git status` that an org-locked machine denies — record it as **unavailable here** with the reason in its section heading and continue with the rest. The user reruns it manually wherever it's permitted.
 

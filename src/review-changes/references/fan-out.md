@@ -8,7 +8,7 @@ Count the changed lines first: insertions plus deletions from `git diff --shorts
 
 ## Conformance-lens model
 
-A lens qualifies for a cheaper model only after a re-run on that model over three past reviews recovers at least 80% of its HIGH and MED findings and misses no Blocker. A qualified lens dispatches with the model `printenv REVIEW_CHECKLIST_MODEL` prints, passed as the dispatch's own `model`; unset or empty, it inherits the session model. No lens has qualified, so every lens inherits the session model and the key changes nothing until this section names one. The key is per machine, in that machine's `~/.claude/settings.json` `env`; `CLAUDE_CODE_SUBAGENT_MODEL` is never set, since it moves every subagent in every repo. The combined conformance lens takes the key only when every lens it carries has qualified. The negative-space pass and the vet keep the session model.
+Every lens, the negative-space pass and the vet inherit the session model, because no lens has qualified for the cheaper one `printenv REVIEW_LENS_MODEL` names. A lens qualifies when a re-run on that model over three past reviews recovers at least 80% of its HIGH and MED findings and misses no Blocker; a qualified lens is then named here with its dispatch rule.
 
 ## Dispatch
 

@@ -60,10 +60,6 @@ Do **not** duplicate their content, and do **not** invent a scratch location to 
 
 ## Notes
 
-### When to offer it
-
-The `context-nudge` hook under `global/hooks/` owns the offer: where it is wired, it adds the token count and says when to offer `/handoff`. Where it is not wired, the token count is invisible to you, so offer `/handoff` at the next phase boundary once the session has auto-compacted or the user reports its context past 150k tokens, and at once past 200k.
-
 ### `handoff` vs `/compact`
 
 - **`handoff`** *forks*: it preserves the conversation as a document and you continue in a **fresh session** that references it. Use it when the window is full, when you want a clean context, or when you're branching off (e.g. into a `/prototype` detour).

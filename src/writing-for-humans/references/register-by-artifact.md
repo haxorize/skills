@@ -2,6 +2,8 @@
 
 The register table in the skill body routes every artifact; this file holds the rows whose rules outgrow a table cell, except the Meeting-notes row's transcript reading, which is [recap-from-transcript.md](recap-from-transcript.md). Open the section for the artifact at hand and no other.
 
+**Any summary scoped to a period** — the weekly status note, "what I did this week", a sprint or month recap — enumerates the period with a command, never from memory: `git log --author=<me> --since=<from> --until=<to> --oneline`, stating the window it used. This binds whichever section you open.
+
 ## README, and a guide (a how-to, a tutorial)
 
 Read this section only when the artifact is a README, how-to, or tutorial.
@@ -48,7 +50,7 @@ Decided separated from discussed; an action is an owner plus a date or is flagge
 
 Read this section only when writing the weekly status note to a manager.
 
-Enumerate the period with a command, never from memory: `git log --author=<me> --since=<from> --until=<to> --oneline`, and state the window it used. Any summary scoped to a period, "what I did this week" included, takes the same command.
+Enumerate the period by the command at the top of this file.
 
 One status line first — green, yellow, or red, with one sentence on where things stand — and the color matches reality: a note that is only ever green stops being read. Then what last week's note said would happen and whether it did, then four sections, each present: **wins** (what shipped, with its effect — never "made progress"), **next** (each step dated or marked undated), **risks** (each with its severity and the mitigation), **asks** (each with an owner, a by-when, and what was already tried, so the reader can act without a round trip; "let me know if you have questions" is not an ask). A yellow or red status line names its biggest ask in the same sentence; the asks section holds the rest, never buried under wins.
 

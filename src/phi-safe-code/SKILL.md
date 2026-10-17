@@ -1,6 +1,6 @@
 ---
 name: phi-safe-code
-description: Keeping member and patient data out of every surface it leaks into. Use when code touches member, subscriber, patient, claim, eligibility, enrollment, 834/837, FHIR, MRN, or date-of-birth data — logging, error handling, fixtures, telemetry, a member EOB, letter, or SMS, an identifier in a URL, key, event, file name, or export path, indexing, a rollup, data or media sent to a vendor, model, or OCR service, a malformed file, or a commit, ticket, screenshot, or chat reply from such a repo; when adding or reviewing an audit trail, or a finding names PHI or an audit gap; or when a real member turns up in a log, test, or commit.
+description: Keeping PHI out of every leak surface. Use when code touches member, subscriber, patient, claim, eligibility, enrollment, 834/837, FHIR, MRN, or date-of-birth data — logging, error handling, fixtures, telemetry, a member EOB, letter, or SMS, an identifier in a URL, key, event, file name, or export path, indexing, a rollup, data or media sent to a vendor, model, or OCR, a malformed file, or a commit, ticket, screenshot, or chat reply from such a repo; when adding or reviewing an audit trail, or a finding names PHI or an audit gap; or a real member turns up in a log, test, or commit. Not provider-side data (NPI, facility records; public), a regulation digest, or the allowed-field list.
 requires: codebase-design
 ---
 
