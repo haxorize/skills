@@ -16,14 +16,14 @@
 # count as this user's (owned by `id -u`, neither group- nor world-writable)
 # are src/handoff/scripts/landing.sh's: this hook reads `landing.sh zones` and
 # `landing.sh list --kind review --repo <repo>`, the lookup the writers use,
-# so a zone landing.sh refuses prints no zone here (and fails `list`) and the
-# push holds, carrying landing.sh's own reason in the block message.
+# so a zone landing.sh refuses fails `zones` and `list` (exit 4) and the push
+# holds, carrying landing.sh's own reason in the block message.
 #
 # Which repo: the directory the push runs in, not merely the session's cwd —
 # a leading `cd <dir> &&`, `pushd <dir> &&`, `git -C <dir>`, `--git-dir`,
 # `--work-tree`, or a `GIT_DIR=` assignment moves it (hook-lib's split_git),
-# and the walk starts there. A `cd` to a value the hook
-# cannot expand (`cd "$X"`) or to a directory that does not exist falls back
+# and the repo is the work tree that directory sits in. A `cd` to a value the
+# hook cannot expand (`cd "$X"`) or to a directory that does not exist falls back
 # to the payload's `cwd`. A push from inside `.git` resolves to its work tree.
 #
 # Opt-in by repo: the repo top's `CLAUDE.md` alone decides — a `Review
@@ -41,8 +41,12 @@
 # Which tree: EVERY source the push would send, because git sends them all.
 # For refspecs, each one's source (`feat:main`, `HEAD:main`, a bare `main`, a
 # leading `+` dropped) — a second refspec is gated exactly like the first —
-# else `HEAD`. A negative refspec (`^…`) sends nothing and is dropped. For `--all`, `--mirror`, or a wildcard refspec, every local
-# branch that is new on the remote or ahead of it. Each source's tree hash
+# else `HEAD`. A negative refspec (`^…`) sends nothing and is dropped. For
+# `--all`, `--mirror`, or a wildcard refspec, every local branch that is new
+# on the remote or ahead of it; for the matching refspec `:` (or `+:`), every
+# local branch the named remote also has and that is ahead of it (to a URL or
+# an unconfigured remote, every local branch); beside either, each other
+# refspec's source as well. Each source's tree hash
 # (`git rev-parse <src>^{tree}`) must equal a stamp in some matching report,
 # and one unstamped source blocks the whole command; the block message names
 # the first source that failed. The stamp is a `Reviewed-tree: <40 hex>` line
@@ -75,16 +79,18 @@
 # `/review-changes` again).
 #
 # Which range, for "nothing to push": only for a single-source push —
-# `<remote>/<dst>..<src>` when the command names a remote (as an argument or
-# `--repo`) and the refspec's destination, else `@{upstream}..HEAD`, else
-# `origin/<branch>..<src>`. With nothing to push the command runs with a
-# breadcrumb. With no ref to compare against — a push to a URL, a branch's
-# first push, a repo with no remote — there is no range and no shortcut: the
-# receipt decides, since every commit is new there. A multi-refspec or `--all`
+# `<remote>/<dst>..<src>` when the command names a configured remote (as an
+# argument or `--repo`) and the refspec's destination, else
+# `@{upstream}..HEAD`, else `origin/<branch>..<src>`. With nothing to push the
+# command runs with a breadcrumb. With no ref to compare against — a push to a
+# URL (any remote argument that is not a configured remote name, whatever the
+# upstream says), a branch's first push, a repo with no remote — there is no
+# range and no shortcut: the receipt decides, since every commit is new there. A multi-refspec or `--all`
 # push skips this shortcut: "is anything being sent" is already answered by
 # whether any branch is ahead, and applying one branch's range to all of them
 # is what let every unreviewed branch out before. A refspec that sends no
-# branch commits — a delete (`:dst`) or a tag — is dropped from the sources,
+# branch commits — a delete (`:dst`, never the bare matching refspec `:` or
+# `+:`, which sends every matching branch) or a tag — is dropped from the sources,
 # not taken as the whole push's answer; a push left with no refspec, and a
 # `--delete` push, runs with a breadcrumb. A refspec is a tag push when its
 # source is a tag (`refs/tags/…`, or a name that is a tag and not a branch)
@@ -114,18 +120,19 @@
 # Fail-open, each with a one-line stderr breadcrumb: a malformed payload, a
 # missing python3 or git, a tokeniser error (an unterminated quote, more
 # than four nested shells), a push outside a git work tree, or any error
-# counting the commits in the range. A top-level CLAUDE.md the hook cannot
-# read holds the push: an unreadable opt-in line must not ungate a repo. A
-# safety hook that blocks on its own errors trains the user to disable it.
-# Fail-closed, in an opted-in repo only: a source whose tree git cannot
-# resolve (a push git would refuse anyway, and allowing it let a negative
-# refspec ungate the rest); the stamp reader or landing.sh missing from
-# beside the checkout, or either failing (a reader failing on a report it
-# could read, `zones` printing no zone or `zones` or `list` exiting non-zero,
-# landing.sh's stderr carried into the block) — a copy of this directory
-# made outside the checkout would otherwise ungate every push with only a
-# breadcrumb, which is a broken install, not an error in the hook, and a zone
-# landing.sh refuses is the user's to fix. A report that cannot be read, or
+# counting the commits in the range. A safety hook that blocks on its own
+# errors trains the user to disable it.
+# Fail-closed, three holds. First, before the opt-in is known: a top-level
+# CLAUDE.md the hook cannot read or scan, since an unreadable opt-in line must
+# not ungate a repo. Then, in an opted-in repo only: a source whose tree git
+# cannot resolve (a push git would refuse anyway, and allowing it let a
+# negative refspec ungate the rest); and the stamp reader or landing.sh
+# missing from beside the checkout, or either failing (a reader failing on a
+# report it could read, `zones` printing no zone or `zones` or `list` exiting
+# non-zero, landing.sh's stderr carried into the block) — a copy of this
+# directory made outside the checkout would otherwise ungate every push with
+# only a breadcrumb, which is a broken install, not an error in the hook, and
+# a zone landing.sh refuses is the user's to fix. A report that cannot be read, or
 # that the stamp reader exits 4 on, is NOT a fail-open: it is skipped
 # with a breadcrumb and the remaining reports still decide, because an
 # unreadable file can carry no stamp and failing open on one would let a
@@ -149,7 +156,8 @@
 # review-receipt-selftest.sh beside this file builds throwaway repos and runs
 # the expect/reject table; run it after changing a rule. committing's
 # src/committing/scripts/next-step.sh reads this same contract (the opt-in
-# walk and its pattern, the fence rule, the Reviewed-tree filter) to say
+# line of the repo top's CLAUDE.md and its pattern, the fence rule, the
+# Reviewed-tree filter) to say
 # whether a push would pass; a rule changed here is changed there, and
 # next-step-selftest.sh's parity section runs both on one fixture to catch
 # the two drifting.
@@ -268,8 +276,10 @@ rec_allow() {
   fi
 }
 
-# hold <why> [<remedy>]: in an opted-in repo, a receipt this hook cannot check
-# blocks. The remedy defaults to the broken-install one.
+# hold <why> [<remedy>]: the three fail-closed holds the header names — a top
+# CLAUDE.md it cannot read (called before the opt-in is known), and, in an
+# opted-in repo, a source tree or a receipt it cannot check. The remedy
+# defaults to the broken-install one.
 hold() {
   {
     echo "review-receipt: blocked a push from $repo — $1, so the receipt cannot be checked."
@@ -285,9 +295,18 @@ hold() {
   exit 2
 }
 
-# landing_why <args>: landing.sh's own stderr for a call, on one line — its
-# reason for refusing a zone, which the hold carries rather than blaming the install
-landing_why() { "${BASH:-bash}" "$landing" "$@" 2>&1 >/dev/null | tr '\n' ' ' | sed 's/ *$//'; }
+# landing_call <args>: runs landing.sh once and returns its status, leaving its
+# stdout in landing_out and its stderr, on one line, in landing_why — its
+# reason for refusing a zone, which the hold carries rather than blaming the
+# install. Its stderr lines are tagged with RS (0x1e) inside the one capture
+# and split out after, so no second run is needed to recover them.
+landing_call() {
+  local all rc
+  all="$("${BASH:-bash}" "$landing" "$@" 2> >(sed $'s/^/\x1e/'))"; rc=$?
+  landing_out="$(printf '%s\n' "$all" | grep -v $'^\x1e')"
+  landing_why="$(printf '%s\n' "$all" | sed -n $'s/^\x1e//p' | tr '\n' ' ' | sed 's/ *$//')"
+  return "$rc"
+}
 landing_fix="landing.sh gives its reason above. A landing zone it refuses (owned by another uid, or
 group- or world-writable) is fixed or removed, then the review report written again; or push from
 your own terminal."
@@ -312,7 +331,8 @@ judge() {
   [ "$kind" = "delete" ] && { rec_allow "a delete sends no commits"; return 0; }
 
   # every refspec, the first and the extras; a delete refspec (`:dst`) sends no
-  # commits, and a negative one (`^…`) excludes refs rather than sending one
+  # commits, and a negative one (`^…`) excludes refs rather than sending one;
+  # the bare `:` / `+:` is the matching refspec and sends every matching branch
   rs=()
   [ -n "$refspec" ] && rs+=("$refspec")
   if [ -n "$extras" ]; then
@@ -320,7 +340,7 @@ judge() {
   fi
   kept=() dropped=""
   for r in ${rs[@]+"${rs[@]}"}; do
-    case "$r" in :*|+:*) dropped=1; continue ;; esac
+    case "$r" in :|+:) ;; :*|+:*) dropped=1; continue ;; esac   # `:` alone is the matching refspec, not a delete
     case "$r" in ^*) continue ;; esac
     kept+=("$r")
   done
@@ -398,21 +418,38 @@ judge() {
   # Every source the push would send, not only the first refspec. A second refspec,
   # `--all`/`--mirror`, and a wildcard refspec each reached the remote ungated
   # before (2026-08-22 review): the gate derived everything from one token.
-  wide=""
-  for r in ${kept[@]+"${kept[@]}"}; do case "$r" in *'*'*) wide=1 ;; esac; done
+  # A remote argument that is not a configured remote is a URL (or a remote
+  # this repo does not know): it has no remote-tracking refs, so no range.
+  url_push=""
+  if [ -n "$remote" ] && ! git -C "$top" remote 2>/dev/null | grep -qxF -- "$remote"; then url_push=1; fi
+  wide="" matching=""
+  for r in ${kept[@]+"${kept[@]}"}; do
+    case "$r" in :|+:) matching=1 ;; *'*'*) wide=1 ;; esac
+  done
   srcs=()
-  if [ -n "$pushall" ] || [ -n "$wide" ]; then
-    wide=1
-    # every local branch the push would actually change: new on the remote, or ahead of it
+  if [ -n "$pushall" ] || [ -n "$wide" ] || [ -n "$matching" ]; then
+    # every local branch the push would actually change: new on the remote, or
+    # ahead of it — for the matching refspec alone, only a branch the remote has
     rname="${remote:-origin}"
+    only_matching=""
+    [ -n "$matching" ] && [ -z "$pushall" ] && [ -z "$wide" ] && [ -z "$url_push" ] && only_matching=1
+    wide=1
     while IFS= read -r b; do
       [ -n "$b" ] || continue
-      if git -C "$top" rev-parse --verify -q "$rname/$b" >/dev/null 2>&1; then
+      if [ -z "$url_push" ] && git -C "$top" rev-parse --verify -q "$rname/$b" >/dev/null 2>&1; then
         ahead="$(git -C "$top" rev-list --count "$rname/$b..$b" 2>/dev/null || echo '?')"
         case "$ahead" in ''|0) continue ;; *[!0-9]*) rec_allow "could not count the commits on $b"; return 0 ;; esac
+      elif [ -n "$only_matching" ]; then
+        continue
       fi
       srcs+=("$b")
     done < <(git -C "$top" for-each-ref --format='%(refname:short)' refs/heads 2>/dev/null)
+    # the other refspecs beside it send their own sources, ahead or not
+    for r in ${kept[@]+"${kept[@]}"}; do
+      case "$r" in :|+:|*'*'*) continue ;; *:*) es="${r%%:*}" ;; *) es="$r" ;; esac
+      es="${es#+}"
+      [ -n "$es" ] && srcs+=("$es")
+    done
     [ "${#srcs[@]}" -gt 0 ] || { rec_allow "no branch is ahead of $rname"; return 0; }
   else
     srcs=("$src")
@@ -436,7 +473,9 @@ judge() {
   tree="${trees[0]}"
 
   range=""
-  if [ -n "$remote" ] && [ -n "$dst" ] && git -C "$top" rev-parse --verify -q "$remote/$dst" >/dev/null 2>&1; then
+  if [ -n "$url_push" ]; then
+    :   # a URL: no remote-tracking ref, whatever the upstream says
+  elif [ -n "$remote" ] && [ -n "$dst" ] && git -C "$top" rev-parse --verify -q "$remote/$dst" >/dev/null 2>&1; then
     range="$remote/$dst..$src"
   elif [ "$src" = "HEAD" ] && git -C "$top" rev-parse --verify -q '@{upstream}' >/dev/null 2>&1; then
     range="@{upstream}..HEAD"
@@ -459,20 +498,13 @@ judge() {
   # or fails holds the push rather than waving it through.
   [ -f "$stamp_reader" ] || hold "the stamp reader is not at $stamp_reader"
   [ -f "$landing" ] || hold "landing.sh is not at $landing"
-  if ! zones_out="$("${BASH:-bash}" "$landing" zones 2>/dev/null)"; then
-    why="$(landing_why zones)"
-    hold "landing.sh zones failed${why:+ ($why)}" "${why:+$landing_fix}"
-  fi
+  landing_call zones || hold "landing.sh zones failed${landing_why:+ ($landing_why)}" "${landing_why:+$landing_fix}"
   zones=()
-  while IFS= read -r z; do [ -n "$z" ] && zones+=("$z"); done <<< "$zones_out"
-  if [ "${#zones[@]}" -eq 0 ]; then
-    why="$(landing_why zones)"
-    hold "landing.sh zones printed no zone${why:+ ($why)}" "${why:+$landing_fix}"
-  fi
-  if ! list_out="$("${BASH:-bash}" "$landing" list --kind review --repo "$repo" 2>/dev/null)"; then
-    why="$(landing_why list --kind review --repo "$repo")"
-    hold "landing.sh list --kind review failed${why:+ ($why)}" "${why:+$landing_fix}"
-  fi
+  while IFS= read -r z; do [ -n "$z" ] && zones+=("$z"); done <<< "$landing_out"
+  [ "${#zones[@]}" -gt 0 ] || hold "landing.sh zones printed no zone${landing_why:+ ($landing_why)}" "${landing_why:+$landing_fix}"
+  landing_call list --kind review --repo "$repo" \
+    || hold "landing.sh list --kind review failed${landing_why:+ ($landing_why)}" "${landing_why:+$landing_fix}"
+  list_out="$landing_out"
   reports=0
   stamps=""
   stamp_files=""
@@ -511,6 +543,7 @@ $h $f"
   src="$unstamped"
   sent="$count unpushed commit(s) in $range"
   [ -n "$range" ] || sent="no remote ref to compare against, so every commit is new there"
+  [ -z "$wide" ] || sent="one of the branches the push would change"
 
   {
     echo "review-receipt: blocked a push from $repo — no review report stamps the tree the push would send ($src^{tree} = ${tree:0:12}; $sent)."

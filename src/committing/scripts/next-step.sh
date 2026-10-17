@@ -27,8 +27,9 @@
 # and this script exits 4 with landing.sh's reason); and their
 # `Reviewed-tree` lines through tree-stamp.sh --stamps, the one stamp reader,
 # skipping a report it cannot read (exit 4) as the hook does. A round is
-# running when the nearest CLAUDE.md carrying a `Deferrals register:` line (the
-# `## Round` block's key, read the same way) has one; then an unreviewed
+# running when that same top CLAUDE.md carries a `Deferrals register:` line
+# (the `## Round` block's key, read the same way, never from a subdirectory's
+# CLAUDE.md); then an unreviewed
 # close's next act is the batch's commit, since one review covers everything
 # unpushed before the push (ADR-0112). A report
 # answers when it stamps the working-tree stamp (HEAD's tree when the tree is
@@ -100,29 +101,17 @@ unfenced() {
     fence != "" { next }
     { print }' "$1" 2>/dev/null
 }
-# nearest <pattern>: the first matching line of the nearest CLAUDE.md that has
-# one, walking from here up to the repo top
 top_phys="$(cd "$top" && pwd -P)"
-nearest() {
-  local dir line
-  dir="$(pwd -P)"
-  while :; do
-    if [ -f "$dir/CLAUDE.md" ]; then
-      line="$(unfenced "$dir/CLAUDE.md" | grep -iE "$1" | head -1)"
-      [ -n "$line" ] && { printf '%s\n' "$line"; return 0; }
-    fi
-    { [ "$dir" = "$top_phys" ] || [ "$dir" = "/" ]; } && return 0
-    dir="$(dirname "$dir")"
-  done
-}
 
 OPT_IN='^[-* >]*\**`?Review required:`?\**[[:space:]]*\**`?(yes|no)`?\**[[:space:]]*$'
 ROUND='^[-* >]*\**`?Deferrals register:`?\**[[:space:]]*[^[:space:]]'
-required=""
+# both keys from the repo top's CLAUDE.md alone, never a subdirectory's: the
+# `Landing:` and `## Round` blocks are the repo's (header)
+required="" round=""
 if [ -f "$top_phys/CLAUDE.md" ]; then
   unfenced "$top_phys/CLAUDE.md" | grep -iE "$OPT_IN" | head -1 | grep -qi 'yes' && required=1
+  round="$(unfenced "$top_phys/CLAUDE.md" | grep -iE "$ROUND" | head -1)"
 fi
-round="$(nearest "$ROUND")"
 
 # untracked files counted whatever status.showUntrackedFiles says, as the stamp
 # counts them; read NUL-separated, so a rename names its new path and a path
@@ -177,7 +166,7 @@ while IFS= read -r f; do
   rc=$?
   case $rc in
     0|2) ;;
-    4) echo "next-step.sh: skipping unreadable report $f" >&2; continue ;;   # as the hook skips it
+    4) echo "next-step.sh: skipping report tree-stamp.sh --stamps could not read (exit 4): $f" >&2; continue ;;   # as the hook skips it
     *) echo "next-step.sh: tree-stamp.sh --stamps failed on $f (exit $rc)" >&2; exit 4 ;;
   esac
   found="$(printf '%s\n' "$found" | sed -n 's/^Reviewed-tree \([0-9a-f]\{40\}\)$/\1/p')"

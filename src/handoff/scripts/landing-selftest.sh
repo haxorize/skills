@@ -16,11 +16,11 @@
 #     never /tmp beside it, the trailing `/` dropped; REVIEW_RECEIPT_DIR set:
 #     that alone, and an empty one is unset; nothing is created.
 #   ownership — a world- or group-writable zone (TMPDIR's or the override):
-#     zones prints nothing, dir, path, latest and list exit 4 and list prints
+#     zones, dir, path, latest and list exit 4, and zones and list print
 #     nothing; a world- or group-writable report is left out of list and
 #     latest; a symlink to a private zone is that zone (zones prints it, list
-#     reads it), and a symlink to a world-writable one is refused (zones prints
-#     nothing, list exits 4). A zone or a link owned by another uid needs root
+#     reads it), and a symlink to a world-writable one is refused (zones and
+#     list print nothing and exit 4). A zone or a link owned by another uid needs root
 #     to build, so neither is built here.
 #   path — <repo>-<today>-<slug>.md from the repo root and from a subdirectory;
 #     --kind review adds `.review`; --kind audit takes `skills` for <repo>;
@@ -153,8 +153,9 @@ expect_in "$out" "the empty latest names the repo" "no handoff file for none"
 for bit in o+w g+w; do
   wz="$tmp/w-$bit"; mkdir -p "$wz/claude-handoffs"; chmod "$bit" "$wz/claude-handoffs"
   printf 'x\n' > "$wz/claude-handoffs/proj-2026-01-01-r.review.md"
-  out="$( TMPDIR="$wz" bash "$script" zones 2>/dev/null )"
+  out="$( TMPDIR="$wz" bash "$script" zones 2>/dev/null )"; rc=$?
   expect_row "$out" "a $bit zone: zones prints nothing" ""
+  expect_rc "a $bit zone: zones refuses it, as list does" 4 "$rc"
   out="$( TMPDIR="$wz" bash "$script" zones 2>&1 >/dev/null )"
   expect_in "$out" "and says why on stderr" "not owned by uid $(id -u) alone"
   ( cd "$tmp/proj" && TMPDIR="$wz" bash "$script" dir ) >/dev/null 2>&1; rc=$?
@@ -166,8 +167,9 @@ for bit in o+w g+w; do
   expect_rc "a $bit zone: list refuses it, not an empty zone" 4 "$rc"
   ( cd "$tmp/proj" && TMPDIR="$wz" bash "$script" latest --kind review ) >/dev/null 2>&1; rc=$?
   expect_rc "a $bit zone: latest refuses it" 4 "$rc"
-  out="$( cd "$tmp/proj" && REVIEW_RECEIPT_DIR="$wz/claude-handoffs" bash "$script" zones 2>/dev/null )"
+  out="$( cd "$tmp/proj" && REVIEW_RECEIPT_DIR="$wz/claude-handoffs" bash "$script" zones 2>/dev/null )"; rc=$?
   expect_row "$out" "a $bit REVIEW_RECEIPT_DIR: zones prints nothing" ""
+  expect_rc "a $bit REVIEW_RECEIPT_DIR: zones exits 4" 4 "$rc"
 done
 # a zone reached through a symlink: private() checks the link's owner and the
 # target's owner and mode, so a link to a private directory is a zone and a
@@ -182,8 +184,9 @@ expect_row "$out" "a symlink to a private zone: zones prints it" "$tmp/linkok"
 out="$( cd "$tmp/proj" && REVIEW_RECEIPT_DIR="$tmp/linkok" bash "$script" list --kind review 2>/dev/null )"; rc=$?
 expect_rc "a symlink to a private zone: list reads it" 0 "$rc"
 expect_row "$out" "and prints its report" "$(cd "$tmp/linkok" && pwd)/proj-2026-01-01-l.review.md"
-out="$( REVIEW_RECEIPT_DIR="$tmp/linkbad" bash "$script" zones 2>/dev/null )"
+out="$( REVIEW_RECEIPT_DIR="$tmp/linkbad" bash "$script" zones 2>/dev/null )"; rc=$?
 expect_row "$out" "a symlink to a world-writable zone: zones prints nothing" ""
+expect_rc "a symlink to a world-writable zone: zones exits 4" 4 "$rc"
 out="$( cd "$tmp/proj" && REVIEW_RECEIPT_DIR="$tmp/linkbad" bash "$script" list --kind review 2>/dev/null )"; rc=$?
 expect_rc "a symlink to a world-writable zone: list refuses it" 4 "$rc"
 expect_row "$out" "and prints no report" ""

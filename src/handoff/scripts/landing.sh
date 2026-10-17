@@ -10,7 +10,7 @@
 #   landing.sh path <slug> [--kind <k>]    <zone>/<repo>-<date>-<slug>[.<k>].md
 #   landing.sh latest [--kind <k>]         the newest such file for this repo
 #   landing.sh list [--kind <k>]           every such file for this repo
-#   landing.sh zones                       the zone searched (none if not private)
+#   landing.sh zones                       the zone searched (exit 4 if not private)
 #   --kind   review | audit; none means a handoff (no kind segment)
 #   --repo <name>   the <repo> segment, for a run outside a git work tree
 #
@@ -20,15 +20,14 @@
 # when it is owned by `id -u` and neither group- nor world-writable, and a
 # report only on the same terms: anyone else's file in a shared temp dir would
 # otherwise be read as this user's review, and its `next:` line become the
-# agent's next command. `zones` prints the zone as written, unless it exists
-# and fails that check (a note on stderr, nothing printed), and creates
-# nothing. The landing zone is that zone: `dir`, `path` and `latest` create it
-# (`mkdir -m 700`; an existing zone's mode is left alone), refuse one that
-# fails the check, and print it as `cd … && pwd` resolves it. `list` creates
-# nothing and refuses a zone that exists and fails the check, exiting 4 as the
-# others do, so a reader cannot take a refused zone for an empty one. `latest`
-# and `list` search the zone, print each file under it resolved the same way,
-# and skip a file that fails the check. <repo> is the
+# agent's next command. The landing zone is that zone: `dir`, `path` and
+# `latest` create it (`mkdir -m 700`; an existing zone's mode is left alone)
+# and print it as `cd … && pwd` resolves it; `zones` prints it as written, and
+# `zones` and `list` create nothing. Every subcommand refuses a zone that
+# exists and fails the check, exiting 4 with one reason on stderr, so a reader
+# cannot take a refused zone for an empty one. `latest` and `list` search the
+# zone, print each file under it resolved the same way, and skip a file that
+# fails the check, naming it on stderr. <repo> is the
 # basename of `git rev-parse --show-toplevel`; the audit kind takes the fixed
 # word `skills`, so `--kind audit` with `--repo` is a usage error. <date> is
 # today, YYYY-MM-DD. A file of a kind is `<repo>-YYYY-MM-DD-<slug>` plus `.md`
@@ -51,8 +50,8 @@
 # file of that kind · 3 usage error (bad subcommand or flag, a slug with `/`
 # or `.` or a leading `-`, an unknown kind, --repo with the audit kind, no repo
 # and no --repo) · 4 the zone could not be created, or is not this user's
-# alone (owned by another uid, or group- or world-writable) — for `list` too,
-# whose zone it does not create; `zones` alone prints nothing and exits 0.
+# alone (owned by another uid, or group- or world-writable) — for `zones` and
+# `list` too, which create no zone; a refused zone prints nothing.
 set -uo pipefail
 unset CDPATH   # an exported CDPATH makes `cd` print the path into the captured value
 
@@ -97,23 +96,22 @@ private() {
   [ -n "$(find "$1" -maxdepth 0 -user "$uid" -print 2>/dev/null)" ] &&
     [ -n "$(find -H "$1" -maxdepth 0 -user "$uid" ! -perm -020 ! -perm -002 -print 2>/dev/null)" ]
 }
-refuse_note() { echo "landing.sh: skipping $1: not owned by uid $uid alone (another owner, or group- or world-writable)" >&2; }
-if [ "$cmd" = zones ]; then
-  if [ -e "$zone" ] && ! private "$zone"; then refuse_note "$zone"; exit 0; fi
-  printf '%s\n' "$zone"
-  exit 0
-fi
+# not_alone <path>: the one wording for a zone or a report that fails `private`
+not_alone() { printf '%s is not owned by uid %s alone (another owner, or group- or world-writable)' "$1" "$uid"; }
+refuse_zone() { echo "landing.sh: the landing zone $(not_alone "$1"); fix or remove it" >&2; exit 4; }
+refuse_note() { echo "landing.sh: skipping $(not_alone "$1")" >&2; }
 
-if [ "$cmd" != list ]; then
+if [ "$cmd" = zones ] || [ "$cmd" = list ]; then
+  # neither creates the zone; both refuse one that exists and is not private
+  if [ -e "$zone" ] && ! private "$zone"; then refuse_zone "$zone"; fi
+  [ "$cmd" = zones ] && { printf '%s\n' "$zone"; exit 0; }
+else
   given="$zone"
   if ! { [ -d "$zone" ] || mkdir -p -m 700 "$zone" 2>/dev/null; } || ! zone="$(cd "$zone" 2>/dev/null && pwd)"; then
     echo "landing.sh: cannot create the landing zone $given (TMPDIR=${TMPDIR:-unset}, REVIEW_RECEIPT_DIR=${REVIEW_RECEIPT_DIR:-unset})" >&2
     exit 4
   fi
-  if ! private "$given"; then
-    echo "landing.sh: the landing zone $given is not this user's alone (owner other than uid $uid, or group- or world-writable); fix or remove it" >&2
-    exit 4
-  fi
+  private "$given" || refuse_zone "$given"
   [ "$cmd" = dir ] && { printf '%s\n' "$zone"; exit 0; }
 fi
 
@@ -131,24 +129,21 @@ if [ "$cmd" = path ]; then
   exit 0
 fi
 
-# latest and list: every file of the shape in the zone, when it exists and is private
+# latest and list: every file of the shape in the zone. The zone already
+# passed the check above (latest created it, list refused it if not private);
+# a file in it that fails the check is skipped with a note.
 best=""
-if [ -d "$zone" ]; then
-  if ! private "$zone"; then
-    echo "landing.sh: the landing zone $zone is not this user's alone (owner other than uid $uid, or group- or world-writable); fix or remove it" >&2
-    exit 4
-  elif zr="$(cd "$zone" 2>/dev/null && pwd)"; then
-    for f in "$zr/$repo"-[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-*"$suffix"; do
-      [ -f "$f" ] || continue
-      name="${f##*/}"
-      rest="${name#"$repo"-????-??-??-}"
-      rest="${rest%"$suffix"}"
-      case "$rest" in ""|*.*) continue ;; esac
-      private "$f" || { refuse_note "$f"; continue; }
-      if [ "$cmd" = list ]; then printf '%s\n' "$f"; continue; fi
-      if [ -z "$best" ] || [ "$f" -nt "$best" ]; then best="$f"; fi
-    done
-  fi
+if [ -d "$zone" ] && zr="$(cd "$zone" 2>/dev/null && pwd)"; then
+  for f in "$zr/$repo"-[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-*"$suffix"; do
+    [ -f "$f" ] || continue
+    name="${f##*/}"
+    rest="${name#"$repo"-????-??-??-}"
+    rest="${rest%"$suffix"}"
+    case "$rest" in ""|*.*) continue ;; esac
+    private "$f" || { refuse_note "$f"; continue; }
+    if [ "$cmd" = list ]; then printf '%s\n' "$f"; continue; fi
+    if [ -z "$best" ] || [ "$f" -nt "$best" ]; then best="$f"; fi
+  done
 fi
 [ "$cmd" = list ] && exit 0
 if [ -z "$best" ]; then

@@ -30,13 +30,14 @@
 #     tip under a dirty-tree review (the r1 rows), and never for a
 #     report with no finding, an `F<n>` line only inside a fence, a report
 #     from another branch, one whose head the upstream moved past, or one
-#     carrying a decline-all pass's second, equal stamp; the opt-in walks up
-#     from a subdirectory; a fenced line (``` or ~~~) is not read, and a ```
+#     carrying a decline-all pass's second, equal stamp; run from a
+#     subdirectory, the top CLAUDE.md's opt-in decides; a fenced line (``` or ~~~) is not read, and a ```
 #     line does not close a ~~~ fence, nor a shorter ``` run a ```` fence; a
 #     staged rename is named by its new path, unquoted; a report in the TMPDIR zone with
 #     REVIEW_RECEIPT_DIR unset, written by landing.sh path.
-#   round — under a `Deferrals register:` line (bold, or backticked, read
-#     from a subdirectory too), dirty: commit this batch; clean and ahead: the
+#   round — under a top CLAUDE.md `Deferrals register:` line (bold, or
+#     backticked, run from a subdirectory too; a subdirectory's CLAUDE.md
+#     carrying one is no round), dirty: commit this batch; clean and ahead: the
 #     next batch, or /review-changes before the push; a report stamping the
 #     tree still says push; the order line names a commit per batch and the
 #     running round; the retired --mid-family flag exits 3.
@@ -47,8 +48,8 @@
 #     writable zone exits 4.
 #   parity — the review-receipt hook and this script run on one fixture each,
 #     and agree on push or hold: bold, backticked and planned `Review
-#     required:` lines, a fenced line of each kind, a subdirectory walk both
-#     ways, a bold round line, fenced and live stamps, the
+#     required:` lines, a fenced line of each kind, a subdirectory under a
+#     gated top either way its own CLAUDE.md reads, a bold round line, fenced and live stamps, the
 #     TMPDIR zone and an override pointing elsewhere, and HEAD's tree stamped
 #     beside a scratch file. A push the hook allows here must be a quiet allow
 #     (a stamp, or no opt-in), never a fail-open.
@@ -59,8 +60,9 @@
 #   second-stamp row reds); the upstream-tree check dropped (the pushed-report
 #   row reds); `grep -qi yes` dropped (the opt-out row reds). And, on the
 #   second pass: the clean-and-up-to-date arm dropped (the fresh gated row);
-#   the stamped nothing-ahead arm dropped (the pushed row); the walk replaced by
-#   one directory (the subdirectory rows); unfenced dropped (the fence rows);
+#   the stamped nothing-ahead arm dropped (the pushed row); unfenced dropped
+#   (the fence rows) (that pass also cut a CLAUDE.md walk, since removed: both
+#   keys now read the top CLAUDE.md only);
 #   the HEAD-tree match dropped (the scratch-file rows); push_act's behind
 #   check dropped (the diverged row); --untracked-files=normal dropped (the
 #   showUntrackedFiles row). Run 2026-10-14 on `addressable`, each red here:
@@ -237,7 +239,7 @@ git clone -q "$tmp/stale-remote.git" "$tmp/stale-other" 2>/dev/null
 expect_row "$(next_of stale)" "a one-stamp report whose head the upstream moved past" "/review-changes"
 
 mkahead walk "$GATED"; mkdir -p "$tmp/walk/pkg"; printf '# pkg\n' > "$tmp/walk/pkg/CLAUDE.md"; commit walk
-expect_row "$(line_of next "$tmp/walk/pkg")" "the opt-in walks up from a subdirectory" "/review-changes"
+expect_row "$(line_of next "$tmp/walk/pkg")" "run from a subdirectory, the top's opt-in decides" "/review-changes"
 mkahead fenced '# repo\n\n```\n- Review required: yes\n```\n'
 expect_row "$(next_of fenced)" "a line inside a backtick fence is not read" "push"
 mkahead tilde '# repo\n\n~~~\n- Review required: yes\n~~~\n'
@@ -269,6 +271,9 @@ expect_row "$(next_of round)" "a stamped tree under a round still pushes" "push"
 mkrepo ticked '# repo\n\n- Review required: yes\n- `Deferrals register:` reconcile.md\n'
 echo x > "$tmp/ticked/f"
 expect_row "$(next_of ticked)" "a backticked round key" "commit this batch"
+mkrepo nestround "$GATED"; mkdir -p "$tmp/nestround/pkg"
+printf -- '- Deferrals register: reconcile.md\n' > "$tmp/nestround/pkg/CLAUDE.md"
+expect_row "$(line_of next "$tmp/nestround/pkg")" "a subdirectory's round line is no round; the top decides" "commit when you like; /review-changes before the push"
 ( cd "$tmp/gated" && bash "$script" --mid-family ) >/dev/null 2>&1; rc=$?
 expect_rc "the retired --mid-family flag" 3 "$rc"
 
@@ -300,7 +305,7 @@ expect_in "$out" "and it names the report" "tree-stamp.sh --stamps failed on $RE
 # a --stamps exit 4 (a report it could not read) skips that report, as the hook does
 out="$( cd "$tmp/gated" && HOME="$tmp/fakehome" FAKE_STAMPS_RC=4 bash "$co_script" 2>&1 )"; rc=$?
 expect_rc "a --stamps read that exits 4" 0 "$rc"
-expect_in "$out" "skips the report, naming it" "next-step.sh: skipping unreadable report $REVIEW_RECEIPT_DIR/gated-2026-01-01-"
+expect_in "$out" "skips the report, naming it" "next-step.sh: skipping report tree-stamp.sh --stamps could not read (exit 4): $REVIEW_RECEIPT_DIR/gated-2026-01-01-"
 expect_in "$out" "and counts no report read" "receipt: none of 0 report(s) stamps it"
 # landing.sh list failing exits 4, carrying landing.sh's own reason
 mkco "$tmp/co2" real "[ \"\$1\" = list ] && { echo 'landing.sh: list refused here' >&2; exit 4; }; exec bash \"$landing\" \"\$@\""
@@ -312,7 +317,7 @@ expect_in "$out" "and its own" "next-step.sh: landing.sh list failed (exit 4)"
 mkdir -p "$tmp/wzone"; chmod o+w "$tmp/wzone"
 out="$( cd "$tmp/gated" && REVIEW_RECEIPT_DIR="$tmp/wzone" bash "$script" 2>&1 )"; rc=$?
 expect_rc "a world-writable zone" 4 "$rc"
-expect_in "$out" "names the refused zone" "is not this user's alone"
+expect_in "$out" "names the refused zone" "landing.sh: the landing zone $tmp/wzone is not owned by uid"
 
 # --- parity with the review-receipt hook ---
 # parity <label> <push|hold> <dir> [next-step args]: the hook judges a bare
