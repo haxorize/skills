@@ -21,8 +21,8 @@ Nothing here is diffed before an edit ([ADR-0111](adr/0111-lineage-is-attributio
 | `ask-for-me` | mattpocock/skills | `to-questionnaire` | MIT | ADR-0034 |
 | `explain` | mattpocock/skills | `wait-what` | MIT | ADR-0043 |
 | `adoption-verdict` | compound-engineering-plugin (clone `everyinc-compound-engineering-plugin`) | `ce-pov` | MIT | ADR-0032 |
-| `diagnosing-bugs` `references/learnings.md` | compound-engineering-plugin | the learnings loop | MIT | ADR-0025 |
-| `address-findings` `references/judging-feedback.md` | obra/superpowers | `receiving-code-review` | MIT | ADR-0034 |
+| `diagnosing-bugs/references/learnings.md` | compound-engineering-plugin | the learnings loop | MIT | ADR-0025 |
+| `address-findings/references/judging-feedback.md` | obra/superpowers | `receiving-code-review` | MIT | ADR-0034 |
 | `diverging` | oaustegard/claude-skills | `generative-thinking` | MIT | ADR-0031 |
 | `verify-docs`, `doc-claims` | oaustegard/claude-skills | `verifying-claims` (the verdict table lives in `doc-claims`) | MIT | ADR-0034 |
 | `audit-tests` | oaustegard/claude-skills | `gating` — the audit half only | MIT | ADR-0034 |
@@ -47,7 +47,7 @@ The three nitfolio rows are written in local prose from one upstream, and each k
 | `work-item-shape` | agent-armory, openai-skills | ideas folded over local publisher discipline | ADR-0044 |
 | `aeo`, `audit-aeo` | the 2026-09-12 round's four AEO reports (`mine-2026-09-12-aeo-a.md`, `-b2.md`, `-b-seo-cluster.md`, `-b-content-cluster.md` under `~/code/lib/_rounds/2026-09-12/reports/`) and the Agent-Ready Foundations PI plan, plus the Digital Platforms ART extraction-fidelity POC deck (2026-09-13, internal; kept as `~/code/lib/_rounds/2026-09-12/reports/extraction-fidelity-poc-deck-2026-09-13.html`) for the scorecard's ceiling and one-lever rules | a Domain skill and its user-invoked audit, mined from named material with no upstream skill (every source license is ideas-only) | ADR-0090 |
 | `phi-safe-code`, `health-literacy`, `accessible-ui` | the material each admission ADR names | Domain skills mined from named material with no upstream skill | ADR-0055 and the later admission records |
-| `address-findings` `references/judging-feedback.md` | addyosmani/agent-skills | `doubt-driven-development`'s doubt-theater alarm, direction-flipped into the zero-accepted tripwire; attribution only | ADR-0029 |
+| `address-findings/references/judging-feedback.md` | addyosmani/agent-skills | `doubt-driven-development`'s doubt-theater alarm, direction-flipped into the zero-accepted tripwire; attribution only | ADR-0029 |
 | `audit-skills`, `delete-dead-code` | an enterprise plugin repo, ECC-derived, mined once | not a tracked upstream | ADR-0062 |
 | `product-description` | the `steveruizok` gists | license NONE-STATED: ideas only, never their wording or templates | ADR-0065 |
 | `upgrade-deps` § 1's step list and § 3 "Upgrade in order" | Microck/ordinary-claude-skills (`dependency-upgrade`, `A32`); wshobson/agents (`deps-audit`, `A38`) | MIT both; one idea each — the staged order the workflow is built on (one class per step, never the whole manifest at once) and security-flagged packages ahead of every other bump; the upstreams' phase scripts and scanner code not taken; local prose, attribution only | ADR-0051 |
