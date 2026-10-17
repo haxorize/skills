@@ -26,8 +26,9 @@ trap 'rm -rf "$tmp"' EXIT
 opted="$tmp/opted"; plain="$tmp/plain"
 mkdir -p "$opted/.claude" "$opted/deep" "$plain"; touch "$opted/.claude/rename-safety"
 
-# shellcheck source=../../scripts/selftest-lib.sh
-. "$here/../../scripts/selftest-lib.sh"   # selftest_mutate, selftest_expect_killed
+# selftest-lib.sh sources scripts/selftest-lib.sh (selftest_mutate,
+# selftest_expect_killed); the path named here is what queues this selftest
+# when that file is staged (pre-commit's queue_hook_selftests_naming).
 . "$here/selftest-lib.sh"
 export HOME="$tmp"            # the opt-in walk stops at $HOME; nothing outside the sandbox is read
 
@@ -227,6 +228,13 @@ expect_allow "$opted" 'cd ../plain && sed -i s/a/b/g "$PWD/f.txt"'              
 RS_TARGET="$opted" expect_crumb "$plain" 'unset RS_TARGET; cd "$RS_TARGET" && sed -i s/a/b/ f.txt' "after a cd the hook cannot expand" "a name the command unsets"
 RS_TARGET="$opted" expect_crumb "$plain" 'read RS_TARGET < list; cd "$RS_TARGET" && sed -i s/a/b/ f.txt' "after a cd the hook cannot expand" "a name the command reads into"
 RS_TARGET="$opted" expect_crumb "$plain" 'for RS_TARGET in x; do cd "$RS_TARGET" && sed -i s/a/b/ f.txt; done' "after a cd the hook cannot expand" "a for loop variable"
+# a file named through a variable the command rebinds: judged by the run directory and the value from before the command
+RS_TARGET="$opted" expect_block "$plain" 'export RS_TARGET="$RS_TARGET"; sed -i s/a/b/g "$RS_TARGET/f.txt"' "an export rebinding an opted-in variable"
+RS_TARGET="$opted" expect_block "$plain" 'for RS_TARGET in "$RS_TARGET"; do sed -i s/a/b/g "$RS_TARGET/f.txt"; done' "a for loop rebinding an opted-in variable"
+RS_TARGET="$opted" expect_block "$plain" 'RS_TARGET="$RS_TARGET"; sed -i s/a/b/g "$RS_TARGET/f.txt"' "an assignment rebinding an opted-in variable"
+RS_TARGET="$opted" expect_block "$plain" 'export RS_TARGET; sed -i s/a/b/g "$RS_TARGET"/*.txt' "a glob under a rebound opted-in variable"
+RS_TARGET="$plain" expect_crumb "$plain" 'export RS_TARGET="$RS_TARGET"; sed -i s/a/b/g "$RS_TARGET/f.txt"' "a variable the command rebinds" "a rebound variable outside an opted-in tree is said, not silent"
+RS_TARGET="$plain" expect_crumb "$plain" 'for RS_TARGET in "$RS_TARGET"; do sed -i s/a/b/g "$RS_TARGET/f.txt"; done' "a variable the command rebinds" "a for loop outside an opted-in tree is said"
 # payload cwd wins over the process directory
 payload="$(python3 -c 'import json,sys; print(json.dumps({"cwd":sys.argv[1],"tool_input":{"command":"sed -i s/a/b/ f"}}))' "$opted")"
 rc="$( cd "$plain" && printf '%s' "$payload" | HOME="$tmp" bash "$hook" >/dev/null 2>&1; echo $? )"
@@ -284,7 +292,7 @@ mutant "--expression takes no next token" '                    if not eq and i +
                         i += 1
                         val = args[i]
                     if ch == "e":' '                    if ch == "e":' "$opted" "sed -i '' --expression 's/a/b/' f.txt" 2
-mutant "drop the {} guard"         'p = None if path == "{}" else expand(path)' 'p = expand(path)' "$opted" "sed -i '' 's/a/b/' {}" 0
+mutant "drop the {} guard"         'p = None if path == "{}" else expand(path, rebound)' 'p = expand(path, rebound)' "$opted" "sed -i '' 's/a/b/' {}" 0
 mutant "drop the newline guard"    '        if e[k] == "\n":
             return False' '        pass' "$opted" "sed -i '' '$NL_EXPR' f.txt" 0
 mutant "no long-option abbreviation" 'hits = [n for n in SED_LONG if n.startswith(name)]' 'hits = []' "$opted" "sed --in 's/a/b/' f.txt" 0
@@ -304,7 +312,7 @@ cp "$hook" "$mdir/rename-safety.sh"
 selftest_mutate "$here/hook-lib.sh" "$mdir/hook-lib.sh" 'export PAYLOAD_CWD="$cwd"' ':' \
   && hook="$mdir/rename-safety.sh" selftest_expect_killed "drop the PAYLOAD_CWD export" hook_rc_not 0 "$opted" "sed -i 's/a/b/' f.txt"
 cp "$here/hook-lib.sh" "$mdir/hook-lib.sh"
-selftest_mutate "$hook" "$mdir/rename-safety.sh" '                UNJUDGED.append(shape)    # a relative file' '                pass    # a relative file' \
+selftest_mutate "$hook" "$mdir/rename-safety.sh" '                UNJUDGED.append((shape, CD))    # a relative file' '                pass    # a relative file' \
   && hook="$mdir/rename-safety.sh" selftest_expect_killed "an unknown cd stays silent" crumb_has "$plain" 'cd "$RS_UNSET_VAR" && sed -i s/a/b/ f.txt' "cannot expand"
 # hook-lib.py's expand(): the shell-kept and rebound names it leaves unexpanded
 cp "$hook" "$mdir/rename-safety.sh"
@@ -313,10 +321,20 @@ hooklib_mutant() { # hooklib_mutant <label> <find> <replace> <cwd> <cmd>  (the r
     && hook="$mdir/rename-safety.sh" selftest_expect_killed "$1" crumb_has "$4" "$5" "cannot expand"
   cp "$here/hook-lib.py" "$mdir/hook-lib.py"
 }
-hooklib_mutant "read PWD from the hook"   'name in SHELL_KEPT or name in TOUCHED' 'name in TOUCHED' "$plain" 'cd ../opted && cd "$PWD" && sed -i s/a/b/ f.txt'
+hooklib_mutant "read PWD from the hook"   'name in SHELL_KEPT or (name in TOUCHED and not rebound)' '(name in TOUCHED and not rebound)' "$plain" 'cd ../opted && cd "$PWD" && sed -i s/a/b/ f.txt'
 RS_TARGET="$opted" hooklib_mutant "unset rebinds nothing" 'BINDERS = {"unset", "read"}' 'BINDERS = {"read"}' "$plain" 'unset RS_TARGET; cd "$RS_TARGET" && sed -i s/a/b/ f.txt'
 RS_TARGET="$opted" hooklib_mutant "read rebinds nothing" 'BINDERS = {"unset", "read"}' 'BINDERS = {"unset"}' "$plain" 'read RS_TARGET < list; cd "$RS_TARGET" && sed -i s/a/b/ f.txt'
 RS_TARGET="$opted" hooklib_mutant "for rebinds nothing" 'elif head in ("for", "select")' 'elif head in ("select",)' "$plain" 'for RS_TARGET in x; do cd "$RS_TARGET" && sed -i s/a/b/ f.txt; done'
+# a variable the command rebinds: judged by its value from before, and said when that misses
+cp "$here/hook-lib.py" "$mdir/hook-lib.py"
+RS_TARGET="$opted" mutant "a rebound file judged by the run directory only" 'p = resolve(start, path, rebound=True)' 'p = None' "$plain" 'export RS_TARGET="$RS_TARGET"; sed -i s/a/b/g "$RS_TARGET/f.txt"' 0
+RS_TARGET="$opted" mutant "a rebound glob parent not judged" '                for g in guesses(start, lead):' '                for g in []:' "$plain" 'export RS_TARGET; sed -i s/a/b/g "$RS_TARGET"/*.txt' 0
+selftest_mutate "$hook" "$mdir/rename-safety.sh" '                UNJUDGED.append((shape, REBOUND))' '                pass' \
+  && RS_TARGET="$plain" hook="$mdir/rename-safety.sh" selftest_expect_killed "a rebound miss stays silent" crumb_has "$plain" 'export RS_TARGET="$RS_TARGET"; sed -i s/a/b/g "$RS_TARGET/f.txt"' "rebinds"
+cp "$hook" "$mdir/rename-safety.sh"
+selftest_mutate "$here/hook-lib.py" "$mdir/hook-lib.py" '(name in TOUCHED and not rebound)' 'name in TOUCHED' \
+  && RS_TARGET="$opted" hook="$mdir/rename-safety.sh" selftest_expect_killed "expand() ignores rebound" hook_rc_not 0 "$plain" 'export RS_TARGET="$RS_TARGET"; sed -i s/a/b/g "$RS_TARGET/f.txt"'
+cp "$here/hook-lib.py" "$mdir/hook-lib.py"
 RENAME_SAFETY_DIRS="$plain" mutant "start directory unresolved" 'dirs = [os.path.realpath(start)]' 'dirs = [start]' "$tmp" "cd plainlink && sed -i 's/a/b/' \"\$RS_UNSET_VAR/f.txt\"" 0
 
 if [ "$fail" -ne 0 ]; then echo "SELFTEST FAIL: rename-safety"; exit 1; fi

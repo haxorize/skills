@@ -24,8 +24,9 @@
 #                                            contains <pattern>; prints nothing
 #
 # The last two are rows a mutant targets, for selftest_expect_killed: a
-# mutation table sources scripts/selftest-lib.sh as well, for selftest_mutate
-# and selftest_expect_killed, and grades a mutant as
+# mutation table gets selftest_mutate and selftest_expect_killed from
+# scripts/selftest-lib.sh, which this file sources (below), and grades a
+# mutant as
 #   selftest_mutate "$hook" "$mdir/<hook>.sh" <from> <to> &&
 #     hook="$mdir/<hook>.sh" selftest_expect_killed <label> hook_rc_not <want> <cwd> <cmd>
 #

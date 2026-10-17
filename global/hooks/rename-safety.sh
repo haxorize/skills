@@ -49,7 +49,11 @@
 # expand (`cd "$(…)"`, a variable unset in the hook's environment) the
 # payload's cwd stands in for that directory: an edit judged opted in there
 # is blocked, and one that is not runs with a breadcrumb saying it was not
-# judged where it runs, unless every file it names is absolute.
+# judged where it runs, unless every file it names is absolute. A file named
+# through a variable the command itself rebinds (`export D="$D"`, `for D in
+# …`, `D=…; sed -i … "$D/f"`) is judged by the directory it runs in and by
+# the variable's value from before the command: opted in either way blocks,
+# and neither runs with a breadcrumb saying the target was not known.
 #
 # Inside an opted-in directory one shape still runs: `sed` (not `gsed`, which
 # reads `''` as the script) in the BSD form `-i ''` (or an attached suffix,
@@ -112,7 +116,10 @@ SED_LONG = {"in-place": "i", "expression": "e", "file": "f", "quiet": "n", "sile
             "follow-symlinks": "", "binary": "", "help": "", "version": ""}
 GLOB = re.compile(r"[*?\[]")
 HOME = os.path.realpath(os.environ.get("HOME") or "/")
-UNJUDGED = []                       # in-place edits whose directory follows a cd the scanner could not expand
+UNJUDGED = []                       # (shape, why) for in-place edits whose target the scanner could not know
+CD = "after a cd the hook cannot expand, judged against the payload cwd, which is not opted in"
+REBOUND = ("on a path through a variable the command rebinds, judged against the directory it runs in "
+           "and the variable\x27s value before the command, neither opted in")
 
 def sed_long(name):
     """The short letter a GNU sed long option stands for ("" for one that
@@ -206,11 +213,22 @@ def one_substitution(e):
         k += 1
     return parts == 2 and re.fullmatch(r"[0-9I]*", e[k:]) is not None
 
-def resolve(start, path):
+def resolve(start, path, rebound=False):
     """The absolute path a file argument names, or None when it is not literal
-    (expand() from hook-lib.py cannot expand it, or it is the find `{}`)."""
-    p = None if path == "{}" else expand(path)
+    (expand() from hook-lib.py cannot expand it, or it is the find `{}`).
+    rebound=True: a variable this command rebinds takes its value from before
+    the command (the rebound reading of expand()), a guess at the target."""
+    p = None if path == "{}" else expand(path, rebound)
     return None if p is None else os.path.join(start, p)
+
+def guesses(start, path):
+    """The paths a variable this command rebinds would give path, read with
+    its value from before the command; empty when plain resolve() reads path,
+    or when nothing rebound stands behind its None."""
+    if path == "{}" or resolve(start, path) is not None:
+        return []
+    p = resolve(start, path, rebound=True)
+    return [p] if p else []
 
 def places(p):
     """The real directories an edit of path p writes into: the one holding the
@@ -253,18 +271,29 @@ def on_command(seg, curdir):
         judged = [p for p in paths if any(opted(d) for d in places(p))]
         if not judged:
             if unknown and not all(os.path.isabs(os.path.expanduser(f)) for f in files):
-                UNJUDGED.append(shape)    # a relative file under an unknown directory: not judged, and said so
+                UNJUDGED.append((shape, CD))    # a relative file under an unknown directory: not judged, and said so
             return None                   # every file lies outside an opted-in directory
     else:
         dirs = [os.path.realpath(start)]
-        for f in files:                   # a glob is judged by its literal parent too
-            if GLOB.search(f):
-                parent = resolve(start, os.path.dirname(GLOB.split(f, 1)[0]) or ".")
+        rebound = []                      # a variable this command rebinds: judged by its value from before
+        for f in files:
+            if GLOB.search(f):            # a glob is judged by its literal parent too
+                lead = os.path.dirname(GLOB.split(f, 1)[0]) or "."
+                parent = resolve(start, lead)
                 if parent:
                     dirs.append(os.path.realpath(parent))
+                for g in guesses(start, lead):
+                    rebound.append(g)
+                    dirs.append(os.path.realpath(g))
+            else:
+                for g in guesses(start, f):
+                    rebound.append(g)
+                    dirs.extend(places(g))
         if not any(opted(d) for d in dirs):
             if unknown:
-                UNJUDGED.append(shape)
+                UNJUDGED.append((shape, CD))
+            elif rebound:
+                UNJUDGED.append((shape, REBOUND))
             return None
     if (head == "sed" and bsd and not quiet and literal and len(files) == 1 and not script_file
             and len(code) == 1 and one_substitution(code[0])):
@@ -272,11 +301,11 @@ def on_command(seg, curdir):
     return (shape, files[:20])
 
 def finish():
-    return ("unjudged", UNJUDGED[0]) if UNJUDGED else None
+    return ("unjudged",) + UNJUDGED[0] if UNJUDGED else None
 
 def emit(hit):
     if hit[0] == "unjudged":
-        sys.stdout.write("%s after a cd the hook cannot expand, judged against the payload cwd, which is not opted in" % hit[1])
+        sys.stdout.write("%s %s" % hit[1:])
         sys.exit(ALLOW_EXIT)
     shape, files = hit
     sys.stdout.write(shape + "".join("\n" + f for f in files))

@@ -19,8 +19,9 @@
 # adds before the last, a `cd` the scanner cannot expand — the session
 # directory's repo scanned in its place, blocking on a hit there, allowing
 # with a breadcrumb when clean or not a work tree, never before the placed
-# commits are scanned, an absolute `-C` / `--git-dir` / `--work-tree` in
-# either spelling placing the command — a failed `git config` read of the
+# commits are scanned, an absolute `-C`, or an absolute `--git-dir` and
+# `--work-tree` together in either spelling, placing the command and either of
+# the two alone not — a failed `git config` read of the
 # filters); a diff read
 # whatever the repo's diff config says (prefixes, `diff.relative`, a `-diff`
 # attribute, quoted paths, an added line starting `++`); a repo whose config
@@ -51,8 +52,9 @@ fi
 trap 'rm -rf "$tmp"' EXIT
 command -v git >/dev/null 2>&1 || { echo "staged-secrets-selftest: git not found — nothing ran" >&2; exit 4; }
 
-# shellcheck source=../../scripts/selftest-lib.sh
-. "$here/../../scripts/selftest-lib.sh"   # selftest_mutate, selftest_expect_killed
+# selftest-lib.sh sources scripts/selftest-lib.sh (selftest_mutate,
+# selftest_expect_killed); the path named here is what queues this selftest
+# when that file is staged (pre-commit's queue_hook_selftests_naming).
 . "$here/selftest-lib.sh"
 
 rep() { printf "%${2}s" "" | tr ' ' "$1"; }   # rep <char> <n>
@@ -210,6 +212,9 @@ expect_block "$r3" "cd \"\$(echo x)\" && git -C $r2 commit -m x" "an absolute -C
 expect_block "$r3" "cd \"\$(echo x)\" && git --git-dir=$r2/.git --work-tree=$r2 commit -m x" "an absolute --git-dir=/--work-tree= after an unknown cd"
 expect_block "$r3" "cd \"\$(echo x)\" && git --git-dir $r2/.git --work-tree $r2 commit -m x" "an absolute --git-dir/--work-tree as separate words after an unknown cd"
 expect_crumb "$r3" "cd \"\$(echo x)\" && git --git-dir=$r2/.git --work-tree=. commit -m x" "follows a cd the hook cannot expand" "a relative --work-tree does not place the command"
+expect_crumb "$r3" "cd \"\$(echo x)\" && git --git-dir=$r2/.git commit -m x" "follows a cd the hook cannot expand" "an absolute --git-dir alone does not place the command"
+expect_crumb "$r3" "cd \"\$(echo x)\" && git --work-tree=$r2 add c.txt && git --work-tree=$r2 commit -m x" "follows a cd the hook cannot expand" "an absolute --work-tree alone does not place the command"
+expect_crumb "$tmp/plain" "cd \"\$(echo x)\" && git --git-dir=$r2/.git commit -m x" "the repo it runs in is unknown" "an absolute --git-dir alone from a directory that is not a repo"
 # the placed commits are scanned before an unknown cd is decided, and an add after the last commit is not read
 expect_block "$tmp/plain" "git -C $r2 commit -m a; cd \"\$(echo x)\" && git add f" "an unknown cd's add after a placed commit"
 expect_block "$tmp/plain" "cd \"\$(echo x)\" && git commit -m a; git -C $r2 commit -m b" "an unknown cd's commit before a placed commit"
@@ -359,9 +364,14 @@ mutant "an unknown cd allowed before the placed scan" '    targets = []
     targets = []
     for c in COMMITS:' "$tmp/plain" "cd \"\$(echo x)\" && git commit -m a; git -C $r2 commit -m b" 0
 mutant "an unknown cd add scanned after the last commit" 'adds = ADDS[:COMMITS[-1][4]]' 'adds = ADDS[:COMMITS[-1][4]] + [a for a in ADDS[COMMITS[-1][4]:] if a[5]]' "$r4" "git -C $r3 commit --allow-empty -m a; cd \"\$(echo x)\" && git add new.txt" 2
-mutant "an absolute --git-dir/--work-tree does not place" 'return bool(repo) and all(repo)' 'return False' "$r3" "cd \"\$(echo x)\" && git --git-dir=$r2/.git --work-tree=$r2 commit -m x" 0
-mutant "a relative --work-tree places" 'return bool(repo) and all(repo)' 'return bool(repo) and any(repo)' "$r3" "cd \"\$(echo x)\" && git --git-dir=$r2/.git --work-tree=. commit -m x" 2
-mutant "the separate-word spelling ignored" 'v = val if eq else (pre[i + 1] if i + 1 < len(pre) else None)' 'v = val' "$r3" "cd \"\$(echo x)\" && git --git-dir $r2/.git --work-tree $r2 commit -m x" 0
+mutant "an absolute --git-dir/--work-tree does not place" 'out.placed = known or (gd_abs and wt_abs)' 'out.placed = known' "$r3" "cd \"\$(echo x)\" && git --git-dir=$r2/.git --work-tree=$r2 commit -m x" 0 hook-lib.py
+mutant "a relative --work-tree places" 'wt_abs = v is not None and os.path.isabs(v)' 'wt_abs = v is not None' "$r3" "cd \"\$(echo x)\" && git --git-dir=$r2/.git --work-tree=. commit -m x" 2 hook-lib.py
+mutant "an absolute --git-dir alone places" 'out.placed = known or (gd_abs and wt_abs)' 'out.placed = known or gd_abs' "$r3" "cd \"\$(echo x)\" && git --git-dir=$r2/.git commit -m x" 2 hook-lib.py
+mutant "an absolute --work-tree alone places" 'out.placed = known or (gd_abs and wt_abs)' 'out.placed = known or wt_abs' "$r3" "cd \"\$(echo x)\" && git --work-tree=$r2 add c.txt && git --work-tree=$r2 commit -m x" 2 hook-lib.py
+mutant "an absolute -C does not place" 'known = known or (v is not None and os.path.isabs(v))' 'pass' "$r3" "cd \"\$(echo x)\" && git -C $r2 commit -m x" 0 hook-lib.py
+mutant "the separate-word spelling ignored" '            if not eq:
+                if i + 1 >= len(args):' '            if False:
+                if i + 1 >= len(args):' "$r3" "cd \"\$(echo x)\" && git --git-dir $r2/.git --work-tree $r2 commit -m x" 0 hook-lib.py
 cp "$hook" "$here/hook-lib.sh" "$here/hook-lib.py" "$mdir/"
 selftest_mutate "$hook" "$mdir/staged-secrets.sh" 'if blind_subs and blind_top is None:' 'if False:' \
   && hook="$mdir/staged-secrets.sh" selftest_expect_killed "a session directory outside a repo not named" crumb_has "$tmp/plain" "cd \"\$(echo $r2)\" && git commit -m x" "not a git work tree"

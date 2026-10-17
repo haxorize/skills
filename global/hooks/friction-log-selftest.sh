@@ -23,7 +23,7 @@
 # way, the cursor silences a second run and re-arms on appended lines;
 # stop_hook_active exits at once, even over a correction; the malformed-
 # payload, bad session-id (`.`, `..`, a slash, and session-hook-lib.py's rule:
-# a dot inside, or past 128 characters), bad FRICTION_LOG_DIR,
+# a dot inside, past 128 characters, or a trailing newline), bad FRICTION_LOG_DIR,
 # missing-transcript, no-python3, no-scanner-file, no or unloadable
 # session-hook-lib.py, and scanner-crash arms allow with a breadcrumb (the crash named, by mutating a
 # copy of friction-log.py beside a copy of the wrapper); the cursor is
@@ -284,6 +284,11 @@ for sid in "a.b" "$(printf '%0129d' 0 | tr 0 a)"; do
   [ "$out" = "rc=0" ] && grep -q "session_id is not a file-safe name" "$tmp/crumb" && [ ! -e "$FRICTION_LOG_DIR/.seen/$sid" ] \
     || { echo "FAIL (session id '${sid:0:12}' (${#sid} chars) must allow as not file-safe and name no cursor): $out $(cat "$tmp/crumb")"; fail=1; }
 done
+# a trailing newline: the JSON escape \n decodes to an id the anchored pattern
+# passes under re.match ($ matches before a final newline) and fullmatch refuses
+out="$(run 'nl\n' "$t")"
+[ "$out" = "rc=0" ] && grep -q "session_id is not a file-safe name" "$tmp/crumb" && [ ! -e "$FRICTION_LOG_DIR/.seen/nl"$'\n' ] \
+  || { echo "FAIL (session id 'nl' plus a trailing newline must allow as not file-safe and name no cursor): $out $(cat "$tmp/crumb")"; fail=1; }
 # the cursor lands through session-hook-lib.py's write_state: a 0600 file in a
 # 0700 directory (arm made it with mkdir's default mode), no temp file left
 mode() { python3 -c 'import os, sys; print(oct(os.stat(sys.argv[1]).st_mode & 0o777))' "$1"; }

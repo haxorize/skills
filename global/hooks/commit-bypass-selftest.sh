@@ -25,8 +25,9 @@ if [ -z "$tmp" ] || [ ! -d "$tmp" ]; then
 fi
 trap 'rm -rf "$tmp"' EXIT
 
-# shellcheck source=../../scripts/selftest-lib.sh
-. "$here/../../scripts/selftest-lib.sh"   # selftest_mutate, selftest_expect_killed
+# selftest-lib.sh sources scripts/selftest-lib.sh (selftest_mutate,
+# selftest_expect_killed); the path named here is what queues this selftest
+# when that file is staged (pre-commit's queue_hook_selftests_naming).
 . "$here/selftest-lib.sh"
 D="$PWD"
 

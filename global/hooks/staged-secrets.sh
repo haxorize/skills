@@ -79,10 +79,11 @@
 #
 # A `git add` / `git commit` after a `cd` the hook cannot expand (`cd "$(…)"`,
 # `cd -`, a variable unset in the hook's environment or one the shell keeps
-# itself) runs in an unknown repo, unless an absolute `-C`, or a `--git-dir` /
-# `--work-tree` whose every value is absolute, names it. The hook scans the
-# session directory's repo in its place, after every placed commit and add has
-# been scanned: a hit there blocks under a line saying the cd could not be
+# itself) runs in an unknown repo, unless an absolute `-C`, or an absolute
+# `--git-dir` and an absolute `--work-tree` together, name it (split_git's
+# `.placed`; either one alone leaves the other to the unknown directory).
+# The hook scans the session directory's repo in its place, after every placed
+# commit and add has been scanned: a hit there blocks under a line saying the cd could not be
 # followed, a clean scan allows with a breadcrumb saying so, and a session
 # directory that is not a git work tree allows with a breadcrumb naming the
 # unknown repo. An add of either kind after the last commit is not read.
@@ -154,32 +155,13 @@ DIFF = ["--no-ext-diff", "--no-textconv", "--no-renames", "--no-relative", "--ig
 PATCH = DIFF + ["-U0", "--no-color", "--text", "--src-prefix=a/", "--dst-prefix=b/"]
 NAMES = DIFF + ["--name-only", "--diff-filter=d", "-z"]
 
-def placed(args, rest, curdir):
-    """False when git runs in a directory that follows a cd the scanner could
-    not expand and nothing before the subcommand names the repo instead: an
-    absolute -C, or a --git-dir / --work-tree (either spelling) whose every
-    value is absolute."""
-    if curdir is not None:
-        return True
-    pre = args[:len(args) - len(rest) - 1]
-    repo = []
-    for i, a in enumerate(pre):
-        name, eq, val = a.partition("=") if a.startswith("--") else (a, "", "")
-        if name in ("-C", "--git-dir", "--work-tree"):
-            v = val if eq else (pre[i + 1] if i + 1 < len(pre) else None)
-            absolute = os.path.isabs(expand(v) or "")
-            if name == "-C" and absolute:
-                return True
-            if name != "-C":
-                repo.append(absolute)
-    return bool(repo) and all(repo)
-
 def on_command(seg, curdir):
     args = git_args(seg)
     if args is None:
         return None
-    d, sub, rest, gd, wt = split_git(args, curdir)
-    blind = sub in ("add", "stage", "commit") and not placed(args, rest, curdir)
+    split = split_git(args, curdir)
+    d, sub, rest, gd, wt = split
+    blind = sub in ("add", "stage", "commit") and not split.placed
     if blind:
         d, gd, wt = base(), None, None      # the repo is unknown: scan the session directory instead
     if sub in ("add", "stage"):

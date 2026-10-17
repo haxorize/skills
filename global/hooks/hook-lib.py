@@ -53,14 +53,19 @@
 # keeps itself (`PWD`, `OLDPWD`), one this command line assigned, declared,
 # unset, or read into (`unset`, `read`, `for`) before the use, any other
 # `${…}` form (`${X:-y}`), a `$(…)`, or a backtick makes the path
-# unexpandable (None).
+# unexpandable (None). `expand(path, rebound=True)` expands a name this
+# command rebinds from the hook's environment anyway — its value before the
+# command — so a hook that gets None from the plain call can still judge
+# that guess, and should say the target was not known.
 # `git_args(seg)` returns the tokens after the `git` word with a `-c
 # alias.X=…` built on the command line expanded into X's place, or None when
 # the segment is not git. `split_git(args, curdir)` reads those tokens the way
 # git does: (dir, subcommand, args after it, git_dir, work_tree), where dir is
 # base() moved by `curdir` and each `-C`, and `--git-dir` / `--work-tree`
 # (either spelling) are honoured as absolute paths resolved from that dir, or
-# None when absent or unexpandable.
+# None when absent or unexpandable; its `.placed` is False after a cd the
+# scanner could not expand unless an absolute `-C`, or an absolute
+# `--git-dir` and `--work-tree` together, name the repo.
 #
 # A shell given a script file (`… | bash hook.sh`) runs the file, and what is
 # piped in is that script's input, not commands; a shell with no operand, `-s`,
@@ -232,14 +237,16 @@ def subst(seg):
     return out
 
 
-def expand(path):
+def expand(path, rebound=False):
     """`~` and `$X` / `${X}` from the environment expanded; None when the
-    path holds anything else the hook cannot expand."""
+    path holds anything else the hook cannot expand. rebound=True reads a
+    name this command rebinds from the environment too: the value it had
+    before the command, a guess at the target rather than the target."""
     if path is None or "`" in path:
         return None
     def env(m):
         name = m.group(1) or m.group(2)
-        v = None if name in SHELL_KEPT or name in TOUCHED else os.environ.get(name)
+        v = None if name in SHELL_KEPT or (name in TOUCHED and not rebound) else os.environ.get(name)
         if v is None:
             raise KeyError(m.group(0))
         return v
@@ -405,14 +412,25 @@ def base():
     return os.path.abspath(os.environ["PAYLOAD_CWD"])
 
 
+class GitSplit(tuple):
+    """split_git's result. Unpacks as (dir, subcommand, args after it,
+    git_dir, work_tree); `.placed` says whether the repo git runs in is known."""
+
+
 def split_git(args, curdir):
-    """Read the tokens after the `git` word the way git does. Returns (dir,
-    subcommand or None, args after it, git_dir, work_tree): dir is base()
-    moved by curdir (None, an unexpandable cd, leaves base()) and by each
-    `-C` (an unexpandable one is skipped); git_dir and work_tree are the
-    `--git-dir` / `--work-tree` values resolved from the final dir, or None."""
+    """Read the tokens after the `git` word the way git does. Returns a
+    GitSplit (dir, subcommand or None, args after it, git_dir, work_tree):
+    dir is base() moved by curdir (None, an unexpandable cd, leaves base())
+    and by each `-C` (an unexpandable one is skipped); git_dir and work_tree
+    are the last `--git-dir` / `--work-tree` values resolved from the final
+    dir, or None. `.placed` is False when curdir is None and nothing names
+    the repo instead: an absolute `-C`, or both a `--git-dir` and a
+    `--work-tree` whose last values are absolute. Either one alone still
+    leaves the other to the unknown directory."""
     d = base() if curdir is None else joined(base(), curdir)
+    known = curdir is not None
     gd = wt = None
+    gd_abs = wt_abs = False
     i = 0
     while i < len(args):
         a = args[i]
@@ -427,18 +445,25 @@ def split_git(args, curdir):
             v = expand(val)
             if name == "-C":
                 d = joined(d, v) or d
+                known = known or (v is not None and os.path.isabs(v))
             elif name == "--git-dir":
                 gd = v if v is not None else gd
+                gd_abs = v is not None and os.path.isabs(v)
             elif name == "--work-tree":
                 wt = v if v is not None else wt
+                wt_abs = v is not None and os.path.isabs(v)
             continue
         if a.startswith("-"):
             i += 1
             continue
         gd = joined(d, gd) if gd is not None else None
         wt = joined(d, wt) if wt is not None else None
-        return os.path.normpath(d), a, args[i + 1:], gd and os.path.normpath(gd), wt and os.path.normpath(wt)
-    return os.path.normpath(d), None, [], None, None
+        out = GitSplit((os.path.normpath(d), a, args[i + 1:], gd and os.path.normpath(gd), wt and os.path.normpath(wt)))
+        out.placed = known or (gd_abs and wt_abs)
+        return out
+    out = GitSplit((os.path.normpath(d), None, [], None, None))
+    out.placed = known
+    return out
 
 
 def fed_by():
