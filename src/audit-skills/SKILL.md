@@ -1,6 +1,6 @@
 ---
 name: audit-skills
-description: Audit the whole installed skill collection under ~/.claude/skills/ for library hygiene — Overlap, Currency, Actionability, Scope fit, Usage — with a Keep / Improve / Update / Retire / Merge verdict per skill — or per pair, where a project-scoped skill shares an installed skill's name — so duplicate, stale, thin, shadowed, or misfiled skills get named.
+description: Audit the whole installed skill collection under ~/.claude/skills/ for library hygiene — Overlap, Currency, Actionability, Scope fit, Usage — with a Keep / Improve / Update / Retire / Shelve / Merge verdict per skill — or per pair, where a project-scoped skill shares an installed skill's name — so duplicate, stale, thin, shadowed, or misfiled skills get named.
 disable-model-invocation: true
 ---
 
@@ -49,9 +49,10 @@ Assign one verdict per skill:
 | **Improve** | Worth keeping, but a specific fix is needed |
 | **Update** | A technical reference is stale — verify the current fact and refresh it |
 | **Retire** | Its moment is already served by an existing skill or global rule — nothing unique is lost |
+| **Shelve** | No skill serves its moment, but it has met the owning repo's recorded exit for want of use — out of the installed set, kept in git |
 | **Merge into X** | Substantial overlap — name the target and what to carry over |
 
-A skill is kept or retired on the **Team-fit test**: kept when its reason names a concrete moment in a product engineering team's work and the role who hits it, retired when an existing skill or global rule already serves that moment. Fire counts are evidence for the case, never the verdict; the call is the team lead's. A Retire on the Team-fit test names the skill or global rule that already serves the moment; any other Retire names which the evidence is — harm from *following* the skill, or the skill merely *skipped* — and a non-compliance-only case is an Improve (description, placement, wording), never a Retire. A **Deprecation stub** is not a Skill under this test and takes none of it: it is judged by count alone, over its own window — [references/deprecation-stubs.md](references/deprecation-stubs.md) holds the second script run that reads it and the retire-or-extend rule.
+A skill is kept or retired on the **Team-fit test**: kept when its reason names a concrete moment in a product engineering team's work and the role who hits it, retired when an existing skill or global rule already serves that moment. Fire counts are evidence for the case, never the verdict; the call is the team lead's. A Retire on the Team-fit test names the skill or global rule that already serves the moment; any other Retire names which the evidence is — harm from *following* the skill, or the skill merely *skipped* — and a non-compliance-only case is an Improve (description, placement, wording), never a Retire. A **Deprecation stub** is not a Skill under this test and takes none of it: it is judged by count alone, over its own window — [references/deprecation-stubs.md](references/deprecation-stubs.md) holds the second script run that reads it and the retire-or-extend rule. A Shelve is written only where the owning repo records an exit rule on the Team-fit test (the skills repo's is its `DOMAIN.md` **Shelf** row), and only on the reads that rule names; a zero with no such rule stays load evidence. A model-invoked skill the rule reaches takes an Improve first (trim the description, or flip it to user-invoked), and a Shelve only when neither can work.
 
 ### 3. Write a reason that stands alone
 
@@ -59,6 +60,7 @@ The reason is the deliverable — a maintainer decides from it without reopening
 
 - **Keep** — name the moment and the role. "An engineer proving a change works in the running app, not in tests" is a reason; "still useful" and "no overlap found" are not.
 - **Retire** — name the moment the skill claimed *and* what serves it instead. "Superseded by X, which covers the same triggers plus Y; no unique content remains." A stub's reason is its count and the window: "zero typed `/old-name` since it landed on 2026-08-22".
+- **Shelve** — name the exit rule, each read it needs (date, machine, typed and loaded counts), and the restore command. "Zero typed, zero loaded on both machines in the 2026-10-12 and 2026-11-23 rounds, admitted 2026-08-27; back with `git mv shelf/x src/x`."
 - **Merge into X** — name the target and the content to carry over. "Duplicates X's step 4; move its one distinct tip in as a note there."
 - **Improve** — name the section and the change. "The framework-comparison section duplicates Y; cut it."
 - **Update** — name the stale fact and the current one, with where you confirmed it.
@@ -66,4 +68,4 @@ The reason is the deliverable — a maintainer decides from it without reopening
 
 ### 4. Present, then act only on confirmation
 
-Present the summary table (skill, verdict, reason), then the Retire and Merge candidates in detail — the defect found, what covers the need instead, and any dependent skills or references the removal would break. Each waits on the user's go-ahead per skill, in the recommend-and-proceed ask shape (`~/.claude/rules/recommend-and-proceed.md`). What a Retire or Merge *does* depends on where the entry points: a skill whose entry is a symlink into a source repo (`readlink`, step 1) is retired *there* — a change in that repo's `src/`, under its own conventions (a repo that keeps Deprecation stubs stubs it for one window), and its installer drops the link; `rm` on the link alone is undone by the next install. Only an orphan — a plain directory no repo owns — is removed from `~/.claude/skills/` directly. Improve and Update land as suggestions the user chooses among.
+Present the summary table (skill, verdict, reason), then the Retire, Shelve and Merge candidates in detail — the defect found, what covers the need instead, and any dependent skills or references the removal would break. Each waits on the user's go-ahead per skill, in the recommend-and-proceed ask shape (`~/.claude/rules/recommend-and-proceed.md`). What a Retire or Merge *does* depends on where the entry points: a skill whose entry is a symlink into a source repo (`readlink`, step 1) is retired *there* — a change in that repo's `src/`, under its own conventions (a repo that keeps Deprecation stubs stubs it for one window), and its installer drops the link; `rm` on the link alone is undone by the next install. A Shelve moves the skill to wherever that repo's exit rule names, in the same repo-side change. Only an orphan — a plain directory no repo owns — is removed from `~/.claude/skills/` directly. Improve and Update land as suggestions the user chooses among.
