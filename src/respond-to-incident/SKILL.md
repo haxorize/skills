@@ -2,7 +2,7 @@
 name: respond-to-incident
 description: Run the first half hour of a production incident — stop the harm before explaining it, set the severity and re-read it as facts arrive, keep a UTC timeline in a file, and draft each update the people waiting on one need — then hand the cause to diagnosis and the record to the incident review. Drafts updates only; you send them.
 disable-model-invocation: true
-requires: writing-for-humans, diagnosing-bugs, capturing-learnings, phi-safe-code
+requires: writing-for-humans, diagnosing-bugs, phi-safe-code
 argument-hint: "[<what is broken, the alert text, or an incident file to resume>]"
 ---
 
@@ -19,7 +19,7 @@ Something members or the business depend on is broken now, and the user is the o
 
 Refuse, naming the route that fits, when the ask is one of these:
 
-- **An incident already resolved** that owes its review. That is `capturing-learnings`' incident learning; this skill hands the file to it at the close, and never writes the review.
+- **An incident already resolved** that owes its review. That is the incident learning `diagnosing-bugs`' learnings reference owns; this skill hands the file to it at the close, and never writes the review.
 - **A defect nobody is harmed by right now** — found in a test, a log, or a report of something that has since stopped. That is `diagnosing-bugs`, and `/to-bug` to file it.
 - **A number drifting with nobody blocked**, like a conversion rate down a point. That is `diagnosing-bugs`' metric regression.
 
@@ -35,7 +35,7 @@ Under `## Timeline`, one line per entry, `<YYYY-MM-DD HH:MM>Z <what was seen or 
 
 - **What is broken, for whom**, in the words a member or a teammate would use: "members cannot see claims in the app", not "claims-api 5xx".
 - **Since when**, from the first evidence of it, which is usually earlier than the alert, and **when it was noticed**, as its own entry: the two gaps, start to noticed and noticed to stopped, are closed by different work.
-- **What changed near that time**: deploys, flag changes, config, a rollout rung opened (a `/roll-out` plan's header says which), a dependency's own outage. Read these with read-only commands; this list is where the mitigation comes from. Call the Skill tool with `capturing-learnings` and search the repo's `docs/solutions/` for the symptom by its retrieval protocol: a past incident's fix is a candidate move, never this incident's diagnosis.
+- **What changed near that time**: deploys, flag changes, config, a rollout rung opened (a `/roll-out` plan's header says which), a dependency's own outage. Read these with read-only commands; this list is where the mitigation comes from. Search the repo's `docs/solutions/` for the symptom by the retrieval protocol in `~/.claude/skills/diagnosing-bugs/references/learnings.md`: a past incident's fix is a candidate move, never this incident's diagnosis.
 - **Who is on it**, and who decides. With more than one responder, one person decides, one acts on the system, and one writes the updates; the user names them. Alone, the user decides and acts, and this skill writes.
 
 The first reply carries the proposed severity, the recommended move from step 3, and the questions above together: the move never waits a round trip for the severity.
@@ -81,7 +81,7 @@ No writing sample is asked for: an update is written plain, in the register, and
 Set the header to `Incident: mitigated`, and draft the last update to each group: what stopped it, when, what is still unknown, and that the cause is being found. Then offer the two hand-offs, each on the user's word:
 
 - **The cause** — call the Skill tool with `diagnosing-bugs`, with the incident file as its evidence. A rolled-back change is fixed through the normal flow and deployed again only then; a flag turned off comes back on through the rollout plan's own rungs.
-- **The record** — call the Skill tool with `capturing-learnings`; whether an incident learning is owed is its rule, and its Timeline starts from this file's.
+- **The record** — open `~/.claude/skills/diagnosing-bugs/references/learnings.md` and run its capture gate; whether an incident learning is owed is its rule, and its Timeline starts from this file's.
 
 The header becomes `Incident: resolved` only on the user's word, with the time. Give the file's path.
 

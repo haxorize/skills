@@ -1,6 +1,6 @@
 # Learning doc and incident learning format
 
-Open this only when a Learning doc or an incident learning is being written or updated — `capturing-learnings` § Capture workflow steps 2-4, which is the only path that reaches one — adjudicating an ambiguous overlap, drafting or updating a doc, or making the first capture in a repo. The retrieval protocol never opens it.
+Open this only when a Learning doc or an incident learning is being written or updated — [learnings.md](learnings.md) § Capture workflow steps 2-4, which is the only path that reaches one — adjudicating an ambiguous overlap, drafting or updating a doc, or making the first capture in a repo. The retrieval protocol never opens it.
 
 Both kinds live in `docs/solutions/` at the target repo's root: a Learning doc at `<slug>.md`, an incident learning at `<yyyy-mm-dd>-<slug>.md`.
 
@@ -22,7 +22,7 @@ A Learning doc's filename is slug-only kebab-case describing the problem (`vites
 | **`last_updated`** | on update | Added when an existing doc absorbs a new occurrence |
 | **`retire_when`** | no | One line naming the outside condition the guidance holds only while — an open upstream bug, a tool or platform version, a dependency's behavior — so a later check can retire it with no repo change; a met condition is a contradiction settled per § Updating an existing doc, and a doc that declares none is never given one by inference |
 
-**Quote any scalar holding a colon-space or a space-hash.** Unquoted, `: ` opens a nested mapping and ` #` starts a comment that truncates the value — and `symptoms` carries verbatim error strings (`Error: connection refused`), which is exactly the shape that corrupts. A corrupted `symptoms` value is one the symptom-keyed greps in `capturing-learnings` § Retrieval protocol cannot match.
+**Quote any scalar holding a colon-space or a space-hash.** Unquoted, `: ` opens a nested mapping and ` #` starts a comment that truncates the value — and `symptoms` carries verbatim error strings (`Error: connection refused`), which is exactly the shape that corrupts. A corrupted `symptoms` value is one the symptom-keyed greps in [learnings.md](learnings.md) § Retrieval protocol cannot match.
 
 `problem_type` enum (compound-engineering's bug track, kept for cross-tool greppability): `build_error`, `test_failure`, `runtime_error`, `performance_issue`, `database_issue`, `security_issue`, `ui_bug`, `integration_issue`, `logic_error`.
 
@@ -75,7 +75,7 @@ The second document kind, same store, same frontmatter — `symptoms:` carries t
 
 ## Overlap adjudication
 
-This section governs Learning docs; an incident learning never merges — a later incident of one failure mode is a recurrence linked per § The incident learning, and the cross-kind case (a Learning doc and an incident learning on one root cause) is `capturing-learnings` § Capture workflow step 2's: link both ways, stay separate. The overlap test is over *problems*, not files: two docs about different sub-problems of one feature stay separate even when they cite the same code — **shared code is not shared problem**; ask whether a maintainer searching the topic in six months benefits from separate docs, or whether the pair just creates content-drift risk. Splitting one doc into two carries a higher bar than merging (it doubles the content-drift surface, and length alone is never a reason); when a split is right, duplicate the shared context — root cause, environment — into each successor rather than cross-referencing, because each doc must stand alone at the moment of search.
+This section governs Learning docs; an incident learning never merges — a later incident of one failure mode is a recurrence linked per § The incident learning, and the cross-kind case (a Learning doc and an incident learning on one root cause) is [learnings.md](learnings.md) § Capture workflow step 2's: link both ways, stay separate. The overlap test is over *problems*, not files: two docs about different sub-problems of one feature stay separate even when they cite the same code — **shared code is not shared problem**; ask whether a maintainer searching the topic in six months benefits from separate docs, or whether the pair just creates content-drift risk. Splitting one doc into two carries a higher bar than merging (it doubles the content-drift surface, and length alone is never a reason); when a split is right, duplicate the shared context — root cause, environment — into each successor rather than cross-referencing, because each doc must stand alone at the moment of search.
 
 ## First capture in a repo
 

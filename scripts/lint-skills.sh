@@ -2885,7 +2885,7 @@ done 3<<<"$graded_scripts"
 # body, and this is the one check whose scope ADR-0077 wrote wider than the
 # skill tree. A separate walk (graded_spelling, built in Pass 0) because it is
 # a separate glob: nothing else reads these files. `find docs` rather than two enumerated levels, because
-# the header states the scope as `docs/**` and `capturing-learnings` writes to
+# the header states the scope as `docs/**` and `diagnosing-bugs` writes to
 # `docs/solutions/`, which a two-level glob would never reach. The prose
 # READMEs under scripts/ are here and not in the scripts/ exclusion above:
 # the exclusion buys out of separating prose from machine-matched literal

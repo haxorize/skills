@@ -148,7 +148,7 @@ expect_run "docs/adr/ path"       "docs/adr/0001-some-record.md"      "lint-skil
 expect_run "docs/lineage.md"      "docs/lineage.md"                   "lint-skills "
 # docs/ outside docs/adr/: lint-skills only. Two named subtrees and a generic
 # one, so dropping the docs/ arm reds here rather than passing on a sibling —
-# sweep-corpus writes docs/health/, capturing-learnings docs/solutions/. The
+# sweep-corpus writes docs/health/, diagnosing-bugs docs/solutions/. The
 # generic row stands for every other writer (evaluation-ledger, offboard-engineer,
 # product-description, rebuild-contract): the arm is one glob, so a row per
 # subtree would prove nothing the generic row does not.

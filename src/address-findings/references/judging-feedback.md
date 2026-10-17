@@ -1,10 +1,6 @@
----
-name: receiving-review
-description: Discipline for receiving code-review feedback — feedback is claims to verify, not orders to follow or occasions for performative agreement. Use when review feedback arrives and before implementing any suggested change — PR comments, a teammate's objections, a pasted review, or the findings a `review-changes` report on your own diff just produced — especially when an item is unclear, seems wrong, or the fix work is outgrowing the change it serves. Also use when fixes have landed and the review's open threads still need outcome replies.
-requires: writing-for-humans
----
+# Judging feedback
 
-# Receiving Review
+Read this at the start of every pass, whatever the findings arrived as. It is the judgment per finding; the skill body owns the pass and the table.
 
 Review feedback is a set of claims to verify, not orders to follow or occasions for gratitude. Technical correctness over social comfort. Two stops bound the pass — clarify every item before implementing any, and one fix pass with re-review the user's call — and the zero-accepted tripwire sits inside it; each is stated in full below.
 
@@ -12,12 +8,12 @@ This holds whoever produced the findings. A report from your own self-review is 
 
 ## The response loop
 
-1. **Read** the complete feedback without reacting. Findings that arrived as PR review comments follow [references/pr-threads.md](references/pr-threads.md), whose draft-review check runs before anything else.
+1. **Read** the complete feedback without reacting. Findings that arrived as PR review comments follow [pr-threads.md](pr-threads.md), whose draft-review check runs before anything else.
 2. **Restate** each requirement in your own words — or ask what it means.
 3. **Verify** each claim against the codebase before agreeing: does the flagged problem actually exist? Is there a reason the current implementation looks this way (check `docs/adr/` — a behavior an ADR records as deliberate is not a bug)? A multi-claim comment is verified claim by claim — one false sub-claim never dismisses the thread, and a finding is never rejected because a related finding was rejected. An empty search does not refute a claim either: a citation your grep cannot find means never verified, not false, and the claim is overturned only by an attempt under the conditions it names. A finding the user already declined in an earlier round is not new: cite that disposition rather than re-verifying it, unless the user reopened it.
 4. **Evaluate** — technically sound *for this codebase*? Does the suggestion break existing behavior, or the platforms/versions this project supports?
 5. **Respond** — a restated fix, a clarifying question, or reasoned pushback.
-6. **Implement** in priority order — blocking issues (breakage, security) → simple fixes (typos, imports) → complex fixes (logic, refactors) — verifying each fix removes the cited deficiency before starting the next; verify no regressions at the end. Each finding gets two separate calls: what happens to this instance, and, for a shape you have seen before, what would prevent the next one — a recurring finding is a process change waiting to be named (if that diagnosis was itself expensive, `capturing-learnings`' capture gate may apply).
+6. **Implement** in priority order — blocking issues (breakage, security) → simple fixes (typos, imports) → complex fixes (logic, refactors) — verifying each fix removes the cited deficiency before starting the next; verify no regressions at the end. Each finding gets two separate calls: what happens to this instance, and, for a shape you have seen before, what would prevent the next one — a recurring finding is a process change waiting to be named (if that diagnosis was itself expensive, `diagnosing-bugs`' capture gate may apply).
 
 ## Route by what the finding indicts
 
@@ -41,7 +37,7 @@ Pushed back and turned out wrong? State the correction factually and move on ("V
 
 ## One fix pass, then the user's call
 
-Fixing findings is one pass: verify, fix what holds, push back on what doesn't, propose deferrals for the user to ratify, and close with every finding disposed. Re-review is the user's call — when they ask for round N, that is one more pass with its own ledger; a fix → re-review loop you start on your own is the failure. The pass closes on a size check `/address-findings` owns the mechanics of: `git diff --stat <Reviewed-head>` (working tree against the reviewed head; `<Reviewed-head>..HEAD` once the fix is committed), insertions plus deletions, against the same sum from `git diff --stat <base>...<Reviewed-head>`; where the fix touched a file the review never graded, or runs past half that sum, **offer** a re-review — and never start one.
+Fixing findings is one pass: verify, fix what holds, push back on what doesn't, propose deferrals for the user to ratify, and close with every finding disposed. Re-review is the user's call — when they ask for round N, that is one more pass with its own ledger; a fix → re-review loop you start on your own is the failure. The pass closes on a size check the skill body's § 4 owns the mechanics of: `git diff --stat <Reviewed-head>` (working tree against the reviewed head; `<Reviewed-head>..HEAD` once the fix is committed), insertions plus deletions, against the same sum from `git diff --stat <base>...<Reviewed-head>`; where the fix touched a file the review never graded, or runs past half that sum, **offer** a re-review — and never start one.
 
 A deferral is a proposal, not a disposition: say which findings you propose to defer and why, and the user ratifies or refuses in the same exchange — an unstated deferral reads as a finding silently dropped, and a stated one the user never saw is the same thing. Stop the pass and ask when the fix work would exceed roughly **2× the original change's scope** — a review that becomes a rewrite has stopped being a review.
 
@@ -55,8 +51,8 @@ When a reviewer wants something "implemented properly" (a fuller endpoint, more 
 
 ## Replying on the review's own threads
 
-When the findings arrived as PR review comments, open [references/pr-threads.md](references/pr-threads.md) before the first reply and follow it — replies are outbound tracker prose, so have `writing-for-humans` live before writing one. Every comment gets an outcome reply; no silent ignores.
+When the findings arrived as PR review comments, open [pr-threads.md](pr-threads.md) before the first reply and follow it — replies are outbound tracker prose, so have `writing-for-humans` live before writing one. Every comment gets an outcome reply; no silent ignores.
 
 ## Boundary
 
-This skill owns the judgment per finding — whether the claim holds, what it indicts, what to say back. `/address-findings` runs the same pass over a `review-changes` report and owns the mechanics around it: the partition, the disposition table, the re-stamp. Producing the findings is `review-changes`'; making the fix work is `implement`'s or `tdd`'s, and landing it is `committing`'s. A finding that turns out to be a defect nobody asked for follows the repo's `Landing:` defect policy rather than becoming this pass's work.
+This reference owns the judgment per finding — whether the claim holds, what it indicts, what to say back. The skill body owns the mechanics around it: the partition, the disposition table, the re-stamp. Producing the findings is `review-changes`'; making the fix work is `implement`'s or `tdd`'s, and landing it is `committing`'s. A finding that turns out to be a defect nobody asked for follows the repo's `Landing:` defect policy rather than becoming this pass's work.

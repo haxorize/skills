@@ -1,6 +1,6 @@
 # Each rule's dependants, one line per rule: `<stem>: <skill>, <skill>`; `#` lines are comments. Checked by scripts/lint-skills.sh (check_global_rule, check_depends_entries).
-evidence: `committing`, `review-changes`, `implement`, `receiving-review`, `address-findings`, `upgrade-deps`, `handoff`, `writing-for-humans`
+evidence: `committing`, `review-changes`, `implement`, `address-findings`, `upgrade-deps`, `handoff`, `writing-for-humans`
 large-write-chunking: `handoff`, `writing-for-humans`
 no-unasked-commits: `committing`
 outbound-dash-sweep: `writing-for-humans`, `ask-for-me`
-recommend-and-proceed: `grilling`, `implement`, `committing`, `receiving-review`, `address-findings`, `upgrade-deps`
+recommend-and-proceed: `grilling`, `implement`, `committing`, `address-findings`, `upgrade-deps`
