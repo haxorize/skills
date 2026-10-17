@@ -9,17 +9,20 @@
 # starts from. Past 150k it adds one line of context telling the agent to
 # offer `/handoff` at the next phase boundary; past 200k, one more line
 # saying to offer it now, before the next step: past 200k a session cannot
-# afford to wait for a boundary. Each threshold fires once per session and never
-# again, even after a compaction drops the figure and it climbs back: a nudge
-# the agent already had is noise the second time. A session that jumps past
-# both between two prompts gets only the 200k line.
+# afford to wait for a boundary. Each threshold fires once per climb: a figure
+# back under 150k after a nudge means a compaction ran, and it re-arms both, so
+# a second climb nudges again. The re-arm exists because a compaction summary
+# carries the old nudge forward as stale text while the real figure has
+# dropped; the nudge tracks the count, not what was said before. A session
+# that jumps past both between two prompts gets only the 200k line.
 #
 # Why a hook: the agent cannot see its own token count, so a rule asking it to
 # judge "around 150k" is a guess. The figure lags by up to one turn — the
 # transcript is written asynchronously — which a nudge can afford.
 #
 # State: one marker file per session under ${HOOK_STATE_DIR:-~/.claude/hook-state}/context-nudge/,
-# named by the session id and holding the highest threshold already sent.
+# named by the session id and holding the highest threshold sent this climb
+# (0 once re-armed).
 # Markers are 0600 files in a 0700 directory; markers older than 30 days are
 # removed after a new one is written and its line printed, so a failed prune
 # never costs the nudge. Nothing from the transcript is written there or

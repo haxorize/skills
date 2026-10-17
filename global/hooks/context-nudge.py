@@ -14,7 +14,7 @@ lib = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(lib)
 lib.init("context-nudge")
 
-THRESHOLDS = [   # highest first; each fires once per session
+THRESHOLDS = [   # highest first; each fires once per climb
     (200000, "context-nudge: this session's context is at {k}k tokens, past 200k. Offer the user /handoff now, before the next step."),
     (150000, "context-nudge: this session's context is at {k}k tokens. At the next phase boundary, offer the user /handoff rather than starting a long new step."),
 ]
@@ -65,8 +65,6 @@ def main():
     except OSError:
         lib.crumb("transcript unreadable")
     level = next(((t, msg) for t, msg in THRESHOLDS if n >= t), None)
-    if level is None:
-        return
     state = lib.state_dir()
     marker = os.path.join(state, sid)
     try:
@@ -74,6 +72,15 @@ def main():
             sent = int(f.read().strip() or 0)
     except (OSError, ValueError):
         sent = 0
+    if level is None:
+        # Back under the lowest threshold after a nudge: a compaction ran, so
+        # re-arm and let a second climb nudge again.
+        if sent:
+            try:
+                lib.write_state(marker, "0\n")
+            except OSError:
+                lib.crumb("state directory not writable (%s)" % state)
+        return
     if level[0] <= sent:
         return
     # The marker first: a nudge that cannot be marked as sent would repeat on

@@ -6,7 +6,8 @@
 #
 # What it grades: quiet below 150k; the 150k line once, then the 200k line
 # once, then quiet; a jump straight past 200k sends only the 200k line; a
-# compaction that drops the figure does not re-arm; sidechain and
+# compaction that leaves the figure at or above 150k does not re-arm, and one
+# that drops it under 150k re-arms both lines; sidechain and
 # `<synthetic>` entries are skipped; a usage line straddling the 1 MB read
 # chunk is read whole; a 30-day-old marker is pruned; a prune that fails
 # (an old directory it cannot remove) still delivers the line, quietly; the
@@ -16,7 +17,7 @@
 # with a path separator, a missing transcript, an unwritable state
 # directory, a missing context-nudge.py) exits 0 with a breadcrumb and no
 # context. The mutation table narrows the sidechain skip, the synthetic skip,
-# the once-only check, the 150k boundary, the chunk join, the prune's error
+# the once-only check, the re-arm, the 150k boundary, the chunk join, the prune's error
 # swallowing, the 0600 write, the 0700 tightening and the phase-boundary
 # wording on a copy of context-nudge.py or session-hook-lib.py, and each
 # mutant must flip its row.
@@ -89,8 +90,14 @@ expect "exactly 150k, new session" "$(nudge s1b "$t")" 150
 entry 205000 >> "$t"
 expect "past 200k" "$(nudge s1 "$t")" 200
 expect "200k again" "$(nudge s1 "$t")" quiet
-entry 40000 >> "$t"; entry 170000 >> "$t"
-expect "after a compaction, past 150k again" "$(nudge s1 "$t")" quiet
+entry 170000 >> "$t"
+expect "a drop that stays past 150k" "$(nudge s1 "$t")" quiet
+entry 40000 >> "$t"
+expect "after a compaction, under 150k" "$(nudge s1 "$t")" quiet
+entry 160000 >> "$t"
+expect "after a compaction, past 150k again" "$(nudge s1 "$t")" 150
+entry 210000 >> "$t"
+expect "after a compaction, past 200k again" "$(nudge s1 "$t")" 200
 
 t="$tmp/t2.jsonl"; entry 230000 > "$t"
 expect "jump past both" "$(nudge s2 "$t")" 200
@@ -166,6 +173,8 @@ mutant() { # mutant <label> <file> <find> <replace> <setup fn> <want> — <file>
 }
 m_side() { t="$tmp/m1.jsonl"; { entry 100000; entry 400000 sidechain; } > "$t"; nudge m1 "$t"; }
 m_once() { t="$tmp/m2.jsonl"; entry 160000 > "$t"; nudge m2 "$t" >/dev/null; nudge m2 "$t"; }
+m_rearm() { t="$tmp/m7.jsonl"; entry 205000 > "$t"; nudge m7 "$t" >/dev/null
+  entry 30000 >> "$t"; nudge m7 "$t" >/dev/null; entry 201000 >> "$t"; nudge m7 "$t"; }
 m_edge() { t="$tmp/m3.jsonl"; entry 150000 > "$t"; nudge m3 "$t"; }
 m_join() { nudge m4 "$tmp/t5.jsonl"; }
 m_prune() { rm -rf "$HOOK_STATE_DIR"; p_fail; }
@@ -178,6 +187,7 @@ m_synth() { t="$tmp/m6.jsonl"; { entry 180000; entry 400000 synthetic; } > "$t";
 mutant "drop the synthetic skip" $py ' or m.get("model") == "<synthetic>"' '' m_synth 150
 mutant "keep a 0755 directory"   $lib '        os.chmod(d, 0o700)  ' '        pass  ' d_mode quiet
 mutant "fire every prompt"       $py 'if level[0] <= sent:' 'if level[0] < sent:' m_once quiet
+mutant "never re-arm"            $py '        if sent:' '        if False:' m_rearm 200
 mutant "150k boundary moved"     $py '(150000, "context-nudge' '(150001, "context-nudge' m_edge 150
 mutant "drop the chunk join"     $py 'tail = lines[0] if start > 0 else b""' 'tail = b""' m_join 150
 mutant "a prune error escapes"   $lib $'os.remove(p)\n        except OSError:\n            pass' $'os.remove(p)\n        except OSError:\n            raise' m_prune 150
