@@ -139,8 +139,8 @@
 # value, an apostrophe in a free-text value, and an unrelated bullet list under
 # the block that a blank line ends), the missing-`Review required:` arm and the
 # negative value in two throwaway copies of that root, and the unreadable-file
-# arm; the walk itself, through a CLAUDE.md below the root that no other check
-# reaches; the single-line-description check in three shapes (a folded
+# arm; the root-only scope, through a keyless block in a CLAUDE.md below the
+# root that must stay quiet; the single-line-description check in three shapes (a folded
 # block scalar, a literal one with an indentation indicator, a continued plain
 # scalar), the re-attach byte-size FAIL (fires on the oversize fixture, draws
 # no WARN, stays silent on the clean root, and stays silent on the clean
@@ -407,12 +407,11 @@ expect "Landing key (a key committing does not read)" "Landing: 'Merge policy: s
 # resuming — which is how a fenced example consumed the whole check.
 expect "Landing key (a parenthetical after Review required)" "Landing: 'Review required: yes (planned)'"
 expect "Landing key (a second block, backtick header, indented bullet)" "Landing: 'PR required: sometimes'"
-# A CLAUDE.md BELOW the root, which no other walk reaches. review-receipt.sh
-# reads the nearest one from the push directory up, so a package file that
-# loses the key opts its subtree out while `git push` stays repo-scoped. Point
-# the check back at the root file alone and this row is the only thing that
-# moves.
-expect "Landing key (a CLAUDE.md below the root)" "packages/api/CLAUDE.md has a Landing: block with no 'Review required:' line"
+# A CLAUDE.md BELOW the root, whose block names no `Review required:` line.
+# review-receipt.sh and next-step.sh read the repo top's CLAUDE.md alone, so
+# this block is read by nothing and the check stays on the root file: widen it
+# to walk every CLAUDE.md again and this row reds.
+reject "Landing key (a CLAUDE.md below the root is not graded)" "packages/api/CLAUDE.md"
 expect "two-way requires (unused)" "src/unused-dep/SKILL.md declares requires: 'fixture-discipline' but the body never names it"
 expect "single-line description (block scalar)" "src/folded-description/SKILL.md description is a YAML block scalar ('>-')"
 expect "single-line description (literal block scalar with indicators)" "src/literal-description/SKILL.md description is a YAML block scalar ('|2-')"
@@ -541,7 +540,11 @@ expect "repo-local script selftest (missing)" ".claude/skills/repo-local/scripts
 # And the remedy it gets names its own tree. The default arm's parenthetical
 # asserts a rule about scripts/*.sh — a glob this file does not match — so the
 # computed half was right and the justification half named the wrong tree.
-expect "repo-local script selftest (tree-specific remedy)" "(source scripts/selftest-lib.sh; every .claude/skills/*/scripts/*.sh is graded by a selftest that runs it against a fixture, the same pairing scripts/ answers to)"
+expect "repo-local script selftest (tree-specific remedy)" "(source scripts/selftest-lib.sh; every .claude/skills/*/scripts/*.sh and *.py is graded by a selftest that runs it against a fixture, the same pairing scripts/ answers to)"
+# The *.py alternative of the same walk: round-yield.py sat outside it, so
+# deleting its selftest drew no FAIL. Drop the *.py glob and this row reds;
+# its remedy names <stem>-selftest.sh, so the .py is cut off the stem.
+expect "repo-local script selftest (missing .py)" ".claude/skills/repo-local/scripts/orphan-local.py has no selftest — write .claude/skills/repo-local/scripts/orphan-local-selftest.sh"
 # And under a shipped skill's src/*/scripts/ (the walk ADR-0104's 2026-10-10
 # amendment records; ADR-0103 owns the bundled-script convention): one
 # instance per glob alternative, so dropping either the *.py or the *.sh half
@@ -745,6 +748,9 @@ expect_rc "the lint against the fixture tree" 1 "$status"
 # Last moved 2026-10-15 (review fixes F8 and F9 of 0061afe): 117 → 120 — the
 # or-joined and comma-joined chained citations in src/house-style/SKILL.md
 # (lines 108, 109) and the fixture DEPENDS's second well-formed entry.
+# Held at 120 on 2026-10-16 (review fixes F35, F38): packages/api/CLAUDE.md's
+# deletion FAIL left (the Landing-key check reads the root file alone) and
+# orphan-local.py's pairing FAIL arrived.
 # Earlier moves of this pin are in
 # `git log -p -G 'expected exactly [0-9]+ FAIL' -- scripts/lint-skills-selftest.sh` — they describe counts
 # nothing asserts any more, and stacking them here made a changelog out of the
@@ -1279,7 +1285,8 @@ fi
 # clean-skill's 436-byte description: grown by 264 bytes to exactly 700 it is
 # quiet (the bound is -gt), by 265 to 701 it WARNs. The same two sizes wrapped
 # in YAML single quotes count as the value loads, without the two quote bytes:
-# 700 stays quiet and 701 WARNs as 701, not 703. A user-invoked description
+# 700 stays quiet and 701 WARNs as 701, not 703; the double-quoted pair below
+# grades the other quote style and its escapes. A user-invoked description
 # never loads, so which-skill grown past the bound stays quiet. A WARN never
 # moves the exit, so every row exits 0.
 desc_warn="description is 701 bytes, over the 700-byte per-description bound"
@@ -1298,6 +1305,20 @@ fi
 if isolated_run "description-quoted-over-bound" 's/^(description: )(.*so that must stay quiet\.)$/$1 . "\x27" . $2 . ("x" x 265) . "\x27"/me' "src/clean-skill/SKILL.md"; then
   expect_in "$isolated_out" "the per-description WARN did not count a quoted 701-byte description as 701 in the 'description-quoted-over-bound' root" "WARN: src/clean-skill/SKILL.md $desc_warn"
   expect_rc "the lint against the isolated 'description-quoted-over-bound' root" 0 "$isolated_rc"
+fi
+# The double-quoted arm, which unescapes `\"` as well as dropping the wrapper.
+# Every `"` in the description is escaped to `\"` (it quotes "do the thing"
+# twice, so four escapes), and each loads as one byte: 700 stays quiet and 701
+# WARNs as 701. Drop the arm and the wrapper counts (702, 703); drop the
+# unescape alone and the four backslashes count (704, 705) — either reds the
+# at-bound row.
+if isolated_run "description-dquoted-at-bound" 's/^(description: )(.*so that must stay quiet\.)$/my ($k, $d) = ($1, $2); $d =~ s{"}{\\"}g; $k . "\x22" . $d . ("x" x 264) . "\x22"/me' "src/clean-skill/SKILL.md"; then
+  reject_in "$isolated_out" "the per-description WARN counted the wrapper or the \\\" escapes of a double-quoted 700-byte description in the 'description-dquoted-at-bound' root" "over the 700-byte per-description bound"
+  expect_rc "the lint against the isolated 'description-dquoted-at-bound' root" 0 "$isolated_rc"
+fi
+if isolated_run "description-dquoted-over-bound" 's/^(description: )(.*so that must stay quiet\.)$/my ($k, $d) = ($1, $2); $d =~ s{"}{\\"}g; $k . "\x22" . $d . ("x" x 265) . "\x22"/me' "src/clean-skill/SKILL.md"; then
+  expect_in "$isolated_out" "the per-description WARN did not count a double-quoted 701-byte description as 701 in the 'description-dquoted-over-bound' root" "WARN: src/clean-skill/SKILL.md $desc_warn"
+  expect_rc "the lint against the isolated 'description-dquoted-over-bound' root" 0 "$isolated_rc"
 fi
 if isolated_run "description-user-invoked" 's/^(description: .*)$/$1 . ("x" x 496)/me' "src/which-skill/SKILL.md"; then
   reject_in "$isolated_out" "the per-description WARN fired on a user-invoked description, which never loads" "per-description bound"

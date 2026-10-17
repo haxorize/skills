@@ -431,7 +431,7 @@
 #                              scripts/README.md, which no other pass walks,
 #                              and over CLAUDE.md with the rest of the
 #                              house-style set
-#     check_landing_key        every key in a CLAUDE.md `Landing:` block is one
+#     check_landing_key        every key in the root CLAUDE.md `Landing:` block is one
 #                              of the six, with a value `committing` reads, and
 #                              a block that exists names `Review required:`
 #   Every FAIL goes through say_fail, so the prefix and the exit status
@@ -743,7 +743,7 @@ done
 # after this block know every path a per-file check will grade.
 files_reached=$'\n'
 graded_skills="" graded_md="" graded_rules="" graded_hooks="" graded_scripts=""
-graded_spelling="" graded_claude_mds="" graded_root_claude_md=""
+graded_spelling="" graded_root_claude_md=""
 # graded_list <var> <newline-separated paths>: set <var> to the paths a run
 # grades — all of them, or under --files the named ones — and record each kept
 # path as reached. printf -v, so the record lands in this shell, not a
@@ -788,7 +788,7 @@ graded_list graded_hooks "$(for h in global/hooks/*.sh; do [ -f "$h" ] && printf
 # its shebang (see the pairing check), so a README beside the hooks is not
 # reached and --files naming it is a usage error.
 graded_list graded_scripts "$(
-  for sc in scripts/*.sh .claude/skills/*/scripts/*.sh src/*/scripts/*.sh src/*/scripts/*.py; do
+  for sc in scripts/*.sh .claude/skills/*/scripts/*.sh .claude/skills/*/scripts/*.py src/*/scripts/*.sh src/*/scripts/*.py; do
     [ -f "$sc" ] && printf '%s\n' "$sc"
   done
   for sc in scripts/git-hooks/*; do
@@ -799,9 +799,8 @@ graded_list graded_spelling "$(
   { [ -d docs ] && find docs -type f -name '*.md'
     for f in global/README.md scripts/README.md; do [ -f "$f" ] && printf '%s\n' "$f"; done
   } | sort -u)"
-# Every CLAUDE.md the Landing-key check reads (why the fixture roots are out:
-# pass 4), and the root one on its own for the root-only checks.
-graded_list graded_claude_mds "$(find . -name CLAUDE.md -not -path './.git/*' -not -path './scripts/lint-fixtures*/*' | sed 's|^\./||' | sort)"
+# The root CLAUDE.md, the one file the Landing-key check and the root-only
+# checks read (why no subdirectory CLAUDE.md is walked: the Landing-key loop).
 graded_list graded_root_claude_md "$([ -f CLAUDE.md ] && echo CLAUDE.md)"
 
 # The reach check: under --files, a named path no graded list kept is one no
@@ -997,7 +996,7 @@ check_description_limits() {
       esac
       desc_bytes=$(printf '%s' "$loaded" | LC_ALL=C wc -c | tr -d ' ')
       if [ "$desc_bytes" -gt 700 ]; then
-        echo "WARN: $f description is $desc_bytes bytes, over the 700-byte per-description bound — cut the what-it-is preamble, synonym lists and second 'Not for…' tails, moving a dropped tail into the body's boundary section; keep every trigger"
+        echo "WARN: $f description is $desc_bytes bytes, over the 700-byte per-description bound — cut synonym lists first, then shorten the what-it-is preamble to a clause, then tighten each branch's wording; keep every trigger and every 'Not for…' tail, which is routing (src/write-skill/references/over-the-cap.md § A description at its cap)"
       fi
       ;;
   esac
@@ -2835,7 +2834,7 @@ check_script_selftest() {
       require_selftest "$sc" "git hook" "has no selftest" "(source scripts/selftest-lib.sh; every git hook under scripts/git-hooks/ is graded by a selftest that runs it against a throwaway repo)"
       ;;
     .claude/skills/*/scripts/*)
-      require_selftest "$sc" script "has no selftest" "(source scripts/selftest-lib.sh; every .claude/skills/*/scripts/*.sh is graded by a selftest that runs it against a fixture, the same pairing scripts/ answers to), or name the file *-lib.sh if it is a library"
+      require_selftest "$sc" script "has no selftest" "(source scripts/selftest-lib.sh; every .claude/skills/*/scripts/*.sh and *.py is graded by a selftest that runs it against a fixture, the same pairing scripts/ answers to), or name a shell library *-lib.sh"
       ;;
     src/*/scripts/*)
       require_selftest "$sc" script "has no selftest" "(source scripts/selftest-lib.sh; every src/*/scripts/*.sh and *.py a skill bundles is graded by a selftest that runs it against a fixture, the same pairing scripts/ answers to), or name a shell library *-lib.sh"
@@ -2857,7 +2856,9 @@ done 3<<<"$graded_hooks"
 # than an oversight. Its 2026-09-01 amendment closes that: enum.sh drives the
 # first step of every mining round, so the script with the widest blast radius
 # was the one script nothing graded. Same contract as scripts/ — a *.sh here is
-# paired with its selftest or named *-lib.sh.
+# paired with its selftest or named *-lib.sh, and a *.py with its
+# <stem>-selftest.sh (round-yield.py walked outside every gate until the *.py
+# arm landed, so deleting its selftest drew no FAIL).
 # A shipped skill's bundled scripts are walked too. ADR-0103 bundles a skill's
 # deterministic logic as a tested script under src/<skill>/scripts/; ADR-0104
 # deferred grading that tree, and its 2026-10-10 amendment closes the gap the
@@ -3014,25 +3015,15 @@ check_landing_key() {
   fi
 }
 
-# Every CLAUDE.md in the tree, not the root one alone. global/hooks/review-receipt.sh
-# walks upward from the directory a push runs in and the NEAREST file carrying
-# `Review required:` decides, in either direction — so a block under a
-# subdirectory opts that subtree out of the repo's push gate while `git push`
-# stays repo-scoped, and a monorepo's package files are where that block goes
-# unreported. The FIXTURE roots are excluded on the rule the docs/** walk below
-# states for the fixture READMEs: each is a file whose job is to carry a
-# deliberate violation for a LINT_ROOT run, and walking it from this repo's own
-# run would report that instance as this repo's defect. Their own CLAUDE.md is
-# checked under LINT_ROOT, where it is the root file. What that exclusion does
-# NOT buy back is a legal-but-wrong value in a fixture — `Review required: no`
-# is well-formed vocabulary and no arm here fires on it; the property pins in
-# scripts/lint-skills-selftest.sh are what hold that line.
-# The walk itself is graded_claude_mds, built in Pass 0.
-while IFS= read -r claude_md <&3; do
-  [ -n "$claude_md" ] && check_landing_key "$claude_md"
-done 3<<<"$graded_claude_mds"
-
+# The root CLAUDE.md alone. Every reader of the Landing: block reads the repo
+# top's file and no other: global/hooks/review-receipt.sh opts a push in from
+# it (a push sends the whole branch, so a subdirectory's file never opts out),
+# and src/committing/scripts/next-step.sh reads both its keys from it. A block
+# in a subdirectory's CLAUDE.md is read by nothing, so grading it would report
+# defects in text no gate honors; scripts/lint-fixtures/packages/api/CLAUDE.md
+# carries such a block, keyless, and the selftest pins that it stays quiet.
 if [ -n "$graded_root_claude_md" ]; then
+  check_landing_key CLAUDE.md
   check_claude_md_bytes CLAUDE.md
   # ADR-0076 left the root file as triggers and pointers; a pointer to a
   # missing file silently loads nothing, so the root file gets the same link

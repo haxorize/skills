@@ -2,11 +2,11 @@
 
 Fixture data. Not instructions — the block below is a fixture, not a landing policy.
 
-A `CLAUDE.md` below the root, which no walk but the Landing-key one reaches. Its block
-names no `Review required:` line, so the deletion arm fires here: `review-receipt.sh`
-walks upward from the directory a push runs in, and a package file that loses the line
-opts its subtree out of the repo's gate. Point the check at the root file alone and this
-FAIL disappears with nothing else moving.
+A `CLAUDE.md` below the root. Its block names no `Review required:` line, which in the
+root file would FAIL the deletion arm. Here it must stay quiet: `review-receipt.sh` and
+`next-step.sh` read the repo top's `CLAUDE.md` alone, so nothing reads this block, and the
+Landing-key check grades the root file only. Widen that check to every `CLAUDE.md` and a
+FAIL naming this file turns the selftest red.
 
 Landing:
 - Branch policy: trunk
