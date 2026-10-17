@@ -4,7 +4,7 @@ Open this at the loop's start for the retrieval protocol, at its close for the c
 
 A solved problem dies with the session unless it lands where the next agent can grep it. This reference owns the **solved-problems store** — `docs/solutions/` at the target repo's root, one Learning doc per problem and one incident learning per incident — on both sides: capturing a new learning and retrieving past ones.
 
-A resolved production incident is captured in the same store as the second document kind, the **incident learning** — its triggers, dated filename, sections, timeline rule, and the `work-item-shape` call behind its Action items are the reference's § The incident learning; the gate below applies, with the incident's resolution as criterion 1 and its trigger as criterion 2. The store is flat and lazily created at first capture. Doc format, filename, frontmatter fields, and update mechanics live in [learning-format.md](learning-format.md), opened at § Capture workflow steps 2-4 when a doc is actually being written — never by the retrieval protocol.
+A resolved production incident is captured in the same store as the second document kind, the **incident learning** — its triggers, dated filename, sections, timeline rule, and the `work-item-shape` call behind its Action items are [learning-format.md](learning-format.md) § The incident learning; the gate below applies, with the incident's resolution as criterion 1 and its trigger as criterion 2. The store is flat and lazily created at first capture. Doc format, filename, frontmatter fields, and update mechanics live in [learning-format.md](learning-format.md), opened at § Capture workflow steps 2-4 when a doc is actually being written — never by the retrieval protocol.
 
 ## The capture gate
 
