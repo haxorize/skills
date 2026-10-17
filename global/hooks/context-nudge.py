@@ -2,7 +2,7 @@
 # UserPromptSubmit hook beside it. Not a hook and not run on its own: the
 # wrapper checks for python3 and for this file and session-hook-lib.py, then
 # runs this with the payload on stdin. The contract — the thresholds, the
-# once-only marker, what is read and written, the fail-open rule — is stated
+# once-per-climb marker, what is read and written, the fail-open rule — is stated
 # once, in context-nudge.sh's header; this file is where the threshold table
 # and the transcript walk live so the selftest can mutate them as a file.
 
@@ -43,7 +43,8 @@ def last_usage(path):
                     d = json.loads(line)
                 except ValueError:
                     continue
-                if boundary and isinstance(d, dict) and d.get("subtype") == "compact_boundary":
+                if (boundary and isinstance(d, dict) and d.get("subtype") == "compact_boundary"
+                        and not d.get("isSidechain")):
                     meta = d.get("compactMetadata")
                     post = meta.get("postTokens") if isinstance(meta, dict) else None
                     return post if isinstance(post, int) and post >= 0 else 0

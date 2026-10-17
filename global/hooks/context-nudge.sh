@@ -6,16 +6,17 @@
 # main-thread assistant entry that carries a `usage` block (sidechain entries
 # and the harness's `<synthetic>` entries skipped) and sums its input,
 # cache-creation, cache-read and output tokens — the context the next request
-# starts from. A `compact_boundary` entry met first ends the walk with its
-# `compactMetadata.postTokens` (0 when absent): a compaction writes no usage
-# entry, so the last one is the pre-compaction figure until the next reply. Past 150k it adds one line of context telling the agent to
-# offer `/handoff` at the next phase boundary; past 200k, one more line
-# saying to offer it now, before the next step: past 200k a session cannot
-# afford to wait for a boundary. Each threshold fires once per climb: a figure
-# back under 150k after a nudge means a compaction ran, and it re-arms both, so
-# a second climb nudges again. The re-arm exists because a compaction summary
-# carries the old nudge forward as stale text while the real figure has
-# dropped; the nudge tracks the count, not what was said before. A session
+# starts from. A main-thread `compact_boundary` entry met first ends the walk
+# with its `compactMetadata.postTokens` (0 when absent or not an integer): a
+# compaction writes no usage entry, so the last one is the pre-compaction
+# figure until the next reply. Past 150k it adds one line of context telling
+# the agent to offer `/handoff` at the next phase boundary; past 200k, one
+# more line saying to offer it now, before the next step: past 200k a session
+# cannot afford to wait for a boundary. Each threshold fires once per climb: a
+# figure back under 150k after a nudge means a compaction ran, and it re-arms
+# both, so a second climb nudges again. The re-arm exists because a compaction
+# summary carries the old nudge forward as stale text while the real figure
+# has dropped; the nudge tracks the count, not what was said before. A session
 # that jumps past both between two prompts gets only the 200k line.
 #
 # Why a hook: the agent cannot see its own token count, so a rule asking it to
@@ -53,7 +54,7 @@
 #     hooks: [{ type: "command", command: "bash <repo>/global/hooks/context-nudge.sh" }] }
 #
 # context-nudge-selftest.sh beside this file builds transcripts at run time
-# and grades the thresholds, the once-only marker and the fail-open table.
+# and grades the thresholds, the once-per-climb marker and the fail-open table.
 #
 # Depends: handoff (the skill the nudge names).
 

@@ -9,8 +9,9 @@
 # compaction that leaves the figure at or above 150k does not re-arm, and one
 # that drops it under 150k re-arms both lines; sidechain and
 # `<synthetic>` entries are skipped; a compaction boundary after the last usage
-# entry reads as its postTokens (0 when absent) and re-arms, and a reply after
-# it counts again; a usage line straddling the 1 MB read
+# entry reads as its postTokens (0 when absent or a string) and re-arms, a
+# sidechain boundary is skipped, and a reply after it counts again; the exact
+# 150k edge nudges; a usage line straddling the 1 MB read
 # chunk is read whole; a 30-day-old marker is pruned; a prune that fails
 # (an old directory it cannot remove) still delivers the line, quietly; the
 # marker is mode 0600, and a 0755 state directory is tightened to 0700; the
@@ -19,7 +20,7 @@
 # with a path separator, a missing transcript, an unwritable state
 # directory, a missing context-nudge.py) exits 0 with a breadcrumb and no
 # context. The mutation table narrows the sidechain skip, the synthetic skip,
-# the once-only check, the re-arm, the boundary read, the 150k boundary, the chunk join, the prune's error
+# the once-only check, the re-arm, the boundary read, the sidechain-boundary skip, the 150k boundary, the chunk join, the prune's error
 # swallowing, the 0600 write, the 0700 tightening and the phase-boundary
 # wording on a copy of context-nudge.py or session-hook-lib.py, and each
 # mutant must flip its row.
@@ -49,13 +50,15 @@ print(json.dumps({"type": "assistant", "isSidechain": kind == "sidechain",
               "usage": {"input_tokens": 2, "cache_creation_input_tokens": 1000,
                         "cache_read_input_tokens": n - 1502, "output_tokens": 500}}}))' "$1" "${2:-main}"
 }
-# boundary [postTokens] — a compaction entry; no argument leaves postTokens out
+# boundary [postTokens|- [sidechain|string]] — a compaction entry; no argument or
+# "-" leaves postTokens out, "string" writes it as a JSON string, "sidechain" marks the entry
 boundary() {
   python3 -c '
 import json, sys
+post, kind = (sys.argv[1:] + ["-", "main"])[:2]
 meta = {"trigger": "auto", "preTokens": 207024}
-if len(sys.argv) > 1: meta["postTokens"] = int(sys.argv[1])
-print(json.dumps({"type": "system", "subtype": "compact_boundary", "isSidechain": False, "compactMetadata": meta}))' "$@"
+if post != "-": meta["postTokens"] = post if kind == "string" else int(post)
+print(json.dumps({"type": "system", "subtype": "compact_boundary", "isSidechain": kind == "sidechain", "compactMetadata": meta}))' "$@"
 }
 user_line() { printf '{"type":"user","message":{"role":"user","content":"hi"}}\n'; }
 
@@ -116,8 +119,17 @@ boundary 22713 >> "$t"
 expect "a compaction boundary after 206k" "$(nudge s1c "$t")" quiet
 entry 210000 >> "$t"
 expect "past 200k after the boundary re-armed" "$(nudge s1c "$t")" 200
-t="$tmp/t1d.jsonl"; { entry 206000; boundary; } > "$t"
-expect "a boundary with no postTokens" "$(nudge s1d "$t")" quiet
+t="$tmp/t1d.jsonl"; entry 206000 > "$t"
+expect "past 200k before a bare boundary" "$(nudge s1d "$t")" 200
+boundary >> "$t"; nudge s1d "$t" >/dev/null; entry 201000 >> "$t"
+expect "a boundary with no postTokens reads 0 and re-arms" "$(nudge s1d "$t")" 200
+t="$tmp/t1f.jsonl"; entry 206000 > "$t"
+expect "past 200k before a string postTokens" "$(nudge s1f "$t")" 200
+boundary 5000 string >> "$t"; nudge s1f "$t" >/dev/null; entry 201000 >> "$t"
+expect "a string postTokens reads 0 and re-arms" "$(nudge s1f "$t")" 200
+s_side() { t="$tmp/t1g.jsonl"; entry 206000 > "$t"; nudge s1g "$t" >/dev/null
+  boundary 5000 sidechain >> "$t"; nudge s1g "$t" >/dev/null; entry 201000 >> "$t"; nudge s1g "$t"; }
+expect "a sidechain boundary is ignored (no re-arm)" "$(s_side)" quiet
 t="$tmp/t1e.jsonl"; { entry 30000; boundary 22713; entry 160000; } > "$t"
 expect "a reply after the boundary counts" "$(nudge s1e "$t")" 150
 
@@ -211,6 +223,7 @@ mutant "drop the synthetic skip" $py ' or m.get("model") == "<synthetic>"' '' m_
 mutant "keep a 0755 directory"   $lib '        os.chmod(d, 0o700)  ' '        pass  ' d_mode quiet
 mutant "fire every prompt"       $py 'if level[0] <= sent:' 'if level[0] < sent:' m_once quiet
 mutant "never re-arm"            $py '        if sent:' '        if False:' m_rearm 200
+mutant "honor a sidechain boundary" $py $'"compact_boundary"\n                        and not d.get("isSidechain")' '"compact_boundary"' s_side quiet
 mutant "skip the compaction boundary" $py '                boundary = b"\"compact_boundary\"" in line' '                boundary = False' m_bound quiet
 mutant "150k boundary moved"     $py '(150000, "context-nudge' '(150001, "context-nudge' m_edge 150
 mutant "drop the chunk join"     $py 'tail = lines[0] if start > 0 else b""' 'tail = b""' m_join 150
