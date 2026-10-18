@@ -22,7 +22,7 @@ Name the object of every vague failure sentence before reasoning from it — "th
 
 **CI failures: classify by branch spread first.** When the failure arrives from CI rather than a local run, open [references/hard-cases.md](references/hard-cases.md) § CI triage — the spread shape decides the investigation before any culprit hunt.
 
-**Redact every secret first**, and every member or patient field the artifact would carry — write `<REDACTED>` in its place; the sink rules are `phi-safe-code`'s. Build loops against env vars so the credential stays in the environment rather than in what you show; from captured artifacts, quote only the lines that carry the signal. If the redacted output is not enough to diagnose the bug, say so and ask the user.
+**Redact every secret first**, and every member or patient field the artifact would carry — write `<REDACTED>` in its place; the sink rules are `phi-safe-code`'s (opt-in). Build loops against env vars so the credential stays in the environment rather than in what you show; from captured artifacts, quote only the lines that carry the signal. If the redacted output is not enough to diagnose the bug, say so and ask the user.
 
 ## Phase 1 — Build a feedback loop
 

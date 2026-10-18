@@ -9,7 +9,7 @@ The invocation axis is a trade between two costs:
 - **Context load** — what a **model-invoked** skill costs the *agent*: its description sits in the context window every turn, spending tokens and attention whether or not it fires. The brake on adding more model-invoked skills.
 - **Cognitive load** — what a **user-invoked** skill costs the *human*: they are the index that must remember it exists and when to reach for it. The brake on adding more user-invoked skills.
 
-The decision rule lives where the classification is made — `write-skill` § Invocation axis. When user-invoked skills multiply past what a person can hold in their head, the cure is a **router skill** — one user-invoked skill that names the others and when to reach for each (this repo's is `which-skill`).
+The decision rule lives where the classification is made — `write-skill` § Invocation axis. When user-invoked skills multiply past what a person can hold in their head, the cure is a **router skill** — one skill that names the others and when to reach for each (this repo's is `which-skill`).
 
 ## Vocabulary
 

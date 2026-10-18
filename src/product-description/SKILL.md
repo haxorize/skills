@@ -1,6 +1,6 @@
 ---
 name: product-description
-description: The outside-in behavior record of a product — what its user sees and what happens when they act or abandon halfway — one document per feature area, drafted from code and tests, verified against the running product. Use when asked to write or extend a product description, when a rewrite, port, or handover needs current behavior pinned down, when someone asks what happens when a user cancels, refreshes, loses the network, or is interrupted, or when onboarding finds no record of how the product behaves. Not a one-sentence answer, API reference, or what the product should do (a work item's).
+description: The outside-in behavior record of a product — what its user sees and what happens when they act or abandon halfway — one document per feature area, drafted from code and tests, verified against the running product. Use when asked to write or extend a product description, when a rewrite, port, or handover needs current behavior pinned down, when someone asks what happens when a user cancels, refreshes, loses the network or is interrupted. Not a one-sentence answer, API reference, or what the product should do (a work item's).
 requires: writing-for-humans, domain-modeling
 ---
 

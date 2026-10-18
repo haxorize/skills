@@ -5,9 +5,9 @@ description: The router over this suite's typed commands and their flow. Use whe
 
 # Which Skill
 
-This routes over the **user-invoked** skills — the ones you type. The **model-invoked Discipline skills** (`tdd`, `feedback-loops`, `diagnosing-bugs`, `codebase-design`, `discoverable-code`, `grilling`, `diverging`, `adoption-verdict`, `domain-modeling`, `adr`, `committing`, `writing-for-agents`, `writing-for-humans`, `work-item-shape`, `doc-claims`, `product-description`) fire on their own when the work calls for them, or get pulled in by the orchestrators below — you rarely reach for them by name. Four **Domain skills** sit beside them — `phi-safe-code`, `health-literacy`, `accessible-ui`, and `aeo` — and their descriptions own the trigger lists, which reach past authoring into review and bug reports.
+This routes over the **user-invoked** skills — the ones you type. The **model-invoked Discipline skills** (`tdd`, `feedback-loops`, `diagnosing-bugs`, `codebase-design`, `discoverable-code`, `grilling`, `diverging`, `adoption-verdict`, `domain-modeling`, `adr`, `committing`, `writing-for-agents`, `writing-for-humans`, `work-item-shape`, `doc-claims`, `product-description`) fire on their own when the work calls for them, or get pulled in by the orchestrators below; four are name-only, loaded only when named. Four **Domain skills** sit beside them — `phi-safe-code`, `health-literacy`, `accessible-ui`, and `aeo` — and their descriptions own the trigger lists, which reach past authoring into review and bug reports.
 
-An **opt-in** skill (listed on `install.sh`'s `opt_in_skills` line) exists in a repo only when the repo's `CLAUDE.md` names it on its `Shared skills:` line and `install.sh --project <repo>` ran there. Route to it anyway; when it is missing, name the line and the command, never a neighbor.
+An **opt-in** skill exists in a repo only when the repo's `CLAUDE.md` names it on its `Shared skills:` line and `bash <root>/scripts/install.sh --project <repo>` has run. Route to it anyway; when it is missing, name the line and the command, never a neighbor.
 
 Under all of them sits the always-on **rules layer** (`~/.claude/rules/`) — evidence beside the claim, no unasked outward acts, the three-bin ask gate, the truncated-artifact invariant, the outbound dash sweep. Nothing routes to it; it binds every flow below with no skill loaded. Operating safely has no skill of its own — three cases, three homes: a destructive command → the harness's own reminder and `committing`'s dirty-path rule; a shared working tree → the same rule; a leaked secret → `committing`'s rotate-first paragraph and `scripts/security.sh` at the skills repo root (`readlink ~/.claude/skills/which-skill` → `<root>/src/which-skill`).
 
@@ -68,7 +68,7 @@ Keep steps 1–2 in **one unbroken context window** so the grilling, decompositi
 
 ## If you are a PM or a designer
 
-Your entries are **`/frame-effort`** for a program with no outcome yet, **`/grill-me`** for the idea, **`/to-story`** to publish it, **`/prototype`** for a question only a running thing answers, a product description asked for by name (`product-description` answers) for what the product does today, and **`/explain`** when an answer did not land. A design decision needing several reviewers' async comments is a `proposed` ADR opened as a PR on your ask, so comments land on lines (`adr` writes, `/ship` opens); there is no separate RFC.
+Your entries are **`/frame-effort`** for a program with no outcome yet, **`/grill-me`** for the idea, **`/to-story`** to publish it, **`/prototype`** for a question only a running thing answers, a product description asked for by name (`product-description`, opt-in) for what the product does today, and **`/explain`** when an answer did not land. A design decision needing several reviewers' async comments is a `proposed` ADR opened as a PR on your ask, so comments land on lines (`adr` writes, `/ship` opens); there is no separate RFC.
 
 ## Standalone
 
@@ -85,7 +85,7 @@ Each route in a line; the blurbs are in the skills repo's `README.md` skill map 
 - **`/inventory-cvits`** — a ServiceNow container-vulnerability export into one Story per image; runs before `/triage-cvits`.
 - **`/triage-cvits`** — a Twistlock/Prisma Cloud export sorted into six buckets, one Task each under the image Story.
 - **`/write-skill`** — conventions for writing and editing skills.
-- **`/audit-skills`** — a verdict per skill installed under `~/.claude/skills/`.
+- **`/audit-skills`** — a verdict per installed skill, opt-in ones included.
 - **`/report-progress`** — your weekly status or progress note to your manager, for you alone or a team, drafted from repos and tracker, each item sourced.
 - **`/retro [--session <id> | --review <report> | --since <date> | --round | --counts <date>]`** — setup changes a run points to; never applies.
 - **`/audit-aeo <url | saved-html>`** — one public page graded as an AI agent reads it, ending in a gap list; the standards it grades against are `aeo`'s.

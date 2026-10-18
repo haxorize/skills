@@ -1,6 +1,6 @@
 ---
 name: writing-for-humans
-description: Writing conventions for human-facing prose — tickets, docs, READMEs, ADR rationale, summaries, incident reports, recaps, on-call notes, status and launch updates, runbooks, release notes, error messages, outbound messages drafted for the user, and the narration, publish confirmations, and reports the user reads in the terminal. Use when writing or editing prose a person must understand, when narrating work or confirming a publish back to the user, when auditing a draft for AI tells, or when picking an artifact's register. Not agent instruction files (writing-for-agents'), member copy (health-literacy's), or code.
+description: Writing conventions for human-facing prose — tickets, docs, READMEs, ADR rationale, summaries, incident reports, recaps, on-call notes, status and launch updates, runbooks, release notes, error messages, outbound messages drafted for the user, and the narration, publish confirmations, and reports the user reads in the terminal. Use when writing or editing prose a person must understand, when narrating work or confirming a publish back to the user, when auditing a draft for AI tells, or when picking an artifact's register. Not agent instruction files (writing-for-agents'), member copy (health-literacy's, opt-in), or code.
 ---
 
 # Writing for Humans
@@ -78,4 +78,4 @@ One over three planned sections lands per section, under `~/.claude/rules/large-
 
 ## Boundary
 
-Documents that exist to be *obeyed* — a skill body, `CLAUDE.md`, a reference an agent follows as process — are `writing-for-agents`', and the split is the document's function, never its reader. This discipline deletes persuasion by design: marketing, brand, and campaign copy are out of scope — say so and offer to apply it to the factual parts only. Copy a member, patient, or subscriber has to act on is `health-literacy`'s, which owns the define-at-first-use and next-step-with-a-date rules the register rows above do not carry; what data may appear in that copy is `phi-safe-code`'s.
+Documents that exist to be *obeyed* — a skill body, `CLAUDE.md`, a reference an agent follows as process — are `writing-for-agents`', and the split is the document's function, never its reader. This discipline deletes persuasion by design: marketing, brand, and campaign copy are out of scope — say so and offer to apply it to the factual parts only. Copy a member, patient, or subscriber has to act on is `health-literacy`'s (opt-in), which owns the define-at-first-use and next-step-with-a-date rules the register rows above do not carry; what data may appear in that copy is `phi-safe-code`'s (opt-in).
