@@ -17,12 +17,14 @@
 # marker is mode 0600, and a 0755 state directory is tightened to 0700; the
 # 150k line asks for the next phase boundary and the 200k line for now; the
 # fail-open table (empty payload, not JSON, no transcript_path, a session id
-# with a path separator, a missing transcript, an unwritable state
+# with a path separator, a dot, 129 characters or a trailing newline — the
+# session-hook-lib.py rule's only rows — a missing transcript, an unwritable state
 # directory, a missing context-nudge.py) exits 0 with a breadcrumb and no
 # context. The mutation table narrows the sidechain skip, the synthetic skip,
 # the once-only check, the re-arm, the boundary read, the sidechain-boundary skip, the 150k boundary, the chunk join, the prune's error
-# swallowing, the 0600 write, the 0700 tightening and the phase-boundary
-# wording on a copy of context-nudge.py or session-hook-lib.py, and each
+# swallowing, the 0600 write, the 0700 tightening, the phase-boundary
+# wording and the session-id rule's fullmatch, character class and length cap
+# on a copy of context-nudge.py or session-hook-lib.py, and each
 # mutant must flip its row.
 set -u
 here="$(cd "$(dirname "$0")" && pwd)"
@@ -188,6 +190,16 @@ done
 got="$(printf '{"session_id":"s"}' | bash "$hook" 2>&1; echo "rc=$?")"
 case "$got" in *"no usable transcript_path"*"rc=0") ;; *) echo "FAIL [no transcript_path]: $got"; fail=1 ;; esac
 expect "a session id with a slash" "$(nudge "../x" "$t")" "crumb:no usable transcript_path or session_id"
+# a dot, or a name past 128 characters, is not file-safe; the JSON escape \n
+# decodes to a trailing newline, which re.match passes ($ matches before a
+# final newline) and fullmatch refuses
+t_sid="$tmp/t12.jsonl"; entry 201000 > "$t_sid"
+sid_dot() { nudge "a.b" "$t_sid"; }
+sid_long() { nudge "$(printf '%0129d' 0 | tr 0 a)" "$t_sid"; }
+sid_nl() { nudge 'nl\n' "$t_sid"; }
+expect "a session id with a dot" "$(sid_dot)" "crumb:no usable transcript_path or session_id"
+expect "a session id of 129 characters" "$(sid_long)" "crumb:no usable transcript_path or session_id"
+expect "a session id with a trailing newline" "$(sid_nl)" "crumb:no usable transcript_path or session_id"
 expect "a missing transcript" "$(nudge s7 "$tmp/none.jsonl")" "crumb:transcript unreadable"
 mkdir -p "$tmp/ro"; chmod a-w "$tmp/ro"
 got="$(HOOK_STATE_DIR="$tmp/ro/x" nudge s8 "$t")"
@@ -230,6 +242,9 @@ mutant "drop the chunk join"     $py 'tail = lines[0] if start > 0 else b""' 'ta
 mutant "a prune error escapes"   $lib $'os.remove(p)\n        except OSError:\n            pass' $'os.remove(p)\n        except OSError:\n            raise' m_prune 150
 mutant "state written 0644"      $lib 'os.replace(tmp, path)' 'os.chmod(tmp, 0o644); os.replace(tmp, path)' m_mode quiet
 mutant "150k back to breakpoint" $py 'At the next phase boundary' 'At the next clean breakpoint' m_word quiet
+mutant "session id by re.match"  $lib 'SID.fullmatch(sid)' 'SID.match(sid)' sid_nl "crumb:no usable transcript_path or session_id"
+mutant "a dot in a session id"   $lib 're.compile(r"^[A-Za-z0-9_-]' 're.compile(r"^[A-Za-z0-9_.-]' sid_dot "crumb:no usable transcript_path or session_id"
+mutant "no session-id length cap" $lib '_-]{1,128}$")' '_-]+$")' sid_long "crumb:no usable transcript_path or session_id"
 
 [ "$fail" = 0 ] && echo "context-nudge-selftest: all rows pass"
 exit "$fail"
