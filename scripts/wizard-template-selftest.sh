@@ -19,7 +19,13 @@
 # and neither takes the other's arity — `confirm` handed a token and
 # `confirm_token` handed none are rc-2 bugs named on stderr, never quieter
 # gates; `write_env` upserts into
-# ENV_FILE idempotently; NO_COLOR empties every colour variable;
+# ENV_FILE idempotently, writing a safe value bare, a value with a space, $,
+# backtick or " single-quoted, and one with a ' or a newline double-quoted
+# and escaped on one line, each sourcing (bar the newline) and reading back
+# unchanged through `_existing`, which still decodes the old '\'' form and a
+# hand-written double-quoted `\\`; a multi-line value leaves no line behind on
+# rewrite, and a key that is not a variable name is refused, never matched
+# as a regex against other keys; NO_COLOR empties every colour variable;
 # and the four state arrays are declared before any helper uses them, so
 # `finish` with nothing recorded is quiet under `set -u` on bash 3.2.
 # Not graded: anything that opens a browser, prompts, or calls gh.
@@ -175,16 +181,52 @@ expect_rc "write_env" 0 "$rc"
 [ "$(grep -c '^KEY=' "$tmp/.env")" -eq 1 ] || selftest_fail "write_env appended a second KEY= line instead of replacing the first"
 expect_in "$(cat "$tmp/.env")" "write_env did not keep the last value" "KEY=two"
 expect_in "$(cat "$tmp/.env")" "write_env lost the other key" "OTHER=x"
+# A safe value is written bare: `docker run --env-file` keeps quotes as part
+# of the value, so quoting one that needs none changes it there.
+reject_in "$(cat "$tmp/.env")" "write_env quoted a value made only of safe characters" "KEY='two'"
 out=$(cd "$tmp" && TMPDIR="$tmp/no-such-dir" ENV_FILE="$tmp/.env" bash -c ". '$lib'; write_env KEY three; echo carried-on" 2>&1); rc=$?
 expect_rc "write_env with no usable TMPDIR ends the wizard under -e" 1 "$rc"
 expect_in "$out" "write_env failed without naming the key it did not write" "KEY not written"
 expect_in "$out" "write_env's failure does not name TMPDIR" "TMPDIR=$tmp/no-such-dir"
 reject_in "$out" "write_env carried on past a failed mktemp" "carried-on"
 expect_in "$(cat "$tmp/.env")" "write_env changed ENV_FILE when mktemp failed" "KEY=two"
+# Each write form survives being sourced and comes back unchanged through
+# _existing on a re-run (TG-9): single quotes for a space, $, backtick, " and
+# \; double quotes, escaped, once a ' is in it.
+rm -f "$tmp/.env"
+probe "write_env single-quoted" 'v="a\$b c \`x\` \"q\" \\"; write_env S "$v" >/dev/null; grep "^S=" "$ENV_FILE"; ( set -a; . "$ENV_FILE"; [ "$S" = "$v" ] && echo sourced-same ); [ "$(_existing S)" = "$v" ] && echo read-same'
+expect_rc "write_env single-quoted" 0 "$rc"
+expect_in "$out" "write_env did not single-quote a value with a space, \$, backtick and \"" "S='a\$b c"
+expect_in "$out" "write_env wrote a single-quoted value that sourcing changes or breaks" "sourced-same"
+expect_in "$out" "_existing did not decode write_env's single quotes" "read-same"
+probe "write_env double-quoted" 'v="it'"'"'s a\$b \\n \`x\` \"q\" \\\\"; write_env Q "$v" >/dev/null; grep "^Q=" "$ENV_FILE"; ( set -a; . "$ENV_FILE"; [ "$Q" = "$v" ] && echo sourced-same ); [ "$(_existing Q)" = "$v" ] && echo read-same'
+expect_rc "write_env double-quoted" 0 "$rc"
+expect_in "$out" "write_env did not double-quote a value holding a '" 'Q="it'"'"'s'
+expect_in "$out" "write_env wrote a double-quoted value that sourcing changes or breaks" "sourced-same"
+expect_in "$out" "_existing did not decode write_env's double-quoted escapes (\\\\ \\\" \\\$ \\\` and a literal \\n)" "read-same"
+# A multi-line value is one line on disk, so a rewrite leaves nothing behind
+# to run as code when the file is sourced, and it reads back with its newline.
+probe "write_env multi-line" 'v=$(printf "l1\nl2"); write_env M "$v" >/dev/null; [ "$(_existing M)" = "$v" ] && echo read-same; write_env M y >/dev/null; cat "$ENV_FILE"'
+expect_in "$out" "_existing did not read a multi-line value back with its newline" "read-same"
+reject_in "$out" "a rewritten multi-line value left its second line in ENV_FILE" "l2"
+# A key is matched as ^KEY=, so a regex metacharacter in it would replace
+# other keys' lines; it is refused by name instead, and ENV_FILE is untouched.
+probe "write_env bad key" 'write_env AXB keep >/dev/null; write_env A.B w; echo "not reached"'
+expect_rc "write_env with a key that is not a variable name" 1 "$rc"
+expect_in "$out" "write_env did not name the bad key" 'key "A.B" is not a shell variable name'
+reject_in "$out" "write_env carried on past a bad key" "not reached"
+expect_in "$(cat "$tmp/.env")" "write_env with a bad key removed another key's line" "AXB=keep"
+reject_in "$(cat "$tmp/.env")" "write_env wrote a bad key" "A.B="
+# Hand-written and older forms still read: a double-quoted \" and \\ (the
+# \\ through a sentinel, so it never starts another escape), the old
+# writer's '\'' quote, and an unquoted value.
+printf '%s\n' 'D="a \"q\" b"' 'D2="a \\ b"' "O='it'\\''s'" 'P=plain' >> "$tmp/.env"
+probe "_existing older forms" 'printf "[%s][%s][%s][%s]" "$(_existing D)" "$(_existing D2)" "$(_existing O)" "$(_existing P)"'
+expect_in "$out" "_existing did not decode a double-quoted value, an escaped backslash, the old single-quote escape, or changed an unquoted one" "[a \"q\" b][a \\ b][it's][plain]"
 
 out=$(cd "$tmp" && NO_COLOR=1 bash -c ". '$lib'; printf '[%s%s%s%s]' \"\$BOLD\" \"\$BLUE\" \"\$GREEN\" \"\$RESET\"" 2>&1)
 [ "$out" = "[]" ] || selftest_fail "NO_COLOR=1 left a colour variable set: $out"
 
 selftest_close \
-  "wizard-template self-test clean — the library parses and sources, preview streams and tolerates a non-zero exit with no temp file, confirm reads y/N and confirm_token an exact token, refusing every near miss, an empty or missing token, the other gate's arity, and a silent decline, a declined gate makes finish report a stop and a passed one does not, a misspelled finish argument is a named bug rather than the success branch, open_url warns when no opener is available, watch records whole commands and finish repeats them, write_env upserts, NO_COLOR is honoured." \
+  "wizard-template self-test clean — the library parses and sources, preview streams and tolerates a non-zero exit with no temp file, confirm reads y/N and confirm_token an exact token, refusing every near miss, an empty or missing token, the other gate's arity, and a silent decline, a declined gate makes finish report a stop and a passed one does not, a misspelled finish argument is a named bug rather than the success branch, open_url warns when no opener is available, watch records whole commands and finish repeats them, write_env upserts each value in its plainest form, one line per key, refusing a non-variable key, and every form sources and reads back unchanged, NO_COLOR is honoured." \
   "wizard-template self-test parsed the file and ran nothing else; see the SKIP line above."

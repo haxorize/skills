@@ -173,11 +173,29 @@ watch() {
   printf '  %s⌛ watch it with:%s %s\n' "$BLUE" "$RESET" "$*"
 }
 
-# _existing KEY — current value of KEY in ENV_FILE, if any.
+# _env_key KEY — succeed when KEY is a shell variable name. Every ENV_FILE
+# lookup matches the key as `^KEY=`, so a key outside this set (a `.`, a `*`)
+# would match, and replace, other keys' lines.
+_env_key() { [[ "$1" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; }
+
+# _existing KEY — current value of KEY in ENV_FILE, if any, decoded from any of
+# write_env's three forms: bare, single-quoted (with the older '\'' escape for
+# a quote), or double-quoted with \\ \" \$ \` and \n escapes.
 _existing() {
-  [[ -f "$ENV_FILE" ]] || return 1
-  local line; line=$(grep -E "^${1}=" "$ENV_FILE" | tail -n1) || return 1
-  printf '%s' "${line#*=}"
+  [[ -f "$ENV_FILE" ]] && _env_key "$1" || return 1
+  local line value sq="'" esc="'\\''" bs='\' dq='"' bq='`'
+  line=$(grep -E "^${1}=" "$ENV_FILE" | tail -n1) || return 1
+  value="${line#*=}"
+  if [[ ${#value} -ge 2 && "$value" == "$sq"*"$sq" ]]; then
+    value="${value#$sq}"; value="${value%$sq}"; value="${value//"$esc"/$sq}"
+  elif [[ ${#value} -ge 2 && "$value" == "$dq"*"$dq" ]]; then
+    value="${value#$dq}"; value="${value%$dq}"
+    # \\ goes to a sentinel first, so the \ it leaves never starts another escape.
+    value="${value//"$bs$bs"/$'\001'}"; value="${value//"$bs$dq"/$dq}"
+    value="${value//"$bs\$"/\$}"; value="${value//"$bs$bq"/$bq}"
+    value="${value//"${bs}n"/$'\n'}"; value="${value//$'\001'/$bs}"
+  fi
+  printf '%s' "$value"
 }
 
 # ask KEY "Prompt" — read a value into $KEY. Offers the existing .env value as
@@ -211,11 +229,29 @@ ask_secret() {
 }
 
 # write_env KEY VALUE — upsert KEY=VALUE into ENV_FILE (creates it; replaces
-# any existing line). Idempotent. Without a temp file it says so on stderr and
-# returns 1, leaving ENV_FILE as it was — under the library's -e a bare call
-# then ends the wizard after that line.
+# any existing line). Idempotent, and always one line per key. The value is
+# written in the plainest form that keeps it whole, because `docker run
+# --env-file` keeps quotes as part of the value and dotenv parsers differ on
+# escapes: bare when it is only [A-Za-z0-9_./:@%+,=-] (or empty); else in
+# single quotes, which shell, dotenv and compose all read literally; else —
+# a ' or a newline in it — in double quotes with \ " $ ` escaped and each
+# newline written as \n, which _existing decodes (sourcing keeps the \n as
+# two characters). A KEY that is not a shell variable name, or no temp file,
+# is named on stderr and returns 1, leaving ENV_FILE as it was — under the
+# library's -e a bare call then ends the wizard after that line.
 write_env() {
-  local key="$1" value="$2" tmp
+  local key="$1" value="$2" tmp sq="'" bs='\' dq='"' bq='`'
+  if ! _env_key "$key"; then
+    printf '  %s✗ write_env key "%s" is not a shell variable name; not written%s\n' "$RED" "$key" "$RESET" >&2
+    return 1
+  fi
+  if [[ "$value" =~ ^[A-Za-z0-9_./:@%+,=-]*$ ]]; then :
+  elif [[ "$value" != *"$sq"* && "$value" != *$'\n'* ]]; then value="$sq$value$sq"
+  else
+    value="${value//"$bs"/$bs$bs}"; value="${value//"$dq"/$bs$dq}"
+    value="${value//\$/$bs\$}"; value="${value//"$bq"/$bs$bq}"
+    value="$dq${value//$'\n'/${bs}n}$dq"
+  fi
   touch "$ENV_FILE"
   # Temp-file template and guard: the skills repo's scripts/README.md § Temp files.
   if ! tmp=$(mktemp "${TMPDIR:-/tmp}/wizard-env.XXXXXX" 2>/dev/null) || [ ! -f "$tmp" ]; then
