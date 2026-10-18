@@ -17,6 +17,48 @@ GLOBAL_DIR="$(cd "$(dirname "$0")/../global" && pwd)"
 TARGET_ROOT="${TARGET_ROOT:-$HOME}"
 TARGET_DIR="${TARGET_ROOT}/.claude/skills"
 RULES_TARGET="${TARGET_ROOT}/.claude/rules"
+
+# Opt-in skills (ADR-0114): never linked into ~/.claude/skills, so
+# their descriptions cost nothing in a repo that does not use them. A repo
+# opts in with a `Shared skills: a, b` line in its CLAUDE.md, and
+# `install.sh --project <repo>` links those names into <repo>/.claude/skills/
+# and lists each link in the repo's .git/info/exclude. An opt-in skill's
+# `requires:` may name a global skill; a global skill's may not name an opt-in
+# one, since outside the opted-in repos nothing would satisfy it.
+opt_in_skills="accessible-ui aeo audit-aeo health-literacy phi-safe-code product-description rebuild-contract respond-to-incident roll-out"
+is_opt_in() {
+  case " $opt_in_skills " in *" $1 "*) return 0 ;; esac
+  return 1
+}
+
+# --project <repo>: the repo-side install. TARGET_DIR moves into the repo and
+# EXCLUDE names its exclude file; every other path stays as above, and the
+# rules, settings keys and hooks below are never reached in this mode.
+EXCLUDE=""
+case "${1:-}" in
+  "") ;;
+  --project)
+    if [ $# -ne 2 ] || [ -z "$2" ]; then
+      echo "usage: install.sh [--project <repo>]" >&2
+      exit 3
+    fi
+    PROJECT="$(cd "$2" 2>/dev/null && pwd)" || { echo "ERROR $2 is not a directory" >&2; exit 3; }
+    # git resolves the exclude file, so a worktree (whose .git is a file) and
+    # a repo with a moved git dir both get the right one.
+    EXCLUDE="$(git -C "$PROJECT" rev-parse --path-format=absolute --git-path info/exclude 2>/dev/null)" ||
+      { echo "ERROR $PROJECT is not a git work tree — the links could not be kept out of its tracked files" >&2; exit 3; }
+    shared="$(sed -n 's/^Shared skills:[[:space:]]*//p' "$PROJECT/CLAUDE.md" 2>/dev/null | head -1 | tr ',' ' ')"
+    if [ -z "$shared" ]; then
+      echo "ERROR $PROJECT/CLAUDE.md has no 'Shared skills:' line — add one naming the opt-in skills this repo uses (one of: $opt_in_skills)" >&2
+      exit 3
+    fi
+    TARGET_DIR="$PROJECT/.claude/skills"
+    ;;
+  *)
+    echo "usage: install.sh [--project <repo>]" >&2
+    exit 3
+    ;;
+esac
 mkdir -p "$TARGET_DIR"
 
 # Read a skill's declared discipline dependencies from its frontmatter `requires:`
@@ -128,9 +170,19 @@ link_skill() {
     return
   fi
   link_one "$skill" "$target" "" "src/$name"
+  [ -n "$EXCLUDE" ] && exclude_one "$name"
   # Resolve declared discipline dependencies. Only descend into deps that aren't
-  # already present, which also guards against cycles.
+  # already present, which also guards against cycles. A dep crosses scope in
+  # one direction only: in a repo, a global dep is already in ~/.claude/skills
+  # and is not linked twice; globally, an opt-in dep is never linked.
   for dep in $(read_requires "$skill"); do
+    if [ -n "$EXCLUDE" ] && ! is_opt_in "$dep"; then
+      continue
+    fi
+    if [ -z "$EXCLUDE" ] && is_opt_in "$dep"; then
+      echo "WARN  $name requires opt-in $dep, which is not linked globally — $name's requirement is unmet outside a repo naming $dep; scope $name too, or drop the edge"
+      continue
+    fi
     if [ ! -L "$TARGET_DIR/$dep" ] && [ ! -e "$TARGET_DIR/$dep" ]; then
       echo "dep   $name -> $dep"
       link_skill "$dep"
@@ -138,10 +190,50 @@ link_skill() {
   done
 }
 
+# exclude_one <name> — keeps the repo-side link out of `git status` by its
+# path from the repo root, written once however many runs reach it.
+exclude_one() {
+  local line="/.claude/skills/$1"
+  mkdir -p "$(dirname "$EXCLUDE")"
+  if ! grep -qxF "$line" "$EXCLUDE" 2>/dev/null; then
+    printf '%s\n' "$line" >> "$EXCLUDE"
+    echo "exclude $line"
+  fi
+}
+
 prune_owned "$TARGET_DIR" "$SKILLS_DIR" ""
 
+if [ -n "$EXCLUDE" ]; then
+  for name in $shared; do
+    if [ ! -d "$SKILLS_DIR/$name" ]; then
+      echo "WARN  $name — named in $PROJECT/CLAUDE.md's 'Shared skills:' line but src/$name does not exist, skipping"
+    elif ! is_opt_in "$name"; then
+      echo "skip  $name (installed globally, not per project)"
+    else
+      link_skill "$name"
+    fi
+  done
+  exit 0
+fi
+
+for name in $opt_in_skills; do
+  [ -d "$SKILLS_DIR/$name" ] ||
+    echo "WARN  $name — on install.sh's opt_in_skills list but src/$name is gone; drop it from the list"
+done
+
+# An opt-in skill's global link from before it was opt-in is removed, and only
+# when it points at exactly this checkout's copy: a link into another checkout,
+# or a real directory, is the user's.
+for name in $opt_in_skills; do
+  if [ -L "$TARGET_DIR/$name" ] && [ "$(readlink "$TARGET_DIR/$name")" = "$SKILLS_DIR/$name" ]; then
+    rm "$TARGET_DIR/$name"
+    echo "unlink $name (opt-in: install.sh --project <repo> links it into a repo whose CLAUDE.md names it)"
+  fi
+done
+
 for skill in "$SKILLS_DIR"/*/; do
-  link_skill "$(basename "$skill")"
+  name="$(basename "$skill")"
+  is_opt_in "$name" || link_skill "$name"
 done
 
 # Global rules (ADR-0053): link global/rules/*.md into ~/.claude/rules/, where

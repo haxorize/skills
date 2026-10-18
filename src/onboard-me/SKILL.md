@@ -1,8 +1,8 @@
 ---
 name: onboard-me
-description: A guided knowledge-transfer session over an unfamiliar repo — evidence-tagged findings, a KT map of what is still dark, and each topic worth going deeper on named to the learner to take to `/teach-me` themselves; where the repo has no product description it offers one, which `product-description` then writes under `docs/product-description/`; its only write of its own is `docs/inward-spec.md`, and only when the learner asks for it.
+description: A guided knowledge-transfer session over an unfamiliar repo — evidence-tagged findings, a KT map of what is still dark, and each topic worth going deeper on named to the learner to take to `/teach-me` themselves; it reads an existing product description as evidence, and its only write is `docs/inward-spec.md`, and only when the learner asks for it.
 disable-model-invocation: true
-requires: writing-for-humans, product-description
+requires: writing-for-humans
 argument-hint: "Which repo, and why are you here?"
 ---
 
@@ -21,7 +21,7 @@ Two ways in:
 
 ## The session reads; its one write is asked for first
 
-This skill changes nothing in the repo beyond the two exceptions below: no edits to source, config, or dependencies, no formatting — a thing noticed on the way past is content for the record, never a task. No commits, pushes, branch changes, migrations, seed scripts, or deploys, and nothing run against a live database or cloud account. Two exceptions, each said before it happens, never after. Where the human accepts the offer below, `product-description` writes under `docs/product-description/` on its own terms — a `README.md` index and one or more documents, a directory rather than a file — and that is its write, not this skill's. Where the learner asks for the inward spec under § Notes, this session writes `docs/inward-spec.md` and nothing else. Beyond those two, nothing this session does leaves anything behind in the repo.
+This skill changes nothing in the repo beyond the one exception below: no edits to source, config, or dependencies, no formatting — a thing noticed on the way past is content for the record, never a task. No commits, pushes, branch changes, migrations, seed scripts, or deploys, and nothing run against a live database or cloud account. The exception is said before it happens, never after: where the learner asks for the inward spec under § Notes, this session writes `docs/inward-spec.md` and nothing else. Beyond that, nothing this session does leaves anything behind in the repo.
 
 Running a build, a test, or a script executes code from a repo nobody in this session can vouch for, and it can reach the network or a real service. The global recommend-and-proceed rule (`~/.claude/rules/recommend-and-proceed.md`) puts "run it and find out" in bin 1 — **override that here**: propose the run and let a human run it or paste the output. Reading files, listing directories, and `git log` are unaffected.
 
@@ -40,9 +40,9 @@ The **KT map** and every later lesson live in the learner's **Learning workspace
 
 Everything else about the workspace's shape is `teach-me`'s. This skill leaves no trail of its own inside the repo, because a second record beside the workspace splits the learner's history in two and abandons a directory in someone else's project.
 
-### 2. When the repo has no product description
+### 2. When the repo has a product description
 
-Before the first rung, list `docs/product-description/` and read its `README.md` if one is there. Where it exists, say so, say where, and go on to the ladder. Where the directory is absent or holds no `README.md`, there is no description — offer one, saying that it writes a `docs/product-description/` directory, and on a yes call the Skill tool with `product-description` **with `--seed`**; that skill owns the artifact, the method, and what the bound covers entirely, and this session owns only the decision that one is needed. If the skill does not load, say so and go on to the ladder — never write the description yourself.
+Before the first rung, list `docs/product-description/` and read its `README.md` if one is there. Where it exists, say so, say where, and go on to the ladder. Where the directory is absent or holds no `README.md`, say there is none and go on to the ladder — never write a description yourself.
 
 An existing description is evidence like any other file, and evidence of what somebody believed at the commit they wrote it at. A claim the map takes from it is an **[inference]** until it has been checked against the code at the current commit.
 
@@ -76,7 +76,7 @@ Prefer reading a few of the right files deeply over skimming everything. A sessi
 
 ### 5. Close
 
-Update the map, then say three things: what is lit, what is still dark, and the one rung or lesson you would take next. Where a description was written this session, say where it landed and what it does *not* yet cover — a `--seed` call writes the pilot and the foundations, and every other feature area is on the README's planned list rather than written, so most of the set does not exist yet rather than being unverified.
+Update the map, then say three things: what is lit, what is still dark, and the one rung or lesson you would take next.
 
 ## Notes
 

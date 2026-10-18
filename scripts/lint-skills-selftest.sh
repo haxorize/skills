@@ -332,6 +332,7 @@ expect "global-rule Depends (uncited)" "global/rules/uncited-depends.md DEPENDS 
 expect "global-rule Depends (directory only)" "global/rules/dir-only-cited.md DEPENDS entry names 'unused-dep' but src/unused-dep/ never cites the rule"
 expect "global-rule Depends (other rule's path)" "global/rules/other-path-cited.md DEPENDS entry names 'unused-dep' but src/unused-dep/ never cites the rule"
 expect "global-rule Depends (unmarked stem)" "global/rules/bare-stem-cited.md DEPENDS entry names 'unused-dep' but src/unused-dep/ never cites the rule"
+expect "opt-in requires (a global skill requiring an opt-in one)" "src/unused-dep/SKILL.md requires 'fixture-discipline', but 'fixture-discipline' is opt-in and 'unused-dep' is global"
 expect "two-way requires (undeclared)" "src/undeclared-dep/SKILL.md calls the Skill tool with \`fixture-discipline\` but its requires: line does not declare"
 # The gerund and the two-name clause are separate matcher reaches: the first name
 # grades 'calling', the second grades that the clause does not end at name one.
@@ -745,19 +746,15 @@ fi
 expect_rc "the lint against the fixture tree" 1 "$status"
 # The count of FAIL lines is pinned: a check that begins firing on a fixture
 # it should leave alone reds here even when no substring row names the line.
-# Last moved 2026-10-15 (review fixes F8 and F9 of 0061afe): 117 → 120 — the
-# or-joined and comma-joined chained citations in src/house-style/SKILL.md
-# (lines 108, 109) and the fixture DEPENDS's second well-formed entry.
-# Held at 120 on 2026-10-16 (review fixes F35, F38): packages/api/CLAUDE.md's
-# deletion FAIL left (the Landing-key check reads the root file alone) and
-# orphan-local.py's pairing FAIL arrived.
+# Last moved 2026-10-17 (Batch 24): 120 → 121 — unused-dep's requirement of
+# fixture-discipline, which the fixture installer now lists as opt-in.
 # Earlier moves of this pin are in
 # `git log -p -G 'expected exactly [0-9]+ FAIL' -- scripts/lint-skills-selftest.sh` — they describe counts
 # nothing asserts any more, and stacking them here made a changelog out of the
 # one line that has to stay readable. A count that moves is read before it is
 # re-pinned.
 nfail=$(printf '%s\n' "$output" | grep -c '^FAIL: ')
-[ "$nfail" -eq 120 ] || selftest_fail "expected exactly 120 FAIL lines against the fixture tree, got $nfail"
+[ "$nfail" -eq 121 ] || selftest_fail "expected exactly 121 FAIL lines against the fixture tree, got $nfail"
 # The shared-trigger-phrase fixtures are pinned by property, as near_bytes and
 # bulk_bytes are below: every row above them asserts a FAIL that appears or a
 # FAIL that does not, and each of those readings is silently satisfied by a
@@ -1391,6 +1388,16 @@ if isolated_run "files-readme" 's/`clean-skill`/clean-skill/g' "README.md"; then
   files_out=$(LINT_ROOT="$isolated_parent/files-readme" bash scripts/lint-skills.sh --files "$isolated_parent/files-readme/src/which-skill/SKILL.md" 2>&1); files_rc=$?
   reject_in "$files_out" "--files naming the router graded README.md's coverage arm, which lands on a file it did not name" "README.md has no backticked mention"
   expect_rc "--files naming the router in the 'files-readme' root" 2 "$files_rc"
+fi
+# The quiet half of the opt-in rows: with the requirer on the list too, the
+# edge is opt-in to opt-in and draws nothing.
+optin_root="$isolated_parent/opt-in-both"
+if mkdir -p "$optin_root" && cp -R "$fixtures/." "$optin_root/" &&
+   perl -0pi -e 's/^opt_in_skills="fixture-discipline"$/opt_in_skills="unused-dep fixture-discipline"/m or die' "$optin_root/scripts/install.sh" 2>/dev/null; then
+  optin_out=$(LINT_ROOT="$optin_root" bash scripts/lint-skills.sh 2>&1)
+  reject_in "$optin_out" "an opt-in skill requiring an opt-in skill FAILed, an edge that installs together" "is opt-in and"
+else
+  selftest_skip "could not copy the wrong-on-purpose tree, or widen its opt-in list, for the 'opt-in-both' case — the quiet opt-in row was not exercised."
 fi
 flip_root="$isolated_parent/files-flip"
 if mkdir -p "$flip_root" && cp -R "$fixtures/." "$flip_root/" &&

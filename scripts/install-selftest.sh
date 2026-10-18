@@ -66,15 +66,26 @@
 #     quiets only the key it carries as asked;
 #   - the stale-hook warning: a wired global/hooks/ path that does not exist
 #     warns, absolute or `~/`, and one that exists, absolute or `~/`, does not;
-#   - a mutation table over those two blocks, on a copy of install.sh that
-#     sees this checkout's src/ and global/ through symlinks.
+#   - the opt-in list: globally, an opt-in skill's old link into this
+#     checkout is unlinked, its link into another checkout stays, no opt-in
+#     skill is linked, and no global skill requires an opt-in one; with
+#     --project, the repo's Shared skills line links an opt-in skill and its
+#     opt-in dep into the repo, never a global skill or a global dep, lists
+#     each once in .git/info/exclude so `git status` stays clean, writes
+#     nothing globally, and a second run adds nothing; a repo that is not a git
+#     work tree, a CLAUDE.md with no key, and a missing repo argument exit 3;
+#   - a mutation table over those blocks, on a copy of install.sh that sees
+#     this checkout's src/ and global/ through symlinks.
 #
 # NOT covered, so a clean run here is not a claim about them: which skills the
 # recursion reaches (the trace row above grades every line it prints, not that
 # the set of lines is complete), the `# Install note:` and `# Event:` roster
 # itself (the snippet row reads the same headers the installer does, so a hook
 # both miss the same way), hook_event's WARN-and-fall-back arm for an unknown
-# event name, and the WARN arms for a target that exists and is not a symlink.
+# event name, the WARN arms for a target that exists and is not a symlink,
+# the WARN for a global skill requiring an opt-in one (the tree has none to
+# fire it; the row above asserts that), and a repo-side link left behind once
+# its name leaves the Shared skills line (nothing removes it).
 # Those are printing and traversal, not removal, and this script was written
 # for the removal.
 set -uo pipefail
@@ -96,12 +107,16 @@ mkdir -p "$skills_target" "$rules_target" "$home/elsewhere"
 # One real skill and one real rule to point the surviving links at. Read from
 # the tree rather than named, so a rename does not turn a row into a no-op that
 # still reads as graded.
-live_skill="$(basename "$(find "$skills_dir" -mindepth 1 -maxdepth 1 -type d | sort | head -1)")"
+# Both skill names are global ones: an opt-in name is never linked into
+# the skills target, so a row pointed at one would grade the unlink instead.
+opt_in_skills=$(sed -n 's/^opt_in_skills="\(.*\)"$/\1/p' scripts/install.sh)
+global_skills=$(find "$skills_dir" -mindepth 1 -maxdepth 1 -type d | sed 's|.*/||' | sort | grep -vxF -f <(printf '%s\n' $opt_in_skills))
+live_skill="$(printf '%s\n' "$global_skills" | head -1)"
 live_rule="$(basename "$(find "$global_dir/rules" -maxdepth 1 -name '*.md' | sort | head -1)")"
 # A second real name of each kind, for the link at a name this repo ships
 # that points somewhere else: the link arm visits only names under src/ and
 # global/rules/, so the foreign `find-skills` link below never reaches it.
-taken_skill="$(basename "$(find "$skills_dir" -mindepth 1 -maxdepth 1 -type d | sort | sed -n 2p)")"
+taken_skill="$(printf '%s\n' "$global_skills" | sed -n 2p)"
 taken_rule="$(basename "$(find "$global_dir/rules" -maxdepth 1 -name '*.md' | sort | sed -n 2p)")"
 if [ -z "$live_skill" ] || [ -z "$live_rule" ] || [ -z "$taken_skill" ] || [ -z "$taken_rule" ]; then
   # selftest_fail has set fail=1, so this close takes the silent exit-1 arm and
@@ -193,6 +208,7 @@ missing=""
 for d in "$skills_dir"/*/; do
   n="$(basename "$d")"
   [ "$n" = "$taken_skill" ] && continue   # staged as a foreign link above, by design
+  case " $opt_in_skills " in *" $n "*) continue ;; esac   # graded by the opt-in rows below
   [ -L "$skills_target/$n" ] || missing="$missing $n"
 done
 [ -z "$missing" ] || selftest_fail "the installer left these skills unlinked in the throwaway HOME:$missing"
@@ -464,6 +480,110 @@ JSON
   reject_in "$out" "a \${HOME}/ hook path that exists was warned about" "wires \${HOME}/global/hooks/here.sh"
 }
 
+# The opt-in rows. Each stages its links against the src/ of the
+# installer it runs ($installer may be a mutant copy whose src/ is a symlink),
+# so the unlink's exact-target test meets the path that installer computes.
+inst_src() { (cd "$(dirname "$installer")/../src" && pwd); }
+opt_in_first=${opt_in_skills%% *}
+opt_in_rest=${opt_in_skills#* }
+opt_in_second=${opt_in_rest%% *}
+
+row_scope_global() {
+  local r out n src
+  r=$(new_root) || { selftest_fail "no root for the global scope row"; return; }
+  src=$(inst_src)
+  mkdir -p "$r/.claude/skills" "$r/other-checkout/$opt_in_second"
+  ln -s "$src/$opt_in_first" "$r/.claude/skills/$opt_in_first"
+  ln -s "$r/other-checkout/$opt_in_second" "$r/.claude/skills/$opt_in_second"
+  out=$(TARGET_ROOT="$r" HOME="$r" bash "$installer" 2>&1)
+  expect_rc "the installer against a root holding an opt-in skill's old global link" 0 $?
+  expect_in "$out" "an opt-in skill's global link into this checkout was not reported unlinked" "unlink $opt_in_first ("
+  [ ! -L "$r/.claude/skills/$opt_in_first" ] ||
+    selftest_fail "the installer left $opt_in_first linked globally — an opt-in skill's description would still load in every repo"
+  [ "$(readlink "$r/.claude/skills/$opt_in_second")" = "$r/other-checkout/$opt_in_second" ] ||
+    selftest_fail "the installer removed or replaced $opt_in_second's link into another checkout — only a link to this checkout's copy is the installer's to remove"
+  for n in $opt_in_skills; do
+    [ "$n" = "$opt_in_second" ] && continue
+    [ ! -e "$r/.claude/skills/$n" ] ||
+      selftest_fail "the installer linked opt-in $n into the global skills target"
+  done
+  reject_in "$out" "a global skill requires an opt-in one — outside the repos naming it, that requirement is unmet" "requires opt-in"
+}
+
+# An opt-in parent with an opt-in dep and a global dep, read off the tree.
+scope_parent="" scope_sdep="" scope_gdep=""
+for n in $opt_in_skills; do
+  for d in $(awk '/^---$/{c++;next} c==1&&/^requires:/{sub(/^requires:[[:space:]]*/,"");gsub(/,/," ");print;exit}' "$skills_dir/$n/SKILL.md" 2>/dev/null); do
+    case " $opt_in_skills " in
+      *" $d "*) [ -n "$scope_sdep" ] || scope_sdep=$d ;;
+      *) [ -n "$scope_gdep" ] || scope_gdep=$d ;;
+    esac
+  done
+  if [ -n "$scope_sdep" ] && [ -n "$scope_gdep" ]; then scope_parent=$n; break; fi
+  scope_sdep="" scope_gdep=""
+done
+
+row_scope_project() {
+  local r p out out2 n
+  r=$(new_root) || { selftest_fail "no root for the project scope row"; return; }
+  p="$r/repo"
+  mkdir -p "$p" && git -C "$p" init -q
+  printf '# CLAUDE.md\n\nShared skills: %s, %s\n' "$scope_parent" "$live_skill" > "$p/CLAUDE.md"
+  git -C "$p" add CLAUDE.md && git -C "$p" -c user.name=t -c user.email=t@t commit -q -m claude
+  out=$(TARGET_ROOT="$r" HOME="$r" bash "$installer" --project "$p" 2>&1)
+  expect_rc "install.sh --project against a repo naming an opt-in and a global skill" 0 $?
+  for n in "$scope_parent" "$scope_sdep"; do
+    [ -L "$p/.claude/skills/$n" ] || selftest_fail "install.sh --project did not link $n into the repo"
+    [ "$(grep -cxF "/.claude/skills/$n" "$p/.git/info/exclude")" = 1 ] ||
+      selftest_fail "the repo's .git/info/exclude does not list /.claude/skills/$n exactly once"
+  done
+  [ ! -e "$p/.claude/skills/$scope_gdep" ] ||
+    selftest_fail "install.sh --project linked global dep $scope_gdep into the repo — it is already in ~/.claude/skills"
+  [ ! -e "$p/.claude/skills/$live_skill" ] ||
+    selftest_fail "install.sh --project linked global skill $live_skill into the repo"
+  expect_in "$out" "a global skill on the Shared skills line was not reported as global" "skip  $live_skill (installed globally"
+  [ ! -e "$r/.claude/skills" ] ||
+    selftest_fail "install.sh --project wrote into the global skills target $r/.claude/skills"
+  [ -z "$(git -C "$p" status --porcelain)" ] ||
+    selftest_fail "the repo-side links show in git status — the exclude did not keep them out of the tracked files: $(git -C "$p" status --porcelain | tr '\n' ' ')"
+  out2=$(TARGET_ROOT="$r" HOME="$r" bash "$installer" --project "$p" 2>&1)
+  expect_rc "the second install.sh --project run" 0 $?
+  reject_in "$out2" "the second --project run relinked a skill" "link  "
+  for n in "$scope_parent" "$scope_sdep"; do
+    [ "$(grep -cxF "/.claude/skills/$n" "$p/.git/info/exclude")" = 1 ] ||
+      selftest_fail "the second --project run wrote /.claude/skills/$n into the exclude file again"
+  done
+}
+
+row_scope_usage() {
+  local r
+  r=$(new_root) || { selftest_fail "no root for the --project usage row"; return; }
+  mkdir -p "$r/plain" "$r/nokey"
+  printf 'Shared skills: %s\n' "$opt_in_first" > "$r/plain/CLAUDE.md"
+  git -C "$r/nokey" init -q
+  printf '# no key\n' > "$r/nokey/CLAUDE.md"
+  TARGET_ROOT="$r" HOME="$r" bash "$installer" --project "$r/plain" >/dev/null 2>&1
+  expect_rc "install.sh --project on a directory that is not a git work tree" 3 $?
+  TARGET_ROOT="$r" HOME="$r" bash "$installer" --project "$r/nokey" >/dev/null 2>&1
+  expect_rc "install.sh --project on a repo whose CLAUDE.md has no Shared skills line" 3 $?
+  TARGET_ROOT="$r" HOME="$r" bash "$installer" --project >/dev/null 2>&1
+  expect_rc "install.sh --project with no repo" 3 $?
+  [ ! -e "$r/plain/.claude" ] && [ ! -e "$r/nokey/.claude" ] ||
+    selftest_fail "a refused --project run still created a .claude/ in the repo"
+}
+
+if [ -z "$opt_in_first" ] || [ "$opt_in_first" = "$opt_in_second" ]; then
+  selftest_fail "found fewer than two names on install.sh's opt_in_skills line — the scope rows graded nothing"
+else
+  row_scope_global
+  row_scope_usage
+  if [ -z "$scope_parent" ]; then
+    selftest_skip "no opt-in skill requires both an opt-in and a global skill — the repo-side dep rows were not exercised."
+  else
+    row_scope_project
+  fi
+fi
+
 if ! command -v python3 >/dev/null 2>&1; then
   selftest_skip "python3 is not on PATH — the settings-keys and stale-hook rows and their mutation table were not exercised."
 elif [ -z "$first_skill" ] || [ -z "$second_skill" ] || [ "$first_skill" = "$second_skill" ]; then
@@ -497,6 +617,12 @@ else
   mutant "any override counts as name-only" '[[:space:]]*\"name-only\"" "$SETTINGS"' '[[:space:]]*\"[^\"]*\"" "$SETTINGS"' row_keys_partial
   mutant "block drops the shell line" "keys='  \"env\"" "keys=''; : '" row_keys_fresh
   mutant "block prints when every key is present" 'if [ "$want_shell" = 1 ] || [ -n "$want_skills" ]; then' 'if :; then' row_keys_quiet
+  mutant "global loop links opt-in skills" 'is_opt_in "$name" || link_skill "$name"' 'link_skill "$name"' row_scope_global
+  mutant "unlink takes any link at an opt-in name" '[ "$(readlink "$TARGET_DIR/$name")" = "$SKILLS_DIR/$name" ]' 'true' row_scope_global
+  mutant "exclude line written every run" 'if ! grep -qxF "$line" "$EXCLUDE" 2>/dev/null; then' 'if :; then' row_scope_project
+  mutant "repo-side deps include global ones" 'if [ -n "$EXCLUDE" ] && ! is_opt_in "$dep"; then' 'if false; then' row_scope_project
+  mutant "global names link into the repo" 'elif ! is_opt_in "$name"; then' 'elif false; then' row_scope_project
+  mutant "a repo with no key is accepted" 'if [ -z "$shared" ]; then' 'if false; then' row_scope_usage
 fi
 
 selftest_close \

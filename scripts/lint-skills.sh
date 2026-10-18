@@ -348,7 +348,8 @@
 # the pre-commit gate is.
 #   Pass 0 — read before any check runs, so no check's answer depends on how
 #   far the pass that asks it has got: the user-invoked set (name_is_user_invoked,
-#   the single predicate for that question) and both routers' text.
+#   the single predicate for that question), the opt-in set read from
+#   scripts/install.sh (name_is_opt_in), and both routers' text.
 #   Pass 1 — every skill's frontmatter and its own body, src/*/SKILL.md:
 #     check_reattach_bytes     the 15,000-byte FAIL
 #     check_name_field         present, <= 64 chars, mirrors the directory
@@ -356,7 +357,8 @@
 #     check_description_limits <= 1024 chars, no bare ': ' or ' #', no < >;
 #                              a model-invoked one over 700 bytes WARNs
 #     check_invocation_axis    the flag and the "Use when" opener agree
-#     check_requires_resolve   each declared dep exists and is model-invoked
+#     check_requires_resolve   each declared dep exists and is model-invoked,
+#                              and a global skill names no opt-in dep
 #     check_requires_two_way   every Skill-tool call declared, every
 #                              declaration named in the body
 #     check_router_coverage    named in which-skill and README.md
@@ -720,6 +722,15 @@ linenos() { printf '%s\n' "$1" | cut -d: -f1 | tr '\n' ' '; }
 user_invoked_skills=" "
 name_is_user_invoked() { case "$user_invoked_skills" in *" $1 "*) return 0 ;; esac; return 1; }
 
+# The opt-in set (ADR-0114): skills install.sh never links globally, read from
+# its opt_in_skills line, the list's one home. A global skill whose requires:
+# names one has an unmet dependency in every repo that does not list the dep.
+# A root with no scripts/install.sh has no opt-in skills.
+opt_in_skills=" "
+[ -f scripts/install.sh ] &&
+  opt_in_skills=" $(sed -n 's/^opt_in_skills="\(.*\)"$/\1/p' scripts/install.sh | head -1) "
+name_is_opt_in() { case "$opt_in_skills" in *" $1 "*) return 0 ;; esac; return 1; }
+
 # Both routers, read once. check_router_coverage runs per skill, so grepping
 # the files there is two processes per skill over the same two files.
 router_text=""; readme_text=""
@@ -1050,7 +1061,8 @@ check_invocation_axis() {
 # given, is a space-separated set of skill names: only a dep in it is graded
 # (--files naming that dep's SKILL.md — see the cross-file arms after pass 1).
 check_requires_resolve() {
-  local f=$1 reqs=$2 only=${3:-} dep depfile
+  local f=$1 reqs=$2 only=${3:-} dep depfile skill
+  skill=${f#src/}; skill=${skill%/SKILL.md}
   for dep in $reqs; do
     [ -z "$only" ] || case " $only " in *" $dep "*) : ;; *) continue ;; esac
     depfile="src/$dep/SKILL.md"
@@ -1060,6 +1072,9 @@ check_requires_resolve() {
     fi
     if name_is_user_invoked "$dep"; then
       say_fail "$f requires '$dep', but '$dep' is user-invoked — prose invocation can only reach model-invoked Discipline skills"
+    fi
+    if name_is_opt_in "$dep" && ! name_is_opt_in "$skill"; then
+      say_fail "$f requires '$dep', but '$dep' is opt-in and '$skill' is global — install.sh never links '$dep' globally, so the requirement is unmet in every repo not listing it; add '$skill' to opt_in_skills too, or drop the edge"
     fi
   done
 }
