@@ -45,6 +45,14 @@ expect_block "$opted" "x=\$(sed -i 's/a/b/' f.txt)"
 expect_block "$opted" "cd src && sed -i 's/a/b/' f.txt"
 expect_block "$opted" $'grep -l a *.md\nsed -i \'s/a/b/\' *.md'
 expect_block "$opted" "find . -name '*.md' -exec sed -i 's/a/b/' {} +"
+# the tokeniser's redirection reads (hook-lib.py): the first five once hid the sed,
+# the last pins that a bare background & still separates
+expect_block "$opted" "echo \\>& sed -i 's/a/b/' f.txt"                       "an escaped > leaves its & a background separator"
+expect_block "$opted" ">x sed -i 's/a/b/' f.txt"                                "a redirection before the program"
+expect_block "$opted" "true &&>x sed -i 's/a/b/' f.txt"                         "&&>x: an and-list, then a redirection"
+expect_block "$opted" "sed 's/a/b/' f.txt >| log -i"                            "the | of >| is a redirection, not a pipe"
+expect_block "$opted" "sed 's/a/b/' f.txt 2> >(cat) -i"                         "a process substitution is one word"
+expect_block "$opted" "sleep 1 & sed -i 's/a/b/' f.txt"                         "a bare background & separates"
 expect_block "$opted" $'sed \\\n  -i \'s/a/b/\' f.txt'          # backslash-newline continuation is one line to the shell
 expect_block "$opted" "perl -pi -e 's/a/b/' *.md"
 expect_block "$opted" "perl -i -pe 's/a/b/' f.txt"

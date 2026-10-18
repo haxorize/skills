@@ -118,6 +118,9 @@ expect_block "$G" "git push origin main"                       "explicit remote"
 expect_block "$G" "git push -q origin main 2>&1 | tail -2"     "push in a pipeline"
 expect_block "$G" "git push origin main >out.txt"              "a redirection is not a second refspec"
 expect_block "$G" "git add . && git commit -m x && git push"   "push after commit"
+expect_block "$G" 'echo \>& git push'                          "an escaped > leaves its & a background separator"
+expect_block "$G" ">x git push"                                "a redirection before the program"
+expect_block "$G" "sleep 1 & git push"                         "a bare background & separates"
 expect_block "$G" "/usr/bin/git push"                          "path-prefixed git"
 expect_block "$G" "git -C . push"                              "-C before the subcommand"
 expect_block "$G" "git -c push.default=simple push"            "-c key=value before the subcommand"
@@ -509,6 +512,9 @@ expect_quiet "$MOK" "git push origin main >> out.txt"          "a detached >> ta
 expect_quiet "$MOK" "git push origin main &> out.txt"          "a detached &> target is not a refspec"
 expect_quiet "$MOK" "git push origin main < /dev/null"         "a detached < source is not a refspec"
 expect_quiet "$MOK" "git push origin > out.txt main"           "a refspec after a redirection is still read"
+expect_quiet "$MOK" "git push origin >| out.txt main"          "a detached >| target is not a refspec"
+expect_block "$MOK" "git push origin main >| out.txt nosuch:other" "the | of >| is a redirection: the refspec after its target is read"
+expect_block "$MOK" "git push origin main 2> >(cat) nosuch:other"  "a process substitution is one word: the refspec after it is read"
 out="$(crumb "$MOK" "git push origin main nosuch:other > out.txt 2>&1")"
 expect_in "$out" "beside a redirection, a source git cannot resolve is still named" 'git cannot resolve the tree of nosuch'
 expect_row "$out" "beside a redirection, a source git cannot resolve still blocks" 'rc=2'
@@ -563,8 +569,15 @@ mutant "a negative refspec is a source" 'case "$r" in ^*) continue ;; esac' ':' 
 mutant "an unresolvable source allows" '[ -n "$t" ] || hold "git cannot resolve' '[ -n "$t" ] || { rec_allow x; return 0; }; : "git cannot resolve' "$MOK" "git push origin main nosuch:other" 0
 mutant "the matching refspec is a delete" 'case "$r" in :|+:) ;; :*|+:*)' 'case "$r" in :*|+:*)' "$G" "git push origin :" 0
 mutant "a URL push takes the upstream range" 'if [ -n "$url_push" ]; then' 'if false; then' "$work/tworemotes" "git push $work/other-remote.git" 0
-mutant "a redirection's target is a refspec" 'if REDIR_OP.match(r):' 'if False:' "$MOK" "git push origin main > out.txt 2>&1" 2
+mutant "a redirection's target is a refspec" 'if REDIR.match(r) and not REDIR.match(r).group(2):' 'if False:' "$MOK" "git push origin main > out.txt 2>&1" 2
 mutant "no range is nothing to push" '[ -z "$wide" ] && [ -n "$range" ]; then' '[ -z "$wide" ]; then [ -n "$range" ] || { rec_allow x; return 0; };' "$work/norem" "git push" 0
+
+# hook-lib.py's REDIR, which the hook reads its operator words through: >| dropped
+# from it, beside an unmutated copy of the hook
+cp "$hook" "$mdir/global/hooks/review-receipt.sh"
+selftest_mutate "$here/hook-lib.py" "$mdir/global/hooks/hook-lib.py" '>>|>\||>&' '>>|>&' \
+  && selftest_expect_killed --mutant hook "$mdir/global/hooks/review-receipt.sh" "a >| target is a refspec" hook_rc_not 2 "$MOK" "git push origin >| out.txt main"
+cp "$here/hook-lib.py" "$mdir/global/hooks/"
 
 if [ "$fail" -ne 0 ]; then echo "SELFTEST FAIL: review-receipt"; exit 1; fi
 echo "OK: review-receipt self-test clean — every gated push blocked, every exempt form and receipt allowed, fail-open holds."

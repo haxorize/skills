@@ -52,6 +52,21 @@ expect_block "$D" "git commit -m x 2>&1 --no-verify"
 expect_block "$D" "git commit -m x >&2 --no-verify"
 expect_block "$D" "git commit -m x &>log --no-verify"
 expect_block "$D" "git commit -m x &>>log --no-verify"
+expect_block "$D" 'echo \>& git commit --no-verify -m x'                     "an escaped > leaves its & a background separator"
+expect_block "$D" 'echo \>|git commit -n -m x'                                "an escaped > leaves its | a pipe"
+expect_allow "$D" 'echo \\>& git commit -n -m x'                             "an escaped backslash leaves the >& a redirection"
+expect_allow "$D" "echo '>&' git commit -n -m x"                               "a quoted >& is text"
+expect_block "$D" "sleep 1 & git commit --no-verify"                           "a bare background & separates"
+expect_block "$D" "git commit -m x >| log --no-verify"                         "the | of >| is a redirection, not a pipe"
+expect_block "$D" "git commit -m x 2> >(cat) --no-verify"                      "a >(…) process substitution is one word"
+expect_block "$D" "git commit -m x < <(true) --no-verify"                      "a <(…) process substitution is one word"
+expect_block "$D" "cat <(git commit --no-verify -m x)"                         "a process substitution's body runs"
+# a redirection in command position is not the program
+expect_block "$D" ">x git commit --no-verify"                                  "an attached redirection before the program"
+expect_block "$D" "> x git commit --no-verify"                                 "a detached redirection and its target before the program"
+expect_block "$D" "true &&>x git commit --no-verify"                           "&&>x: an and-list, then a redirection"
+expect_block "$D" "2>&1 >x FOO=1 git commit -n -m x"                           "redirections around an assignment"
+expect_block "$D" "FOO=1 >x git commit -n -m x"                                "a redirection after an assignment"
 expect_block "$D" $'git commit -F - --no-verify <<\'MSG\'\nfix\nMSG'
 expect_block "$D" $'bash <<EOF\ngit commit --no-verify -m x\nEOF'
 # quoted flags are still flags to git
@@ -211,9 +226,15 @@ lib_mutant "no value-taking options" 'k += 2 if SHELL_VALUE_OPTS.match(t) else 1
 lib_mutant "no here-string read"   'body = seg[k + 1] if t == "<<<"' 'body = "" if True' 'bash <<< "git commit --no-verify -m x"' 0
 lib_mutant "no backslash delimiter" '<<-?\s*\\?[' '<<-?\s*[' $'cat <<\\EOF > notes.txt\ndon\'t\nEOF\ngit commit -n -m x' 0
 lib_mutant "an unexpandable operand is a script" 'any(c in t for c in "$`<>")' 'any(c in t for c in "<>")' "printf 'git commit --no-verify -m x' | bash \"\$X\"" 0
-# the tokeniser's redirection &, one alternative at a time
-lib_mutant "the & of >& separates"  'REDIR_AMP = re.compile(r"[<>]&|&>")' 'REDIR_AMP = re.compile(r"&>")' "git commit -m x 2>&1 --no-verify" 0
-lib_mutant "the & of &> separates"  'REDIR_AMP = re.compile(r"[<>]&|&>")' 'REDIR_AMP = re.compile(r"[<>]&")' "git commit -m x &>log --no-verify" 0
+# the tokeniser's redirection operators, one alternative at a time
+lib_mutant "the & of >& separates"  'elif c in "<>" and nxt == "&":' 'elif False:' "git commit -m x 2>&1 --no-verify" 0
+lib_mutant "the & of &> separates"  'elif c == "&" and nxt == ">":' 'elif False:' "git commit -m x &>log --no-verify" 0
+lib_mutant "an escaped > is a redirection" 'if c == "\\":' 'if False:' 'echo \>& git commit --no-verify -m x' 0
+lib_mutant "the | of >| pipes"      'elif c == ">" and nxt == "|":' 'elif False:' "git commit -m x >| log --no-verify" 0
+lib_mutant "a process substitution splits" 'elif c in "<>" and nxt == "(":' 'elif False:' "git commit -m x 2> >(cat) --no-verify" 0
+lib_mutant "a process substitution body is dropped" '        out += ["\n", "("] + b + [")"]' '        pass' "cat <(git commit --no-verify -m x)" 0
+lib_mutant "a leading redirection is the program" '        k = skip_redirs(seg, k)' '        pass' ">x git commit --no-verify" 0
+lib_mutant "a detached target is the program" 'k += 1 if m.group(2) else 2' 'k += 1' "> x git commit --no-verify" 0
 # hook-lib.sh's isolated Python, and the hook's own value-option skip, on copies beside the real lib
 sdir="$tmp/mut-sh"; mkdir -p "$sdir"; cp "$hook" "$here/hook-lib.py" "$sdir/"
 # row_no_cwd_module: green when the hook, run from the shadow dir, imported

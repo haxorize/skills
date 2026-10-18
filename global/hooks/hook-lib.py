@@ -14,8 +14,10 @@
 #     script file, a `find` with no `-exec` clause), as written — and raises
 #     `TokeniseError` on a tokeniser error. It reads no stdin and never exits.
 # Besides those names, a hook may use `re`, `sys`, `os`, `shlex`, `progname`,
-# `git_args`, `split_git`, `expand`, `joined`, `base`, `fed_by`, and
+# `git_args`, `split_git`, `expand`, `joined`, `base`, `fed_by`, `REDIR`, and
 # `ALLOW_EXIT`; everything else here is the scanner's own and may be renamed.
+# `REDIR` matches a redirection word as the tokeniser hands it over; its group
+# 2 is the attached target, empty when the target is the next word.
 # `fed_by()` names the feeders (`xargs`, `find`) the current segment runs
 # under, so a hook can tell that its file list arrives from outside the
 # segment. `base()` is the payload's cwd as an absolute path (hook_scan exports
@@ -27,12 +29,17 @@
 #
 # The contract, which every hook inherits: the command is tokenised the way a
 # shell would (`shlex`), split into segments at `; && || | & ( )` and newlines
-# (the `&` of a redirection — `2>&1`, `>&2`, `&>file` — is part of its word),
-# and `on_command` is called once per segment with the tokens of the program
-# that actually runs — a reserved word in command position (`if`, `then`,
-# `do`, `{`, `!`, …) dropped, wrappers (`env`, `sudo`, `timeout 30`, `nice`,
-# …) peeled, a leading `FOO=bar` assignment (bare, or after `export`,
-# `declare`, `local`, `typeset`, `readonly`, or a wrapper) dropped, `$var` /
+# (the `&` of a redirection — `2>&1`, `>&2`, `&>file` — and the `|` of `>|`
+# are part of its word, unless the `<`/`>` is backslash-escaped, where bash
+# reads it as text and the `&` or `|` as a separator; a `<(…)` /
+# `>(…)` process substitution is the one word `<(…)` and its body is scanned
+# as segments of its own, after the rest), and `on_command` is called once per
+# segment with the tokens of the program that actually runs — a reserved word
+# in command position (`if`, `then`, `do`, `{`, `!`, …) dropped, a
+# redirection there (`>x git …`, with a detached target) dropped, wrappers
+# (`env`, `sudo`, `timeout 30`, `nice`, …) peeled, a leading `FOO=bar`
+# assignment (bare, or after `export`, `declare`, `local`, `typeset`,
+# `readonly`, or a wrapper) dropped, `$var` /
 # `${var…}` replaced with a value assigned earlier in the same command,
 # `$(which git)` resolved to `git`. A string handed to `bash -c` / `-lc`,
 # `eval`, `env -S`, a backtick or `$(…)` body, a literal string piped into a
@@ -99,8 +106,10 @@ KEYWORDS = {"if", "then", "else", "elif", "fi", "while", "until", "do", "done",
             "case", "esac", "!", "{", "}"}   # reserved words: dropped in command position only
 SEPS = {";", "&&", "||", "|", "&", "(", ")", "\n"}
 ESCAPED_SEMI = "\\;"               # `find … \;` survives tokenising as this word, never a separator
-REDIR_AMP = re.compile(r"[<>]&|&>")   # the & of a redirection operator, which separates nothing
-AMP = "\x01"                       # stands in for that & while shlex splits, restored in the word after
+AMP = "\x01"                       # stands in for a redirection's & while shlex splits, restored in the word after
+PIPE = "\x02"                      # likewise the | of `>|`, which pipes nothing
+REDIR = re.compile(r"^[0-9]*(&>>|&>|>>|>\||>&|<<<|<<-|<<|<>|<&|>|<)(?!\()(.*)$", re.S)   # group 2 empty: the target is the next word
+PROCSUB = "\x03"                   # opens a `<(`/`>(` body in the text shlex splits
 FIND_EXEC = {"-exec", "-execdir", "-ok", "-okdir"}
 FIND_END = {";", ESCAPED_SEMI, "+"}
 XARGS_VALUE_OPTS = {"-n", "-I", "-L", "-P", "-s", "-d", "-E", "-a", "-J", "-R", "-S"}
@@ -181,6 +190,57 @@ def ansi_c(m):
     return "'" + body.replace("'", "'\\''") + "'"
 
 
+def mark_redirs(text):
+    """Swap the `&` of `>&`, `<&`, `&>` and the `|` of `>|` for AMP / PIPE
+    where bash reads a redirection operator: the `<`/`>` (or the `&` of `&>`)
+    not backslash-escaped. `\\>&` is an escaped `>` and then a background
+    `&`. Quotes need no tracking: shlex reads a quoted `&` or `|` as text
+    either way, and the stand-in is restored inside the word; a `\\` inside
+    single quotes that pairs here with the closing quote changes nothing
+    after it. A `<(` / `>(` gets PROCSUB between its two characters, so
+    lift_procsubs can tell it from a `> (`."""
+    out, i, n = [], 0, len(text)
+    while i < n:
+        c = text[i]
+        nxt = text[i + 1] if i + 1 < n else ""
+        if c == "\\":                         # an escaped character is text, never an operator
+            out.append(c + nxt); i += 2
+        elif c in "<>" and nxt == "&":
+            out.append(c + AMP); i += 2
+        elif c == ">" and nxt == "|":
+            out.append(c + PIPE); i += 2
+        elif c in "<>" and nxt == "(":
+            out.append(c + PROCSUB); i += 1
+        elif c == "&" and nxt == ">":       # `&&>x`: `&` then `&>x`, which separates the same
+            out.append(AMP); i += 1
+        else:
+            out.append(c); i += 1
+    return "".join(out)
+
+
+def lift_procsubs(toks):
+    """A `<(…)` / `>(…)` process substitution is one word to the command it
+    sits in, and its body runs as commands of its own: leave the word `<(…)`
+    in place and append each body, as a `( … )` group, after the rest."""
+    out, bodies, i = [], [], 0
+    while i < len(toks):
+        t = toks[i]
+        if t in ("<" + PROCSUB, ">" + PROCSUB) and i + 1 < len(toks) and toks[i + 1] == "(":
+            depth, j = 1, i + 2
+            while j < len(toks) and depth:
+                depth += {"(": 1, ")": -1}.get(toks[j], 0)
+                j += 1
+            bodies.append(lift_procsubs(toks[i + 2:j - 1 if depth == 0 else j]))
+            out.append(t[0] + "(…)")
+            i = j
+            continue
+        out.append(t.replace(PROCSUB, ""))
+        i += 1
+    for b in bodies:
+        out += ["\n", "("] + b + [")"]
+    return out
+
+
 def tokens(text):
     text = strip_comments(text)
     text = re.sub(r"\$\x27((?:[^\x27\\]|\\.)*)\x27", ansi_c, text)            # ANSI-C $'…' quoting
@@ -188,7 +248,7 @@ def tokens(text):
     text = re.sub(r"`(?:which|command -v|type -P)\s+(\w+)`", r"\1", text)
     text = re.sub(r"`([^`]*)`", r"( \1 )", text)                                # a backtick body runs
     text = text.replace("\\;", "\\\\" + ESCAPED_SEMI)                           # `\\\;` reads back as the word `\;`
-    text = REDIR_AMP.sub(lambda m: m.group(0).replace("&", AMP), text)          # `2>&1`, `&>f`: one word, not a `&` split
+    text = mark_redirs(text)                                                    # `2>&1`, `&>f`, `>|f`: one word, not a split
     lex = shlex.shlex(text, posix=True, punctuation_chars=";&|()\n")
     lex.whitespace_split = True
     lex.whitespace = " \t\r"
@@ -198,8 +258,8 @@ def tokens(text):
         if t and all(c in ";&|()\n" for c in t):       # an empty word (`sed -i ''`) is still a word
             out.extend(re.findall(r"&&|\|\||[;&|()\n]", t))
         else:
-            out.append(t.replace(AMP, "&"))
-    return out
+            out.append(t.replace(AMP, "&").replace(PIPE, "|"))
+    return lift_procsubs(out)
 
 
 def segments(toks):
@@ -274,14 +334,19 @@ def joined(base, path):
 def take_assignments(seg, curdir):
     """Record leading NAME=value tokens (after an optional declarer and its
     options) into VARS, and every name they or the declarer bind into
-    TOUCHED; return the rest of the segment and the curdir."""
+    TOUCHED; drop a redirection among them (`>x git …`: the word, and its
+    target when that is the next word); return the rest of the segment and
+    the curdir."""
     k = 0
     if seg and seg[0] in DECLARERS:
         k = 1
         while k < len(seg) and seg[k].startswith("-"):
             k += 1
         TOUCHED.update(t.split("=", 1)[0] for t in seg[k:] if NAME.fullmatch(t.split("=", 1)[0]))
-    while k < len(seg) and ASSIGN.match(seg[k]):
+    while True:
+        k = skip_redirs(seg, k)
+        if k >= len(seg) or not ASSIGN.match(seg[k]):
+            break
         name, value = ASSIGN.match(seg[k]).groups()
         VARS[name] = value
         TOUCHED.add(name)
@@ -289,6 +354,16 @@ def take_assignments(seg, curdir):
             curdir = joined(curdir, expand(value))
         k += 1
     return seg[k:], curdir
+
+
+def skip_redirs(seg, k):
+    """The index past the redirection words at seg[k:], each with its target."""
+    while k < len(seg):
+        m = REDIR.match(seg[k])
+        if not m:
+            break
+        k += 1 if m.group(2) else 2
+    return k
 
 
 def scan(text, curdir, depth=0):
