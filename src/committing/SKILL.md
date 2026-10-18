@@ -76,4 +76,4 @@ The `commit-bypass` hook under `global/hooks/` is this protocol's mechanical hal
 
 ## Boundary
 
-This skill lands a change honestly; it does not decide what to build or judge what was built. Merge conflicts on the way in are `resolving-merge-conflicts`' job. Findings that surface while drafting are follow-ups, not this change's work — land the change, name what you noticed; filing them is `/to-bug`'s, and only on the user's ask, since the `Landing:` defect policy defaults to "fix, don't file". Grading the diff before it lands is `/review-changes`'.
+This skill lands a change honestly; it does not decide what to build or judge what was built. Findings that surface while drafting are follow-ups, not this change's work — land the change, name what you noticed; filing them is `/to-bug`'s, and only on the user's ask, since the `Landing:` defect policy defaults to "fix, don't file". Grading the diff before it lands is `/review-changes`'.
