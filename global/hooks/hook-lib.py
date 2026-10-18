@@ -26,7 +26,8 @@
 # hook_allow, so an allow never shares the channel a finding travels in.
 #
 # The contract, which every hook inherits: the command is tokenised the way a
-# shell would (`shlex`), split into segments at `; && || | & ( )` and newlines,
+# shell would (`shlex`), split into segments at `; && || | & ( )` and newlines
+# (the `&` of a redirection — `2>&1`, `>&2`, `&>file` — is part of its word),
 # and `on_command` is called once per segment with the tokens of the program
 # that actually runs — a reserved word in command position (`if`, `then`,
 # `do`, `{`, `!`, …) dropped, wrappers (`env`, `sudo`, `timeout 30`, `nice`,
@@ -98,6 +99,8 @@ KEYWORDS = {"if", "then", "else", "elif", "fi", "while", "until", "do", "done",
             "case", "esac", "!", "{", "}"}   # reserved words: dropped in command position only
 SEPS = {";", "&&", "||", "|", "&", "(", ")", "\n"}
 ESCAPED_SEMI = "\\;"               # `find … \;` survives tokenising as this word, never a separator
+REDIR_AMP = re.compile(r"[<>]&|&>")   # the & of a redirection operator, which separates nothing
+AMP = "\x01"                       # stands in for that & while shlex splits, restored in the word after
 FIND_EXEC = {"-exec", "-execdir", "-ok", "-okdir"}
 FIND_END = {";", ESCAPED_SEMI, "+"}
 XARGS_VALUE_OPTS = {"-n", "-I", "-L", "-P", "-s", "-d", "-E", "-a", "-J", "-R", "-S"}
@@ -185,6 +188,7 @@ def tokens(text):
     text = re.sub(r"`(?:which|command -v|type -P)\s+(\w+)`", r"\1", text)
     text = re.sub(r"`([^`]*)`", r"( \1 )", text)                                # a backtick body runs
     text = text.replace("\\;", "\\\\" + ESCAPED_SEMI)                           # `\\\;` reads back as the word `\;`
+    text = REDIR_AMP.sub(lambda m: m.group(0).replace("&", AMP), text)          # `2>&1`, `&>f`: one word, not a `&` split
     lex = shlex.shlex(text, posix=True, punctuation_chars=";&|()\n")
     lex.whitespace_split = True
     lex.whitespace = " \t\r"
@@ -194,7 +198,7 @@ def tokens(text):
         if t and all(c in ";&|()\n" for c in t):       # an empty word (`sed -i ''`) is still a word
             out.extend(re.findall(r"&&|\|\||[;&|()\n]", t))
         else:
-            out.append(t)
+            out.append(t.replace(AMP, "&"))
     return out
 
 

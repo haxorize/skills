@@ -31,7 +31,8 @@
 # and `--git-dir` / `--work-tree` name the repo; a tag push is decided by its
 # source; a negative refspec is dropped and an unresolvable source holds; a
 # push with no range checks the receipt, a push to a URL included; the
-# matching refspec `:` is a push, not a delete. A zone landing.sh refuses, and a
+# matching refspec `:` is a push, not a delete; a redirection's target is not
+# a refspec. A zone landing.sh refuses, and a
 # `list` that fails, block carrying landing.sh's stderr; a report the reader
 # exits 4 on is skipped. Whether next-step.sh agrees
 # with this hook is next-step-selftest.sh's parity section.
@@ -498,6 +499,19 @@ mkrepo mutok "$GATED_LINES"
 MOK="$work/mutok"
 stamp mutok-2026-01-01-m.review.md "Reviewed-tree: $(cd "$MOK" && git rev-parse 'HEAD^{tree}')"
 expect_quiet "$MOK" "git push"                                 "the mutation companion: a Reviewed-tree stamp allows quietly"
+# a redirection's target is not a refspec: each push below is the bare `git push
+# origin main`, stamped, so it allows quietly; read as a source it would hold
+expect_quiet "$MOK" "git push origin main > out.txt 2>&1"      "a detached > target and 2>&1 are not refspecs"
+expect_quiet "$MOK" "git push origin main >out.txt"            "an attached > target is not a refspec"
+expect_quiet "$MOK" "git push origin main 2>err.txt"           "an attached 2> target is not a refspec"
+expect_quiet "$MOK" "git push origin main 2> err.txt"          "a detached 2> target is not a refspec"
+expect_quiet "$MOK" "git push origin main >> out.txt"          "a detached >> target is not a refspec"
+expect_quiet "$MOK" "git push origin main &> out.txt"          "a detached &> target is not a refspec"
+expect_quiet "$MOK" "git push origin main < /dev/null"         "a detached < source is not a refspec"
+expect_quiet "$MOK" "git push origin > out.txt main"           "a refspec after a redirection is still read"
+out="$(crumb "$MOK" "git push origin main nosuch:other > out.txt 2>&1")"
+expect_in "$out" "beside a redirection, a source git cannot resolve is still named" 'git cannot resolve the tree of nosuch'
+expect_row "$out" "beside a redirection, a source git cannot resolve still blocks" 'rc=2'
 
 # --- mutation table -------------------------------------------------------------
 # Each row edits a copy of the hook, laid out as a checkout so the copy finds the
@@ -549,6 +563,7 @@ mutant "a negative refspec is a source" 'case "$r" in ^*) continue ;; esac' ':' 
 mutant "an unresolvable source allows" '[ -n "$t" ] || hold "git cannot resolve' '[ -n "$t" ] || { rec_allow x; return 0; }; : "git cannot resolve' "$MOK" "git push origin main nosuch:other" 0
 mutant "the matching refspec is a delete" 'case "$r" in :|+:) ;; :*|+:*)' 'case "$r" in :*|+:*)' "$G" "git push origin :" 0
 mutant "a URL push takes the upstream range" 'if [ -n "$url_push" ]; then' 'if false; then' "$work/tworemotes" "git push $work/other-remote.git" 0
+mutant "a redirection's target is a refspec" 'if REDIR_OP.match(r):' 'if False:' "$MOK" "git push origin main > out.txt 2>&1" 2
 mutant "no range is nothing to push" '[ -z "$wide" ] && [ -n "$range" ]; then' '[ -z "$wide" ]; then [ -n "$range" ] || { rec_allow x; return 0; };' "$work/norem" "git push" 0
 
 if [ "$fail" -ne 0 ]; then echo "SELFTEST FAIL: review-receipt"; exit 1; fi

@@ -186,6 +186,7 @@ hook_scan '
 PUSH_VALUE_OPTS = {"-o", "--push-option", "--receive-pack", "--exec", "--repo"}
 DRYRUN = re.compile(r"^(--dry-run|-[A-Za-z]*n[A-Za-z]*)$")
 DELETE = re.compile(r"^(--delete|-[A-Za-z]*d[A-Za-z]*)$")
+REDIR_OP = re.compile(r"^[0-9]*(<|>|>>|<>|>\||&>|&>>|<&|>&|<<-?|<<<)$")   # a redirection whose target is the next word
 
 def check_git(args, curdir):
     """args = tokens after the git word. Returns (kind, dir, remote, refspec,
@@ -225,8 +226,11 @@ def check_git(args, curdir):
                 pushall = "1"     # sends every branch; no refspec appears
             j += 1
             continue
+        if REDIR_OP.match(r):
+            j += 2                 # `> out.txt`: the operator and the target after it
+            continue
         if "<" in r or ">" in r:
-            j += 1                 # a redirection the segment split left behind
+            j += 1                 # `>out.txt`, `2>&1`: a redirection in one word
             continue
         if not remote:
             remote = r

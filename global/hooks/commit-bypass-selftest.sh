@@ -47,6 +47,11 @@ expect_block "$D" "/usr/bin/git commit --no-verify -m x"
 expect_block "$D" "cd repo && git commit --no-verify -m x"
 expect_block "$D" "git add . && git commit -n -m x"
 expect_block "$D" $'git commit \\\n  --no-verify -m x'             # continuation is one line to the shell
+# the & in a redirection operator (2>&1, >&2, &>file) is not a separator
+expect_block "$D" "git commit -m x 2>&1 --no-verify"
+expect_block "$D" "git commit -m x >&2 --no-verify"
+expect_block "$D" "git commit -m x &>log --no-verify"
+expect_block "$D" "git commit -m x &>>log --no-verify"
 expect_block "$D" $'git commit -F - --no-verify <<\'MSG\'\nfix\nMSG'
 expect_block "$D" $'bash <<EOF\ngit commit --no-verify -m x\nEOF'
 # quoted flags are still flags to git
@@ -206,6 +211,9 @@ lib_mutant "no value-taking options" 'k += 2 if SHELL_VALUE_OPTS.match(t) else 1
 lib_mutant "no here-string read"   'body = seg[k + 1] if t == "<<<"' 'body = "" if True' 'bash <<< "git commit --no-verify -m x"' 0
 lib_mutant "no backslash delimiter" '<<-?\s*\\?[' '<<-?\s*[' $'cat <<\\EOF > notes.txt\ndon\'t\nEOF\ngit commit -n -m x' 0
 lib_mutant "an unexpandable operand is a script" 'any(c in t for c in "$`<>")' 'any(c in t for c in "<>")' "printf 'git commit --no-verify -m x' | bash \"\$X\"" 0
+# the tokeniser's redirection &, one alternative at a time
+lib_mutant "the & of >& separates"  'REDIR_AMP = re.compile(r"[<>]&|&>")' 'REDIR_AMP = re.compile(r"&>")' "git commit -m x 2>&1 --no-verify" 0
+lib_mutant "the & of &> separates"  'REDIR_AMP = re.compile(r"[<>]&|&>")' 'REDIR_AMP = re.compile(r"[<>]&")' "git commit -m x &>log --no-verify" 0
 # hook-lib.sh's isolated Python, and the hook's own value-option skip, on copies beside the real lib
 sdir="$tmp/mut-sh"; mkdir -p "$sdir"; cp "$hook" "$here/hook-lib.py" "$sdir/"
 # row_no_cwd_module: green when the hook, run from the shadow dir, imported
