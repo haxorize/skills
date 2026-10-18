@@ -19,11 +19,6 @@ cat ~/.claude/history.jsonl_old
 cat ./.credentials.json
 # ruleid: sh-agentcfg
 cat .mcp.json
-# A peer skill's body by a relative path, and under a skills/ directory.
-# ruleid: sh-agentcfg
-cat ../peer-skill/SKILL.md
-# ruleid: sh-agentcfg
-cat skills/other/SKILL.md
 # A trailing comment is not a comment line.
 # ruleid: sh-agentcfg
 echo ok # then read ~/.claude/settings.json

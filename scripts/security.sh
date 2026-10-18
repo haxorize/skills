@@ -16,7 +16,11 @@
 #   - injection phrases ("ignore previous instructions", "do not tell the
 #     user"), read in the raw text, code fences included — a fence is a
 #     rendering convention; a session loading the body reads through it
-#   - imperative text hidden in HTML comments; zero-width / bidi unicode
+#   - imperative text hidden in HTML comments; zero-width, bidi-control,
+#     bidi-isolate or tag-block unicode, a variation selector, a soft hyphen,
+#     the combining grapheme joiner or an invisible operator (a byte-order
+#     mark at offset 0 is the encoding's own and exempt, one anywhere else
+#     counts; VS16 after an emoji or inside a keycap is exempt)
 #   - large decodable base64 blobs in markdown, whether the decode is text
 #     (hidden instructions) or not (a smuggled payload)
 #   - scripts that pipe the network into a shell, decode-and-exec, read
@@ -44,16 +48,30 @@
 #     and its IPv6 form fd00:ec2::254, since one GET there returns the
 #     instance role's credentials), name an agent's configuration outside a
 #     comment (a
-#     ~/.claude, ~/.codex or ~/.gemini directory, a .credentials.json, an
-#     mcp.json, a peer skill's SKILL.md by a ../ or skills/ path — a mention
-#     is a hit, a read verb is not required), persist past the session
+#     ~/.claude, ~/.codex or ~/.gemini directory, a .credentials.json or an
+#     mcp.json is a hit on a mention alone), name a peer skill's SKILL.md by
+#     a ../ or skills/ path outside a comment (sh-peerbody, in two tiers:
+#     HIGH beside an access verb on the same line — a shell read, write,
+#     copy, link, search or encode verb, curl's upload flags, a redirect onto
+#     the path, open(, read_text/write_text, the fs read/write calls, shutil,
+#     os.remove/rename/symlink — and MEDIUM on a mention alone, because
+#     registries, manifests and docs name peer bodies as data: over the
+#     2026-10-12 mining corpus 50 of 55 such lines were mentions. A path held
+#     in a variable and read on a later line draws only the MEDIUM on the
+#     line that names it; the read itself is not seen), persist past the
+#     session
 #     (crontab other than -l/-r, launchctl load or bootstrap, a write into
 #     LaunchAgents or a systemd user unit directory, a redirect or tee into a
 #     shell rc file, systemctl enable), turn TLS verification off (curl -k in
 #     curl's own command, --no-check-certificate,
 #     verify=False, rejectUnauthorized: false, the node and git env switches),
 #     or serialise the whole environment (JSON.stringify(process.env),
-#     dict(os.environ), env piped to a network tool or an encoder)
+#     dict(os.environ), env piped to a network tool or an encoder), or open
+#     a reverse shell in one of its unambiguous forms (bash's /dev/tcp/ or
+#     /dev/udp/, nc, ncat or netcat with -e, or with -c naming a shell,
+#     ncat's --exec, --sh-exec or --lua-exec, socat with an EXEC: or SYSTEM:
+#     address in any case, a mkfifo line whose pipe a shell reads, piped or
+#     redirected); a bare nc, socat or mkfifo is not a hit
 #   - a Latin-lookalike letter from another script (Cyrillic or Greek) in a
 #     run of ASCII letters — a homoglyph — anywhere in markdown or script
 #     text; a whole foreign word, an accented name, CJK beside ASCII, a run of
@@ -339,6 +357,22 @@ _DROP_HOSTS = (
     r"webhook\.site|requestbin\.(com|net)|[a-z0-9-]+\.pipedream\.net|[a-z0-9-]+\.requestcatcher\.com|"
     r"discord(app)?\.com/api/webhooks|hooks\.slack\.com|[a-z0-9-]+\.webhook\.office\.com|api\.telegram\.org/bot[\w:-]*"
 )
+# A peer skill's body by a ../ or skills/ path. The path's run is bounded, and
+# so is every gap below, so a hostile line costs linear time, never quadratic.
+_PEER_BODY = r"(\.\./|\bskills/)[^\s\"']{0,256}SKILL\.md\b"
+# The access verbs that raise a peer-body mention to HIGH, anywhere on its
+# line. A shell verb is a word of its own (not foo.cat, $cat or my-cat) and
+# never a key: `"source": "skills/x/SKILL.md"` and `install=...` are data.
+# The redirect is not any < or > on the line (an HTML tag, a comparison):
+# it opens a shell word and its target is the peer path itself, so bash's
+# $(<file) read counts and a bare $( does not (its command is the verb).
+_ACCESS = (
+    r"(?<![\w.$-])(cat|tac|cp|mv|rm|ln|install|rsync|scp|sed|awk|grep|rg|tee|source|head|tail|dd|xxd|od|hexdump|base64|tar|zip|truncate)\b(?![\"']?\s*[:=])"
+    r"|\bcurl\b[^\n]{0,200}?\s(-T|--upload-file|-F|--form|-d|--data(-binary|-raw|-urlencode)?)\b"
+    r"|\bopen\(|\b(read|write)_(text|bytes)\b|\b(readFile|writeFile|appendFile|copyFile|createReadStream|createWriteStream)"
+    r"|\bshutil\.\w+|\bos\.(remove|unlink|rename|replace|symlink|link)\b|\b(symlink_to|hardlink_to|unlink)\(|\bFile\.(read|write|open)\b"
+    r"|(^|(?<=[\s;(|&]))[0-9&]?(>>?|<)\s*[\"']?" + _PEER_BODY
+)
 _RAW_IP = _PRIVATE_IP + r"\d{1,3}(\.\d{1,3}){3}|\d{8,10}|0x[0-9a-f]{8}|\[[0-9a-f:]{3,}\]"
 SCRIPT_RULES = [
     ("sh-curlpipe", "HIGH", R(r"\b(curl|wget)\b[^\n|;&]*\|\s*(sudo\s+)?(ba)?sh\b"),
@@ -373,8 +407,16 @@ SCRIPT_RULES = [
     # directory lands here.
     # A line that is only a comment names nothing the shell reads, so the rule
     # starts past a leading `#` or `//`; a trailing comment still counts.
-    ("sh-agentcfg", "HIGH", R(r"(?m)^(?![ \t]*(#|//))[^\n]*?(" + _HOME + r"/\.(claude|codex|gemini)(/(?!history\.jsonl\b)|(?![\w./-]))|\.credentials\.json\b|\bmcp\.json\b|(\.\./|\bskills/)[^\s\"']*SKILL\.md\b)"),
-     "Names agent configuration (an agent's config directory, its credentials file, mcp.json, or a peer skill's body)"),
+    ("sh-agentcfg", "HIGH", R(r"(?m)^(?![ \t]*(#|//))[^\n]*?(" + _HOME + r"/\.(claude|codex|gemini)(/(?!history\.jsonl\b)|(?![\w./-]))|\.credentials\.json\b|\bmcp\.json\b)"),
+     "Names agent configuration (an agent's config directory, its credentials file, or mcp.json)"),
+    # A peer skill's body, in two tiers that split every non-comment line
+    # naming one: HIGH with an access verb anywhere on the line, MEDIUM on a
+    # mention alone (the header says why). The two lookaheads are one
+    # expression negated, so a line draws exactly one tier.
+    ("sh-peerbody", "HIGH", R(r"(?m)^(?![ \t]*(#|//))(?=[^\n]*?(" + _ACCESS + r"))[^\n]*?" + _PEER_BODY),
+     "Reads, writes or ships a peer skill's body (a ../ or skills/ SKILL.md beside an access verb)"),
+    ("sh-peerbody", "MEDIUM", R(r"(?m)^(?![ \t]*(#|//))(?![^\n]*?(" + _ACCESS + r"))[^\n]*?" + _PEER_BODY),
+     "Names a peer skill's body (a ../ or skills/ SKILL.md, no access verb on the line)"),
     # `crontab -l` and `crontab -r` list and delete; every other operand
     # installs. The two path alternatives need a write beside them (a
     # redirect, tee, cp, mv, ln, install), so a mention is not a hit.
@@ -385,6 +427,15 @@ SCRIPT_RULES = [
      "TLS verification disabled"),
     ("sh-envdump", "MEDIUM", R(r"JSON\.stringify\(\s*process\.env\s*\)|\bdict\(\s*os\.environ\s*\)|\b(printenv|env)\b\s*\|[^\n]*\b(curl|wget|nc|ncat|base64|openssl)\b"),
      "Serialises or pipes the whole environment (a credential harvest)"),
+    # nc's -c is TLS in OpenBSD's netcat and a shell command in the others, so
+    # it counts only with a shell as its argument. socat's address types are
+    # case-insensitive. A mkfifo line counts when a shell reads the pipe,
+    # piped (| sh) or redirected (sh -i < /tmp/f).
+    ("sh-revshell", "HIGH", R(r"/dev/(tcp|udp)/"
+        r"|\b(nc|ncat|netcat)\s+([^\n|;&]{0,200}\s)?(-[a-zA-Z]*e\b|-[a-zA-Z]*c\s+[\"']?(\S*/)?(ba|z|da|k)?sh\b|--(sh-|lua-)?exec\b)"
+        r"|\bsocat\b[^\n]{0,300}?\b(?i:exec|system):"
+        r"|\bmkfifo\b[^\n]{0,300}?(\|\s*(/(usr/)?bin/)?(ba|z|da)?sh\b|(?<![\w-])(ba|z|da|k)?sh(\s+-[a-zA-Z]+)*\s*[0-9]?<(?!<))"),
+     "Reverse shell (/dev/tcp, nc -e or -c sh, ncat --exec, socat EXEC: or SYSTEM:, or a mkfifo a shell reads)"),
 ]
 MD_RULES = [PatternRule(*r) for r in MD_RULES]
 SCRIPT_RULES = [PatternRule(*r) for r in SCRIPT_RULES]
@@ -404,7 +455,16 @@ RUN_SPLIT = R(r"[._-]")
 ESCAPE_TAIL = R(r"(u[0-9a-fA-F]{4}|U[0-9a-fA-F]{8}|x[0-9a-fA-F]{2}|[A-Za-z0-9])?")
 # U+200C/U+200D are legitimate inside emoji sequences and some scripts — they
 # only count as hidden when sandwiched between plain ASCII.
-UNI_HIDDEN = R("[\u200b\u2060\u202a-\u202e\ufeff]|[\x20-\x7e][\u200c\u200d]+[\x20-\x7e]")
+# A byte-order mark at offset 0 is the encoding's own; one anywhere else hides
+# nothing legitimate. Tag characters (U+E0000-E007F) spell invisible ASCII.
+# Variation selectors (U+FE00-FE0E, U+E0100-E01EF) carry bytes after a
+# visible character (emoji smuggling); the soft hyphen, the combining
+# grapheme joiner and the invisible operators (U+2061-2064) render as nothing.
+# VS16 (U+FE0F) is emoji presentation, so it counts only off an emoji: not
+# after a pictographic code point, and not in a keycap (1, U+FE0F, U+20E3).
+_EMOJI_BASE = "\u00a9\u00ae\u203c\u2049\u2122\u2139\u2194-\u21aa\u231a-\u23ff\u24c2\u25aa-\u25fe\u2600-\u27bf\u2934\u2935\u2b05-\u2b55\u3030\u303d\u3297\u3299\U0001F000-\U0001FAFF"
+UNI_HIDDEN = R("(?!\\A)\ufeff|[\u200b\u2060\u202a-\u202e\u2066-\u2069\U000E0000-\U000E007F]|[\u00ad\u034f\u2061-\u2064\ufe00-\ufe0e\U000E0100-\U000E01EF]"
+               "|(?<![" + _EMOJI_BASE + "0-9#*])\ufe0f|(?<=[0-9#*])\ufe0f(?!\u20e3)|[\x20-\x7e][\u200c\u200d]+[\x20-\x7e]")
 # Control characters in a hostile file name or evidence line are rendered as
 # escapes, so a scanned directory cannot rewrite the terminal it is reported on.
 CONTROL = R(r"[\x00-\x1f\x7f]")
@@ -544,7 +604,7 @@ def confusable_runs(text):
 
 
 UNI_CONFUSABLE = FindingKind("uni-confusable", "MEDIUM", "Latin-lookalike letter from another script inside an ASCII identifier (homoglyph)")
-UNI_HIDDEN_RULE = PatternRule("uni-hidden", "HIGH", UNI_HIDDEN, "Zero-width or bidi-control unicode (hidden text)")
+UNI_HIDDEN_RULE = PatternRule("uni-hidden", "HIGH", UNI_HIDDEN, "Zero-width, bidi-control, bidi-isolate, tag, variation-selector or other invisible unicode (hidden text)")
 MD_REMOTE_RULE = PatternRule("md-remote-instructions", "MEDIUM", REMOTE_INSTR, "Fetches instructions from a URL on each run and applies them (rules change under the installer with no commit)")
 MD_HTMLCOMMENT = FindingKind("md-htmlcomment", "MEDIUM", "HTML comment contains imperative instructions (invisible when rendered)")
 MD_B64_TEXT = FindingKind("md-b64", "MEDIUM", "Large base64 blob in markdown that decodes to text (hidden instructions)")

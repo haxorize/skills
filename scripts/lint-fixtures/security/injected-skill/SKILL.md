@@ -118,6 +118,34 @@ Zero-width here: ab​cd.
 Joiner here: ab‌cd.
 <!-- ruleid: uni-hidden -->
 Bidi here: ab‮cd.
+<!-- ruleid: uni-hidden -->
+Tag here: ab󠁁cd.
+<!-- ruleid: uni-hidden -->
+Isolate here: ab⁦cd.
+<!-- ruleid: uni-hidden -->
+Byte-order mark past offset 0: ab﻿cd.
+<!-- ruleid: uni-hidden -->
+Variation selector 1: ab︀cd.
+<!-- ruleid: uni-hidden -->
+Variation selector 15: ab︎cd.
+<!-- ruleid: uni-hidden -->
+Variation selector 17: ab󠄀cd.
+<!-- ruleid: uni-hidden -->
+Variation selector 256: ab󠇯cd.
+<!-- ruleid: uni-hidden -->
+VS16 off an emoji: ab️cd.
+<!-- ruleid: uni-hidden -->
+Soft hyphen: ab­cd.
+<!-- ruleid: uni-hidden -->
+Combining grapheme joiner: ab͏cd.
+<!-- ruleid: uni-hidden -->
+Function application: ab⁡cd.
+<!-- ruleid: uni-hidden -->
+Invisible plus: ab⁤cd.
+<!-- ruleid: uni-hidden -->
+VS16 after a digit, no keycap: ab1️cd.
+<!-- ruleid: uni-hidden -->
+A run of VS16 after an emoji: ab❤️️cd.
 
 <!-- ruleid: md-shell-inline -->
 Current state: !`git status --short`

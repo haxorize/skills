@@ -44,3 +44,9 @@ Copyright &#169; 2026 &amp; contributors; remove the marker TODO from the follow
 
 <!-- ok: inj-obfuscated -->
 Remove all characters except ASCII alphanumerics, then strip the string foo, remove the token bar, drop the tag baz, and delete the sequence qux from the slug.
+
+<!-- ok: uni-hidden -->
+Emoji presentation: ⚠️ Target missed, ❤️ thanks, 🏳️ flag.
+
+<!-- ok: uni-hidden -->
+A keycap: press 1️⃣ then #️⃣.

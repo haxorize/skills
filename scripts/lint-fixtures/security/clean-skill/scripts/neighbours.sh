@@ -39,3 +39,28 @@ curl -s "$URL" | jq -r '.[]' | sort -k 2
 curl -s https://example.com/api/webhooks/1
 # ok: sh-dropsite
 curl -s https://api.telegram.org/
+# A skill's own body, a non-skill file beside a peer, a skills/ that is the
+# tail of another word, and a comment line: none names a peer body.
+# ok: sh-peerbody
+cat SKILL.md ./SKILL.md
+# ok: sh-peerbody
+cat ../peer-skill/README.md
+# ok: sh-peerbody
+cat myskills/other/SKILL.md
+# ok: sh-peerbody
+# cat ../peer-skill/SKILL.md
+# ok: sh-peerbody
+# see ../peer-skill/SKILL.md for the contract
+# ok: sh-revshell
+nc -z example.com 22
+# ok: sh-revshell
+socat TCP-LISTEN:8080,fork TCP:localhost:80
+# ok: sh-revshell
+mkfifo /tmp/p && cat /tmp/p | grep ready
+# ok: sh-revshell
+mkfifo /tmp/p && grep ready < /tmp/p
+# OpenBSD netcat's -c is TLS, not a shell command.
+# ok: sh-revshell
+nc -c example.com 443
+# ok: sh-revshell
+socat TCP-LISTEN:8080,fork OPEN:/tmp/log,creat,append

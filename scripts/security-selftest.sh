@@ -118,7 +118,8 @@
 # its three mutation rows (the review threshold read as risk; the flag parsed
 # and ignored; the incomplete threshold dropped) in the table.
 #
-# Last, every shipped skill under src/ must PASS. That row grades the corpus,
+# Last, every shipped skill under src/ must PASS, retro excepted: its findings
+# are pinned to a shrink-only baseline beside the row. That row grades the corpus,
 # not the scanner: a red there is a skill body that acquired a flagged phrase,
 # or a rule that widened onto ordinary prose — its message says which file, and
 # the rows above say whether the scanner itself moved. Run it after changing a
@@ -140,6 +141,15 @@
 # narrowings for sh-dropsite, sh-dlexec, sh-creds, inj-ignore
 # and uni-hidden; the first eight 2026-08-29 additions are otherwise ungraded
 # by mutation.
+# The 2026-10-18 edits are graded both ways: sh-peerbody's two tiers (the
+# mention, the redirect shape, the key and in-word exemptions, the comment
+# guard, curl's upload flags, shutil, node's fs calls; every other access
+# verb has a :HIGH-pinned instance, so dropping one reds on its severity),
+# sh-revshell's arms, and uni-hidden's tag block, bidi isolates,
+# byte-order-mark offset, variation selectors, soft hyphen, combining
+# grapheme joiner, invisible operators and the VS16 emoji and keycap
+# exemptions. The runtime of sh-peerbody's bounded gaps is measured by hand
+# (a 60,000-character line), not here.
 set -uo pipefail
 
 repo_root="$(cd "$(dirname "$0")/.." && pwd)"
@@ -153,19 +163,20 @@ rules=$(grep -oE '"(inj|sh|md|bin|uni|manifest|scan)-[a-z0-9-]+"' scripts/securi
 # name; the count is pinned, so a rule deleted from the source — and with it
 # from the roster — reds too. Raise the pin when a rule lands with its fixture.
 nrules=$(printf '%s\n' "$rules" | wc -l | tr -d ' ')
-[ "$nrules" -eq 36 ] || selftest_fail "read $nrules rule ids out of scripts/security.sh, not 36 — a rule was added (add its fixture instance and raise this pin) or deleted (lower the pin on purpose)"
+[ "$nrules" -eq 38 ] || selftest_fail "read $nrules rule ids out of scripts/security.sh, not 38 — a rule was added (add its fixture instance and raise this pin) or deleted (lower the pin on purpose)"
 
 # Every rule's severity, pinned: the verdict is made of severities alone, and
 # a LOW finding is never printed, so a demotion is a change to the contract.
 # One row per rule; the grader reds on a finding whose severity differs, and
 # on a rule missing here. inj-obfuscated carries the severity of the phrase
-# it reads as (HIGH for inj-ignore, MEDIUM for the marker-count finding), so
-# its row lists both.
+# it reads as (HIGH for inj-ignore, MEDIUM for the marker-count finding), and
+# sh-peerbody is HIGH beside an access verb and MEDIUM on a mention, so each
+# row lists both and the fixture pins the tier per instance.
 SEVERITY=$(printf '%s\n' \
   'inj-ignore HIGH' 'inj-conceal HIGH' 'inj-secrecy HIGH' 'inj-exfil-word MEDIUM' 'inj-noconfirm MEDIUM' 'inj-newrole MEDIUM' \
   'sh-curlpipe HIGH' 'sh-b64exec HIGH' 'sh-creds HIGH' 'sh-dropsite HIGH' 'sh-dlexec HIGH' 'sh-hexblob MEDIUM' \
   'sh-shortener HIGH' 'sh-http MEDIUM' 'sh-postout MEDIUM' 'sh-eval MEDIUM' 'sh-history MEDIUM' 'sh-imds HIGH' \
-  'sh-agentcfg HIGH' 'sh-persist HIGH' 'sh-noverify MEDIUM' 'sh-envdump MEDIUM' 'sh-minified MEDIUM' \
+  'sh-agentcfg HIGH' 'sh-peerbody HIGH MEDIUM' 'sh-persist HIGH' 'sh-noverify MEDIUM' 'sh-envdump MEDIUM' 'sh-revshell HIGH' 'sh-minified MEDIUM' \
   'uni-confusable MEDIUM' 'uni-hidden HIGH' 'md-remote-instructions MEDIUM' 'md-htmlcomment MEDIUM' 'md-b64 MEDIUM' \
   'manifest-hook HIGH' 'bin-compiled HIGH' 'bin-bytecode MEDIUM' 'scan-skipped MEDIUM' 'scan-error MEDIUM' \
   'md-shell-inline MEDIUM' 'inj-obfuscated HIGH MEDIUM' 'bin-archive MEDIUM')
@@ -345,7 +356,7 @@ done <<< "$graded"
 # that stopped matching, would otherwise pass. Exact, so a fixture addition
 # is a deliberate edit here.
 ngraded=$(printf '%s\n' "$graded" | sed -n 's/^GRADED \([0-9]*\) expectations$/\1/p')
-[ "${ngraded:-0}" -eq 386 ] || selftest_fail "the grader read ${ngraded:-0} expectations from the fixtures, not the pinned 386 — a fixture instance was added (raise the pin) or lost (find it: a deleted file, or an annotation the grader no longer reads)"
+[ "${ngraded:-0}" -eq 594 ] || selftest_fail "the grader read ${ngraded:-0} expectations from the fixtures, not the pinned 594 — a fixture instance was added (raise the pin) or lost (find it: a deleted file, or an annotation the grader no longer reads)"
 
 # Every member of the scanner's homoglyph table has an instance: the table is
 # read out of the source, and each character must appear on a line under a
@@ -497,7 +508,7 @@ mutation "agentcfg-no-codex"    's/claude\|codex\|gemini/claude|gemini/'        
 mutation "agentcfg-any-dotdir"  's/\(claude\|codex\|gemini\)\(\/\(\?!history\\\.jsonl\\b\)/[a-z]+(\/(?!history\\.jsonl\\b)/' "widening: sh-agentcfg matches every dot-directory under home" "sh-agentcfg fired on clean-skill/scripts/neighbours.sh"
 mutation "agentcfg-no-baredir"  's/\|\(\?!\[\\w\.\/-\]\)\)/)/'                                        "narrowing: sh-agentcfg loses the bare-directory form (~/.claude with no trailing slash)" "sh-agentcfg did not fire on injected-skill/scripts/sh-agentcfg.sh:12"
 mutation "agentcfg-comment-fires" 's/\(\?m\)\^\(\?!\[ \\t\]\*\(#\|\/\/\)\)\[\^\\n\]\*\?//'        "widening: sh-agentcfg fires on a comment line that names the file" "sh-agentcfg fired on clean-skill/scripts/neighbours.sh"
-mutation "agentcfg-no-relative-peer" 's/\(\\\.\\\.\/\|\\bskills\/\)/(\\bskills\/)/'              "narrowing: sh-agentcfg loses the ../ form of a peer skill's body" "sh-agentcfg did not fire on injected-skill/scripts/sh-agentcfg.sh:24"
+mutation "peerbody-no-relative" 's/\(\\\.\\\.\/\|\\bskills\/\)\[/(\\bskills\/)[/'              "narrowing: sh-peerbody loses the ../ form of a peer skill's body" "sh-peerbody did not fire on injected-skill/scripts/sh-peerbody.sh:8"
 mutation "persist-no-bashrc"    's/zshrc\|bashrc\|/zshrc|/'                                     "narrowing: sh-persist loses .bashrc" "sh-persist did not fire on injected-skill/scripts/sh-persist.sh"
 mutation "persist-crontab-l"    's/crontab\\s\+\(\?!-\[lr\]\\b\)/crontab\\s+/'                    "widening: sh-persist flags crontab -l" "sh-persist fired on clean-skill/scripts/neighbours.sh"
 mutation "persist-no-tee"       's/\|\\\|\\s\*tee\(\\s\+-a\)\?//'                                "narrowing: sh-persist loses the tee form of the rc-file write" "sh-persist did not fire on injected-skill/scripts/sh-persist.sh"
@@ -529,7 +540,45 @@ mutation "rawip-no-exemption"   's/_RAW_IP = _PRIVATE_IP \+ /_RAW_IP = /'       
 mutation "creds-no-netrc"       's/\|\\\.netrc//'                                                "narrowing: sh-creds loses .netrc" "sh-creds did not fire"
 mutation "dlexec-no-tee"        's/\|\\\|\\s\*tee\\b//g'                                         "narrowing: sh-dlexec loses the tee form" "sh-dlexec did not fire"
 mutation "ignore-no-disregard"  's/ignore\|disregard\|forget/ignore|forget/'                     "narrowing: inj-ignore loses disregard" "inj-ignore did not fire"
+mutation "hidden-no-tag"        's/\\u2066-\\u2069\\U000E0000-\\U000E007F/\\u2066-\\u2069/'      "narrowing: uni-hidden loses the tag block" "uni-hidden did not fire on injected-skill/SKILL.md"
+mutation "hidden-no-isolate"    's/\\u2066-\\u2069//'                                          "narrowing: uni-hidden loses the bidi isolates" "uni-hidden did not fire on injected-skill/SKILL.md"
+mutation "hidden-no-midbom"     's/"\(\?!\\\\A\)\\ufeff\|/"/'                                "narrowing: uni-hidden loses the byte-order mark past offset 0" "uni-hidden did not fire on injected-skill/SKILL.md"
+mutation "hidden-bom-at-zero"   's/\(\?!\\\\A\)//'                                            "widening: uni-hidden flags the byte-order mark at offset 0, the encoding's own" "uni-hidden fired on clean-skill/bom.md"
+mutation "peerbody-no-mention"   's/\n    \("sh-peerbody", "MEDIUM".*\n.*\n/\n/'                       "narrowing: a peer SKILL.md mention with no verb draws nothing, the 2026-10-18 first cut" "sh-peerbody did not fire on injected-skill/scripts/sh-peerbody.sh:98"
+mutation "peerbody-any-angle"   's/\(\^\|\(\?<=\[\\s;\(\|&\]\)\)\[0-9&\]\?\(>>\?\|<\)\\s\*\[\\"\x27\]\?" \+ _PEER_BODY/[<>]"/' "widening: any < or > on the line is a redirect, so an HTML tag beside a peer path is a read" "sh-peerbody reported severity HIGH on injected-skill/scripts/sh-peerbody.sh:110"
+mutation "peerbody-no-redirect" 's/\|\(\^\|\(\?<=\[\\s;\(\|&\]\)\)\[0-9&\]\?\(>>\?\|<\)\\s\*\[\\"\x27\]\?" \+ _PEER_BODY/"/' "narrowing: the access verbs lose the redirect onto the path" "sh-peerbody reported severity MEDIUM on injected-skill/scripts/sh-peerbody.sh:81"
+mutation "peerbody-key-is-verb" 's/\(\?!\[\\"\x27\]\?\\s\*\[:=\]\)//'                             "widening: a key named like a verb (\"source\": ...) is the verb" "sh-peerbody reported severity HIGH on injected-skill/scripts/sh-peerbody.sh:105"
+mutation "peerbody-verb-in-word" 's/\(\?<!\[\\w\.\$-\]\)\(cat\|/\\b(cat|/'                           "widening: a verb inside another word or a variable (\$cat, my-cat) is the verb" "sh-peerbody reported severity HIGH on injected-skill/scripts/sh-peerbody.sh:117"
+mutation "peerbody-no-curl-upload" 's/\|\\bcurl\\b\[\^\\n\]\{0,200\}\?\\s\(-T\|--upload-file\|-F\|--form\|-d\|--data\(-binary\|-raw\|-urlencode\)\?\)\\b//' "narrowing: the access verbs lose curl's upload flags" "sh-peerbody reported severity MEDIUM on injected-skill/scripts/sh-peerbody.sh:62"
+mutation "peerbody-no-shutil"   's/\|\\bshutil\\\.\\w\+//'                                       "narrowing: the access verbs lose shutil" "sh-peerbody reported severity MEDIUM on injected-skill/scripts/sh-peerbody.py:14"
+mutation "peerbody-no-fs"       's/\|\\b\(readFile\|writeFile\|appendFile\|copyFile\|createReadStream\|createWriteStream\)//' "narrowing: the access verbs lose node's fs calls" "sh-peerbody reported severity MEDIUM on injected-skill/scripts/sh-peerbody.js:10"
+mutation "peerbody-comment-fires-high" 's/\("sh-peerbody", "HIGH", R\(r"\(\?m\)\^\(\?!\[ \\t\]\*\(#\|\/\/\)\)/("sh-peerbody", "HIGH", R(r"(?m)^/' "widening: a comment line naming a peer body beside a verb is a read" "sh-peerbody fired on clean-skill/scripts/neighbours.sh"
+mutation "peerbody-comment-fires-medium" 's/\("sh-peerbody", "MEDIUM", R\(r"\(\?m\)\^\(\?!\[ \\t\]\*\(#\|\/\/\)\)/("sh-peerbody", "MEDIUM", R(r"(?m)^/' "widening: a comment line naming a peer body is a mention" "sh-peerbody fired on clean-skill/scripts/neighbours.sh"
+mutation "peerbody-any-skillsdir" 's/\(\\\.\\\.\/\|\\bskills\/\)\[/(\\.\\.\/|skills\/)[/' "widening: a skills/ that is the tail of another word (myskills/) names a peer" "sh-peerbody fired on clean-skill/scripts/neighbours.sh"
+mutation "revshell-no-socat"    's/\n\s*r"\|\\bsocat\\b\[\^\\n\]\{0,300\}\?\\b\(\?i:exec\|system\):"//' "narrowing: sh-revshell loses socat EXEC:" "sh-revshell did not fire on injected-skill/scripts/sh-revshell.sh:13"
+mutation "revshell-no-mkfifo"   's/\n\s*r"\|\\bmkfifo\\b[^\n]*"\),/),/'                          "narrowing: sh-revshell loses the mkfifo a shell reads" "sh-revshell did not fire on injected-skill/scripts/sh-revshell.sh:15"
+mutation "revshell-any-nc"      's/\\s\+\(\[\^\\n\|;&\]\{0,200\}\\s\)\?\(-\[a-zA-Z\]\*e\\b.*?--\(sh-\|lua-\)\?exec\\b\)/\\b/' "widening: sh-revshell flags any nc call, a port check included" "sh-revshell fired on clean-skill/scripts/neighbours.sh"
+mutation "revshell-any-mkfifo"  's/\\bmkfifo\\b[^"]*"/\\bmkfifo\\b"/'                            "widening: sh-revshell flags any mkfifo, one with no shell beside it included" "sh-revshell fired on clean-skill/scripts/neighbours.sh"
+mutation "revshell-any-socat"   's/\\bsocat\\b\[\^\\n\]\{0,300\}\?\\b\(\?i:exec\|system\):/\\bsocat\\b/' "widening: sh-revshell flags any socat, a port forward included" "sh-revshell fired on clean-skill/scripts/neighbours.sh"
+mutation "revshell-no-devtcp"   's/r"\/dev\/\(tcp\|udp\)\/"\n\s*r"\|/r"/'                       "narrowing: sh-revshell loses bash's /dev/tcp/ form" "sh-revshell did not fire on injected-skill/scripts/sh-revshell.sh:5"
+mutation "revshell-no-netcat"   's/\(nc\|ncat\|netcat\)/(nc|ncat)/'                              "narrowing: sh-revshell loses the netcat spelling" "sh-revshell did not fire on injected-skill/scripts/sh-revshell.sh:17"
+mutation "revshell-no-dash-c"   's/\|-\[a-zA-Z\]\*c\\s\+\[\\"\x27\]\?\(\\S\*\/\)\?\(ba\|z\|da\|k\)\?sh\\b//' "narrowing: sh-revshell loses nc -c with a shell" "sh-revshell did not fire on injected-skill/scripts/sh-revshell.sh:19"
+mutation "revshell-dash-c-any"  's/-\[a-zA-Z\]\*c\\s\+\[\\"\x27\]\?\(\\S\*\/\)\?\(ba\|z\|da\|k\)\?sh\\b/-[a-zA-Z]*c\\b/' "widening: sh-revshell flags nc -c with no shell (OpenBSD's TLS flag)" "sh-revshell fired on clean-skill/scripts/neighbours.sh"
+mutation "revshell-no-long-exec" 's/\|--\(sh-\|lua-\)\?exec\\b//'                                "narrowing: sh-revshell loses ncat's --exec family" "sh-revshell did not fire on injected-skill/scripts/sh-revshell.sh:23"
+mutation "revshell-no-system"   's/\(\?i:exec\|system\)/(?i:exec)/'                              "narrowing: sh-revshell loses socat SYSTEM:" "sh-revshell did not fire on injected-skill/scripts/sh-revshell.sh:29"
+mutation "revshell-socat-case"  's/\(\?i:exec\|system\)/(EXEC|SYSTEM)/'                         "narrowing: sh-revshell reads socat's address types in one case only" "sh-revshell did not fire on injected-skill/scripts/sh-revshell.sh:31"
+mutation "revshell-no-zsh-pipe" 's/\\\|\\s\*\(\/\(usr\/\)\?bin\/\)\?\(ba\|z\|da\)\?sh/\\|\\s*(\/(usr\/)?bin\/)?(ba|da)?sh/' "narrowing: the mkfifo pipe loses zsh" "sh-revshell did not fire on injected-skill/scripts/sh-revshell.sh:36"
+mutation "revshell-no-fifo-redirect" 's/\|\(\?<!\[\\w-\]\)\(ba\|z\|da\|k\)\?sh\(\\s\+-\[a-zA-Z\]\+\)\*\\s\*\[0-9\]\?<\(\?!<\)//' "narrowing: the mkfifo loses the shell redirected from the pipe" "sh-revshell did not fire on injected-skill/scripts/sh-revshell.sh:40"
+mutation "revshell-fifo-any-redirect" 's/\(\?<!\[\\w-\]\)\(ba\|z\|da\|k\)\?sh\(\\s\+-\[a-zA-Z\]\+\)\*\\s\*\[0-9\]\?<//' "widening: any < after a mkfifo is a shell reading the pipe" "sh-revshell fired on clean-skill/scripts/neighbours.sh"
 mutation "hidden-no-zwj"        's/\|\[\\x20-\\x7e\]\[\\u200c\\u200d\]\+\[\\x20-\\x7e\]//'         "narrowing: uni-hidden loses the joiner-between-ASCII form" "uni-hidden did not fire"
+mutation "hidden-no-vs"         's/\\ufe00-\\ufe0e//'                                          "narrowing: uni-hidden loses the variation selectors" "uni-hidden did not fire on injected-skill/SKILL.md:128"
+mutation "hidden-no-vs-supplement" 's/\\U000E0100-\\U000E01EF//'                                "narrowing: uni-hidden loses the supplementary variation selectors" "uni-hidden did not fire on injected-skill/SKILL.md:132"
+mutation "hidden-no-soft-hyphen" 's/\[\\u00ad/[/'                                               "narrowing: uni-hidden loses the soft hyphen" "uni-hidden did not fire on injected-skill/SKILL.md:138"
+mutation "hidden-no-cgj"        's/\\u034f//'                                                    "narrowing: uni-hidden loses the combining grapheme joiner" "uni-hidden did not fire on injected-skill/SKILL.md:140"
+mutation "hidden-no-invisible-ops" 's/\\u2061-\\u2064//'                                         "narrowing: uni-hidden loses the invisible operators" "uni-hidden did not fire on injected-skill/SKILL.md:142"
+mutation "hidden-no-vs16"       's/\|\(\?<!\[" \+ _EMOJI_BASE \+ "0-9#\*\]\)\\ufe0f//'          "narrowing: uni-hidden loses VS16 off an emoji" "uni-hidden did not fire on injected-skill/SKILL.md:136"
+mutation "hidden-vs16-anywhere" 's/\(\?<!\[" \+ _EMOJI_BASE \+ "0-9#\*\]\)\\ufe0f/\\ufe0f/'     "widening: uni-hidden flags VS16 after an emoji, its ordinary use" "uni-hidden fired on clean-skill/SKILL.md"
+mutation "hidden-keycap"        's/\(\?<=\[0-9#\*\]\)\\ufe0f\(\?!\\u20e3\)/(?<=[0-9#*])\\ufe0f/' "widening: uni-hidden flags a keycap (1, VS16, U+20E3)" "uni-hidden fired on clean-skill/SKILL.md"
 # The 2026-09-04 rules, each both ways.
 mutation "shell-no-fence"       's/m\.group\("info"\)\.startswith\("!"\)/False/'                              "narrowing: md-shell-inline loses the \`\`\`! fence form" "md-shell-inline did not fire on injected-skill/SKILL.md"
 mutation "fence-no-tracking"    's/if m and open_mark is None:/if m and (open_mark is None or m.group("info").startswith("!")):/' "widening: a ! fence opens while another fence is open, so one quoted as documentation inside an outer fence is a command" "md-shell-inline fired on clean-skill/SKILL.md"
@@ -579,7 +628,7 @@ mutation_exit "failon-ignored"        's/EXIT_CODE = 4 if/EXIT_CODE = 0 if/' "na
 # The row count, pinned beside the rule count: a rule that lands without its
 # two rows is a deliberate edit here, not an omission.
 nmut=$(grep -cE '^ *mutation(_exit)? "' "$0")
-[ "$nmut" -eq 74 ] || selftest_fail "counted $nmut mutation rows in $0, not the pinned 74 — a row was added (raise the pin) or lost"
+[ "$nmut" -eq 112 ] || selftest_fail "counted $nmut mutation rows in $0, not the pinned 112 — a row was added (raise the pin) or lost"
 fi
 
 if tmp="$(selftest_tmpdir)"; then
@@ -765,10 +814,34 @@ bash scripts/security.sh --fail-on >/dev/null 2>&1; expect_rc "--fail-on with no
 # The shipped corpus. Counted the way --each enumerates (three globs, so a
 # dot-named child counts too), so the two cannot disagree on what a directory
 # is.
+# One skill is pinned rather than passed: retro's digest exists to read
+# ~/.claude transcripts and history, so sh-agentcfg and sh-history name it by
+# design. Its findings are a closed baseline (rule, file, count, read from
+# --json since the text report folds past five lines) that may only shrink; a new finding there is red like any other. A bytecode file under a
+# gitignored __pycache__/ is a local run's leftover, not shipped, and is
+# dropped before the compare.
+retro_pinned='2 sh-history scripts/digest.py
+7 sh-agentcfg scripts/digest.py'
+retro_tally() {
+  bash scripts/security.sh --json --path src/retro 2>/dev/null | python3 -c '
+import collections, json, sys
+c = collections.Counter((f["rule"], f["file"]) for s in json.load(sys.stdin)["skills"] for f in s["findings"]
+                        if not (f["rule"] == "bin-bytecode" and f["file"].startswith("scripts/__pycache__/")))
+for (rule, path), k in sorted(c.items(), key=lambda kv: kv[0][0], reverse=True):
+    print(k, rule, path)'
+}
 n=0; for d in src/* src/.[!.]* src/..?*; do [ -d "$d" ] && n=$((n + 1)); done
 shipped=$(bash scripts/security.sh --each src 2>/dev/null)
-if ! grep -qF "Scanned: $n | RISK: 0 | REVIEW: 0 | PASS: $n" <<< "$shipped"; then
-  selftest_fail "a shipped skill under src/ drew a finding ($n directories scanned) — a corpus finding (a body acquired a flagged phrase) or a rule that widened onto ordinary prose; the rule rows above say whether the scanner itself moved. Shipped output:"
+retro_got=$(retro_tally)
+if [ "$retro_got" != "$retro_pinned" ]; then
+  selftest_fail "src/retro's findings left their pinned baseline — expected:
+$retro_pinned
+got:
+$retro_got"
+fi
+if ! grep -qF "Scanned: $n | RISK: 1 | REVIEW: 0 | PASS: $((n - 1))" <<< "$shipped" \
+  || [ "$(grep -c '^\[RISK\]' <<< "$shipped")" -ne 1 ] || ! grep -q '^\[RISK\] retro (src/retro)$' <<< "$shipped"; then
+  selftest_fail "a shipped skill under src/ other than the pinned retro drew a finding ($n directories scanned) — a corpus finding (a body acquired a flagged phrase) or a rule that widened onto ordinary prose; the rule rows above say whether the scanner itself moved. Shipped output:"
   printf '%s\n' "$shipped" | head -20
 fi
 
@@ -779,5 +852,5 @@ if [ "$fail" -ne 0 ]; then
   echo; echo "Fixture output (first 40 lines; run the scanner for the rest):"; printf '%s\n' "$out" | head -40; echo "Clean output:"; printf '%s\n' "$clean" | head -40
 fi
 selftest_close \
-  "security self-test clean — every annotated instance drew its rule and every neighbour stayed quiet ($ngraded expectations), every mutation in the table went red on the instance it names, the runtime rows fired, and all $n shipped skills PASS." \
+  "security self-test clean — every annotated instance drew its rule and every neighbour stayed quiet ($ngraded expectations), every mutation in the table went red on the instance it names, the runtime rows fired, and every shipped skill but retro PASSes ($n scanned; retro held to its pinned baseline)." \
   "security self-test clean on every committed fixture and all $n shipped skills, but a runtime or mutation row was not exercised; see the SKIP line above."
