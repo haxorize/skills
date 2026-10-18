@@ -10,7 +10,8 @@
 # alternative of a lib roster, the fail-open section pins the lib's
 # empty-payload breadcrumb, and the mutation table at the end grades the lib's
 # script-file read (a shell given a script file reads its pipe as data), its
-# here-string read, its `<<\EOF` delimiter, hook-lib.sh's `python3 -I`, and
+# here-string read, its `<<\EOF` delimiter, its command-substitution lift
+# (`$(…)` and backticks), hook-lib.sh's `python3 -I`, and
 # this hook's skip of git's separate-word option values.
 set -u
 here="$(cd "$(dirname "$0")" && pwd)"
@@ -61,6 +62,21 @@ expect_block "$D" "git commit -m x >| log --no-verify"                         "
 expect_block "$D" "git commit -m x 2> >(cat) --no-verify"                      "a >(…) process substitution is one word"
 expect_block "$D" "git commit -m x < <(true) --no-verify"                      "a <(…) process substitution is one word"
 expect_block "$D" "cat <(git commit --no-verify -m x)"                         "a process substitution's body runs"
+# a command substitution is one word to its command, and its body runs on its own
+expect_block "$D" 'git commit $(true) --no-verify'                             "a \$(…) mid-command is one word"
+expect_block "$D" 'git commit `true` --no-verify'                              "a backtick mid-command is one word"
+expect_block "$D" 'git commit -m "$(date)" --no-verify'                        "a quoted \$(…) message is one word"
+expect_block "$D" 'echo "$(git commit --no-verify)"'                           "a \$(…) body inside double quotes runs"
+expect_block "$D" 'echo "`git commit -n -m x`"'                                "a backtick body inside double quotes runs"
+expect_block "$D" 'x=$(git commit -n -m x)'                                    "a \$(…) body in an assignment runs"
+expect_block "$D" 'echo $(echo $(git commit -n -m x))'                         "a nested \$(…) body runs"
+expect_block "$D" 'echo "$(echo ")") $(git commit -n -m x)"'                   "a quoted ) inside a body does not close it"
+expect_block "$D" 'echo $(echo ")"; git commit -n -m x)'                       "a quoted ) inside a body leaves the rest of the body in it"
+expect_block "$D" "echo \"it's \$(git commit -n -m x)\""                        "a ' inside double quotes is text, not a quote"
+expect_block "$D" 'echo $((1 + 2)) && git commit -n -m x'                      "arithmetic \$((…)) is not a substitution"
+expect_allow "$D" "echo '\$(git commit --no-verify)'"                          "a single-quoted \$(…) is text"
+expect_allow "$D" "echo '\`git commit -n -m x\`'"                              "a single-quoted backtick is text"
+expect_allow "$D" 'echo "\$(git commit --no-verify)"'                          "an escaped \$ inside double quotes is text"
 # a redirection in command position is not the program
 expect_block "$D" ">x git commit --no-verify"                                  "an attached redirection before the program"
 expect_block "$D" "> x git commit --no-verify"                                 "a detached redirection and its target before the program"
@@ -235,6 +251,14 @@ lib_mutant "a process substitution splits" 'elif c in "<>" and nxt == "(":' 'eli
 lib_mutant "a process substitution body is dropped" '        out += ["\n", "("] + b + [")"]' '        pass' "cat <(git commit --no-verify -m x)" 0
 lib_mutant "a leading redirection is the program" '        k = skip_redirs(seg, k)' '        pass' ">x git commit --no-verify" 0
 lib_mutant "a detached target is the program" 'k += 1 if m.group(2) else 2' 'k += 1' "> x git commit --no-verify" 0
+# the command-substitution lift, one alternative and one boundary at a time
+lib_mutant "a \$(…) is not lifted"    '        elif text.startswith("$(", i):' '        elif False:' 'git commit $(true) --no-verify' 0
+lib_mutant "a backtick is not lifted" '        elif c == "`":' '        elif False:' 'echo "`git commit -n -m x`"' 0
+lib_mutant "a substitution body is dropped" 'return "".join(out) + "".join(' 'return "".join(out) or "".join(' 'echo "$(git commit --no-verify)"' 0
+lib_mutant "a ' inside double quotes opens a span" 'elif c == "\x27" and not dq:' 'elif c == "\x27":' "echo \"it's \$(git commit -n -m x)\"" 0
+lib_mutant "a single-quoted \$(…) is lifted" 'elif c == "\x27" and not dq:' 'elif False:' "echo '\$(git commit --no-verify)'" 2
+lib_mutant "an escaped \$ is lifted"  '            out.append(text[i:i + 2]); i += 2' '            out.append(c); i += 1' 'echo "\$(git commit --no-verify)"' 2
+lib_mutant "a quoted ) closes a body" '            k = skip_dquoted(text, k + 1)' '            k += 1' 'echo $(echo ")"; git commit -n -m x)' 0
 # hook-lib.sh's isolated Python, and the hook's own value-option skip, on copies beside the real lib
 sdir="$tmp/mut-sh"; mkdir -p "$sdir"; cp "$hook" "$here/hook-lib.py" "$sdir/"
 # row_no_cwd_module: green when the hook, run from the shadow dir, imported

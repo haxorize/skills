@@ -32,8 +32,10 @@
 # (the `&` of a redirection — `2>&1`, `>&2`, `&>file` — and the `|` of `>|`
 # are part of its word, unless the `<`/`>` is backslash-escaped, where bash
 # reads it as text and the `&` or `|` as a separator; a `<(…)` /
-# `>(…)` process substitution is the one word `<(…)` and its body is scanned
-# as segments of its own, after the rest), and `on_command` is called once per
+# `>(…)` process substitution is the one word `<(…)`, and a `$(…)` or
+# backtick command substitution, bare or in double quotes, is `$(…)` inside
+# its word; either body is scanned as segments of its own, after the rest),
+# and `on_command` is called once per
 # segment with the tokens of the program that actually runs — a reserved word
 # in command position (`if`, `then`, `do`, `{`, `!`, …) dropped, a
 # redirection there (`>x git …`, with a detached target) dropped, wrappers
@@ -42,7 +44,7 @@
 # `readonly`, or a wrapper) dropped, `$var` /
 # `${var…}` replaced with a value assigned earlier in the same command,
 # `$(which git)` resolved to `git`. A string handed to `bash -c` / `-lc`,
-# `eval`, `env -S`, a backtick or `$(…)` body, a literal string piped into a
+# `eval`, `env -S`, a literal string piped into a
 # shell, a shell-fed heredoc, or each `find -exec` clause is scanned in turn,
 # four nested shells at most; `xargs <prog>` sees the words of a feeding
 # `echo`/`printf` as trailing arguments (any other producer's argv is not its
@@ -110,6 +112,7 @@ AMP = "\x01"                       # stands in for a redirection's & while shlex
 PIPE = "\x02"                      # likewise the | of `>|`, which pipes nothing
 REDIR = re.compile(r"^[0-9]*(&>>|&>|>>|>\||>&|<<<|<<-|<<|<>|<&|>|<)(?!\()(.*)$", re.S)   # group 2 empty: the target is the next word
 PROCSUB = "\x03"                   # opens a `<(`/`>(` body in the text shlex splits
+CMDSUB = "\x04"                    # stands in for a lifted `$(…)` / backtick while shlex splits, restored as `$(…)`
 FIND_EXEC = {"-exec", "-execdir", "-ok", "-okdir"}
 FIND_END = {";", ESCAPED_SEMI, "+"}
 XARGS_VALUE_OPTS = {"-n", "-I", "-L", "-P", "-s", "-d", "-E", "-a", "-J", "-R", "-S"}
@@ -241,12 +244,97 @@ def lift_procsubs(toks):
     return out
 
 
+def skip_dquoted(text, k):
+    """The index past the `"` closing the double-quoted span whose body starts
+    at k; a `$(…)` inside it is skipped whole, so its quotes stay its own."""
+    n = len(text)
+    while k < n and text[k] != "\"":
+        if text[k] == "\\":
+            k += 2
+        elif text.startswith("$(", k):
+            k = close_paren(text, k + 2) + 1
+        else:
+            k += 1
+    return k + 1
+
+
+def skip_backticks(text, k):
+    """The index of the backtick closing the span whose body starts at k."""
+    while k < len(text) and text[k] != "`":
+        k += 2 if text[k] == "\\" else 1
+    return k
+
+
+def close_paren(text, k):
+    """The index of the `)` closing a `$(` whose body starts at k, or
+    len(text) when none does. Quotes, a nested `$(…)` and backticks inside the
+    body are skipped whole; a bare `(` nests (a `case` pattern's lone `)`
+    closes early, a shape no measured bypass uses)."""
+    depth, n = 0, len(text)
+    while k < n:
+        c = text[k]
+        if c == "\\":
+            k += 2
+            continue
+        if c == "\x27":
+            j = text.find("\x27", k + 1)
+            k = n if j < 0 else j + 1
+            continue
+        if c == "\"":
+            k = skip_dquoted(text, k + 1)
+            continue
+        if c == "`":
+            k = skip_backticks(text, k + 1) + 1
+            continue
+        if text.startswith("$(", k):
+            k = close_paren(text, k + 2) + 1
+            continue
+        if c == "(":
+            depth += 1
+        elif c == ")":
+            if depth == 0:
+                return k
+            depth -= 1
+        k += 1
+    return n
+
+
+def lift_cmdsubs(text):
+    """A `$(…)` or backtick command substitution is part of one word to the
+    command it sits in, and its body runs as commands of its own, whether
+    unquoted or inside double quotes; single quotes or a backslash make it
+    text. Leave CMDSUB in the word and append each body, as a `( … )` group,
+    after the rest, its own substitutions lifted after it. An arithmetic
+    `$((…))` is lifted too: its body scans as a harmless group, and a `$(…)`
+    inside it still runs."""
+    out, bodies, i, n, dq = [], [], 0, len(text), False
+    while i < n:
+        c = text[i]
+        if c == "\\":
+            out.append(text[i:i + 2]); i += 2
+        elif c == "\x27" and not dq:
+            j = text.find("\x27", i + 1)
+            j = n if j < 0 else j + 1
+            out.append(text[i:j]); i = j
+        elif c == "\"":
+            dq = not dq; out.append(c); i += 1
+        elif text.startswith("$(", i):
+            j = close_paren(text, i + 2)
+            bodies.append(text[i + 2:j]); out.append(CMDSUB); i = j + 1
+        elif c == "`":
+            j = skip_backticks(text, i + 1)
+            bodies.append(text[i + 1:j].replace("\\`", "`")); out.append(CMDSUB); i = j + 1
+        else:
+            out.append(c); i += 1
+    return "".join(out) + "".join("\n( " + lift_cmdsubs(b) + "\n)" for b in bodies)
+
+
 def tokens(text):
     text = strip_comments(text)
     text = re.sub(r"\$\x27((?:[^\x27\\]|\\.)*)\x27", ansi_c, text)            # ANSI-C $'…' quoting
     text = re.sub(r"\$\((?:which|command -v|type -P)\s+(\w+)\)", r"\1", text)
     text = re.sub(r"`(?:which|command -v|type -P)\s+(\w+)`", r"\1", text)
-    text = re.sub(r"`([^`]*)`", r"( \1 )", text)                                # a backtick body runs
+    text = lift_cmdsubs(text)                                                   # `$(…)`, backticks: one word, body after
     text = text.replace("\\;", "\\\\" + ESCAPED_SEMI)                           # `\\\;` reads back as the word `\;`
     text = mark_redirs(text)                                                    # `2>&1`, `&>f`, `>|f`: one word, not a split
     lex = shlex.shlex(text, posix=True, punctuation_chars=";&|()\n")
@@ -258,7 +346,7 @@ def tokens(text):
         if t and all(c in ";&|()\n" for c in t):       # an empty word (`sed -i ''`) is still a word
             out.extend(re.findall(r"&&|\|\||[;&|()\n]", t))
         else:
-            out.append(t.replace(AMP, "&").replace(PIPE, "|"))
+            out.append(t.replace(AMP, "&").replace(PIPE, "|").replace(CMDSUB, "$(…)"))
     return lift_procsubs(out)
 
 
