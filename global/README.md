@@ -52,7 +52,7 @@ To wire a hook, paste the printed block into `~/.claude/settings.json` under `ho
       {
         "matcher": "Bash",
         "hooks": [
-          { "type": "command", "command": "bash /absolute/path/to/skills/global/hooks/rename-safety.sh" }
+          { "type": "command", "command": "bash \"/absolute/path/to/skills/global/hooks/rename-safety.sh\"" }
         ]
       }
     ]

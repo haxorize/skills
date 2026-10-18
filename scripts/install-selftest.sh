@@ -65,7 +65,10 @@
 #     file with a zsh shell and a skill set "off" still prints both, and
 #     quiets only the key it carries as asked;
 #   - the stale-hook warning: a wired global/hooks/ path that does not exist
-#     warns, absolute or `~/`, and one that exists, absolute or `~/`, does not;
+#     warns, absolute or `~/`, and one that exists, absolute or `~/`, quoted,
+#     holding a space or ending in `;`, does not, nor does a
+#     $CLAUDE_PROJECT_DIR path; the grep that stands in without python3, on a
+#     copy of the installer that never finds it, the same minus the space;
 #   - the opt-in list: globally, an opt-in skill's old link into this
 #     checkout is unlinked, its link into another checkout stays, no opt-in
 #     skill is linked, and no global skill requires an opt-in one; with
@@ -73,7 +76,16 @@
 #     opt-in dep into the repo, never a global skill or a global dep, lists
 #     each once in .git/info/exclude so `git status` stays clean, writes
 #     nothing globally, and a second run adds nothing; a repo that is not a git
-#     work tree, a CLAUDE.md with no key, and a missing repo argument exit 3;
+#     work tree, a CLAUDE.md with no key, a missing repo argument, an extra
+#     one, a misspelt flag, a path that does not exist, no CLAUDE.md at all, a
+#     subdirectory of a work tree, and a committed .claude or .claude/skills
+#     symlink exit 3 and write nothing; the line is read bulleted, indented,
+#     CRLF, with a trailing `/` and with a `*` that is not glob-expanded, and
+#     from .claude/CLAUDE.md when the root one lacks it; a real directory or a
+#     foreign link at a named skill gets no exclude line; an exclude file with
+#     no final newline keeps its last line; a linked worktree's line lands in
+#     the common exclude file; CDPATH does not redirect a relative repo; both
+#     WARNs for a name with no src/ fire (on the line, and on opt_in_skills);
 #   - a mutation table over those blocks, on a copy of install.sh that sees
 #     this checkout's src/ and global/ through symlinks.
 #
@@ -83,12 +95,20 @@
 # itself (the snippet row reads the same headers the installer does, so a hook
 # both miss the same way), hook_event's WARN-and-fall-back arm for an unknown
 # event name, the WARN arms for a target that exists and is not a symlink,
+# the EXCLUDE single-line guard and the git older than 2.31 it stands in for
+# (git here is newer, so both forms of the path are what it prints), the
+# post-mkdir resolve check (no row can swap a .claude in between),
 # the WARN for a global skill requiring an opt-in one (the tree has none to
 # fire it; the row above asserts that), and a repo-side link left behind once
 # its name leaves the Shared skills line (nothing removes it).
 # Those are printing and traversal, not removal, and this script was written
 # for the removal.
 set -uo pipefail
+# The pre-commit hook runs this with git's repo-local variables set
+# (GIT_INDEX_FILE, GIT_DIR); left in place, every git call in a fixture
+# repo below reads this checkout's index instead, and the --project rows
+# fail only inside the hook.
+unset $(git rev-parse --local-env-vars)
 
 repo_root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$repo_root"
@@ -328,14 +348,14 @@ for pair in os.environ["WANT_PAIRS"].split():
         for k, entries in hooks.items()
         for e in entries
         for h in e.get("hooks", [])
-        if h.get("command") == "bash " + path and k == ev
+        if h.get("command") == "bash \"%s\"" % path and k == ev
     )
     total = sum(
         1
         for entries in hooks.values()
         for e in entries
         for h in e.get("hooks", [])
-        if h.get("command") == "bash " + path
+        if h.get("command") == "bash \"%s\"" % path
     )
     if n != 1 or total != 1:
         placed.append("%s=%s(under-own-event=%d,anywhere=%d)" % (os.path.basename(path), ev, n, total))
@@ -377,7 +397,7 @@ print("placed:", " ".join(placed))
     expect_in "$named_out" "the hook settings.json names was not reported as already named" "hook  $named_hook already named in $fresh/.claude/settings.json"
     for h in $other_hooks; do
       reject_in "$named_out" "a hook settings.json does not name was reported as already named" "hook  $h already named"
-      expect_in "$named_out" "a hook settings.json does not name is missing from the snippet" "\"command\": \"bash $global_dir/hooks/$h.sh\""
+      expect_in "$named_out" "a hook settings.json does not name is missing from the snippet" "\"command\": \"bash \\\"$global_dir/hooks/$h.sh\\\"\""
     done
   fi
 fi
@@ -457,9 +477,10 @@ row_keys_partial() {
 row_stale() {
   local r out
   r=$(new_root) || { selftest_fail "no root for the stale-hook row"; return; }
-  mkdir -p "$r/global/hooks" "$r/abs/global/hooks"
+  mkdir -p "$r/global/hooks" "$r/abs/global/hooks" "$r/sp ace/global/hooks"
   : > "$r/global/hooks/here.sh"
   : > "$r/abs/global/hooks/abs.sh"
+  : > "$r/sp ace/global/hooks/s.sh"
   cat > "$r/.claude/settings.json" <<JSON
 { "hooks": { "PreToolUse": [ { "matcher": "Bash", "hooks": [
   { "type": "command", "command": "bash $r/gone/global/hooks/gone.sh" },
@@ -467,7 +488,13 @@ row_stale() {
   { "type": "command", "command": "bash $r/abs/global/hooks/abs.sh" },
   { "type": "command", "command": "bash ~/global/hooks/here.sh" },
   { "type": "command", "command": "bash \$HOME/global/hooks/here.sh" },
-  { "type": "command", "command": "bash \${HOME}/global/hooks/here.sh" }
+  { "type": "command", "command": "bash \${HOME}/global/hooks/here.sh" },
+  { "type": "command", "command": "bash \"$r/abs/global/hooks/abs.sh\"" },
+  { "type": "command", "command": "bash \"$r/sp ace/global/hooks/s.sh\"; true" },
+  { "type": "command", "command": "bash $r/abs/global/hooks/abs.sh;" },
+  { "type": "command", "command": "bash \"\$CLAUDE_PROJECT_DIR/global/hooks/proj.sh\"" },
+  { "type": "command", "command": "bash \$HOME/global/hooks/home-gone.sh" },
+  { "type": "command", "command": "bash \${HOME}/global/hooks/braced-gone.sh" }
 ] } ] } }
 JSON
   out=$(TARGET_ROOT="$r" HOME="$r" bash "$installer" 2>&1)
@@ -478,6 +505,35 @@ JSON
   reject_in "$out" "a ~/ hook path that exists was warned about" "wires ~/global/hooks/here.sh"
   reject_in "$out" "a \$HOME/ hook path that exists was warned about" "wires \$HOME/global/hooks/here.sh"
   reject_in "$out" "a \${HOME}/ hook path that exists was warned about" "wires \${HOME}/global/hooks/here.sh"
+  expect_in "$out" "a wired \$HOME/ hook path that does not exist was not warned about" "wires \$HOME/global/hooks/home-gone.sh, which does not exist"
+  expect_in "$out" "a wired \${HOME}/ hook path that does not exist was not warned about" "wires \${HOME}/global/hooks/braced-gone.sh, which does not exist"
+  reject_in "$out" "a quoted hook path holding a space was warned about" "hooks/s.sh"
+  reject_in "$out" "a quoted or ;-ended hook path that exists was warned about" "hooks/abs.sh"
+  reject_in "$out" "a \$CLAUDE_PROJECT_DIR hook path, which only the harness can expand, was warned about" "CLAUDE_PROJECT_DIR"
+}
+
+# The stale-hook grep that stands in without python3, on a copy of the
+# installer that never finds it: the JSON-escaped quote and a trailing `;` are
+# trimmed, a $CLAUDE_PROJECT_DIR path is not checked, a gone path still warns.
+row_stale_fallback() {
+  local r v out
+  r=$(new_root) || { selftest_fail "no root for the stale-hook fallback row"; return; }
+  v=$(variant "$r" 's/command -v python3 >\/dev\/null 2>&1 && python3 -I - "$SETTINGS"/false \&\& python3 -I - "$SETTINGS"/' 'false && python3 -I - "$SETTINGS"') ||
+    { selftest_fail "could not write an installer copy without its python3 branch — the fallback row graded nothing"; return; }
+  mkdir -p "$r/abs/global/hooks" && : > "$r/abs/global/hooks/abs.sh"
+  cat > "$r/.claude/settings.json" <<JSON
+{ "hooks": { "PreToolUse": [ { "matcher": "Bash", "hooks": [
+  { "type": "command", "command": "bash \"$r/abs/global/hooks/abs.sh\"" },
+  { "type": "command", "command": "bash $r/abs/global/hooks/abs.sh; true" },
+  { "type": "command", "command": "bash \"\$CLAUDE_PROJECT_DIR/global/hooks/proj.sh\"" },
+  { "type": "command", "command": "bash \"$r/gone/global/hooks/gone.sh\"" }
+] } ] } }
+JSON
+  out=$(TARGET_ROOT="$r" HOME="$r" bash "$v" 2>&1)
+  expect_rc "the installer's stale-hook fallback" 0 $?
+  expect_in "$out" "the fallback did not warn about a quoted hook path that does not exist" "wires $r/gone/global/hooks/gone.sh, which does not exist"
+  reject_in "$out" "the fallback warned about a quoted or ;-ended hook path that exists" "wires $r/abs/"
+  reject_in "$out" "the fallback warned about a \$CLAUDE_PROJECT_DIR path it cannot expand" "CLAUDE_PROJECT_DIR"
 }
 
 # The opt-in rows. Each stages its links against the src/ of the
@@ -510,10 +566,19 @@ row_scope_global() {
   reject_in "$out" "a global skill requires an opt-in one — outside the repos naming it, that requirement is unmet" "requires opt-in"
 }
 
-# An opt-in parent with an opt-in dep and a global dep, read off the tree.
+# An opt-in parent with an opt-in dep and a global dep, read off the tree with
+# install.sh's own read_requires, lifted out the way prune_owned is above, so
+# a change to how the installer parses `requires:` moves these rows with it.
+requires_src="$(sed -n '/^read_requires() {$/,/^}$/p' scripts/install.sh)"
+if [ -z "$requires_src" ]; then
+  selftest_fail "found no 'read_requires() {' ... '}' block in scripts/install.sh — the dep-scope rows below read no requires: line"
+  read_requires() { :; }
+else
+  eval "$requires_src"
+fi
 scope_parent="" scope_sdep="" scope_gdep=""
 for n in $opt_in_skills; do
-  for d in $(awk '/^---$/{c++;next} c==1&&/^requires:/{sub(/^requires:[[:space:]]*/,"");gsub(/,/," ");print;exit}' "$skills_dir/$n/SKILL.md" 2>/dev/null); do
+  for d in $(read_requires "$skills_dir/$n" 2>/dev/null); do
     case " $opt_in_skills " in
       *" $d "*) [ -n "$scope_sdep" ] || scope_sdep=$d ;;
       *) [ -n "$scope_gdep" ] || scope_gdep=$d ;;
@@ -572,28 +637,183 @@ row_scope_usage() {
     selftest_fail "a refused --project run still created a .claude/ in the repo"
 }
 
+# Opt-in names with no opt-in dep, for the shape rows below: linking one pulls
+# in no other opt-in skill, so a second one appearing in the repo can only have
+# come from the arm a row grades.
+leaf1="" leaf2=""
+for n in $opt_in_skills; do
+  has_opt_in_dep=0
+  for d in $(read_requires "$skills_dir/$n" 2>/dev/null); do
+    case " $opt_in_skills " in *" $d "*) has_opt_in_dep=1 ;; esac
+  done
+  [ "$has_opt_in_dep" = 0 ] || continue
+  if [ -z "$leaf1" ]; then leaf1=$n; elif [ -z "$leaf2" ]; then leaf2=$n; fi
+done
+
+# mkrepo <dir> <CLAUDE.md text, printf %b> — a git repo whose one commit holds
+# that CLAUDE.md, so the file itself never shows in `git status`.
+mkrepo() {
+  mkdir -p "$1" && git -C "$1" init -q && printf '%b' "$2" > "$1/CLAUDE.md" &&
+    git -C "$1" add CLAUDE.md && git -C "$1" -c user.name=t -c user.email=t@t commit -q -m claude
+}
+# variant <root> <sed expression> <text the edit must leave> — a copy of
+# $installer with one edit, beside src/ and global/ symlinks to that
+# installer's own, path on stdout. Fails when the edit matched nothing, so a
+# row built on it never grades the unedited script by accident.
+variant() {
+  local v="$1/variant.$RANDOM"
+  mkdir -p "$v/scripts" &&
+    ln -s "$(inst_src)" "$v/src" &&
+    ln -s "$(cd "$(dirname "$installer")/../global" && pwd)" "$v/global" &&
+    sed "$2" "$installer" > "$v/scripts/install.sh" &&
+    grep -qF -- "$3" "$v/scripts/install.sh" && printf '%s' "$v/scripts/install.sh"
+}
+
+# The --project refusals the usage row does not reach: each exits 3 and
+# writes nothing, inside the repo or out of it.
+row_project_refusals() {
+  local r out
+  r=$(new_root) || { selftest_fail "no root for the --project refusals row"; return; }
+  mkrepo "$r/repo" "Shared skills: $leaf1\n"
+  mkdir -p "$r/repo/sub" "$r/outside" "$r/outside2" "$r/nocl"
+  out=$(TARGET_ROOT="$r" HOME="$r" bash "$installer" --project "$r/repo/sub" 2>&1)
+  expect_rc "install.sh --project on a subdirectory of a work tree" 3 $?
+  expect_in "$out" "a subdirectory --project run did not name the work tree's root" "is not the root of its git work tree"
+  [ ! -e "$r/repo/sub/.claude" ] && [ ! -e "$r/repo/.claude" ] ||
+    selftest_fail "a subdirectory --project run still wrote a .claude/ — its exclude line would be anchored at the root, so the link would show in git status"
+  TARGET_ROOT="$r" HOME="$r" bash "$installer" --project "$r/repo" extra >/dev/null 2>&1
+  expect_rc "install.sh --project with an extra argument" 3 $?
+  TARGET_ROOT="$r" HOME="$r" bash "$installer" --projcet "$r/repo" >/dev/null 2>&1
+  expect_rc "install.sh with a misspelt flag" 3 $?
+  [ ! -e "$r/.claude/skills" ] ||
+    selftest_fail "install.sh --projcet <repo> ran the global install — an unknown flag must be a usage error, not the no-argument run"
+  TARGET_ROOT="$r" HOME="$r" bash "$installer" --project "$r/no-such-dir" >/dev/null 2>&1
+  expect_rc "install.sh --project on a path that does not exist" 3 $?
+  git -C "$r/nocl" init -q
+  out=$(TARGET_ROOT="$r" HOME="$r" bash "$installer" --project "$r/nocl" 2>&1)
+  expect_rc "install.sh --project on a repo with no CLAUDE.md" 3 $?
+  expect_in "$out" "a repo with no CLAUDE.md was reported as a CLAUDE.md missing its line" "has no CLAUDE.md"
+  mkrepo "$r/dotlink" "Shared skills: $leaf1\n"
+  ln -s "$r/outside" "$r/dotlink/.claude"
+  TARGET_ROOT="$r" HOME="$r" bash "$installer" --project "$r/dotlink" >/dev/null 2>&1
+  expect_rc "install.sh --project on a repo whose .claude is a symlink" 3 $?
+  mkrepo "$r/skilllink" "Shared skills: $leaf1\n"
+  mkdir -p "$r/skilllink/.claude"
+  ln -s "$r/outside2" "$r/skilllink/.claude/skills"
+  TARGET_ROOT="$r" HOME="$r" bash "$installer" --project "$r/skilllink" >/dev/null 2>&1
+  expect_rc "install.sh --project on a repo whose .claude/skills is a symlink" 3 $?
+  [ -z "$(find "$r/outside" "$r/outside2" -mindepth 1)" ] ||
+    selftest_fail "install.sh --project wrote through a committed symlink to outside the repo: $(find "$r/outside" "$r/outside2" -mindepth 1 | tr '\n' ' ')"
+}
+
+# How the Shared skills line is read: a bulleted, indented, CRLF line whose
+# names carry a trailing `/` and a `*`, run from a cwd holding an entry named
+# after a second opt-in skill; and the line found in .claude/CLAUDE.md when
+# the root one lacks it.
+row_project_lines() {
+  local r out
+  r=$(new_root) || { selftest_fail "no root for the Shared skills line row"; return; }
+  mkdir -p "$r/cwd" && : > "$r/cwd/$leaf2"
+  mkrepo "$r/crlf" "# CLAUDE.md\r\n\r\n  - Shared skills: *, no-such-skill, $leaf1/\r\n"
+  out=$(cd "$r/cwd" && TARGET_ROOT="$r" HOME="$r" bash "$installer" --project "$r/crlf" 2>&1)
+  expect_rc "install.sh --project on a bulleted CRLF Shared skills line" 0 $?
+  [ -L "$r/crlf/.claude/skills/$leaf1" ] ||
+    selftest_fail "a bulleted CRLF line naming '$leaf1/' did not link $leaf1 — the bullet, the \\r or the trailing / reached the name"
+  [ ! -e "$r/crlf/.claude/skills/$leaf2" ] ||
+    selftest_fail "a '*' on the Shared skills line linked $leaf2, an entry in the cwd — the line was glob-expanded"
+  expect_in "$out" "a '*' on the line was not reported as the literal name it is" "WARN  * — named in"
+  expect_in "$out" "a name with no src/ directory was not warned about" "WARN  no-such-skill — named in"
+  mkrepo "$r/dotmd" "# no key at the root\n"
+  mkdir -p "$r/dotmd/.claude" && printf 'Shared skills: %s\n' "$leaf1" > "$r/dotmd/.claude/CLAUDE.md"
+  TARGET_ROOT="$r" HOME="$r" bash "$installer" --project "$r/dotmd" >/dev/null 2>&1
+  expect_rc "install.sh --project on a repo whose line is in .claude/CLAUDE.md" 0 $?
+  [ -L "$r/dotmd/.claude/skills/$leaf1" ] ||
+    selftest_fail "a Shared skills line in .claude/CLAUDE.md was not read"
+}
+
+# What lands in the exclude file and where: a real directory and a foreign
+# link at a named skill get no line; an exclude file with no final newline
+# keeps its last line whole; a linked worktree's line goes to the common
+# exclude file git reads for it; and a relative <repo> means the one under the
+# cwd, whatever CDPATH holds.
+row_project_shapes() {
+  local r out ex
+  r=$(new_root) || { selftest_fail "no root for the --project shapes row"; return; }
+  mkrepo "$r/declined" "Shared skills: $leaf1, $leaf2\n"
+  mkdir -p "$r/declined/.claude/skills/$leaf1" "$r/elsewhere/$leaf2"
+  ln -s "$r/elsewhere/$leaf2" "$r/declined/.claude/skills/$leaf2"
+  TARGET_ROOT="$r" HOME="$r" bash "$installer" --project "$r/declined" >/dev/null 2>&1
+  expect_rc "install.sh --project over a real directory and a foreign link" 0 $?
+  ex="$r/declined/.git/info/exclude"
+  ! grep -qxF "/.claude/skills/$leaf1" "$ex" 2>/dev/null ||
+    selftest_fail "a real directory at .claude/skills/$leaf1 got an exclude line — the user's own files would vanish from git status"
+  ! grep -qxF "/.claude/skills/$leaf2" "$ex" 2>/dev/null ||
+    selftest_fail "a foreign link at .claude/skills/$leaf2 got an exclude line"
+
+  mkrepo "$r/nl" "Shared skills: $leaf1\n"
+  printf 'keep-me' > "$r/nl/.git/info/exclude"
+  TARGET_ROOT="$r" HOME="$r" bash "$installer" --project "$r/nl" >/dev/null 2>&1
+  expect_rc "install.sh --project on an exclude file with no final newline" 0 $?
+  grep -qxF keep-me "$r/nl/.git/info/exclude" && grep -qxF "/.claude/skills/$leaf1" "$r/nl/.git/info/exclude" ||
+    selftest_fail "the exclude line fused with a last line that had no newline: $(tr '\n' '|' < "$r/nl/.git/info/exclude")"
+
+  mkrepo "$r/main" "Shared skills: $leaf1\n"
+  if ! git -C "$r/main" worktree add -q "$r/wt" 2>/dev/null; then
+    selftest_fail "git worktree add failed — the worktree row graded nothing"
+  else
+    TARGET_ROOT="$r" HOME="$r" bash "$installer" --project "$r/wt" >/dev/null 2>&1
+    expect_rc "install.sh --project on a linked worktree" 0 $?
+    [ -L "$r/wt/.claude/skills/$leaf1" ] || selftest_fail "install.sh --project did not link $leaf1 into the worktree"
+    [ "$(grep -cxF "/.claude/skills/$leaf1" "$r/main/.git/info/exclude")" = 1 ] ||
+      selftest_fail "the worktree's link is not listed once in the common .git/info/exclude"
+    [ -z "$(git -C "$r/wt" status --porcelain)" ] ||
+      selftest_fail "the worktree's link shows in its git status: $(git -C "$r/wt" status --porcelain | tr '\n' ' ')"
+  fi
+
+  mkrepo "$r/work/repo" "Shared skills: $leaf1\n"
+  mkrepo "$r/cdp/repo" "Shared skills: $leaf1\n"
+  (cd "$r/work" && CDPATH="$r/cdp" TARGET_ROOT="$r" HOME="$r" bash "$installer" --project repo >/dev/null 2>&1)
+  expect_rc "install.sh --project on a relative repo with CDPATH set" 0 $?
+  [ -L "$r/work/repo/.claude/skills/$leaf1" ] && [ ! -e "$r/cdp/repo/.claude" ] ||
+    selftest_fail "a relative --project <repo> resolved through CDPATH instead of the cwd"
+}
+
+# The global run's WARN for a list name with no src/, on a copy of the
+# installer whose list carries one.
+row_scope_gone() {
+  local r v out
+  r=$(new_root) || { selftest_fail "no root for the gone opt-in row"; return; }
+  v=$(variant "$r" 's/^opt_in_skills="/opt_in_skills="no-such-opt-in /' 'opt_in_skills="no-such-opt-in ') ||
+    { selftest_fail "could not write an installer copy whose opt_in_skills names a gone skill"; return; }
+  out=$(TARGET_ROOT="$r" HOME="$r" bash "$v" 2>&1)
+  expect_rc "the installer with a gone name on its opt_in_skills list" 0 $?
+  expect_in "$out" "a name on opt_in_skills with no src/ was not warned about" "WARN  no-such-opt-in — on install.sh's opt_in_skills list but src/no-such-opt-in is gone"
+}
+
 if [ -z "$opt_in_first" ] || [ "$opt_in_first" = "$opt_in_second" ]; then
   selftest_fail "found fewer than two names on install.sh's opt_in_skills line — the scope rows graded nothing"
 else
   row_scope_global
   row_scope_usage
+  row_scope_gone
   if [ -z "$scope_parent" ]; then
     selftest_skip "no opt-in skill requires both an opt-in and a global skill — the repo-side dep rows were not exercised."
   else
     row_scope_project
   fi
+  if [ -z "$leaf2" ]; then
+    selftest_fail "found fewer than two opt-in skills with no opt-in dep — the --project refusal, line and shape rows graded nothing"
+  else
+    row_project_refusals
+    row_project_lines
+    row_project_shapes
+  fi
 fi
+row_stale_fallback
 
 if ! command -v python3 >/dev/null 2>&1; then
-  selftest_skip "python3 is not on PATH — the settings-keys and stale-hook rows and their mutation table were not exercised."
-elif [ -z "$first_skill" ] || [ -z "$second_skill" ] || [ "$first_skill" = "$second_skill" ]; then
-  selftest_fail "found fewer than two names on install.sh's name_only_skills line — the settings-keys rows graded nothing"
+  selftest_skip "python3 is not on PATH — the settings-keys and stale-hook rows, and the mutation table over them and over the opt-in rows, were not exercised."
 else
-  row_keys_fresh
-  row_keys_quiet
-  row_keys_partial
-  row_stale
-
   # --- mutation table -------------------------------------------------------
   # Each mutant edits a copy of install.sh in one place and reruns the row
   # that grades that place; the row must be green on the installer and red on
@@ -608,23 +828,70 @@ else
     selftest_mutate scripts/install.sh "$mdir/scripts/install.sh" "$2" "$3" || return
     selftest_expect_killed --mutant installer "$mdir/scripts/install.sh" "$1" "$4"
   }
-  mutant "stale warning never fires" '[ -e "$path" ] || echo "WARN' 'true || echo "WARN' row_stale
-  mutant "~/ is not expanded" "'~/'*) path=" "'~nope/'*) path=" row_stale
-  mutant "\$HOME/ is not expanded" "'\$HOME/'*) path=" "'\$NOPE/'*) path=" row_stale
-  mutant "\${HOME}/ is not expanded" "'\${HOME}/'*) path=" "'\${NOPE}/'*) path=" row_stale
-  mutant "any shell counts as bash" '"[^"]*/bash"'"'"' "$SETTINGS"' '"[^"]*"'"'"' "$SETTINGS"' row_keys_partial
-  mutant "shell check takes no space after the colon" '"CLAUDE_CODE_SHELL"[[:space:]]*:[[:space:]]*' '"CLAUDE_CODE_SHELL":' row_keys_quiet
-  mutant "any override counts as name-only" '[[:space:]]*\"name-only\"" "$SETTINGS"' '[[:space:]]*\"[^\"]*\"" "$SETTINGS"' row_keys_partial
-  mutant "block drops the shell line" "keys='  \"env\"" "keys=''; : '" row_keys_fresh
-  mutant "block prints when every key is present" 'if [ "$want_shell" = 1 ] || [ -n "$want_skills" ]; then' 'if :; then' row_keys_quiet
-  mutant "global loop links opt-in skills" 'is_opt_in "$name" || link_skill "$name"' 'link_skill "$name"' row_scope_global
-  mutant "unlink takes any link at an opt-in name" '[ "$(readlink "$TARGET_DIR/$name")" = "$SKILLS_DIR/$name" ]' 'true' row_scope_global
-  mutant "exclude line written every run" 'if ! grep -qxF "$line" "$EXCLUDE" 2>/dev/null; then' 'if :; then' row_scope_project
-  mutant "repo-side deps include global ones" 'if [ -n "$EXCLUDE" ] && ! is_opt_in "$dep"; then' 'if false; then' row_scope_project
-  mutant "global names link into the repo" 'elif ! is_opt_in "$name"; then' 'elif false; then' row_scope_project
-  mutant "a repo with no key is accepted" 'if [ -z "$shared" ]; then' 'if false; then' row_scope_usage
+
+  if [ -z "$first_skill" ] || [ -z "$second_skill" ] || [ "$first_skill" = "$second_skill" ]; then
+    selftest_fail "found fewer than two names on install.sh's name_only_skills line — the settings-keys rows graded nothing"
+  else
+    row_keys_fresh
+    row_keys_quiet
+    row_keys_partial
+    row_stale
+    mutant "stale warning never fires" '[ -e "$path" ] || echo "WARN' 'true || echo "WARN' row_stale
+    mutant "~/ is not expanded" "'~/'*) path=" "'~nope/'*) path=" row_stale
+    mutant "\$HOME/ is not expanded" "'\$HOME/'*) path=" "'\$NOPE/'*) path=" row_stale
+    mutant "\${HOME}/ is not expanded" "'\${HOME}/'*) path=" "'\${NOPE}/'*) path=" row_stale
+    mutant "an unexpandable \$VAR path is checked" "    case \"\$path\" in *'\$'*) continue ;; esac
+" "" row_stale
+    mutant "the parsed commands are not shell-split" 'words = shlex.split(cmd)' 'words = cmd.split()' row_stale
+    mutant "any shell counts as bash" '"[^"]*/bash"'"'"' "$SETTINGS"' '"[^"]*"'"'"' "$SETTINGS"' row_keys_partial
+    mutant "shell check takes no space after the colon" '"CLAUDE_CODE_SHELL"[[:space:]]*:[[:space:]]*' '"CLAUDE_CODE_SHELL":' row_keys_quiet
+    mutant "any override counts as name-only" '[[:space:]]*\"name-only\"" "$SETTINGS"' '[[:space:]]*\"[^\"]*\"" "$SETTINGS"' row_keys_partial
+    mutant "block drops the shell line" "keys='  \"env\"" "keys=''; : '" row_keys_fresh
+    mutant "block prints when every key is present" 'if [ "$want_shell" = 1 ] || [ -n "$want_skills" ]; then' 'if :; then' row_keys_quiet
+  fi
+  mutant "fallback keeps the escaped quote and the ;" "global/hooks/[^\"[:space:];\\\\]*'" "global/hooks/[^\"[:space:]]*'" row_stale_fallback
+
+  # The opt-in mutants run whatever the name-only list holds; a short
+  # opt_in_skills line already failed above, so they are skipped quietly.
+  if [ -n "$opt_in_first" ] && [ "$opt_in_first" != "$opt_in_second" ]; then
+    mutant "global loop links opt-in skills" 'is_opt_in "$name" || link_skill "$name"' 'link_skill "$name"' row_scope_global
+    mutant "unlink takes any link at an opt-in name" '[ "$(readlink "$TARGET_DIR/$name")" = "$SKILLS_DIR/$name" ]' 'true' row_scope_global
+    mutant "a repo with no key is accepted" 'if [ -z "$shared" ]; then' 'if false; then' row_scope_usage
+    mutant "a gone opt-in name is not warned about" '[ -d "$SKILLS_DIR/$name" ] ||
+    echo "WARN' 'true ||
+    echo "WARN' row_scope_gone
+    if [ -z "$leaf2" ]; then
+      selftest_fail "no two opt-in skills without an opt-in dep — the --project shape mutants would each grade an empty row, so none was run"
+    else
+      mutant "an unknown flag runs the global install" '  *)
+    echo "usage: install.sh [--project <repo>]" >&2
+    exit 3
+    ;;' '  *)
+    ;;' row_project_refusals
+      mutant "a subdirectory is accepted" 'if [ "$top" != "$PROJECT" ]; then' 'if false; then' row_project_refusals
+      mutant "a symlinked .claude is followed" 'if [ -L "$d" ]; then' 'if false; then' row_project_refusals
+      mutant "the Shared skills line is glob-expanded" '  set -f
+  for name in $shared; do' '  for name in $shared; do' row_project_lines
+      mutant "a CRLF line keeps its \\r" "tr ',\\r' '  '" "tr ',' ' '" row_project_lines
+      mutant "a trailing / is kept" '    name="${name%/}"' '    :' row_project_lines
+      mutant "a bulleted line is not read" '\([-*][[:space:]]\{1,\}\)\{0,1\}Shared skills:' 'Shared skills:' row_project_lines
+      mutant "a declined name is excluded anyway" 'if [ -n "$EXCLUDE" ] && [ -L "$target" ] && [ "$(readlink "$target")" = "$skill" ]; then' 'if [ -n "$EXCLUDE" ]; then' row_project_shapes
+      mutant "no newline before an append" 'if [ -s "$EXCLUDE" ] && [ -n "$(tail -c1 "$EXCLUDE")" ]; then' 'if false; then' row_project_shapes
+      mutant "CDPATH is honoured" 'PROJECT="$(CDPATH= cd -- "$2"' 'PROJECT="$(cd -- "$2"' row_project_shapes
+    fi
+    # These three grade row_scope_project, which reads scope_parent: with it
+    # empty the row stages nothing, and a mutant could count a kill on a row
+    # that graded no link at all.
+    if [ -z "$scope_parent" ]; then
+      selftest_fail "no opt-in skill requires both an opt-in and a global skill — the repo-side dep mutants would grade an empty row, so none was run"
+    else
+      mutant "exclude line written every run" 'if ! grep -qxF "$line" "$EXCLUDE" 2>/dev/null; then' 'if :; then' row_scope_project
+      mutant "repo-side deps include global ones" 'if [ -n "$EXCLUDE" ] && ! is_opt_in "$dep"; then' 'if false; then' row_scope_project
+      mutant "global names link into the repo" 'elif ! is_opt_in "$name"; then' 'elif false; then' row_scope_project
+    fi
+  fi
 fi
 
 selftest_close \
-  "install self-test clean — both prune arms removed the dangling links they own, left the foreign links, the live links and the real directories alone, the second run was a no-op, the settings keys printed only what the file lacks, and the stale-hook warning fired only on missing paths." \
+  "install self-test clean — both prune arms removed the dangling links they own, left the foreign links, the live links and the real directories alone, the second run was a no-op, the settings keys printed only what the file lacks, the stale-hook warning fired only on missing paths, and the opt-in rows unlinked the old global links, linked the repo's Shared skills into it with one exclude line each, and refused every repo shape that would write elsewhere." \
   "install self-test PARTIAL — see the SKIP lines above for what went ungraded."
