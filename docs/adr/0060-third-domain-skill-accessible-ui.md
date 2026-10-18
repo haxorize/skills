@@ -10,7 +10,7 @@ Prong (a) was measured, and the measurement reversed a recommendation. Six promp
 
 The test's first prong therefore reads "the default output of the models the invoking teams run", and `DOMAIN.md` says so. The gap is model-dependent and was measured, not assumed; a later model that passes the same probe makes the skill dead weight, and the record below names that trigger.
 
-Placement stays flat in `src/`. ADR-0055 said a third admission re-decides it, and it did: three bodies cost the lint, install, and selftest globs nothing, and a tier bought now is paid for in every loop. The re-open trigger is an observed cost rather than a count: the first loop that has to special-case Domain skills as a kind. `install.sh`'s opt-in list ([ADR-0114](0114-opt-in-skills-install-per-repo-from-a-shared-skills-line.md)) does not meet it. That list holds `accessible-ui`, which installs per repo from a `Shared skills:` line, but it is drawn by install scope: 4 of its 9 skills are not Domain skills.
+Placement stays flat in `src/`. ADR-0055 said a third admission re-decides it, and it did: three bodies cost the lint, install, and selftest globs nothing, and a tier bought now is paid for in every loop. The re-open trigger is an observed cost rather than a count: the first loop that has to special-case Domain skills as a kind. `install.sh`'s opt-in list ([ADR-0114](0114-opt-in-skills-install-per-repo-from-a-shared-skills-line.md)) does not meet it. That list holds `accessible-ui`, which installs per repo from a `Shared skills:` line, but it is drawn by install scope: 5 of its 9 skills are not Domain skills.
 
 The name is `accessible-ui`, final in this record rather than through a rename-table pass. The a11y-health UI gate requires the skill by name, so a provisional name would break the gate on rename. `accessibility` lost because a stranger at autocomplete cannot tell it from the project's `a11y` residue skill; `a11y-evidence` lost because it names one half.
 
@@ -33,7 +33,7 @@ The description was probed 12 times against its final wording: 6 engineer messag
 
 ## Deferred
 
-- The a11y-health UI repo's install line and edit-gate message (`a11y-health-ui/CLAUDE.md:39`, `:131`; `skill-gate.mjs:348`) name the per-project command `install.sh --project`, not a user-level link: that repo's change and record (Batch 24b).
+- The a11y-health UI repo's install line and edit-gate message (`a11y-health-ui/CLAUDE.md:39`, `:131`; `skill-gate.mjs:348`) name the command `install.sh --project`, not a user-level link: that repo's change and record (Batch 24b).
 - `image` is out of the description, though the body's `references/patterns.md` § Images and icons carries the contract. Restoring it owes a trigger-test re-run in the same batch, under [ADR-0077](0077-tightening-round-one-house-style.md) § Scope and order.
 
 ## Revisit when

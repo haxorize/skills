@@ -146,7 +146,7 @@ Five skills entered the suite, and the Team-fit test is why. Four of them were P
 
 | Skill | Axis | The moment, and the role | Record |
 | --- | --- | --- | --- |
-| `product-description` | model-invoked | A rewrite, port, or handover needs current outside-in behavior pinned down before the code moves — reached by a BA or PM through prose, and by `requires:` from two callers | [ADR-0065](0065-product-description-model-invoked-not-onboard-me-phase-0.md) |
+| `product-description` | model-invoked | A rewrite, port, or handover needs current outside-in behavior pinned down before the code moves — reached by a BA or PM through prose, and by `requires:` from two callers at admission, one since [ADR-0114](0114-opt-in-skills-install-per-repo-from-a-shared-skills-line.md) | [ADR-0065](0065-product-description-model-invoked-not-onboard-me-phase-0.md) |
 | `onboard-me` | user-invoked | An engineer starting on a repo they do not know, one rung per turn, reading and never writing | [ADR-0064](0064-onboard-me-read-only-kt-session.md) |
 | `rebuild-contract` | user-invoked | A reimplementer who must rebuild what a system does — in another language, framework, or architecture — without opening the source | [ADR-0069](0069-rebuild-contract-pre-rewrite-contract-in-repo.md) |
 | `offboard-me` | user-invoked | An engineer who is leaving, interviewed area by area on what only they can answer | [ADR-0070](0070-offboard-me-handover-in-repo-human-as-evidence.md) |
