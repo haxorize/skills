@@ -24,7 +24,7 @@ For test fixtures and patterns, see your project's testing skill(s). For convent
 
 ## Code written before its test
 
-Production code that got ahead of its failing test gets **deleted** — not kept as reference, not adapted, not glanced at while rewriting. Delete it, write the test, watch it fail, re-implement.
+This rule governs production code absent from `git merge-base HEAD <trunk>` — on a trunk-only repo the merge-base is `HEAD`, so the rule governs uncommitted code. Such code that got ahead of its failing test gets **deleted** — not kept as reference, not adapted, not glanced at while rewriting. Delete it, write the test, watch it fail, re-implement. Code present at the merge-base is the pinning test's: where it arrived with no tests, a slice that changes it writes a pinning test first (§ Closing the cycle).
 
 | Rationalization | Reality |
 | --- | --- |

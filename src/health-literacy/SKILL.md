@@ -62,7 +62,7 @@ The failures here are copy written as though the English rendering were the only
 
 - **The target is the project's; grade 6 to 8 is the fallback.** Which formula, which target, and what it is measured on are the convention skill's answers; where none is named, write against grade 6 to 8. The score is a signal read as a range, never the gate; the check below is.
 - **The mechanical floor:** sentences of 20 words or fewer, one point per sentence, paragraphs of 2 or 3 sentences, no noun stack longer than three words (*prior authorization request determination notice* is unwound into a sentence), and headings that make sense alone. For general word substitutions, the public-domain plainlanguage.gov list *Use simple words and phrases* is the lookup; the payer terms in this body are the ones that list does not carry.
-- **The check that decides is the next move.** *Read the draft aloud once as the member:* what happened, what it costs, what I do now. Where the answer needs a second read, the copy is not finished, whatever it scores.
+- **The check that decides is the next move.** Run a **Cold-reader pass** (`writing-for-humans`) on the copy alone and ask what happened, what it costs, and what the member does now; an answer that misses or misstates any of the three marks the copy unfinished, whatever it scores.
 
 A rule above answered "no" for this change is a finding on it, the same as a failing check.
 

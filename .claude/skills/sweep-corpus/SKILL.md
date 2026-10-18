@@ -1,13 +1,13 @@
 ---
 name: sweep-corpus
-description: Run the dormant health family over this repo on a schedule — lint, the doc-claim check over the four documents that claim what the suite is, and the cross-reference and router checks — report-only against an additive open-findings file, plus the hand procedure for closing one of its findings outside a sweep. Repo-local to the skills repo.
+description: Run the dormant health family over this repo when typed — lint, the doc-claim check over the four documents that claim what the suite is, and the cross-reference and router checks — report-only against an additive open-findings file, plus the hand procedure for closing one of its findings outside a sweep. Repo-local to the skills repo.
 disable-model-invocation: true
 requires: doc-claims
 ---
 
 # Sweep Corpus
 
-The health checks fire only when something schedules them; this skill is the schedule, running the doc-claim check, the lint gate, and the cross-reference check over this repo. It **reports and never edits `src/`**: the fix for a finding is a normal session's work, landed through review.
+The health checks fire only when someone runs them; nothing schedules this skill, and a person types it to run the doc-claim check, the lint gate, and the cross-reference check over this repo. It **reports and never edits `src/`**: the fix for a finding is a normal session's work, landed through review.
 
 Its writes are one new `docs/health/<date>.md` per run plus the one additive `docs/health/open-findings.md` — two files on the first run, one more on every run after. Both are **tracked**, because `open-findings.md` carries findings across sessions and must survive a clone; `.gitignore` therefore does not name them, and `git add -A :/` in any tree stamp will pick them up. So a sweep starts from a clean tree — § 3 says why — and its own output is the only thing standing in the working tree when it ends, landing as **its own commit** rather than riding someone else's: the repo's `Landing:` block pre-authorizes push but not commit, so the sweep ends by asking for that commit. A sweep asked for over a change in flight refuses rather than stamping a tree the checks did not read.
 

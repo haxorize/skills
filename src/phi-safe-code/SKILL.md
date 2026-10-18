@@ -59,6 +59,7 @@ Reject a unit that fails validation — the claim in an 837, the member record i
 ## The repo and the conversation
 
 - **The conversation is private; the repo is not.** Never write a member named in a chat turn, a support thread, or a pasted log anywhere durable: not a commit message, branch name, PR or work-item body, test name, comment, screenshot, or terminal excerpt in a report. Reproduce the case with a synthetic record and refer to the real one by ticket number.
+- **A presigned or unguessable link to a private file is the credential:** never in a ticket, chat, log, or commit, and short-lived when one must travel.
 - **A PHI value already landed where it should not be is an incident, not a typo** — in published history, a running log, a store, a ticket. Raise it through the project's incident path before touching it: a quiet delete destroys the evidence of scope, and the retention window is the owner's call. On all four surfaces, never delete the log lines, purge the rows, or edit the ticket — report, and the owner decides what is scrubbed. **Published history is the one surface with a procedure**: never run your own amend, tip-edit, or force-push; take the steps in [references/history-incident.md](references/history-incident.md).
 
 ## External sinks and the BAA gate

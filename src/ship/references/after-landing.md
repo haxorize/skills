@@ -8,6 +8,7 @@ The push is not the end of a deployed change. The claim "works" for a live effec
 
 One pass over the window, then a verdict. Not a loop, not a poll.
 
+- **For a web app, check from outside before reading logs.** Request the page, its assets, and one route behind login, from outside the deploy's network; a broken asset or a gated route that errors never reaches a server log as a failure. An app with no login skips the gated route. A session with no vantage point outside the deploy's network marks the outside check `UNVERIFIABLE` in the verdict, naming the network it would need, and grades on the logs alone.
 - **Measure against the baseline, not against zero.** Errors that were there before the deploy are not the change's; errors that are new are, until shown otherwise. Mark each measurement `FAIL` (the rollback trigger fired: roll back), `WARN` (deviates from the baseline, keep watching to the window's end), or `PASS`, and say which.
 - **Pull the logs; never grade from a dashboard or a script's stdout.** A dashboard rolls up; stdout is what the script chose to print. The log lines for the window are the evidence, and the report names the window and the line count, as a `N+` figure where a limit cut the read.
 - **The same job or request id repeated is one failure retried, not five.** Dedupe on the id before counting; a retry storm counted raw makes a single failure read as an outage.

@@ -7,7 +7,7 @@ description: The relentless-interview discipline for stress-testing a plan, deci
 
 ## Map the tree, then work it in rounds
 
-Map the topic as a **decision tree** — every decision branches into the decisions that hang off it — and work it in **rounds**. The **frontier** is every decision whose prerequisites are already settled: the questions you can ask *now* without guessing at answers you haven't heard yet. Ask the whole frontier in one round, then wait. Answers reshape the tree — settled decisions push the frontier outward — so recompute it and ask the next round. A question whose answer depends on another question still open in this round belongs to a *later* round, not this one. When decisions chain, the frontier narrows by itself — a one-question round is the tree saying the next decision gates everything else, not a failure to batch.
+Before mapping, restate the goal and the problem in your own words in two lines, so a misread goal is corrected before the first round. Then map the topic as a **decision tree** — every decision branches into the decisions that hang off it — and work it in **rounds**. The **frontier** is every decision whose prerequisites are already settled: the questions you can ask *now* without guessing at answers you haven't heard yet. Ask the whole frontier in one round, then wait. Answers reshape the tree — settled decisions push the frontier outward — so recompute it and ask the next round. A question whose answer depends on another question still open in this round belongs to a *later* round, not this one. When decisions chain, the frontier narrows by itself — a one-question round is the tree saying the next decision gates everything else, not a failure to batch.
 
 The loop is not done when the questions run out. Three gates close it, each stated in full below: the **closure sweep** over the standing categories, the **pre-mortem**, and the **false yes** that refuses a non-answer as a decision. A grill that skipped them is unresolved, whatever it concluded.
 
@@ -23,7 +23,7 @@ When the user wants the plan blessed rather than tested, name that out loud and 
 
 Within a round, order questions load-bearing-first — an assumption that sinks the plan if it's false is read before any nice-to-have refinement — and the same ordering picks which branches to expand first. The format below replaces the global ask block for every grill question. Format every question:
 
-❓ **Q1 — [short title]**: [the question; letter the alternatives (a/b/c) when it offers any]
+❓ **Q<n> — [short title]**: [the question; letter the alternatives (a/b/c) when it offers any]
 
 💡 [your recommended answer]
 
@@ -31,7 +31,7 @@ Within a round, order questions load-bearing-first — an assumption that sinks 
 
 Separate consecutive questions with a `---` line, so a wide round scans as a list of decisions rather than one block.
 
-Three guards on the question line itself: a topic label is not a question ("Acceptance device matrix (FR-023)" is a label — write the full interrogative, ending in `?`); the line must be answerable on its own by a reader who skipped the surrounding prose; and when the stake is not obvious, one plain why-it-matters sentence sits between the question and its options. Never letter a "let Claude decide" option — it invites the false yes by checkbox. Keep the interviewer voice matter-of-fact: praise and agreement lower the pressure the grill exists to apply.
+Four guards on the question line itself: a topic label is not a question ("Acceptance device matrix (FR-023)" is a label — write the full interrogative, ending in `?`); the line must be answerable on its own by a reader who skipped the surrounding prose; when the stake is not obvious, one plain why-it-matters sentence sits between the question and its options; and the question is worded so a bare "yes" accepts the 💡 line, never so a yes could mean either alternative. Number questions across the whole conversation, not per round, and a re-asked question keeps its number. Never letter a "let Claude decide" option — it invites the false yes by checkbox. Keep the interviewer voice matter-of-fact: praise and agreement lower the pressure the grill exists to apply.
 
 ## Read the answer, and dwell when it is fuzzy
 
