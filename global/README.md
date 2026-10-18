@@ -20,7 +20,7 @@ The five rules (each rule's `DEPENDS` entry names the skills lint checks cite ba
 
 ## Hooks
 
-`hooks/` holds hook scripts for the class of failure a hook can see: a tool call whose shape, or whose precondition on disk, is wrong before it runs; a sensor that sees a turn after it ran; and two that add a line of context after the fact and never block. Seven ship:
+`hooks/` holds hook scripts for the class of failure a hook can see: a tool call whose shape, or whose precondition on disk, is wrong before it runs; and two that add a line of context after the fact and never block. Six ship:
 
 - `rename-safety.sh` — a `PreToolUse` check on Bash that blocks in-place edits (`sed -i`, `perl -pi`, `ruby -i`, however the flag reaches the program) to files in an opted-in directory, and points at the Edit tool; one BSD-form substitution on one listed file runs, as does any edit whose files all lie outside. Its header states the in-place shapes, the opt-in, and the fail-open rule.
 - `commit-bypass.sh` — a `PreToolUse` check on Bash that blocks the three command-line shapes that skip the repo's hooks (`--no-verify` and its prefixes, `git commit -n`, `-c core.hooksPath=` and its `--config-env` spelling), however the flag reaches git; always on, no opt-in, fail-open. A mention inside a message or note passes. `git config` writes and `GIT_CONFIG_*` overrides are outside its contract — the header says so.

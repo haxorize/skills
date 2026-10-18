@@ -220,7 +220,7 @@ It links the whole suite; there is no single-skill install. Skills reach each ot
 
 ### Committed git hooks (opt-in)
 
-The **git hooks** ship in `scripts/git-hooks/` — run by git, not the Claude Code hooks under `global/hooks/` (four `PreToolUse` checks, one `Stop` sensor, and two context hooks on `UserPromptSubmit` and `PostToolUseFailure`); `bash scripts/setup-hooks.sh` prints the current roster from each hook's `# Gate map:` header line: `pre-commit` runs the linter a staged path answers to (`lint-skills.sh` for a path under `src/`, `global/`, `.claude/skills/`, `scripts/`, or `docs/`, or for `README.md`, `DOMAIN.md`, or `CLAUDE.md`; `lint-adrs.sh` for a path under `docs/adr/`), `post-merge` re-hoists after a pull, and `commit-msg` re-breaks over-long body prose lines and checks commit-message shape. One opt-in enables all of them:
+The **git hooks** ship in `scripts/git-hooks/` — run by git, not the Claude Code hooks under `global/hooks/` (four `PreToolUse` checks and two context hooks on `UserPromptSubmit` and `PostToolUseFailure`); `bash scripts/setup-hooks.sh` prints the current roster from each hook's `# Gate map:` header line: `pre-commit` runs the linter a staged path answers to (`lint-skills.sh` for a path under `src/`, `global/`, `.claude/skills/`, `scripts/`, or `docs/`, or for `README.md`, `DOMAIN.md`, or `CLAUDE.md`; `lint-adrs.sh` for a path under `docs/adr/`), `post-merge` re-hoists after a pull, and `commit-msg` re-breaks over-long body prose lines and checks commit-message shape. One opt-in enables all of them:
 
 ```bash
 bash scripts/setup-hooks.sh

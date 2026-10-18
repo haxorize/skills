@@ -209,6 +209,7 @@ awk -F'\t' -v since="$since" -v until="$until" -v exclude="$exclude" \
       t = typed[name] + 0; l = loaded[name] + 0
       lt = (name in last_t) ? last_t[name] : "-"; ll = (name in last_l) ? last_l[name] : "-"
       if (json) {
+        # read by src/retro/scripts/digest.py: the keys skill, typed and loaded of each row, and exit 2 as a floor (no quote marks: this is inside the awk program)
         printf "%s{\"skill\":\"%s\",\"typed\":%d,\"typed_is_floor\":%s,\"loaded\":%d,\"loaded_is_floor\":%s,\"last_typed\":%s,\"last_loaded\":%s}", (first ? "" : ","), name, t, (typed_partial ? "true" : "false"), l, (loaded_partial ? "true" : "false"), (lt == "-" ? "null" : "\"" lt "\""), (ll == "-" ? "null" : "\"" ll "\"")
         first = 0
       } else {

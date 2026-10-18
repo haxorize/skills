@@ -3078,6 +3078,7 @@ check_context_budget() {
   total=$(( ${claude_md_bytes/absent/0} + rules_bytes + catalog_line_bytes ))
   # Integer division rounds down; the probe's ratio is 3.64, carried as 364/100.
   tokens=$((total * 100 / 364))
+  # read by src/retro/scripts/digest.py: it scrapes `launch-loaded surface: <N> bytes` off stdout
   echo "launch-loaded surface: $total bytes (CLAUDE.md $claude_md_bytes + global/rules/ $rules_dir_bytes + model-invoked catalog $catalog_line_bytes), about $tokens tokens at 3.64 bytes per token, paid on every turn of every session"
   if [ "$total" -gt 30000 ]; then
     echo "WARN: the launch-loaded surface totals $total bytes, over the 30,000-byte per-turn budget ADR-0079 argues — the layer that grew pays: relocate procedure out of global/rules/, trim CLAUDE.md to triggers and contracts, or trim the description that grew; the budget moves only by an edit to ADR-0079"
