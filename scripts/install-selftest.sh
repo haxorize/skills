@@ -60,6 +60,14 @@
 #   - prune_owned's empty-prefix abort, on the function lifted out of the
 #     script (no call site reaches it from outside): it exits 1 and leaves a
 #     foreign dangling link that an empty prefix would otherwise match.
+#   - the settings-keys block: a root with no settings.json prints every key
+#     as one parseable object; a file carrying every key prints no block; a
+#     file with a zsh shell and a skill set "off" still prints both, and
+#     quiets only the key it carries as asked;
+#   - the stale-hook warning: a wired global/hooks/ path that does not exist
+#     warns, absolute or `~/`, and one that exists, absolute or `~/`, does not;
+#   - a mutation table over those two blocks, on a copy of install.sh that
+#     sees this checkout's src/ and global/ through symlinks.
 #
 # NOT covered, so a clean run here is not a claim about them: which skills the
 # recursion reaches (the trace row above grades every line it prints, not that
@@ -256,7 +264,7 @@ else
   # missing and the installer prints the whole block. The JSON is the text
   # from the first line that is exactly `{` to the first that is exactly `}`;
   # the roster and the expected key set both come from the hooks' headers.
-  snippet=$(printf '%s\n' "$fresh_out" | sed -n '/^{$/,/^}$/p')
+  snippet=$(printf '%s\n' "$fresh_out" | sed -n '/^Hook snippet/,$p' | sed -n '/^{$/,/^}$/p')
   if [ -z "$snippet" ]; then
     selftest_fail "the fresh install printed no hook snippet — a root with no settings.json must print the block for every hook, so the snippet rows below graded nothing"
   elif ! command -v python3 >/dev/null 2>&1; then
@@ -358,6 +366,139 @@ print("placed:", " ".join(placed))
   fi
 fi
 
+# The settings-keys block and the stale-hook warning. Each row runs $installer
+# against a root of its own under $home, so the mutation table below can swap
+# in a mutant by setting that one name. The name-only list is read off the
+# installer rather than restated, so the rows track its edits.
+installer="$repo_root/scripts/install.sh"
+name_only=$(sed -n 's/^name_only_skills="\(.*\)"$/\1/p' scripts/install.sh)
+first_skill=${name_only%% *}
+rest=${name_only#* }
+second_skill=${rest%% *}
+# new_root — a fresh TARGET_ROOT with an empty .claude/, path on stdout.
+new_root() {
+  local r
+  r=$(mktemp -d "$home/root.XXXXXX") && mkdir -p "$r/.claude" && printf '%s' "$r"
+}
+# keys_report <installer output> — the settings-keys object parsed: the shell
+# it sets, then the sorted name-only skills. Empty when no block printed.
+keys_report() {
+  local keys
+  keys=$(printf '%s\n' "$1" | sed -n '/^Settings keys/,/^}$/p' | sed -n '/^{$/,/^}$/p')
+  [ -n "$keys" ] || return 0
+  printf '%s\n' "$keys" | python3 -I -c '
+import json, sys
+d = json.load(sys.stdin)
+print("shell:", d.get("env", {}).get("CLAUDE_CODE_SHELL", "-"))
+print("skills:", " ".join(sorted(k for k, v in d.get("skillOverrides", {}).items() if v == "name-only")))
+' 2>&1
+}
+sorted_words() { printf '%s\n' "$@" | sort | tr '\n' ' ' | sed 's/ $//'; }
+
+row_keys_fresh() {
+  local r out report
+  r=$(new_root) || { selftest_fail "no root for the settings-keys fresh row"; return; }
+  out=$(TARGET_ROOT="$r" HOME="$r" bash "$installer" 2>&1)
+  expect_rc "the installer against a root with no settings.json (settings keys)" 0 $?
+  report=$(keys_report "$out") ||
+    { selftest_fail "the settings-keys block is not valid JSON — the user merges it by hand: $report"; return; }
+  expect_row "$report" "a root with no settings.json did not get the bash shell line" "shell: /bin/bash"
+  expect_row "$report" "a root with no settings.json did not get every name-only entry" "skills: $(sorted_words $name_only)"
+}
+
+row_keys_quiet() {
+  local r out s entries=""
+  r=$(new_root) || { selftest_fail "no root for the settings-keys quiet row"; return; }
+  for s in $name_only; do entries="$entries, \"$s\": \"name-only\""; done
+  printf '{ "env": { "CLAUDE_CODE_SHELL": "/bin/bash" }, "skillOverrides": { "init": "name-only"%s } }\n' \
+    "$entries" > "$r/.claude/settings.json"
+  out=$(TARGET_ROOT="$r" HOME="$r" bash "$installer" 2>&1)
+  expect_rc "the installer against a settings.json carrying every key" 0 $?
+  reject_in "$out" "a settings.json carrying every key still got the settings-keys block" "Settings keys"
+  expect_in "$out" "the bash shell line was not reported as already set" "key   env.CLAUDE_CODE_SHELL already bash"
+  for s in $name_only; do
+    expect_in "$out" "a name-only entry the file carries was not reported as already set" "key   skillOverrides.$s already name-only"
+  done
+}
+
+row_keys_partial() {
+  local r out report
+  r=$(new_root) || { selftest_fail "no root for the settings-keys partial row"; return; }
+  printf '{ "env": { "CLAUDE_CODE_SHELL": "/bin/zsh" }, "skillOverrides": { "%s": "name-only", "%s": "off" } }\n' \
+    "$first_skill" "$second_skill" > "$r/.claude/settings.json"
+  out=$(TARGET_ROOT="$r" HOME="$r" bash "$installer" 2>&1)
+  expect_rc "the installer against a settings.json with a zsh shell and one skill off" 0 $?
+  reject_in "$out" "a zsh shell line was reported as bash" "already bash"
+  reject_in "$out" "a skill set \"off\" was reported as name-only" "skillOverrides.$second_skill already"
+  expect_in "$out" "the one name-only entry the file carries was not reported" "key   skillOverrides.$first_skill already name-only"
+  report=$(keys_report "$out") ||
+    { selftest_fail "the settings-keys block is not valid JSON: $report"; return; }
+  expect_row "$report" "a zsh shell did not get the bash shell line" "shell: /bin/bash"
+  expect_row "$report" "the block did not list exactly the entries the file lacks" \
+    "skills: $(sorted_words $(printf '%s\n' $name_only | grep -vxF "$first_skill"))"
+}
+
+row_stale() {
+  local r out
+  r=$(new_root) || { selftest_fail "no root for the stale-hook row"; return; }
+  mkdir -p "$r/global/hooks" "$r/abs/global/hooks"
+  : > "$r/global/hooks/here.sh"
+  : > "$r/abs/global/hooks/abs.sh"
+  cat > "$r/.claude/settings.json" <<JSON
+{ "hooks": { "PreToolUse": [ { "matcher": "Bash", "hooks": [
+  { "type": "command", "command": "bash $r/gone/global/hooks/gone.sh" },
+  { "type": "command", "command": "bash ~/global/hooks/tilde-gone.sh" },
+  { "type": "command", "command": "bash $r/abs/global/hooks/abs.sh" },
+  { "type": "command", "command": "bash ~/global/hooks/here.sh" },
+  { "type": "command", "command": "bash \$HOME/global/hooks/here.sh" },
+  { "type": "command", "command": "bash \${HOME}/global/hooks/here.sh" }
+] } ] } }
+JSON
+  out=$(TARGET_ROOT="$r" HOME="$r" bash "$installer" 2>&1)
+  expect_rc "the installer against a settings.json wiring missing hooks" 0 $?
+  expect_in "$out" "a wired absolute hook path that does not exist was not warned about" "wires $r/gone/global/hooks/gone.sh, which does not exist"
+  expect_in "$out" "a wired ~/ hook path that does not exist was not warned about" "wires ~/global/hooks/tilde-gone.sh, which does not exist"
+  reject_in "$out" "an absolute hook path that exists was warned about" "wires $r/abs/"
+  reject_in "$out" "a ~/ hook path that exists was warned about" "wires ~/global/hooks/here.sh"
+  reject_in "$out" "a \$HOME/ hook path that exists was warned about" "wires \$HOME/global/hooks/here.sh"
+  reject_in "$out" "a \${HOME}/ hook path that exists was warned about" "wires \${HOME}/global/hooks/here.sh"
+}
+
+if ! command -v python3 >/dev/null 2>&1; then
+  selftest_skip "python3 is not on PATH — the settings-keys and stale-hook rows and their mutation table were not exercised."
+elif [ -z "$first_skill" ] || [ -z "$second_skill" ] || [ "$first_skill" = "$second_skill" ]; then
+  selftest_fail "found fewer than two names on install.sh's name_only_skills line — the settings-keys rows graded nothing"
+else
+  row_keys_fresh
+  row_keys_quiet
+  row_keys_partial
+  row_stale
+
+  # --- mutation table -------------------------------------------------------
+  # Each mutant edits a copy of install.sh in one place and reruns the row
+  # that grades that place; the row must be green on the installer and red on
+  # the mutant. The copy sits in a scripts/ whose src and global are symlinks
+  # to this checkout's, so its own-path lookups resolve.
+  mdir="$home/mutant"
+  mkdir -p "$mdir/scripts"
+  ln -s "$skills_dir" "$mdir/src"
+  ln -s "$global_dir" "$mdir/global"
+  # mutant <label> <find> <replace> <row>
+  mutant() {
+    selftest_mutate scripts/install.sh "$mdir/scripts/install.sh" "$2" "$3" || return
+    selftest_expect_killed --mutant installer "$mdir/scripts/install.sh" "$1" "$4"
+  }
+  mutant "stale warning never fires" '[ -e "$path" ] || echo "WARN' 'true || echo "WARN' row_stale
+  mutant "~/ is not expanded" "'~/'*) path=" "'~nope/'*) path=" row_stale
+  mutant "\$HOME/ is not expanded" "'\$HOME/'*) path=" "'\$NOPE/'*) path=" row_stale
+  mutant "\${HOME}/ is not expanded" "'\${HOME}/'*) path=" "'\${NOPE}/'*) path=" row_stale
+  mutant "any shell counts as bash" '"[^"]*/bash"'"'"' "$SETTINGS"' '"[^"]*"'"'"' "$SETTINGS"' row_keys_partial
+  mutant "shell check takes no space after the colon" '"CLAUDE_CODE_SHELL"[[:space:]]*:[[:space:]]*' '"CLAUDE_CODE_SHELL":' row_keys_quiet
+  mutant "any override counts as name-only" '[[:space:]]*\"name-only\"" "$SETTINGS"' '[[:space:]]*\"[^\"]*\"" "$SETTINGS"' row_keys_partial
+  mutant "block drops the shell line" "keys='  \"env\"" "keys=''; : '" row_keys_fresh
+  mutant "block prints when every key is present" 'if [ "$want_shell" = 1 ] || [ -n "$want_skills" ]; then' 'if :; then' row_keys_quiet
+fi
+
 selftest_close \
-  "install self-test clean — both prune arms removed the dangling links they own, left the foreign links, the live links and the real directories alone, and the second run was a no-op." \
+  "install self-test clean — both prune arms removed the dangling links they own, left the foreign links, the live links and the real directories alone, the second run was a no-op, the settings keys printed only what the file lacks, and the stale-hook warning fired only on missing paths." \
   "install self-test PARTIAL — see the SKIP lines above for what went ungraded."

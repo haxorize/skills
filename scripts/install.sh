@@ -162,6 +162,76 @@ link_rules() {
 
 link_rules
 
+SETTINGS="${TARGET_ROOT}/.claude/settings.json"
+
+# A wired hook whose script is gone. settings.json outlives the file it names:
+# a hook deleted here (friction-log.sh, ADR-0113) stays wired on every machine
+# until someone removes its entry, and the harness never says it ran nothing.
+# Any path under a global/hooks/ is read, not only this checkout's, since the
+# work machine's mirror sits at another path. A leading `~/` or `$HOME/` is
+# expanded the way the harness's shell would, so a portable entry is not
+# reported missing. A WARN only: the settings file stays the user's to edit.
+if [ -f "$SETTINGS" ]; then
+  while IFS= read -r wired; do
+    path="$wired"
+    case "$path" in
+      '~/'*) path="$HOME/${path#'~/'}" ;;
+      '$HOME/'*) path="$HOME/${path#'$HOME/'}" ;;
+      '${HOME}/'*) path="$HOME/${path#'${HOME}/'}" ;;
+    esac
+    [ -e "$path" ] || echo "WARN  $SETTINGS wires $wired, which does not exist — remove that hook entry"
+  done < <(grep -o '[^"[:space:]]*global/hooks/[^"[:space:]]*' "$SETTINGS" | sort -u || true)
+fi
+
+# Settings keys this repo owns a value for, printed the way hooks are below
+# and never written (ADR-0053). CLAUDE_CODE_SHELL: zsh reads the agent's
+# `grep --include=…` as a glob and refuses it, and the empty result reads as
+# "nothing found". The name-only skills: model-loaded only because another
+# skill names them, so their descriptions cost every turn and start nothing;
+# name-only keeps each callable by name. work-item-shape stays off the list
+# (grill Q32). Quiet per key once settings.json carries it.
+name_only_skills="feedback-loops writing-for-agents diverging doc-claims"
+want_shell=1
+if [ -f "$SETTINGS" ] && grep -Eq '"CLAUDE_CODE_SHELL"[[:space:]]*:[[:space:]]*"[^"]*/bash"' "$SETTINGS"; then
+  echo "key   env.CLAUDE_CODE_SHELL already bash in $SETTINGS"
+  want_shell=0
+fi
+want_skills=""
+for s in $name_only_skills; do
+  if [ ! -d "$SKILLS_DIR/$s" ]; then
+    echo "WARN  $s — on install.sh's name-only list but src/$s is gone; drop it from the list"
+  elif [ -f "$SETTINGS" ] && grep -Eq "\"$s\"[[:space:]]*:[[:space:]]*\"name-only\"" "$SETTINGS"; then
+    echo "key   skillOverrides.$s already name-only in $SETTINGS"
+  else
+    want_skills="$want_skills $s"
+  fi
+done
+if [ "$want_shell" = 1 ] || [ -n "$want_skills" ]; then
+  cat <<SNIPPET
+
+Settings keys — merge these into ~/.claude/settings.json (not applied automatically).
+Keep any key already there; a managed env setting (/status) wins over this one.
+SNIPPET
+  keys=""
+  if [ "$want_shell" = 1 ]; then
+    keys='  "env": { "CLAUDE_CODE_SHELL": "/bin/bash" }'
+  fi
+  if [ -n "$want_skills" ]; then
+    overrides=""
+    for s in $want_skills; do
+      if [ -n "$overrides" ]; then overrides="$overrides,
+"; fi
+      overrides="$overrides    \"$s\": \"name-only\""
+    done
+    block="  \"skillOverrides\": {
+$overrides
+  }"
+    if [ -n "$keys" ]; then keys="$keys,
+$block"; else keys="$block"; fi
+  fi
+  printf '{\n%s\n}\n' "$keys"
+fi
+
 # Hooks are wired in ~/.claude/settings.json, which this script never edits:
 # an installer that rewrites the harness config leaves the user with a
 # settings file they no longer know the contents of. Print the block; the
@@ -174,7 +244,6 @@ link_rules
 # roster the same way. A hook's event is its `# Event:` header line, and a
 # hook with none is a PreToolUse check on Bash; only PreToolUse entries take
 # a matcher, so a Stop hook's entry is the bare hooks list.
-SETTINGS="${TARGET_ROOT}/.claude/settings.json"
 # hook_event <hook name> — prints the event the hook's `# Event:` header names,
 # or PreToolUse when it carries none. The value lands in a JSON key position
 # in the snippet below, so it is checked against the harness's event names
