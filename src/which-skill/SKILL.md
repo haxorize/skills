@@ -1,7 +1,6 @@
 ---
 name: which-skill
-description: Ask which skill or flow fits your situation. A router over the user-invoked skills in this repo.
-disable-model-invocation: true
+description: The router over this suite's typed commands and their flow. Use when someone asks which skill or command fits a situation, or which one comes after the step just finished. Not for running the chosen skill — load or type that one.
 ---
 
 # Which Skill

@@ -21,13 +21,9 @@ Every skill sits on one axis — **who can reach it** (see [`DOMAIN.md`](DOMAIN.
 - **User-invoked skills** — reachable only by a human typing them (`disable-model-invocation: true`). They **orchestrate** a workflow.
 - **Model-invoked skills** — reachable by the model or a human (the default). They hold a reusable **discipline** the model reaches for on its own, or that an orchestrator pulls in via a declared dependency.
 
-The route most work travels: **`/grill-me`** → **`/to-feature` / `/to-story` / `/to-tasks`** to decompose → **`/implement <id>`** to load one slice and build it → **`/review-changes`** before it lands → **`/address-findings`** to act on the report → a plain "commit and push" (the `committing` discipline) or **`/ship`** to land it. Detours branch off: a runnable question goes **`/handoff` → `/prototype` → `/handoff`**; a hard bug pulls in `diagnosing-bugs`. A program or feature with no outcome statement yet is framed by **`/frame-effort`** before the grill. An effort too big for one session and still wrapped in fog goes through **`/chart-course`** first. Upkeep loops — **`/review-architecture`**, **`/sweep-domain`**, **`/backfill-adrs`**, **`/verify-docs`** — run between features. A PM or designer enters through **`/grill-me`**, **`/to-story`**, **`/prototype`**, a product description asked for by name (`product-description` answers), and **`/explain`**. When you don't remember which to reach for, ask **`/which-skill`**.
+The route most work travels: **`/grill-me`** → **`/to-feature` / `/to-story` / `/to-tasks`** to decompose → **`/implement <id>`** to load one slice and build it → **`/review-changes`** before it lands → **`/address-findings`** to act on the report → a plain "commit and push" (the `committing` discipline) or **`/ship`** to land it. Detours branch off: a runnable question goes **`/handoff` → `/prototype` → `/handoff`**; a hard bug pulls in `diagnosing-bugs`. A program or feature with no outcome statement yet is framed by **`/frame-effort`** before the grill. An effort too big for one session and still wrapped in fog goes through **`/chart-course`** first. Upkeep loops — **`/review-architecture`**, **`/sweep-domain`**, **`/backfill-adrs`**, **`/verify-docs`** — run between features. A PM or designer enters through **`/grill-me`**, **`/to-story`**, **`/prototype`**, a product description asked for by name (`product-description` answers), and **`/explain`**. When you don't remember which to reach for, ask which skill fits; the model opens **`which-skill`**.
 
 ## User-invoked skills
-
-### Routing
-
-- **`which-skill`** — Ask which skill or flow fits your situation. A router over the user-invoked skills.
 
 ### Grilling
 
@@ -53,7 +49,7 @@ The route most work travels: **`/grill-me`** → **`/to-feature` / `/to-story` /
 
 ### Meeting, and leaving, a system you did not write
 
-- **`onboard-repo`** — Wire a repo for the suite in one sitting: the `Issue tracker:`, `Landing:`, and `## Registry` blocks, loop commands and the `Run:` bring-up line (or `## What the product is here` for an instruction-set repo), convention-skill roles, `## Sibling repos`, `## Review lenses`, and `## Generated files` where the repo has them, a `## Risk zones` block only as the user draws it, and the `DOMAIN.md` / `docs/solutions/` seeds, each written only where nothing exists yet. Prints the hook snippet; never edits `settings.json`.
+- **`onboard-repo`** — Wire a repo for the suite in one sitting: the `Issue tracker:`, `Landing:`, and `## Registry` blocks, loop commands and the `Run:` bring-up line (or `## What the product is here` for an instruction-set repo), the `## Main flow` line, convention-skill roles, `## Sibling repos`, `## Review lenses`, and `## Generated files` where the repo has them, a `## Risk zones` block only as the user draws it, and the `DOMAIN.md` / `docs/solutions/` seeds, each written only where nothing exists yet. Prints the hook snippet; never edits `settings.json`.
 - **`onboard-me`** — A knowledge-transfer session over an unfamiliar repo: evidence-tagged findings, a KT map of what is still dark, one rung per turn, and each topic worth going deeper on named to the learner to take to `/teach-me` themselves. Writes one file itself, `docs/inward-spec.md`, only when the learner asks for it, and the map lives outside the repo; where the repo has no product description it offers one, and on a yes `product-description` writes a `docs/product-description/` directory.
 - **`rebuild-contract`** — The pre-rewrite contract for a system about to be ported or replaced: every observer at its declared boundary, a fidelity per surface, and everything they can see written as rules a reimplementer builds from without opening the source, with the audit trail beside it under `docs/rebuild-contract/`. Reads the repo and writes only that folder, after asking. Declares `product-description` and calls it with `--seed` where the repo has none; the architecture it strips out is `onboard-me`'s KT map, and `onboard-me`'s inward spec (`docs/inward-spec.md`) is the seam it reads for that boundary.
 - **`offboard-engineer`** — Evidence-led knowledge capture from an engineer who is leaving: the repo is scanned for what only they can answer, the risks ranked by how exclusively theirs and how badly the loss hurts, then one area per turn is put to them with your reading offered first, and the offboarding record — its risk register, the tagged capture, and the successor document together — lands under `docs/offboarding/`, what nobody knows first. Runs with the departing person, never at them, and has no unattended run — without them it produces an agenda that says so. What they will answer in writing after the session goes to `ask-for-me`.
@@ -124,6 +120,10 @@ The first two are the same first day, different subject: `onboard-repo` wires th
 - **`retro`** — Look back at a session, one code-review report, or every session since a date, and propose changes to the agent's setup — checks, hooks, skill text, steering, tools, permissions — ranked, each with a pointer into the transcript and the metric that will show it held. A bundled script reads the transcripts. Proposes; never applies.
 
 ## Model-invoked skills
+
+### Routing
+
+- **`which-skill`** — The router over the typed commands and their flow. The model opens it when someone asks which skill fits or what comes next, and you can type it.
 
 ### Grilling & domain modeling
 

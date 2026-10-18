@@ -20,7 +20,7 @@ Everything is plain files in a git repo: readable, editable, versioned, with no 
 
 1. Clone the repo and run `bash scripts/install.sh`. It symlinks the skills and rules, and it prints the hook snippet for `~/.claude/settings.json`; it never edits that file, so each person pastes the snippet themselves.
 2. Run `/onboard-repo` once in each repo. It interviews you and writes the tracker and `Landing:` sections into that repo's `CLAUDE.md`, only where nothing exists yet.
-3. Pick an on-ramp below. The rest stays idle until someone asks for it by name, and `/which-skill` answers "which one fits" from day one.
+3. Pick an on-ramp below. The rest stays idle until someone asks for it by name, and asking which one fits opens the `which-skill` router from day one.
 
 ## What it does not do
 

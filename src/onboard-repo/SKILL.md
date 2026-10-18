@@ -1,6 +1,6 @@
 ---
 name: onboard-repo
-description: Wire a repo for this suite in one sitting — the `Issue tracker:`, `Landing:`, and `## Registry` blocks, the `## Commands` section with its `Run:` bring-up line (or `## What the product is here` for an instruction-set repo), the convention-skill roles, `## Sibling repos`, `## Review lenses`, `## Generated files`, and `## Risk zones` where the repo has them, the seed files (`DOMAIN.md`, `docs/solutions/`), and the printed hook snippet — each block written only where nothing exists yet.
+description: Wire a repo for this suite in one sitting — the `Issue tracker:`, `Landing:`, and `## Registry` blocks, the `## Commands` section with its `Run:` bring-up line (or `## What the product is here` for an instruction-set repo), the `## Main flow` line, the convention-skill roles, `## Sibling repos`, `## Review lenses`, `## Generated files`, and `## Risk zones` where the repo has them, the seed files (`DOMAIN.md`, `docs/solutions/`), and the printed hook snippet — each block written only where nothing exists yet.
 disable-model-invocation: true
 requires: writing-for-agents
 ---
@@ -40,6 +40,7 @@ Preview every block, then write on confirmation. A block or file that already ex
 - `## Landing` — the `Landing:` block, six lines.
 - `## Commands` — only the commands step 2 admitted, each preceded by the question it answers; the bring-up answer is its `Run:` line — launch, readiness signal, sibling services and their start order, seed, and the canonical record — one line, in that order. Where step 2 found the checks differ by change type, add the change-type table: `| Change type | Paths | Checks |`, one row per type, with an opt-in suite marked `(opt-in)` in the row whose paths call for it.
 - `## What the product is here` — **only** in a repo step 1 marked as one whose product is agent instructions: names the tracked instruction files as the product's content, read as data and never as rules in force for the agent working on the repo. Any other repo gets no such block.
+- `## Main flow` — every repo step 1 did not mark as agent instructions gets one line, verbatim: "Main flow: `/implement <id>` → `/handoff` when a session runs long → `/review-changes` → `/address-findings <report>` → `/ship`. Anything off this path, ask which skill fits." A teammate meets this order before learning the router exists.
 - `## Convention skills` — role → skill name, one line each.
 - `## Sibling repos` — one line per sibling, `` `<relative-path>`: <what it is to this repo> ``; written only where step 2 named one, since an empty section reads as a declared absence of siblings.
 - `## Review lenses` — the lens or specialization step 2 named, one line each, naming what it looks at; written only where the repo has a subject that demands one.
