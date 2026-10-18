@@ -470,8 +470,9 @@ rules each cites. With no argument, the whole tree.
                     that some per-file check reads. Router coverage and the
                     requires arms that read a skill's invocation flag run from
                     every other skill when the router, README.md or that
-                    skill's SKILL.md is named, narrowed to the named file. A
-                    clean run prints `lint-skills.sh PARTIAL:` and exits 2,
+                    skill's SKILL.md is named, narrowed to the named file;
+                    naming scripts/install.sh grades every skill's requires:
+                    edges to an opt-in skill. A clean run prints `lint-skills.sh PARTIAL:` and exits 2,
                     never 0: not everything was checked
 
   LINT_ROOT=<dir>   point the whole sweep at another tree; unset in normal use
@@ -725,11 +726,32 @@ name_is_user_invoked() { case "$user_invoked_skills" in *" $1 "*) return 0 ;; es
 # The opt-in set (ADR-0114): skills install.sh never links globally, read from
 # its opt_in_skills line, the list's one home. A global skill whose requires:
 # names one has an unmet dependency in every repo that does not list the dep.
-# A root with no scripts/install.sh has no opt-in skills.
+# A root with no scripts/install.sh has no opt-in skills. An install.sh whose
+# line this parse no longer matches (wrapped, single-quoted, a trailing
+# comment) FAILs below rather than reading as an empty set, which would quietly
+# pass every global-requires-opt-in edge.
+# Source of truth: install.sh's opt_in_skills line and its is_opt_in.
 opt_in_skills=" "
-[ -f scripts/install.sh ] &&
+opt_in_line_missing=0
+if [ -f scripts/install.sh ]; then
+  grep -q '^opt_in_skills=".*"$' scripts/install.sh || opt_in_line_missing=1
   opt_in_skills=" $(sed -n 's/^opt_in_skills="\(.*\)"$/\1/p' scripts/install.sh | head -1) "
+fi
+# Mirrors install.sh's is_opt_in over the set parsed above.
 name_is_opt_in() { case "$opt_in_skills" in *" $1 "*) return 0 ;; esac; return 1; }
+
+# The name-only set: skills install.sh prints a skillOverrides "name-only" key
+# for, read from its name_only_skills line the same way and FAILed below on the
+# same terms. check_catalog_bytes is the reader — an unread line would put
+# their descriptions back in the every-turn figure with nothing saying so.
+# Source of truth: install.sh's name_only_skills line.
+name_only_skills=" "
+name_only_line_missing=0
+if [ -f scripts/install.sh ]; then
+  grep -q '^name_only_skills=".*"$' scripts/install.sh || name_only_line_missing=1
+  name_only_skills=" $(sed -n 's/^name_only_skills="\(.*\)"$/\1/p' scripts/install.sh | head -1) "
+fi
+name_is_name_only() { case "$name_only_skills" in *" $1 "*) return 0 ;; esac; return 1; }
 
 # Both routers, read once. check_router_coverage runs per skill, so grepping
 # the files there is two processes per skill over the same two files.
@@ -825,6 +847,16 @@ if [ "$files_mode" -eq 1 ]; then
     echo "lint-skills.sh: --files '$p' is a file no per-file check reads — nothing here would grade it, so a run over it is no verdict; drop it, or run without --files" >&2
     exit 3
   done <<<"$files_scope"
+fi
+
+# The opt-in parse above, graded where its FAIL can land: a whole-tree run, or
+# --files naming install.sh. A FAIL, not a WARN — an unread list turns
+# check_requires_resolve's opt-in arm off, which a WARN would leave green.
+if [ "$opt_in_line_missing" -eq 1 ] && { [ "$files_mode" -eq 0 ] || files_named scripts/install.sh; }; then
+  say_fail "scripts/install.sh has no line of the form opt_in_skills=\"a b c\" (one line, double-quoted, nothing after the closing quote) — lint reads the opt-in set from it, so every global skill's requires: edge to an opt-in skill went ungraded; restore that shape"
+fi
+if [ "$name_only_line_missing" -eq 1 ] && { [ "$files_mode" -eq 0 ] || files_named scripts/install.sh; }; then
+  say_fail "scripts/install.sh has no line of the form name_only_skills=\"a b c\" (one line, double-quoted, nothing after the closing quote) — lint reads the name-only set from it, so every name-only skill's description was counted in the every-turn catalog figure; restore that shape"
 fi
 
 # DOMAIN.md, read once for the two checks that grade a body against it. The
@@ -1217,14 +1249,19 @@ if [ "$files_mode" -eq 1 ]; then
     skill=${f#src/}; skill=${skill%/SKILL.md}
     cross_names="$cross_names $skill"
   done <<<"$graded_skills"
-  if [ -n "$cross_routers" ] || [ -n "$cross_names" ]; then
+  # Naming install.sh names the opt-in list, which every requires: edge to an
+  # opt-in dep turns on, so those deps join the resolve arm's set.
+  cross_req_names=$cross_names
+  files_named scripts/install.sh && cross_req_names="$cross_names $opt_in_skills"
+  if [ -n "$cross_routers" ] || [ -n "${cross_req_names// /}" ]; then
     for f in src/*/SKILL.md; do
       files_named "$f" && continue
       skill=${f#src/}; skill=${skill%/SKILL.md}
       [ -n "$cross_routers" ] && check_router_coverage "$skill" "$cross_routers"
-      [ -n "$cross_names" ] || continue
+      [ -n "${cross_req_names// /}" ] || continue
       reqs=$(frontmatter_value "$f" requires | tr ',' ' ')
-      [ -n "$reqs" ] && check_requires_resolve "$f" "$reqs" "$cross_names"
+      [ -n "$reqs" ] && check_requires_resolve "$f" "$reqs" "$cross_req_names"
+      [ -n "$cross_names" ] || continue
       check_requires_two_way "$f" "$skill" "$reqs" "$(skill_body_lines "$f")" "$cross_names"
     done
   fi
@@ -2696,8 +2733,12 @@ check_rules_bytes() {
 # The measured span is the whole `description:` line, key and value and
 # newline, which is what the 13,132 figure counted; a value-only reading
 # would report 308 bytes of headroom that do not exist.
+# An opt-in or name-only skill's line is subtracted from the every-turn figure,
+# and from the ceiling and budget graded against it, and printed on a line of
+# its own: those descriptions no longer load in every session (ADR-0114 for
+# opt-in; name-only via the skillOverrides keys install.sh prints).
 check_catalog_bytes() {
-  local f skill bytes one line
+  local f skill bytes one line deferred=0 opt_in_named="" name_only_named=""
   bytes=0
   for f in src/*/SKILL.md; do
     [ -f "$f" ] || continue
@@ -2715,9 +2756,17 @@ check_catalog_bytes() {
     fi
     one=0
     [ -n "$line" ] && one=$(printf '%s\n' "$line" | wc -c | tr -d ' ')
-    bytes=$((bytes + one))
+    if name_is_opt_in "$skill"; then
+      deferred=$((deferred + one)); opt_in_named="$opt_in_named,$skill"
+    elif name_is_name_only "$skill"; then
+      deferred=$((deferred + one)); name_only_named="$name_only_named,$skill"
+    else
+      bytes=$((bytes + one))
+    fi
   done
   catalog_line_bytes=$bytes
+  opt_in_named=${opt_in_named#,}; name_only_named=${name_only_named#,}
+  echo "paid only where installed or named: $deferred bytes (opt-in ${opt_in_named:-none}; name-only ${name_only_named:-none})"
   if [ "$bytes" -gt 14400 ]; then
     echo "WARN: the model-invoked description lines total $bytes bytes, over the 14,400-byte ceiling ADR-0079 fixed for the catalog loaded on every turn — trim the description that grew, or trim others to pay for it; the ceiling moves only by an edit to ADR-0079"
   fi

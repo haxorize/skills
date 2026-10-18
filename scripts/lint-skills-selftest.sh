@@ -333,6 +333,7 @@ expect "global-rule Depends (directory only)" "global/rules/dir-only-cited.md DE
 expect "global-rule Depends (other rule's path)" "global/rules/other-path-cited.md DEPENDS entry names 'unused-dep' but src/unused-dep/ never cites the rule"
 expect "global-rule Depends (unmarked stem)" "global/rules/bare-stem-cited.md DEPENDS entry names 'unused-dep' but src/unused-dep/ never cites the rule"
 expect "opt-in requires (a global skill requiring an opt-in one)" "src/unused-dep/SKILL.md requires 'fixture-discipline', but 'fixture-discipline' is opt-in and 'unused-dep' is global"
+expect "name-only parse (an installer with no name_only_skills line)" "FAIL: scripts/install.sh has no line of the form name_only_skills="
 expect "two-way requires (undeclared)" "src/undeclared-dep/SKILL.md calls the Skill tool with \`fixture-discipline\` but its requires: line does not declare"
 # The gerund and the two-name clause are separate matcher reaches: the first name
 # grades 'calling', the second grades that the clause does not end at name one.
@@ -746,15 +747,15 @@ fi
 expect_rc "the lint against the fixture tree" 1 "$status"
 # The count of FAIL lines is pinned: a check that begins firing on a fixture
 # it should leave alone reds here even when no substring row names the line.
-# Last moved 2026-10-17 (Batch 24): 120 → 121 — unused-dep's requirement of
-# fixture-discipline, which the fixture installer now lists as opt-in.
+# Last moved 2026-10-18: 121 → 122 — the fixture installer carries no
+# name_only_skills line, which lint now reads for the catalog figure.
 # Earlier moves of this pin are in
 # `git log -p -G 'expected exactly [0-9]+ FAIL' -- scripts/lint-skills-selftest.sh` — they describe counts
 # nothing asserts any more, and stacking them here made a changelog out of the
 # one line that has to stay readable. A count that moves is read before it is
 # re-pinned.
 nfail=$(printf '%s\n' "$output" | grep -c '^FAIL: ')
-[ "$nfail" -eq 121 ] || selftest_fail "expected exactly 121 FAIL lines against the fixture tree, got $nfail"
+[ "$nfail" -eq 122 ] || selftest_fail "expected exactly 122 FAIL lines against the fixture tree, got $nfail"
 # The shared-trigger-phrase fixtures are pinned by property, as near_bytes and
 # bulk_bytes are below: every row above them asserts a FAIL that appears or a
 # FAIL that does not, and each of those readings is silently satisfied by a
@@ -980,6 +981,8 @@ reject_in "$clean_baseline" "the clean run printed a shell error (a header line 
 # rather than inside the throwaway-root block below: it needs no mktemp, so a
 # machine whose mktemp fails still grades it.
 expect_in "$clean_baseline" "the launch-loaded sum did not print, or its figure moved, in the clean root" "launch-loaded surface: 6692 bytes (CLAUDE.md 5954 + global/rules/ 118 + model-invoked catalog 620), about 1838 tokens"
+# No install.sh, so nothing is opt-in or name-only and the split line reads 0.
+expect_in "$clean_baseline" "the clean root did not print the opt-in/name-only line at 0" "paid only where installed or named: 0 bytes (opt-in none; name-only none)"
 
 # The widening half of scripts/README.md's both-ways rule for the
 # .claude/skills/*/scripts/*.sh walk. Narrowing is graded twice — dropping the
@@ -1394,11 +1397,57 @@ fi
 optin_root="$isolated_parent/opt-in-both"
 if mkdir -p "$optin_root" && cp -R "$fixtures/." "$optin_root/" &&
    perl -0pi -e 's/^opt_in_skills="fixture-discipline"$/opt_in_skills="unused-dep fixture-discipline"/m or die' "$optin_root/scripts/install.sh" 2>/dev/null; then
-  optin_out=$(LINT_ROOT="$optin_root" bash scripts/lint-skills.sh 2>&1)
+  optin_out=$(LINT_ROOT="$optin_root" bash scripts/lint-skills.sh 2>&1); optin_rc=$?
   reject_in "$optin_out" "an opt-in skill requiring an opt-in skill FAILed, an edge that installs together" "is opt-in and"
+  # The absence above is only a finding if the run reached its end: the tree's
+  # own FAILs still exit 1, and the launch-loaded line is the run's last.
+  expect_rc "the lint against the 'opt-in-both' root" 1 "$optin_rc"
+  expect_in "$optin_out" "the 'opt-in-both' run never reached its launch-loaded line, so the quiet opt-in row graded a run that stopped early" "launch-loaded surface:"
 else
   selftest_skip "could not copy the wrong-on-purpose tree, or widen its opt-in list, for the 'opt-in-both' case — the quiet opt-in row was not exercised."
 fi
+# An opt-in line the parse no longer reads must FAIL, not read as an empty set
+# that turns the global-requires-opt-in arm off; whole-tree and under --files.
+optin_root="$isolated_parent/opt-in-reshaped"
+if mkdir -p "$optin_root" && cp -R "$fixtures/." "$optin_root/" &&
+   perl -0pi -e "s/^opt_in_skills=\"fixture-discipline\"\$/opt_in_skills='fixture-discipline'/m or die" "$optin_root/scripts/install.sh" 2>/dev/null; then
+  optin_out=$(LINT_ROOT="$optin_root" bash scripts/lint-skills.sh 2>&1)
+  expect_in "$optin_out" "a single-quoted opt_in_skills line drew no FAIL, so an unread opt-in list passes silently" "FAIL: scripts/install.sh has no line of the form opt_in_skills="
+  optin_out=$(LINT_ROOT="$optin_root" bash scripts/lint-skills.sh --files "$optin_root/scripts/install.sh" 2>&1)
+  expect_in "$optin_out" "--files naming install.sh drew no FAIL for its unread opt_in_skills line" "FAIL: scripts/install.sh has no line of the form opt_in_skills="
+  optin_out=$(LINT_ROOT="$optin_root" bash scripts/lint-skills.sh --files "$optin_root/src/broken-links/SKILL.md" 2>&1)
+  reject_in "$optin_out" "--files naming broken-links graded install.sh's opt_in_skills line, a file it did not name" "scripts/install.sh has no line of the form"
+else
+  selftest_skip "could not copy the wrong-on-purpose tree, or reshape its opt-in line, for the 'opt-in-reshaped' case — the unread-list row was not exercised."
+fi
+# --files naming install.sh names the opt-in list, so every global skill's
+# requires: edge to an opt-in dep is re-graded, though no SKILL.md was named.
+files_out=$(LINT_ROOT="$fixtures" bash scripts/lint-skills.sh --files "$fixtures/scripts/install.sh" 2>&1); files_rc=$?
+expect_in "$files_out" "--files naming install.sh did not re-grade the requires: edges its opt-in list turns on" "FAIL: src/unused-dep/SKILL.md requires 'fixture-discipline', but 'fixture-discipline' is opt-in and 'unused-dep' is global"
+expect_rc "--files naming install.sh in the wrong-on-purpose root" 1 "$files_rc"
+files_out=$(LINT_ROOT="$fixtures" bash scripts/lint-skills.sh --files "$fixtures/src/broken-links/SKILL.md" 2>&1)
+reject_in "$files_out" "--files naming broken-links graded the opt-in requires: edges, which only install.sh or the skills themselves turn on" "is opt-in and"
+# Opt-in and name-only descriptions leave the every-turn figure (ADR-0114;
+# skillOverrides). The clean root plus a paired, pointer-carrying installer
+# listing near-cap (170 bytes) opt-in and clean-skill (450) name-only, one
+# root each: the catalog arm drops to the other skill's bytes, the launch-loaded
+# sum drops with it, and the split line names what left. Deleting the
+# subtraction keeps 620 in the sum and reds both roots' rows.
+for split in "near-cap||450|170 bytes (opt-in near-cap; name-only none)" "|clean-skill|170|450 bytes (opt-in none; name-only clean-skill)"; do
+  IFS='|' read -r split_opt split_name split_turn split_paid <<<"$split"
+  split_root="$isolated_parent/catalog-split-${split_opt:-$split_name}"
+  if mkdir -p "$split_root" && cp -R "$clean_fixtures/." "$split_root/" &&
+     printf '#!/usr/bin/env bash\n# Conventions for this tree: scripts/README.md\nopt_in_skills="%s"\nname_only_skills="%s"\n' "$split_opt" "$split_name" > "$split_root/scripts/install.sh" &&
+     printf '#!/usr/bin/env bash\n# Conventions for this tree: scripts/README.md\nexit 0\n' > "$split_root/scripts/install-selftest.sh" &&
+     chmod +x "$split_root/scripts/install-selftest.sh"; then
+    split_out=$(LINT_ROOT="$split_root" bash scripts/lint-skills.sh 2>&1); split_rc=$?
+    expect_rc "the lint against the '${split_root##*/}' root" 0 "$split_rc"
+    expect_in "$split_out" "the '${split_root##*/}' root did not print what left the every-turn catalog" "paid only where installed or named: $split_paid"
+    expect_in "$split_out" "the '${split_root##*/}' root still counted an opt-in or name-only description every turn" "model-invoked catalog $split_turn)"
+  else
+    selftest_skip "could not build the '${split_root##*/}' root — the opt-in/name-only catalog split was not exercised."
+  fi
+done
 flip_root="$isolated_parent/files-flip"
 if mkdir -p "$flip_root" && cp -R "$fixtures/." "$flip_root/" &&
    perl -0pi -e 's/^(name: fixture-discipline\n)/$1disable-model-invocation: true\n/m or die' "$flip_root/src/fixture-discipline/SKILL.md" 2>/dev/null; then
