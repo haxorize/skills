@@ -173,7 +173,7 @@ selftests_for() {
   esac
   # a library: the selftests of the non-selftest scripts in its directory that
   # name it, plus those of any script naming a library that names it (one hop:
-  # hook-lib.py is named by hook-lib.sh, which every hook but friction-log sources)
+  # hook-lib.py is named by hook-lib.sh, which every hook sources)
   local libnames="$base" f2
   for f in "$root/$d"/*-lib.sh; do
     [ -f "$f" ] && [ "${f##*/}" != "$base" ] && names "$f" "$base" && libnames="$libnames ${f##*/}"

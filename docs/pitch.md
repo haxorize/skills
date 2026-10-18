@@ -25,7 +25,7 @@ Everything is plain files in a git repo: readable, editable, versioned, with no 
 ## What it does not do
 
 - It does not enforce anything outside the session. Nothing runs in CI, and the hooks are per-seat: a teammate without the install has no gate. Branch protection stays your repo host's job.
-- Most of the discipline is prose the agent follows, not mechanism. Three of the hooks cover only the shapes a script can see before a tool call (the mass edit, the bypass flag, the unreviewed push); a fourth reads each finished turn and flags correction-shaped ones for the friction log. All fail open with a logged breadcrumb rather than blocking on their own errors.
+- Most of the discipline is prose the agent follows, not mechanism. Three of the hooks cover only the shapes a script can see before a tool call (the mass edit, the bypass flag, the unreviewed push). All fail open with a logged breadcrumb rather than blocking on their own errors.
 - It does not edit `settings.json`, rewrite git history, or push anywhere without an ask.
 - It does not replace human review. It makes the agent's self-review legible and can gate a push on it; a person still approves the PR wherever the repo requires an approver.
 - It does not carry company data. Repo-specific vocabulary, thresholds, and policies stay in each repo's own files.

@@ -1,3 +1,6 @@
+---
+status: superseded by [ADR-0113](0113-the-retro-reads-transcripts-and-the-friction-hook-goes.md)
+---
 # The 2026-09-12 round's batch 8 admits the friction loop: a `Stop` hook that has the agent log a correction, and the user-invoked `debrief` that writes the paragraph behind one line
 
 ## Context

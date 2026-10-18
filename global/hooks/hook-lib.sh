@@ -21,15 +21,11 @@
 #                         on the hook's own allow (exit 5: emit's stdout is
 #                         the breadcrumb), and on any other non-zero exit
 #   hook_allow "<why>"  — exit 0 with a one-line stderr breadcrumb
-#                         (friction-log.sh, the one hook that sources no
-#                         shell lib, carries a byte-identical copy as
-#                         `allow`, and session-hook-lib.py's `crumb` carries
-#                         the same shape for the three session hooks' Python,
-#                         friction-log.py's included; a change to the message
-#                         shape is made in all three, and in the one-line
-#                         load-failure fallbacks that cannot reach a lib:
-#                         friction-log.py's, and each hook's own "hook-lib.sh
-#                         not found" line)
+#                         (session-hook-lib.py's `crumb` carries the same
+#                         shape for the two session hooks' Python; a change
+#                         to the message shape is made in both, and in each
+#                         hook's own one-line "hook-lib.sh not found"
+#                         fallback, which cannot reach a lib)
 #
 # Fail-open is the lib's rule, not each hook's: a safety hook that blocks on
 # its own errors trains the user to disable it. Silent exits (no breadcrumb)

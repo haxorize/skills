@@ -87,5 +87,5 @@ Each route in a line; the blurbs are in the skills repo's `README.md` skill map 
 - **`/write-skill`** — conventions for writing and editing skills.
 - **`/audit-skills`** — a verdict per skill installed under `~/.claude/skills/`.
 - **`/report-progress`** — your weekly status or progress note to your manager, for you alone or a team, drafted from repos and tracker, each item sourced.
-- **`/debrief <date | id | phrase>`** — the paragraph behind one friction-log line: class, remedy, proposed fix; the next mining round reads it first.
+- **`/retro [--session <id> | --review <report> | --since <date> | --round]`** — setup changes a session, review, or window points to; proposes, never applies.
 - **`/audit-aeo <url | saved-html>`** — one public page graded as an AI agent reads it, ending in a gap list; the standards it grades against are `aeo`'s.
