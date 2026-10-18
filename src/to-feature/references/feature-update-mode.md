@@ -21,9 +21,9 @@ Re-run the story-map checks from step 8 (every active Feature AC ID covered by a
 
 ## Patch
 
-- **ADO:** The fetched description is already HTML. Convert **only the new story map section** from Markdown to HTML (using the pandoc or Python one-liner from [ado-html-transport.md](ado-html-transport.md)), splice the result between the `<!-- BEGIN STORY MAP -->` and `<!-- END STORY MAP -->` markers in the existing HTML, write to a file, and patch with its absolute path:
+- **ADO:** The fetched description is already HTML. Convert **only the new story map section** from Markdown to HTML (`python3 ~/.claude/skills/work-item-shape/scripts/tracker.py html <scratchpad>/map.md <scratchpad>/map.html`), splice the result between the `<!-- BEGIN STORY MAP -->` and `<!-- END STORY MAP -->` markers in the existing HTML, write it to a file, and patch with it — an `.html` file goes through unconverted:
   ```bash
-  az boards work-item update --id <feature-id> --description @/absolute/path/description.html
+  python3 ~/.claude/skills/work-item-shape/scripts/tracker.py update <feature-id> --body <scratchpad>/description.html --workdir <scratchpad>
   ```
   (description-only; do not pass `Microsoft.VSTS.Common.AcceptanceCriteria`). **Never pass the full fetched description through a Markdown → HTML converter** — it is already HTML and re-converting will double-encode any `<code>`, `<hr>`, and other HTML tags already present.
-- **GitHub:** `gh issue edit <feature-number> --body-file <draft>`.
+- **GitHub:** `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py update <feature-number> --body <scratchpad>/<draft>.md --workdir <scratchpad>`.

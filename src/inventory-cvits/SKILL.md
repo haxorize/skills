@@ -61,11 +61,17 @@ Delete `$RUN/export-utf8.csv` once the script exits. A non-zero exit stops the r
 
 ### 3. Match each image to its existing Story
 
-Once per run, enumerate the security feature's child Stories and read each one's marker:
+Once per run, map the security feature's child Stories by marker with the bundled lookup, which reads the `az` JSON and never calls `az`:
 
-- `az boards work-item show <security-feature> --output json --expand relations` — the children are the `System.LinkTypes.Hierarchy-Forward` relations.
-- For each child, `az boards work-item show <child-id> --output json`, and from `System.Description` take the **first** match of `Image:\s*([^\s<]+)` — the marker is the body's first line. A second `Image:` in one body is reported as a possible forged marker, and that Story is matched by its first marker only. Keep each child's `Microsoft.VSTS.Common.Priority`, its AC field, and any `## Removed acceptance criteria` section for step 4.
-- A child with no marker pre-dates this skill or was hand-made: report it for the user to reconcile, never treat it as a match.
+```bash
+S="$(readlink ~/.claude/skills/inventory-cvits)/scripts/find-image-story.py"
+az boards work-item show --id <security-feature> --output json --expand relations > "$RUN/feature.json"
+python3 "$S" children < "$RUN/feature.json" > "$RUN/children.txt"
+while read -r id; do az boards work-item show --id "$id" --output json || exit 1; done < "$RUN/children.txt" > "$RUN/children.json"
+python3 "$S" match --expect "$(wc -l < "$RUN/children.txt")" < "$RUN/children.json"
+```
+
+A non-zero exit stops the run: an `az` read that fails or is throttled leaves a partial map, which reads a mapped image as new and drafts a duplicate Story. `|| exit 1` stops at the first failed read, and `match` exits 2 naming the short read when the work items it read differ from the child count. Re-run the step; never draft from a partial map. Its `stories` are the map: each child's first marker and Priority. Report its `forged` entries as possible forged markers and its `unmarked` children for the user to reconcile; neither is ever a match. Keep `$RUN/children.json` for step 4, which reads each matched Story's AC field and `## Removed acceptance criteria` section from it.
 
 Cross-check `zero_finding` against the map: an image that has an existing Story but no rows in this export is reported with its Story ID, as a Story a clean rescan should now let the team close — unless its `rejected` count is above 0. This skill closes nothing.
 
@@ -78,7 +84,7 @@ For each `in_scope` entry, write the body and acceptance criteria to `$RUN/story
 
 Before printing an `--update`, carry two things forward from the existing Story into the drafted files, since `/to-story --update` replaces the description and the AC field whole: append the Story's `## Removed acceptance criteria` section verbatim to the body file, and append to the acceptance file every active AC beyond the drafted `AC1` and `AC2`, text unchanged. A dropped one breaks the append-only record `to-story`'s update self-review checks.
 
-**Tags are set at creation only.** `/to-story` takes no tag argument: it stamps the drafted title's leading bracket plus the launch repo's `Additional tags:` line, once, on create, and `--update` never touches tags. Print each entry's `tags` beside its command, naming any the title bracket and `Additional tags:` will not produce, with `to-story`'s manual form for adding them after the create: `az boards work-item update --id <id> --fields "System.Tags=<tag1>; <tag2>"`.
+**Tags are set at creation only.** `/to-story` takes no tag argument: it stamps the drafted title's leading bracket plus the launch repo's `Additional tags:` line, once, on create, and `--update` never touches tags. Print each entry's `tags` beside its command, naming any the title bracket and `Additional tags:` will not produce, minus every tag the launch repo's `Never tag:` line lists, which is never applied. Beside them print the command that adds them after the create, with `<org>` the `Organization:` line of the launch repo's `## Issue tracker` block (a bare name becomes `https://dev.azure.com/<name>`, as `tracker.py` expands it), listing every tag the Story should carry, since `System.Tags` is replaced whole: `az boards work-item update --org <org> --id <story-id> --fields "System.Tags=<tag1>; <tag2>"`. Pass no `--project`: `work-item update` addresses the item by ID alone and does not accept the flag.
 
 Tell the human that `/to-story` publishes the drafted files as the Story, and that its own prompts (approach, `## Layers touched`) are answered there. Keep `$RUN` until every printed command has been typed, then `rm -rf "$RUN"`.
 

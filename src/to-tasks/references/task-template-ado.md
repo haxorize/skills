@@ -1,22 +1,22 @@
 # Task template — Azure DevOps
 
-Use this when publishing a Task work item to Azure DevOps via `az boards work-item create --type "Task"`.
+Use this when publishing a Task work item to Azure DevOps via `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py create --type Task`.
 
 ## Field mapping
 
-| ADO field (display name) | Reference name | Source | CLI flag |
+| ADO field (display name) | Reference name | Source | `tracker.py create` argument |
 |---|---|---|---|
-| **Title** | `System.Title` | Set on command line | `--title` |
-| **Description (HTML)** | `System.Description` | Body markdown converted to HTML | `--description @<file>` |
-| **Area Path** | `System.AreaPath` | From CLAUDE.md `Area path:` | `--area` |
-| **Iteration Path** | `System.IterationPath` | From CLAUDE.md `Iteration:` | `--iteration` |
-| **State** | `System.State` | From CLAUDE.md `Default state:`; absent → `New` (optional, never a fail-fast field) | `--fields "System.State=..."` |
-| **Parent (User Story)** | (relation) | From `--parent <story-id>` arg or resolved upstream | post-create: `az boards work-item relation add --id <task-id> --relation-type Parent --target-id <story-id>` |
-| **Blocked-by (Predecessor)** | (relation) | In-project blockers identified during drafting (SKILL step 5) | post-create: `az boards work-item relation add --id <task-id> --relation-type Predecessor --target-id <blocker-id>` |
+| **Title** | `System.Title` | Drafted title; the script prepends the prefix | `--title '…'` |
+| **Description (HTML)** | `System.Description` | Body markdown; the script converts it | `--body <scratchpad>/description.md` |
+| **Area Path** | `System.AreaPath` | From CLAUDE.md `Area path:` | none — read from the block |
+| **Iteration Path** | `System.IterationPath` | From CLAUDE.md `Iteration:` | none — read from the block |
+| **State** | `System.State` | From CLAUDE.md `Default state:`, read from the block; absent → ADO's `New` (optional, never a fail-fast field) | `--field "System.State=…"` overrides it |
+| **Parent (User Story)** | (relation) | From `--parent <story-id>` arg or resolved upstream | `--parent <story-id>` — linked after the create |
+| **Blocked-by (Predecessor)** | (relation) | In-project blockers identified during drafting (SKILL step 5) | after the create: `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py block --blocked <task-id> --blocker <blocker-id>` |
 
 ADO Tasks have only `System.Description` for body content — **no Acceptance Criteria field**. Acceptance criteria belong on the parent User Story.
 
-Before first publish against a new ADO project, verify the field shape once per [ado-html-transport.md](ado-html-transport.md).
+Before first publish against a new ADO project, verify the field shape once per [publishing.md](publishing.md) § Transport safety.
 
 ## Description
 
@@ -32,17 +32,14 @@ Dependence on **another work item in this project** is recorded as a built-in **
 
 ## Create call
 
-Convert the draft per [ado-html-transport.md](ado-html-transport.md), then:
+Write the body to `<scratchpad>/description.md`, then:
 
 ```bash
-az boards work-item create \
-  --type "Task" \
-  --title "$TITLE" \
-  --description @description.html \
-  --area "$AREA_PATH" \
-  --iteration "$ITERATION" \
-  --fields "System.State=$STATE" "System.Tags=$TAGS"
+python3 ~/.claude/skills/work-item-shape/scripts/tracker.py create --type Task --title '<drafted title>' \
+  --body <scratchpad>/description.md --parent <story-id> --workdir <scratchpad>
 ```
+
+Add `--debt` per [publishing.md](publishing.md) § Flags the script cannot derive.
 
 ## Notes
 

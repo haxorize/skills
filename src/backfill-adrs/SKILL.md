@@ -27,7 +27,7 @@ For each commit that smells like a design choice (new module, new dependency, sc
 
 Most commits reference a PR or work item; the rationale lives there, not in the commit message.
 
-Resolve the tracker per [references/tracker-resolution.md](references/tracker-resolution.md) in **Declared** mode only, then query it:
+Resolve the tracker per [references/tracker-resolution.md](references/tracker-resolution.md) in **Declared** mode only (`python3 ~/.claude/skills/work-item-shape/scripts/tracker.py resolve`) then query it:
 
 - **GitHub**: `gh pr view <number>` and `gh issue view <number>` for PR/issue description and discussion. Use `--comments` to include the thread.
 - **Azure DevOps**: `az repos pr show --id <pr-id>` for PR rationale, `az boards work-item show --id <id>` for work-item description and discussion.

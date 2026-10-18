@@ -1,6 +1,6 @@
 # Feature template — GitHub
 
-Use this body when publishing a Feature-level issue to GitHub via `gh issue create`. The title is set on the command line; this is the body.
+Use this body when publishing a Feature-level issue to GitHub via `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py create`. The title is set on the command line; this is the body.
 
 Assemble the body from the skeleton in [feature-body.md](feature-body.md), placing each section below at one anchor: `## Acceptance criteria` after `## Non-goals` (acceptance criteria live in the body on GitHub — there is no separate field), `## Stories underneath` after `## Constraints`, and `## Parent` at the end. AC IDs follow [ac-ids.md](ac-ids.md) — typed prefixes, append-only, removed-criteria record, and why the worked examples skip `AC3`.
 

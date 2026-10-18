@@ -21,9 +21,7 @@ Call the Skill tool with `writing-for-humans`, then again with `work-item-shape`
 
 ### 1. Resolve tracker
 
-Resolve the tracker per [references/tracker-resolution.md](references/tracker-resolution.md).
-
-Title prefix: if the tracker block declares `Title prefix:`, prepend it (with a trailing space) to each Task title before publishing.
+Resolve the tracker per [references/tracker-resolution.md](references/tracker-resolution.md); the tracker script is `work-item-shape`'s, run as `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py`.
 
 ### 2. Resolve parent Story
 
@@ -99,11 +97,11 @@ For each Task, use the appropriate template:
 - GitHub: [references/task-template-github.md](references/task-template-github.md)
 - ADO: [references/task-template-ado.md](references/task-template-ado.md)
 
-- **GitHub:** `gh issue create --title "..." --body-file <draft>` with default labels from CLAUDE.md, plus `--label debt` when the Task pays down debt ([references/work-item-tags.md](references/work-item-tags.md) § The `debt` tag; the label is GitHub's mechanism). Reference the parent via template `Parent: #N` line. **Before creating the first Task in a publishing batch,** run the label precheck in [references/publishing.md](references/publishing.md), and publish the first Task alone per its `## First item of a batch alone`. When a parent Story was resolved, add each new issue as a native sub-issue of it after create — see [references/github-sub-issues.md](references/github-sub-issues.md).
-- **ADO:** publish with the create call in [references/task-template-ado.md](references/task-template-ado.md), with project / area path / iteration / state from CLAUDE.md. Then, per created Task:
-  - **Parent:** `az boards work-item relation add --id <task-id> --relation-type Parent --target-id <story-id>`.
-  - **Tags:** merge `System.Tags` into the create call's `--fields` — see [references/work-item-tags.md](references/work-item-tags.md).
-  - **Blockers:** materialize each in-project blocker as a built-in Predecessor relation: `az boards work-item relation add --id <task-id> --relation-type Predecessor --target-id <blocker-id>`. A just-created Task has no relations — add directly. Only when the Task already existed (a re-run or `--reconcile`) fetch `az boards work-item show <task-id> --output json --expand relations` first and skip the add if a Predecessor to that blocker is already present.
+Publish the first Task alone per [references/publishing.md](references/publishing.md) `## First item of a batch alone`.
+
+- **GitHub:** `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py create --type Task --title '<drafted title>' --body <scratchpad>/<draft>.md --parent <story-number> --workdir <scratchpad>`, adding `--debt` per [references/publishing.md](references/publishing.md) § Flags the script cannot derive. The script applies the default labels and links each issue as a native sub-issue of the Story; the template's `Parent: #N` body line stays, since `/implement`'s ticket load reads it.
+- **ADO:** publish with the create call in [references/task-template-ado.md](references/task-template-ado.md); the script links the parent Story. Then, per created Task:
+  - **Blockers:** materialize each in-project blocker as a built-in Predecessor relation: `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py block --blocked <task-id> --blocker <blocker-id>`. A just-created Task has no relations — add directly. Only when the Task already existed (a re-run or `--reconcile`) read `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py show <task-id>` first and skip the add if a Predecessor to that blocker is already present.
   - **On relation failure:** permission denied — surface immediately; any other error — surface with both work-item IDs for manual linking.
 
 Missing required CLAUDE.md fields, writes blocked on auth or policy (don't loop on auth), and **transport safety** on every create and retry all follow [references/publishing.md](references/publishing.md) — `## When a required field is missing`, `## When the write is blocked`, `## Transport safety`.

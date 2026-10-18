@@ -28,15 +28,15 @@ If the parent has no story-map markers but has a headed decomposition section (l
 <h3>Story 2 — short title — <a href="https://dev.azure.com/...">#<id></a></h3>
 ```
 
-Write the modified HTML to a file and patch with its absolute path:
+Write the modified HTML to a file and patch with it — an `.html` file goes through unconverted, and the script reads the description back:
 
 ```bash
-az boards work-item update --id <feature-id> --description @/absolute/path/description.html
+python3 ~/.claude/skills/work-item-shape/scripts/tracker.py update <feature-id> --body <scratchpad>/description.html --workdir <scratchpad>
 ```
 
 **Emergent Story** (no Snapshot match): After publishing, fetch the parent Feature's description. Locate `<!-- BEGIN STORY MAP -->` / `<!-- END STORY MAP -->`; append an entry below the separator with this Story's tracker ID, scope summary, parent Feature AC IDs it covers (`Covers: AC1, AC3`), and shared names. The Snapshot above the separator is immutable.
 
-**HTML safety for both cases:** the fetched description is already HTML — convert **only the newly authored content** from Markdown to HTML (using the pandoc or Python one-liner from [ado-html-transport.md](ado-html-transport.md)), then append or splice the resulting fragment into the existing description HTML. Never pass fetched or combined content through pandoc or any Markdown → HTML converter: re-converting double-encodes the `<code>`, `<hr>`, and other HTML tags already present.
+**HTML safety for both cases:** the fetched description is already HTML — convert **only the newly authored content** from Markdown to HTML (`python3 ~/.claude/skills/work-item-shape/scripts/tracker.py html <scratchpad>/new.md <scratchpad>/new.html`), then append or splice the resulting fragment into the existing description HTML. Never pass fetched or combined content through pandoc or any Markdown → HTML converter: re-converting double-encodes the `<code>`, `<hr>`, and other HTML tags already present.
 
 Three cases:
 
@@ -63,7 +63,7 @@ az boards work-item show <successor-id> --output json --expand relations
 Then add only the edges whose predecessor is not already in that set:
 
 ```bash
-az boards work-item relation add --id <successor-id> --relation-type Predecessor --target-id <predecessor-id>
+python3 ~/.claude/skills/work-item-shape/scripts/tracker.py block --blocked <successor-id> --blocker <predecessor-id>
 ```
 
 One fetch per successor, not one per edge, keeps republish idempotent without N redundant reads. `--update` never reaches this step — it skips the map-stamp and does not expand relations (see [story-update-mode.md](story-update-mode.md)) — so only create-mode republish is covered.

@@ -41,16 +41,15 @@ If the update adds or removes ACs, changes the module list, or reshapes layers, 
 
 ## Patch
 
-- **ADO:** Convert Markdown → HTML using the pandoc or Python one-liner from [ado-html-transport.md](ado-html-transport.md) (each artifact to a file, its path passed as `@<file>`). Always patch the title — scope changes that trigger `--update` frequently invalidate the prior title:
+- **ADO:** Patch through the script, which converts each `.md` and reads every rich-text field back. Always patch the title — scope changes that trigger `--update` frequently invalidate the prior title. `update` applies the tracker block's `Title prefix:` itself, idempotently, so pass the drafted title without it:
   ```bash
-  az boards work-item update --id <story-id> \
-    --title "<updated-title>" \
-    --description @description.html \
-    --fields "Microsoft.VSTS.Common.AcceptanceCriteria=@acceptance.html"
+  python3 ~/.claude/skills/work-item-shape/scripts/tracker.py update <story-id> --type Story --title '<updated title>' \
+    --body <scratchpad>/description.md \
+    --field "Microsoft.VSTS.Common.AcceptanceCriteria=@<scratchpad>/acceptance.md" --workdir <scratchpad>
   ```
-  When `--priority <1-4>` is passed, add `"Microsoft.VSTS.Common.Priority=<priority>"` to the same `--fields` list on this one update call — the same single-write-path rule as create; without it the field is left untouched. A caller that drafts priority on every run, such as `inventory-cvits`, passes it only to escalate, so an update never lowers a priority someone raised by hand.
-- **GitHub:** `gh issue edit <story-number> --title "<updated-title>" --body-file <draft>`.
+  When `--priority <1-4>` is passed, add `--field "Microsoft.VSTS.Common.Priority=<priority>"` to this one update — the same single-write-path rule as create; without it the field is left untouched. A caller that drafts priority on every run, such as `inventory-cvits`, passes it only to escalate, so an update never lowers a priority someone raised by hand.
+- **GitHub:** `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py update <story-number> --type Story --title '<updated title>' --body <scratchpad>/<draft>.md --workdir <scratchpad>`.
 
-On ADO, read the AC field back after patching, per step 9 — empty, null, or a value beginning with `@` is a failed patch, just as on a create.
+On ADO, an `update` exit 5 with `incomplete=readback:<field>` is a failed patch, just as on a create: fix the file and patch that field again.
 
 The naming-drift check in SKILL.md applies to patches the same as to publishes.

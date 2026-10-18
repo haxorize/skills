@@ -1,21 +1,21 @@
 # Story template — Azure DevOps
 
-Use this when publishing a User Story to Azure DevOps via `az boards work-item create --type "User Story"`. ADO User Stories have structured fields beyond a single body — populate them via the corresponding flags.
+Use this when publishing a User Story to Azure DevOps via `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py create --type "User Story"`. ADO User Stories have structured fields beyond a single body — populate each through its argument below.
 
 ## Field mapping
 
-| ADO field (display name) | Reference name | Source | CLI flag |
+| ADO field (display name) | Reference name | Source | `tracker.py create` argument |
 |---|---|---|---|
-| **Title** | `System.Title` | Set on command line | `--title` |
-| **Description** | `System.Description` | Body markdown converted to HTML | `--description @<file>` |
-| **Acceptance Criteria** | `Microsoft.VSTS.Common.AcceptanceCriteria` | Acceptance bullets converted to HTML | `--fields "Microsoft.VSTS.Common.AcceptanceCriteria=@<file>"` |
-| **Area Path** | `System.AreaPath` | From CLAUDE.md `Area path:` | `--area` |
-| **Iteration Path** | `System.IterationPath` | From CLAUDE.md `Iteration:` | `--iteration` |
-| **State** | `System.State` | From CLAUDE.md `Default state:`; absent → `New` (optional, never a fail-fast field) | `--fields "System.State=..."` |
-| **Priority** | `Microsoft.VSTS.Common.Priority` | From `--priority <1-4>`, an integer 1–4; absent → ADO's own default (optional, never a fail-fast field) | `--fields "Microsoft.VSTS.Common.Priority=..."` |
-| **Parent (Feature)** | (relation) | From `--parent <feature-id>` arg | post-create: `az boards work-item relation add --id <new-story-id> --relation-type Parent --target-id <feature-id>` |
+| **Title** | `System.Title` | Drafted title; the script prepends the prefix | `--title '…'` |
+| **Description** | `System.Description` | Body markdown; the script converts it | `--body <scratchpad>/description.md` |
+| **Acceptance Criteria** | `Microsoft.VSTS.Common.AcceptanceCriteria` | Acceptance bullets; the script converts them | `--field "Microsoft.VSTS.Common.AcceptanceCriteria=@<scratchpad>/acceptance.md"` |
+| **Area Path** | `System.AreaPath` | From CLAUDE.md `Area path:` | none — read from the block |
+| **Iteration Path** | `System.IterationPath` | From CLAUDE.md `Iteration:` | none — read from the block |
+| **State** | `System.State` | From CLAUDE.md `Default state:`, read from the block; absent → ADO's `New` (optional, never a fail-fast field) | `--field "System.State=…"` overrides it |
+| **Priority** | `Microsoft.VSTS.Common.Priority` | From `--priority <1-4>`, an integer 1–4; absent → ADO's own default (optional, never a fail-fast field) | `--field "Microsoft.VSTS.Common.Priority=…"` |
+| **Parent (Feature)** | (relation) | From `--parent <feature-id>` arg | `--parent <feature-id>` — linked after the create |
 
-Before first publish against a new ADO project, verify the field shape once per [ado-html-transport.md](ado-html-transport.md).
+Before first publish against a new ADO project, verify the field shape once per [publishing.md](publishing.md) § Transport safety.
 
 ## Description
 
@@ -31,7 +31,7 @@ The record shape and the append-only rule are in [ac-ids.md](ac-ids.md).
 
 ## Acceptance Criteria (ADO field)
 
-Author as Markdown bullets with typed, append-only IDs per [ac-ids.md](ac-ids.md), converted to HTML before publishing:
+Author as Markdown bullets with typed, append-only IDs per [ac-ids.md](ac-ids.md), in `<scratchpad>/acceptance.md`:
 
 ```markdown
 - **AC1:** Specific, testable outcome 1
@@ -43,26 +43,18 @@ The example skips `AC3` for the reason [ac-ids.md](ac-ids.md) gives.
 
 ## Create call
 
-Convert each artifact per [ado-html-transport.md](ado-html-transport.md), then:
+Write the body to `<scratchpad>/description.md` and the criteria to `<scratchpad>/acceptance.md`, then:
 
 ```bash
-az boards work-item create \
-  --type "User Story" \
-  --title "$TITLE" \
-  --description @description.html \
-  --fields \
-    "Microsoft.VSTS.Common.AcceptanceCriteria=@acceptance.html" \
-    "System.State=$STATE" \
-    "System.Tags=$TAGS" \
-  --area "$AREA_PATH" \
-  --iteration "$ITERATION"
+python3 ~/.claude/skills/work-item-shape/scripts/tracker.py create --type "User Story" --title '<drafted title>' \
+  --body <scratchpad>/description.md \
+  --field "Microsoft.VSTS.Common.AcceptanceCriteria=@<scratchpad>/acceptance.md" \
+  --parent <feature-id> --workdir <scratchpad>
 ```
 
-**Priority (optional).** When `--priority` is passed, check it is an integer 1–4, then add this line to the same `--fields` list on the one create call — never a second `az` write after create. Absent, omit the line:
+Drop `--parent` when there is none; add `--debt` per [publishing.md](publishing.md) § Flags the script cannot derive.
 
-```bash
-    "Microsoft.VSTS.Common.Priority=$PRIORITY" \
-```
+**Priority (optional).** When `--priority` is passed, check it is an integer 1–4, then add `--field "Microsoft.VSTS.Common.Priority=<n>"` to the same create — never a second write after it. Absent, omit it.
 
 ## Notes
 

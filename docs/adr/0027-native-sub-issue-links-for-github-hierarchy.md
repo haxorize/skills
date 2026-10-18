@@ -1,6 +1,6 @@
 # Native sub-issue links for GitHub hierarchy
 
-On GitHub, `to-story`, `to-tasks`, and `to-bug` add each newly published issue as a native sub-issue of its resolved parent — amended: see Amendments 2026-09-01 — extending ADR-0023's principle (built-in relations as an additive projection) from ADO blocking dependencies to GitHub hierarchy. The projection is a convenience layer: the `Parent: #N` body line remains the source of truth that `from-work-item` reads on cold-start, and a failed sub-issue call surfaces both issue numbers for manual linking without blocking or rolling back the publish.
+On GitHub, `to-story`, `to-tasks`, `to-bug` and `to-feature` add each newly published issue as a native sub-issue of its resolved parent, and `chart-course` does the same for a Decision ticket under its map ([ADR-0028](0028-chart-course-decision-ticket-maps.md)), extending ADR-0023's principle (built-in relations as an additive projection) from ADO blocking dependencies to GitHub hierarchy. The projection is a convenience layer: the `Parent: #N` body line remains the source of truth that `from-work-item` reads on cold-start, and a failed sub-issue call surfaces both issue numbers for manual linking without blocking or rolling back the publish.
 
 ## Considered options
 
@@ -10,11 +10,4 @@ On GitHub, `to-story`, `to-tasks`, and `to-bug` add each newly published issue a
 
 ## Consequences
 
-The two parent representations are deliberately redundant — do not "clean up" the `Parent: #N` line in favor of the native link, and do not tighten link failure into a publish failure. The linking mechanics (database-ID lookup, failure handling) live once in the `github-sub-issues.md` sibling reference shared byte-identically by the three publishing skills.
-
-## Amendments
-
-- **2026-08-09** — The sibling group has a fourth member: `chart-course` carries its own byte-identical `github-sub-issues.md` copy, adopted when [ADR-0028](0028-chart-course-decision-ticket-maps.md) made GitHub Decision tickets native sub-issues of their map. "The three publishing skills" above reads as the group's membership at authoring time; `scripts/lint-skills.sh` guards all four copies.
-
-- **2026-09-01** — The sibling group has a **fifth** member, and a publisher gained an outward tracker write with no record. The 2026-08-30 tightening round added `src/to-feature/references/github-sub-issues.md` and a fifth path to `sibling_groups`, so `to-feature` now adds a resolved parent's new issue as a native sub-issue on the same terms as the other three; the opening sentence and [ADR-0007](0007-self-contained-skill-bundles.md)'s tally were both left naming four. The behavior is right — a Feature published under a resolved parent should project the same relation the other tiers do — and the gap was recording, found by the Batch A review rather than by any check: `lint-adrs.sh` reads pointer symmetry, never membership counts.
-
+The two parent representations are deliberately redundant — do not "clean up" the `Parent: #N` line in favor of the native link, and do not tighten link failure into a publish failure. The linking mechanics (database-ID lookup, failure handling) live once in `work-item-shape`'s `tracker.py`: its `link` command, which `create --parent` also runs, and which every skill that publishes a GitHub issue runs by installed path. A failed link inside a create exits 5 (written but incomplete) after printing the new issue's `id=`, naming both issues, and tells the caller to re-run `link`, never the create; a failed `link` run on its own exits 1.

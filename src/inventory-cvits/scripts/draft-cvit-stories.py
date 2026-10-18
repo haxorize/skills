@@ -80,11 +80,9 @@ MISSED_STATUS = "Target Missed"
 
 # The idempotency marker stamped in each Story body, by which a re-run matches the
 # existing Story instead of opening a duplicate. Defined once here so the body writer
-# and the JSON `marker` field never drift apart. The format (`Image: <repo>`) is frozen
-# across three homes, so an edit to the prefix must update all three together:
-#   - this script (MARKER_PREFIX / marker_for);
-#   - src/inventory-cvits/SKILL.md §3, the read-back regex matching existing Stories;
-#   - src/triage-cvits/SKILL.md, which parses the same marker to find the image's Story.
+# and the JSON `marker` field never drift apart. find-image-story.py, beside this
+# script, imports MARKER_PREFIX to build its read-back MARKER_RE (triage-cvits runs it
+# by its installed path), so a rename here breaks that import: keep the name.
 MARKER_PREFIX = "Image:"
 
 

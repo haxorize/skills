@@ -1,6 +1,6 @@
 # Task template — GitHub
 
-Use this body when publishing a Task-shaped child of a Story parent to GitHub via `gh issue create`. The title is set on the command line; this is the body.
+Use this body when publishing a Task-shaped child of a Story parent to GitHub via `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py create`. The title is set on the command line; this is the body.
 
 Assemble the body from the skeleton in [task-body.md](task-body.md), appending the two GitHub-only sections below at the end.
 

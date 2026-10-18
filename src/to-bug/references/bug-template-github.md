@@ -1,6 +1,6 @@
 # Bug template — GitHub
 
-Use this body when publishing a Bug-shaped issue to GitHub via `gh issue create`. The title is set on the command line. GitHub has no native Bug type — apply the `bug` label and a severity label.
+Use this body when publishing a Bug-shaped issue to GitHub via `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py create`. The title is set on the command line. GitHub has no native Bug type — apply the `bug` label and a severity label.
 
 Assemble the body from the skeleton in [bug-body.md](bug-body.md): lead with a `## Repro` section (the skeleton's repro-steps block, headed), then the skeleton sections, then the `## Parent` section below at the end.
 
@@ -36,6 +36,6 @@ Teams override these by declaring `## Severity definitions` in CLAUDE.md alongsi
 
 ## Notes
 
-- Every label applied must already exist on the repo — SKILL step 9 reconciles missing ones before `gh issue create`.
+- Every label applied must already exist on the repo — `tracker.py create` creates a missing one before it files the issue (SKILL step 9).
 - Bugs do not produce child Task issues. The fix is the slice; if more structure is needed, that's a Story.
 - `/implement <issue-number>` recognizes a `bug`-labeled issue as a Bug and loads the Bug-shaped context.

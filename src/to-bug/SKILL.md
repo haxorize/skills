@@ -21,9 +21,7 @@ This tier's evidence sections are `## Repro` (on ADO, the `Microsoft.VSTS.TCM.Re
 
 ### 1. Resolve tracker
 
-Resolve the tracker per [references/tracker-resolution.md](references/tracker-resolution.md).
-
-Title prefix: if the tracker block declares `Title prefix:`, prepend it (with a trailing space) to the drafted title before publishing.
+Resolve the tracker per [references/tracker-resolution.md](references/tracker-resolution.md); the tracker script is `work-item-shape`'s, run as `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py`.
 
 ### 2. Resolve parent (optional)
 
@@ -91,8 +89,8 @@ Iterate until approved.
 
 The **Publish gate** in [references/publishing.md](references/publishing.md) holds first.
 
-- **GitHub:** `gh issue create --title "..." --body-file <draft>` with `--label bug --label <severity-label>` plus any default labels from CLAUDE.md, plus `--label debt` when the item pays down debt ([references/work-item-tags.md](references/work-item-tags.md) § The `debt` tag; the label is GitHub's mechanism). Parent linking via template `Parent: #N` reference if `--parent` was provided. **Before creating the issue,** run the label precheck in [references/publishing.md](references/publishing.md) — the labels about to be applied here are `bug`, the chosen severity label, and any `Default labels:`. If `--parent` was provided, add the new issue as a native sub-issue of the parent Feature after create — see [references/github-sub-issues.md](references/github-sub-issues.md).
-- **ADO:** publish with the create call in [references/bug-template-ado.md](references/bug-template-ado.md) — description and repro steps into their two rich-text fields, severity from step 4, project / area path / iteration / state from CLAUDE.md, each artifact converted on its own per the template. If `--parent` was provided, link via `az boards work-item relation add --id <bug-id> --relation-type Parent --target-id <feature-id>` after the create call. Merge `System.Tags` into the create call's `--fields` — see [references/work-item-tags.md](references/work-item-tags.md).
+- **GitHub:** `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py create --type Bug --title '<drafted title>' --body <scratchpad>/<draft>.md --label bug --label <severity-label> --parent <feature-number> --workdir <scratchpad>`, dropping `--parent` when there is none and adding `--debt` per [references/publishing.md](references/publishing.md) § Flags the script cannot derive. The script adds any `Default labels:`, creates a missing label first, and links the issue as a native sub-issue of the parent Feature; the template's `Parent: #N` body line stays, since `/implement`'s ticket load reads it.
+- **ADO:** publish with the create call in [references/bug-template-ado.md](references/bug-template-ado.md) — description and repro steps into their two rich-text fields, each its own file, and severity from step 4; the script reads area path, iteration and state from CLAUDE.md and links `--parent` after the create.
 
 Missing required CLAUDE.md fields, writes blocked on auth or policy (don't loop on auth), and **transport safety** on every create and retry all follow [references/publishing.md](references/publishing.md) — `## When a required field is missing`, `## When the write is blocked`, `## Transport safety`.
 

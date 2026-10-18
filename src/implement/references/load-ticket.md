@@ -8,13 +8,13 @@ Open this when a ticket id, tracker URL, or `latest` is passed to `/implement`, 
 
 ## 1. Resolve tracker
 
-Resolve the tracker per [tracker-resolution.md](tracker-resolution.md), in **Declared** mode only — a reader never bootstraps: with no tracker block, ask which tracker holds the ticket for this load and write nothing (a publisher run bootstraps the block).
+Resolve the tracker per [tracker-resolution.md](tracker-resolution.md) with `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py resolve`, in **Declared** mode only — a reader never bootstraps: with no tracker block, ask which tracker holds the ticket for this load and write nothing (a publisher run bootstraps the block).
 
 If the user passed a tracker URL instead of a bare ID, infer the tracker from the URL host and proceed. If they passed `latest`, take the ID from the newest handoff for this repo, the file `bash ~/.claude/skills/handoff/scripts/landing.sh latest` prints (`handoff` names work items with their ID attached), and say which file and ID you resolved before loading. A reference that could name two items — a bare number in a repo whose `Issue tracker:` block names more than one tracker, say — is asked about, never guessed.
 
 ## 2. Detect work-item type
 
-Auto-detect from the ID and tracker:
+Auto-detect from the ID and tracker. The reads here and in step 4 are direct `gh` / `az` calls, not `tracker.py show`: its GitHub read returns no `comments` or `closedByPullRequestsReferences`, which the ladder, the linked-work check and the comment load need.
 
 - **ADO:** `az boards work-item show <id> --output json --query 'fields."System.WorkItemType"'`. Read the type directly.
 - **GitHub:** `gh issue view <id> --json labels,body,title,state,comments,closedByPullRequestsReferences`. Detection ladder:

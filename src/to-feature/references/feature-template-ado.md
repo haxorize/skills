@@ -1,22 +1,22 @@
 # Feature template — Azure DevOps
 
-Use this when publishing a Feature work item to Azure DevOps via `az boards work-item create --type Feature`.
+Use this when publishing a Feature work item to Azure DevOps via `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py create --type Feature`.
 
 ## Field mapping
 
-| ADO field | Reference name | Source | CLI flag |
+| ADO field | Reference name | Source | `tracker.py create` argument |
 |---|---|---|---|
-| **Title** | `System.Title` | Set on command line | `--title` |
-| **Description** | `System.Description` | Body markdown converted to HTML | `--description @<file>` |
-| **Acceptance Criteria** | `Microsoft.VSTS.Common.AcceptanceCriteria` | Outcome bullets converted to HTML | `--fields "Microsoft.VSTS.Common.AcceptanceCriteria=@<file>"` |
-| **Area Path** | `System.AreaPath` | From CLAUDE.md `Area path:` | `--area` |
-| **Iteration Path** | `System.IterationPath` | From CLAUDE.md `Iteration:` | `--iteration` |
-| **State** | `System.State` | From CLAUDE.md `Default state:`; absent → `New` (optional, never a fail-fast field) | `--fields "System.State=..."` |
-| **Parent (Epic)** | (relation) | From `--parent <epic-id>` arg | post-create: `az boards work-item relation add --id <feature-id> --relation-type Parent --target-id <epic-id>` |
+| **Title** | `System.Title` | Drafted title; the script prepends the prefix | `--title '…'` |
+| **Description** | `System.Description` | Body markdown; the script converts it | `--body <scratchpad>/description.md` |
+| **Acceptance Criteria** | `Microsoft.VSTS.Common.AcceptanceCriteria` | Outcome bullets; the script converts them | `--field "Microsoft.VSTS.Common.AcceptanceCriteria=@<scratchpad>/acceptance.md"` |
+| **Area Path** | `System.AreaPath` | From CLAUDE.md `Area path:` | none — read from the block |
+| **Iteration Path** | `System.IterationPath` | From CLAUDE.md `Iteration:` | none — read from the block |
+| **State** | `System.State` | From CLAUDE.md `Default state:`, read from the block; absent → ADO's `New` (optional, never a fail-fast field) | `--field "System.State=…"` overrides it |
+| **Parent (Epic)** | (relation) | From `--parent <epic-id>` arg | `--parent <epic-id>` — linked after the create |
 
-Before first publish against a new ADO project, verify the field shape once per [ado-html-transport.md](ado-html-transport.md).
+Before first publish against a new ADO project, verify the field shape once per [publishing.md](publishing.md) § Transport safety.
 
-## Description (markdown body — converted to HTML before publishing)
+## Description (markdown body — the script converts it)
 
 Author the body as Markdown from the skeleton in [feature-body.md](feature-body.md), then append the story map below (the acceptance criteria are a separate ADO field, never a body section). The `## Story Decomposition` section is that map (see `to-feature` SKILL.md step 6); inside it, HTML markers fence an append-only region so `to-story` can locate and append to it.
 
@@ -59,7 +59,7 @@ If decomposition was deferred at Feature creation, the body of `## Story Decompo
 
 ## Acceptance Criteria
 
-ADO renders Acceptance Criteria as a separate field. Author as Markdown bullets with typed, append-only IDs and the removed-criteria record per [ac-ids.md](ac-ids.md), converted to HTML before publishing.
+ADO renders Acceptance Criteria as a separate field. Author as Markdown bullets with typed, append-only IDs and the removed-criteria record per [ac-ids.md](ac-ids.md), in `<scratchpad>/acceptance.md`.
 
 ```markdown
 - **AC1:** Outcome 1 measurable success criterion
@@ -71,20 +71,16 @@ The example skips `AC3` for the reason [ac-ids.md](ac-ids.md) gives.
 
 ## Create call
 
-Convert each artifact per [ado-html-transport.md](ado-html-transport.md), then:
+Write the body to `<scratchpad>/description.md` and the criteria to `<scratchpad>/acceptance.md`, then:
 
 ```bash
-az boards work-item create \
-  --type "Feature" \
-  --title "$TITLE" \
-  --description @description.html \
-  --fields \
-    "Microsoft.VSTS.Common.AcceptanceCriteria=@acceptance.html" \
-    "System.State=$STATE" \
-    "System.Tags=$TAGS" \
-  --area "$AREA_PATH" \
-  --iteration "$ITERATION"
+python3 ~/.claude/skills/work-item-shape/scripts/tracker.py create --type Feature --title '<drafted title>' \
+  --body <scratchpad>/description.md \
+  --field "Microsoft.VSTS.Common.AcceptanceCriteria=@<scratchpad>/acceptance.md" \
+  --parent <epic-id> --workdir <scratchpad>
 ```
+
+Drop `--parent` when there is none; add `--debt` per [publishing.md](publishing.md) § Flags the script cannot derive. A Feature takes the block's `Feature title prefix:` where one is declared; the script picks it by type.
 
 ## Notes
 

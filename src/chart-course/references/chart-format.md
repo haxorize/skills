@@ -63,9 +63,9 @@ Assets: <links to any prototype, document, or branch produced — linked, never 
 
 ## ADO body handling
 
-ADO description and comment fields expect HTML. Convert with the pandoc or Python one-liner in [ado-html-transport.md](ado-html-transport.md), write the result to a file, and pass its path with the CLI's `@` prefix (`--description @<file>`) — the content never crosses the shell; the create calls are in [chart-tracker-ops.md](chart-tracker-ops.md) and the read-back in [publishing.md](publishing.md) `## Transport safety`.
+An ADO description field expects HTML, so a create or update takes the Markdown file and the script converts it (`--body <scratchpad>/<file>.md`). An ADO comment takes Markdown, so `comment <id> --body <scratchpad>/<file>.md` passes the file as-is. The content never crosses the shell; the calls are in [chart-tracker-ops.md](chart-tracker-ops.md) and the read-back in [publishing.md](publishing.md) `## Transport safety`.
 
 ## Titles
 
-- **ADO — the `Chart:` title marker.** Bake `Chart: ` into every drafted title, so nobody scanning a board mistakes a question for a build-ready Story, then apply the CLAUDE.md tracker block's prefix resolution on top — for the map Feature, `Feature title prefix:` falling back to `Title prefix:`; for tickets, `Title prefix:`. Result: `[App] Chart: <question>`.
+- **ADO — the `Chart:` title marker.** Bake `Chart: ` into every drafted title, so nobody scanning a board mistakes a question for a build-ready Story. Draft it without the tracker block's prefix: the script prepends it at create (`Feature title prefix:` falling back to `Title prefix:` for the map, `Title prefix:` for tickets). Result: `[App] Chart: <question>`.
 - **GitHub:** no marker — the `chart:*` labels carry the typing.

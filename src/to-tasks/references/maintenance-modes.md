@@ -30,8 +30,8 @@ Parse:
 
 ### Patch
 
-- **ADO:** convert Markdown → HTML (using the pandoc or Python one-liner from [ado-html-transport.md](ado-html-transport.md)) to a file, then `az boards work-item update --id <task-id> --description @<file>`. Tasks have no AC field; do not pass `Microsoft.VSTS.Common.AcceptanceCriteria`.
-- **GitHub:** `gh issue edit <task-number> --body-file <draft>`.
+- **ADO:** `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py update <task-id> --body <scratchpad>/description.md --workdir <scratchpad>`. Tasks have no AC field; do not pass `Microsoft.VSTS.Common.AcceptanceCriteria`.
+- **GitHub:** `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py update <task-number> --body <scratchpad>/<draft>.md --workdir <scratchpad>`.
 
 ## Reconcile mode
 
@@ -123,7 +123,7 @@ State conflicts (requires decision, N):
 Healthy Task (N): listed for completeness, no action.
 ```
 
-Iterate per bucket until approved. Apply approved changes — body patches via `az boards work-item update` / `gh issue edit`, state transitions via update / close. Publish new Tasks in dependency order so each blocker's real ID is available; on ADO, materialize each in-project blocker as a built-in Predecessor relation, and on GitHub, add each new Task as a native sub-issue of the parent Story, exactly as the create path does — see [../SKILL.md](../SKILL.md) step 8. Reconcile operates on an existing set, so always apply the skip-if-exists guard there. A blocker may be an existing Task in the set, not just a newly published one.
+Iterate per bucket until approved. Apply approved changes — body patches via `tracker.py update`, state transitions as direct `az boards work-item update` / `gh issue close` calls, which the script has no command for. Publish new Tasks in dependency order so each blocker's real ID is available; on ADO, materialize each in-project blocker as a built-in Predecessor relation, and on GitHub, add each new Task as a native sub-issue of the parent Story, exactly as the create path does — see [../SKILL.md](../SKILL.md) step 8. Reconcile operates on an existing set, so always apply the skip-if-exists guard there. A blocker may be an existing Task in the set, not just a newly published one.
 
 ### Naming drift
 

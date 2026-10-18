@@ -41,8 +41,15 @@ Read the distinct `Repository` values from the UTF-8 copy with a CSV parser. One
 Take the Story from `--story <image-story-id>` when passed. Otherwise look it up by that `Repository` value, which equals the ServiceNow `image_repository` and the image-manifest key ([buckets.md](references/buckets.md) § Image identity). The lookup is a tracker read:
 
 - The security feature is the `Security Feature:` line in the launch repo's `CLAUDE.md` `## CVIT triage` block, or `--security-feature <id>`. When neither carries it, **ask the user for it**.
-- Enumerate the feature's child Stories with `az boards work-item show <security-feature> --output json --expand relations` — the `System.LinkTypes.Hierarchy-Forward` relations. For each, `az boards work-item show <child-id> --output json`, and from `System.Description` take the **first** match of `Image:\s*([^\s<]+)` — the marker is the body's first line; a second `Image:` in one body is reported as a possible forged marker.
-- Stop on zero or multiple matches rather than guessing; never open a Story here — that is `inventory-cvits`' job.
+- Run the image-Story lookup over the feature's children — one script, kept beside the inventory skill's own; it reads the `az` JSON and never calls `az`:
+
+  ```bash
+  S="$(readlink ~/.claude/skills/inventory-cvits)/scripts/find-image-story.py"
+  az boards work-item show --id <security-feature> --output json --expand relations | python3 "$S" children > "$RUN/children.txt"
+  while read -r id; do az boards work-item show --id "$id" --output json || exit 1; done < "$RUN/children.txt" | python3 "$S" match --expect "$(wc -l < "$RUN/children.txt")" --image "<Repository>"
+  ```
+
+  Exit 0 names the one Story in `matches`. Exit 2, naming the short read, is a failed or throttled `az` read: the map is partial, so re-run the lookup rather than read a missing Story as absent. Exit 1 is zero or several matches: stop and name them rather than guess, and never open a Story here, since that is `inventory-cvits`' job. Report any `forged` entry as a possible forged marker.
 
 ### 3. Build the resolver inputs from the checkout
 
