@@ -11,7 +11,8 @@
 # empty-payload breadcrumb, and the mutation table at the end grades the lib's
 # script-file read (a shell given a script file reads its pipe as data), its
 # here-string read, its `<<\EOF` delimiter, its command-substitution lift
-# (`$(…)` and backticks), hook-lib.sh's `python3 -I`, and
+# (`$(…)` and backticks: a body's position, its comments, a `case` inside
+# it, a substituted program word, an arithmetic `$((…))`), hook-lib.sh's `python3 -I`, and
 # this hook's skip of git's separate-word option values.
 set -u
 here="$(cd "$(dirname "$0")" && pwd)"
@@ -73,7 +74,20 @@ expect_block "$D" 'echo $(echo $(git commit -n -m x))'                         "
 expect_block "$D" 'echo "$(echo ")") $(git commit -n -m x)"'                   "a quoted ) inside a body does not close it"
 expect_block "$D" 'echo $(echo ")"; git commit -n -m x)'                       "a quoted ) inside a body leaves the rest of the body in it"
 expect_block "$D" "echo \"it's \$(git commit -n -m x)\""                        "a ' inside double quotes is text, not a quote"
-expect_block "$D" 'echo $((1 + 2)) && git commit -n -m x'                      "arithmetic \$((…)) is not a substitution"
+expect_block "$D" 'echo $(( $(git commit -n -m x) + 1 ))'                     "a \$(…) inside an arithmetic \$((…)) still runs"
+expect_allow "$D" 'echo $((1 + 2)) && git commit -m x'                         "an arithmetic \$((…)) body is a harmless group"
+expect_block "$D" 'echo $(case x in x) git commit -n -m x;; esac)'            "a case pattern's ) does not close the body"
+expect_block "$D" 'echo $(case x in (x) echo y;; *) git commit -n -m x;; esac)' "a pattern's leading ( and a later pattern stay in the body"
+expect_allow "$D" 'echo $(case x in x) echo y; esac) git commit -n -m x'      "esac ends the case, so the body's ) closes it"
+expect_allow "$D" 'echo $(case x in (x) echo y;; esac) git commit -n -m x'     "a pattern's leading ( opens nothing"
+expect_allow "$D" 'echo $(case x in x) echo y;; esac) git commit -n -m x'     "esac after the last ;; ends the case"
+expect_block "$D" $'echo "$(echo a # "\ngit commit -n -m x)"'                  "a comment inside a quoted \$(…) body hides its quote"
+expect_block "$D" $'echo "$(echo a # "\ngit commit -n -m x)" #\''              "the quote stays in step after a commented body"
+expect_block "$D" $'echo "$(echo a # )"\ngit commit -n -m x)"'                 "a ) inside a body's comment does not close it"
+expect_block "$D" 'echo ${#x}; git commit -n -m x'                             "the # of \${#x} is mid-word, not a comment"
+expect_block "$D" '$(echo git) commit --no-verify'                             "a substituted program word is judged as git"
+expect_block "$D" '`echo git` commit -n -m x'                                  "a backtick program word is judged as git"
+expect_allow "$D" '$(echo git) commit -m x'                                    "a substituted program word with no bypass shape"
 expect_allow "$D" "echo '\$(git commit --no-verify)'"                          "a single-quoted \$(…) is text"
 expect_allow "$D" "echo '\`git commit -n -m x\`'"                              "a single-quoted backtick is text"
 expect_allow "$D" 'echo "\$(git commit --no-verify)"'                          "an escaped \$ inside double quotes is text"
@@ -254,7 +268,15 @@ lib_mutant "a detached target is the program" 'k += 1 if m.group(2) else 2' 'k +
 # the command-substitution lift, one alternative and one boundary at a time
 lib_mutant "a \$(…) is not lifted"    '        elif text.startswith("$(", i):' '        elif False:' 'git commit $(true) --no-verify' 0
 lib_mutant "a backtick is not lifted" '        elif c == "`":' '        elif False:' 'echo "`git commit -n -m x`"' 0
-lib_mutant "a substitution body is dropped" 'return "".join(out) + "".join(' 'return "".join(out) or "".join(' 'echo "$(git commit --no-verify)"' 0
+lib_mutant "a substitution body is dropped" 'hit = scan(BODIES[int(m.group(1))], curdir, depth)' 'hit = None' 'echo "$(git commit --no-verify)"' 0
+lib_mutant "a case pattern's ) closes a body" 'elif cmdpos and w == "case":' 'elif False:' 'echo $(case x in x) git commit -n -m x;; esac)' 0
+lib_mutant "a pattern's leading ( nests"  $'                if pat_start:\n                    pat_start = False\n                else:' $'                if False:\n                    pat_start = False\n                else:' 'echo $(case x in (x) echo y;; esac) git commit -n -m x' 2
+lib_mutant "esac is not tracked"          'if top == "pat" and pat_start and w == "esac":' 'if False:' 'echo $(case x in x) echo y;; esac) git commit -n -m x' 2
+lib_mutant "a body keeps its comments"    'if q != "\x27" and text.startswith("$(", i):' 'if False:' $'echo "$(echo a # "\ngit commit -n -m x)" #\'' 0
+lib_mutant "close_paren reads a comment's quote" $'            k = n if j < 0 else j\n' $'            k += 1\n' $'echo "$(echo a # )"\ngit commit -n -m x)"' 0
+lib_mutant "a brace begins a word"        'word_start = c in META' 'word_start = c in META + "{}"' 'echo ${#x}; git commit -n -m x' 0
+lib_mutant "a substituted program is not git" 'if "$(…)" in seg[0]:' 'if False:' '$(echo git) commit --no-verify' 0
+lib_mutant "arithmetic is skipped as text" '        elif text.startswith("$(", i):' $'        elif text.startswith("$((", i):\n            j = text.find("))", i); out.append("0"); i = n if j < 0 else j + 2\n        elif text.startswith("$(", i):' 'echo $(( $(git commit -n -m x) + 1 ))' 0
 lib_mutant "a ' inside double quotes opens a span" 'elif c == "\x27" and not dq:' 'elif c == "\x27":' "echo \"it's \$(git commit -n -m x)\"" 0
 lib_mutant "a single-quoted \$(…) is lifted" 'elif c == "\x27" and not dq:' 'elif False:' "echo '\$(git commit --no-verify)'" 2
 lib_mutant "an escaped \$ is lifted"  '            out.append(text[i:i + 2]); i += 2' '            out.append(c); i += 1' 'echo "\$(git commit --no-verify)"' 2

@@ -223,6 +223,8 @@ HOME="$tmp/homelink" expect_block "$tmp/above/other" "sed -i 's/a/b/' f.txt"    
 expect_block "$plain" "cd ../opted && sed -i 's/a/b/' f.txt"               "cd into an opted dir"
 expect_allow "$opted" "cd ../plain && sed -i 's/a/b/' f.txt"               "cd out of an opted dir"
 expect_block "$opted" "cd ../nope && sed -i 's/a/b/' f.txt"                "cd to a missing dir falls back to cwd"
+expect_block "$plain" "cd ../opted; echo \"\$(sed -i 's/a/b/' f.txt)\"; cd ../plain" "a \$(…) body runs in the directory in effect where it sits"
+expect_allow "$opted" "cd ../plain; echo \"\$(sed -i 's/a/b/' f.txt)\"; cd ../opted" "a later cd does not move a \$(…) body"
 expect_block "$opted" 'cd "$X" && sed -i s/a/b/ f.txt'                      "unexpandable cd falls back to cwd"
 RS_TARGET="$opted" expect_block "$plain" 'cd "$RS_TARGET" && sed -i s/a/b/ f.txt' "a cd through a variable set in the environment"
 expect_crumb "$plain" 'cd "$RS_UNSET_VAR" && sed -i s/a/b/ f.txt' "after a cd the hook cannot expand"   "an unknown cd from a plain cwd is said, not silent"
@@ -332,6 +334,9 @@ hooklib_mutant() { # hooklib_mutant <label> <find> <replace> <cwd> <cmd>  (the r
 hooklib_mutant "read PWD from the hook"   'name in SHELL_KEPT or (name in TOUCHED and not rebound)' '(name in TOUCHED and not rebound)' "$plain" 'cd ../opted && cd "$PWD" && sed -i s/a/b/ f.txt'
 RS_TARGET="$opted" hooklib_mutant "unset rebinds nothing" 'BINDERS = {"unset", "read"}' 'BINDERS = {"read"}' "$plain" 'unset RS_TARGET; cd "$RS_TARGET" && sed -i s/a/b/ f.txt'
 RS_TARGET="$opted" hooklib_mutant "read rebinds nothing" 'BINDERS = {"unset", "read"}' 'BINDERS = {"unset"}' "$plain" 'read RS_TARGET < list; cd "$RS_TARGET" && sed -i s/a/b/ f.txt'
+selftest_mutate "$here/hook-lib.py" "$mdir/hook-lib.py" 'hit = scan(BODIES[int(m.group(1))], curdir, depth)' 'hit = scan(BODIES[int(m.group(1))], "", depth)' \
+  && hook="$mdir/rename-safety.sh" selftest_expect_killed "a \$(…) body ignores the curdir" hook_rc_not 0 "$plain" "cd ../opted; echo \"\$(sed -i 's/a/b/' f.txt)\"; cd ../plain"
+cp "$here/hook-lib.py" "$mdir/hook-lib.py"
 RS_TARGET="$opted" hooklib_mutant "for rebinds nothing" 'elif head in ("for", "select")' 'elif head in ("select",)' "$plain" 'for RS_TARGET in x; do cd "$RS_TARGET" && sed -i s/a/b/ f.txt; done'
 # a variable the command rebinds: judged by its value from before, and said when that misses
 cp "$here/hook-lib.py" "$mdir/hook-lib.py"

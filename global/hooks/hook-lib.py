@@ -32,10 +32,12 @@
 # (the `&` of a redirection — `2>&1`, `>&2`, `&>file` — and the `|` of `>|`
 # are part of its word, unless the `<`/`>` is backslash-escaped, where bash
 # reads it as text and the `&` or `|` as a separator; a `<(…)` /
-# `>(…)` process substitution is the one word `<(…)`, and a `$(…)` or
-# backtick command substitution, bare or in double quotes, is `$(…)` inside
-# its word; either body is scanned as segments of its own, after the rest),
-# and `on_command` is called once per
+# `>(…)` process substitution is the one word `<(…)`, its body scanned as
+# segments of its own after the rest; a `$(…)` or backtick command
+# substitution, bare or in double quotes, is `$(…)` inside its word, its body
+# scanned just before the segment holding it, under the curdir in effect
+# there, with its own comments and `case` patterns), and `on_command` is
+# called once per
 # segment with the tokens of the program that actually runs — a reserved word
 # in command position (`if`, `then`, `do`, `{`, `!`, …) dropped, a
 # redirection there (`>x git …`, with a detached target) dropped, wrappers
@@ -43,7 +45,9 @@
 # assignment (bare, or after `export`, `declare`, `local`, `typeset`,
 # `readonly`, or a wrapper) dropped, `$var` /
 # `${var…}` replaced with a value assigned earlier in the same command,
-# `$(which git)` resolved to `git`. A string handed to `bash -c` / `-lc`,
+# `$(which git)` resolved to `git`, and any other program word holding a
+# substitution (`$(echo git)`) replaced by `git`, so the words after it are
+# judged as git's (fail closed). A string handed to `bash -c` / `-lc`,
 # `eval`, `env -S`, a literal string piped into a
 # shell, a shell-fed heredoc, or each `find -exec` clause is scanned in turn,
 # four nested shells at most; `xargs <prog>` sees the words of a feeding
@@ -112,7 +116,12 @@ AMP = "\x01"                       # stands in for a redirection's & while shlex
 PIPE = "\x02"                      # likewise the | of `>|`, which pipes nothing
 REDIR = re.compile(r"^[0-9]*(&>>|&>|>>|>\||>&|<<<|<<-|<<|<>|<&|>|<)(?!\()(.*)$", re.S)   # group 2 empty: the target is the next word
 PROCSUB = "\x03"                   # opens a `<(`/`>(` body in the text shlex splits
-CMDSUB = "\x04"                    # stands in for a lifted `$(…)` / backtick while shlex splits, restored as `$(…)`
+CMDSUB = "\x04"                    # opens a lifted `$(…)` / backtick's reference: CMDSUB, its BODIES index, CMDEND
+CMDEND = "\x05"
+SUBREF = re.compile("\x04([0-9]+)\x05")
+BODIES = []                        # lifted substitution bodies; scan() runs each where its segment runs
+META = " \t\r\n;&|()"               # ends a word: a `#` after one starts a comment
+LEAD_WORDS = KEYWORDS - {"case", "esac", "fi", "done", "}"} | {"time"}   # the word after one is still in command position
 FIND_EXEC = {"-exec", "-execdir", "-ok", "-okdir"}
 FIND_END = {";", ESCAPED_SEMI, "+"}
 XARGS_VALUE_OPTS = {"-n", "-I", "-L", "-P", "-s", "-d", "-E", "-a", "-J", "-R", "-S"}
@@ -157,10 +166,17 @@ def drop_heredocs(s):
 
 def strip_comments(text):
     """Drop `# …` to end of line where `#` begins a word outside quotes — the
-    shell rule; a `#` inside quotes or mid-word is text."""
+    shell rule; a `#` inside quotes or mid-word is text. A `$(…)` body,
+    bare or in double quotes, is a fresh shell context: its own comments are
+    dropped and a quote inside one of them opens nothing. `{` and `}` are not
+    metacharacters, so the `#` of `${#x}` is mid-word."""
     out, i, n, q, word_start = [], 0, len(text), None, True
     while i < n:
         c = text[i]
+        if q != "\x27" and text.startswith("$(", i):
+            j = close_paren(text, i + 2)
+            out.append("$(" + strip_comments(text[i + 2:j]) + text[j:j + 1]); i = j + 1; word_start = False
+            continue
         if q:
             if c == "\\" and q == "\"" and i + 1 < n:
                 out.append(c); i += 1; c = text[i]
@@ -181,7 +197,7 @@ def strip_comments(text):
             i = j
             continue
         out.append(c)
-        word_start = c in " \t\r\n;&|(){}"
+        word_start = c in META
         i += 1
     return "".join(out)
 
@@ -268,26 +284,87 @@ def skip_backticks(text, k):
 def close_paren(text, k):
     """The index of the `)` closing a `$(` whose body starts at k, or
     len(text) when none does. Quotes, a nested `$(…)` and backticks inside the
-    body are skipped whole; a bare `(` nests (a `case` pattern's lone `)`
-    closes early, a shape no measured bypass uses)."""
+    body are skipped whole, a `#` beginning a word comments to the end of the
+    line, and a bare `(` nests. A `case` in command position is tracked to its
+    `esac`: the `)` ending each pattern (and a pattern's optional leading `(`)
+    belongs to the case, not to the substitution. A case whose last
+    branch ends without `;;` stays on the stack; nothing after it reads the
+    stale entry but a `;;`, which only an enclosing case can hold."""
     depth, n = 0, len(text)
+    word_start, cmdpos = True, True
+    cases = []                      # per open case: "subj" (before `in`), "pat", "body"
+    pat_start, pdepth = False, 0
     while k < n:
         c = text[k]
+        top = cases[-1] if cases else None
+        if c in " \t\r":
+            word_start = True
+            k += 1
+            continue
+        if c == "#" and word_start:
+            j = text.find("\n", k)
+            k = n if j < 0 else j
+            continue
+        if word_start and c not in META:
+            m = re.match(r"[^\s;&|()<>\x27\"`\\$]+", text[k:])
+            w = m.group(0) if m else ""
+            after = text[k + len(w):k + len(w) + 1]
+            if w and (after == "" or after in META or after in "<>"):
+                if top == "pat" and pat_start and w == "esac":
+                    cases.pop()
+                elif top == "subj" and w == "in":
+                    cases[-1], pat_start, pdepth = "pat", True, 0
+                elif cmdpos and w == "case":
+                    cases.append("subj")
+                if top == "pat":
+                    pat_start = False
+                cmdpos = w in LEAD_WORDS and top != "pat"
+                word_start = False
+                k += len(w)
+                continue
+        word_start = False
         if c == "\\":
             k += 2
+            cmdpos = False
             continue
         if c == "\x27":
             j = text.find("\x27", k + 1)
             k = n if j < 0 else j + 1
+            cmdpos = False
             continue
         if c == "\"":
             k = skip_dquoted(text, k + 1)
+            cmdpos = False
             continue
         if c == "`":
             k = skip_backticks(text, k + 1) + 1
+            cmdpos = False
             continue
         if text.startswith("$(", k):
             k = close_paren(text, k + 2) + 1
+            cmdpos = False
+            continue
+        if c in META:
+            word_start = True
+        if top == "pat":
+            if c == "(":
+                if pat_start:
+                    pat_start = False
+                else:
+                    pdepth += 1
+            elif c == ")":
+                if pdepth:
+                    pdepth -= 1
+                else:
+                    cases[-1], cmdpos = "body", True
+            elif c not in "\n":
+                pat_start = False
+            k += 1
+            continue
+        if top == "body" and text.startswith(";;", k) or top == "body" and text.startswith(";&", k):
+            cases[-1], pat_start, pdepth = "pat", True, 0
+            k += 3 if text.startswith(";;&", k) else 2
+            word_start = True
             continue
         if c == "(":
             depth += 1
@@ -295,6 +372,7 @@ def close_paren(text, k):
             if depth == 0:
                 return k
             depth -= 1
+        cmdpos = c in META
         k += 1
     return n
 
@@ -303,11 +381,13 @@ def lift_cmdsubs(text):
     """A `$(…)` or backtick command substitution is part of one word to the
     command it sits in, and its body runs as commands of its own, whether
     unquoted or inside double quotes; single quotes or a backslash make it
-    text. Leave CMDSUB in the word and append each body, as a `( … )` group,
-    after the rest, its own substitutions lifted after it. An arithmetic
-    `$((…))` is lifted too: its body scans as a harmless group, and a `$(…)`
-    inside it still runs."""
-    out, bodies, i, n, dq = [], [], 0, len(text), False
+    text. Each body goes into BODIES and leaves a CMDSUB<index>CMDEND
+    reference in its word; scan() runs the body when it reaches the segment
+    holding the reference, with the curdir in effect there, and only then
+    reads the word as `$(…)`. The body's own substitutions lift when it is
+    scanned. An arithmetic `$((…))` is lifted too: its body scans as a
+    harmless group, and a `$(…)` inside it still runs."""
+    out, i, n, dq = [], 0, len(text), False
     while i < n:
         c = text[i]
         if c == "\\":
@@ -320,13 +400,18 @@ def lift_cmdsubs(text):
             dq = not dq; out.append(c); i += 1
         elif text.startswith("$(", i):
             j = close_paren(text, i + 2)
-            bodies.append(text[i + 2:j]); out.append(CMDSUB); i = j + 1
+            out.append(subref(text[i + 2:j])); i = j + 1
         elif c == "`":
             j = skip_backticks(text, i + 1)
-            bodies.append(text[i + 1:j].replace("\\`", "`")); out.append(CMDSUB); i = j + 1
+            out.append(subref(text[i + 1:j].replace("\\`", "`"))); i = j + 1
         else:
             out.append(c); i += 1
-    return "".join(out) + "".join("\n( " + lift_cmdsubs(b) + "\n)" for b in bodies)
+    return "".join(out)
+
+
+def subref(body):
+    BODIES.append(body)
+    return CMDSUB + str(len(BODIES) - 1) + CMDEND
 
 
 def tokens(text):
@@ -334,7 +419,7 @@ def tokens(text):
     text = re.sub(r"\$\x27((?:[^\x27\\]|\\.)*)\x27", ansi_c, text)            # ANSI-C $'…' quoting
     text = re.sub(r"\$\((?:which|command -v|type -P)\s+(\w+)\)", r"\1", text)
     text = re.sub(r"`(?:which|command -v|type -P)\s+(\w+)`", r"\1", text)
-    text = lift_cmdsubs(text)                                                   # `$(…)`, backticks: one word, body after
+    text = lift_cmdsubs(text)                                                   # `$(…)`, backticks: one word, body run by scan()
     text = text.replace("\\;", "\\\\" + ESCAPED_SEMI)                           # `\\\;` reads back as the word `\;`
     text = mark_redirs(text)                                                    # `2>&1`, `&>f`, `>|f`: one word, not a split
     lex = shlex.shlex(text, posix=True, punctuation_chars=";&|()\n")
@@ -346,7 +431,7 @@ def tokens(text):
         if t and all(c in ";&|()\n" for c in t):       # an empty word (`sed -i ''`) is still a word
             out.extend(re.findall(r"&&|\|\||[;&|()\n]", t))
         else:
-            out.append(t.replace(AMP, "&").replace(PIPE, "|").replace(CMDSUB, "$(…)"))
+            out.append(t.replace(AMP, "&").replace(PIPE, "|"))
     return lift_procsubs(out)
 
 
@@ -459,6 +544,12 @@ def scan(text, curdir, depth=0):
         raise RuntimeError("more than four nested shells")
     prev = None
     for seg in segments(tokens(text)):
+        for t in seg:               # a substitution runs as its segment expands: before it, after the one before
+            for m in SUBREF.finditer(t):
+                hit = scan(BODIES[int(m.group(1))], curdir, depth)
+                if hit:
+                    return hit
+        seg = [SUBREF.sub("$(…)", t) for t in seg]
         seg, curdir = take_assignments(subst(seg), curdir)
         head = progname(seg[0]) if seg else ""
         if head in BINDERS:
@@ -482,6 +573,8 @@ def scan_segment(seg, prev, curdir, depth, fed=None):
     seg, curdir = take_assignments(seg, curdir)   # `env FOO=bar git …`: a wrapper's assignments
     if not seg:
         return None
+    if "$(…)" in seg[0]:            # `$(echo git) commit -n`: the program is unknown, so judge it as git
+        seg = ["git"] + seg[1:]
     head = progname(seg[0])
     if head in WRAPPERS:
         vals = WRAPPERS[head]
@@ -685,6 +778,7 @@ def scan_command(text, on_command):
     _on_command = on_command
     VARS.clear()
     TOUCHED.clear()
+    del BODIES[:]
     del VIA[:]
     try:
         return scan(drop_heredocs(text), "")
