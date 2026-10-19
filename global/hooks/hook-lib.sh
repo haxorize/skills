@@ -18,8 +18,9 @@
 #                         breadcrumb, on a tokeniser error (exit 3: an
 #                         unterminated quote, more than four nested shells),
 #                         on a scanner crash (exit 4: the exception's name),
-#                         on the hook's own allow (exit 5: emit's stdout is
-#                         the breadcrumb), and on any other non-zero exit
+#                         on the hook's own allow (exit 5: the first
+#                         allow_with text is the breadcrumb), and on any
+#                         other non-zero exit
 #   hook_allow "<why>"  — exit 0 with a one-line stderr breadcrumb
 #                         (session-hook-lib.py's `crumb` carries the same
 #                         shape for the two session hooks' Python; a change

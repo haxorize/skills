@@ -117,15 +117,19 @@ command -v git >/dev/null 2>&1 || hook_allow "git not found"
 # --- commit shape, then the scan --------------------------------------------
 # on_command records each `git add` and each `git commit` in the command, in
 # order, each marked blind when it follows a cd the scanner could not expand;
-# finish hands them to emit once the whole command is read; emit scans each
-# commit's repo and each add before the last commit, the blind ones in the
-# session directory's repo, and prints one finding a line, or exits ALLOW_EXIT
-# with the breadcrumb when nothing it scanned held a finding but a repo was not
-# a git work tree or a blind scan ran.
+# once the whole command is read, finish scans each commit's repo and each add
+# before the last commit, the blind ones in the session directory's repo, and
+# returns the findings, or calls allow_with when nothing it scanned held one
+# but a repo was not a git work tree or a blind scan ran; emit prints the
+# findings one a line.
 hook_scan '
 import subprocess
-ADDS = []                           # (dir, git_dir, work_tree, pathspecs, force, blind)
-COMMITS = []                        # (dir, git_dir, work_tree, all, adds before it, blind)
+from collections import namedtuple
+Add = namedtuple("Add", "dir git_dir work_tree specs force blind")
+Commit = namedtuple("Commit", "dir git_dir work_tree all adds blind")   # adds: how many adds come before it
+Target = namedtuple("Target", "dir git_dir work_tree blind")
+ADDS = []
+COMMITS = []
 ALLOW = "secret-scan: allow"
 CONTENT_RULES = [
     ("aws-key",        re.compile(r"\b(?:AKIA|ASIA)[0-9A-Z]{16}\b")),
@@ -183,16 +187,82 @@ def on_command(seg, curdir):
                     wide = True             # the pathspecs are in a file this hook does not read: the whole tree
             elif "f" in a[1:]:
                 force = True
-        ADDS.append((d, gd, wt, [] if wide else specs, force, blind))
+        ADDS.append(Add(d, gd, wt, [] if wide else specs, force, blind))
         return None
     if sub == "commit":
-        COMMITS.append((d, gd, wt, any(commits_all(a) for a in rest), len(ADDS), blind))
+        COMMITS.append(Commit(d, gd, wt, any(commits_all(a) for a in rest), len(ADDS), blind))
     return None
 
 def finish():
-    """Every add and commit is recorded once the command is read; a commit
-    anywhere in it (`git commit -m a; git add f; git commit -m b`) is a scan."""
-    return bool(COMMITS)
+    """Scan every commit target, and every add before the last commit, once
+    each, once the whole command is read (`git commit -m a; git add f; git
+    commit -m b` is two scans). A placed hit is a finding. A blind one
+    (scanned in the session directory\x27s repo, since its own is unknown) is a
+    finding under a line saying so. Only when nothing held a finding does a
+    blind entry whose session directory is not a work tree, a placed target
+    outside one, or a clean blind scan, call allow_with."""
+    if not COMMITS:
+        return None
+    adds = ADDS[:COMMITS[-1].adds]         # an add after the last commit stages nothing this command commits
+    placed, blind, outside = scan_all(adds)
+    found = dedupe(placed)
+    blind_found = [h for h in dedupe(blind.hits) if h not in found]
+    if blind_found:
+        found.append("the hook could not follow a cd before a git %s, so it scanned the session directory\x27s repo (%s) instead:" % (blind.subs[0], blind.top))
+        found.extend(blind_found)
+    if found:
+        return found
+    if blind.subs and blind.top is None:
+        allow_with("a git %s follows a cd the hook cannot expand, so the repo it runs in is unknown, and the session directory is not a git work tree" % blind.subs[0])
+    elif outside:
+        allow_with("not a git work tree (%s)" % outside[0])
+    elif blind.subs:
+        allow_with("a git %s follows a cd the hook cannot expand; the session directory\x27s repo (%s) was scanned instead and is clean" % (blind.subs[0], blind.top))
+    return None
+
+class Blind:
+    """What the blind scans found: the subcommands, in order, the session
+    directory\x27s work tree (None when it is not one), and the hits."""
+    def __init__(self):
+        self.subs, self.top, self.hits = [], None, []
+
+    def add(self, sub, top, hits):
+        self.subs.append(sub)
+        self.top = self.top or top
+        self.hits.extend(hits or [])
+
+def scan_all(adds):
+    """(placed hits, Blind, placed targets outside a work tree) over the
+    commit targets and the adds."""
+    targets = []
+    for c in COMMITS:
+        t = Target(c.dir, c.git_dir, c.work_tree, c.blind)
+        if t not in targets:
+            targets.append(t)
+    placed, blind, outside = [], Blind(), []
+    for t in targets:
+        commit_all = any(c.all for c in COMMITS if Target(c.dir, c.git_dir, c.work_tree, c.blind) == t)
+        top, hits = scan_commit(t, commit_all)
+        if t.blind:
+            blind.add("commit", top, hits)
+        elif hits is None:
+            outside.append(t.dir)
+        else:
+            placed.extend(hits)
+    for a in adds:
+        top, hits = scan_add(a)
+        if a.blind:
+            blind.add("add", top, hits)
+        else:
+            placed.extend(hits or [])          # an add outside a work tree fails, and stages nothing
+    return placed, blind, outside
+
+def dedupe(hits):
+    out = []
+    for h in hits:
+        if h not in out:
+            out.append(h)
+    return out
 
 def commits_all(a):
     """`-a`/`--all`, or `a` in a short-option cluster before an option that
@@ -295,67 +365,8 @@ def path_hit(path):
             return "%s %s" % (path, name)
     return None
 
-def emit(hit):
-    """Scan every commit target, and every add before the last commit, once
-    each, then decide. A placed hit blocks. A blind one (scanned in the repo
-    of the session directory, since its own is unknown) blocks under a line
-    saying so.
-    Only when nothing held a finding does a blind entry whose session directory
-    is not a work tree, a placed target outside one, or a clean blind scan,
-    allow with its breadcrumb. `hit` is the True finish() returned: the records
-    are the globals."""
-    targets = []
-    for c in COMMITS:
-        if c[:3] + c[5:] not in targets:
-            targets.append(c[:3] + c[5:])
-    adds = ADDS[:COMMITS[-1][4]]           # an add after the last commit stages nothing this command commits
-    found, blind_found, outside, blind_subs, blind_top = [], [], [], [], None
-    try:
-        for d, gd, wt, blind in targets:
-            commit_all = any(c[3] for c in COMMITS if c[:3] + c[5:] == (d, gd, wt, blind))
-            top, hits = scan_commit((d, gd, wt), commit_all)
-            if blind:
-                blind_subs.append("commit")
-                blind_top = blind_top or top
-                blind_found.extend(hits or [])
-            elif hits is None:
-                outside.append(d)
-            else:
-                found.extend(hits)
-        for a in adds:
-            top, hits = scan_add(a)
-            if a[5]:
-                blind_subs.append("add")
-                blind_top = blind_top or top
-                blind_found.extend(hits or [])
-            else:
-                found.extend(hits or [])     # an add outside a work tree fails, and stages nothing
-    except (OSError, ValueError) as e:
-        sys.stdout.write(str(e))
-        sys.exit(4)
-    seen = []
-    for h in found:
-        if h not in seen:
-            seen.append(h)
-    blind_seen = []
-    for h in blind_found:
-        if h not in seen and h not in blind_seen:
-            blind_seen.append(h)
-    if blind_seen:
-        seen.append("the hook could not follow a cd before a git %s, so it scanned the session directory\x27s repo (%s) instead:" % (blind_subs[0], blind_top))
-        seen.extend(blind_seen)
-    if seen:
-        sys.stdout.write("\n".join(seen))
-        return
-    if blind_subs and blind_top is None:
-        sys.stdout.write("a git %s follows a cd the hook cannot expand, so the repo it runs in is unknown, and the session directory is not a git work tree" % blind_subs[0])
-        sys.exit(ALLOW_EXIT)
-    if outside:
-        sys.stdout.write("not a git work tree (%s)" % outside[0])
-        sys.exit(ALLOW_EXIT)
-    if blind_subs:
-        sys.stdout.write("a git %s follows a cd the hook cannot expand; the session directory\x27s repo (%s) was scanned instead and is clean" % (blind_subs[0], blind_top))
-        sys.exit(ALLOW_EXIT)
+def emit(findings):
+    sys.stdout.write("\n".join(findings))
 
 def toplevel(d, gd, wt):
     """The work tree top git would run in, or None when it is not a work tree."""
@@ -366,7 +377,7 @@ def toplevel(d, gd, wt):
 def scan_commit(target, commit_all):
     """(top, findings) for the staged lines of one commit target, and with -a its
     unstaged ones; (None, None) when it is not a work tree."""
-    d, gd, wt = target
+    d, gd, wt = target.dir, target.git_dir, target.work_tree
     top = toplevel(d, gd, wt)
     if top is None:
         return None, None
@@ -382,7 +393,7 @@ def scan_add(add):
     """(top, findings) for what one git add would stage: the unstaged lines
     of tracked files and the untracked files its pathspecs name; (None, None)
     when it runs outside a work tree."""
-    ad, agd, awt, specs, force, blind = add
+    ad, agd, awt, specs, force = add.dir, add.git_dir, add.work_tree, add.specs, add.force
     atop = toplevel(ad, agd, awt)
     if atop is None:
         return None, None

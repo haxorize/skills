@@ -116,7 +116,6 @@ SED_LONG = {"in-place": "i", "expression": "e", "file": "f", "quiet": "n", "sile
             "follow-symlinks": "", "binary": "", "help": "", "version": ""}
 GLOB = re.compile(r"[*?\[]")
 HOME = os.path.realpath(os.environ.get("HOME") or "/")
-UNJUDGED = []                       # (shape, why) for in-place edits whose target the scanner could not know
 CD = "after a cd the hook cannot expand, judged against the payload cwd, which is not opted in"
 REBOUND = ("on a path through a variable the command rebinds, judged against the directory it runs in "
            "and the variable\x27s value before the command, neither opted in")
@@ -260,18 +259,17 @@ def on_command(seg, curdir):
     if not inplace:
         return None
     shape = "sed -i" if prog == "sed" else "perl/ruby -i"
-    cwd = base()
     unknown = curdir is None              # a cd the lib could not expand: the cwd stands in for it
-    start = cwd if unknown else os.path.join(cwd, curdir)
+    start = stand_in(curdir)
     if not os.path.isdir(start):          # a cd to a missing dir falls back to the payload cwd
-        start = cwd
+        start = base()
     paths = [resolve(start, f) if not GLOB.search(f) else None for f in files]
     literal = files and None not in paths and not fed_by()
     if literal:
         judged = [p for p in paths if any(opted(d) for d in places(p))]
         if not judged:
             if unknown and not all(os.path.isabs(os.path.expanduser(f)) for f in files):
-                UNJUDGED.append((shape, CD))    # a relative file under an unknown directory: not judged, and said so
+                allow_with("%s %s" % (shape, CD))    # a relative file under an unknown directory: not judged, and said so
             return None                   # every file lies outside an opted-in directory
     else:
         dirs = [os.path.realpath(start)]
@@ -291,22 +289,16 @@ def on_command(seg, curdir):
                     dirs.extend(places(g))
         if not any(opted(d) for d in dirs):
             if unknown:
-                UNJUDGED.append((shape, CD))
+                allow_with("%s %s" % (shape, CD))
             elif rebound:
-                UNJUDGED.append((shape, REBOUND))
+                allow_with("%s %s" % (shape, REBOUND))
             return None
     if (head == "sed" and bsd and not quiet and literal and len(files) == 1 and not script_file
             and len(code) == 1 and one_substitution(code[0])):
         return None                       # one substitution in one listed file, BSD sed
     return (shape, files[:20])
 
-def finish():
-    return ("unjudged",) + UNJUDGED[0] if UNJUDGED else None
-
 def emit(hit):
-    if hit[0] == "unjudged":
-        sys.stdout.write("%s %s" % hit[1:])
-        sys.exit(ALLOW_EXIT)
     shape, files = hit
     sys.stdout.write(shape + "".join("\n" + f for f in files))
 '

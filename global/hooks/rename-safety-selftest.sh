@@ -325,7 +325,7 @@ cp "$hook" "$mdir/rename-safety.sh"
 selftest_mutate "$here/hook-lib.sh" "$mdir/hook-lib.sh" 'export PAYLOAD_CWD="$cwd"' ':' \
   && hook="$mdir/rename-safety.sh" selftest_expect_killed "drop the PAYLOAD_CWD export" hook_rc_not 0 "$opted" "sed -i 's/a/b/' f.txt"
 cp "$here/hook-lib.sh" "$mdir/hook-lib.sh"
-selftest_mutate "$hook" "$mdir/rename-safety.sh" '                UNJUDGED.append((shape, CD))    # a relative file' '                pass    # a relative file' \
+selftest_mutate "$hook" "$mdir/rename-safety.sh" '                allow_with("%s %s" % (shape, CD))    # a relative file' '                pass    # a relative file' \
   && hook="$mdir/rename-safety.sh" selftest_expect_killed "an unknown cd stays silent" crumb_has "$plain" 'cd "$RS_UNSET_VAR" && sed -i s/a/b/ f.txt' "cannot expand"
 # hook-lib.py's expand(): the shell-kept and rebound names it leaves unexpanded
 cp "$hook" "$mdir/rename-safety.sh"
@@ -345,7 +345,7 @@ RS_TARGET="$opted" hooklib_mutant "for rebinds nothing" 'elif head in ("for", "s
 cp "$here/hook-lib.py" "$mdir/hook-lib.py"
 RS_TARGET="$opted" mutant "a rebound file judged by the run directory only" 'p = resolve(start, path, rebound=True)' 'p = None' "$plain" 'export RS_TARGET="$RS_TARGET"; sed -i s/a/b/g "$RS_TARGET/f.txt"' 0
 RS_TARGET="$opted" mutant "a rebound glob parent not judged" '                for g in guesses(start, lead):' '                for g in []:' "$plain" 'export RS_TARGET; sed -i s/a/b/g "$RS_TARGET"/*.txt' 0
-selftest_mutate "$hook" "$mdir/rename-safety.sh" '                UNJUDGED.append((shape, REBOUND))' '                pass' \
+selftest_mutate "$hook" "$mdir/rename-safety.sh" '                allow_with("%s %s" % (shape, REBOUND))' '                pass' \
   && RS_TARGET="$plain" hook="$mdir/rename-safety.sh" selftest_expect_killed "a rebound miss stays silent" crumb_has "$plain" 'export RS_TARGET="$RS_TARGET"; sed -i s/a/b/g "$RS_TARGET/f.txt"' "rebinds"
 cp "$hook" "$mdir/rename-safety.sh"
 selftest_mutate "$here/hook-lib.py" "$mdir/hook-lib.py" '(name in TOUCHED and not rebound)' 'name in TOUCHED' \

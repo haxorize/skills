@@ -4,7 +4,8 @@
 #   - A PreToolUse hook: hook-lib.sh's `hook_scan` prepends this file to the
 #     hook's own Python, which defines `on_command(seg, curdir)` and
 #     `emit(hit)`, and may define `finish()` (called once after a scan in
-#     which no `on_command` returned a hit; what it returns is the hit), then
+#     which no `on_command` returned a hit; what it returns is the hit, and
+#     emit writes it from that argument alone), then
 #     appends `run_scanner(on_command, emit, finish)`, the process entry: it
 #     reads the command from stdin and owns the exit codes below.
 #   - A loader by path (repeat-failure.py, through importlib): it calls
@@ -14,9 +15,9 @@
 #     script file, a `find` with no `-exec` clause), as written — and raises
 #     `TokeniseError` on a tokeniser error. It reads no stdin and never exits.
 # Besides those names, a hook may use `re`, `sys`, `os`, `shlex`, `progname`,
-# `git_args`, `split_git`, `expand`, `joined`, `base`, `fed_by`, `REDIR`,
-# `drop_redirs`, and `ALLOW_EXIT`; everything else here is the scanner's own
-# and may be renamed.
+# `git_args`, `split_git`, `expand`, `joined`, `base`, `stand_in`,
+# `allow_with`, `fed_by`, `REDIR`, and `drop_redirs`; everything else here is
+# the scanner's own and may be renamed.
 # `REDIR` matches a redirection word as the tokeniser hands it over; its group
 # 2 is the attached target, empty when the target is the next word;
 # `drop_redirs(words)` returns the words with each redirection and its target
@@ -26,8 +27,15 @@
 # segment. `base()` is the payload's cwd as an absolute path (hook_scan exports
 # it as PAYLOAD_CWD; a scanner run without it crashes, which fails open with
 # the exception named, rather than silently judging the hook process's own
-# directory). An `emit` that decides to allow with a breadcrumb writes the
-# breadcrumb to stdout and exits `ALLOW_EXIT` (5); hook_scan turns that into
+# directory).
+#
+# A cd the scanner could not expand is one policy for every hook: curdir is
+# None, and `stand_in(curdir)` gives the payload's cwd in its place (else
+# base() moved by curdir). A hook judges the stand-in, blocks on a hit there,
+# and on a miss calls `allow_with(text)` to say what it could not judge where
+# it runs. `allow_with` records an allow with a breadcrumb: when neither
+# on_command nor finish() returns a hit, run_scanner writes the first one
+# recorded to stdout and exits `ALLOW_EXIT` (5); hook_scan turns that into
 # hook_allow, so an allow never shares the channel a finding travels in.
 #
 # The contract, which every hook inherits: the command is tokenised the way a
@@ -94,7 +102,7 @@
 #
 # In run_scanner, a tokeniser error (an unterminated quote, more than four
 # nested shells) is exit 3; any other exception is exit 4 with its name on
-# stdout. hook-lib.sh turns both, and a hook's own exit 5, into a fail-open
+# stdout. hook-lib.sh turns both, and an allow_with's exit 5, into a fail-open
 # allow with a breadcrumb.
 
 import os, re, shlex, sys
@@ -507,6 +515,20 @@ def joined(base, path):
     return path if os.path.isabs(path) else os.path.join(base, path)
 
 
+def stand_in(curdir):
+    """The directory a segment runs in: base() moved by curdir, or base()
+    itself after a cd the scanner could not expand (curdir None)."""
+    return base() if curdir is None else joined(base(), curdir)
+
+
+CRUMBS = []                        # allow-with-breadcrumb lines, in the order hooks recorded them
+
+
+def allow_with(text):
+    """Allow with this breadcrumb when nothing blocks; the first one wins."""
+    CRUMBS.append(text)
+
+
 def take_assignments(seg, curdir):
     """Record leading NAME=value tokens (after an optional declarer and its
     options) into VARS, and every name they or the declarer bind into
@@ -703,7 +725,7 @@ def split_git(args, curdir):
     the repo instead: an absolute `-C`, or both a `--git-dir` and a
     `--work-tree` whose last values are absolute. Either one alone still
     leaves the other to the unknown directory."""
-    d = base() if curdir is None else joined(base(), curdir)
+    d = stand_in(curdir)
     known = curdir is not None
     gd = wt = None
     gd_abs = wt_abs = False
@@ -818,7 +840,8 @@ def program_segments(cmd):
 
 def run_scanner(on_command, emit, finish=None):
     """The process entry hook_scan appends: the command from stdin, the exit
-    codes in the header, and emit(hit) on a hit from on_command or finish()."""
+    codes in the header, emit(hit) on a hit from on_command or finish(), and
+    the first allow_with on no hit."""
     try:
         hit = scan_command(sys.stdin.read(), on_command)
         if not hit and finish:
@@ -830,3 +853,6 @@ def run_scanner(on_command, emit, finish=None):
         sys.exit(4)                  # the scanner itself is broken
     if hit:
         emit(hit)
+    elif CRUMBS:
+        sys.stdout.write(CRUMBS[0])
+        sys.exit(ALLOW_EXIT)
