@@ -373,9 +373,26 @@ _ACCESS = (
     r"|\bshutil\.\w+|\bos\.(remove|unlink|rename|replace|symlink|link)\b|\b(symlink_to|hardlink_to|unlink)\(|\bFile\.(read|write|open)\b"
     r"|(^|(?<=[\s;(|&]))[0-9&]?(>>?|<)\s*[\"']?" + _PEER_BODY
 )
+# A gap after a rule's opening word stops at the next copy of that word: the
+# line still draws the hit from the last copy before the target, and findings
+# are one per line, so the report is unchanged, while a line of the word
+# repeated costs linear time, never quadratic (D82). sh-dlexec's
+# fetch-first arm has a second gap a guard cannot close without losing a hit,
+# so it starts only at a line's start and commits, in atomic groups, to the
+# line's first fetch and the first output after it: any later pair finds its
+# chmod inside the first pair's window too.
+_FETCH = r"\b(?:curl|wget)\b"
+_CHMODX = r"\b(chmod\s+[+ugoa]*x|chmod\s+0?[0-7]*[1357][0-7]{0,2}\b|install\s+-m\s*0?[0-7]*[1357])"
+_WRITE = r"(>>?|\b(tee|cp|mv|ln|install)\b)"
+
+
+def _upto(word, cls=r"[^\n]"):
+    return r"(?:(?!" + word + r")" + cls + r")*"
+
+
 _RAW_IP = _PRIVATE_IP + r"\d{1,3}(\.\d{1,3}){3}|\d{8,10}|0x[0-9a-f]{8}|\[[0-9a-f:]{3,}\]"
 SCRIPT_RULES = [
-    ("sh-curlpipe", "HIGH", R(r"\b(curl|wget)\b[^\n|;&]*\|\s*(sudo\s+)?(ba)?sh\b"),
+    ("sh-curlpipe", "HIGH", R(r"\b(curl|wget)\b" + _upto(_FETCH, r"[^\n|;&]") + r"\|\s*(sudo\s+)?(ba)?sh\b"),
      "Network piped straight into a shell"),
     ("sh-b64exec", "HIGH", R(r"base64\s+(-d|--decode)[^\n]*\|\s*(sudo\s+)?(ba)?sh\b|echo\s+[A-Za-z0-9+/=]{40,}\s*\|\s*base64\s+(-d|--decode)"),
      "Decode-and-execute pattern"),
@@ -384,16 +401,16 @@ SCRIPT_RULES = [
     ("sh-dropsite", "HIGH", R(r"https?://(" + _DROP_HOSTS + r"|" + _RAW_IP + r")(?![\w.-])", re.I),
      "Drop-site URL (paste site, file drop, tunnel, request bin, chat webhook, telegram bot, or raw IP)"),
     ("sh-dlexec", "HIGH", R(
-        r"\b(curl|wget)\b[^\n]*(\s-[oO]\s|--output(-document)?[ =]|>>?\s*\S|\|\s*tee\b)[^\n]*(\n[^\n]*){0,5}?\b(chmod\s+[+ugoa]*x|chmod\s+0?[0-7]*[1357][0-7]{0,2}\b|install\s+-m\s*0?[0-7]*[1357])"
-        r"|\b(chmod\s+[+ugoa]*x|chmod\s+0?[0-7]*[1357][0-7]{0,2}\b|install\s+-m\s*0?[0-7]*[1357])[^\n]*(\n[^\n]*){0,5}?\b(curl|wget)\b[^\n]*(\s-[oO]\s|--output(-document)?[ =]|>>?\s*\S|\|\s*tee\b)"),
+        r"(?<![^\n])(?>[^\n]*?\b(curl|wget)\b)(?>[^\n]*?(\s-[oO]\s|--output(-document)?[ =]|>>?\s*\S|\|\s*tee\b))[^\n]*(\n[^\n]*){0,5}?" + _CHMODX
+        + r"|" + _CHMODX + _upto(_CHMODX) + r"(\n[^\n]*){0,5}?\b(curl|wget)\b" + _upto(_FETCH) + r"(\s-[oO]\s|--output(-document)?[ =]|>>?\s*\S|\|\s*tee\b)"),
      "Download-then-execute (fetches a file and makes it executable, in either order)"),
     ("sh-hexblob", "MEDIUM", R(r"(\\x[0-9a-fA-F]{2}){20,}|(?<![0-9a-fA-F])[0-9a-fA-F]{200,}"),
      "Hex-encoded blob (obfuscated payload)"),
     ("sh-shortener", "HIGH", R(r"https?://(bit\.ly|tinyurl\.com|t\.co|goo\.gl|is\.gd|cutt\.ly|rb\.gy)/", re.I),
      "URL shortener (destination hidden)"),
-    ("sh-http", "MEDIUM", R(r"\b(curl|wget)\b[^\n]*\bhttp://(?!localhost)" + _PRIVATE_IP),
+    ("sh-http", "MEDIUM", R(r"\b(curl|wget)\b" + _upto(_FETCH) + r"\bhttp://(?!localhost)" + _PRIVATE_IP),
      "Plain-HTTP network call (no TLS)"),
-    ("sh-postout", "MEDIUM", R(r"\bcurl\b[^\n]*(-d|--data|--data-binary|-F|--form|-T|--upload-file)[^\n]*\$"),
+    ("sh-postout", "MEDIUM", R(r"\bcurl\b" + _upto(r"\bcurl\b") + r"(-d|--data|--data-binary|-F|--form|-T|--upload-file)[^\n]*\$"),
      "Uploads variable data to the network"),
     ("sh-eval", "MEDIUM", R(r"\beval\s+[\"']?\$"),
      "eval on variable content"),
@@ -420,10 +437,10 @@ SCRIPT_RULES = [
     # `crontab -l` and `crontab -r` list and delete; every other operand
     # installs. The two path alternatives need a write beside them (a
     # redirect, tee, cp, mv, ln, install), so a mention is not a hit.
-    ("sh-persist", "HIGH", R(r"\bcrontab\s+(?!-[lr]\b)\S|\blaunchctl\s+(load|bootstrap)\b|(>>?|\b(tee|cp|mv|ln|install)\b)[^\n]*?(Library/LaunchAgents/|\.config/systemd/user/)|(>>?|\|\s*tee(\s+-a)?)\s*[\"']?" + _HOME + r"/\.(zshrc|bashrc|bash_profile|profile|zprofile)(?![\w.])|\bsystemctl\s+(--user\s+)?enable\b"),
+    ("sh-persist", "HIGH", R(r"\bcrontab\s+(?!-[lr]\b)\S|\blaunchctl\s+(load|bootstrap)\b|" + _WRITE + _upto(_WRITE) + r"(Library/LaunchAgents/|\.config/systemd/user/)|(>>?|\|\s*tee(\s+-a)?)\s*[\"']?" + _HOME + r"/\.(zshrc|bashrc|bash_profile|profile|zprofile)(?![\w.])|\bsystemctl\s+(--user\s+)?enable\b"),
      "Persists beyond the session (cron, launchd, a shell-rc write, or a systemd user unit)"),
     # curl's -k must sit in curl's own command: before any pipe or separator.
-    ("sh-noverify", "MEDIUM", R(r"\bcurl\b[^\n|;&]*\s(-[a-zA-Z]*k[a-zA-Z]*|--insecure)\b|--no-check-certificate|\bverify\s*=\s*False\b|rejectUnauthorized\s*:\s*false|NODE_TLS_REJECT_UNAUTHORIZED\s*=\s*[\"']?0|GIT_SSL_NO_VERIFY\s*=\s*[\"']?(?i:1|true)"),
+    ("sh-noverify", "MEDIUM", R(r"\bcurl\b" + _upto(r"\bcurl\b", r"[^\n|;&]") + r"\s(-[a-zA-Z]*k[a-zA-Z]*|--insecure)\b|--no-check-certificate|\bverify\s*=\s*False\b|rejectUnauthorized\s*:\s*false|NODE_TLS_REJECT_UNAUTHORIZED\s*=\s*[\"']?0|GIT_SSL_NO_VERIFY\s*=\s*[\"']?(?i:1|true)"),
      "TLS verification disabled"),
     ("sh-envdump", "MEDIUM", R(r"JSON\.stringify\(\s*process\.env\s*\)|\bdict\(\s*os\.environ\s*\)|\b(printenv|env)\b\s*\|[^\n]*\b(curl|wget|nc|ncat|base64|openssl)\b"),
      "Serialises or pipes the whole environment (a credential harvest)"),
