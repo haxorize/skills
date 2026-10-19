@@ -166,7 +166,7 @@ def on_command(seg, curdir):
         d, gd, wt = base(), None, None      # the repo is unknown: scan the session directory instead
     if sub in ("add", "stage"):
         specs, force, wide, dashdash = [], False, False, False
-        for a in rest:
+        for a in drop_redirs(rest):
             if dashdash or not a.startswith("-") or a == "-":
                 p = expand(a)
                 if p is None:

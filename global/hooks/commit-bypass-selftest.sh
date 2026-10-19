@@ -259,6 +259,7 @@ lib_mutant "an unexpandable operand is a script" 'any(c in t for c in "$`<>")' '
 # the tokeniser's redirection operators, one alternative at a time
 lib_mutant "the & of >& separates"  'elif c in "<>" and nxt == "&":' 'elif False:' "git commit -m x 2>&1 --no-verify" 0
 lib_mutant "the & of &> separates"  'elif c == "&" and nxt == ">":' 'elif False:' "git commit -m x &>log --no-verify" 0
+lib_mutant "the & is not restored in the word" '.append(t.replace(AMP, "&").replace(PIPE, "|"))' '.append(t.replace(PIPE, "|"))' "&> x git commit --no-verify" 0
 lib_mutant "an escaped > is a redirection" 'if c == "\\":' 'if False:' 'echo \>& git commit --no-verify -m x' 0
 lib_mutant "the | of >| pipes"      'elif c == ">" and nxt == "|":' 'elif False:' "git commit -m x >| log --no-verify" 0
 lib_mutant "a process substitution splits" 'elif c in "<>" and nxt == "(":' 'elif False:' "git commit -m x 2> >(cat) --no-verify" 0

@@ -256,7 +256,7 @@ def on_command(seg, curdir):
     prog = {"sed": "sed", "gsed": "sed", "perl": "perl", "ruby": "ruby"}.get(head)
     if not prog:
         return None
-    inplace, files, code, bsd, script_file, quiet = parse(prog, seg[1:])
+    inplace, files, code, bsd, script_file, quiet = parse(prog, drop_redirs(seg[1:]))
     if not inplace:
         return None
     shape = "sed -i" if prog == "sed" else "perl/ruby -i"

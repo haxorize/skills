@@ -163,6 +163,8 @@ expect_block "$r" "git add new.txt && git commit -m x" "add of an untracked path
 expect_block "$r" "git add . && git commit -m x" "add ."
 expect_block "$r" "git add -A; git commit -m x" "add -A"
 expect_quiet "$r" "git add other.txt && git commit -m x" "add names another path"
+expect_quiet "$r" "git add other.txt 2> new.txt && git commit -m x" "a detached redirect target is not a pathspec"
+expect_block "$r" "git add 2> log new.txt && git commit -m x" "a pathspec after a redirection is still read"
 expect_quiet "$r" "git status" "not a commit"
 r="$(newrepo)"; in_fixture "$r"; printf 'id\n' > "$r/id_rsa"
 expect_block "$r" "git add id_rsa && git commit -m x" "untracked key file added in the same command"
@@ -374,6 +376,7 @@ mutant "an absolute --git-dir/--work-tree does not place" 'out.placed = known or
 mutant "a relative --work-tree places" 'wt_abs = v is not None and os.path.isabs(v)' 'wt_abs = v is not None' "$r3" "cd \"\$(echo x)\" && git --git-dir=$r2/.git --work-tree=. commit -m x" 2 hook-lib.py
 mutant "an absolute --git-dir alone places" 'out.placed = known or (gd_abs and wt_abs)' 'out.placed = known or gd_abs' "$r3" "cd \"\$(echo x)\" && git --git-dir=$r2/.git commit -m x" 2 hook-lib.py
 mutant "an absolute --work-tree alone places" 'out.placed = known or (gd_abs and wt_abs)' 'out.placed = known or wt_abs' "$r3" "cd \"\$(echo x)\" && git --work-tree=$r2 add c.txt && git --work-tree=$r2 commit -m x" 2 hook-lib.py
+mutant "a detached redirect target is a pathspec" $'            k += 1 if m.group(2) else 2\n        else:' $'            k += 1\n        else:' "$(r="$(newrepo)" && in_fixture "$r" && printf 'k = %s\n' "$AWS" > "$r/n.txt" && printf '%s' "$r")" "git add o.txt 2> n.txt && git commit -m x" 2 hook-lib.py
 mutant "an absolute -C does not place" 'known = known or (v is not None and os.path.isabs(v))' 'pass' "$r3" "cd \"\$(echo x)\" && git -C $r2 commit -m x" 0 hook-lib.py
 mutant "the separate-word spelling ignored" '            if not eq:
                 if i + 1 >= len(args):' '            if False:

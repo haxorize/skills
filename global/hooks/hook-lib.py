@@ -14,10 +14,13 @@
 #     script file, a `find` with no `-exec` clause), as written — and raises
 #     `TokeniseError` on a tokeniser error. It reads no stdin and never exits.
 # Besides those names, a hook may use `re`, `sys`, `os`, `shlex`, `progname`,
-# `git_args`, `split_git`, `expand`, `joined`, `base`, `fed_by`, `REDIR`, and
-# `ALLOW_EXIT`; everything else here is the scanner's own and may be renamed.
+# `git_args`, `split_git`, `expand`, `joined`, `base`, `fed_by`, `REDIR`,
+# `drop_redirs`, and `ALLOW_EXIT`; everything else here is the scanner's own
+# and may be renamed.
 # `REDIR` matches a redirection word as the tokeniser hands it over; its group
-# 2 is the attached target, empty when the target is the next word.
+# 2 is the attached target, empty when the target is the next word;
+# `drop_redirs(words)` returns the words with each redirection and its target
+# taken out, so a hook reading file arguments never reads `> log` as one.
 # `fed_by()` names the feeders (`xargs`, `find`) the current segment runs
 # under, so a hook can tell that its file list arrives from outside the
 # segment. `base()` is the payload's cwd as an absolute path (hook_scan exports
@@ -537,6 +540,19 @@ def skip_redirs(seg, k):
             break
         k += 1 if m.group(2) else 2
     return k
+
+
+def drop_redirs(words):
+    """The words with every redirection taken out, each with its target: a
+    program never sees `2> log`, so neither word is a file argument."""
+    out, k = [], 0
+    while k < len(words):
+        m = REDIR.match(words[k])
+        if m:
+            k += 1 if m.group(2) else 2
+        else:
+            out.append(words[k]); k += 1
+    return out
 
 
 def scan(text, curdir, depth=0):
