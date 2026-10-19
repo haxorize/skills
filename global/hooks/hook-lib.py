@@ -18,7 +18,8 @@
 # `git_args`, `split_git`, `expand`, `joined`, `base`, `stand_in`,
 # `allow_with`, `fed_by`, `REDIR`, and `drop_redirs`; everything else here is
 # the scanner's own and may be renamed.
-# `REDIR` matches a redirection word as the tokeniser hands it over; its group
+# `REDIR` matches a redirection word as the tokeniser hands it over (a quoted
+# or escaped operator, `'>'` or `\\>`, is text and never matches); its group
 # 2 is the attached target, empty when the target is the next word;
 # `drop_redirs(words)` returns the words with each redirection and its target
 # taken out, so a hook reading file arguments never reads `> log` as one.
@@ -129,6 +130,7 @@ REDIR = re.compile(r"^[0-9]*(&>>|&>|>>|>\||>&|<<<|<<-|<<|<>|<&|>|<)(?!\()(.*)$",
 PROCSUB = "\x03"                   # opens a `<(`/`>(` body in the text shlex splits
 CMDSUB = "\x04"                    # opens a lifted `$(…)` / backtick's reference: CMDSUB, its BODIES index, CMDEND
 CMDEND = "\x05"
+LITERAL = "\x06"                   # before a quoted or escaped `<`/`>` that opens a word: text, never a redirection
 SUBREF = re.compile("\x04([0-9]+)\x05")
 BODIES = []                        # lifted substitution bodies; scan() runs each where its segment runs
 META = " \t\r\n;&|()"               # ends a word: a `#` after one starts a comment
@@ -224,26 +226,38 @@ def mark_redirs(text):
     """Swap the `&` of `>&`, `<&`, `&>` and the `|` of `>|` for AMP / PIPE
     where bash reads a redirection operator: the `<`/`>` (or the `&` of `&>`)
     not backslash-escaped. `\\>&` is an escaped `>` and then a background
-    `&`. Quotes need no tracking: shlex reads a quoted `&` or `|` as text
-    either way, and the stand-in is restored inside the word; a `\\` inside
-    single quotes that pairs here with the closing quote changes nothing
-    after it. A `<(` / `>(` gets PROCSUB between its two characters, so
-    lift_procsubs can tell it from a `> (`."""
+    `&`. A quoted `&` or `|` needs no care: shlex reads it as text either
+    way, and the stand-in is restored inside the word. A quoted or escaped
+    `<`/`>` that opens a word (after digits only, as in `'2>'`) does: shlex
+    drops the quotes, and the bare word would read as a redirection, so it
+    gets LITERAL before it, which REDIR refuses and drop_redirs removes. A
+    `<(` / `>(` gets PROCSUB between its two characters, so lift_procsubs can
+    tell it from a `> (`."""
     out, i, n = [], 0, len(text)
+    quote, lead = None, True          # the open quote; the word so far is digits only
     while i < n:
         c = text[i]
         nxt = text[i + 1] if i + 1 < n else ""
-        if c == "\\":                         # an escaped character is text, never an operator
-            out.append(c + nxt); i += 2
+        if quote == "\x27" and c != "\x27" or quote == '"' and c not in '"\\':
+            out.append((LITERAL if lead and c in "<>" else "") + c); i += 1
+            lead = lead and c.isdigit()
+        elif c in "\x27\"" and quote in (None, c):
+            quote = None if quote else c
+            out.append(c); i += 1
+        elif c == "\\":                         # an escaped character is text, never an operator
+            out.append((LITERAL if lead and nxt in ("<", ">") else "") + c + nxt); i += 2
+            lead = lead and nxt.isdigit()
+        elif c in " \t\r\n;&|()":
+            lead = True
+            out.append(AMP if c == "&" and nxt == ">" else c); i += 1   # `&&>x`: `&` then `&>x`, which separates the same
         elif c in "<>" and nxt == "&":
             out.append(c + AMP); i += 2
         elif c == ">" and nxt == "|":
             out.append(c + PIPE); i += 2
         elif c in "<>" and nxt == "(":
             out.append(c + PROCSUB); i += 1
-        elif c == "&" and nxt == ">":       # `&&>x`: `&` then `&>x`, which separates the same
-            out.append(AMP); i += 1
         else:
+            lead = lead and c.isdigit()
             out.append(c); i += 1
     return "".join(out)
 
@@ -426,7 +440,7 @@ def subref(body):
 
 
 def tokens(text):
-    text = strip_comments(text)
+    text = strip_comments(text.replace(LITERAL, ""))                          # a nested shell's string is marked afresh
     text = re.sub(r"\$\x27((?:[^\x27\\]|\\.)*)\x27", ansi_c, text)            # ANSI-C $'…' quoting
     text = re.sub(r"\$\((?:which|command -v|type -P)\s+(\w+)\)", r"\1", text)
     text = re.sub(r"`(?:which|command -v|type -P)\s+(\w+)`", r"\1", text)
@@ -573,7 +587,7 @@ def drop_redirs(words):
         if m:
             k += 1 if m.group(2) else 2
         else:
-            out.append(words[k]); k += 1
+            out.append(words[k].replace(LITERAL, "")); k += 1
     return out
 
 

@@ -253,7 +253,7 @@ lib_mutant "no backslash delimiter" '<<-?\s*\\?[' '<<-?\s*[' $'cat <<\\EOF > not
 lib_mutant "an unexpandable operand is a script" 'any(c in t for c in "$`<>")' 'any(c in t for c in "<>")' "printf 'git commit --no-verify -m x' | bash \"\$X\"" 0
 # the tokeniser's redirection operators, one alternative at a time
 lib_mutant "the & of >& separates"  'elif c in "<>" and nxt == "&":' 'elif False:' "git commit -m x 2>&1 --no-verify" 0
-lib_mutant "the & of &> separates"  'elif c == "&" and nxt == ">":' 'elif False:' "git commit -m x &>log --no-verify" 0
+lib_mutant "the & of &> separates"  'out.append(AMP if c == "&" and nxt == ">" else c)' 'out.append(c)' "git commit -m x &>log --no-verify" 0
 lib_mutant "the & is not restored in the word" '.append(t.replace(AMP, "&").replace(PIPE, "|"))' '.append(t.replace(PIPE, "|"))' "&> x git commit --no-verify" 0
 lib_mutant "an escaped > is a redirection" 'if c == "\\":' 'if False:' 'echo \>& git commit --no-verify -m x' 0
 lib_mutant "the | of >| pipes"      'elif c == ">" and nxt == "|":' 'elif False:' "git commit -m x >| log --no-verify" 0

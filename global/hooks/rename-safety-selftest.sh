@@ -156,6 +156,12 @@ expect_allow "$plain" "sed -i 's/a/b/' *.md"                                    
 expect_allow "$plain" "sed -i 's/a/b/' f.txt > $opted/log"                        "a detached redirect target is not a file"
 expect_allow "$plain" "sed -i 's/a/b/' f.txt &> $opted/log"                       "nor is &>'s"
 expect_block "$plain" "sed -i 's/a/b/' 2> log $opted/f.txt"                       "a file after a redirection is still read"
+# a quoted or escaped > is a file named >, so the word after it is still a file (D83)
+expect_block "$plain" "sed -i 's/a/b/' '>' $opted/f.txt"                         "a quoted > is a file, not a redirection"
+expect_block "$plain" "sed -i 's/a/b/' \\> $opted/f.txt"                         "nor is an escaped >"
+expect_block "$plain" "sed -i 's/a/b/' \"2>\" $opted/f.txt"                       "nor a quoted 2>"
+expect_block "$plain" "sed -i 's/a/b/' '<' $opted/f.txt"                         "nor a quoted <"
+expect_allow "$plain" "sed -i 's/a/b/' f.txt '>' x"                              "a quoted > file outside stays allowed"
 # symlinks: a path is judged where it really lies (~/.claude/skills/<skill> is a link into the checkout)
 ln -s "$opted" "$plain/dirlink"; ln -s "$opted/f.txt" "$plain/filelink"
 ln -s "$plain/g.txt" "$opted/outlink"; ln -s "$tmp/elsewhere/g.txt" "$plain/outlink"
@@ -322,6 +328,13 @@ selftest_mutate "$here/hook-lib.sh" "$mdir/hook-lib.sh" 'export PAYLOAD_CWD="$cw
 cp "$here/hook-lib.sh" "$mdir/hook-lib.sh"
 selftest_mutate "$hook" "$mdir/rename-safety.sh" '                allow_with("%s %s" % (shape, CD))    # a relative file' '                pass    # a relative file' \
   && hook="$mdir/rename-safety.sh" selftest_expect_killed "an unknown cd stays silent" crumb_has "$plain" 'cd "$RS_UNSET_VAR" && sed -i s/a/b/ f.txt' "cannot expand"
+# hook-lib.py's mark_redirs(): a quoted or escaped operator word is marked as text (D83)
+selftest_mutate "$here/hook-lib.py" "$mdir/hook-lib.py" 'out.append((LITERAL if lead and c in "<>" else "") + c); i += 1' 'out.append(c); i += 1' \
+  && hook="$mdir/rename-safety.sh" selftest_expect_killed "a quoted > reads as a redirection" hook_rc_not 0 "$plain" "sed -i 's/a/b/' '>' $opted/f.txt"
+cp "$here/hook-lib.py" "$mdir/hook-lib.py"
+selftest_mutate "$here/hook-lib.py" "$mdir/hook-lib.py" 'out.append((LITERAL if lead and nxt in ("<", ">") else "") + c + nxt); i += 2' 'out.append(c + nxt); i += 2' \
+  && hook="$mdir/rename-safety.sh" selftest_expect_killed "an escaped > reads as a redirection" hook_rc_not 0 "$plain" "sed -i 's/a/b/' \\> $opted/f.txt"
+cp "$here/hook-lib.py" "$mdir/hook-lib.py"
 # hook-lib.py's expand(): the shell-kept and rebound names it leaves unexpanded
 cp "$hook" "$mdir/rename-safety.sh"
 hooklib_mutant() { # hooklib_mutant <label> <find> <replace> <cwd> <cmd>  (the row must lose its breadcrumb)
