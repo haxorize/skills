@@ -9,15 +9,23 @@
 # starts from. A main-thread `compact_boundary` entry met first ends the walk
 # with its `compactMetadata.postTokens` (0 when absent or not an integer): a
 # compaction writes no usage entry, so the last one is the pre-compaction
-# figure until the next reply. Past 150k it adds one line of context telling
-# the agent to offer `/handoff` at the next phase boundary; past 200k, one
-# more line saying to offer it now, before the next step: past 200k a session
-# cannot afford to wait for a boundary. Each threshold fires once per climb: a
-# figure back under 150k after a nudge means a compaction ran, and it re-arms
-# both, so a second climb nudges again. The re-arm exists because a compaction
-# summary carries the old nudge forward as stale text while the real figure
-# has dropped; the nudge tracks the count, not what was said before. A session
-# that jumps past both between two prompts gets only the 200k line.
+# figure until the next reply. The thresholds follow the context window:
+# 150k and 200k on a 1M-token window, 120k and 150k on a 200k one. The window
+# is per machine and model, since a deployment can cap a model below its
+# published window: with CONTEXT_NUDGE_1M_MODELS unset every model reads as
+# 1M; a machine that sets it (in settings.json `env`, as `opus-4-8` or a
+# comma- or space-separated list) names its 1M models, and every other model
+# there is 200k. The model is that entry's `model` (after a compaction, the
+# entry before it). Past the lower threshold it adds one line of
+# context telling the agent to offer `/handoff` at the next phase boundary;
+# past the higher, one more line saying to offer it now, before the next step:
+# past it a session cannot afford to wait for a boundary. Each threshold fires
+# once per climb: a figure back under the lower one after a nudge means a
+# compaction ran, and it re-arms both, so a second climb nudges again. The
+# re-arm exists because a compaction summary carries the old nudge forward as
+# stale text while the real figure has dropped; the nudge tracks the count,
+# not what was said before. A session that jumps past both between two
+# prompts gets only the higher line.
 #
 # Why a hook: the agent cannot see its own token count, so a rule asking it to
 # judge "around 150k" is a guess. The figure lags by up to one turn — the
@@ -47,7 +55,7 @@
 # shared with repeat-failure). Neither .py is a hook: no `# Install note:`.
 #
 # Event: UserPromptSubmit
-# Install note: always on — no opt-in; quiet below 150k tokens.
+# Install note: always on — no opt-in; quiet below 150k tokens (120k where CONTEXT_NUDGE_1M_MODELS omits the model).
 #
 # Wire it in ~/.claude/settings.json (scripts/install.sh prints the block):
 #   hooks.UserPromptSubmit[] = {
