@@ -374,7 +374,9 @@ expect_quiet "$G" "git push origin refs/heads/side:refs/heads/main" "the refs/he
 # with no range the receipt decides, so the strip shows only in the shortcut:
 # main is pushed and unstamped, and only a stripped destination finds origin/main
 expect_crumb "$G" "git push origin refs/heads/main:refs/heads/main" "nothing to push" "the stripped destination finds the range, and a pushed branch sends nothing"
+expect_crumb "$G" "git push origin +main" "nothing to push"   "a forced refspec with no : drops its + from the destination too"
 ( cd "$G" && git checkout -q main )
+expect_block "$G" "git push origin side:main; git push origin nostamp:main" "a second push from the same repo reads the cached stamps and still blocks"
 # an unreadable report is skipped, not a fail-open — a planted chmod 000 file
 # must not disable the gate the way it did before the 2026-08-22 review (F4, F14)
 if [ "$(id -u)" != 0 ]; then
@@ -558,19 +560,19 @@ mutant "landing.sh is not the one beside the checkout" 'landing="$hook_real/../.
 # the missing-reader hold, turned into an allow: graded from a copy with no
 # checkout around it (the $mdir copy finds the real reader and never reaches the
 # hold), pushing the opted-in $M, whose real-hook answer is the hold's rc 2
-selftest_mutate "$hook" "$work/lonely2/review-receipt.sh" 'hold "the stamp reader is not at' '{ rec_allow "x"; return 0; }; : "' \
+selftest_mutate "$hook" "$work/lonely2/review-receipt.sh" 'hold "the stamp reader is not at' '{ rec_allow "x"; exit 0; }; : "' \
   && hook="$work/lonely2/review-receipt.sh" selftest_expect_killed "a missing reader allows" hook_rc_not 0 "$M" "git push"
 mutant "judge only the first push"    'judge "${records[$((ri - 1))]}"' 'judge "${records[0]}"' "$G" "git push origin :gone; git push origin main" 0
 mutant "a delete first passes the rest" ':*|+:*) dropped=1; continue ;;' ':*|+:*) rec_allow x; return 0 ;;' "$G" "git push origin :gone main" 0
 mutant "a tag first passes the rest"  'is_tag "$r" && continue;' 'is_tag "$r" && { rec_allow x; return 0; };' "$G" "git push origin v1.0 main" 0
-mutant "the destination decides a tag" 's="${r%%:*}" d="${r#*:}"' 's="${r#*:}" d=""' "$G" "git push origin main:v2.0" 0
-mutant "a tag sent to a branch is a tag push" 'case "$d" in ""|refs/tags/*) ;; *) return 1 ;; esac' ':' "$G" "git push origin v2.0:main" 0
+mutant "the destination decides a tag" $'  refspec_parts "$1"\n  case "$rs_dst"' $'  refspec_parts "$1"; rs_src="${rs_dst:-$rs_src}" rs_dst=""\n  case "$rs_dst"' "$G" "git push origin main:v2.0" 0
+mutant "a tag sent to a branch is a tag push" 'case "$rs_dst" in ""|refs/tags/*) ;; *) return 1 ;; esac' ':' "$G" "git push origin v2.0:main" 0
 mutant "a negative refspec is a source" 'case "$r" in ^*) continue ;; esac' ':' "$MOK" "git push origin main ^refs/heads/nope" 2
 mutant "an unresolvable source allows" '[ -n "$t" ] || hold "git cannot resolve' '[ -n "$t" ] || { rec_allow x; return 0; }; : "git cannot resolve' "$MOK" "git push origin main nosuch:other" 0
 mutant "the matching refspec is a delete" 'case "$r" in :|+:) ;; :*|+:*)' 'case "$r" in :*|+:*)' "$G" "git push origin :" 0
 mutant "a URL push takes the upstream range" 'if [ -n "$url_push" ]; then' 'if false; then' "$work/tworemotes" "git push $work/other-remote.git" 0
 mutant "a redirection's target is a refspec" 'if REDIR.match(r) and not REDIR.match(r).group(2):' 'if False:' "$MOK" "git push origin main > out.txt 2>&1" 2
-mutant "no range is nothing to push" '[ -z "$wide" ] && [ -n "$range" ]; then' '[ -z "$wide" ]; then [ -n "$range" ] || { rec_allow x; return 0; };' "$work/norem" "git push" 0
+mutant "no range is nothing to push" '[ -z "$wide" ] && [ -n "$range" ]; then' '[ -z "$wide" ]; then [ -n "$range" ] || { rec_allow x; return 1; };' "$work/norem" "git push" 0
 
 # hook-lib.py's REDIR, which the hook reads its operator words through: >| dropped
 # from it, beside an unmutated copy of the hook

@@ -314,50 +314,38 @@ landing_fix="landing.sh gives its reason above. A landing zone it refuses (owned
 group- or world-writable) is fixed or removed, then the review report written again; or push from
 your own terminal."
 
+# refspec_parts <refspec>: the one place a refspec is split. rs_src is its
+# source with the force `+` dropped; rs_dst its destination as written, ""
+# when the refspec has no `:` (git then updates the source's own name).
+refspec_parts() {
+  local r="${1#+}"
+  case "$r" in *:*) rs_src="${r%%:*}" rs_dst="${r#*:}" ;; *) rs_src="$r" rs_dst="" ;; esac
+}
+
 # is_tag <refspec>: the refspec sends a tag, not branch commits — its source
 # is a tag (refs/tags/…, or a name that is a tag and not a branch) and its
 # destination is absent or under refs/tags/. The destination's name never
 # decides alone: `wip:v1` sends a branch even where a tag v1 exists.
 is_tag() {
-  local r="${1#+}" s d=""
-  case "$r" in *:*) s="${r%%:*}" d="${r#*:}" ;; *) s="$r" ;; esac
-  case "$d" in ""|refs/tags/*) ;; *) return 1 ;; esac
-  case "$s" in refs/tags/?*) return 0 ;; refs/*|"") return 1 ;; esac
-  ! git -C "$top" rev-parse --verify -q "refs/heads/$s" >/dev/null 2>&1 \
-    && git -C "$top" rev-parse --verify -q "refs/tags/$s" >/dev/null 2>&1
+  refspec_parts "$1"
+  case "$rs_dst" in ""|refs/tags/*) ;; *) return 1 ;; esac
+  case "$rs_src" in refs/tags/?*) return 0 ;; refs/*|"") return 1 ;; esac
+  ! git -C "$top" rev-parse --verify -q "refs/heads/$rs_src" >/dev/null 2>&1 \
+    && git -C "$top" rev-parse --verify -q "refs/tags/$rs_src" >/dev/null 2>&1
 }
 
-# judge <record>: returns when this push passes, exits 2 when it is blocked.
-judge() {
-  local kind pushdir remote refspec extras pushall r rs kept dropped
-  IFS=$'\x1f' read -r kind pushdir remote refspec extras pushall <<< "$1"
-  [ "$kind" = "delete" ] && { rec_allow "a delete sends no commits"; return 0; }
-
-  # every refspec, the first and the extras; a delete refspec (`:dst`) sends no
-  # commits, and a negative one (`^…`) excludes refs rather than sending one;
-  # the bare `:` / `+:` is the matching refspec and sends every matching branch
-  rs=()
-  [ -n "$refspec" ] && rs+=("$refspec")
-  if [ -n "$extras" ]; then
-    while IFS= read -r r || [ -n "$r" ]; do [ -n "$r" ] && rs+=("$r"); done < <(printf '%s' "$extras" | tr '\036' '\n')
-  fi
-  kept=() dropped=""
-  for r in ${rs[@]+"${rs[@]}"}; do
-    case "$r" in :|+:) ;; :*|+:*) dropped=1; continue ;; esac   # `:` alone is the matching refspec, not a delete
-    case "$r" in ^*) continue ;; esac
-    kept+=("$r")
-  done
-  [ -n "$dropped" ] && [ "${#kept[@]}" -eq 0 ] && { rec_allow "a delete refspec sends no commits"; return 0; }
-
-  start="$cwd"
-  if [ -n "$pushdir" ]; then
-    case "$pushdir" in
-      /*) start="$pushdir" ;;
-      *)  start="$cwd/$pushdir" ;;
+# resolve_repo <push dir>: top (the work tree the push runs in) and repo (its
+# name); returns 1 outside a work tree. The push dir is `git -C`'s, resolved
+# from the payload cwd, which stands in when it is not a directory.
+resolve_repo() {
+  local start="$cwd" common
+  if [ -n "$1" ]; then
+    case "$1" in
+      /*) start="$1" ;;
+      *)  start="$cwd/$1" ;;
     esac
     [ -d "$start" ] || start="$cwd"
   fi
-
   top="$(git -C "$start" rev-parse --show-toplevel 2>/dev/null || true)"
   if [ -z "$top" ]; then
     # inside `.git`, or a GIT_DIR= pointed at one: the work tree is the git dir's parent
@@ -367,114 +355,103 @@ judge() {
       [ -e "$top/.git" ] || top=""
     fi
   fi
-  [ -n "$top" ] || { rec_allow "not inside a git work tree"; return 0; }
+  [ -n "$top" ] || return 1
   repo="$(basename "$top")"
+}
 
-  # --- opt-in: the repo top's CLAUDE.md alone decides --------------------------
-  # The fence rule is tree-stamp.sh's: a run of three or more ` or ~ opens a
-  # fence, and only a run of the same character at least as long closes it.
-  # next-step.sh's unfenced is the same awk.
-  OPT_IN='^[-* >]*\**`?Review required:`?\**[[:space:]]*\**`?(yes|no)`?\**[[:space:]]*$'
-  gated=""
-  optin="$top/CLAUDE.md"
-  if [ -e "$optin" ]; then
-    unfenced="$(awk '
-      match($0, /^[[:space:]]*(```+|~~~+)/) {
-        run = substr($0, RSTART, RLENGTH); sub(/^[[:space:]]*/, "", run)
-        if (fence == "") { fence = run; next }
-        if (substr(run, 1, 1) == substr(fence, 1, 1) && length(run) >= length(fence)) { fence = ""; next }
-      }
-      fence != "" { next }
-      { print }' "$optin" 2>/dev/null)" || hold "could not read $optin" "Make $optin readable, or push from your own terminal."
-    line="$(printf '%s\n' "$unfenced" | grep -iE "$OPT_IN" | head -1; exit "${PIPESTATUS[1]}")"
-    grc=$?
-    [ "$grc" -le 1 ] || hold "could not scan $optin (grep rc=$grc)" "Push from your own terminal."
-    printf '%s\n' "$line" | grep -qi 'yes' && gated=1
-  fi
-  [ -n "$gated" ] || return 0
+# review_required: true when the top's CLAUDE.md says 'Review required: yes'.
+# The fence rule is tree-stamp.sh's: a run of three or more ` or ~ opens a
+# fence, and only a run of the same character at least as long closes it.
+# next-step.sh's unfenced is the same awk.
+OPT_IN='^[-* >]*\**`?Review required:`?\**[[:space:]]*\**`?(yes|no)`?\**[[:space:]]*$'
+review_required() {
+  local optin="$top/CLAUDE.md" unfenced line grc
+  [ -e "$optin" ] || return 1
+  unfenced="$(awk '
+    match($0, /^[[:space:]]*(```+|~~~+)/) {
+      run = substr($0, RSTART, RLENGTH); sub(/^[[:space:]]*/, "", run)
+      if (fence == "") { fence = run; next }
+      if (substr(run, 1, 1) == substr(fence, 1, 1) && length(run) >= length(fence)) { fence = ""; next }
+    }
+    fence != "" { next }
+    { print }' "$optin" 2>/dev/null)" || hold "could not read $optin" "Make $optin readable, or push from your own terminal."
+  line="$(printf '%s\n' "$unfenced" | grep -iE "$OPT_IN" | head -1; exit "${PIPESTATUS[1]}")"
+  grc=$?
+  [ "$grc" -le 1 ] || hold "could not scan $optin (grep rc=$grc)" "Push from your own terminal."
+  printf '%s\n' "$line" | grep -qi 'yes'
+}
 
-  # --- the refspecs that send branch commits: a tag refspec sends none ------------
-  if [ "${#kept[@]}" -gt 0 ]; then
-    rs=("${kept[@]}") kept=()
-    for r in "${rs[@]}"; do is_tag "$r" && continue; kept+=("$r"); done
-    [ "${#kept[@]}" -gt 0 ] || { rec_allow "a tag push sends no branch commits"; return 0; }
-  fi
-  refspec="${kept[0]:-}"
-
-  # --- the range the push would send --------------------------------------------
+# sources <remote> <pushall> <refspec>…: every source the push would send —
+# srcs, and src (the first refspec's source, else HEAD), dst (its
+# destination, else the current branch), branch, wide (several branches) and
+# url_push (the remote is not a configured one). Returns 1 when the push
+# passes, having said why. A second refspec, `--all`/`--mirror`, and a
+# wildcard refspec each reached the remote ungated before (2026-08-22
+# review): the gate derived everything from one token. A remote argument
+# that is not a configured remote is a URL (or a remote this repo does not
+# know): it has no remote-tracking refs, so no range.
+sources() {
+  local remote="$1" pushall="$2" r b ahead rname only_matching matching=""
+  shift 2
   branch="$(git -C "$top" symbolic-ref --short -q HEAD 2>/dev/null || true)"
-  dst=""
-  if [ -n "$refspec" ]; then
-    case "$refspec" in *:*) dst="${refspec#*:}" ;; *) dst="$refspec" ;; esac
-  fi
+  refspec_parts "${1:-}"
+  src="${rs_src:-HEAD}"
+  dst="${rs_dst:-$rs_src}"
   [ -n "$dst" ] || dst="$branch"
   dst="${dst#refs/heads/}"
-
-  # the commit the push would send: the refspec's source, else HEAD
-  src=""
-  if [ -n "$refspec" ]; then
-    case "$refspec" in *:*) src="${refspec%%:*}" ;; *) src="$refspec" ;; esac
-    src="${src#+}"
-  fi
-  [ -n "$src" ] || src="HEAD"
-
-  # Every source the push would send, not only the first refspec. A second refspec,
-  # `--all`/`--mirror`, and a wildcard refspec each reached the remote ungated
-  # before (2026-08-22 review): the gate derived everything from one token.
-  # A remote argument that is not a configured remote is a URL (or a remote
-  # this repo does not know): it has no remote-tracking refs, so no range.
   url_push=""
   if [ -n "$remote" ] && ! git -C "$top" remote 2>/dev/null | grep -qxF -- "$remote"; then url_push=1; fi
-  wide="" matching=""
-  for r in ${kept[@]+"${kept[@]}"}; do
+  wide=""
+  for r in "$@"; do
     case "$r" in :|+:) matching=1 ;; *'*'*) wide=1 ;; esac
   done
   srcs=()
-  if [ -n "$pushall" ] || [ -n "$wide" ] || [ -n "$matching" ]; then
-    # every local branch the push would actually change: new on the remote, or
-    # ahead of it — for the matching refspec alone, only a branch the remote has
-    rname="${remote:-origin}"
-    only_matching=""
-    [ -n "$matching" ] && [ -z "$pushall" ] && [ -z "$wide" ] && [ -z "$url_push" ] && only_matching=1
-    wide=1
-    while IFS= read -r b; do
-      [ -n "$b" ] || continue
-      if [ -z "$url_push" ] && git -C "$top" rev-parse --verify -q "$rname/$b" >/dev/null 2>&1; then
-        ahead="$(git -C "$top" rev-list --count "$rname/$b..$b" 2>/dev/null || echo '?')"
-        case "$ahead" in ''|0) continue ;; *[!0-9]*) rec_allow "could not count the commits on $b"; return 0 ;; esac
-      elif [ -n "$only_matching" ]; then
-        continue
-      fi
-      srcs+=("$b")
-    done < <(git -C "$top" for-each-ref --format='%(refname:short)' refs/heads 2>/dev/null)
-    # the other refspecs beside it send their own sources, ahead or not
-    for r in ${kept[@]+"${kept[@]}"}; do
-      case "$r" in :|+:|*'*'*) continue ;; *:*) es="${r%%:*}" ;; *) es="$r" ;; esac
-      es="${es#+}"
-      [ -n "$es" ] && srcs+=("$es")
+  if [ -z "$pushall" ] && [ -z "$wide" ] && [ -z "$matching" ]; then
+    for r in "$@"; do
+      refspec_parts "$r"
+      srcs+=("${rs_src:-HEAD}")
     done
-    [ "${#srcs[@]}" -gt 0 ] || { rec_allow "no branch is ahead of $rname"; return 0; }
-  else
-    srcs=("$src")
-    for r in ${kept[@]+"${kept[@]:1}"}; do
-      case "$r" in *:*) es="${r%%:*}" ;; *) es="$r" ;; esac
-      es="${es#+}"
-      [ -n "$es" ] && srcs+=("$es")
-    done
+    [ "${#srcs[@]}" -gt 0 ] || srcs=("HEAD")
+    return 0
   fi
+  # every local branch the push would actually change: new on the remote, or
+  # ahead of it — for the matching refspec alone, only a branch the remote has
+  rname="${remote:-origin}"
+  only_matching=""
+  [ -n "$matching" ] && [ -z "$pushall" ] && [ -z "$wide" ] && [ -z "$url_push" ] && only_matching=1
+  wide=1
+  while IFS= read -r b; do
+    [ -n "$b" ] || continue
+    if [ -z "$url_push" ] && git -C "$top" rev-parse --verify -q "$rname/$b" >/dev/null 2>&1; then
+      ahead="$(git -C "$top" rev-list --count "$rname/$b..$b" 2>/dev/null || echo '?')"
+      case "$ahead" in ''|0) continue ;; *[!0-9]*) rec_allow "could not count the commits on $b"; return 1 ;; esac
+    elif [ -n "$only_matching" ]; then
+      continue
+    fi
+    srcs+=("$b")
+  done < <(git -C "$top" for-each-ref --format='%(refname:short)' refs/heads 2>/dev/null)
+  # the other refspecs beside it send their own sources, ahead or not
+  for r in "$@"; do
+    case "$r" in :|+:|*'*'*) continue ;; esac
+    refspec_parts "$r"
+    [ -n "$rs_src" ] && srcs+=("$rs_src")
+  done
+  [ "${#srcs[@]}" -gt 0 ] || { rec_allow "no branch is ahead of $rname"; return 1; }
+}
 
-  # --- the tree(s) the push would send ---------------------------------------------
-  # Every source must be stamped; one unstamped source blocks the whole command,
-  # because git sends them all. Resolved before the range, so a source git
-  # cannot resolve holds here rather than failing open on the commit count.
+# measure <remote>: trees (one per source; every source must be stamped,
+# because git sends them all), range (what the push sends, "" when there is
+# no ref to compare against) and count. Trees resolve before the range, so a
+# source git cannot resolve holds here rather than failing open on the
+# count. Returns 1 when the push passes, having said why.
+measure() {
+  local remote="$1" s t
   trees=()
   for s in "${srcs[@]}"; do
     t="$(git -C "$top" rev-parse --verify -q "$s^{tree}" 2>/dev/null || true)"
     [ -n "$t" ] || hold "git cannot resolve the tree of $s" "Check the refspec (git would refuse a source it cannot resolve), or push from your own terminal."
     trees+=("$t")
   done
-  tree="${trees[0]}"
-
   range=""
   if [ -n "$url_push" ]; then
     :   # a URL: no remote-tracking ref, whatever the upstream says
@@ -491,26 +468,30 @@ judge() {
   if [ "${#srcs[@]}" -eq 1 ] && [ -z "$wide" ] && [ -n "$range" ]; then
     count="$(git -C "$top" rev-list --count "$range" 2>/dev/null || echo '?')"
     case "$count" in
-      ''|0)       rec_allow "nothing to push on this branch"; return 0 ;;
-      *[!0-9]*)   rec_allow "could not count the commits in $range"; return 0 ;;
+      ''|0)       rec_allow "nothing to push on this branch"; return 1 ;;
+      *[!0-9]*)   rec_allow "could not count the commits in $range"; return 1 ;;
     esac
   fi
+}
 
-  # --- the receipt ---------------------------------------------------------------
-  # The zones and the report list are landing.sh's; a reader that is missing
-  # or fails holds the push rather than waving it through.
+# stamps_for <repo>: zones, reports (the readable review reports), stamps
+# (one Reviewed-tree a line) and stamp_files ("<tree> <report>" a line), read
+# once per repo: a second push from the same repo reuses them. The zones and
+# the report list are landing.sh's; a reader that is missing or fails holds
+# the push rather than waving it through.
+stamps_repo=""
+stamps_for() {
+  local f h found
+  [ "$stamps_repo" = "$1" ] && return 0
   [ -f "$stamp_reader" ] || hold "the stamp reader is not at $stamp_reader"
   [ -f "$landing" ] || hold "landing.sh is not at $landing"
   landing_call zones || hold "landing.sh zones failed${landing_why:+ ($landing_why)}" "${landing_why:+$landing_fix}"
   zones=()
-  while IFS= read -r z; do [ -n "$z" ] && zones+=("$z"); done <<< "$landing_out"
+  while IFS= read -r f; do [ -n "$f" ] && zones+=("$f"); done <<< "$landing_out"
   [ "${#zones[@]}" -gt 0 ] || hold "landing.sh zones printed no zone${landing_why:+ ($landing_why)}" "${landing_why:+$landing_fix}"
-  landing_call list --kind review --repo "$repo" \
+  landing_call list --kind review --repo "$1" \
     || hold "landing.sh list --kind review failed${landing_why:+ ($landing_why)}" "${landing_why:+$landing_fix}"
-  list_out="$landing_out"
-  reports=0
-  stamps=""
-  stamp_files=""
+  reports=0 stamps="" stamp_files=""
   while IFS= read -r f; do
     [ -n "$f" ] && [ -f "$f" ] || continue
     if [ ! -r "$f" ]; then
@@ -533,21 +514,17 @@ $found"
 $h $f"
       done <<< "$found"
     fi
-  done <<< "$list_out"
+  done <<< "$landing_out"
+  stamps_repo="$1"
+}
 
-  unstamped=""
-  for i in "${!trees[@]}"; do
-    printf '%s\n' "$stamps" | grep -qx "${trees[$i]}" && continue
-    unstamped="${srcs[$i]}"
-    tree="${trees[$i]}"
-    break
-  done
-  [ -n "$unstamped" ] || return 0
-  src="$unstamped"
+# block_unstamped <source> <tree>: exits 2, naming the unstamped tree, the
+# last stamp read and how the two differ.
+block_unstamped() {
+  local src="$1" tree="$2" sent last_line last
   sent="$count unpushed commit(s) in $range"
   [ -n "$range" ] || sent="no remote ref to compare against, so every commit is new there"
   [ -z "$wide" ] || sent="one of the branches the push would change"
-
   {
     echo "review-receipt: blocked a push from $repo — no review report stamps the tree the push would send ($src^{tree} = ${tree:0:12}; $sent)."
     echo "  command: $cmd"
@@ -575,6 +552,41 @@ $h $f"
     echo "  can push unreviewed work from their own terminal."
   } >&2
   exit 2
+}
+
+# judge <record>: returns when this push passes, exits 2 when it is blocked.
+judge() {
+  local kind pushdir remote refspec extras pushall r i dropped="" rs=() kept=() pushed=()
+  IFS=$'\x1f' read -r kind pushdir remote refspec extras pushall <<< "$1"
+  [ "$kind" = "delete" ] && { rec_allow "a delete sends no commits"; return 0; }
+
+  # every refspec, the first and the extras; a delete refspec (`:dst`) sends no
+  # commits, and a negative one (`^…`) excludes refs rather than sending one;
+  # the bare `:` / `+:` is the matching refspec and sends every matching branch
+  [ -n "$refspec" ] && rs+=("$refspec")
+  if [ -n "$extras" ]; then
+    while IFS= read -r r || [ -n "$r" ]; do [ -n "$r" ] && rs+=("$r"); done < <(printf '%s' "$extras" | tr '\036' '\n')
+  fi
+  for r in ${rs[@]+"${rs[@]}"}; do
+    case "$r" in :|+:) ;; :*|+:*) dropped=1; continue ;; esac   # `:` alone is the matching refspec, not a delete
+    case "$r" in ^*) continue ;; esac
+    kept+=("$r")
+  done
+  [ -n "$dropped" ] && [ "${#kept[@]}" -eq 0 ] && { rec_allow "a delete refspec sends no commits"; return 0; }
+
+  resolve_repo "$pushdir" || { rec_allow "not inside a git work tree"; return 0; }
+  review_required || return 0
+
+  # a tag refspec sends no branch commits
+  for r in ${kept[@]+"${kept[@]}"}; do is_tag "$r" && continue; pushed+=("$r"); done
+  [ "${#kept[@]}" -eq 0 ] || [ "${#pushed[@]}" -gt 0 ] || { rec_allow "a tag push sends no branch commits"; return 0; }
+
+  sources "$remote" "$pushall" ${pushed[@]+"${pushed[@]}"} || return 0
+  measure "$remote" || return 0
+  stamps_for "$repo"
+  for i in "${!trees[@]}"; do
+    printf '%s\n' "$stamps" | grep -qx "${trees[$i]}" || block_unstamped "${srcs[$i]}" "${trees[$i]}"
+  done
 }
 
 for ri in "${!records[@]}"; do
