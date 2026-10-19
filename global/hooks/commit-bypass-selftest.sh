@@ -17,20 +17,14 @@
 set -u
 here="$(cd "$(dirname "$0")" && pwd)"
 hook="$here/commit-bypass.sh"
-# Temp-file template and guard: scripts/README.md § Temp files. Spelled out
-# rather than selftest_tmpdir, which both selftest libs below now provide:
-# this block runs before either is sourced and has not moved yet.
-tmp="$(mktemp -d "${TMPDIR:-/tmp}/commit-bypass-selftest.XXXXXX" 2>/dev/null)"
-if [ -z "$tmp" ] || [ ! -d "$tmp" ]; then
-  echo "commit-bypass-selftest: no usable temp directory (TMPDIR=${TMPDIR:-unset}) — nothing ran" >&2
-  exit 4
-fi
-trap 'rm -rf "$tmp"' EXIT
 
 # selftest-lib.sh sources scripts/selftest-lib.sh (selftest_mutate,
 # selftest_expect_killed); the path named here is what queues this selftest
 # when that file is staged (pre-commit's queue_hook_selftests_naming).
 . "$here/selftest-lib.sh"
+# Temp-file template and guard: scripts/README.md § Temp files.
+tmp="$(selftest_tmpdir)" || selftest_no_tmpdir commit-bypass-selftest
+trap 'rm -rf "$tmp"' EXIT
 D="$PWD"
 
 # --- bypass shapes: block -----------------------------------------------------
@@ -226,9 +220,10 @@ out="$( printf '' | bash "$hook" 2>&1 >/dev/null; echo "rc=$?" )"
 printf '%s' "$out" | grep -q 'empty payload, allowing' && printf '%s' "$out" | grep -q 'rc=0' || { echo "FAIL: an empty payload must allow with its own breadcrumb: $out"; fail=1; }
 # a crash in the hook's own Python is named, not mislabelled a tokeniser error
 crashed="$tmp/crashed.sh"; cp "$here/hook-lib.sh" "$here/hook-lib.py" "$tmp/"
-python3 -c 'import sys; s=open(sys.argv[1]).read(); open(sys.argv[2],"w").write(s.replace("def check_git(args):\n", "def check_git(args):\n    undefined_name\n", 1))' "$hook" "$crashed"
-out="$( printf '%s' '{"tool_input":{"command":"git commit -m x"}}' | bash "$crashed" 2>&1 >/dev/null; echo "rc=$?" )"
-printf '%s' "$out" | grep -q 'scanner crashed (NameError' && printf '%s' "$out" | grep -q 'rc=0' || { echo "FAIL: a scanner crash must allow with its exception named: $out"; fail=1; }
+if selftest_mutate "$hook" "$crashed" $'def check_git(args):\n' $'def check_git(args):\n    undefined_name\n'; then
+  out="$( printf '%s' '{"tool_input":{"command":"git commit -m x"}}' | bash "$crashed" 2>&1 >/dev/null; echo "rc=$?" )"
+  printf '%s' "$out" | grep -q 'scanner crashed (NameError' && printf '%s' "$out" | grep -q 'rc=0' || { echo "FAIL: a scanner crash must allow with its exception named: $out"; fail=1; }
+fi
 # a module in the session's cwd named like a standard one is never imported (python3 -I)
 mkdir -p "$tmp/shadow"
 for m in json re shlex os; do printf 'open("%s/PWNED-%s", "w").write("x")\n' "$tmp/shadow" "$m" > "$tmp/shadow/$m.py"; done
@@ -297,5 +292,5 @@ cp "$here/hook-lib.sh" "$sdir/"
 selftest_mutate "$hook" "$sdir/commit-bypass.sh" 'if a in GIT_VALUE_OPTS:      # its value' 'if a in ("-c", "-C", "--config-env"):      # its value' \
   && selftest_expect_killed --mutant hook "$sdir/commit-bypass.sh" "three value options" hook_rc_not 0 "$D" "git --git-dir .git commit -n -m x"
 
-if [ "$fail" -ne 0 ]; then echo "SELFTEST FAIL: commit-bypass"; exit 1; fi
-echo "OK: commit-bypass self-test clean — every tabled bypass shape blocked, every mention and look-alike allowed, fail-open holds."
+selftest_close "commit-bypass self-test clean — every tabled bypass shape blocked, every mention and look-alike allowed, fail-open holds." \
+  "commit-bypass self-test clean on what it could reach; see the SKIP line above."

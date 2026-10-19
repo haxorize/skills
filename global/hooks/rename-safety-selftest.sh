@@ -15,21 +15,16 @@
 set -u
 here="$(cd "$(dirname "$0")" && pwd)"
 hook="$here/rename-safety.sh"
-# Temp-file template and guard: scripts/README.md § Temp files. Spelled out
-# because the libraries are sourced after this block.
-tmp="$(mktemp -d "${TMPDIR:-/tmp}/rename-safety-selftest.XXXXXX" 2>/dev/null)"
-if [ -z "$tmp" ] || [ ! -d "$tmp" ]; then
-  echo "rename-safety-selftest: no usable temp directory (TMPDIR=${TMPDIR:-unset}) — nothing ran" >&2
-  exit 4
-fi
-trap 'rm -rf "$tmp"' EXIT
-opted="$tmp/opted"; plain="$tmp/plain"
-mkdir -p "$opted/.claude" "$opted/deep" "$plain"; touch "$opted/.claude/rename-safety"
 
 # selftest-lib.sh sources scripts/selftest-lib.sh (selftest_mutate,
 # selftest_expect_killed); the path named here is what queues this selftest
 # when that file is staged (pre-commit's queue_hook_selftests_naming).
 . "$here/selftest-lib.sh"
+# Temp-file template and guard: scripts/README.md § Temp files.
+tmp="$(selftest_tmpdir)" || selftest_no_tmpdir rename-safety-selftest
+trap 'rm -rf "$tmp"' EXIT
+opted="$tmp/opted"; plain="$tmp/plain"
+mkdir -p "$opted/.claude" "$opted/deep" "$plain"; touch "$opted/.claude/rename-safety"
 export HOME="$tmp"            # the opt-in walk stops at $HOME; nothing outside the sandbox is read
 
 # --- in-place shapes: block ---------------------------------------------------
@@ -353,5 +348,5 @@ selftest_mutate "$here/hook-lib.py" "$mdir/hook-lib.py" '(name in TOUCHED and no
 cp "$here/hook-lib.py" "$mdir/hook-lib.py"
 RENAME_SAFETY_DIRS="$plain" mutant "start directory unresolved" 'dirs = [os.path.realpath(start)]' 'dirs = [start]' "$tmp" "cd plainlink && sed -i 's/a/b/' \"\$RS_UNSET_VAR/f.txt\"" 0
 
-if [ "$fail" -ne 0 ]; then echo "SELFTEST FAIL: rename-safety"; exit 1; fi
-echo "OK: rename-safety self-test clean — every in-place shape blocked, one listed substitution and every out-of-tree target allowed, every read and mention allowed, opt-in and fail-open hold."
+selftest_close "rename-safety self-test clean — every in-place shape blocked, one listed substitution and every out-of-tree target allowed, every read and mention allowed, opt-in and fail-open hold." \
+  "rename-safety self-test clean on what it could reach; see the SKIP line above."

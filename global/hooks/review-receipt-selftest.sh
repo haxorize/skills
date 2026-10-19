@@ -39,13 +39,10 @@
 set -u
 here="$(cd "$(dirname "$0")" && pwd)"
 hook="$here/review-receipt.sh"
+. "$here/selftest-lib.sh"   # sources scripts/selftest-lib.sh too: expect_in, selftest_mutate, …
 
 # Temp-file template and guard: scripts/README.md § Temp files.
-work="$(mktemp -d "${TMPDIR:-/tmp}/review-receipt-selftest.XXXXXX" 2>/dev/null)"
-if [ -z "$work" ] || [ ! -d "$work" ]; then
-  echo "review-receipt-selftest: mktemp -d \"\${TMPDIR:-/tmp}/review-receipt-selftest.XXXXXX\" gave no usable temp directory (TMPDIR=${TMPDIR:-unset}) — nothing ran" >&2
-  exit 4
-fi
+work="$(selftest_tmpdir)" || selftest_no_tmpdir review-receipt-selftest
 work="$(cd "$work" && pwd -P)"
 trap 'chmod -R u+rw "$work" 2>/dev/null; rm -rf "$work"' EXIT
 export REVIEW_RECEIPT_DIR="$work/zone"
@@ -108,8 +105,6 @@ mkrepo tworemotes "$GATED_LINES"
 # no tracking branch, but origin/main fetched: the `origin/<branch>` fallback range
 mkrepo noupstream "$GATED_LINES"
 ( cd "$work/noupstream" && git branch -q --unset-upstream )
-
-. "$here/selftest-lib.sh"   # sources scripts/selftest-lib.sh too: expect_in, selftest_mutate, …
 G="$work/gated"; P="$work/plain"
 
 # --- no receipt at all: block every live push shape in the gated repo ---------
@@ -581,5 +576,5 @@ selftest_mutate "$here/hook-lib.py" "$mdir/global/hooks/hook-lib.py" '>>|>\||>&'
   && selftest_expect_killed --mutant hook "$mdir/global/hooks/review-receipt.sh" "a >| target is a refspec" hook_rc_not 2 "$MOK" "git push origin >| out.txt main"
 cp "$here/hook-lib.py" "$mdir/global/hooks/"
 
-if [ "$fail" -ne 0 ]; then echo "SELFTEST FAIL: review-receipt"; exit 1; fi
-echo "OK: review-receipt self-test clean — every gated push blocked, every exempt form and receipt allowed, fail-open holds."
+selftest_close "review-receipt self-test clean — every gated push blocked, every exempt form and receipt allowed, fail-open holds." \
+  "review-receipt self-test clean on what it could reach; see the SKIP line above."

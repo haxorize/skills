@@ -43,19 +43,15 @@ set -u
 unset $(git rev-parse --local-env-vars)
 here="$(cd "$(dirname "$0")" && pwd)"
 hook="$here/staged-secrets.sh"
-# Temp-file template and guard: scripts/README.md § Temp files.
-tmp="$(mktemp -d "${TMPDIR:-/tmp}/staged-secrets-selftest.XXXXXX" 2>/dev/null)"
-if [ -z "$tmp" ] || [ ! -d "$tmp" ]; then
-  echo "staged-secrets-selftest: no usable temp directory (TMPDIR=${TMPDIR:-unset}) — nothing ran" >&2
-  exit 4
-fi
-trap 'rm -rf "$tmp"' EXIT
-command -v git >/dev/null 2>&1 || { echo "staged-secrets-selftest: git not found — nothing ran" >&2; exit 4; }
 
 # selftest-lib.sh sources scripts/selftest-lib.sh (selftest_mutate,
 # selftest_expect_killed); the path named here is what queues this selftest
 # when that file is staged (pre-commit's queue_hook_selftests_naming).
 . "$here/selftest-lib.sh"
+# Temp-file template and guard: scripts/README.md § Temp files.
+tmp="$(selftest_tmpdir)" || selftest_no_tmpdir staged-secrets-selftest
+trap 'rm -rf "$tmp"' EXIT
+command -v git >/dev/null 2>&1 || { echo "staged-secrets-selftest: git not found — nothing ran" >&2; exit 4; }
 
 rep() { printf "%${2}s" "" | tr ' ' "$1"; }   # rep <char> <n>
 AWS="AK""IA$(rep Q 16)"
@@ -406,5 +402,4 @@ DIFF = [' external
 mark_mutant "keep clean filters" '            argv += ["-c", "filter.%s.%s=%s" % (drv, key, val)]' '            pass' clean
 mark_mutant "look into submodules" ', "--ignore-submodules=all"]' ']' subclean
 
-[ "$fail" = 0 ] && echo "staged-secrets-selftest: all rows pass"
-exit "$fail"
+selftest_close "staged-secrets-selftest: all rows pass" "staged-secrets self-test clean on what it could reach; see the SKIP line above."

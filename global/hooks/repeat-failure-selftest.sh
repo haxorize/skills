@@ -21,7 +21,8 @@
 # CONTENT_RULES family, read from that hook, has a sample masked before the
 # state file; a prune that fails still sends the line; the fail-open table
 # (empty payload, not JSON, no command, a session id with a slash, an
-# unwritable state directory, a missing repeat-failure.py). The mutation table narrows the tool filter, the
+# unwritable state directory, a missing repeat-failure.py, session-hook-lib.py
+# or hook-lib.py, each naming itself). The mutation table narrows the tool filter, the
 # subcommand rule, the digit-run normalising, the fire count, the list read,
 # the hash fallback, the mask, the 0600 write, the segmenter, both
 # failing-segment rules, the script-file and find segments, the SAS mask, the
@@ -31,17 +32,12 @@
 set -u
 here="$(cd "$(dirname "$0")" && pwd)"
 hook="$here/repeat-failure.sh"
+# shellcheck source=../../scripts/selftest-lib.sh
+. "$here/../../scripts/selftest-lib.sh"   # selftest_tmpdir, selftest_mutate, selftest_expect_killed, selftest_close
 # Temp-file template and guard: scripts/README.md § Temp files.
-tmp="$(mktemp -d "${TMPDIR:-/tmp}/repeat-failure-selftest.XXXXXX" 2>/dev/null)"
-if [ -z "$tmp" ] || [ ! -d "$tmp" ]; then
-  echo "repeat-failure-selftest: no usable temp directory (TMPDIR=${TMPDIR:-unset}) — nothing ran" >&2
-  exit 4
-fi
+tmp="$(selftest_tmpdir)" || selftest_no_tmpdir repeat-failure-selftest
 trap 'chmod -R u+w "$tmp" 2>/dev/null; rm -rf "$tmp"' EXIT
 command -v python3 >/dev/null 2>&1 || { echo "repeat-failure-selftest: python3 not found — nothing ran" >&2; exit 4; }
-fail=0
-# shellcheck source=../../scripts/selftest-lib.sh
-. "$here/../../scripts/selftest-lib.sh"   # selftest_mutate, selftest_expect_killed
 export HOOK_STATE_DIR="$tmp/state"
 
 # fire <sid> <command> <error> [tool] [interrupt] — prints "rc=N|<stdout>|<stderr>"
@@ -233,6 +229,13 @@ case "$got" in "rc=0||repeat-failure: state directory not writable"*) ;; *) echo
 mkdir -p "$tmp/nopy"; cp "$here/repeat-failure.sh" "$here/hook-lib.sh" "$here/hook-lib.py" "$here/session-hook-lib.py" "$tmp/nopy/"
 got="$(mhook="$tmp/nopy/repeat-failure.sh" fire s18 ls "$E1")"
 case "$got" in "rc=0||repeat-failure: repeat-failure.py is not beside the hook"*) ;; *) echo "FAIL [repeat-failure.py missing]: $got"; fail=1 ;; esac
+for gone in session-hook-lib.py hook-lib.py; do   # each lib's own arm, not the crash breadcrumb a load failure would leave
+  rm -rf "$tmp/nolib"; mkdir -p "$tmp/nolib"
+  cp "$here/repeat-failure.sh" "$here/repeat-failure.py" "$here/hook-lib.sh" "$here/hook-lib.py" "$here/session-hook-lib.py" "$tmp/nolib/"
+  rm "$tmp/nolib/$gone"
+  got="$(mhook="$tmp/nolib/repeat-failure.sh" fire s19 ls "$E1")"
+  case "$got" in "rc=0||repeat-failure: $gone is not beside the hook"*) ;; *) echo "FAIL [$gone missing]: $got"; fail=1 ;; esac
+done
 
 # --- mutation table -------------------------------------------------------------
 mdir="$tmp/mut"; mkdir -p "$mdir"
@@ -267,5 +270,4 @@ mutant "drop the SAS mask"        $py '    re.compile(r"[?&]sig=[A-Za-z0-9%/+=]{
 mutant "the old environmental line" $py 'If this was not the expected red of a test loop, treat it' 'Treat it' 'r_red m16'
 mutant "a prune error escapes"    $lib $'os.remove(p)\n        except OSError:\n            pass' $'os.remove(p)\n        except OSError:\n            raise' 'r_prune m12'
 
-[ "$fail" = 0 ] && echo "repeat-failure-selftest: all rows pass"
-exit "$fail"
+selftest_close "repeat-failure-selftest: all rows pass" "repeat-failure self-test clean on what it could reach; see the SKIP line above."

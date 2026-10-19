@@ -29,17 +29,12 @@
 set -u
 here="$(cd "$(dirname "$0")" && pwd)"
 hook="$here/context-nudge.sh"
+# shellcheck source=../../scripts/selftest-lib.sh
+. "$here/../../scripts/selftest-lib.sh"   # selftest_tmpdir, selftest_mutate, selftest_expect_killed, selftest_close
 # Temp-file template and guard: scripts/README.md § Temp files.
-tmp="$(mktemp -d "${TMPDIR:-/tmp}/context-nudge-selftest.XXXXXX" 2>/dev/null)"
-if [ -z "$tmp" ] || [ ! -d "$tmp" ]; then
-  echo "context-nudge-selftest: no usable temp directory (TMPDIR=${TMPDIR:-unset}) — nothing ran" >&2
-  exit 4
-fi
+tmp="$(selftest_tmpdir)" || selftest_no_tmpdir context-nudge-selftest
 trap 'chmod -R u+w "$tmp" 2>/dev/null; rm -rf "$tmp"' EXIT
 command -v python3 >/dev/null 2>&1 || { echo "context-nudge-selftest: python3 not found — nothing ran" >&2; exit 4; }
-fail=0
-# shellcheck source=../../scripts/selftest-lib.sh
-. "$here/../../scripts/selftest-lib.sh"   # selftest_mutate, selftest_expect_killed
 export HOOK_STATE_DIR="$tmp/state"
 
 # entry <tokens> [sidechain|synthetic] — one transcript line
@@ -246,5 +241,4 @@ mutant "session id by re.match"  $lib 'SID.fullmatch(sid)' 'SID.match(sid)' sid_
 mutant "a dot in a session id"   $lib 're.compile(r"^[A-Za-z0-9_-]' 're.compile(r"^[A-Za-z0-9_.-]' sid_dot "crumb:no usable transcript_path or session_id"
 mutant "no session-id length cap" $lib '_-]{1,128}$")' '_-]+$")' sid_long "crumb:no usable transcript_path or session_id"
 
-[ "$fail" = 0 ] && echo "context-nudge-selftest: all rows pass"
-exit "$fail"
+selftest_close "context-nudge-selftest: all rows pass" "context-nudge self-test clean on what it could reach; see the SKIP line above."
