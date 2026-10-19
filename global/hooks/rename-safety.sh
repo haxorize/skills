@@ -44,8 +44,11 @@
 # resolved the same way. When every file lies outside an opted-in directory,
 # the edit runs: a handoff marker under $TMPDIR is not the repo. When a file
 # list is not all literal — a glob, an unexpandable variable, `{}`, or files
-# fed by `xargs` or `find -exec` — the directory the segment runs in (and a
-# glob's literal parent) is what is judged. After a `cd` the lib cannot
+# fed by `xargs` or `find -exec` — the directory the segment runs in, a
+# glob's literal parent, and each file the list does name are what is judged,
+# and a path no reading expands (a variable unset in the hook's environment,
+# a loop variable among them) runs with a breadcrumb saying the run directory
+# alone was judged. After a `cd` the lib cannot
 # expand (`cd "$(…)"`, a variable unset in the hook's environment) the
 # payload's cwd stands in for that directory: an edit judged opted in there
 # is blocked, and one that is not runs with a breadcrumb saying it was not
@@ -119,6 +122,7 @@ HOME = os.path.realpath(os.environ.get("HOME") or "/")
 CD = "after a cd the hook cannot expand, judged against the payload cwd, which is not opted in"
 REBOUND = ("on a path through a variable the command rebinds, judged against the directory it runs in "
            "and the variable\x27s value before the command, neither opted in")
+UNREAD = "on a path the hook cannot expand, judged against the directory it runs in, which is not opted in"
 
 def sed_long(name):
     """The short letter a GNU sed long option stands for ("" for one that
@@ -274,24 +278,33 @@ def on_command(seg, curdir):
     else:
         dirs = [os.path.realpath(start)]
         rebound = []                      # a variable this command rebinds: judged by its value from before
+        unread = False                    # a path neither read: judged by the run directory alone
         for f in files:
             if GLOB.search(f):            # a glob is judged by its literal parent too
                 lead = os.path.dirname(GLOB.split(f, 1)[0]) or "."
                 parent = resolve(start, lead)
                 if parent:
                     dirs.append(os.path.realpath(parent))
-                for g in guesses(start, lead):
-                    rebound.append(g)
-                    dirs.append(os.path.realpath(g))
+                g = guesses(start, lead)
+                rebound += g
+                dirs += [os.path.realpath(x) for x in g]
+                unread = unread or not (parent or g)
             else:
-                for g in guesses(start, f):
-                    rebound.append(g)
-                    dirs.extend(places(g))
+                p = resolve(start, f)     # a listed file beside a feeder (xargs, find) is judged where it lies
+                if p:
+                    dirs.extend(places(p))
+                g = guesses(start, f)
+                rebound += g
+                for x in g:
+                    dirs.extend(places(x))
+                unread = unread or not (p or g)
         if not any(opted(d) for d in dirs):
             if unknown:
                 allow_with("%s %s" % (shape, CD))
             elif rebound:
                 allow_with("%s %s" % (shape, REBOUND))
+            elif unread:
+                allow_with("%s %s" % (shape, UNREAD))
             return None
     if (head == "sed" and bsd and not quiet and literal and len(files) == 1 and not script_file
             and len(code) == 1 and one_substitution(code[0])):

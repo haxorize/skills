@@ -249,6 +249,14 @@ RS_TARGET="$opted" expect_block "$plain" 'RS_TARGET="$RS_TARGET"; sed -i s/a/b/g
 RS_TARGET="$opted" expect_block "$plain" 'export RS_TARGET; sed -i s/a/b/g "$RS_TARGET"/*.txt' "a glob under a rebound opted-in variable"
 RS_TARGET="$plain" expect_crumb "$plain" 'export RS_TARGET="$RS_TARGET"; sed -i s/a/b/g "$RS_TARGET/f.txt"' "a variable the command rebinds" "a rebound variable outside an opted-in tree is said, not silent"
 RS_TARGET="$plain" expect_crumb "$plain" 'for RS_TARGET in "$RS_TARGET"; do sed -i s/a/b/g "$RS_TARGET/f.txt"; done' "a variable the command rebinds" "a for loop outside an opted-in tree is said"
+# a path no reading expands, a loop variable unset in the hook's environment
+# among them, is judged by the run directory alone and says so (D68)
+expect_crumb "$plain" 'for RS_D68 in a ../opted; do sed -i s/a/b/ "$RS_D68/f.txt"; done' "a path the hook cannot expand" "a loop variable unset here is said, not silent"
+expect_crumb "$plain" 'sed -i s/a/b/ "$RS_UNSET_VAR/f.txt"' "a path the hook cannot expand" "an unset variable in a file path is said"
+expect_crumb "$plain" 'sed -i s/a/b/ "$RS_UNSET_VAR"/*.txt' "a path the hook cannot expand" "a glob under an unset variable is said"
+# a listed file beside a feeder is judged where it lies, not by the run directory alone (D68)
+expect_block "$plain" "echo x | xargs sed -i s/a/b/ $opted/f.txt" "a listed file beside xargs"
+expect_allow "$plain" "echo x | xargs sed -i s/a/b/ $plain/f.txt" "a listed file beside xargs, outside"
 # payload cwd wins over the process directory
 payload="$(python3 -c 'import json,sys; print(json.dumps({"cwd":sys.argv[1],"tool_input":{"command":"sed -i s/a/b/ f"}}))' "$opted")"
 rc="$( cd "$plain" && printf '%s' "$payload" | HOME="$tmp" bash "$hook" >/dev/null 2>&1; echo $? )"
@@ -352,9 +360,18 @@ RS_TARGET="$opted" hooklib_mutant "for rebinds nothing" 'elif head in ("for", "s
 # a variable the command rebinds: judged by its value from before, and said when that misses
 cp "$here/hook-lib.py" "$mdir/hook-lib.py"
 RS_TARGET="$opted" mutant "a rebound file judged by the run directory only" 'p = resolve(start, path, rebound=True)' 'p = None' "$plain" 'export RS_TARGET="$RS_TARGET"; sed -i s/a/b/g "$RS_TARGET/f.txt"' 0
-RS_TARGET="$opted" mutant "a rebound glob parent not judged" '                for g in guesses(start, lead):' '                for g in []:' "$plain" 'export RS_TARGET; sed -i s/a/b/g "$RS_TARGET"/*.txt' 0
+RS_TARGET="$opted" mutant "a rebound glob parent not judged" '                g = guesses(start, lead)' '                g = []' "$plain" 'export RS_TARGET; sed -i s/a/b/g "$RS_TARGET"/*.txt' 0
 selftest_mutate "$hook" "$mdir/rename-safety.sh" '                allow_with("%s %s" % (shape, REBOUND))' '                pass' \
   && RS_TARGET="$plain" hook="$mdir/rename-safety.sh" selftest_expect_killed "a rebound miss stays silent" crumb_has "$plain" 'export RS_TARGET="$RS_TARGET"; sed -i s/a/b/g "$RS_TARGET/f.txt"' "rebinds"
+cp "$hook" "$mdir/rename-safety.sh"
+selftest_mutate "$hook" "$mdir/rename-safety.sh" '                allow_with("%s %s" % (shape, UNREAD))' '                pass' \
+  && hook="$mdir/rename-safety.sh" selftest_expect_killed "an unread path stays silent" crumb_has "$plain" 'sed -i s/a/b/ "$RS_UNSET_VAR/f.txt"' "cannot expand"
+cp "$hook" "$mdir/rename-safety.sh"
+mutant "a fed listed file judged by the run directory only" '                if p:
+                    dirs.extend(places(p))' '                if False:
+                    pass' "$plain" "echo x | xargs sed -i s/a/b/ $opted/f.txt" 0
+selftest_mutate "$hook" "$mdir/rename-safety.sh" 'unread = unread or not (parent or g)' 'unread = unread' \
+  && hook="$mdir/rename-safety.sh" selftest_expect_killed "a glob's unread parent goes unsaid" crumb_has "$plain" 'sed -i s/a/b/ "$RS_UNSET_VAR"/*.txt' "cannot expand"
 cp "$hook" "$mdir/rename-safety.sh"
 selftest_mutate "$here/hook-lib.py" "$mdir/hook-lib.py" '(name in TOUCHED and not rebound)' 'name in TOUCHED' \
   && RS_TARGET="$opted" hook="$mdir/rename-safety.sh" selftest_expect_killed "expand() ignores rebound" hook_rc_not 0 "$plain" 'export RS_TARGET="$RS_TARGET"; sed -i s/a/b/g "$RS_TARGET/f.txt"'

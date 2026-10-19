@@ -12,11 +12,13 @@
 # even before a digit), tool residue (utm_source=, oaicite, turn0search, a
 # bracketed placeholder such as [Your Name]), and a zero-width space. A
 # parenthetical is a link target only when it holds no space (bar a quoted
-# title after one) and is empty or opens on `#` or `?` (a URL the mask cut) or
-# holds a `.`, `/`, `:` or `@` (`[The guide](guide.md)`, `[Contact
-# Us](mailto:a@b.c)`, `[Docs](https://x.y "Title")`). So `[Insert
-# Date](optional)`, `Hi [Your Name](e.g. Jane)` and `On [Insert
-# Date](optional: weekday)` still hit, and so does `[Your Name][1]` mid-line.
+# title after one) and is empty or opens on `#` or `?` (a URL the mask cut),
+# holds a `/`, `:` or `@`, or ends on a `.` and a letter or digit run, an
+# extension, with an optional `#` or `?` tail (`[The guide](guide.md)`,
+# `[Contact Us](mailto:a@b.c)`, `[Docs](https://x.y "Title")`). So `[Insert
+# Date](optional)`, `Hi [Your Name](e.g. Jane)`, `Hi [Your Name](e.g.)` and
+# `On [Insert Date](optional: weekday)` still hit, and so does `[Your
+# Name][1]` mid-line.
 # A `[Name]:` is a reference definition only with nothing but spaces or tabs
 # before it on its line; `Dear [Name]: hello` hits. The no-break space, tab and
 # zero-width space are written as byte escapes so BSD grep matches them too.
@@ -46,7 +48,7 @@ if [ ! -f "$1" ] || [ ! -r "$1" ]; then
   exit 3
 fi
 
-sed -E -e 's/`[^`]*`//g' -e 's#https?://[^ )>?]*##g' -e 's%\[([^]]*)\]\(([#?][^ )]*|[^ )]*[./:@][^ )]*)?( +"[^"]*")?\)%\1%g' "$1" | grep -nE '—|( |'$'\xc2\xa0'')--( |'$'\xc2\xa0'')|^–|[^0-9]–|–[^0-9]|–$|utm_source=|oaicite|turn0search|\[[A-Z][A-Za-z ]*\]([^:]|$)|[^ '$'\t''][ '$'\t'']*\[[A-Z][A-Za-z ]*\]:|'$'\xe2\x80\x8b'
+sed -E -e 's/`[^`]*`//g' -e 's#https?://[^ )>?]*##g' -e 's%\[([^]]*)\]\(([#?][^ )]*|[^ )]*[/:@][^ )]*|[^ )]*\.[A-Za-z0-9]+([#?][^ )]*)?)?( +"[^"]*")?\)%\1%g' "$1" | grep -nE '—|( |'$'\xc2\xa0'')--( |'$'\xc2\xa0'')|^–|[^0-9]–|–[^0-9]|–$|utm_source=|oaicite|turn0search|\[[A-Z][A-Za-z ]*\]([^:]|$)|[^ '$'\t''][ '$'\t'']*\[[A-Z][A-Za-z ]*\]:|'$'\xe2\x80\x8b'
 
 status=("${PIPESTATUS[@]}")
 if [ "${status[0]}" -ne 0 ]; then
