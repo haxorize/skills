@@ -10,7 +10,9 @@
 # and an assignment are skipped to reach the head; a non-Bash tool and an
 # interrupt are ignored; sessions count apart; the line names the head and
 # never the full command; an `error` that is a list is read as its lines and
-# one of another type as empty, never a crash; a command with no program is
+# one of another type as empty, never a crash; a payload captured from the
+# harness (D57) counts and fires as the hand-written ones do, and is ignored
+# with is_interrupt true; a command with no program is
 # keyed by a hash and a token in the error is masked, so neither reaches the
 # state file, which is 0600; the head comes from hook-lib.py's segmenter (a
 # `bash -c` body is read) and names the failing segment (an `exit N` matching
@@ -213,6 +215,27 @@ r_families s23
 r_prune() { mkdir -p "$HOOK_STATE_DIR/repeat-failure/olddir"; touch -t 202001010000 "$HOOK_STATE_DIR/repeat-failure/olddir"
   fire "$1" ls "$E1" >/dev/null; fire "$1" ls "$E1" >/dev/null; fires "a failed prune keeps the line" "$(fire "$1" ls "$E1")" 3; }
 r_prune s17
+
+# --- a real payload ---------------------------------------------------------------
+# Captured from Claude Code on 2026-10-19 (D57) and scrubbed: the ids, the
+# transcript path and the cwd are replaced; every key, type and the error text
+# are as the harness sent them. is_interrupt arrives as a JSON boolean.
+REAL_PTUF='{"session_id": "00000000-0000-4000-8000-000000000000", "transcript_path": "/home/u/.claude/projects/-repo/00000000-0000-4000-8000-000000000000.jsonl", "cwd": "/repo", "prompt_id": "00000000-0000-4000-8000-000000000001", "permission_mode": "auto", "effort": {"level": "medium"}, "hook_event_name": "PostToolUseFailure", "tool_name": "Bash", "tool_input": {"command": "ls /nonexistent-d57-probe", "description": "Fail on purpose to fire PostToolUseFailure"}, "tool_use_id": "toolu_00000000000000000000000000", "error": "Exit code 1\nls: /nonexistent-d57-probe: No such file or directory", "is_interrupt": false, "duration_ms": 42}'
+# fire_real <sid> [interrupt] — the real payload under session <sid>, is_interrupt set true by a second argument
+fire_real() {
+  local out err rc
+  out="$(python3 -c 'import json, sys; d = json.loads(sys.argv[1]); d["session_id"] = sys.argv[2]
+d["is_interrupt"] = len(sys.argv) > 3; print(json.dumps(d))' "$REAL_PTUF" "$@" | bash "${mhook:-$hook}" 2>"$tmp/err")"; rc=$?
+  err="$(cat "$tmp/err")"
+  printf 'rc=%s|%s|%s' "$rc" "$out" "$err"
+}
+quiet "real payload, first" "$(fire_real real1)"
+quiet "real payload, second" "$(fire_real real1)"
+got="$(fire_real real1)"
+fires "real payload, third" "$got" 3
+names "real payload names its head" "$got" ls
+for i in 1 2; do fire_real real2 interrupt >/dev/null; done
+quiet "real payload with is_interrupt true" "$(fire_real real2 interrupt)"
 
 # --- fail open --------------------------------------------------------------------
 for bad in "" "notjson" "[]"; do
