@@ -15,7 +15,9 @@
 # chunk is read whole; a 30-day-old marker is pruned; a prune that fails
 # (an old directory it cannot remove) still delivers the line, quietly; the
 # marker is mode 0600, and a 0755 state directory is tightened to 0700; the
-# 150k line asks for the next phase boundary and the 200k line for now; the
+# 150k line asks for the next phase boundary and the 200k line for now;
+# payloads captured from the harness (D57), a typed prompt and a background-task
+# notification, read as the hand-written ones do; the
 # fail-open table (empty payload, not JSON, no transcript_path, a session id
 # with a path separator, a dot, 129 characters or a trailing newline — the
 # session-hook-lib.py rule's only rows — a missing transcript, an unwritable state
@@ -176,6 +178,27 @@ w_check() { case "$(w150)" in *"At the next phase boundary, offer the user /hand
 w_check
 t="$tmp/t10.jsonl"; entry 201000 > "$t"
 case "$(nudge s10 "$t")" in *"Offer the user /handoff now, before the next step"*) ;; *) echo "FAIL [200k wording]: should say now"; fail=1 ;; esac
+
+# --- real payloads ----------------------------------------------------------------
+# Captured from Claude Code on 2026-10-19 (D57) and scrubbed: the ids, the
+# transcript path, the cwd and the prompt text are replaced; every key and type
+# is as the harness sent it. The second is a background-task notification,
+# which fires UserPromptSubmit too and reuses the typed prompt's prompt_id.
+REAL_UPS='{"session_id": "00000000-0000-4000-8000-000000000000", "transcript_path": "/home/u/.claude/projects/-repo/00000000-0000-4000-8000-000000000000.jsonl", "cwd": "/repo", "prompt_id": "00000000-0000-4000-8000-000000000001", "permission_mode": "auto", "hook_event_name": "UserPromptSubmit", "prompt": "yes, commit it", "session_title": "skills"}'
+REAL_UPS_TASK='{"session_id": "00000000-0000-4000-8000-000000000000", "transcript_path": "/home/u/.claude/projects/-repo/00000000-0000-4000-8000-000000000000.jsonl", "cwd": "/repo", "prompt_id": "00000000-0000-4000-8000-000000000001", "permission_mode": "auto", "hook_event_name": "UserPromptSubmit", "prompt": "<task-notification>\n<task-id>b0000000</task-id>\n<tool-use-id>toolu_00000000000000000000000000</tool-use-id>\n<output-file>/tmp/tasks/b0000000.output</output-file>\n<status>completed</status>\n<summary>Background command \"x\" completed (exit code 0)</summary>\n</task-notification>", "session_title": "skills"}'
+# nudge_real <payload> <sid> <transcript> — a real payload with its session and transcript swapped in
+nudge_real() {
+  local out err rc
+  out="$(python3 -c 'import json, sys; d = json.loads(sys.argv[1]); d["session_id"], d["transcript_path"] = sys.argv[2:4]
+print(json.dumps(d))' "$@" | bash "${mhook:-$hook}" 2>"$tmp/err")"; rc=$?
+  err="$(cat "$tmp/err")"
+  printf 'rc=%s|%s|%s' "$rc" "$out" "$err"
+}
+t="$tmp/real-low.jsonl"; entry 100000 > "$t"
+expect "real payload, quiet below 150k" "$(nudge_real "$REAL_UPS" real1 "$t")" quiet
+t="$tmp/real.jsonl"; entry 160000 > "$t"
+expect "real payload, the 150k line" "$(nudge_real "$REAL_UPS" real2 "$t")" 150
+expect "real task-notification payload, the 150k line" "$(nudge_real "$REAL_UPS_TASK" real3 "$t")" 150
 
 # --- fail open --------------------------------------------------------------------
 for bad in "" "notjson" "[]"; do
