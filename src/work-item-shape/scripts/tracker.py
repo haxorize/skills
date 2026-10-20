@@ -94,6 +94,7 @@ but incomplete: id= and url= are printed, then one incomplete=readback:<REF>
 or incomplete=link:<parent> line per gap — never re-run the create; patch
 with `update` or re-run `link`.
 """
+import collections
 import json
 import os
 import re
@@ -293,6 +294,7 @@ def need(tool):
 
 def run(cmd):
     """(rc, stdout, stderr); under --dry-run prints the command and returns success."""
+    need(cmd[0])
     if DRY:
         lead = "GH_REPO=%s " % shlex.quote(os.environ["GH_REPO"]) if cmd[0] == "gh" and os.environ.get("GH_REPO") else ""
         print(lead + " ".join(shlex.quote(c) for c in cmd))
@@ -393,7 +395,7 @@ def parse(argv, spec):
     return opts, pos
 
 
-def cmd_resolve(o):
+def cmd_resolve(o, pos):
     root = find_root(o["root"])
     mode, fields, trackers, ignored = read_block(root)
     for line in ignored:
@@ -409,16 +411,14 @@ def cmd_resolve(o):
             print("%s=%s" % (k, v))
 
 
-def cmd_tags(o):
+def cmd_tags(o, pos):
     if not o["title"]:
         usage("tags needs --title")
     _, fields = declared(find_root(o["root"]))
     print(derive_tags(o["title"], fields, o["debt"]))
 
 
-def cmd_html(pos):
-    if len(pos) != 2:
-        usage("html takes IN.md OUT.html")
+def cmd_html(o, pos):
     to_html(nonempty(pos[0]), pos[1])
 
 
@@ -521,20 +521,28 @@ def gh_db_id(number):
     return dbid, ""
 
 
-def cmd_create(o):
-    if not o["type"] or not o["title"]:
-        usage("create needs --type and --title")
-    if o["parent"]:
-        numeric_id(o["parent"], "--parent")
-    kind, fields = declared(find_root(o["root"]))
-    title = prefixed(o["type"], o["title"], fields, o["no-prefix"])
-    if kind == "github":
-        if o["field"]:
-            usage("--field is Azure DevOps only")
+def no_fields(o):
+    if o.get("field"):
+        usage("--field is Azure DevOps only")
+
+
+def create_failed(cli, err):
+    die(1, "%s failed: %s\nDo not retry blind: the item may exist. "
+           "Run `tracker.py search --terms ...` for the title first." % (cli, err.strip()))
+
+
+# --- the backends: one class per tracker, each method one command's tracker half
+
+class GitHub:
+    def __init__(self, fields):
+        self.fields = fields
+
+    def create(self, o, title):
+        """(id, gaps) once the issue exists; id= and url= already printed."""
+        no_fields(o)
         if not o["body"]:
             usage("create on GitHub needs --body FILE")
-        labels = gh_labels(fields, o)
-        need("gh")
+        labels = gh_labels(self.fields, o)
         body = nonempty(o["body"])
         gh_ensure_labels(labels)
         cmd = ["gh", "issue", "create", "--title", title, "--body-file", body]
@@ -542,8 +550,7 @@ def cmd_create(o):
             cmd += ["--label", label]
         rc, out, err = run(cmd)
         if rc != 0:
-            die(1, "gh issue create failed: %s\nDo not retry blind: the issue may exist. "
-                   "Run `tracker.py search --terms ...` for the title first." % err.strip())
+            create_failed("gh issue create", err)
         url = out.strip().splitlines()[-1] if out.strip() else ""
         m = re.search(r"/issues/(\d+)\s*$", url)
         item_id = m.group(1) if m else ("<new>" if DRY else "")
@@ -551,9 +558,60 @@ def cmd_create(o):
             die(1, "gh issue create printed no issue URL: %r" % out)
         print("id=%s" % item_id)
         print("url=" + (url if m else ""))
-        gaps = []
-    else:
-        need("az")
+        return item_id, []
+
+    def update(self, item_id, o, title):
+        """The read-back gaps (none on GitHub: the body is plain Markdown)."""
+        no_fields(o)
+        cmd = ["gh", "issue", "edit", item_id]
+        if title:
+            cmd += ["--title", title]
+        if o["body"]:
+            cmd += ["--body-file", nonempty(o["body"])]
+        rc, _, err = run(cmd)
+        if rc != 0:
+            die(1, "gh issue edit failed for #%s: %s" % (item_id, err.strip()))
+        return []
+
+    def link(self, parent, child):
+        dbid, err = gh_db_id(child)
+        if not dbid:
+            return 1, err
+        rc, _, err = run(["gh", "api", "repos/{owner}/{repo}/issues/%s/sub_issues" % parent,
+                          "-F", "sub_issue_id=%s" % dbid])
+        return rc, err
+
+    def block(self, blocked, blocker):
+        dbid, err = gh_db_id(blocker)
+        rc = 1
+        if dbid:
+            rc, _, err = run(["gh", "api", "repos/{owner}/{repo}/issues/%s/dependencies/blocked_by" % blocked,
+                              "-F", "issue_id=%s" % dbid])
+        if rc != 0:
+            die(1, "the dependencies API refused (%s); write a `Blocked-by: #%s` line in #%s's body instead"
+                % (err.strip(), blocker, blocked))
+
+    def search(self, terms, state):
+        """(id, title, state) per match."""
+        rc, out, err = run(["gh", "issue", "list", "--state", state, "--search", " OR ".join(terms),
+                            "--limit", "100", "--json", "number,title,state"])
+        if rc != 0:
+            die(1, "gh issue list failed: %s" % err.strip())
+        return [(i["number"], i["title"], i["state"]) for i in json.loads(out or "[]")]
+
+    def show(self, item_id):
+        return run(["gh", "issue", "view", item_id, "--json", "number,title,body,state,labels,assignees,url"])
+
+    def comment(self, item_id, body):
+        return run(["gh", "issue", "comment", item_id, "--body-file", body])
+
+
+class Ado:
+    def __init__(self, fields):
+        self.fields = fields
+
+    def create(self, o, title):
+        fields = self.fields
         itemdir = os.path.join(workdir_of(o), "%s-%s" % (slug(o["type"]), slug(o["title"])))
         desc, flist, rich = ado_fields(o, itemdir)
         if not any(f.startswith("System.State=") for f in flist) and fields.get("default_state"):
@@ -575,8 +633,7 @@ def cmd_create(o):
             rc, out, err = run(base + (["--fields"] + flist if flist else []) + tail)
             untagged = rc == 0
         if rc != 0:
-            die(1, "az boards work-item create failed: %s\nDo not retry blind: the item may exist. "
-                   "Run `tracker.py search --terms ...` for the title first." % err.strip())
+            create_failed("az boards work-item create", err)
         item_id = "<new>" if DRY else json.loads(out)["id"]
         print("id=%s" % item_id)
         print("url=" + ado_url(fields, item_id))
@@ -584,40 +641,9 @@ def cmd_create(o):
         print("apply-tags=" + (" ".join(shlex.quote(c) for c in
               ["az", "boards", "work-item", "update", "--id", str(item_id),
                "--fields", "System.Tags=" + tags] + ado_org(fields)) if untagged else ""))
-        gaps = ["readback:" + r for r in read_back(fields, item_id, rich)]
-    if o["parent"] and not link(kind, fields, o["parent"], item_id):
-        gaps.append("link:" + o["parent"])
-    if gaps:
-        incomplete(item_id, gaps)
+        return item_id, ["readback:" + r for r in read_back(fields, item_id, rich)]
 
-
-def cmd_update(o, pos):
-    if len(pos) != 1:
-        usage("update takes one ID")
-    item_id = numeric_id(pos[0], "update")
-    kind, fields = declared(find_root(o["root"]))
-    title = None
-    if o["title"]:
-        if (not o["type"] and not o["no-prefix"]
-                and title_prefix("feature", fields) != title_prefix("", fields)):
-            usage("update --title needs --type T (or --no-prefix): the block's Feature title prefix "
-                  "differs from its Title prefix")
-        title = prefixed(o["type"], o["title"], fields, o["no-prefix"])
-    if kind == "github":
-        if o["field"]:
-            usage("--field is Azure DevOps only")
-        need("gh")
-        cmd = ["gh", "issue", "edit", item_id]
-        if title:
-            cmd += ["--title", title]
-        if o["body"]:
-            cmd += ["--body-file", nonempty(o["body"])]
-        rc, _, err = run(cmd)
-        if rc != 0:
-            die(1, "gh issue edit failed for #%s: %s" % (item_id, err.strip()))
-        print("id=%s" % item_id)
-    else:
-        need("az")
+    def update(self, item_id, o, title):
         itemdir = os.path.join(workdir_of(o), "update-%s" % slug(item_id))
         desc, flist, rich = ado_fields(o, itemdir)
         cmd = ["az", "boards", "work-item", "update", "--id", item_id]
@@ -627,27 +653,90 @@ def cmd_update(o, pos):
             cmd += ["--description", "@" + desc]
         if flist:
             cmd += ["--fields"] + flist
-        rc, _, err = run(cmd + ado_org(fields) + ["--output", "json"])
+        rc, _, err = run(cmd + ado_org(self.fields) + ["--output", "json"])
         if rc != 0:
             die(1, "az boards work-item update failed for %s: %s" % (item_id, err.strip()))
-        print("id=%s" % item_id)
-        gaps = ["readback:" + r for r in read_back(fields, item_id, rich)]
-        if gaps:
-            incomplete(item_id, gaps)
+        return ["readback:" + r for r in read_back(self.fields, item_id, rich)]
+
+    def relate(self, item_id, relation, target):
+        rc, _, err = run(["az", "boards", "work-item", "relation", "add", "--id", str(item_id),
+                          "--relation-type", relation, "--target-id", str(target)]
+                         + ado_org(self.fields) + ["--output", "json"])
+        return rc, err
+
+    def link(self, parent, child):
+        return self.relate(child, "Parent", parent)
+
+    def block(self, blocked, blocker):
+        rc, err = self.relate(blocked, "Predecessor", blocker)
+        if rc != 0:
+            die(1, "relation add failed: %s" % err.strip())
+
+    def search(self, terms, state):
+        clause = " OR ".join("[System.Title] CONTAINS '%s'" % t.replace("'", "''") for t in terms)
+        wiql = ("SELECT [System.Id], [System.Title], [System.State] FROM WorkItems "
+                "WHERE [System.TeamProject] = @project AND (%s)" % clause)
+        if state == "open":
+            wiql += "".join(" AND [System.State] <> '%s'" % s for s in ("Closed", "Removed", "Done", "Resolved"))
+        rc, out, err = run(["az", "boards", "query", "--wiql", wiql, "--output", "json"] + ado_scope(self.fields))
+        if rc != 0:
+            die(1, "az boards query failed: %s" % err.strip())
+        return [(i.get("id") or i["fields"].get("System.Id"), i["fields"].get("System.Title", ""),
+                 i["fields"].get("System.State", "")) for i in json.loads(out or "[]")]
+
+    def show(self, item_id):
+        return run(["az", "boards", "work-item", "show", "--id", item_id, "--expand", "relations",
+                    "--output", "json"] + ado_org(self.fields))
+
+    def comment(self, item_id, body):
+        return run(["az", "boards", "work-item", "update", "--id", item_id, "--discussion", "@" + body]
+                   + ado_org(self.fields) + ["--output", "json"])
 
 
-def link(kind, fields, parent, child):
+BACKENDS = {"github": GitHub, "ado": Ado}
+
+
+def backend(o):
+    """The declared tracker's backend, after every block check."""
+    kind, fields = declared(find_root(o["root"]))
+    return BACKENDS[kind](fields)
+
+
+# --- the commands: checks and output shared by both trackers ----------------
+
+def cmd_create(o, pos):
+    if not o["type"] or not o["title"]:
+        usage("create needs --type and --title")
+    if o["parent"]:
+        numeric_id(o["parent"], "--parent")
+    tracker = backend(o)
+    title = prefixed(o["type"], o["title"], tracker.fields, o["no-prefix"])
+    item_id, gaps = tracker.create(o, title)
+    if o["parent"] and not link(tracker, o["parent"], item_id):
+        gaps.append("link:" + o["parent"])
+    if gaps:
+        incomplete(item_id, gaps)
+
+
+def cmd_update(o, pos):
+    item_id = numeric_id(pos[0], "update")
+    tracker = backend(o)
+    fields, title = tracker.fields, None
+    if o["title"]:
+        if (not o["type"] and not o["no-prefix"]
+                and title_prefix("feature", fields) != title_prefix("", fields)):
+            usage("update --title needs --type T (or --no-prefix): the block's Feature title prefix "
+                  "differs from its Title prefix")
+        title = prefixed(o["type"], o["title"], fields, o["no-prefix"])
+    gaps = tracker.update(item_id, o, title)
+    print("id=%s" % item_id)
+    if gaps:
+        incomplete(item_id, gaps)
+
+
+def link(tracker, parent, child):
     """True once linked (linked= printed); False with the reason on stderr."""
-    if kind == "github":
-        dbid, err = gh_db_id(child)
-        link_rc = 1
-        if dbid:
-            link_rc, _, err = run(["gh", "api", "repos/{owner}/{repo}/issues/%s/sub_issues" % parent,
-                                   "-F", "sub_issue_id=%s" % dbid])
-    else:
-        link_rc, _, err = run(["az", "boards", "work-item", "relation", "add", "--id", str(child),
-                               "--relation-type", "Parent", "--target-id", str(parent)]
-                              + ado_org(fields) + ["--output", "json"])
+    link_rc, err = tracker.link(parent, child)
     if link_rc != 0:
         print("tracker.py: item %s is not linked under %s (%s); re-run `tracker.py link --parent %s "
               "--child %s` or link the two by hand — never retry the create"
@@ -657,40 +746,21 @@ def link(kind, fields, parent, child):
     return True
 
 
-def cmd_link(o):
+def cmd_link(o, pos):
     if not o["parent"] or not o["child"]:
         usage("link needs --parent and --child")
     numeric_id(o["parent"], "--parent")
     numeric_id(o["child"], "--child")
-    kind, fields = declared(find_root(o["root"]))
-    need("gh" if kind == "github" else "az")
-    if not link(kind, fields, o["parent"], o["child"]):
+    if not link(backend(o), o["parent"], o["child"]):
         sys.exit(1)
 
 
-def cmd_block(o):
+def cmd_block(o, pos):
     if not o["blocked"] or not o["blocker"]:
         usage("block needs --blocked and --blocker")
     numeric_id(o["blocked"], "--blocked")
     numeric_id(o["blocker"], "--blocker")
-    kind, fields = declared(find_root(o["root"]))
-    if kind == "github":
-        need("gh")
-        dbid, err = gh_db_id(o["blocker"])
-        rc = 1
-        if dbid:
-            rc, _, err = run(["gh", "api", "repos/{owner}/{repo}/issues/%s/dependencies/blocked_by" % o["blocked"],
-                              "-F", "issue_id=%s" % dbid])
-        if rc != 0:
-            die(1, "the dependencies API refused (%s); write a `Blocked-by: #%s` line in #%s's body instead"
-                % (err.strip(), o["blocker"], o["blocked"]))
-    else:
-        need("az")
-        rc, _, err = run(["az", "boards", "work-item", "relation", "add", "--id", o["blocked"],
-                          "--relation-type", "Predecessor", "--target-id", o["blocker"]]
-                         + ado_org(fields) + ["--output", "json"])
-        if rc != 0:
-            die(1, "relation add failed: %s" % err.strip())
+    backend(o).block(o["blocked"], o["blocker"])
     print("blocked=%s<%s" % (o["blocked"], o["blocker"]))
 
 
@@ -698,50 +768,20 @@ def tsv(value):
     return re.sub(r"[\t\r\n]+", " ", str(value))
 
 
-def cmd_search(o):
+def cmd_search(o, pos):
     terms = (o["terms"] or "").split()
     if not terms:
         usage("search needs --terms")
     state = o["state"] or "open"
     if state not in ("open", "all"):
         usage("--state is open or all")
-    kind, fields = declared(find_root(o["root"]))
-    if kind == "github":
-        need("gh")
-        rc, out, err = run(["gh", "issue", "list", "--state", state, "--search", " OR ".join(terms),
-                            "--limit", "100", "--json", "number,title,state"])
-        if rc != 0:
-            die(1, "gh issue list failed: %s" % err.strip())
-        rows = [(i["number"], i["title"], i["state"]) for i in json.loads(out or "[]")]
-    else:
-        need("az")
-        clause = " OR ".join("[System.Title] CONTAINS '%s'" % t.replace("'", "''") for t in terms)
-        wiql = ("SELECT [System.Id], [System.Title], [System.State] FROM WorkItems "
-                "WHERE [System.TeamProject] = @project AND (%s)" % clause)
-        if state == "open":
-            wiql += "".join(" AND [System.State] <> '%s'" % s for s in ("Closed", "Removed", "Done", "Resolved"))
-        rc, out, err = run(["az", "boards", "query", "--wiql", wiql, "--output", "json"] + ado_scope(fields))
-        if rc != 0:
-            die(1, "az boards query failed: %s" % err.strip())
-        rows = [(i.get("id") or i["fields"].get("System.Id"), i["fields"].get("System.Title", ""),
-                 i["fields"].get("System.State", "")) for i in json.loads(out or "[]")]
-    for r in rows:
+    for r in backend(o).search(terms, state):
         print("\t".join(tsv(c) for c in r))
 
 
 def cmd_show(o, pos):
-    if len(pos) != 1:
-        usage("show takes one ID")
     item_id = numeric_id(pos[0], "show")
-    kind, fields = declared(find_root(o["root"]))
-    if kind == "github":
-        need("gh")
-        cmd = ["gh", "issue", "view", item_id, "--json", "number,title,body,state,labels,assignees,url"]
-    else:
-        need("az")
-        cmd = ["az", "boards", "work-item", "show", "--id", item_id, "--expand", "relations",
-               "--output", "json"] + ado_org(fields)
-    rc, out, err = run(cmd)
+    rc, out, err = backend(o).show(item_id)
     if rc != 0:
         die(1, "could not read item %s: %s" % (item_id, err.strip()))
     sys.stdout.write(out)
@@ -751,37 +791,39 @@ def cmd_comment(o, pos):
     if o["body"] and o["body-file"] and o["body"] != o["body-file"]:
         usage("comment takes one body: --body and --body-file are the same option")
     body_opt = o["body"] or o["body-file"]
-    if len(pos) != 1 or not body_opt:
-        usage("comment takes one ID and --body FILE")
+    if not body_opt:
+        usage("comment needs --body FILE")
     item_id = numeric_id(pos[0], "comment")
-    kind, fields = declared(find_root(o["root"]))
-    body = nonempty(body_opt)
-    if kind == "github":
-        need("gh")
-        rc, _, err = run(["gh", "issue", "comment", item_id, "--body-file", body])
-    else:
-        need("az")
-        rc, _, err = run(["az", "boards", "work-item", "update", "--id", item_id, "--discussion", "@" + body]
-                         + ado_org(fields) + ["--output", "json"])
+    tracker = backend(o)
+    rc, _, err = tracker.comment(item_id, nonempty(body_opt))
     if rc != 0:
         die(1, "comment failed on item %s: %s; hand the user the text to post" % (item_id, err.strip()))
     print("commented=%s" % item_id)
 
 
+# Every command, once: its handler, its options (parse's spec) and its
+# positionals (the usage text and how many); main() reads nothing else.
+Command = collections.namedtuple("Command", "handler options positionals")
+NO_ARGS = ("no positional argument", 0)
+ONE_ID = ("one ID", 1)
+
 SPECS = {
-    "resolve": {"root": "one"},
-    "tags": {"root": "one", "type": "one", "title": "one", "debt": "flag"},
-    "html": {"root": "one"},
-    "create": {"root": "one", "type": "one", "title": "one", "body": "one", "field": "many",
-               "label": "many", "parent": "one", "debt": "flag", "workdir": "one",
-               "dry-run": "flag", "no-prefix": "flag"},
-    "update": {"root": "one", "title": "one", "type": "one", "no-prefix": "flag", "body": "one",
-               "field": "many", "workdir": "one", "dry-run": "flag"},
-    "link": {"root": "one", "parent": "one", "child": "one", "dry-run": "flag"},
-    "block": {"root": "one", "blocked": "one", "blocker": "one", "dry-run": "flag"},
-    "search": {"root": "one", "terms": "one", "state": "one"},
-    "show": {"root": "one"},
-    "comment": {"root": "one", "body": "one", "body-file": "one", "dry-run": "flag"},
+    "resolve": Command(cmd_resolve, {"root": "one"}, NO_ARGS),
+    "tags": Command(cmd_tags, {"root": "one", "type": "one", "title": "one", "debt": "flag"}, NO_ARGS),
+    "html": Command(cmd_html, {"root": "one"}, ("IN.md OUT.html", 2)),
+    "create": Command(cmd_create, {"root": "one", "type": "one", "title": "one", "body": "one",
+                                   "field": "many", "label": "many", "parent": "one", "debt": "flag",
+                                   "workdir": "one", "dry-run": "flag", "no-prefix": "flag"}, NO_ARGS),
+    "update": Command(cmd_update, {"root": "one", "title": "one", "type": "one", "no-prefix": "flag",
+                                   "body": "one", "field": "many", "workdir": "one",
+                                   "dry-run": "flag"}, ONE_ID),
+    "link": Command(cmd_link, {"root": "one", "parent": "one", "child": "one", "dry-run": "flag"}, NO_ARGS),
+    "block": Command(cmd_block, {"root": "one", "blocked": "one", "blocker": "one", "dry-run": "flag"},
+                     NO_ARGS),
+    "search": Command(cmd_search, {"root": "one", "terms": "one", "state": "one"}, NO_ARGS),
+    "show": Command(cmd_show, {"root": "one"}, ONE_ID),
+    "comment": Command(cmd_comment, {"root": "one", "body": "one", "body-file": "one",
+                                     "dry-run": "flag"}, ONE_ID),
 }
 
 
@@ -793,30 +835,13 @@ def main(argv):
     command = argv[0]
     if command not in SPECS:
         usage("unknown command %s" % command)
-    o, pos = parse(argv[1:], SPECS[command])
+    spec = SPECS[command]
+    o, pos = parse(argv[1:], spec.options)
     DRY = bool(o.get("dry-run"))
-    if pos and command not in ("html", "update", "show", "comment"):
-        usage("%s takes no positional argument (%s)" % (command, pos[0]))
-    if command == "resolve":
-        cmd_resolve(o)
-    elif command == "tags":
-        cmd_tags(o)
-    elif command == "html":
-        cmd_html(pos)
-    elif command == "create":
-        cmd_create(o)
-    elif command == "update":
-        cmd_update(o, pos)
-    elif command == "link":
-        cmd_link(o)
-    elif command == "block":
-        cmd_block(o)
-    elif command == "search":
-        cmd_search(o)
-    elif command == "show":
-        cmd_show(o, pos)
-    elif command == "comment":
-        cmd_comment(o, pos)
+    takes, count = spec.positionals
+    if len(pos) != count:
+        usage("%s takes %s (got %d)" % (command, takes, len(pos)))
+    spec.handler(o, pos)
 
 
 if __name__ == "__main__":

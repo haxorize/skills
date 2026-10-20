@@ -57,9 +57,11 @@
 #     --project) and through gh issue view; html through the python markdown
 #     fallback (a stand-in module, since the real one may be absent).
 #   usage and never-ran — an unknown command, a create with no --title, an
-#     option with no value, a non-numeric ID in every ID slot, a label or a
-#     field reference starting with "-": exit 3; `<command> --help` exit 0;
-#     no az on PATH, and no Markdown converter, exit 4.
+#     option with no value, a positional count off its command's (update
+#     with none, show with two, search with one), a non-numeric ID in every
+#     ID slot, a label or a field reference starting with "-": exit 3;
+#     `<command> --help` exit 0; no az on PATH (a create with no body, so
+#     no conversion runs first), and no Markdown converter, exit 4.
 # The mutation table drops or reverts each of those checks; each mutant must
 # turn its row red.
 set -uo pipefail
@@ -598,12 +600,15 @@ row_field_ref() {
 }
 row_usage() {
   trkn "$tmp/ado" bogus; expect_rc "an unknown command" 3 "$rc"
+  trkn "$tmp/ado" update; expect_rc "update with no ID" 3 "$rc"
+  trkn "$tmp/ado" show 12 13; expect_rc "show with two IDs" 3 "$rc"
+  trkn "$tmp/ado" search --terms x extra; expect_rc "search with a positional" 3 "$rc"
   trkn "$tmp/ado" create --type Task; expect_rc "create with no --title" 3 "$rc"
   trkn "$tmp/ado" create --type; expect_rc "an option with no value" 3 "$rc"
-  out=$(cd "$tmp/ado" && PATH="$tmp/nobin" python3 "$TRACKER" create --type Task --title x --body "$tmp/body.md" 2>&1); rc=$?
+  out=$(cd "$tmp/ado" && PATH="$tmp/nobin" python3 "${TRACKER_MUT:-$TRACKER}" create --type Task --title x 2>&1); rc=$?
   expect_rc "no az on PATH" 4 "$rc"
   out=$(cd "$tmp/ado" && FAKE_LOG="$tmp/log" FAKE_STATE="$tmp/state.json" PATH="$tmp/nobin:$(dirname "$(command -v bash)")" \
-        PYTHONPATH="$tmp/nomd" python3 "$TRACKER" html "$tmp/body.md" "$tmp/out.html" 2>&1); rc=$?
+        PYTHONPATH="$tmp/nomd" python3 "${TRACKER_MUT:-$TRACKER}" html "$tmp/body.md" "$tmp/out.html" 2>&1); rc=$?
   expect_rc "no Markdown converter" 4 "$rc"
 }
 
@@ -654,20 +659,10 @@ mutant "tags reads the block without declared()" row_tags_block \
   '    _, fields = declared(find_root(o["root"]))
     print(derive_tags(' '    _, fields, _, _ = read_block(find_root(o["root"]))
     print(derive_tags('
-mutant "GitHub create drops --field" row_gh_field '        if o["field"]:
-            usage("--field is Azure DevOps only")
+mutant "GitHub create drops --field" row_gh_field '        no_fields(o)
         if not o["body"]:' '        if not o["body"]:'
-mutant "update read-back dropped" row_update_readback '        gaps = ["readback:" + r for r in read_back(fields, item_id, rich)]
-        if gaps:
-            incomplete(item_id, gaps)
-
-
-def link' '        gaps = []
-        if gaps:
-            incomplete(item_id, gaps)
-
-
-def link'
+mutant "update read-back dropped" row_update_readback \
+  '        return ["readback:" + r for r in read_back(self.fields, item_id, rich)]' '        return []'
 mutant "update drops its --field list" row_update '        if flist:
             cmd += ["--fields"] + flist' '        if False:
             cmd += ["--fields"] + flist'
@@ -686,6 +681,8 @@ mutant "IDs not checked as numeric" row_ids '    if not re.match(r"^\d+$", value
 mutant "a label starting with - passed" row_label_dash '        if label.startswith("-"):
             usage(' '        if False:
             usage('
+mutant "positional count unchecked" row_usage '    if len(pos) != count:' '    if False:'
+mutant "a missing CLI not caught before its call" row_usage '    need(cmd[0])' '    pass'
 mutant "a field reference starting with - passed" row_field_ref '    if not FIELD_REF.match(ref):' '    if False:'
 
 selftest_close \
