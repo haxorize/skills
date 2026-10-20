@@ -95,8 +95,8 @@ If the line is malformed (e.g., `In-progress signal: label` with no name), warn 
 
 When reconcile "removes" a Task:
 
-- **ADO:** `az boards work-item update --id <task-id> --state Removed` (or the team-configured equivalent terminal state). Never `az boards work-item delete`.
-- **GitHub:** `gh issue close <task-number> --reason not_planned`. The audit trail is the closure event.
+- **ADO:** `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py close <task-id> --state Removed` (or the team-configured equivalent terminal state). Never `az boards work-item delete`.
+- **GitHub:** `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py close <task-number> --reason not_planned`. The audit trail is the closure event.
 
 The work-item record persists either way — the suite's history-in-body principle extends to keeping rejected slices visible.
 
@@ -123,7 +123,7 @@ State conflicts (requires decision, N):
 Healthy Task (N): listed for completeness, no action.
 ```
 
-Iterate per bucket until approved. Apply approved changes — body patches via `tracker.py update`, state transitions as direct `az boards work-item update` / `gh issue close` calls, which the script has no command for. Publish new Tasks in dependency order so each blocker's real ID is available; on ADO, materialize each in-project blocker as a built-in Predecessor relation, and on GitHub, add each new Task as a native sub-issue of the parent Story, exactly as the create path does — see [../SKILL.md](../SKILL.md) step 8. Reconcile operates on an existing set, so always apply the skip-if-exists guard there. A blocker may be an existing Task in the set, not just a newly published one.
+Iterate per bucket until approved. Apply approved changes — body patches via `tracker.py update`, closures via `tracker.py close` as § Mark, never delete gives them. Publish new Tasks in dependency order so each blocker's real ID is available; on ADO, materialize each in-project blocker as a built-in Predecessor relation, and on GitHub, add each new Task as a native sub-issue of the parent Story, exactly as the create path does — see [../SKILL.md](../SKILL.md) step 8. Reconcile operates on an existing set, so always apply the skip-if-exists guard there. A blocker may be an existing Task in the set, not just a newly published one.
 
 ### Naming drift
 

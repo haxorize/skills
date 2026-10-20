@@ -2,7 +2,7 @@
 
 The procedure around a tracker create, for the skills that perform one. Tracker *resolution* — the three modes and the required fields — is [tracker-resolution.md](tracker-resolution.md).
 
-Every create, update and link goes through `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py` — `work-item-shape` owns the one copy. It carries every rule with one right answer — prefix, tags, labels, conversion, read-back, links — and `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py <command> --help` lists them. None is applied by hand, and no raw `gh issue create` or `az boards work-item create` goes out beside it. State transitions, assignment, close, label edits and tag applies have no script command: those stay direct `gh` / `az` calls, as each skill's step shows. Pass `--workdir <scratchpad>` on every create and update so the converted files land there.
+Every create, update and link goes through `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py` — `work-item-shape` owns the one copy. It carries every rule with one right answer — prefix, tags, labels, conversion, read-back, links — and `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py <command> --help` lists them. None is applied by hand, and no raw `gh issue create` or `az boards work-item create` goes out beside it. Claim, close and label edits go through it too (`assign`, `close`, `label`), and a tag apply after a create is `update --field "System.Tags=A; B"`. Pass `--workdir <scratchpad>` on every create and update so the converted files land there.
 
 ## Publish gate
 

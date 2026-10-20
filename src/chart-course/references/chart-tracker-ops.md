@@ -1,6 +1,6 @@
 # Chart tracker operations
 
-Open this only when a chart step writes to the tracker — creating a decision ticket, resolving one, or reading its state. Every create, link, block, search and comment goes through `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py`, which reads project, area path, iteration, default labels, and title prefixes from the CLAUDE.md tracker block itself (resolution: `~/.claude/skills/work-item-shape/references/tracker-resolution.md`); a required field missing there is a fail-fast, not a guess — `## When a required field is missing` in `~/.claude/skills/work-item-shape/references/publishing.md`. A create call blocked on auth or policy follows `## When the write is blocked` in `~/.claude/skills/work-item-shape/references/publishing.md` — don't loop on auth. Apply the **transport safety** rules in `~/.claude/skills/work-item-shape/references/publishing.md` to every create and retry. On a ticket you didn't author, prefer an additive comment over editing its body — the body is the author's record. Claim, close and the frontier query are direct `az` / `gh` calls, below; the script has no command for them.
+Open this only when a chart step writes to the tracker — creating a decision ticket, resolving one, or reading its state. Every write (create, link, block, comment, claim, close) and the dedupe search go through `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py`, which reads project, area path, iteration, default labels, and title prefixes from the CLAUDE.md tracker block itself (resolution: `~/.claude/skills/work-item-shape/references/tracker-resolution.md`); a required field missing there is a fail-fast, not a guess — `## When a required field is missing` in `~/.claude/skills/work-item-shape/references/publishing.md`. A create call blocked on auth or policy follows `## When the write is blocked` in `~/.claude/skills/work-item-shape/references/publishing.md` — don't loop on auth. Apply the **transport safety** rules in `~/.claude/skills/work-item-shape/references/publishing.md` to every create and retry. On a ticket you didn't author, prefer an additive comment over editing its body — the body is the author's record. The frontier query is the one direct `az` / `gh` call, below: it reads relations and assignees the script's `search` does not return.
 
 ## ADO
 
@@ -9,9 +9,9 @@ ADO carries no typing projection — the domain `System.Tags` the script stamps 
 - **Create map:** `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py create --type Feature --title '<drafted title>' --body <scratchpad>/<map>.md --workdir <scratchpad>`. Add `--parent <epic-id>` only if the tracker block requires hierarchy above Features.
 - **Create ticket:** `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py create --type "User Story" --title '<drafted title>' --body <scratchpad>/<ticket>.md --parent <map-id> --workdir <scratchpad>`.
 - **Wire blocking:** `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py block --blocked <blocked-id> --blocker <blocker-id>` — a Predecessor relation on the blocked ticket.
-- **Claim:** `az boards work-item update --id <ticket-id> --assigned-to <user>`.
+- **Claim:** `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py assign <ticket-id> --to <user>` — the user's uniqueName.
 - **Frontier query:** the map's child work items that are open, unassigned, and have no open Predecessor. Fetch children via the map's relations (`az boards work-item show --id <map-id> --expand relations`), then check each candidate's state, assignee, and Predecessor states. Prefer one `--expand relations` call per candidate over per-relation queries.
-- **Resolve:** post the resolution comment (Markdown, passed as-is — see [chart-format.md](chart-format.md)) with `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py comment <ticket-id> --body <scratchpad>/<resolution>.md`, then close with the team process's terminal state (state names vary by process template — use the state the team's existing closed Stories show).
+- **Resolve:** post the resolution comment (Markdown, passed as-is — see [chart-format.md](chart-format.md)) with `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py comment <ticket-id> --body <scratchpad>/<resolution>.md`, then `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py close <ticket-id> --state <terminal state>`. State names vary by process template: pass the state the team's existing closed Stories show; the script refuses a close with no `--state` rather than guess one.
 
 ## GitHub
 
@@ -21,9 +21,9 @@ GitHub `chart:*` labels are an additive typing projection, applied best-effort �
 - **Create map:** `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py create --type Feature --title '<drafted title>' --body <scratchpad>/<map>.md --label chart:map --workdir <scratchpad>`.
 - **Create ticket:** `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py create --type "User Story" --title '<drafted title>' --body <scratchpad>/<ticket>.md --label chart:<type> --parent <map-number> --workdir <scratchpad>` — the parent becomes a native sub-issue link.
 - **Wire blocking:** `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py block --blocked <n> --blocker <n>` — native issue dependencies. Where the API refuses, the script exits 1 naming the fallback: a `Blocked-by: #N` body line, the same body-truth posture as `Chart-type:`.
-- **Claim:** `gh issue edit <n> --add-assignee <user>`.
+- **Claim:** `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py assign <n> --to <user>` — a login, or `@me`.
 - **Frontier query:** `gh issue list --label "chart:grilling,chart:prototype,chart:research,chart:errand" --state open --json number,title,assignees` scoped to the map's sub-issues, keep the unassigned ones, then drop any with an open blocker (dependencies API, or `Blocked-by:` body lines where the fallback is in use).
-- **Resolve:** `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py comment <n> --body <scratchpad>/<resolution>.md`, then `gh issue close <n>`.
+- **Resolve:** `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py comment <n> --body <scratchpad>/<resolution>.md`, then `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py close <n>`.
 
 ## Dedupe search (the Publish gate's second prong)
 

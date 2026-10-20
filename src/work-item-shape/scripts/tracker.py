@@ -9,7 +9,8 @@ as for shared references). Judgment stays in the calling skill: whether a draft 
 approved, what the dedupe search's near match means, which parent to pick.
 This script owns what has one right answer: reading the CLAUDE.md block, the
 title prefix, the ADO tag set, Markdown to HTML, the one `--fields` list, the
-rich-text read-back, sub-issue and relation links.
+rich-text read-back, sub-issue and relation links, and the claim, close and
+label calls.
 
 Usage: tracker.py <command> [options]   (every command takes --root DIR, the
        repo whose CLAUDE.md holds the `## Issue tracker` block; default: the
@@ -40,9 +41,19 @@ Usage: tracker.py <command> [options]   (every command takes --root DIR, the
                              any term (tabs and newlines in a title become spaces)
   show ID                    the item as the tracker's JSON (ADO: relations)
   comment ID --body FILE     (--body-file FILE is the same option)
+  close ID [--reason completed|not_planned|duplicate] [--state S]
+                             GitHub: gh issue close, with --reason; ADO: needs
+                             --state, the team process's terminal state (never
+                             guessed); --reason is GitHub only, --state ADO only
+  assign ID --to USER        GitHub: --add-assignee (a login or @me); ADO:
+                             --assigned-to (the uniqueName)
+  label ID [--add L]... [--remove L]...
+                             GitHub only: a missing --add label is created
+                             first; on ADO set tags with update --field
+                             "System.Tags=A; B", which replaces the set whole
 
 Every ID is digits only; --field takes GitHub nowhere (create and update
-alike exit 3); a --label starting with "-" exits 3.
+alike exit 3); a label (--label, --add, --remove) starting with "-" exits 3.
 
 The block: from the `## Issue tracker` heading to the next heading of any
 level. A field is a line `Key: value` (a leading `- ` or `* ` allowed) whose
@@ -474,10 +485,15 @@ def incomplete(item_id, gaps):
                          "`update` or re-run `link`" % item_id)
 
 
-def gh_labels(fields, o):
-    for label in o["label"]:
+def dash_free(labels):
+    for label in labels:
         if label.startswith("-"):
-            usage("a --label cannot start with '-': %s" % label)
+            usage("a label cannot start with '-': %s" % label)
+    return labels
+
+
+def gh_labels(fields, o):
+    dash_free(o["label"])
     defaults = split_list(fields.get("default_labels"))
     for label in defaults:
         if label.startswith("-"):
@@ -605,6 +621,24 @@ class GitHub:
     def comment(self, item_id, body):
         return run(["gh", "issue", "comment", item_id, "--body-file", body])
 
+    def close(self, item_id, o):
+        if o["state"]:
+            usage("--state is Azure DevOps only; GitHub closes with --reason")
+        reason = ["--reason", o["reason"].replace("_", " ")] if o["reason"] else []  # gh spells it "not planned"
+        return run(["gh", "issue", "close", item_id] + reason)
+
+    def assign(self, item_id, user):
+        return run(["gh", "issue", "edit", item_id, "--add-assignee", user])
+
+    def label(self, item_id, add, remove):
+        gh_ensure_labels(add)
+        cmd = ["gh", "issue", "edit", item_id]
+        for label in add:
+            cmd += ["--add-label", label]
+        for label in remove:
+            cmd += ["--remove-label", label]
+        return run(cmd)
+
 
 class Ado:
     def __init__(self, fields):
@@ -689,8 +723,26 @@ class Ado:
                     "--output", "json"] + ado_org(self.fields))
 
     def comment(self, item_id, body):
-        return run(["az", "boards", "work-item", "update", "--id", item_id, "--discussion", "@" + body]
+        return self.edit(item_id, ["--discussion", "@" + body])
+
+    def edit(self, item_id, flags):
+        return run(["az", "boards", "work-item", "update", "--id", item_id] + flags
                    + ado_org(self.fields) + ["--output", "json"])
+
+    def close(self, item_id, o):
+        if o["reason"]:
+            usage("--reason is GitHub only; Azure DevOps closes with --state S")
+        if not o["state"]:
+            usage("close on Azure DevOps needs --state S: the team process's terminal state "
+                  "(Closed, Done, Removed), read off the team's closed items, never guessed")
+        return self.edit(item_id, ["--state", o["state"]])
+
+    def assign(self, item_id, user):
+        return self.edit(item_id, ["--assigned-to", user])
+
+    def label(self, item_id, add, remove):
+        usage("label is GitHub only; on Azure DevOps set tags with `update ID --field "
+              "\"System.Tags=A; B\"`, which replaces the set whole")
 
 
 BACKENDS = {"github": GitHub, "ado": Ado}
@@ -801,6 +853,36 @@ def cmd_comment(o, pos):
     print("commented=%s" % item_id)
 
 
+def cmd_close(o, pos):
+    item_id = numeric_id(pos[0], "close")
+    if o["reason"] and o["reason"] not in ("completed", "not_planned", "duplicate"):
+        usage("--reason is completed, not_planned or duplicate, not %r" % o["reason"])
+    rc, _, err = backend(o).close(item_id, o)
+    if rc != 0:
+        die(1, "close failed on item %s: %s" % (item_id, err.strip()))
+    print("closed=%s" % item_id)
+
+
+def cmd_assign(o, pos):
+    item_id = numeric_id(pos[0], "assign")
+    if not o["to"]:
+        usage("assign needs --to USER")
+    rc, _, err = backend(o).assign(item_id, o["to"])
+    if rc != 0:
+        die(1, "assign failed on item %s: %s" % (item_id, err.strip()))
+    print("assigned=%s>%s" % (item_id, o["to"]))
+
+
+def cmd_label(o, pos):
+    item_id = numeric_id(pos[0], "label")
+    if not o["add"] and not o["remove"]:
+        usage("label needs --add L or --remove L")
+    rc, _, err = backend(o).label(item_id, dash_free(o["add"]), dash_free(o["remove"]))
+    if rc != 0:
+        die(1, "label edit failed on item %s: %s" % (item_id, err.strip()))
+    print("labeled=%s" % item_id)
+
+
 # Every command, once: its handler, its options (parse's spec) and its
 # positionals (the usage text and how many); main() reads nothing else.
 Command = collections.namedtuple("Command", "handler options positionals")
@@ -824,6 +906,9 @@ SPECS = {
     "show": Command(cmd_show, {"root": "one"}, ONE_ID),
     "comment": Command(cmd_comment, {"root": "one", "body": "one", "body-file": "one",
                                      "dry-run": "flag"}, ONE_ID),
+    "close": Command(cmd_close, {"root": "one", "reason": "one", "state": "one", "dry-run": "flag"}, ONE_ID),
+    "assign": Command(cmd_assign, {"root": "one", "to": "one", "dry-run": "flag"}, ONE_ID),
+    "label": Command(cmd_label, {"root": "one", "add": "many", "remove": "many", "dry-run": "flag"}, ONE_ID),
 }
 
 

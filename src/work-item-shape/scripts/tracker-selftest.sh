@@ -56,6 +56,14 @@
 #     through --body and --body-file; show reading relations on ADO (no
 #     --project) and through gh issue view; html through the python markdown
 #     fallback (a stand-in module, since the real one may be absent).
+#   close, assign, label — GitHub's close sending not_planned as gh's "not
+#     planned" and no --reason when none is given, --state refused; ADO's
+#     close by --state with --org and no --project, a missing --state and a
+#     --reason each exit 3 before any call; a refused close exits 1 on both;
+#     assign by --add-assignee and by --assigned-to, --to required; label
+#     creating a missing --add label first, then one gh issue edit with
+#     --add-label and --remove-label, a --remove label starting with "-"
+#     exit 3, and label on ADO exit 3 naming the System.Tags update.
 #   usage and never-ran — an unknown command, a create with no --title, an
 #     option with no value, a positional count off its command's (update
 #     with none, show with two, search with one), a non-numeric ID in every
@@ -97,7 +105,9 @@ case "$1 $2" in
   "issue create") fail issue-create; echo "https://github.com/o/r/issues/42" ;;
   "issue list") echo '[{"number":7,"title":"Dup\tthing","state":"OPEN"}]' ;;
   "issue view") echo '{"number":'"$3"',"title":"T"}' ;;
-  "issue edit"|"issue comment") ;;
+  "issue edit") fail edit ;;
+  "issue close") fail close ;;
+  "issue comment") ;;
   "api repos/{owner}/{repo}/issues/"*)
     case "$2" in
       */sub_issues) fail sub ;;
@@ -563,6 +573,45 @@ row_comment_body() {
   expect_rc "comment --body" 0 "$rc"
   expect_in "$log" "comment --body did not send the file" "gh|issue|comment|12|--body-file|$tmp/body.md"
 }
+row_close() {
+  trkn "$tmp/gh" close 12 --reason not_planned
+  expect_rc "a GitHub close" 0 "$rc"
+  expect_in "$log" "not_planned did not reach gh as \"not planned\"" "gh|issue|close|12|--reason|not planned"
+  expect_in "$out" "close printed no closed= line" "closed=12"
+  trkn "$tmp/gh" close 12
+  reject_in "$log" "a close with no --reason sent one" "--reason"
+  trkn "$tmp/gh" close 12 --state Done; expect_rc "a GitHub close with --state" 3 "$rc"
+  trkn "$tmp/gh" close 12 --reason wontfix; expect_rc "an unknown close --reason" 3 "$rc"
+  trkn "$tmp/ado" close 12 --state Removed
+  expect_in "$log" "an ADO close did not set the state" "az|boards|work-item|update|--id|12|--state|Removed|"
+  reject_in "$log" "an ADO close carried --project, which work-item update does not take" "--project"
+  trkn "$tmp/ado" close 12; expect_rc "an ADO close with no --state" 3 "$rc"
+  [ -z "$log" ] || selftest_fail "an ADO close with no --state still called az: $log"
+  trkn "$tmp/ado" close 12 --state Done --reason completed; expect_rc "an ADO close with --reason" 3 "$rc"
+  FAKE_FAIL=update trkn "$tmp/ado" close 12 --state Done; expect_rc "a refused ADO close" 1 "$rc"
+  FAKE_FAIL=close trkn "$tmp/gh" close 12; expect_rc "a refused GitHub close" 1 "$rc"
+}
+row_assign() {
+  trkn "$tmp/gh" assign 12 --to @me
+  expect_in "$log" "a GitHub assign did not add the assignee" "gh|issue|edit|12|--add-assignee|@me"
+  expect_in "$out" "assign printed no assigned= line" "assigned=12>@me"
+  trkn "$tmp/ado" assign 12 --to jo@example.com
+  expect_in "$log" "an ADO assign did not set --assigned-to" "az|boards|work-item|update|--id|12|--assigned-to|jo@example.com|"
+  trkn "$tmp/ado" assign 12; expect_rc "assign with no --to" 3 "$rc"
+  FAKE_FAIL=edit trkn "$tmp/gh" assign 12 --to @me; expect_rc "a refused assign" 1 "$rc"
+}
+row_label() {
+  FAKE_LABELS="bug sev:3" trkn "$tmp/gh" label 12 --add sev:2 --remove sev:3
+  expect_rc "a GitHub label edit" 0 "$rc"
+  expect_in "$log" "a missing --add label was not created first" "gh|label|create|sev:2"
+  expect_in "$log" "the label edit did not add and remove" "gh|issue|edit|12|--add-label|sev:2|--remove-label|sev:3"
+  trkn "$tmp/gh" label 12; expect_rc "label with nothing to change" 3 "$rc"
+  trkn "$tmp/gh" label 12 --remove -x; expect_rc "a --remove label starting with -" 3 "$rc"
+  [ -z "$log" ] || selftest_fail "a --remove label starting with - still reached gh: $log"
+  trkn "$tmp/ado" label 12 --add x; expect_rc "label on ADO" 3 "$rc"
+  expect_in "$out" "label on ADO did not name the System.Tags update" "System.Tags="
+  [ -z "$log" ] || selftest_fail "label on ADO still called az: $log"
+}
 row_html() {
   out=$(PATH="$tmp/nobin" PYTHONPATH="$tmp/fakemd" python3 "${TRACKER_MUT:-$TRACKER}" html "$tmp/body.md" "$tmp/md.html" 2>&1); rc=$?
   expect_rc "html through the python markdown fallback" 0 "$rc"
@@ -618,7 +667,7 @@ rows=(row_resolve row_heading row_subheading row_prose row_two_trackers row_proj
       row_gh_field row_gh_fail row_empty row_ado_create row_keys row_workdir row_state row_convert
       row_tagdeny row_readback row_link_fail row_update row_update_readback row_gh_update
       row_ado_fail row_dry row_search row_search_scope row_gh_search row_gh_repo row_misc
-      row_comment_body row_html row_help row_ids row_label_dash row_field_ref row_usage)
+      row_comment_body row_close row_assign row_label row_html row_help row_ids row_label_dash row_field_ref row_usage)
 for r in "${rows[@]}"; do "$r"; done
 
 # --- mutation table ---------------------------------------------------------
@@ -681,10 +730,18 @@ mutant "IDs not checked as numeric" row_ids '    if not re.match(r"^\d+$", value
 mutant "a label starting with - passed" row_label_dash '        if label.startswith("-"):
             usage(' '        if False:
             usage('
+mutant "not_planned sent unspelled" row_close 'o["reason"].replace("_", " ")' 'o["reason"]'
+mutant "an ADO close guesses no state" row_close '        if not o["state"]:' '        if False:'
+mutant "a GitHub close takes --state" row_close '        if o["state"]:
+            usage("--state is Azure DevOps only' '        if False:
+            usage("--state is Azure DevOps only'
+mutant "an ADO assign by --fields" row_assign '["--assigned-to", user]' '["--fields", "System.AssignedTo=" + user]'
+mutant "a missing --add label not created" row_label '        gh_ensure_labels(add)' '        pass'
+mutant "a --remove label starting with - passed" row_label 'dash_free(o["remove"])' 'o["remove"]'
 mutant "positional count unchecked" row_usage '    if len(pos) != count:' '    if False:'
 mutant "a missing CLI not caught before its call" row_usage '    need(cmd[0])' '    pass'
 mutant "a field reference starting with - passed" row_field_ref '    if not FIELD_REF.match(ref):' '    if False:'
 
 selftest_close \
-  "tracker self-test clean — resolve and the block's end, prose, keys and two-tracker refusal, Repo: and Organization: forms, a missing block's exit 2, tags, title prefix on create and update, GitHub and ADO create with labels, Repo:, conversion, one --fields list, read-back, tag-refusal retry, parent link and the written-but-incomplete exit 5, update, search on both trackers, block, comment, show, html, help, ID and option checks, usage and never-ran rows pass, and every mutant in the table went red." \
+  "tracker self-test clean — resolve and the block's end, prose, keys and two-tracker refusal, Repo: and Organization: forms, a missing block's exit 2, tags, title prefix on create and update, GitHub and ADO create with labels, Repo:, conversion, one --fields list, read-back, tag-refusal retry, parent link and the written-but-incomplete exit 5, update, search on both trackers, block, comment, show, close, assign, label, html, help, ID and option checks, usage and never-ran rows pass, and every mutant in the table went red." \
   "tracker self-test: a row was skipped; see the SKIP line above."
