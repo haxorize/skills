@@ -19,13 +19,12 @@
 #
 # It reads what the review-receipt hook reads, by the same means, so it never
 # says "push" where the hook blocks: the `Review required:` line of the repo
-# top's CLAUDE.md alone, never a subdirectory's (the hook's
-# pattern and fence rule, copied with their anchors — global/hooks/
-# review-receipt.sh; next-step-selftest.sh's parity section runs both on one
-# fixture); the review reports `landing.sh list --kind review` prints, from
+# top's CLAUDE.md alone, never a subdirectory's, through tree-stamp.sh
+# --review-required, the one opt-in and fence reader the hook calls too
+# (next-step-selftest.sh's parity section runs both on one fixture); the review reports `landing.sh list --kind review` prints, from
 # the zones `landing.sh zones` owns (a zone landing.sh refuses fails `list`,
 # and this script exits 4 with landing.sh's reason); and their
-# `Reviewed-tree` lines through tree-stamp.sh --stamps, the one stamp reader,
+# `Reviewed-tree` lines through tree-stamp.sh --reviewed-trees, the one stamp reader,
 # skipping a report it cannot read (exit 4) as the hook does. A round is
 # running when that same top CLAUDE.md carries a `Deferrals register:` line
 # (the `## Round` block's key, read the same way, never from a subdirectory's
@@ -88,28 +87,16 @@ landing="$here_real/../../handoff/scripts/landing.sh"
 [ -f "$stamp" ] || { echo "next-step.sh: stamp script not found at $stamp" >&2; exit 4; }
 [ -f "$landing" ] || { echo "next-step.sh: landing.sh not found at $landing" >&2; exit 4; }
 
-# unfenced <file>: the file outside its fences, by tree-stamp.sh's rule (a run of
-# three or more ` or ~ opens a fence, and only a run of the same character at
-# least as long closes it), as the hook scans it
-unfenced() {
-  awk '
-    match($0, /^[[:space:]]*(```+|~~~+)/) {
-      run = substr($0, RSTART, RLENGTH); sub(/^[[:space:]]*/, "", run)
-      if (fence == "") { fence = run; next }
-      if (substr(run, 1, 1) == substr(fence, 1, 1) && length(run) >= length(fence)) { fence = ""; next }
-    }
-    fence != "" { next }
-    { print }' "$1" 2>/dev/null
-}
+# unfenced <file>: the file outside its fences, by tree-stamp.sh's one fence rule
+unfenced() { bash "$stamp" --unfenced "$1" 2>/dev/null; }
 top_phys="$(cd "$top" && pwd -P)"
 
-OPT_IN='^[-* >]*\**`?Review required:`?\**[[:space:]]*\**`?(yes|no)`?\**[[:space:]]*$'
 ROUND='^[-* >]*\**`?Deferrals register:`?\**[[:space:]]*[^[:space:]]'
 # both keys from the repo top's CLAUDE.md alone, never a subdirectory's: the
 # `Landing:` and `## Round` blocks are the repo's (header)
 required="" round=""
 if [ -f "$top_phys/CLAUDE.md" ]; then
-  unfenced "$top_phys/CLAUDE.md" | grep -iE "$OPT_IN" | head -1 | grep -qi 'yes' && required=1
+  bash "$stamp" --review-required "$top_phys/CLAUDE.md" 2>/dev/null && required=1
   round="$(unfenced "$top_phys/CLAUDE.md" | grep -iE "$ROUND" | head -1)"
 fi
 
@@ -162,14 +149,13 @@ reports=0 stamped_by="" head_by="" newest="" newest_stamps=""
 while IFS= read -r f; do
   [ -n "$f" ] && [ -f "$f" ] || continue
   if [ ! -r "$f" ]; then echo "next-step.sh: skipping unreadable report $f" >&2; continue; fi
-  found="$(bash "$stamp" --stamps "$f" 2>/dev/null)"
+  found="$(bash "$stamp" --reviewed-trees "$f" 2>/dev/null)"
   rc=$?
   case $rc in
     0|2) ;;
-    4) echo "next-step.sh: skipping report tree-stamp.sh --stamps could not read (exit 4): $f" >&2; continue ;;   # as the hook skips it
-    *) echo "next-step.sh: tree-stamp.sh --stamps failed on $f (exit $rc)" >&2; exit 4 ;;
+    4) echo "next-step.sh: skipping report tree-stamp.sh --reviewed-trees could not read (exit 4): $f" >&2; continue ;;   # as the hook skips it
+    *) echo "next-step.sh: tree-stamp.sh --reviewed-trees failed on $f (exit $rc)" >&2; exit 4 ;;
   esac
-  found="$(printf '%s\n' "$found" | sed -n 's/^Reviewed-tree \([0-9a-f]\{40\}\)$/\1/p')"
   reports=$((reports + 1))
   if [ -n "$tree" ] && [ -z "$stamped_by" ] && printf '%s\n' "$found" | grep -qx "$tree"; then
     stamped_by="$f"

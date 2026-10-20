@@ -10,7 +10,7 @@ A stamp of the working tree comes from this skill's `scripts/tree-stamp.sh`, run
 bash ~/.claude/skills/review-changes/scripts/tree-stamp.sh
 ```
 
-It seeds a throwaway index from `HEAD` and adds everything, so uncommitted and untracked non-ignored files count, and a tracked-but-ignored file still counts. The real index and every open file are untouched; the run adds unreachable blobs and one tree to the object store that `git gc` collects. The stamp is one line, exactly `Reviewed-tree: <40-hex>` — **nothing after the hash**, because the stamp reader the `review-receipt` hook and `--verify` share (`tree-stamp.sh --stamps`) anchors at end of line, so a stamp carrying an appended clause ("the tree as reviewed", a date, a note) is invisible to it and the push is refused against an older report.
+It seeds a throwaway index from `HEAD` and adds everything, so uncommitted and untracked non-ignored files count, and a tracked-but-ignored file still counts. The real index and every open file are untouched; the run adds unreachable blobs and one tree to the object store that `git gc` collects. The stamp is one line, exactly `Reviewed-tree: <40-hex>` — **nothing after the hash**, because the stamp reader the `review-receipt` hook (through `tree-stamp.sh --reviewed-trees`) and `--verify` share anchors at end of line, so a stamp carrying an appended clause ("the tree as reviewed", a date, a note) is invisible to it and the push is refused against an older report.
 
 **Why clearing untracked files before the stamp is a stop, not a tidy-up.** Once the stamp has folded a file in, the only documented way past the gate is to commit it — and a gate that talks the author into committing a secret has inverted its own purpose.
 

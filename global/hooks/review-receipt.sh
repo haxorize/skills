@@ -50,18 +50,19 @@
 # (`git rev-parse <src>^{tree}`) must equal a stamp in some matching report,
 # and one unstamped source blocks the whole command; the block message names
 # the first source that failed. The stamp is a `Reviewed-tree: <40 hex>` line
-# as `src/review-changes/scripts/tree-stamp.sh --stamps` reads it — that
+# as `src/review-changes/scripts/tree-stamp.sh --reviewed-trees` reads it — that
 # script's header owns the line shape (a list marker, bold, or backticks
 # around it; nothing inside a ``` or ~~~ fenced block or behind a blockquote
 # `>`, since a report quotes hashes, this hook's own contract included, and a
 # quotation is not a receipt), and it is the same reader `--verify` uses, so
-# the push gate and a fix pass cannot disagree about a line. This hook
-# accepts only its `Reviewed-tree` lines: a `Measured-tree:` line stamps a
+# the push gate and a fix pass cannot disagree about a line. That mode
+# keeps only the `Reviewed-tree` lines: a `Measured-tree:` line stamps a
 # measured report, not a review. The script is found from this hook's own
 # resolved path (`<checkout>/src/review-changes/scripts/`), and landing.sh
-# the same way (`<checkout>/src/handoff/scripts/`). The opt-in scan strips
-# fences by tree-stamp.sh's rule: a run of three or more ` or ~ opens one,
-# and only a run of the same character at least as long closes it. A report
+# the same way (`<checkout>/src/handoff/scripts/`). The opt-in line is read
+# by that script too (`--review-required`), which owns its pattern and the
+# fence rule; a CLAUDE.md that never says `review required` (any case) is
+# not opted in without calling it. A report
 # may carry several stamps, one per stamping,
 # and any of them matches. The work-tree
 # hash `review-changes` and `address-findings` write is the one
@@ -124,7 +125,9 @@
 # errors trains the user to disable it.
 # Fail-closed, three holds. First, before the opt-in is known: a top-level
 # CLAUDE.md the hook cannot read or scan, since an unreadable opt-in line must
-# not ungate a repo. Then, in an opted-in repo only: a source whose tree git
+# not ungate a repo, and one naming `review required` anywhere whose stamp
+# reader is missing or fails, since that reader decides the opt-in. Then, in
+# an opted-in repo only: a source whose tree git
 # cannot resolve (a push git would refuse anyway, and allowing it let a
 # negative refspec ungate the rest); and the stamp reader or landing.sh
 # missing from beside the checkout, or either failing (a reader failing on a
@@ -156,9 +159,8 @@
 # review-receipt-selftest.sh beside this file builds throwaway repos and runs
 # the expect/reject table; run it after changing a rule. committing's
 # src/committing/scripts/next-step.sh reads this same contract (the opt-in
-# line of the repo top's CLAUDE.md and its pattern, the fence rule, the
-# Reviewed-tree filter) to say
-# whether a push would pass; a rule changed here is changed there, and
+# line of the repo top's CLAUDE.md, the landing zones, the Reviewed-tree
+# stamps) through the same two scripts to say whether a push would pass, and
 # next-step-selftest.sh's parity section runs both on one fixture to catch
 # the two drifting.
 #
@@ -359,26 +361,25 @@ resolve_repo() {
   repo="$(basename "$top")"
 }
 
-# review_required: true when the top's CLAUDE.md says 'Review required: yes'.
-# The fence rule is tree-stamp.sh's: a run of three or more ` or ~ opens a
-# fence, and only a run of the same character at least as long closes it.
-# next-step.sh's unfenced is the same awk.
-OPT_IN='^[-* >]*\**`?Review required:`?\**[[:space:]]*\**`?(yes|no)`?\**[[:space:]]*$'
+# review_required: true when the top's CLAUDE.md says 'Review required: yes',
+# as tree-stamp.sh --review-required reads it (header). The phrase check first
+# is a necessary condition, not a second rule: a file without it has no
+# opt-in line however the reader parses one.
 review_required() {
-  local optin="$top/CLAUDE.md" unfenced line grc
+  local optin="$top/CLAUDE.md" grc
   [ -e "$optin" ] || return 1
-  unfenced="$(awk '
-    match($0, /^[[:space:]]*(```+|~~~+)/) {
-      run = substr($0, RSTART, RLENGTH); sub(/^[[:space:]]*/, "", run)
-      if (fence == "") { fence = run; next }
-      if (substr(run, 1, 1) == substr(fence, 1, 1) && length(run) >= length(fence)) { fence = ""; next }
-    }
-    fence != "" { next }
-    { print }' "$optin" 2>/dev/null)" || hold "could not read $optin" "Make $optin readable, or push from your own terminal."
-  line="$(printf '%s\n' "$unfenced" | grep -iE "$OPT_IN" | head -1; exit "${PIPESTATUS[1]}")"
+  grep -qi 'review required' "$optin" 2>/dev/null
   grc=$?
-  [ "$grc" -le 1 ] || hold "could not scan $optin (grep rc=$grc)" "Push from your own terminal."
-  printf '%s\n' "$line" | grep -qi 'yes'
+  [ "$grc" -le 1 ] || hold "could not read $optin" "Make $optin readable, or push from your own terminal."
+  [ "$grc" -eq 0 ] || return 1
+  [ -f "$stamp_reader" ] || hold "the stamp reader is not at $stamp_reader"
+  "${BASH:-bash}" "$stamp_reader" --review-required "$optin" 2>/dev/null
+  case $? in
+    0) return 0 ;;
+    1) return 1 ;;
+    4) hold "could not read $optin" "Make $optin readable, or push from your own terminal." ;;
+    *) hold "the stamp reader failed on $optin" ;;
+  esac
 }
 
 # sources <remote> <pushall> <refspec>…: every source the push would send —
@@ -483,7 +484,6 @@ stamps_repo=""
 stamps_for() {
   local f h found
   [ "$stamps_repo" = "$1" ] && return 0
-  [ -f "$stamp_reader" ] || hold "the stamp reader is not at $stamp_reader"
   [ -f "$landing" ] || hold "landing.sh is not at $landing"
   landing_call zones || hold "landing.sh zones failed${landing_why:+ ($landing_why)}" "${landing_why:+$landing_fix}"
   zones=()
@@ -498,9 +498,9 @@ stamps_for() {
       echo "review-receipt: skipping unreadable report $f" >&2
       continue
     fi
-    found="$("${BASH:-bash}" "$stamp_reader" --stamps "$f" 2>/dev/null)"
+    found="$("${BASH:-bash}" "$stamp_reader" --reviewed-trees "$f" 2>/dev/null)"
     case $? in
-      0) found="$(printf '%s\n' "$found" | sed -n 's/^Reviewed-tree \([0-9a-f]\{40\}\)$/\1/p')" ;;
+      0) ;;
       2) found="" ;;
       4) echo "review-receipt: skipping unreadable report $f" >&2; continue ;;
       *) hold "the stamp reader failed on $f" ;;

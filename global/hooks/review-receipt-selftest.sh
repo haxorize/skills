@@ -23,9 +23,10 @@
 # names both silent paths. So a row that must not be satisfied by a fail-open
 # is expect_quiet, never expect_allow.
 # The block message is graded once, on the fix-up row: over reports that carry
-# stamps, it names the last stamp read. Stamps are read by tree-stamp.sh
-# --stamps (its own selftest grades the line shapes); the mutation table at the
-# end grades what this hook adds on top: only `Reviewed-tree` lines count, the
+# stamps, it names the last stamp read. Stamps and the opt-in line are read by
+# tree-stamp.sh --reviewed-trees and --review-required (its own selftest grades
+# the line shapes and the Reviewed-tree filter); the mutation table at the
+# end grades what this hook adds on top: it reads through --reviewed-trees, the
 # reader and landing.sh are the ones beside the checkout, a missing or failing
 # one blocks named (an opted-in repo is never ungated by a broken install),
 # and `--git-dir` / `--work-tree` name the repo; a tag push is decided by its
@@ -469,13 +470,15 @@ fakeco "$work/badlanding" real 'exit 1'
 out="$(hook="$work/badlanding/global/hooks/review-receipt.sh" crumb "$M" "git push")"
 expect_in "$out" "a failing landing.sh is named" 'landing.sh zones failed'
 expect_row "$out" "a failing landing.sh blocks" 'rc=2'
-fakeco "$work/badreader" 'exit 1' real
+# a stub reader fails only its --reviewed-trees read; the opt-in read is the real one's
+real_reader="$here/../../src/review-changes/scripts/tree-stamp.sh"
+fakeco "$work/badreader" "[ \"\$1\" = --reviewed-trees ] && exit 1; exec bash \"$real_reader\" \"\$@\"" real
 out="$(hook="$work/badreader/global/hooks/review-receipt.sh" crumb "$M" "git push")"
 expect_in "$out" "a stamp reader failing on a readable report is named" 'the stamp reader failed on'
 expect_row "$out" "a stamp reader failing on a readable report blocks" 'rc=2'
 # a reader exiting 4 (it could not read the report) skips that report, as
 # next-step.sh does; with no other report the push still holds
-fakeco "$work/reader4" 'exit 4' real
+fakeco "$work/reader4" "[ \"\$1\" = --reviewed-trees ] && exit 4; exec bash \"$real_reader\" \"\$@\"" real
 out="$(hook="$work/reader4/global/hooks/review-receipt.sh" crumb "$M" "git push")"
 expect_in "$out" "a report the reader exits 4 on is skipped" 'skipping unreadable report'
 expect_row "$out" "and with no other report the push still holds" 'rc=2'
@@ -543,7 +546,7 @@ mutant() { # mutant <label> <find> <replace> <cwd> <cmd> <want rc>
   selftest_mutate "$hook" "$mdir/global/hooks/review-receipt.sh" "$2" "$3" || return
   hook="$mdir/global/hooks/review-receipt.sh" selftest_expect_killed "$1" hook_rc_not "$6" "$4" "$5"
 }
-mutant "accept a Measured-tree stamp" "s/^Reviewed-tree " "s/^[A-Za-z]*-tree " "$M" "git push" 0
+mutant "read every stamp, not the Reviewed-tree hashes" '--reviewed-trees "$f"' '--stamps "$f"' "$MOK" "git push" 2
 # the missing-reader check, dropped: a copy with no checkout around it no longer names the missing script
 mkdir -p "$work/lonely2"; cp "$here/hook-lib.sh" "$here/hook-lib.py" "$work/lonely2/"
 selftest_mutate "$hook" "$work/lonely2/review-receipt.sh" '[ -f "$stamp_reader" ] || hold' ': ||' \

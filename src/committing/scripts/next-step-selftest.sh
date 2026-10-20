@@ -42,7 +42,7 @@
 #     tree still says push; the order line names a commit per batch and the
 #     running round; the retired --mid-family flag exits 3.
 #   the scripts it runs — a copy laid out as a checkout runs the tree-stamp.sh
-#     beside it, never one under ~/.claude/skills/; a --stamps read that fails
+#     beside it, never one under ~/.claude/skills/; a --reviewed-trees read that fails
 #     exits 4 and names the report, and one that exits 4 skips the report;
 #     landing.sh list failing exits 4 with landing.sh's reason; a world-
 #     writable zone exits 4.
@@ -291,7 +291,7 @@ mkdir -p "$tmp/fakehome/.claude/skills/review-changes/scripts" "$tmp/fakehome/.c
 printf 'touch "%s/installed-used"; exit 1\n' "$tmp" > "$tmp/fakehome/.claude/skills/review-changes/scripts/tree-stamp.sh"
 printf 'touch "%s/installed-used"; exit 1\n' "$tmp" > "$tmp/fakehome/.claude/skills/handoff/scripts/landing.sh"
 mkco "$tmp/co" "touch \"$tmp/beside-used\"
-[ \"\${1:-}\" = --stamps ] && [ -n \"\${FAKE_STAMPS_RC:-}\" ] && exit \"\$FAKE_STAMPS_RC\"
+[ \"\${1:-}\" = --reviewed-trees ] && [ -n \"\${FAKE_STAMPS_RC:-}\" ] && exit \"\$FAKE_STAMPS_RC\"
 exec bash \"$stamp\" \"\$@\"" real
 co_script="$tmp/co/src/committing/scripts/next-step.sh"
 out="$( cd "$tmp/gated" && HOME="$tmp/fakehome" bash "$co_script" | sed -n 's/^next: //p' )"
@@ -300,12 +300,12 @@ expect_row "$out" "the tree-stamp.sh beside the checkout gives the same answer" 
 [ -f "$tmp/installed-used" ] && selftest_fail "a decoy script under the fake HOME was run in place of the one beside the checkout"
 selftest_rows=$((selftest_rows + 1))
 out="$( cd "$tmp/gated" && HOME="$tmp/fakehome" FAKE_STAMPS_RC=1 bash "$co_script" 2>&1 )"; rc=$?
-expect_rc "a --stamps read that fails" 4 "$rc"
-expect_in "$out" "and it names the report" "tree-stamp.sh --stamps failed on $REVIEW_RECEIPT_DIR/gated-2026-01-01-"
-# a --stamps exit 4 (a report it could not read) skips that report, as the hook does
+expect_rc "a --reviewed-trees read that fails" 4 "$rc"
+expect_in "$out" "and it names the report" "tree-stamp.sh --reviewed-trees failed on $REVIEW_RECEIPT_DIR/gated-2026-01-01-"
+# a --reviewed-trees exit 4 (a report it could not read) skips that report, as the hook does
 out="$( cd "$tmp/gated" && HOME="$tmp/fakehome" FAKE_STAMPS_RC=4 bash "$co_script" 2>&1 )"; rc=$?
-expect_rc "a --stamps read that exits 4" 0 "$rc"
-expect_in "$out" "skips the report, naming it" "next-step.sh: skipping report tree-stamp.sh --stamps could not read (exit 4): $REVIEW_RECEIPT_DIR/gated-2026-01-01-"
+expect_rc "a --reviewed-trees read that exits 4" 0 "$rc"
+expect_in "$out" "skips the report, naming it" "next-step.sh: skipping report tree-stamp.sh --reviewed-trees could not read (exit 4): $REVIEW_RECEIPT_DIR/gated-2026-01-01-"
 expect_in "$out" "and counts no report read" "receipt: none of 0 report(s) stamps it"
 # landing.sh list failing exits 4, carrying landing.sh's own reason
 mkco "$tmp/co2" real "[ \"\$1\" = list ] && { echo 'landing.sh: list refused here' >&2; exit 4; }; exec bash \"$landing\" \"\$@\""

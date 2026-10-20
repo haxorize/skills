@@ -31,6 +31,15 @@
 #     exactly the two, labelled; it reads outside any repo; a missing report
 #     exits 4, as do an unreadable report (skipped as root) and awk failing;
 #     another flag beside it (--committed or --verify), or no path, exits 3.
+#   --reviewed-trees — the mixed report prints its one Reviewed-tree hash
+#     bare; a Measured stamp alone or a fenced one alone exits 2; several
+#     print each; a missing report, and awk failing, exit 4.
+#   --review-required — yes, a bold key, a backticked value and any case
+#     exit 0; no, no line, `yes (planned)`, a no line before a yes, and a yes
+#     inside a ``` or ~~~ fence exit 1; a yes after a ~~~ fence a ``` line
+#     did not close exits 0; a missing file, and awk failing, exit 4.
+#   --unfenced — a fenced line dropped, a live one kept; a missing file
+#     exits 4; two read modes, or one with --committed, exit 3.
 #   usage and never-ran — an unknown flag exits 3; outside a repo exits 4; an
 #     unusable TMPDIR exits 4; a relative TMPDIR from a subdirectory stamps.
 #
@@ -45,7 +54,11 @@
 #   --stamps-with---verify row reds). Dropping `|| [ ! -r "$stamps_of" ]` is
 #   an equivalent mutant on this machine's awk, which exits non-zero on an
 #   unreadable file, so the awk-failed exit 4 catches it; the unreadable rows
-#   pin the 4 whichever guard fires.
+#   pin the 4 whichever guard fires. On 2026-10-20, with the read modes
+#   (D60): --reviewed-trees keeping Measured lines; OPT_IN's end anchor
+#   dropped; its case-blind -i dropped; `head -1` dropped (the first-line
+#   row); --unfenced and --review-required each without FENCE_AWK; the
+#   two-read-modes check dropped.
 #
 # NOT covered: the review-receipt hook itself (its own selftest calls this
 # script for its expected trees), and the work machine's sandbox.
@@ -183,6 +196,51 @@ printf '#!/bin/sh\nexit 2\n' > "$tmp/badawk/awk"; chmod +x "$tmp/badawk/awk"
 expect_rc "--stamps when awk fails" 4 "$rc"
 ( cd "$tmp/repo" && PATH="$tmp/badawk:$PATH" bash "$script" --verify "$tmp/bare.md" ) >/dev/null 2>&1; rc=$?
 expect_rc "--verify when awk fails" 4 "$rc"
+
+# --reviewed-trees: the hashes of the Reviewed-tree stamps alone, outside fences.
+out="$(stamp --reviewed-trees "$tmp/mixed.md")"; rc=$?
+expect_rc "--reviewed-trees on the mixed report" 0 "$rc"
+selftest_check "--reviewed-trees prints the one Reviewed-tree hash bare (got: $out)" [ "$out" = "$dirty" ]
+stamp --reviewed-trees "$tmp/measured.md" >/dev/null 2>&1; rc=$?
+expect_rc "--reviewed-trees on a Measured-tree stamp alone" 2 "$rc"
+stamp --reviewed-trees "$tmp/fenced.md" >/dev/null 2>&1; rc=$?
+expect_rc "--reviewed-trees on a fenced stamp alone" 2 "$rc"
+out="$(stamp --reviewed-trees "$tmp/several.md")"
+selftest_check "--reviewed-trees prints every Reviewed-tree stamp" [ "$(grep -c . <<< "$out")" -eq 2 ]
+stamp --reviewed-trees "$tmp/absent.md" >/dev/null 2>&1; rc=$?
+expect_rc "--reviewed-trees on a missing report" 4 "$rc"
+( cd "$tmp/repo" && PATH="$tmp/badawk:$PATH" bash "$script" --reviewed-trees "$tmp/bare.md" ) >/dev/null 2>&1; rc=$?
+expect_rc "--reviewed-trees when awk fails" 4 "$rc"
+
+# --review-required: the one opt-in reader the hook and next-step.sh call.
+optin() { printf -- "$2" > "$tmp/optin-$1.md"; stamp --review-required "$tmp/optin-$1.md" >/dev/null 2>&1; }
+optin yes '- Review required: yes\n';                       expect_rc "--review-required on a yes line" 0 $?
+optin bold '- **Review required:** yes\n';                  expect_rc "--review-required on a bold key" 0 $?
+optin ticks '- Review required: `yes`\n';                   expect_rc "--review-required on a backticked value" 0 $?
+optin case '- review REQUIRED: Yes\n';                      expect_rc "--review-required reads case-blind" 0 $?
+optin no '- Review required: no\n';                         expect_rc "--review-required on a no line" 1 $?
+optin none '# repo\n';                                      expect_rc "--review-required with no opt-in line" 1 $?
+optin planned '- Review required: yes (planned)\n';         expect_rc "--review-required on yes (planned)" 1 $?
+optin first '- Review required: no\n- Review required: yes\n'; expect_rc "--review-required: the first line decides" 1 $?
+optin fenced '```\n- Review required: yes\n```\n';          expect_rc "--review-required skips a backtick fence" 1 $?
+optin tilde '~~~\n- Review required: yes\n~~~\n';           expect_rc "--review-required skips a ~~~ fence" 1 $?
+optin mixed '~~~\n```\n~~~\n- Review required: yes\n';     expect_rc "--review-required: a backtick line does not close a ~~~ fence" 0 $?
+stamp --review-required "$tmp/absent.md" >/dev/null 2>&1; rc=$?
+expect_rc "--review-required on a missing file" 4 "$rc"
+( cd "$tmp/repo" && PATH="$tmp/badawk:$PATH" bash "$script" --review-required "$tmp/optin-yes.md" ) >/dev/null 2>&1; rc=$?
+expect_rc "--review-required when awk fails" 4 "$rc"
+
+# --unfenced: the file with its fenced blocks dropped, by the same rule.
+out="$(stamp --unfenced "$tmp/mixed.md")"; rc=$?
+expect_rc "--unfenced on the mixed report" 0 "$rc"
+reject_in "$out" "--unfenced drops a ~~~-fenced line" "$(g rev-parse 'HEAD^{tree}')"
+expect_in "$out" "--unfenced keeps a live line" "Measured-tree: $dirty"
+stamp --unfenced "$tmp/absent.md" >/dev/null 2>&1; rc=$?
+expect_rc "--unfenced on a missing file" 4 "$rc"
+stamp --unfenced "$tmp/bare.md" --stamps "$tmp/bare.md" >/dev/null 2>&1; rc=$?
+expect_rc "two read modes at once" 3 "$rc"
+stamp --review-required "$tmp/optin-yes.md" --committed HEAD >/dev/null 2>&1; rc=$?
+expect_rc "a read mode with --committed" 3 "$rc"
 
 stamp --verify "$tmp/absent.md" >/dev/null 2>&1; rc=$?
 expect_rc "--verify on a missing report" 3 "$rc"

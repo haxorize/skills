@@ -14,6 +14,13 @@
 #   tree-stamp.sh --stamps <report>    every stamp line in <report>, one per line
 #                                      as `Reviewed-tree <hash>` or
 #                                      `Measured-tree <hash>`; needs no repo
+#   tree-stamp.sh --reviewed-trees <report>
+#                                      the hash of each `Reviewed-tree` stamp
+#                                      alone, one per line; needs no repo
+#   tree-stamp.sh --review-required <CLAUDE.md>
+#                                      exit 0 when its opt-in line says yes,
+#                                      1 when it says no or there is none
+#   tree-stamp.sh --unfenced <file>    <file> with its fenced blocks dropped
 #
 # Run from anywhere inside the repo; it stamps the repo root. The working-tree
 # stamp seeds a throwaway index from HEAD and adds everything, so uncommitted
@@ -32,9 +39,10 @@
 # inline in the rule" line and its pointer to the address-findings sibling are
 # historical and stay unedited; this header is where the reason now lives.
 #
-# One reader, read_stamps below, finds the stamp lines for --stamps and
-# --verify alike, and the review-receipt hook reads a report through --stamps,
-# accepting only the `Reviewed-tree` lines, so there is no second parser. A
+# One reader, read_stamps below, finds the stamp lines for --stamps,
+# --reviewed-trees and --verify alike, and the review-receipt hook reads a
+# report through --reviewed-trees, which keeps only the `Reviewed-tree` lines,
+# so there is no second parser. A
 # stamp line is the label (`Reviewed-tree:` or `Measured-tree:`), a list
 # marker, bold or backticks allowed around it, the hash, nothing after it. A
 # line inside a fenced block (a fence opens on a line starting, after optional
@@ -44,33 +52,48 @@
 # `>` fails the pattern's start. Any stamp in the report matching passes
 # --verify, since a fix pass appends one per stamping.
 #
-# The fence rule in read_stamps' awk has two hand-synced copies, the opt-in
-# scan in global/hooks/review-receipt.sh and `unfenced` in
-# src/committing/scripts/next-step.sh; a change to it here is made in both.
+# The fence rule (FENCE_AWK) and the `Review required:` opt-in pattern
+# (OPT_IN) live here alone. global/hooks/review-receipt.sh and
+# src/committing/scripts/next-step.sh read a CLAUDE.md's opt-in through
+# --review-required, a file outside its fences through --unfenced, and a
+# report's receipts through --reviewed-trees, so the push gate and the
+# script that predicts it hold no copy of either rule to drift. lint-skills.sh's
+# FENCE_AWK is a different, older rule (any ``` toggles; ~~~ is not a fence)
+# over skill bodies, and does not read through here.
 #
-# Exit: 0 stamp printed, --verify matched, or --stamps found a stamp · 1
-# --verify found stamps and none matched · 2 --verify or --stamps found no
-# stamp line in the report · 3 usage error (bad flag, missing --verify report,
-# unknown rev, --stamps with another flag) · 4 not inside a git work tree, no
-# usable temp directory, or a report the reader could not read.
+# Exit: 0 stamp printed, --verify matched, a read mode found what it reads, or
+# --review-required read yes · 1 --verify found stamps and none matched, or
+# --review-required read no or no opt-in line · 2 --verify, --stamps or
+# --reviewed-trees found no such stamp line in the report · 3 usage error (bad
+# flag, missing --verify report, unknown rev, a read mode with another flag) ·
+# 4 not inside a git work tree, no usable temp directory, or a file the reader
+# could not read.
 set -uo pipefail
 
 usage() {
-  sed -n '9,16p' "$0" | sed 's/^# \{0,1\}//'
-  echo "Exit: 0 printed, matched, or stamps listed; 1 no stamp matched; 2 no stamp line;"
-  echo "3 usage; 4 never ran (no repo, no temp directory, or an unreadable report)."
+  sed -n '9,24p' "$0" | sed 's/^# \{0,1\}//'
+  echo "Exit: 0 printed, matched, read, or opted in; 1 no stamp matched, or not opted in;"
+  echo "2 no stamp line; 3 usage; 4 never ran (no repo, no temp directory, or an unreadable file)."
 }
 
-# The one stamp-line reader (header: "One reader"). Prints `<label> <hash>`
-# per stamp outside a fence and returns awk's status.
-read_stamps() {
-  awk '
+# The one fence rule (header): prepend to an awk program, and every line
+# inside a fence is skipped before the program sees it.
+FENCE_AWK='
     match($0, /^[[:space:]]*(```+|~~~+)/) {
       run = substr($0, RSTART, RLENGTH); sub(/^[[:space:]]*/, "", run)
       if (fence == "") { fence = run; next }
       if (substr(run, 1, 1) == substr(fence, 1, 1) && length(run) >= length(fence)) { fence = ""; next }
     }
     fence != "" { next }
+'
+# The one opt-in pattern (header), matched case-blind against unfenced lines;
+# `yes (…)` fails it, and the first matching line decides.
+OPT_IN='^[-* >]*\**`?Review required:`?\**[[:space:]]*\**`?(yes|no)`?\**[[:space:]]*$'
+
+# The one stamp-line reader (header: "One reader"). Prints `<label> <hash>`
+# per stamp outside a fence and returns awk's status.
+read_stamps() {
+  awk "$FENCE_AWK"'
     /^[-*]*[[:space:]]*\**`?(Reviewed|Measured)-tree:`?\**[[:space:]]*`?[0-9a-f]{40}`?[[:space:]]*$/ {
       label = ($0 ~ /Reviewed-tree:/) ? "Reviewed-tree" : "Measured-tree"
       if (match($0, /[0-9a-f]{40}/)) print label " " substr($0, RSTART, RLENGTH)
@@ -80,7 +103,8 @@ read_stamps() {
 
 committed=""
 report=""
-stamps_of=""
+read_mode=""
+read_path=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --committed)
@@ -89,29 +113,55 @@ while [ $# -gt 0 ]; do
     --verify)
       [ $# -ge 2 ] || { echo "tree-stamp.sh: --verify needs a report path" >&2; exit 3; }
       report="$2"; shift 2 ;;
-    --stamps)
-      [ $# -ge 2 ] || { echo "tree-stamp.sh: --stamps needs a report path" >&2; exit 3; }
-      stamps_of="$2"; shift 2 ;;
+    --stamps|--reviewed-trees|--review-required|--unfenced)
+      [ $# -ge 2 ] || { echo "tree-stamp.sh: $1 needs a file path" >&2; exit 3; }
+      [ -z "$read_mode" ] || { echo "tree-stamp.sh: $read_mode and $1 are two read modes; give one" >&2; exit 3; }
+      read_mode="$1" read_path="$2"; shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) echo "tree-stamp.sh: unknown argument: $1" >&2; usage >&2; exit 3 ;;
   esac
 done
 
-if [ -n "$stamps_of" ]; then
+if [ -n "$read_mode" ]; then
   if [ -n "$report" ] || [ -n "$committed" ]; then
-    echo "tree-stamp.sh: --stamps takes no other flag" >&2
+    echo "tree-stamp.sh: $read_mode takes no other flag" >&2
     exit 3
   fi
-  if [ ! -f "$stamps_of" ] || [ ! -r "$stamps_of" ]; then
-    echo "tree-stamp.sh: cannot read report $stamps_of — no stamps read" >&2
+  if [ ! -f "$read_path" ] || [ ! -r "$read_path" ]; then
+    echo "tree-stamp.sh: cannot read $read_path — nothing read" >&2
     exit 4
   fi
-  if ! found="$(read_stamps "$stamps_of")"; then
-    echo "tree-stamp.sh: awk failed reading $stamps_of — no stamps read" >&2
+  case "$read_mode" in
+    --unfenced)
+      awk "$FENCE_AWK"'{ print }' "$read_path" \
+        || { echo "tree-stamp.sh: awk failed reading $read_path — nothing read" >&2; exit 4; }
+      exit 0 ;;
+    --review-required)
+      if ! body="$(awk "$FENCE_AWK"'{ print }' "$read_path")"; then
+        echo "tree-stamp.sh: awk failed reading $read_path — opt-in not read" >&2
+        exit 4
+      fi
+      line="$(printf '%s\n' "$body" | grep -iE "$OPT_IN" | head -1; exit "${PIPESTATUS[1]}")"
+      grc=$?
+      if [ "$grc" -gt 1 ]; then
+        echo "tree-stamp.sh: grep failed scanning $read_path (rc=$grc) — opt-in not read" >&2
+        exit 4
+      fi
+      printf '%s\n' "$line" | grep -qi 'yes' && exit 0
+      exit 1 ;;
+  esac
+  if ! found="$(read_stamps "$read_path")"; then
+    echo "tree-stamp.sh: awk failed reading $read_path — no stamps read" >&2
     exit 4
   fi
-  if [ -z "$found" ]; then
-    echo "tree-stamp.sh: no Reviewed-tree: or Measured-tree: line in $stamps_of" >&2
+  if [ "$read_mode" = --reviewed-trees ]; then
+    found="$(printf '%s\n' "$found" | sed -n 's/^Reviewed-tree //p')"
+    if [ -z "$found" ]; then
+      echo "tree-stamp.sh: no Reviewed-tree: line in $read_path" >&2
+      exit 2
+    fi
+  elif [ -z "$found" ]; then
+    echo "tree-stamp.sh: no Reviewed-tree: or Measured-tree: line in $read_path" >&2
     exit 2
   fi
   printf '%s\n' "$found"
