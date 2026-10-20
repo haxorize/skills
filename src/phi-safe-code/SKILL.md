@@ -10,7 +10,7 @@ The data class is **protected health information**: anything that identifies a p
 
 The default output gets this wrong in a specific way: it knows "don't log PHI" and then puts the member's name in a fixture, the subscriber ID in a URL, and the member record in a model prompt — each an incident the assessor rules on, none of them a typo. So run the discipline by **sink**, not by intent: trace every field that is PHI to every place it could land, and show each landing to be opaque-ID-only. One hard stop binds throughout: an external sink is blocked until the BAA gate below clears — an unanswered BAA column is a blocked change.
 
-A coverage, eligibility, or claims decision a model's judgment feeds is a decision about a person: its fixtures are checked for equal treatment per `codebase-design`'s [model-seam reference](../codebase-design/references/model-seam.md).
+A coverage, eligibility, or claims decision a model's judgment feeds is a decision about a person: its fixtures are checked for equal treatment per `codebase-design`'s `~/.claude/skills/codebase-design/references/model-seam.md`.
 
 ## Allow by name, never block by substring
 

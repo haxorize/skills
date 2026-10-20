@@ -15,6 +15,8 @@ quietly greener lint run.
 - A repo ADR cited by number, which skill bodies may never do: ADR-0007
 - A load gate inside a model-invoked skill, where no human watches for the
   `Launching skill: broken-links` line
+- A relative link into another skill, which resolves but is read by installed path:
+  [cross-skill link](../house-style/references/cited-by-path.md)
 
 ## Must stay quiet
 

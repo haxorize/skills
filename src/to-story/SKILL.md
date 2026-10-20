@@ -22,7 +22,7 @@ Call the Skill tool with `writing-for-humans`, then again with `work-item-shape`
 
 ### 1. Resolve tracker
 
-Resolve the tracker per [references/tracker-resolution.md](references/tracker-resolution.md); the tracker script is `work-item-shape`'s, run as `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py`.
+Resolve the tracker per `~/.claude/skills/work-item-shape/references/tracker-resolution.md`; the tracker script is `work-item-shape`'s, run as `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py`.
 
 ### 2. Resolve parent
 
@@ -83,14 +83,14 @@ Iterate until approved.
 
 ### 9. Publish via tracker dispatch
 
-The **Publish gate** in [references/publishing.md](references/publishing.md) holds first.
+The **Publish gate** in `~/.claude/skills/work-item-shape/references/publishing.md` holds first.
 
-- **GitHub:** `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py create --type "User Story" --title '<drafted title>' --body <scratchpad>/<draft>.md --parent <feature-number> --workdir <scratchpad>`, dropping `--parent` when there is none and adding `--debt` per [references/publishing.md](references/publishing.md) § Flags the script cannot derive. The script applies the default labels and links the issue as a native sub-issue of the parent; the template's `Parent: #N` body line stays, since `/implement`'s ticket load reads it.
+- **GitHub:** `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py create --type "User Story" --title '<drafted title>' --body <scratchpad>/<draft>.md --parent <feature-number> --workdir <scratchpad>`, dropping `--parent` when there is none and adding `--debt` per `~/.claude/skills/work-item-shape/references/publishing.md` § Flags the script cannot derive. The script applies the default labels and links the issue as a native sub-issue of the parent; the template's `Parent: #N` body line stays, since `/implement`'s ticket load reads it.
 - **ADO:** publish with the create call in [references/story-template-ado.md](references/story-template-ado.md) — the **two-field split**, body into `System.Description` and acceptance bullets into `Microsoft.VSTS.Common.AcceptanceCriteria`, each its own file. `--priority <1-4>` (an integer 1–4; a caller such as `inventory-cvits` decides the value) goes onto the same create as `--field "Microsoft.VSTS.Common.Priority=<n>"`. GitHub has no priority field and ignores it.
 
-Missing required CLAUDE.md fields, writes blocked on auth or policy (don't loop on auth), and **transport safety** on every create and retry all follow [references/publishing.md](references/publishing.md) — `## When a required field is missing`, `## When the write is blocked`, `## Transport safety`.
+Missing required CLAUDE.md fields, writes blocked on auth or policy (don't loop on auth), and **transport safety** on every create and retry all follow `~/.claude/skills/work-item-shape/references/publishing.md` — `## When a required field is missing`, `## When the write is blocked`, `## Transport safety`.
 
-**An `incomplete=readback` exit 5 means the Story is written but not finished (ADO)** — on any create or patch carrying acceptance criteria, update mode included. Never re-run the create; the patch is in [references/publishing.md](references/publishing.md) `## Transport safety`.
+**An `incomplete=readback` exit 5 means the Story is written but not finished (ADO)** — on any create or patch carrying acceptance criteria, update mode included. Never re-run the create; the patch is in `~/.claude/skills/work-item-shape/references/publishing.md` `## Transport safety`.
 
 ### 10. Update parent's story map (where `Hierarchy: required`)
 

@@ -21,7 +21,7 @@ Call the Skill tool with `writing-for-humans`, then again with `work-item-shape`
 
 ### 1. Resolve tracker
 
-Resolve the tracker per [references/tracker-resolution.md](references/tracker-resolution.md); the tracker script is `work-item-shape`'s, run as `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py`.
+Resolve the tracker per `~/.claude/skills/work-item-shape/references/tracker-resolution.md`; the tracker script is `work-item-shape`'s, run as `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py`.
 
 ### 2. Resolve parent
 
@@ -83,14 +83,14 @@ Iterate until approved.
 
 ### 10. Publish via tracker dispatch
 
-The **Publish gate** in [references/publishing.md](references/publishing.md) holds first.
+The **Publish gate** in `~/.claude/skills/work-item-shape/references/publishing.md` holds first.
 
-- **GitHub:** `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py create --type Feature --title '<drafted title>' --body <scratchpad>/<draft>.md --parent <number> --workdir <scratchpad>`, dropping `--parent` when there is none and adding `--debt` per [references/publishing.md](references/publishing.md) § Flags the script cannot derive. The script applies the default labels and links the issue as a native sub-issue of the parent; the template's `Parent: #N` body line stays, since `/implement`'s ticket load reads it.
+- **GitHub:** `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py create --type Feature --title '<drafted title>' --body <scratchpad>/<draft>.md --parent <number> --workdir <scratchpad>`, dropping `--parent` when there is none and adding `--debt` per `~/.claude/skills/work-item-shape/references/publishing.md` § Flags the script cannot derive. The script applies the default labels and links the issue as a native sub-issue of the parent; the template's `Parent: #N` body line stays, since `/implement`'s ticket load reads it.
 - **ADO:** publish with the create call in [feature-template-ado.md](references/feature-template-ado.md) — the **two-field split**, body into the description and outcome bullets into the AC field, each its own file. The body's final section is `## Story Decomposition`; inside it, HTML markers (`<!-- BEGIN STORY MAP -->` / `<!-- END STORY MAP -->`) fence an append-only region — see the template for the snapshot separator and emergent-Story sentinel inside it. If decomposition was deferred, the section body is the single line `Story Decomposition: deferred at Feature creation.` (no markers). Link the parent per the template's field-mapping row.
 
-Missing required CLAUDE.md fields, writes blocked on auth or policy (don't loop on auth), and **transport safety** on every create and retry all follow [references/publishing.md](references/publishing.md) — `## When a required field is missing`, `## When the write is blocked`, `## Transport safety`.
+Missing required CLAUDE.md fields, writes blocked on auth or policy (don't loop on auth), and **transport safety** on every create and retry all follow `~/.claude/skills/work-item-shape/references/publishing.md` — `## When a required field is missing`, `## When the write is blocked`, `## Transport safety`.
 
-**An `incomplete=readback` exit 5 means the Feature is written but not finished (ADO)** — never re-run the create. The patch is in [references/publishing.md](references/publishing.md) `## Transport safety`.
+**An `incomplete=readback` exit 5 means the Feature is written but not finished (ADO)** — never re-run the create. The patch is in `~/.claude/skills/work-item-shape/references/publishing.md` `## Transport safety`.
 
 ## Update mode
 

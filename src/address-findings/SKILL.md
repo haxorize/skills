@@ -74,7 +74,7 @@ Close with one row per finding, every `F<n>` in the report present, in ID order:
 | F4 | ABANDON | started the rename, three call sites resist it without a contract change; reverted, tree clean, the contract change is a question for the user |
 
 - **FIXED** carries the hunk or SHA *and* a statement that the cited deficiency is gone — not that an edit was made. A fix that addresses the finding's line but not its claim is not FIXED: it is DEFERRED, with what remains named.
-- **DECLINED** carries a reason that disposes *that* claim, with the same verification read a FIXED row gets — the dismissal standard is `review-changes`' [finding-discipline.md](../review-changes/references/finding-discipline.md)'s — a claim is disposed by the evidence that refutes it, never by its confidence or its author. Verifying before implementing is the response loop's, gated by § Clarify all before implementing any.
+- **DECLINED** carries a reason that disposes *that* claim, with the same verification read a FIXED row gets — the dismissal standard is `review-changes`' `~/.claude/skills/review-changes/references/finding-discipline.md`'s — a claim is disposed by the evidence that refutes it, never by its confidence or its author. Verifying before implementing is the response loop's, gated by § Clarify all before implementing any.
 - **DEFERRED** is a proposal the human ratifies in the same message. The row names the record the work would go to and the event that picks it up; if they do not ratify, it is not deferred.
 - **ABANDON** is the visible form of "I tried and stopped": what was attempted, why it did not land, what state was left. A finding that is neither fixed nor explicitly disposed is this row, never an omission.
 

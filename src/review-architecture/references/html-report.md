@@ -126,7 +126,7 @@ One larger **`.card-deep`** after the candidates — the recommendation literall
 
 ## Tone
 
-Plain English, concise — but the architectural nouns come straight from `codebase-design`: **module, interface, implementation, depth, deep, shallow, seam, adapter, leverage, locality**. Never substitute component/service (module), API (interface), or boundary (seam). The vet, finding format, and leverage ranking are unchanged — see [finding-discipline.md](finding-discipline.md); this file only changes how the vetted findings are *rendered*.
+Plain English, concise — but the architectural nouns come straight from `codebase-design`: **module, interface, implementation, depth, deep, shallow, seam, adapter, leverage, locality**. Never substitute component/service (module), API (interface), or boundary (seam). The vet, finding format, and leverage ranking are unchanged — see `~/.claude/skills/review-changes/references/finding-discipline.md`; this file only changes how the vetted findings are *rendered*.
 
 ## Before you present: self-check the render
 

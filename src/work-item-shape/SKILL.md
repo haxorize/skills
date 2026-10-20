@@ -92,7 +92,7 @@ Past 5 blocks, triage which escalate by impact: **scope > security and privacy >
 
 Self-review sees what you meant, not what you wrote — before an item publishes, send it through a reader with no prior context:
 
-- Spawn one fresh-context subagent — the cold reader, briefed per [references/subagent-brief.md](references/subagent-brief.md). It gets only what a cold reader of the published artifact would see — the calling skill names the exact input; ad-hoc, it is the drafted body alone — never this conversation.
+- Spawn one fresh-context subagent — the cold reader, briefed per `~/.claude/skills/handoff/references/subagent-brief.md`. It gets only what a cold reader of the published artifact would see — the calling skill names the exact input; ad-hoc, it is the drafted body alone — never this conversation.
 - It answers the calling skill's question — "what would you build?", or for a bug, "what's broken, and how do I reproduce it?"; ad-hoc, the question matching the inferred tier. Alongside the answer it names ambiguities in Ambiguity-block shape and any context it had to assume.
 - Fold real gaps back into the draft. One pass, not a loop.
 

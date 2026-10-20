@@ -316,6 +316,8 @@ reject_re() {
 # defect this field was added to fix. Moving that link in the fixture is meant
 # to fail here until the number is updated with it.
 expect "reference-link resolution" "links to 'references/does-not-exist.md' (line 14)"
+expect "cross-skill relative link" "src/broken-links/SKILL.md links to '../house-style/references/cited-by-path.md' (line 19), a relative path into another skill's directory"
+reject "cross-skill relative link (a ../ that stays in its own skill)" "links to '../SKILL.md'"
 expect "ADR-citation ban" "cites a repo ADR by number"
 expect "rich-text transport ban" "src/unused-dep/references/shell-transport.md passes HTML through the shell (line(s) 3 )"
 expect "description colon" "description has unquoted ': '"
@@ -747,15 +749,15 @@ fi
 expect_rc "the lint against the fixture tree" 1 "$status"
 # The count of FAIL lines is pinned: a check that begins firing on a fixture
 # it should leave alone reds here even when no substring row names the line.
-# Last moved 2026-10-18: 121 → 122 — the fixture installer carries no
-# name_only_skills line, which lint now reads for the catalog figure.
+# Last moved 2026-10-20: 122 → 123 — broken-links' relative link into
+# house-style, the cross-skill link row.
 # Earlier moves of this pin are in
 # `git log -p -G 'expected exactly [0-9]+ FAIL' -- scripts/lint-skills-selftest.sh` — they describe counts
 # nothing asserts any more, and stacking them here made a changelog out of the
 # one line that has to stay readable. A count that moves is read before it is
 # re-pinned.
 nfail=$(printf '%s\n' "$output" | grep -c '^FAIL: ')
-[ "$nfail" -eq 122 ] || selftest_fail "expected exactly 122 FAIL lines against the fixture tree, got $nfail"
+[ "$nfail" -eq 123 ] || selftest_fail "expected exactly 123 FAIL lines against the fixture tree, got $nfail"
 # The shared-trigger-phrase fixtures are pinned by property, as near_bytes and
 # bulk_bytes are below: every row above them asserts a FAIL that appears or a
 # FAIL that does not, and each of those readings is silently satisfied by a

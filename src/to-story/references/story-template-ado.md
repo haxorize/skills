@@ -15,7 +15,7 @@ Use this when publishing a User Story to Azure DevOps via `python3 ~/.claude/ski
 | **Priority** | `Microsoft.VSTS.Common.Priority` | From `--priority <1-4>`, an integer 1–4; absent → ADO's own default (optional, never a fail-fast field) | `--field "Microsoft.VSTS.Common.Priority=…"` |
 | **Parent (Feature)** | (relation) | From `--parent <feature-id>` arg | `--parent <feature-id>` — linked after the create |
 
-Before first publish against a new ADO project, verify the field shape once per [publishing.md](publishing.md) § Transport safety.
+Before first publish against a new ADO project, verify the field shape once per `~/.claude/skills/work-item-shape/references/publishing.md` § Transport safety.
 
 ## Description
 
@@ -27,11 +27,11 @@ Author the body as Markdown from the skeleton in [story-body.md](story-body.md),
 - ~~**AC3:** Original criterion text~~ — removed 2026-05-01: reason in one line
 ```
 
-The record shape and the append-only rule are in [ac-ids.md](ac-ids.md).
+The record shape and the append-only rule are in `~/.claude/skills/work-item-shape/references/ac-ids.md`.
 
 ## Acceptance Criteria (ADO field)
 
-Author as Markdown bullets with typed, append-only IDs per [ac-ids.md](ac-ids.md), in `<scratchpad>/acceptance.md`:
+Author as Markdown bullets with typed, append-only IDs per `~/.claude/skills/work-item-shape/references/ac-ids.md`, in `<scratchpad>/acceptance.md`:
 
 ```markdown
 - **AC1:** Specific, testable outcome 1
@@ -39,7 +39,7 @@ Author as Markdown bullets with typed, append-only IDs per [ac-ids.md](ac-ids.md
 - **AC4:** Specific, testable outcome 4
 ```
 
-The example skips `AC3` for the reason [ac-ids.md](ac-ids.md) gives.
+The example skips `AC3` for the reason `~/.claude/skills/work-item-shape/references/ac-ids.md` gives.
 
 ## Create call
 
@@ -52,7 +52,7 @@ python3 ~/.claude/skills/work-item-shape/scripts/tracker.py create --type "User 
   --parent <feature-id> --workdir <scratchpad>
 ```
 
-Drop `--parent` when there is none; add `--debt` per [publishing.md](publishing.md) § Flags the script cannot derive.
+Drop `--parent` when there is none; add `--debt` per `~/.claude/skills/work-item-shape/references/publishing.md` § Flags the script cannot derive.
 
 **Priority (optional).** When `--priority` is passed, check it is an integer 1–4, then add `--field "Microsoft.VSTS.Common.Priority=<n>"` to the same create — never a second write after it. Absent, omit it.
 

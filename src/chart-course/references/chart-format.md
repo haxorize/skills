@@ -63,7 +63,7 @@ Assets: <links to any prototype, document, or branch produced — linked, never 
 
 ## ADO body handling
 
-An ADO description field expects HTML, so a create or update takes the Markdown file and the script converts it (`--body <scratchpad>/<file>.md`). An ADO comment takes Markdown, so `comment <id> --body <scratchpad>/<file>.md` passes the file as-is. The content never crosses the shell; the calls are in [chart-tracker-ops.md](chart-tracker-ops.md) and the read-back in [publishing.md](publishing.md) `## Transport safety`.
+An ADO description field expects HTML, so a create or update takes the Markdown file and the script converts it (`--body <scratchpad>/<file>.md`). An ADO comment takes Markdown, so `comment <id> --body <scratchpad>/<file>.md` passes the file as-is. The content never crosses the shell; the calls are in [chart-tracker-ops.md](chart-tracker-ops.md) and the read-back in `~/.claude/skills/work-item-shape/references/publishing.md` `## Transport safety`.
 
 ## Titles
 

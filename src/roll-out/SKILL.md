@@ -35,7 +35,7 @@ Ask only what blocks the step in hand. A value nobody in the conversation can su
 The default rungs are **dark** (deployed, exposed to nobody), **internal** (the team and staff accounts), **limited cohort**, and **everyone**. Use the team's own names where it has them, and add rungs between cohort and everyone when the change is risky. A change meant to look identical can add a **shadow** rung after dark: real requests are copied to the new path, its output is compared with the old, and nobody is served it. For each rung write:
 
 - **Who is exposed** — the attribute that selects them and roughly how many.
-- **The watch** — the measurements compared against the baseline, and the window. This is `ship`'s post-deploy watch run once per rung ([after-landing.md](../ship/references/after-landing.md)); write its success line and rollback trigger here, per rung.
+- **The watch** — the measurements compared against the baseline, and the window. This is `ship`'s post-deploy watch run once per rung (`~/.claude/skills/ship/references/after-landing.md`); write its success line and rollback trigger here, per rung.
 - **The entry condition** — what must be true to open this rung: the previous rung's watch returned its verdict and the change was kept, and, for a bet, no rung above the one the primary metric is read at opens before the readout's **Ship**, since a change in exposure mid-run breaks the frozen contract.
 
 A rung with no watch is a rung nobody can decide to leave. The dark rung's watch is the deploy itself, proved landed per step 5.
@@ -52,7 +52,7 @@ Write the value the code serves when the flag service cannot be reached. Until t
 
 Pull the kill switch once in a lower environment before any rung opens, by the user or on their word, and record what happened in the plan — the environment, the date, and what the change looked like off. A kill switch never pulled is a guess about a flag; the first time it is pulled must not be during an incident. Where no lower environment can exercise it, the plan marks the pull `UNVERIFIABLE` with the reason, and the user decides whether the dark rung opens anyway.
 
-Class what turning it off does to data, per `ship`'s data-safety class ([after-landing.md](../ship/references/after-landing.md) § The data-safety class): a flag guarding a code path that writes records, sends messages, or submits claims is not **reversible** by being turned off, and the plan says what stays behind.
+Class what turning it off does to data, per `ship`'s data-safety class (`~/.claude/skills/ship/references/after-landing.md` § The data-safety class): a flag guarding a code path that writes records, sends messages, or submits claims is not **reversible** by being turned off, and the plan says what stays behind.
 
 ### 5. Instrument, then prove the dark rung landed
 
@@ -70,7 +70,7 @@ The plan is ready when every rung has its three lines, the kill switch has a rec
 
 Open this when the user brings back a plan to move it to its next rung.
 
-1. Read the plan's header for the current rung. Run that rung's watch per [after-landing.md](../ship/references/after-landing.md) against the baseline and window the plan wrote, and append the verdict block under the rung. A bet also runs the experiment reference's checks for a rung where its rule applies.
+1. Read the plan's header for the current rung. Run that rung's watch per `~/.claude/skills/ship/references/after-landing.md` against the baseline and window the plan wrote, and append the verdict block under the rung. A bet also runs the experiment reference's checks for a rung where its rule applies.
 2. The watch's verdict decides the move, never one measurement's marker. Kept, and the next rung's entry condition holds — say so and offer to open it; changing who is exposed is an outward act, taken on the user's word. Rolled back — here the rollback is pulling the kill switch, which the trigger written in the plan already authorizes, as `ship`'s watch does; the verdict names which trigger fired.
 3. Update the header to the new current rung and next action. At the everyone rung kept, the next action is the removal item. After a pull, the rung is marked closed and `Next:` is the cause, which `diagnosing-bugs` owns; the ladder reopens at that rung only on the user's word, after the fix, or the removal item's trigger is met.
 

@@ -17,7 +17,7 @@ When framing a candidate, classify its dependencies using `codebase-design`'s **
 
 ## Work item tracker
 
-Resolve the tracker before Step 1 in one of three modes — **Declared**, **Bootstrap-on-ask**, or **No-repo CLI-only**. See [references/tracker-resolution.md](references/tracker-resolution.md) for each mode's behavior and the required fields.
+Resolve the tracker before Step 1 in one of three modes — **Declared**, **Bootstrap-on-ask**, or **No-repo CLI-only**. See `~/.claude/skills/work-item-shape/references/tracker-resolution.md` for each mode's behavior and the required fields.
 
 Search and comment through `work-item-shape`'s tracker script — `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py search --terms "<terms>" --state all`, and `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py comment <id> --body <scratchpad>/<file>.md` (Markdown, on ADO too). Creating or rewriting work items is `to-story`'s job. If a comment fails on auth or permission, give the user the comment text to post by hand; don't loop on auth.
 
@@ -40,7 +40,7 @@ If an area was recently refactored, the bar for proposing another change is much
 
 **Scope before you scan — YAGNI.** Deepening a module pays off by making future changes to it easier, so weight the parts of the codebase where change keeps landing. If the user named a direction — a module, a subsystem, a point of architectural friction — take it. Otherwise take the hot spots from step 1's churn list — the files that keep coming up — and let those paths pull attention first. Scattered changes with no hot spot → widen the net.
 
-Use the Agent tool with subagent_type=Explore to navigate the codebase. Every Explore prompt carries the rules in [references/subagent-brief.md](references/subagent-brief.md) quoted, and its **Launch-failure classification** binds you: a slice whose explorer never launched is explored inline. Don't follow rigid heuristics — explore and note where you experience friction:
+Use the Agent tool with subagent_type=Explore to navigate the codebase. Every Explore prompt carries the rules in `~/.claude/skills/handoff/references/subagent-brief.md` quoted, and its **Launch-failure classification** binds you: a slice whose explorer never launched is explored inline. Don't follow rigid heuristics — explore and note where you experience friction:
 
 - Where does understanding one concept require bouncing between many small files?
 - Where are modules so shallow that the interface is nearly as complex as the implementation?
@@ -49,13 +49,13 @@ Use the Agent tool with subagent_type=Explore to navigate the codebase. Every Ex
 - Which parts of the codebase are untested or hard to test?
 - Where do domain terms from DOMAIN.md leak across module interfaces?
 - Where the repo declares a dependency direction (in DOMAIN.md, CLAUDE.md, or an ADR), does any import run against it?
-- Where does a Code smell from [smell-baseline.md](../review-changes/references/smell-baseline.md) recur across the hot spots (the Explore brief carries the catalog's path as `readlink -f ~/.claude/skills/review-changes/references/smell-baseline.md` prints it, since a subagent cannot follow a relative link) — the catalog reads the same over a tree as over a diff, judgment calls and repo overrides included — and where does work grow with the data: a query issued inside a loop, a nested walk over two collections, a sort or a full scan repeated per item?
+- Where does a Code smell from `~/.claude/skills/review-changes/references/smell-baseline.md` recur across the hot spots (the Explore brief carries the catalog's path as `readlink -f ~/.claude/skills/review-changes/references/smell-baseline.md` prints it, since a subagent cannot follow a relative link) — the catalog reads the same over a tree as over a diff, judgment calls and repo overrides included — and where does work grow with the data: a query issued inside a loop, a nested walk over two collections, a sort or a full scan repeated per item?
 
 Done when you've swept **every top-level module/area**, not just the first friction you hit; if you deliberately skipped a large subtree, say which and why.
 
 ### 3. Vet, then consolidate and present candidates
 
-**Vet first** per [references/finding-discipline.md](references/finding-discipline.md), which covers the over-report, the drop classes, the advisory, the vet's context-asymmetry default, and the **bidirectional** ADR/`DOMAIN.md` read. When a candidate warrants *reopening* an ADR, mark it clearly (e.g., _"contradicts a recorded ADR — but worth reopening because…"_) and only when the friction justifies it.
+**Vet first** per `~/.claude/skills/review-changes/references/finding-discipline.md`, which covers the over-report, the drop classes, the advisory, the vet's context-asymmetry default, and the **bidirectional** ADR/`DOMAIN.md` read. When a candidate warrants *reopening* an ADR, mark it clearly (e.g., _"contradicts a recorded ADR — but worth reopening because…"_) and only when the friction justifies it.
 
 Group surviving findings into coherent candidates — don't present overlapping or sub-issues separately. **Cross-reference against existing work items found in step 1.** If a candidate overlaps with an existing work item, say so explicitly — propose updating that one rather than filing a new one.
 

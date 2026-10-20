@@ -21,7 +21,7 @@ This tier's evidence sections are `## Repro` (on ADO, the `Microsoft.VSTS.TCM.Re
 
 ### 1. Resolve tracker
 
-Resolve the tracker per [references/tracker-resolution.md](references/tracker-resolution.md); the tracker script is `work-item-shape`'s, run as `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py`.
+Resolve the tracker per `~/.claude/skills/work-item-shape/references/tracker-resolution.md`; the tracker script is `work-item-shape`'s, run as `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py`.
 
 ### 2. Resolve parent (optional)
 
@@ -87,12 +87,12 @@ Iterate until approved.
 
 ### 9. Publish via tracker dispatch
 
-The **Publish gate** in [references/publishing.md](references/publishing.md) holds first.
+The **Publish gate** in `~/.claude/skills/work-item-shape/references/publishing.md` holds first.
 
-- **GitHub:** `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py create --type Bug --title '<drafted title>' --body <scratchpad>/<draft>.md --label bug --label <severity-label> --parent <feature-number> --workdir <scratchpad>`, dropping `--parent` when there is none and adding `--debt` per [references/publishing.md](references/publishing.md) § Flags the script cannot derive. The script adds any `Default labels:`, creates a missing label first, and links the issue as a native sub-issue of the parent Feature; the template's `Parent: #N` body line stays, since `/implement`'s ticket load reads it.
+- **GitHub:** `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py create --type Bug --title '<drafted title>' --body <scratchpad>/<draft>.md --label bug --label <severity-label> --parent <feature-number> --workdir <scratchpad>`, dropping `--parent` when there is none and adding `--debt` per `~/.claude/skills/work-item-shape/references/publishing.md` § Flags the script cannot derive. The script adds any `Default labels:`, creates a missing label first, and links the issue as a native sub-issue of the parent Feature; the template's `Parent: #N` body line stays, since `/implement`'s ticket load reads it.
 - **ADO:** publish with the create call in [references/bug-template-ado.md](references/bug-template-ado.md) — description and repro steps into their two rich-text fields, each its own file, and severity from step 4; the script reads area path, iteration and state from CLAUDE.md and links `--parent` after the create.
 
-Missing required CLAUDE.md fields, writes blocked on auth or policy (don't loop on auth), and **transport safety** on every create and retry all follow [references/publishing.md](references/publishing.md) — `## When a required field is missing`, `## When the write is blocked`, `## Transport safety`.
+Missing required CLAUDE.md fields, writes blocked on auth or policy (don't loop on auth), and **transport safety** on every create and retry all follow `~/.claude/skills/work-item-shape/references/publishing.md` — `## When a required field is missing`, `## When the write is blocked`, `## Transport safety`.
 
 On publish, run `work-item-shape`'s **Naming drift** rule against sibling items under the parent Feature (skip when parentless).
 

@@ -16,7 +16,7 @@ Use this when publishing a Task work item to Azure DevOps via `python3 ~/.claude
 
 ADO Tasks have only `System.Description` for body content — **no Acceptance Criteria field**. Acceptance criteria belong on the parent User Story.
 
-Before first publish against a new ADO project, verify the field shape once per [publishing.md](publishing.md) § Transport safety.
+Before first publish against a new ADO project, verify the field shape once per `~/.claude/skills/work-item-shape/references/publishing.md` § Transport safety.
 
 ## Description
 
@@ -39,7 +39,7 @@ python3 ~/.claude/skills/work-item-shape/scripts/tracker.py create --type Task -
   --body <scratchpad>/description.md --parent <story-id> --workdir <scratchpad>
 ```
 
-Add `--debt` per [publishing.md](publishing.md) § Flags the script cannot derive.
+Add `--debt` per `~/.claude/skills/work-item-shape/references/publishing.md` § Flags the script cannot derive.
 
 ## Notes
 

@@ -17,8 +17,8 @@
 #   - Sibling reference files must stay byte-identical. ADR-0108 gives a
 #     shared reference one copy, in its owner's `references/`, read by
 #     installed path (ADR-0007, which it supersedes, duplicated them); the
-#     groups below predate it and stay byte-checked until their migration
-#     batch collapses them, and this check goes with the last group.
+#     one group below (evidence-tags) predates it and stays byte-checked until
+#     its skills are shelved, and this check goes with it.
 #   - Declared dependencies (ADR-0016): an orchestrator names the disciplines it
 #     needs in a frontmatter `requires:` line (comma-separated skill names).
 #     Each named dep must exist as a skill AND be model-invoked — prose
@@ -77,12 +77,13 @@
 #     inline link form alone, on the `.md` extension alone. Reference-style
 #     (`[text][label]`), titled (`[text](path.md "Title")`), angle-bracketed,
 #     percent-encoded, and paren-bearing targets are not extracted, so a
-#     broken one passes unflagged. Resolution is the filesystem's, so a link
-#     escaping the skill directory (`../../docs/...`) passes here while
-#     breaking once the skill is symlinked into ~/.claude/skills/, and a
-#     case-only mismatch passes on a case-insensitive volume and fails on a
-#     case-sensitive one. The sibling-group check below covers the same
-#     ground for the paths registered there.
+#     broken one passes unflagged. A link from a file under src/<skill>/
+#     that resolves outside that skill's directory (`../review-changes/...`,
+#     `../../docs/...`) FAILs even when the file is there: another skill's
+#     file is read by its installed path (ADR-0108), and a repo path breaks
+#     once the skill is symlinked into ~/.claude/skills/. Resolution is the
+#     filesystem's, so a case-only mismatch passes on a case-insensitive
+#     volume and fails on a case-sensitive one.
 #
 # scripts/lint-skills-selftest.sh runs this file against a deliberately-bad
 # fixture tree and against a clean mirror, and fails if a *covered* check stops
@@ -1320,7 +1321,7 @@ check_html_transport() {
 # links. Reading that silence as a pass is the failure this check exists to
 # prevent, one level up.
 check_reference_links() {
-  local f=$1 dir link_targets lineno target
+  local f=$1 dir link_targets lineno target skill real
   dir=$(dirname "$f")
   if ! link_targets=$(awk "$STRIP_SPANS_AWK$FENCE_AWK"'
     {
@@ -1336,6 +1337,7 @@ check_reference_links() {
     link_targets=""
   fi
 
+  case "$f" in src/*/*) skill=${f#src/}; skill=${skill%%/*} ;; *) skill="" ;; esac
   while IFS=$'\t' read -r lineno target; do
     [ -z "$target" ] && continue
     case "$target" in
@@ -1343,6 +1345,13 @@ check_reference_links() {
     esac
     if [ ! -f "$dir/${target%%#*}" ]; then
       say_fail "$f links to '$target' (line $lineno), which resolves to no file — create $dir/${target%%#*}, fix the path, or drop the link; a pointer to a missing reference silently loads nothing at runtime"
+    elif [ -n "$skill" ]; then
+      case "$target" in ../* | */../*) : ;; *) continue ;; esac
+      real=$(cd "$(dirname "$dir/${target%%#*}")" && pwd -P)
+      case "$real/" in
+        "$(pwd -P)/src/$skill/"*) : ;;
+        *) say_fail "$f links to '$target' (line $lineno), a relative path into another skill's directory — cite it by its installed path, \`~/.claude/skills/<owner>/<path>\`, in backticks; a shared file has one owner and one copy, and a reader reaches it the way every installed skill does (ADR-0108)" ;;
+      esac
     fi
   done <<< "$link_targets"
 }
@@ -2482,12 +2491,6 @@ check_evaluation_ledger_consumers() {
 
 sibling_groups=(
   "src/onboard-me/references/evidence-tags.md|src/offboard-engineer/references/evidence-tags.md|src/rebuild-contract/references/evidence-tags.md"
-  "src/to-bug/references/tracker-resolution.md|src/to-feature/references/tracker-resolution.md|src/to-story/references/tracker-resolution.md|src/to-tasks/references/tracker-resolution.md|src/review-architecture/references/tracker-resolution.md|src/chart-course/references/tracker-resolution.md|src/implement/references/tracker-resolution.md|src/ship/references/tracker-resolution.md|src/backfill-adrs/references/tracker-resolution.md"
-  "src/to-bug/references/publishing.md|src/to-feature/references/publishing.md|src/to-story/references/publishing.md|src/to-tasks/references/publishing.md|src/chart-course/references/publishing.md"
-  "src/review-changes/references/subagent-brief.md|src/review-architecture/references/subagent-brief.md|src/chart-course/references/subagent-brief.md|src/handoff/references/subagent-brief.md|src/work-item-shape/references/subagent-brief.md|src/adoption-verdict/references/subagent-brief.md|src/product-description/references/subagent-brief.md"
-  "src/review-architecture/references/finding-discipline.md|src/review-changes/references/finding-discipline.md"
-  "src/implement/references/completion-audit.md|src/handoff/references/completion-audit.md|src/committing/references/completion-audit.md"
-  "src/to-feature/references/ac-ids.md|src/to-story/references/ac-ids.md"
 )
 
 # The registry above names this repo's own paths, so under LINT_ROOT every

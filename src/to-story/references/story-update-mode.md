@@ -17,7 +17,7 @@ Parse:
 
 ## AC ID handling on revision
 
-ID mechanics — append-only, next unused integer, the removed-criteria record — are [ac-ids.md](ac-ids.md)'s. The revision-specific rule:
+ID mechanics — append-only, next unused integer, the removed-criteria record — are `~/.claude/skills/work-item-shape/references/ac-ids.md`'s. The revision-specific rule:
 
 - **Edit-in-place** keeps the same AC ID. Default for wordsmithing or tightening.
 - **Substantive change** (semantics shift, not wording): prompt the user — edit-in-place (keep ID) or remove+add per the ID mechanics.

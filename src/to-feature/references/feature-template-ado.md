@@ -14,7 +14,7 @@ Use this when publishing a Feature work item to Azure DevOps via `python3 ~/.cla
 | **State** | `System.State` | From CLAUDE.md `Default state:`, read from the block; absent → ADO's `New` (optional, never a fail-fast field) | `--field "System.State=…"` overrides it |
 | **Parent (Epic)** | (relation) | From `--parent <epic-id>` arg | `--parent <epic-id>` — linked after the create |
 
-Before first publish against a new ADO project, verify the field shape once per [publishing.md](publishing.md) § Transport safety.
+Before first publish against a new ADO project, verify the field shape once per `~/.claude/skills/work-item-shape/references/publishing.md` § Transport safety.
 
 ## Description (markdown body — the script converts it)
 
@@ -59,7 +59,7 @@ If decomposition was deferred at Feature creation, the body of `## Story Decompo
 
 ## Acceptance Criteria
 
-ADO renders Acceptance Criteria as a separate field. Author as Markdown bullets with typed, append-only IDs and the removed-criteria record per [ac-ids.md](ac-ids.md), in `<scratchpad>/acceptance.md`.
+ADO renders Acceptance Criteria as a separate field. Author as Markdown bullets with typed, append-only IDs and the removed-criteria record per `~/.claude/skills/work-item-shape/references/ac-ids.md`, in `<scratchpad>/acceptance.md`.
 
 ```markdown
 - **AC1:** Outcome 1 measurable success criterion
@@ -67,7 +67,7 @@ ADO renders Acceptance Criteria as a separate field. Author as Markdown bullets 
 - **AC4:** Outcome 4 measurable success criterion
 ```
 
-The example skips `AC3` for the reason [ac-ids.md](ac-ids.md) gives.
+The example skips `AC3` for the reason `~/.claude/skills/work-item-shape/references/ac-ids.md` gives.
 
 ## Create call
 
@@ -80,7 +80,7 @@ python3 ~/.claude/skills/work-item-shape/scripts/tracker.py create --type Featur
   --parent <epic-id> --workdir <scratchpad>
 ```
 
-Drop `--parent` when there is none; add `--debt` per [publishing.md](publishing.md) § Flags the script cannot derive. A Feature takes the block's `Feature title prefix:` where one is declared; the script picks it by type.
+Drop `--parent` when there is none; add `--debt` per `~/.claude/skills/work-item-shape/references/publishing.md` § Flags the script cannot derive. A Feature takes the block's `Feature title prefix:` where one is declared; the script picks it by type.
 
 ## Notes
 

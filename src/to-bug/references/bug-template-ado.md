@@ -18,7 +18,7 @@ The body goes to `Custom.Notes`. The target ADO org customizes its Bug type: the
 | **System Info** | `Microsoft.VSTS.TCM.SystemInfo` | Environment details (optional) | `--field "Microsoft.VSTS.TCM.SystemInfo=@sysinfo.md"` |
 | **Parent (Feature, optional)** | (relation) | From `--parent <feature-id>` arg | `--parent <feature-id>` — linked after the create |
 
-Before first publish against a new ADO project, verify the field shape once per [publishing.md](publishing.md) § Transport safety.
+Before first publish against a new ADO project, verify the field shape once per `~/.claude/skills/work-item-shape/references/publishing.md` § Transport safety.
 
 ## Body
 
@@ -45,7 +45,7 @@ python3 ~/.claude/skills/work-item-shape/scripts/tracker.py create --type Bug --
   --parent <feature-id> --workdir <scratchpad>
 ```
 
-Drop `--parent` when there is none; add `--debt` per [publishing.md](publishing.md) § Flags the script cannot derive.
+Drop `--parent` when there is none; add `--debt` per `~/.claude/skills/work-item-shape/references/publishing.md` § Flags the script cannot derive.
 
 ## Notes
 

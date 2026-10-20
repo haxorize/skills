@@ -2,7 +2,7 @@
 
 Use this body when publishing a Story-level issue to GitHub via `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py create`. The title is set on the command line; this is the body.
 
-Assemble the body from the skeleton in [story-body.md](story-body.md), inserting the two GitHub-only sections below after `## User-facing behavior` (acceptance criteria live in the body on GitHub — there is no separate field) and the `## Parent` section at the end. AC IDs follow [ac-ids.md](ac-ids.md) — typed prefixes, append-only, removed-criteria record.
+Assemble the body from the skeleton in [story-body.md](story-body.md), inserting the two GitHub-only sections below after `## User-facing behavior` (acceptance criteria live in the body on GitHub — there is no separate field) and the `## Parent` section at the end. AC IDs follow `~/.claude/skills/work-item-shape/references/ac-ids.md` — typed prefixes, append-only, removed-criteria record.
 
 ```markdown
 ## Acceptance criteria
@@ -20,7 +20,7 @@ Assemble the body from the skeleton in [story-body.md](story-body.md), inserting
 Parent: #<issue-number>
 ```
 
-The example skips `AC3` for the reason [ac-ids.md](ac-ids.md) gives. Each criterion is a single concrete check. Avoid "works correctly" — say what "correct" looks like. Omit `## Parent` if parentless.
+The example skips `AC3` for the reason `~/.claude/skills/work-item-shape/references/ac-ids.md` gives. Each criterion is a single concrete check. Avoid "works correctly" — say what "correct" looks like. Omit `## Parent` if parentless.
 
 ## Notes
 

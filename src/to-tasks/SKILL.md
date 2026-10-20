@@ -21,7 +21,7 @@ Call the Skill tool with `writing-for-humans`, then again with `work-item-shape`
 
 ### 1. Resolve tracker
 
-Resolve the tracker per [references/tracker-resolution.md](references/tracker-resolution.md); the tracker script is `work-item-shape`'s, run as `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py`.
+Resolve the tracker per `~/.claude/skills/work-item-shape/references/tracker-resolution.md`; the tracker script is `work-item-shape`'s, run as `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py`.
 
 ### 2. Resolve parent Story
 
@@ -89,7 +89,7 @@ Then run the **Cold-reader pass** from the `work-item-shape` discipline: the col
 
 ### 8. Publish in dependency order
 
-The **Publish gate** in [references/publishing.md](references/publishing.md) holds first.
+The **Publish gate** in `~/.claude/skills/work-item-shape/references/publishing.md` holds first.
 
 Publish blockers first so each blocker's real work-item ID is available when the dependent Task links or references it.
 
@@ -97,14 +97,14 @@ For each Task, use the appropriate template:
 - GitHub: [references/task-template-github.md](references/task-template-github.md)
 - ADO: [references/task-template-ado.md](references/task-template-ado.md)
 
-Publish the first Task alone per [references/publishing.md](references/publishing.md) `## First item of a batch alone`.
+Publish the first Task alone per `~/.claude/skills/work-item-shape/references/publishing.md` `## First item of a batch alone`.
 
-- **GitHub:** `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py create --type Task --title '<drafted title>' --body <scratchpad>/<draft>.md --parent <story-number> --workdir <scratchpad>`, adding `--debt` per [references/publishing.md](references/publishing.md) § Flags the script cannot derive. The script applies the default labels and links each issue as a native sub-issue of the Story; the template's `Parent: #N` body line stays, since `/implement`'s ticket load reads it.
+- **GitHub:** `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py create --type Task --title '<drafted title>' --body <scratchpad>/<draft>.md --parent <story-number> --workdir <scratchpad>`, adding `--debt` per `~/.claude/skills/work-item-shape/references/publishing.md` § Flags the script cannot derive. The script applies the default labels and links each issue as a native sub-issue of the Story; the template's `Parent: #N` body line stays, since `/implement`'s ticket load reads it.
 - **ADO:** publish with the create call in [references/task-template-ado.md](references/task-template-ado.md); the script links the parent Story. Then, per created Task:
   - **Blockers:** materialize each in-project blocker as a built-in Predecessor relation: `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py block --blocked <task-id> --blocker <blocker-id>`. A just-created Task has no relations — add directly. Only when the Task already existed (a re-run or `--reconcile`) read `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py show <task-id>` first and skip the add if a Predecessor to that blocker is already present.
   - **On relation failure:** permission denied — surface immediately; any other error — surface with both work-item IDs for manual linking.
 
-Missing required CLAUDE.md fields, writes blocked on auth or policy (don't loop on auth), and **transport safety** on every create and retry all follow [references/publishing.md](references/publishing.md) — `## When a required field is missing`, `## When the write is blocked`, `## Transport safety`.
+Missing required CLAUDE.md fields, writes blocked on auth or policy (don't loop on auth), and **transport safety** on every create and retry all follow `~/.claude/skills/work-item-shape/references/publishing.md` — `## When a required field is missing`, `## When the write is blocked`, `## Transport safety`.
 
 On publish, run `work-item-shape`'s **Naming drift** rule against sibling Tasks under the same parent.
 
