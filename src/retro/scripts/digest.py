@@ -71,15 +71,21 @@ message, keeping session ids, counts and tool names; a skill or hook name prints
 when it is on the roster (--skills, this checkout's global/hooks/, a hook event name),
 and as `other` otherwise, so the work machine can carry the file.
 
+Commands are split, and vendor token shapes masked, by this checkout's
+global/hooks/hook-lib.py, the hooks' own splitter and table; without it nothing is read.
+
 Exit: 0 a digest; 2 a digest marked PARTIAL, naming each source not fully read (a line
 that would not parse, a source absent, a helper script that failed or was not found);
-3 usage error; 4 the script itself crashed. A missing source is never read as zero.
+3 usage error; 4 the script itself crashed, or hook-lib.py would not load. A missing
+source is never read as zero.
 Past 12 KB the digest re-renders at one pointer per count and says so in its header.
 """
 import ast
 import collections
 import datetime
+import functools
 import glob
+import importlib.util
 import json
 import os
 import re
@@ -133,24 +139,49 @@ PASTED = re.compile(r"<pasted_content\b.*?(</pasted_content>|\Z)", re.S)
 RESTORE = re.compile(r"\bgit\s+(checkout\s+--|restore)\b")
 CONCEDE = re.compile(r"^\W*(you'?re (absolutely |quite )?right|my (mistake|bad|apologies)|good catch|i apologi[sz]e|sorry[,.!]? (i|you|that)|i was wrong)\b", re.I)
 COMMAND_NAME = re.compile(r"<command-name>/?([\w:.-]+)</command-name>")
-# Secret shapes. global/hooks/repeat-failure.py's SECRETS masks the same vendor
-# prefixes; a shape added to one is added to the other.
-SECRET = re.compile(
-    r"(?i:\b(?:sk|pk|rk)-[a-z0-9_-]{16,}|\b(?:sk|pk|rk)_(?:live|test)_[a-z0-9]{16,}"
-    r"|\b(?:ghp|gho|ghu|ghs|ghr)_[a-z0-9]{20,}|\bgithub_pat_\w{20,}|\bglpat-[\w-]{16,}|\bnpm_[a-z0-9]{30,}"
-    r"|\bxox[abposr]-[\w-]{10,}|\bbearer\s+[\w.~+/=-]{12,}|\bbasic\s+(?![a-z]+\b)[\w+/=]{8,}"
-    r"|\bauthorization:\s*\S+(\s+\S+)?|[?&]sig=[\w%/+=]{20,})"
-    r"|\b(?:AKIA|ASIA)[0-9A-Z]{16}\b|\bAIza[\w-]{30,}|\beyJ[\w-]{8,}\.[\w-]{8,}\.[\w-]{8,}"
+# The command splitter and the vendor token shapes are global/hooks/hook-lib.py's,
+# loaded by load_hook_lib() before anything is read: program_segments, which the
+# PreToolUse hooks and repeat-failure.py split commands with, and VENDOR_SECRET,
+# which repeat-failure.py masks with too. A digest that cannot mask never prints.
+HOOK_LIB = os.path.join(REPO, "global", "hooks", "hook-lib.py")
+hook_lib = None
+SECRET = None
+# The digest's own secret shapes, after the vendor ones: auth headers, URL
+# credentials, a hex run, and the mixed-case runs a path segment never is.
+OWN_SECRET = (
+    r"|(?i:\bbearer\s+[\w.~+/=-]{12,}|\bbasic\s+(?![a-z]+\b)[\w+/=]{8,}|\bauthorization:\s*\S+(\s+\S+)?)"
     r"|(?<=://)[^/\s:@]+:[^/\s@]+(?=@)"   # the user:password of a URL
     r"|\b[a-fA-F0-9]{40,}\b"
     r"|(?<![\w/.-])(?=[A-Za-z0-9+/]*\d)(?=[A-Za-z0-9+/]*[A-Z])(?=[A-Za-z0-9+/]*[a-z])[A-Za-z0-9+/]{40}(?![\w/.-])"   # a 40-character key with a slash in it
     r"|(?<![\w/.-])(?=[\w+-]*\d)(?=[\w+-]*[A-Z])(?=[\w+-]*[a-z])[\w+-]{32,}={0,2}")   # mixed case and a digit: a path segment is neither
+
 KEYVAL = re.compile(r"(?i)(\b[\w-]*?(?:password|passwd|pwd|secret|token|api[_-]?key|access[_-]?key)\s*[:=]\s*|--[\w-]*(?:password|passwd|secret|token|api-key)\s+)\S+")
-CD_PREFIX = re.compile(r"^\s*cd\s+\S+\s*(;|&&)\s*")
 HOOK_EVENT = re.compile(r"^(PreToolUse|PostToolUse|PostToolUseFailure|UserPromptSubmit|Stop|SubagentStop|SessionStart|PreCompact|Notification)(:\w+)?$")
 BASELINE = ("surface.bytes", "surface.hook_context.bytes.per_session", "hook_blocks.per_session")   # the report's standing control rows
 TURN_WINDOW = 3        # human turns after a skill loads in which a correction is charged to it
 REPEAT_SESSIONS = 3    # sessions a prompt or command must recur in to be listed
+
+# One human turn's events, in order, as claim_turns reads them: a tool call, a text
+# block the agent wrote (its transcript line, for the pointer), a tool result.
+ToolCall = collections.namedtuple("ToolCall", "name command id")
+Text = collections.namedtuple("Text", "text line")
+Result = collections.namedtuple("Result", "id errored")
+# What the sources besides the transcripts gave, each None where it was not read.
+Sources = collections.namedtuple("Sources", "meta_n facet_n skill_rows git_reverts surface memory history")
+
+
+def load_hook_lib():
+    """hook-lib.py from this checkout, and SECRET built over its vendor shapes;
+    exits 4 when it is missing or will not load, since nothing can be masked."""
+    global hook_lib, SECRET
+    try:
+        spec = importlib.util.spec_from_file_location("hook_lib", HOOK_LIB)
+        hook_lib = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(hook_lib)
+        SECRET = re.compile(hook_lib.VENDOR_SECRET.pattern + OWN_SECRET)
+    except Exception as ex:   # missing, unreadable, or not the hook-lib.py this reads
+        sys.stderr.write("digest.py: %s did not load (%s); nothing masked, nothing read\n" % (HOOK_LIB, type(ex).__name__))
+        sys.exit(EXIT_CRASH)
 
 
 def mask(text):
@@ -182,17 +213,28 @@ def pointer(sid, line):
     return "%s:%d" % (sid[:8], line)
 
 
+def segments(cmd):
+    """The program segments a Bash command runs, by hook-lib.py's splitter (a `cd`,
+    an assignment and a wrapper peeled); [] on a tokeniser error."""
+    try:
+        return [s for s in hook_lib.program_segments(cmd) if s]
+    except hook_lib.TokeniseError:
+        return []
+
+
+@functools.lru_cache(maxsize=None)
 def program(cmd):
-    """The program a Bash command runs, past a leading `cd DIR;` or `cd DIR &&` and VAR=value."""
-    c = CD_PREFIX.sub("", cmd)
-    words = [w for w in c.split() if not re.match(r"^[A-Za-z_]\w*=", w)]
-    return os.path.basename(words[0]) if words else "?"
+    """The first program a Bash command runs."""
+    segs = segments(cmd)
+    return os.path.basename(segs[0][0]) if segs else "?"
 
 
+@functools.lru_cache(maxsize=None)
 def shape(cmd):
-    """A Bash command with its digits, quoted strings and hex runs flattened."""
-    c = CD_PREFIX.sub("", cmd)
-    c = re.sub(r"'[^']*'|\"[^\"]*\"", "Q", c)
+    """A Bash command's segments, a word holding a space (a quoted string) as Q, and
+    digits and hex runs flattened; the text itself where it will not tokenise."""
+    segs = segments(cmd)
+    c = " ; ".join(" ".join("Q" if re.search(r"\s", w) else w for w in s) for s in segs) if segs else cmd
     c = re.sub(r"\b[0-9a-f]{7,}\b|\d+", "N", c)
     return " ".join(c.split())
 
@@ -250,10 +292,10 @@ def parse_args(argv):
 
 
 class Digest:
-    def __init__(self, a):
-        self.a = a
+    def __init__(self, args):
+        self.args = args
         self.partial = []
-        self.c = collections.Counter()
+        self.counts = collections.Counter()
         self.ptr = collections.defaultdict(list)
         self.quotes = collections.defaultdict(list)
         self.hooks = collections.Counter()
@@ -284,7 +326,7 @@ class Digest:
         self.caught = set()
         self.shapes = collections.defaultdict(set)
         self.shape_n = collections.Counter()
-        self.skill_roster = set(os.listdir(a["skills"])) if os.path.isdir(a["skills"]) else set()
+        self.skill_roster = set(os.listdir(args["skills"])) if os.path.isdir(args["skills"]) else set()
         self.hook_roster = {os.path.splitext(f)[0] for f in os.listdir(os.path.join(REPO, "global", "hooks"))
                             if f.endswith((".sh", ".py"))} if os.path.isdir(os.path.join(REPO, "global", "hooks")) else set()
 
@@ -297,7 +339,7 @@ class Digest:
     def label(self, name, roster):
         """The one counts-only seam for a skill or hook name: a name off the roster is
         transcript text, and the carried file holds it as `other`."""
-        if not self.a["counts_only"] or name in roster or HOOK_EVENT.match(name):
+        if not self.args["counts_only"] or name in roster or HOOK_EVENT.match(name):
             return name
         return "other"
 
@@ -307,36 +349,36 @@ class Digest:
         self.skill_loads[name] += 1
 
     def point(self, key, sid, line, quote=None):
-        self.c[key] += 1
-        if len(self.ptr[key]) < self.a["max_pointers"]:
+        self.counts[key] += 1
+        if len(self.ptr[key]) < self.args["max_pointers"]:
             self.ptr[key].append(pointer(sid, line))
-            if quote is not None and not self.a["counts_only"]:
+            if quote is not None and not self.args["counts_only"]:
                 self.quotes[key].append(mask(quote)[:120])
 
     # -- transcripts ------------------------------------------------------------
     def files(self):
-        root = self.a["projects"]
+        root = self.args["projects"]
         if not os.path.isdir(root):
             self.partial.append("projects directory absent")
             return []
         mains = {}
         for f in glob.glob(os.path.join(root, "*", "*.jsonl")):
             mains[os.path.basename(f)[:-6]] = f
-        if self.a["session"] is not None:
-            hits = sorted(s for s in mains if s.startswith(self.a["session"]))
+        if self.args["session"] is not None:
+            hits = sorted(s for s in mains if s.startswith(self.args["session"]))
             if len(hits) != 1:
                 usage("--session matches %d sessions%s" % (len(hits), (": " + ", ".join(hits[:10])) if hits else ""))
-            self.a["session"] = hits[0]
+            self.args["session"] = hits[0]
         keep = []
         for sid, f in mains.items():
-            if sid == self.a["exclude"]:
+            if sid == self.args["exclude"]:
                 continue
-            if self.a["session"] is not None:
-                if sid != self.a["session"]:
+            if self.args["session"] is not None:
+                if sid != self.args["session"]:
                     continue
             else:
                 try:
-                    if os.path.getmtime(f) < self.a["since_ts"]:   # a helper follows its main session in or out
+                    if os.path.getmtime(f) < self.args["since_ts"]:   # a helper follows its main session in or out
                         continue
                 except OSError:
                     continue
@@ -426,7 +468,7 @@ class Digest:
                     for ld in loads:   # each load is charged at most once, inside its window
                         if hit:
                             self.skill_corr[ld[0]] += 1
-                            if len(self.skill_ptr[ld[0]]) < self.a["max_pointers"]:
+                            if len(self.skill_ptr[ld[0]]) < self.args["max_pointers"]:
                                 self.skill_ptr[ld[0]].append(pointer(sid, n))
                             ld[1] = 0
                         else:
@@ -453,8 +495,8 @@ class Digest:
                     seen_msg.add(mid)
                     ctx = sum(u.get(k, 0) or 0 for k in ("input_tokens", "cache_read_input_tokens", "cache_creation_input_tokens"))
                     tok += ctx + (u.get("output_tokens", 0) or 0)
-                    self.c["tokens_cache_read"] += u.get("cache_read_input_tokens", 0) or 0
-                    self.c["tokens_context"] += ctx
+                    self.counts["tokens_cache_read"] += u.get("cache_read_input_tokens", 0) or 0
+                    self.counts["tokens_context"] += ctx
                     self.peak[sid] = max(self.peak.get(sid, 0), ctx if not helper else 0)
                     self.big_turns.append((ctx, sid, n))
                 for b in m.get("content") if isinstance(m.get("content"), list) else []:
@@ -466,7 +508,7 @@ class Digest:
                         self.tools[name] += 1
                         cmds[b.get("id")] = (name, inp)
                         if cur is not None:
-                            cur.append(("tool", name, inp.get("command", "") if name == "Bash" else "", b.get("id")))
+                            cur.append(ToolCall(name, inp.get("command", "") if name == "Bash" else "", b.get("id")))
                         if name == "Skill" and isinstance(inp.get("skill"), str) and not helper:
                             self.load(inp["skill"], loads)
                         if name == "Read" and isinstance(inp.get("file_path"), str):
@@ -489,7 +531,7 @@ class Digest:
                             self.point("concessions", sid, n)
                             self.caught.add(sid)
                         if cur is not None:
-                            cur.append(("text", b["text"], n))
+                            cur.append(Text(b["text"], n))
         self.sess_tokens[(sid, helper)] = tok
         self.claim_turns(turns, sid, helper)
 
@@ -549,7 +591,7 @@ class Digest:
             self.bash_bytes[program(inp["command"])] += len(c.encode("utf-8", "replace"))
         err = b.get("is_error") is True
         if cur is not None:
-            cur.append(("res", b.get("tool_use_id"), err))
+            cur.append(Result(b.get("tool_use_id"), err))
         if not err:
             return
         if flat_quotes(c.lstrip().lower()).startswith(DENIAL_PREFIX):
@@ -564,19 +606,19 @@ class Digest:
 
     def claim_turns(self, turns, sid, helper):
         side = "helper" if helper else "main"
-        for ev in turns:
-            texts = [(j, e) for j, e in enumerate(ev) if e[0] == "text"]
+        for events in turns:
+            texts = [(j, e) for j, e in enumerate(events) if isinstance(e, Text)]
             if not texts:
                 continue
             j, last = texts[-1]
-            if not CLAIM.search(last[1]):
+            if not CLAIM.search(last.text):
                 continue
-            before = ev[:j]
-            lastedit = max([k for k, e in enumerate(before) if e[0] == "tool" and e[1] in EDIT_TOOLS], default=-1)
-            errs = {e[1] for e in before if e[0] == "res" and e[2]}
-            checks = [k for k, e in enumerate(before) if e[0] == "tool" and e[1] == "Bash" and CHECK.search(e[2] or "")]
-            after = [k for k in checks if k > lastedit and before[k][3] not in errs]
-            if MARK.search(last[1]):
+            before = events[:j]
+            lastedit = max([k for k, e in enumerate(before) if isinstance(e, ToolCall) and e.name in EDIT_TOOLS], default=-1)
+            errs = {e.id for e in before if isinstance(e, Result) and e.errored}
+            checks = [k for k, e in enumerate(before) if isinstance(e, ToolCall) and e.name == "Bash" and CHECK.search(e.command or "")]
+            after = [k for k in checks if k > lastedit and before[k].id not in errs]
+            if MARK.search(last.text):
                 cls = "marked"
             elif after:
                 cls = "check-after-last-edit"
@@ -588,11 +630,11 @@ class Digest:
                 cls = "edit-no-check"
             self.claims[side][cls] += 1
             if cls == "edit-no-check":
-                self.point("claims.%s.edit_no_check" % side, sid, last[2])
+                self.point("claims.%s.edit_no_check" % side, sid, last.line)
 
     # -- usage data -------------------------------------------------------------
     def usage_data(self):
-        root = self.a["usage_data"]
+        root = self.args["usage_data"]
         meta_n = facet_n = 0
         self.friction = collections.Counter()
         self.facet_flagged, self.facet_detail = set(), []
@@ -618,7 +660,7 @@ class Digest:
                     for k in ("bash_would_prompt_count", "git_commits", "git_pushes", "user_interruptions"):
                         v = d.get(k)
                         if isinstance(v, int):
-                            self.c["meta." + k] += v
+                            self.counts["meta." + k] += v
                 else:
                     facet_n += 1
                     fc = d.get("friction_counts")
@@ -645,7 +687,7 @@ class Digest:
     def history(self):
         """Prompts of 25 or more characters, not slash commands, grouped by their first 50
         normalised characters; a group typed in REPEAT_SESSIONS or more sessions is listed."""
-        p = self.a["history"]
+        p = self.args["history"]
         if not os.path.isfile(p):
             self.partial.append("history file absent")
             return None
@@ -667,12 +709,12 @@ class Digest:
                 if not isinstance(h, dict) or not isinstance(h.get("display"), str):
                     continue
                 sid = h.get("sessionId") or "%s@%s" % (h.get("project"), str(h.get("timestamp"))[:5])
-                if self.a["session"] is not None:
-                    if sid != self.a["session"]:
+                if self.args["session"] is not None:
+                    if sid != self.args["session"]:
                         continue
-                elif not isinstance(h.get("timestamp"), (int, float)) or h["timestamp"] / 1000 < self.a["since_ts"]:
+                elif not isinstance(h.get("timestamp"), (int, float)) or h["timestamp"] / 1000 < self.args["since_ts"]:
                     continue
-                if sid == self.a["exclude"]:
+                if sid == self.args["exclude"]:
                     continue
                 t = h["display"].strip()
                 if len(t) < 25 or t.startswith("/"):
@@ -724,16 +766,16 @@ class Digest:
         return (idx, orphans, dead, gone) if found else None
 
     def skill_fit(self):   # None in --session mode, where skill-usage.sh has no session scope
-        if self.a["since"] is None:
+        if self.args["since"] is None:
             return None
         script = os.path.join(REPO, "scripts", "skill-usage.sh")
         if not os.path.isfile(script):
             self.partial.append("skill-usage.sh not found beside this checkout")
             return None
-        cmd = ["bash", script, "--since", self.a["since"], "--skills-from", os.path.join(REPO, "src"), "--json",
-               "--projects", self.a["projects"], "--history", self.a["history"]]
-        if self.a["exclude"]:
-            cmd += ["--exclude-session", self.a["exclude"]]
+        cmd = ["bash", script, "--since", self.args["since"], "--skills-from", os.path.join(REPO, "src"), "--json",
+               "--projects", self.args["projects"], "--history", self.args["history"]]
+        if self.args["exclude"]:
+            cmd += ["--exclude-session", self.args["exclude"]]
         try:
             r = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
             rows = json.loads(r.stdout)
@@ -752,7 +794,7 @@ class Digest:
         trusted: the fsmonitor, hooks, signature check (which runs gpg.program) and
         pager are switched off for every call, and log prints no diff, so no textconv
         or external diff runs."""
-        if not self.a["since"]:
+        if not self.args["since"]:
             return None
         safe = ["git", "-c", "core.fsmonitor=false", "-c", "core.hooksPath=/dev/null", "-c", "log.showSignature=false",
                 "-c", "core.pager=cat", "--no-pager"]
@@ -768,7 +810,7 @@ class Digest:
                 tops.add(r.stdout.strip())
         for top in sorted(tops):
             try:
-                r = subprocess.run(safe + ["-C", top, "log", "--no-show-signature", "--since=%sT00:00" % self.a["since"],
+                r = subprocess.run(safe + ["-C", top, "log", "--no-show-signature", "--since=%sT00:00" % self.args["since"],
                                            "--format=%H %s"], capture_output=True, text=True, timeout=60)
             except (OSError, subprocess.SubprocessError):
                 r = None
@@ -800,26 +842,57 @@ class Digest:
         for f, sid, helper in self._files:
             self.read_file(f, sid, helper)
         meta_n, facet_n = self.usage_data()
-        rows = self.skill_fit()
-        gitr = self.git()
-        surf = self.surface() if self.a["surface"] else None
-        mem = self.memory()
-        hist = self.history()
-        self.sources = (meta_n, facet_n, rows, gitr, surf, mem, hist)
-        return self.render(*self.sources)
+        self.sources = Sources(meta_n, facet_n, self.skill_fit(), self.git(),
+                               self.surface() if self.args["surface"] else None, self.memory(), self.history())
+        self.compute()
+        return self.render()
+
+    def compute(self):
+        """Every count the render prints and metrics() reads, set once from what the
+        sources gave; render() and metrics() only read it."""
+        src = self.sources
+        self.counts["skill_corrections"] = sum(self.skill_corr.values())
+        self.missed = sorted(self.facet_flagged & self.sessions - self.caught)
+        self.counts["facet_missed"] = len(self.missed)
+        if src.history is not None:
+            self.counts["history_repeats"] = len(src.history)
+        self.repeated_shapes = sorted(((len(v), self.shape_n[k], k) for k, v in self.shapes.items() if len(v) >= REPEAT_SESSIONS), reverse=True)
+        self.counts["bash_shapes_repeated"] = len(self.repeated_shapes)
+        self.counts["hook_blocks"] = sum(self.hooks.values())
+        for name in self.hooks:
+            self.counts["hook.%s.sessions" % name] = len(self.hook_sessions[name])
+        self.counts["surface.hook_context.bytes"] = sum(self.hookctx.values())
+        self.counts["result_bytes.total"] = sum(self.result_bytes.values())
+        self.counts["result_bytes.bash"] = self.result_bytes["Bash"]
+        self.tokens_main = sum(v for (s, h), v in self.sess_tokens.items() if not h)
+        self.tokens_helper = sum(v for (s, h), v in self.sess_tokens.items() if h)
+        self.counts["tokens.total"] = self.tokens_main + self.tokens_helper
+        self.reread = [(key, k) for key, k in self.reads.items() if k > 2]
+        self.counts["files_read_over_twice"] = len(self.reread)
+        if src.skill_rows is not None:
+            self.unused_skills = sorted(r["skill"] for r in src.skill_rows if r.get("typed") == 0 and r.get("loaded") == 0)
+            self.loaded_untyped = sorted(r["skill"] for r in src.skill_rows if r.get("typed") == 0 and (r.get("loaded") or 0) > 0)
+            self.counts["skills_unused"] = len(self.unused_skills)
+        if src.git_reverts is not None:
+            self.counts["reverts"] = src.git_reverts[0]
+        if src.surface is not None:
+            self.counts["surface.bytes"] = src.surface
+        if src.memory is not None:
+            idx, orphans, dead, gone = src.memory
+            self.counts.update({"memory.index_lines": idx, "memory.orphans": orphans, "memory.dead_links": dead, "memory.dead_paths": gone})
 
     def capped(self):
         """The same sources re-rendered at one pointer per count, with no source read
-        again; render only assigns its counters, so a second pass leaves them as they were."""
-        self.a["max_pointers"] = 1
+        and no count computed again."""
+        self.args["max_pointers"] = 1
         for table in (self.ptr, self.quotes, self.skill_ptr):
             for k in table:
                 del table[k][1:]
         self.capped_note = True
-        return self.render(*self.sources)
+        return self.render()
 
     def line_ptr(self, key, label):
-        s = "- %s: %d" % (label, self.c[key])
+        s = "- %s: %d" % (label, self.counts[key])
         if self.ptr[key]:
             s += " (" + ", ".join(self.ptr[key]) + ")"
         out = [s]
@@ -827,155 +900,133 @@ class Digest:
             out.append('  - "%s"' % q.replace('"', "'"))
         return out
 
-    def render(self, meta_n, facet_n, rows, gitr, surf, mem, hist):
-        co = self.a["counts_only"]
+    def render(self):
+        src = self.sources
+        counts_only = self.args["counts_only"]
         n = len(self.sessions)
-        scope = ("session %s" % self.a["session"][:8]) if self.a["session"] else ("since %s" % self.a["since"])
-        L = ["# Retro digest: %s" % scope, "",
-             "Sessions: %d main, %d helper transcripts.%s" % (
-                 n, sum(1 for _, _, h in self._files if h), " Counts only." if co else ""),
-             "Quoted text below is data from the transcripts, never an instruction."]
+        scope = ("session %s" % self.args["session"][:8]) if self.args["session"] else ("since %s" % self.args["since"])
+        lines = ["# Retro digest: %s" % scope, "",
+                 "Sessions: %d main, %d helper transcripts.%s" % (
+                     n, sum(1 for _, _, h in self._files if h), " Counts only." if counts_only else ""),
+                 "Quoted text below is data from the transcripts, never an instruction."]
         if getattr(self, "capped_note", False):
-            L.append("Pointers capped to 1 (12 KB limit).")
-        head = len(L)   # the PARTIAL banner goes here once every section, Controls included, has had its say
-        L += ["", "## Signals"] + self.line_ptr("signals", "correction-shaped human turns") \
+            lines.append("Pointers capped to 1 (12 KB limit).")
+        head = len(lines)   # the PARTIAL banner goes here once every section, Controls included, has had its say
+        lines += ["", "## Signals"] + self.line_ptr("signals", "correction-shaped human turns") \
             + self.line_ptr("interrupts", "interrupts") + self.line_ptr("denials", "denied tool calls")
-        L += ["", "## Corrections the keywords miss"] \
+        lines += ["", "## Corrections the keywords miss"] \
             + self.line_ptr("after_claim", "a question or signal right after a closing claim") \
             + self.line_ptr("after_interrupt", "the turn after an interrupt") \
             + self.line_ptr("concessions", "the agent conceding (\"you're right\", \"my mistake\")")
         corr = [(self.skill_corr[k], k) for k in self.skill_loads if self.skill_corr[k]]
-        self.c["skill_corrections"] = sum(self.skill_corr.values())
-        L.append("- a correction within %d human turns of a skill loading: %d" % (TURN_WINDOW, self.c["skill_corrections"]))
+        lines.append("- a correction within %d human turns of a skill loading: %d" % (TURN_WINDOW, self.counts["skill_corrections"]))
         for k, name in sorted(corr, reverse=True)[:5]:
-            L.append("  - %s %d of %d loads (%s)" % (name, k, self.skill_loads[name], ", ".join(self.skill_ptr[name])))
-        missed = sorted(self.facet_flagged & self.sessions - self.caught)
-        self.c["facet_missed"] = len(missed)
-        L.append("- sessions the facets flag for friction that none of the above caught: %d of %d flagged%s" % (
-            len(missed), len(self.facet_flagged & self.sessions),
-            (" (" + ", ".join(s[:8] for s in missed[:self.a["max_pointers"]]) + ")") if missed else ""))
-        if not co:
-            for s, det in [x for x in self.facet_detail if x[0] in missed][:self.a["max_pointers"]]:
-                L.append('  - %s: "%s"' % (s[:8], quote(det)))
-        L += ["", "## Repeats"]
-        if hist is None:
-            L.append("- prompts retyped: not measured")
+            lines.append("  - %s %d of %d loads (%s)" % (name, k, self.skill_loads[name], ", ".join(self.skill_ptr[name])))
+        lines.append("- sessions the facets flag for friction that none of the above caught: %d of %d flagged%s" % (
+            len(self.missed), len(self.facet_flagged & self.sessions),
+            (" (" + ", ".join(s[:8] for s in self.missed[:self.args["max_pointers"]]) + ")") if self.missed else ""))
+        if not counts_only:
+            for s, det in [x for x in self.facet_detail if x[0] in self.missed][:self.args["max_pointers"]]:
+                lines.append('  - %s: "%s"' % (s[:8], quote(det)))
+        lines += ["", "## Repeats"]
+        if src.history is None:
+            lines.append("- prompts retyped: not measured")
         else:
-            self.c["history_repeats"] = len(hist)
-            L.append("- prompts retyped in %d or more sessions: %d" % (REPEAT_SESSIONS, len(hist)))
-            if not co:
-                for k, t in hist[:5]:
-                    L.append('  - %d sessions: "%s"' % (k, quote(t)))
-        rc = sorted(((len(v), self.shape_n[k], k) for k, v in self.shapes.items() if len(v) >= REPEAT_SESSIONS), reverse=True)
-        self.c["bash_shapes_repeated"] = len(rc)
-        L.append("- Bash commands over 80 characters rerun in %d or more sessions: %d" % (REPEAT_SESSIONS, len(rc)))
-        if not co:
-            for ns, k, sh in rc[:5]:
-                L.append("  - %d calls in %d sessions: `%s`" % (k, ns, sh[:120].replace("`", "'")))
-        L += ["", "## Hooks"]
-        self.c["hook_blocks"] = sum(self.hooks.values())
-        for name in self.hooks:
-            self.c["hook.%s.sessions" % name] = len(self.hook_sessions[name])
+            lines.append("- prompts retyped in %d or more sessions: %d" % (REPEAT_SESSIONS, len(src.history)))
+            if not counts_only:
+                for k, t in src.history[:5]:
+                    lines.append('  - %d sessions: "%s"' % (k, quote(t)))
+        lines.append("- Bash commands over 80 characters rerun in %d or more sessions: %d" % (REPEAT_SESSIONS, len(self.repeated_shapes)))
+        if not counts_only:
+            for ns, k, sh in self.repeated_shapes[:5]:
+                lines.append("  - %d calls in %d sessions: `%s`" % (k, ns, sh[:120].replace("`", "'")))
+        lines += ["", "## Hooks"]
         for name, k in self.hooks.most_common(8):
             rep = sum(1 for v in self.hook_sessions[name].values() if v > 1)
-            L += self.line_ptr("hook." + name, "%s blocked (%d sessions, %d with a repeat)" % (name, len(self.hook_sessions[name]), rep))
+            lines += self.line_ptr("hook." + name, "%s blocked (%d sessions, %d with a repeat)" % (name, len(self.hook_sessions[name]), rep))
         if not self.hooks:
-            L.append("- blocks: none")
-        if not co:
+            lines.append("- blocks: none")
+        if not counts_only:
             for (name, msg), k in self.hook_msgs.most_common(5):
-                L.append('  - %d x %s: "%s"' % (k, name, msg.replace('"', "'")))
+                lines.append('  - %d x %s: "%s"' % (k, name, msg.replace('"', "'")))
         if self.hook_runs:
-            L.append("- runs are a floor: Claude Code records a run for a Stop hook and for a hook that printed, not for every run")
+            lines.append("- runs are a floor: Claude Code records a run for a Stop hook and for a hook that printed, not for every run")
         for name, k in self.hook_runs.most_common(8):
-            L.append("- %s ran %d+ times in %d+ sessions, %d+ ms in all, blocked %d" % (
+            lines.append("- %s ran %d+ times in %d+ sessions, %d+ ms in all, blocked %d" % (
                 name, k, len(self.hook_run_sessions[name]), self.hook_ms[name], self.hooks.get(name, 0)))
-        self.c["surface.hook_context.bytes"] = sum(self.hookctx.values())
-        L.append("- bytes hooks added to context: %d" % self.c["surface.hook_context.bytes"])
+        lines.append("- bytes hooks added to context: %d" % self.counts["surface.hook_context.bytes"])
         for name, b in self.hookctx.most_common(5):
-            L.append("  - %s %d bytes over %d events" % (name, b, self.hookctx_n[name]))
-        L += ["", "## Tool economy",
-              "- calls: " + ", ".join("%s %d" % kv for kv in self.tools.most_common(8)),
-              "- Bash:Read %d:%d" % (self.tools["Bash"], self.tools["Read"])]
-        tot_rb = sum(self.result_bytes.values())
-        self.c["result_bytes.total"] = tot_rb
-        self.c["result_bytes.bash"] = self.result_bytes["Bash"]
-        L.append("- result bytes: %d; " % tot_rb + ", ".join(
+            lines.append("  - %s %d bytes over %d events" % (name, b, self.hookctx_n[name]))
+        lines += ["", "## Tool economy",
+                  "- calls: " + ", ".join("%s %d" % kv for kv in self.tools.most_common(8)),
+                  "- Bash:Read %d:%d" % (self.tools["Bash"], self.tools["Read"])]
+        tot_rb = self.counts["result_bytes.total"]
+        lines.append("- result bytes: %d; " % tot_rb + ", ".join(
             "%s %d%%" % (t, 100 * b // tot_rb) for t, b in self.result_bytes.most_common(5)) if tot_rb else "- result bytes: 0")
-        if not co and self.bash_bytes:
-            L.append("  - Bash by program: " + ", ".join("%s %d" % kv for kv in self.bash_bytes.most_common(3)))
-        L += self.line_ptr("bash_retries", "a Bash command repeated within 3 calls")
-        if not co and self.retry_heads:
-            L.append("  - by program: " + ", ".join("%s %d" % kv for kv in self.retry_heads.most_common(5)))
-        L += self.line_ptr("tool_errors", "tool errors (not hooks, not denials)")
+        if not counts_only and self.bash_bytes:
+            lines.append("  - Bash by program: " + ", ".join("%s %d" % kv for kv in self.bash_bytes.most_common(3)))
+        lines += self.line_ptr("bash_retries", "a Bash command repeated within 3 calls")
+        if not counts_only and self.retry_heads:
+            lines.append("  - by program: " + ", ".join("%s %d" % kv for kv in self.retry_heads.most_common(5)))
+        lines += self.line_ptr("tool_errors", "tool errors (not hooks, not denials)")
         if self.err_cats:
-            L.append("  - by tool: " + ", ".join("%s %d" % kv for kv in self.err_cats.most_common(5)))
-        L += self.line_ptr("restores", "git checkout -- / git restore calls")
-        tot_main = sum(v for (s, h), v in self.sess_tokens.items() if not h)
-        tot_help = sum(v for (s, h), v in self.sess_tokens.items() if h)
-        self.c["tokens.total"] = tot_main + tot_help
-        share = (100 * self.c["tokens_cache_read"] // self.c["tokens_context"]) if self.c["tokens_context"] else 0
-        L += ["", "## Token economy",
-              "- tokens: %d main, %d helpers; cache-read share %d%%" % (tot_main, tot_help, share),
-              "- peak context per session, top 5: " + ", ".join(
-                  "%s %d" % (s[:8], v) for s, v in sorted(self.peak.items(), key=lambda kv: -kv[1])[:5])]
-        L.append("- largest turns: " + ", ".join("%s:%d %d" % (s[:8], ln, ctx) for ctx, s, ln in sorted(self.big_turns, reverse=True)[:5]))
-        rr = [(key, k) for key, k in self.reads.items() if k > 2]
-        self.c["files_read_over_twice"] = len(rr)
-        L.append("- files Read more than twice in one transcript: %d" % len(rr))
-        if not co:
-            for (s, h, p), k in sorted(rr, key=lambda x: -x[1])[:5]:
-                L.append("  - %d x %s (%s%s)" % (k, p, s[:8], " helper" if h else ""))
-        L += self.line_ptr("pastes_over_5000", "pastes over 5,000 characters")
-        L += self.line_ptr("compactions", "compactions (%s)" % (", ".join("%s %d" % kv for kv in sorted(self.compact_trig.items())) or "none"))
-        L += ["", "## Done claims"]
+            lines.append("  - by tool: " + ", ".join("%s %d" % kv for kv in self.err_cats.most_common(5)))
+        lines += self.line_ptr("restores", "git checkout -- / git restore calls")
+        share = (100 * self.counts["tokens_cache_read"] // self.counts["tokens_context"]) if self.counts["tokens_context"] else 0
+        lines += ["", "## Token economy",
+                  "- tokens: %d main, %d helpers; cache-read share %d%%" % (self.tokens_main, self.tokens_helper, share),
+                  "- peak context per session, top 5: " + ", ".join(
+                      "%s %d" % (s[:8], v) for s, v in sorted(self.peak.items(), key=lambda kv: -kv[1])[:5])]
+        lines.append("- largest turns: " + ", ".join("%s:%d %d" % (s[:8], ln, ctx) for ctx, s, ln in sorted(self.big_turns, reverse=True)[:5]))
+        lines.append("- files Read more than twice in one transcript: %d" % len(self.reread))
+        if not counts_only:
+            for (s, h, p), k in sorted(self.reread, key=lambda x: -x[1])[:5]:
+                lines.append("  - %d x %s (%s%s)" % (k, p, s[:8], " helper" if h else ""))
+        lines += self.line_ptr("pastes_over_5000", "pastes over 5,000 characters")
+        lines += self.line_ptr("compactions", "compactions (%s)" % (", ".join("%s %d" % kv for kv in sorted(self.compact_trig.items())) or "none"))
+        lines += ["", "## Done claims"]
         for side in ("main", "helper"):
             cl = self.claims[side]
-            L.append("- %s: %d closing claims; %s" % (side, sum(cl.values()), ", ".join("%s %d" % kv for kv in sorted(cl.items())) or "none"))
-            L += ["  " + x for x in self.line_ptr("claims.%s.edit_no_check" % side, "edited and ran no check")]
-        L += ["", "## Permissions",
-              "- would-prompt Bash calls: %d over %d of %d sessions with session-meta" % (self.c["meta.bash_would_prompt_count"], meta_n, n),
-              "- the prompting prefixes: run the built-in `/fewer-permission-prompts`; this digest does not re-derive them"]
-        L += ["", "## Skill fit"]
-        if rows is None and self.a["since"] is None:
-            L.append("- not measured in --session mode: skill-usage.sh counts a window")
-        elif rows is None:
-            L.append("- not measured")
+            lines.append("- %s: %d closing claims; %s" % (side, sum(cl.values()), ", ".join("%s %d" % kv for kv in sorted(cl.items())) or "none"))
+            lines += ["  " + x for x in self.line_ptr("claims.%s.edit_no_check" % side, "edited and ran no check")]
+        lines += ["", "## Permissions",
+                  "- would-prompt Bash calls: %d over %d of %d sessions with session-meta" % (self.counts["meta.bash_would_prompt_count"], src.meta_n, n),
+                  "- the prompting prefixes: run the built-in `/fewer-permission-prompts`; this digest does not re-derive them"]
+        lines += ["", "## Skill fit"]
+        if src.skill_rows is None and self.args["since"] is None:
+            lines.append("- not measured in --session mode: skill-usage.sh counts a window")
+        elif src.skill_rows is None:
+            lines.append("- not measured")
         else:
-            zero = sorted(r["skill"] for r in rows if r.get("typed") == 0 and r.get("loaded") == 0)
-            lnt = sorted(r["skill"] for r in rows if r.get("typed") == 0 and (r.get("loaded") or 0) > 0)
-            self.c["skills_unused"] = len(zero)
-            L.append("- typed 0 and loaded 0 (%d): %s" % (len(zero), ", ".join(zero) or "none"))
-            L.append("- loaded, never typed (%d): %s" % (len(lnt), ", ".join(lnt) or "none"))
-        L += ["", "## Facets",
-              "- coverage: %d of %d sessions" % (facet_n, n)]
-        if n and facet_n * 2 < n:
-            L.append("- under half covered: run /insights first, then re-run this digest")
+            lines.append("- typed 0 and loaded 0 (%d): %s" % (len(self.unused_skills), ", ".join(self.unused_skills) or "none"))
+            lines.append("- loaded, never typed (%d): %s" % (len(self.loaded_untyped), ", ".join(self.loaded_untyped) or "none"))
+        lines += ["", "## Facets",
+                  "- coverage: %d of %d sessions" % (src.facet_n, n)]
+        if n and src.facet_n * 2 < n:
+            lines.append("- under half covered: run /insights first, then re-run this digest")
         if self.friction:
-            L.append("- friction: " + ", ".join("%s %d" % kv for kv in self.friction.most_common(8)))
-        L += ["", "## Git",
-              "- commits %d, pushes %d (session-meta)" % (self.c["meta.git_commits"], self.c["meta.git_pushes"])]
-        if gitr is not None:
-            self.c["reverts"] = gitr[0]
-            L.append("- revert commits since %s: %d across %d repos the sessions ran in" % (self.a["since"], gitr[0], gitr[1]))
-        if surf is not None:
-            self.c["surface.bytes"] = surf
-            L += ["", "## Surface", "- launch-loaded surface: %d bytes (lint-skills.sh)" % surf]
-        if mem is not None:
-            L += ["", "## Memory"]
-            idx, orphans, dead, gone = mem
-            self.c.update({"memory.index_lines": idx, "memory.orphans": orphans, "memory.dead_links": dead, "memory.dead_paths": gone})
-            L.append("- memory index: %d lines%s; %d notes it does not list, %d links to no file, %d paths named in notes that no longer exist" % (
+            lines.append("- friction: " + ", ".join("%s %d" % kv for kv in self.friction.most_common(8)))
+        lines += ["", "## Git",
+                  "- commits %d, pushes %d (session-meta)" % (self.counts["meta.git_commits"], self.counts["meta.git_pushes"])]
+        if src.git_reverts is not None:
+            lines.append("- revert commits since %s: %d across %d repos the sessions ran in" % (self.args["since"], src.git_reverts[0], src.git_reverts[1]))
+        if src.surface is not None:
+            lines += ["", "## Surface", "- launch-loaded surface: %d bytes (lint-skills.sh)" % src.surface]
+        if src.memory is not None:
+            idx, orphans, dead, gone = src.memory
+            lines += ["", "## Memory"]
+            lines.append("- memory index: %d lines%s; %d notes it does not list, %d links to no file, %d paths named in notes that no longer exist" % (
                 idx, " (past 200, the rest does not load at session start)" if idx > 200 else "", orphans, dead, gone))
         metrics = self.metrics(n)
-        if self.a["controls"]:
-            L += ["", "## Controls"] + self.controls(metrics)
-        if self.a["since"]:
-            L += ["", "## Baseline rows for this run's report", ""] + [
+        if self.args["controls"]:
+            lines += ["", "## Controls"] + self.controls(metrics)
+        if self.args["since"]:
+            lines += ["", "## Baseline rows for this run's report", ""] + [
                 "| B%d | `%s` | %s | baseline | open |" % (i, k, metrics.get(k, "-")) for i, k in enumerate(BASELINE, 1)]
-        L += ["", "## Metrics", "```"] + ["%s %s" % kv for kv in sorted(metrics.items())] + ["```"]
+        lines += ["", "## Metrics", "```"] + ["%s %s" % kv for kv in sorted(metrics.items())] + ["```"]
         if self.partial:
-            L[head:head] = ["", "**PARTIAL**: " + "; ".join(sorted(set(self.partial)))]
-        return "\n".join(L) + "\n"
+            lines[head:head] = ["", "**PARTIAL**: " + "; ".join(sorted(set(self.partial)))]
+        return "\n".join(lines) + "\n"
 
     def metrics(self, n):
         keys = ["signals", "interrupts", "denials", "bash_retries", "tool_errors", "restores",
@@ -985,29 +1036,29 @@ class Digest:
                 "bash_shapes_repeated", "hook_blocks", "surface.hook_context.bytes", "result_bytes.total", "result_bytes.bash",
                 "compactions"]
         keys += ["hook." + h for h in self.hooks] + ["hook.%s.sessions" % h for h in self.hooks]
-        keys += [k for k in ("history_repeats",) if k in self.c]
+        keys += [k for k in ("history_repeats",) if k in self.counts]
         m = {"sessions": n}
         for k in ("memory.index_lines", "memory.orphans", "memory.dead_links", "memory.dead_paths"):
-            if k in self.c:
-                m[k] = self.c[k]
-        if "surface.bytes" in self.c:
-            m["surface.bytes"] = self.c["surface.bytes"]
+            if k in self.counts:
+                m[k] = self.counts[k]
+        if "surface.bytes" in self.counts:
+            m["surface.bytes"] = self.counts["surface.bytes"]
         if self.peak:
             m["peak_context.max"] = max(self.peak.values())
         for k in keys:
-            if k == "reverts" and "reverts" not in self.c:
+            if k == "reverts" and "reverts" not in self.counts:
                 continue
-            if k == "skills_unused" and "skills_unused" not in self.c:
+            if k == "skills_unused" and "skills_unused" not in self.counts:
                 continue
-            m[k] = self.c[k]
+            m[k] = self.counts[k]
             if n and not k.endswith(".sessions"):
-                m[k + ".per_session"] = round(self.c[k] / n, 3)
+                m[k + ".per_session"] = round(self.counts[k] / n, 3)
         return m
 
     def controls(self, metrics):
         out, rows, tally = [], [], collections.Counter()
         try:
-            with open(self.a["controls"], encoding="utf-8") as fh:
+            with open(self.args["controls"], encoding="utf-8") as fh:
                 text = fh.read()
         except OSError:
             self.partial.append("--controls report unreadable")
@@ -1057,6 +1108,7 @@ class Digest:
 
 def main(argv):
     a = parse_args(argv[1:])
+    load_hook_lib()
     d = Digest(a)
     text = d.run()
     if len(text.encode()) > MAX_BYTES and a["max_pointers"] > 1:

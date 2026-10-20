@@ -48,9 +48,14 @@
 # id, a negative --max-pointers, a missing --controls file, an unknown flag), 4
 # for a crash. Skill fit's content and --surface, from stand-in producers.
 #
+# The program a repeated command is charged to, and a long command's shape,
+# come from hook-lib.py's splitter: the shape row pins its segments.
+#
 # Mutation table: each alternative of SIGNALS dropped in turn (21 mutants), and
 # one mutant per graded behaviour above (the list at the foot); every mutant
-# must red its row, and the close line counts them.
+# must red its row, and the close line counts them. The vendor secret shapes
+# live in global/hooks/hook-lib.py, so their mutants edit a copy of that file
+# beside an unmutated digest (mutate_lib_and_kill).
 #
 # NOT covered, so a clean run here is not a claim about it: core.hooksPath,
 # since neither git call the digest makes runs a hook, so its mutant is
@@ -261,7 +266,7 @@ grade_counts() {
   expect_in "$out" "an off-roster skill load in the full digest" "jane-doe-123 1 of 1 loads"
   mask_out=$(python3 -I - "$1" <<'PY'
 import importlib.util, sys
-sp = importlib.util.spec_from_file_location("digest", sys.argv[1]); d = importlib.util.module_from_spec(sp); sp.loader.exec_module(d)
+sp = importlib.util.spec_from_file_location("digest", sys.argv[1]); d = importlib.util.module_from_spec(sp); sp.loader.exec_module(d); d.load_hook_lib()
 # Token shapes are joined at run time, as staged-secrets-selftest.sh builds its
 # fixtures, so no committed line is token-shaped.
 cases = {"sk" + "-abcdefghijklmnop1234": "abcdefghijklmnop", "AKIA" + "ABCDEFGHIJKLMNOP": "ABCDEFGHIJKLMNOP", "bearer abcdefghijklmnopqr": "abcdefghijklmnopqr",
@@ -307,6 +312,9 @@ PY
   expect_in "$out" "its facet detail, masked" "token=[masked]"
   expect_row "$out" "a prompt typed in three sessions; a slash command and a short one not" "history_repeats 1"
   expect_row "$out" "a long Bash shape across three sessions" "bash_shapes_repeated 1"
+  expect_in "$out" "the shape is the splitter's segments, quoted words and digits flattened" \
+    '`git -C /repo log --oneline --since=N-N-N Q ; grep -v -e Merge -e fixup ; head -n N ; curl -u me:[masked]`'
+  expect_row "$out" "a repeated command is named by the program the splitter finds" "  - by program: sed 1"
   expect_in "$out" "hook runs and milliseconds from a Stop summary, as a floor" "context-nudge ran 2+ times in 1+ sessions, 100+ ms in all, blocked 0"
   expect_in "$out" "hook runs from a hook_success" "rename-safety ran 1+ times in 1+ sessions, 10+ ms in all, blocked 2"
   reject_in "$out" "hook runs are never a Metrics key" "hookrun."
@@ -360,7 +368,7 @@ PY
 expect_in "$out" "a crash names its exception" "digest.py: crashed (TypeError)"
 out=$(python3 -I - "$script" "${args[@]}" 2>/dev/null <<'PY'
 import importlib.util, sys
-sp = importlib.util.spec_from_file_location("digest", sys.argv[1]); d = importlib.util.module_from_spec(sp); sp.loader.exec_module(d)
+sp = importlib.util.spec_from_file_location("digest", sys.argv[1]); d = importlib.util.module_from_spec(sp); sp.loader.exec_module(d); d.load_hook_lib()
 d.MAX_BYTES = 2000
 d.main(sys.argv[1:])
 PY
@@ -436,8 +444,9 @@ grade_variants "$script"
 # Skill fit's content and --surface, from a tree whose two producer scripts are
 # stand-ins printing a fixed answer.
 fake="$tmp/fake"
-mkdir -p "$fake/scripts" "$fake/src/retro/scripts"
+mkdir -p "$fake/scripts" "$fake/src/retro/scripts" "$fake/global/hooks"
 cp "$script" "$fake/src/retro/scripts/digest.py"
+cp global/hooks/hook-lib.py "$fake/global/hooks/"
 printf '#!/bin/sh\necho %s\nexit 2\n' "'[{\"skill\": \"never\", \"typed\": 0, \"loaded\": 0}, {\"skill\": \"quiet\", \"typed\": 0, \"loaded\": 3}]'" > "$fake/scripts/skill-usage.sh"
 printf '#!/bin/sh\necho "launch-loaded surface: 1234 bytes"\n' > "$fake/scripts/lint-skills.sh"
 run_digest "$fake/src/retro/scripts/digest.py" --surface
@@ -461,6 +470,7 @@ root="$tmp/root"
 mkdir -p "$root/scripts" "$root/src/retro/scripts" "$root/global/hooks"
 cp scripts/skill-usage.sh "$root/scripts/"
 for h in global/hooks/*.sh global/hooks/*.py; do : > "$root/$h"; done   # the hook roster is read by name
+cp global/hooks/hook-lib.py "$root/global/hooks/"   # but the splitter and the vendor shapes are loaded
 cp src/retro/SKILL.md "$root/src/retro/"
 cp "$script" "$root/src/retro/scripts/digest.py"
 m="$root/src/retro/scripts/mutant.py"
@@ -479,6 +489,12 @@ while IFS= read -r alt; do
 done <<< "$alts"
 expect_rc "21 SIGNALS alternatives found to mutate" 21 "$n"
 
+mutate_lib_and_kill() {   # <label> <from> <to>: hook-lib.py mutated beside a copy of the digest
+  rm -rf "$tmp/libroot"; cp -R "$root" "$tmp/libroot"
+  selftest_mutate global/hooks/hook-lib.py "$tmp/libroot/global/hooks/hook-lib.py" "$2" "$3" || return 0
+  selftest_expect_killed --mutant target "$tmp/libroot/src/retro/scripts/digest.py" "$1" grade_target
+  rows=$((rows + 1))
+}
 mutate_and_kill() {   # <label> <from> <to> [grader, default grade_target]
   selftest_mutate "$script" "$m" "$2" "$3" || return 0
   selftest_expect_killed --mutant target "$m" "$1" "${4:-grade_target}"
@@ -489,16 +505,19 @@ mutate_and_kill "injected-turn skip" '"<local-command-caveat>", "<command-name>"
 mutate_and_kill "denial prefix" "the user doesn't want to proceed with this tool use" "the user declined"
 mutate_and_kill "repeat threshold" 'if v > 1)' 'if v > 2)'
 mutate_and_kill "message-id dedupe" 'if mid not in seen_msg:' 'if True:'
-mutate_and_kill "counts-only quote guard" 'if quote is not None and not self.a["counts_only"]:' 'if quote is not None:'
+mutate_and_kill "counts-only quote guard" 'if quote is not None and not self.args["counts_only"]:' 'if quote is not None:'
 mutate_and_kill "held comparison" 'elif now < wasf or' 'elif now > wasf or'
 mutate_and_kill "surface holds level" 'or metric.startswith("surface."))' ')'
 mutate_and_kill "secret mask" 'SECRET.sub("[masked]", text)' 'text'
 mutate_and_kill "key=value mask" 'KEYVAL.sub(r"\1[masked]", ' '('
 mutate_and_kill "key=value: a prefixed name" '(\b[\w-]*?(?:password' '(\b(?:password'
-mutate_and_kill "secret: sk-" 'r"(?i:\b(?:sk|pk|rk)-[a-z0-9_-]{16,}|' 'r"(?i:(?!x)x|'
-mutate_and_kill "secret: AKIA" '|\b(?:AKIA|ASIA)[0-9A-Z]{16}\b' '|(?!x)x'
-mutate_and_kill "secret: bearer" '|\bbearer\s+[\w.~+/=-]{12,}' ''
-mutate_and_kill "secret: a JWT" '|\beyJ[\w-]{8,}\.[\w-]{8,}\.[\w-]{8,}' ''
+mutate_lib_and_kill "secret: sk-" 'r"(?i:\b(?:sk|pk|rk)-[a-z0-9_-]{16,}|' 'r"(?i:(?!x)x|'
+mutate_lib_and_kill "secret: AKIA" '|\b(?:AKIA|ASIA)[0-9A-Z]{16}\b' '|(?!x)x'
+mutate_and_kill "secret: bearer" '\bbearer\s+[\w.~+/=-]{12,}|' ''
+mutate_lib_and_kill "secret: a JWT" '|\beyJ[\w-]{8,}\.[\w-]{8,}\.[\w-]*' ''
+mutate_and_kill "the vendor shapes joined" 'SECRET = re.compile(hook_lib.VENDOR_SECRET.pattern + OWN_SECRET)' 'SECRET = re.compile(OWN_SECRET[1:])'
+mutate_and_kill "the splitter's program" 'return os.path.basename(segs[0][0]) if segs else "?"' 'return "?"'
+mutate_and_kill "the shape from the splitter" $'    segs = segments(cmd)\n    c = " ; "' $'    segs = []\n    c = " ; "'
 mutate_and_kill "secret: 40 hex" '|\b[a-fA-F0-9]{40,}\b' ''
 mutate_and_kill "secret: URL credentials" '|(?<=://)[^/\s:@]+:[^/\s@]+(?=@)' ''
 mutate_and_kill "secret: a 40-character key with a slash" '[A-Za-z0-9+/]{40}(?![\w/.-])' '(?!x)x'
@@ -510,36 +529,36 @@ mutate_and_kill "a Stop gate's blocking error" 'if at.get("type") == "hook_block
 mutate_and_kill "a helper's compaction skipped" 'e.get("subtype") == "compact_boundary" and not e.get("isSidechain")' 'e.get("subtype") == "compact_boundary"'
 mutate_and_kill "workflow helpers a directory deeper" 'recursive=True)]' 'recursive=False)]'
 mutate_and_kill "a typed command is a load only on the roster" 'return (":" in name or name.split(":")[-1] in self.skill_roster' 'return (True'
-mutate_and_kill "the counts-only label seam" 'if not self.a["counts_only"] or name in roster or HOOK_EVENT.match(name):' 'if True:'
+mutate_and_kill "the counts-only label seam" 'if not self.args["counts_only"] or name in roster or HOOK_EVENT.match(name):' 'if True:'
 mutate_and_kill "reads counted per transcript" 'self.reads[(sid, helper, inp["file_path"])] += 1' 'self.reads[(0, 0, inp["file_path"])] += 1'
 mutate_and_kill "an inline hook's name" '", w)]' '", w) or True]'
 mutate_and_kill "a queued prompt is a human turn" 'at.get("type") == "queued_command"' 'at.get("type") == "queued_x"'
 mutate_and_kill "an isMeta turn skipped" 'if e.get("type") != "user" or e.get("isMeta") or' 'if e.get("type") != "user" or'
 mutate_and_kill "the paste threshold" 'if len(t) > 5000:' 'if len(t) > 50000:'
 mutate_and_kill "peak context" 'm["peak_context.max"] = max(self.peak.values())' 'm["peak_context.max"] = 0'
-mutate_and_kill "cache-read share" 'share = (100 * self.c["tokens_cache_read"]' 'share = (0 * self.c["tokens_cache_read"]'
-mutate_and_kill "helper tokens" 'tot_help = sum(v for (s, h), v in self.sess_tokens.items() if h)' 'tot_help = 0'
+mutate_and_kill "cache-read share" 'share = (100 * self.counts["tokens_cache_read"]' 'share = (0 * self.counts["tokens_cache_read"]'
+mutate_and_kill "helper tokens" 'self.tokens_helper = sum(v for (s, h), v in self.sess_tokens.items() if h)' 'self.tokens_helper = 0'
 mutate_and_kill "memory index lines" 'idx = max(idx, len(text.splitlines()))' 'idx = 0'
 mutate_and_kill "none as an open sha" 'if sha in ("", "-", "none"):' 'if sha in ("", "-"):'
 mutate_and_kill "Controls read by header" 'cid, metric = cells[col["id"]], cells[col["metric"]].strip("`")' 'cid, metric = cells[0], cells[1].strip("`")'
-mutate_and_kill "counts-only Bash bytes guard" 'if not co and self.bash_bytes:' 'if self.bash_bytes:'
-mutate_and_kill "counts-only retry guard" 'if not co and self.retry_heads:' 'if self.retry_heads:'
-mutate_and_kill "claims: an errored check is no check" 'after = [k for k in checks if k > lastedit and before[k][3] not in errs]' 'after = [k for k in checks if k > lastedit]'
+mutate_and_kill "counts-only Bash bytes guard" 'if not counts_only and self.bash_bytes:' 'if self.bash_bytes:'
+mutate_and_kill "counts-only retry guard" 'if not counts_only and self.retry_heads:' 'if self.retry_heads:'
+mutate_and_kill "claims: an errored check is no check" 'after = [k for k in checks if k > lastedit and before[k].id not in errs]' 'after = [k for k in checks if k > lastedit]'
 mutate_and_kill "claims: a check before the edit" 'after = [k for k in checks if k > lastedit and' 'after = [k for k in checks if True and'
-mutate_and_kill "claims: marked" 'if MARK.search(last[1]):' 'if False:'
+mutate_and_kill "claims: marked" 'if MARK.search(last.text):' 'if False:'
 mutate_and_kill "claims: the helper side" 'side = "helper" if helper else "main"' 'side = "main"'
 mutate_and_kill "a pointer's line" 'return "%s:%d" % (sid[:8], line)' 'return "%s:%d" % (sid[:8], 0)'
-mutate_and_kill "the per-session key" 'm[k + ".per_session"] = round(self.c[k] / n, 3)' 'pass'
-mutate_and_kill "--exclude-session on transcripts" '            if sid == self.a["exclude"]:' '            if False:' variants_target
-mutate_and_kill "--exclude-session on history" '                if sid == self.a["exclude"]:' '                if False:' variants_target
-mutate_and_kill "the transcript window" 'if os.path.getmtime(f) < self.a["since_ts"]:' 'if False:' variants_target
-mutate_and_kill "the history window" 'h["timestamp"] / 1000 < self.a["since_ts"]' 'h["timestamp"] / 1000 < 0' variants_target
-mutate_and_kill "git --since from midnight" '"--since=%sT00:00" % self.a["since"]' '"--since=%s" % self.a["since"]' variants_target
-mutate_and_kill "--max-pointers caps" 'if len(self.ptr[key]) < self.a["max_pointers"]:' 'if True:' variants_target
-mutate_and_kill "facets under half" 'if n and facet_n * 2 < n:' 'if False:' variants_target
+mutate_and_kill "the per-session key" 'm[k + ".per_session"] = round(self.counts[k] / n, 3)' 'pass'
+mutate_and_kill "--exclude-session on transcripts" '            if sid == self.args["exclude"]:' '            if False:' variants_target
+mutate_and_kill "--exclude-session on history" '                if sid == self.args["exclude"]:' '                if False:' variants_target
+mutate_and_kill "the transcript window" 'if os.path.getmtime(f) < self.args["since_ts"]:' 'if False:' variants_target
+mutate_and_kill "the history window" 'h["timestamp"] / 1000 < self.args["since_ts"]' 'h["timestamp"] / 1000 < 0' variants_target
+mutate_and_kill "git --since from midnight" '"--since=%sT00:00" % self.args["since"]' '"--since=%s" % self.args["since"]' variants_target
+mutate_and_kill "--max-pointers caps" 'if len(self.ptr[key]) < self.args["max_pointers"]:' 'if True:' variants_target
+mutate_and_kill "facets under half" 'if n and src.facet_n * 2 < n:' 'if False:' variants_target
 mutate_and_kill "every hook's sessions key" '        for name in self.hooks:
-            self.c["hook.%s.sessions"' '        for name in list(self.hooks)[:8]:
-            self.c["hook.%s.sessions"' variants_target
+            self.counts["hook.%s.sessions"' '        for name in list(self.hooks)[:8]:
+            self.counts["hook.%s.sessions"' variants_target
 mutate_and_kill "a --session prefix resolves to one" 'if len(hits) != 1:' 'if not hits:' variants_target
 mutate_and_kill "the memory past-200 note" 'if idx > 200 else' 'if idx > 2000 else' variants_target
 

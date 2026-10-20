@@ -61,7 +61,8 @@
 # repeat-failure.py with the payload on stdin — the head, the class and the
 # count live there — which loads session-hook-lib.py (the payload read,
 # session-id check, 0600 state write, prune and breadcrumb shared with
-# context-nudge) and hook-lib.py (the segmenter). Neither lib is a hook.
+# context-nudge) and hook-lib.py (the segmenter and the vendor token shapes).
+# Neither lib is a hook.
 #
 # Event: PostToolUseFailure
 # Install note: always on — no opt-in; quiet until the third identical failure.

@@ -14,6 +14,10 @@
 #     segment the scanner reads itself and hands to no hook (a shell given a
 #     script file, a `find` with no `-exec` clause), as written — and raises
 #     `TokeniseError` on a tokeniser error. It reads no stdin and never exits.
+#     repeat-failure.py and src/retro/scripts/digest.py also read
+#     `VENDOR_SECRET`, the one table of vendor token shapes both masks share;
+#     each adds its own generic shapes and its own replacement. A vendor shape
+#     is added here, and both selftests grade it.
 # Besides those names, a hook may use `re`, `sys`, `os`, `shlex`, `progname`,
 # `git_args`, `split_git`, `expand`, `joined`, `base`, `stand_in`,
 # `allow_with`, `fed_by`, `REDIR`, and `drop_redirs`; everything else here is
@@ -107,6 +111,14 @@
 # allow with a breadcrumb.
 
 import os, re, shlex, sys
+
+# Vendor token shapes (header): an API key, a GitHub, GitLab, npm or Slack
+# token, an AWS or Google key, a JWT, an Azure SAS signature. No capture group.
+VENDOR_SECRET = re.compile(
+    r"(?i:\b(?:sk|pk|rk)-[a-z0-9_-]{16,}|\b(?:sk|pk|rk)_(?:live|test)_[a-z0-9]{16,}"
+    r"|\bgh[pousr]_[a-z0-9]{16,}|\bgithub_pat_\w{16,}|\bglpat-[\w-]{16,}|\bnpm_[a-z0-9]{30,}"
+    r"|\bxox[abposr]-[\w-]{10,}|[?&]sig=[\w%/+=]{20,})"
+    r"|\b(?:AKIA|ASIA)[0-9A-Z]{16}\b|\bAIza[\w-]{30,}|\beyJ[\w-]{8,}\.[\w-]{8,}\.[\w-]*")
 
 SHELL = re.compile(r"(^|[;&|(\s])(bash|sh|zsh|dash|ksh|eval|source|\.)(\s|$)")
 HEREDOC = re.compile(r"<<-?\s*\\?[\x27\"]?([A-Za-z_][A-Za-z0-9_]*)[\x27\"]?[^\n]*\n.*?\n\t*\1(?=\n|$)", re.S)

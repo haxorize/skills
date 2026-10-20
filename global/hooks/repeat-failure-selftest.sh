@@ -289,7 +289,8 @@ mutant "no error-named rule"      $py 'for s in reversed(segs):' 'for s in []:' 
 mutant "scripts hand no segment"  hook-lib.py '            _opaque(seg)
             return None             # `… | bash hook.sh`' '            return None             # `… | bash hook.sh`' 'r_script m13'
 mutant "find hands no segment"    hook-lib.py '            _opaque(seg)            # no clause' '            pass            # no clause' 'r_find m14'
-mutant "drop the SAS mask"        $py '    re.compile(r"[?&]sig=[A-Za-z0-9%/+=]{20,}"),' '' 'r_families m15'
+mutant "drop the SAS mask"        hook-lib.py '|[?&]sig=[\w%/+=]{20,})"' ')"' 'r_families m15'
+mutant "drop the shared vendor table" $py 'line = scanner.VENDOR_SECRET.sub("#", line)' 'pass' 'r_families m17'
 mutant "the old environmental line" $py 'If this was not the expected red of a test loop, treat it' 'Treat it' 'r_red m16'
 mutant "a prune error escapes"    $lib $'os.remove(p)\n        except OSError:\n            pass' $'os.remove(p)\n        except OSError:\n            raise' 'r_prune m12'
 

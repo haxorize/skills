@@ -34,17 +34,9 @@ PROG = re.compile(r"^[A-Za-z0-9._+-]{1,40}$")
 EXIT_CODE = re.compile(r"^Exit code (\d+)$")
 # Token shapes masked out of the stored error line before anything else
 # touches it: a credential the failing tool echoed back never reaches disk.
+# The vendor shapes are hook-lib.py's VENDOR_SECRET, shared with the retro
+# digest; these are this hook's own, wider, generic ones.
 SECRETS = [
-    re.compile(r"\b(?:gh[pousr]_[A-Za-z0-9]{16,}|github_pat_[A-Za-z0-9_]{16,})"),
-    re.compile(r"\bsk-[A-Za-z0-9_-]{16,}"),                    # sk-, sk-ant-, sk-proj-
-    re.compile(r"\b(?:sk|pk|rk)_(?:live|test)_[A-Za-z0-9]{16,}"),
-    re.compile(r"\b(?:AKIA|ASIA)[0-9A-Z]{16}\b"),
-    re.compile(r"\bxox[abposr]-[A-Za-z0-9-]{10,}"),
-    re.compile(r"\bglpat-[A-Za-z0-9_-]{16,}"),
-    re.compile(r"\bAIza[0-9A-Za-z_-]{30,}"),
-    re.compile(r"\bnpm_[A-Za-z0-9]{30,}"),
-    re.compile(r"\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]*"),   # a JWT
-    re.compile(r"[?&]sig=[A-Za-z0-9%/+=]{20,}"),               # an Azure SAS signature
     re.compile(r"(?i)\b(bearer|basic)\s+\S+"),
     re.compile(r"(?i)\b(token|secret|password|passwd|pwd|api[_-]?key|auth)\b(\s*[=:]\s*)\S+"),
     re.compile(r"(?=[A-Za-z0-9+_=-]*[0-9])(?=[A-Za-z0-9+_=-]*[A-Za-z])[A-Za-z0-9+_=-]{24,}"),   # a long base64/hex run
@@ -52,6 +44,7 @@ SECRETS = [
 
 
 def mask(line):
+    line = scanner.VENDOR_SECRET.sub("#", line)
     for rx in SECRETS:
         if rx.groups == 1:
             line = rx.sub(lambda m: m.group(1) + " #", line)
