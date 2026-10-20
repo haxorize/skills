@@ -8,7 +8,28 @@ argument-hint: "[review report path | PR number — default: the newest report f
 
 # Address Findings
 
-One pass over review feedback: every finding gets a disposition, nothing is deferred silently, and the pass ends with a ledger and a re-stamped report rather than another review — the re-stamp is the last step, and without it the `review-receipt` hook blocks the push of the tree the fixes made. An advisory — the ID-less item `review-changes` lists under a lens — is read, not dispositioned: it is outside the `F<n>` count by construction, and the author acts on it or not. The judgment per finding is [references/judging-feedback.md](references/judging-feedback.md)'s, and this skill owns the pass and the table. Read it now, before step 1, and open the pass by quoting its § Clarify all before implementing any rule verbatim: a pass with no quote has run without it.
+One pass over review feedback: every finding gets a disposition, nothing is deferred silently, and the pass ends with a ledger and a re-stamped report rather than another review — the re-stamp is the last step, and without it the `review-receipt` hook blocks the push of the tree the fixes made. An advisory — the ID-less item `review-changes` lists under a lens — is read, not dispositioned: it is outside the `F<n>` count by construction, and the author acts on it or not. The judgment per finding is § Judging each finding below, applied at every step; [references/judging-feedback.md](references/judging-feedback.md) holds the routing, pushback and re-review rules, opened before a finding goes to the Ask set.
+
+## Judging each finding
+
+Review feedback is a set of claims to verify, not orders to follow or occasions for gratitude. Technical correctness over social comfort. This holds whoever produced the findings: your own self-review and a subagent's are claims like any other, a top-level PR comment is judged like an inline thread, and an advisory is verified the same way.
+
+### The response loop
+
+1. **Read** the complete feedback without reacting.
+2. **Restate** each requirement in your own words — or ask what it means.
+3. **Verify** each claim against the codebase before agreeing: does the flagged problem actually exist? Is there a reason the current implementation looks this way (check `docs/adr/` — a behavior an ADR records as deliberate is not a bug)? A multi-claim comment is verified claim by claim — one false sub-claim never dismisses the thread, and a finding is never rejected because a related finding was rejected. An empty search does not refute a claim either: a citation your grep cannot find means never verified, not false, and the claim is overturned only by an attempt under the conditions it names. A finding the user already declined in an earlier round is not new: it is DECLINED again citing that disposition, not re-verified, unless the user reopened it.
+4. **Evaluate** — technically sound *for this codebase*? Does the suggestion break existing behavior, or the platforms/versions this project supports? A true finding can earn no code when its failure would surface before it costs anything and you can name what surfaces it; never when the failure is data loss, a wrong grant of money or access, security, auth, billing, retention, a migration, or an irreversible external effect. Accepting it without code is a deferral you propose in the Ask set: its DEFERRED (proposed) row names the record the fix would go to, and the mechanism that surfaces the failure as the event that picks it up. Accepting it without code accepts the finding as true, so it never counts as invalid toward the zero-accepted tripwire. A finding on code an earlier review fix added takes the same test.
+5. **Respond** — a restated fix, a clarifying question, or reasoned pushback ([references/judging-feedback.md](references/judging-feedback.md) § Pushback).
+6. **Implement** in the suggested order Workflow § 2 opens on, verifying each fix removes the cited deficiency before starting the next; verify no regressions at the end. Each finding gets two separate calls: what happens to this instance, and, for a shape you have seen before, what would prevent the next one — a recurring finding is a process change waiting to be named (if that diagnosis was itself expensive, `~/.claude/skills/diagnosing-bugs/references/learnings.md` § The capture gate may apply).
+
+### Clarify all before implementing any
+
+For multi-item feedback: if any item is unclear, implement nothing until every item is clarified — items may be coupled, and partial understanding yields the wrong implementation. "I understand items 1, 2, 3, and 6; I need clarification on 4 and 5 before starting." "This one's unambiguous and low-risk, I'll land it while I wait" is the rationalization to refuse — whether an item is safe in isolation is exactly what you don't know until the unclear ones resolve.
+
+### The zero-accepted tripwire
+
+If you have verified every finding in a review and classified all of them as invalid, stop — an all-reject pattern is evidence about you, not the review. You may be defending, not verifying. Re-examine the strongest finding as if it were true before sending any response, and then continue the pass.
 
 ## Workflow
 
@@ -26,22 +47,20 @@ Read the report's stamps and compare them to the tree as it is now — but compa
 
 ### 2. Partition the findings
 
-Sort every finding into one of two sets before touching anything, working from the report's index (`review-changes` § 6), one line per `F<n>`: its tag, causation and `file:line` place most findings and show which share a file. Open a finding's entry in the body where its line cannot decide the set, and always before fixing or asking it. The sort is whole-report first because findings couple, and judging-feedback.md's **Clarify all before implementing any** holds here. A report with no index is read whole.
+Sort every finding into one of two sets before touching anything, working from the report's index (`review-changes` § 6), one line per `F<n>`: its tag, causation and `file:line` place most findings and show which share a file. Open a finding's entry in the body where its line cannot decide the set, and always before fixing or asking it. The sort is whole-report first because findings couple, and § Clarify all before implementing any holds here. A report with no index is read whole.
 
 - **Mechanical** — verified real, local to the change, inside its scope, with one obvious fix and no contract fork. Fix without asking.
-- **Ask** — a design call, an escalation, a finding you would push back on, a fix that would outgrow the change it serves, a deferral you want to propose, a finding judging-feedback.md routes away from a local fix (an out-of-scope instruction-file finding, a spec-level defect), or a finding whose claim you could not verify either way. These go into **one batched question**, each entry carrying a recommendation in the ask-block shape the global recommend-and-proceed rule defines (`~/.claude/rules/recommend-and-proceed.md`) — not one question per finding, and not a question for the mechanical set.
-
-A finding the user declined in an earlier round is DECLINED again citing that disposition, per judging-feedback.md.
+- **Ask** — a design call, an escalation, a finding you would push back on, a fix that would outgrow the change it serves, a deferral you want to propose, a finding judging-feedback.md routes away from a local fix (an out-of-scope instruction-file finding, a spec-level defect), or a finding whose claim you could not verify either way. Open [references/judging-feedback.md](references/judging-feedback.md) before placing the first. These go into **one batched question**, each entry carrying a recommendation in the ask-block shape the global recommend-and-proceed rule defines (`~/.claude/rules/recommend-and-proceed.md`) — not one question per finding, and not a question for the mechanical set.
 
 Open the pass with one line — the file you picked when no path was given, and the order: `suggested order: F3, F1, F7` — blockers, then simple, then complex, by the report's own IDs. It reranks no verdict; it only says where the fixes start.
 
 ### 3. Fix, ask once, apply
 
-Fix the mechanical set in that order, each fix verified per judging-feedback.md before any row reads FIXED. Fixes that touch disjoint files run in parallel subagents, in this working tree and never a worktree, so every fix sits in the tree step 5 stamps; the subagents only edit, and you verify each of their fixes after all of them land, since a check run inside one subagent sees its siblings' half-applied edits. Findings that share a file stay in order. Then ask the batch, once. Apply the answers the same way: a proposed deferral the user says to fix now is a mechanical fix from then on. A bare "yes" to the batch resolves every entry to its recommended line.
+Fix the mechanical set in that order, each fix verified per the response loop's step 6 before any row reads FIXED. Fixes that touch disjoint files run in parallel subagents, in this working tree and never a worktree, so every fix sits in the tree step 5 stamps; the subagents only edit, and you verify each of their fixes after all of them land, since a check run inside one subagent sees its siblings' half-applied edits. Findings that share a file stay in order. Then ask the batch, once. Apply the answers the same way: a proposed deferral the user says to fix now is a mechanical fix from then on. A bare "yes" to the batch resolves every entry to its recommended line.
 
 Call the Skill tool with `feedback-loops` once after the last fix, not per fix — if you don't see a `Launching skill: feedback-loops` line, stop and call it again.
 
-Nothing here loops back to review: re-review is the user's call, per judging-feedback.md; round N is one more run of this skill on the new report, with its own ledger.
+Nothing here loops back to review: re-review is the user's call, per judging-feedback.md § One fix pass, then the user's call; round N is one more run of this skill on the new report, with its own ledger.
 
 ### 4. The disposition table
 
@@ -55,7 +74,7 @@ Close with one row per finding, every `F<n>` in the report present, in ID order:
 | F4 | ABANDON | started the rename, three call sites resist it without a contract change; reverted, tree clean, the contract change is a question for the user |
 
 - **FIXED** carries the hunk or SHA *and* a statement that the cited deficiency is gone — not that an edit was made. A fix that addresses the finding's line but not its claim is not FIXED: it is DEFERRED, with what remains named.
-- **DECLINED** carries a reason that disposes *that* claim, with the same verification read a FIXED row gets — the dismissal standard is `review-changes`' [finding-discipline.md](../review-changes/references/finding-discipline.md)'s — a claim is disposed by the evidence that refutes it, never by its confidence or its author. Verifying before implementing is judging-feedback.md's, gated by its § Clarify all before implementing any.
+- **DECLINED** carries a reason that disposes *that* claim, with the same verification read a FIXED row gets — the dismissal standard is `review-changes`' [finding-discipline.md](../review-changes/references/finding-discipline.md)'s — a claim is disposed by the evidence that refutes it, never by its confidence or its author. Verifying before implementing is the response loop's, gated by § Clarify all before implementing any.
 - **DEFERRED** is a proposal the human ratifies in the same message. The row names the record the work would go to and the event that picks it up; if they do not ratify, it is not deferred.
 - **ABANDON** is the visible form of "I tried and stopped": what was attempted, why it did not land, what state was left. A finding that is neither fixed nor explicitly disposed is this row, never an omission.
 
