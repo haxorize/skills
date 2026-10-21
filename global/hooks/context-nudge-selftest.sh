@@ -20,8 +20,10 @@
 # with CONTEXT_NUDGE_1M_MODELS unset, every model quiet at 140k, the
 # phase-boundary line past 150k and the 200k line past 200k; with it set, a
 # listed model (also by a Bedrock id) on that pair, any other (also by a dated
-# id) on 120k and 150k, a listed opus-4 not covering opus-4-8, and a listed
-# model's compaction read by the model before it;
+# id) on 120k and 150k, a listed opus-4 not covering opus-4-8, a listed
+# model's compaction read by the model before it, the exact 150k and 200k
+# edges on the 1M pair and the exact 150k edge on the 200k pair, and a move
+# from a 1M model to a 200k one at 160k sending the 200k pair's 150k line;
 # payloads captured from the harness (D57), a typed prompt and a background-task
 # notification, read as the hand-written ones do; the
 # fail-open table (empty payload, not JSON, no transcript_path, a session id
@@ -29,7 +31,8 @@
 # session-hook-lib.py rule's only rows — a missing transcript, an unwritable state
 # directory, a missing context-nudge.py) exits 0 with a breadcrumb and no
 # context. The mutation table narrows the sidechain skip, the synthetic skip,
-# the once-only check, the re-arm, the boundary read, the sidechain-boundary skip, the 120k boundary, the unset default, the
+# the once-only check, the re-arm, the boundary read, the sidechain-boundary skip, the 120k boundary, each table's
+# 150k and 200k edges, the window in the marker, the unset default, the
 # minor-version guard, the model read and the model read past a boundary, the chunk join, the prune's error
 # swallowing, the 0600 write, the 0700 tightening, the phase-boundary
 # wording and the session-id rule's fullmatch, character class and length cap
@@ -217,6 +220,18 @@ t="$tmp/w4.jsonl"; entry 160000 main claude-opus-4-20250514 > "$t"
 expect "200k model by a dated id, the 150k line" "$(nudge w4 "$t")" 150
 w_comp() { t="$tmp/w5.jsonl"; { entry 30000 main claude-opus-5-5; boundary 130000; } > "$t"; nudge w5 "$t"; }
 expect "1M model, a boundary at 130k stays quiet" "$(w_comp)" quiet
+# each table's exact edges nudge
+e1m150() { t="$tmp/w7.jsonl"; entry 150000 main claude-opus-5-5 > "$t"; nudge w7 "$t"; }
+e1m200() { t="$tmp/w8.jsonl"; entry 200000 main claude-opus-5-5 > "$t"; nudge w8 "$t"; }
+e200k150() { t="$tmp/w9.jsonl"; entry 150000 > "$t"; nudge w9 "$t"; }
+expect "1M model, exactly 150k" "$(e1m150)" low
+expect "1M model, exactly 200k" "$(e1m200)" 200
+expect "200k model, exactly 150k" "$(e200k150)" 150
+# a threshold sent on one window does not hold back the other's: 1M at 160k,
+# then a 200k model at 160k gets the 200k table's now line
+w_switch() { t="$tmp/w10.jsonl"; entry 160000 main claude-opus-5-5 > "$t"; nudge w10 "$t" >/dev/null
+  entry 160000 >> "$t"; nudge w10 "$t"; }
+expect "1M to 200k at 160k, the 150k line" "$(w_switch)" 150
 
 # --- real payloads ----------------------------------------------------------------
 # Captured from Claude Code on 2026-10-19 (D57) and scrubbed: the ids, the
@@ -291,10 +306,14 @@ m_synth() { t="$tmp/m6.jsonl"; { entry 140000; entry 400000 synthetic; } > "$t";
 mutant "drop the synthetic skip" $py ' or m.get("model") == "<synthetic>"' '' m_synth low
 mutant "keep a 0755 directory"   $lib '        os.chmod(d, 0o700)  ' '        pass  ' d_mode quiet
 mutant "fire every prompt"       $py 'if level[0] <= sent:' 'if level[0] < sent:' m_once quiet
-mutant "never re-arm"            $py '        if sent:' '        if False:' m_rearm 150
+mutant "never re-arm"            $py '        if stored:' '        if False:' m_rearm 150
 mutant "honor a sidechain boundary" $py $'"compact_boundary"\n                        and not d.get("isSidechain")' '"compact_boundary"' s_side quiet
 mutant "skip the compaction boundary" $py '                boundary = b"\"compact_boundary\"" in line' '                boundary = False' m_bound quiet
 mutant "120k boundary moved"     $py '(120000, LATER)' '(120001, LATER)' m_edge low
+mutant "1M 150k boundary moved"  $py '(150000, LATER)' '(150001, LATER)' e1m150 low
+mutant "1M 200k boundary moved"  $py '(200000, NOW % 200)' '(200001, NOW % 200)' e1m200 200
+mutant "200k 150k boundary moved" $py '(150000, NOW % 150)' '(150001, NOW % 150)' e200k150 150
+mutant "the marker ignores the window" $py 'sent = stored if len(fields) < 2 or int(fields[1]) == win else 0' 'sent = stored' w_switch 150
 m_1m() { t="$tmp/m9.jsonl"; entry 130000 main claude-opus-5-5 > "$t"; nudge m9 "$t"; }
 m_unset() { t="$tmp/m10.jsonl"; entry 140000 > "$t"; w_unset m10; }
 mutant "unset reads as 200k"     $py $'return 1000000\n    for tok' $'return 200000\n    for tok' m_unset quiet

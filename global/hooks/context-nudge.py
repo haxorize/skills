@@ -98,18 +98,23 @@ def main():
         n, model = last_usage(tp)
     except OSError:
         lib.crumb("transcript unreadable")
-    level = next(((t, msg) for t, msg in THRESHOLDS[window(model)] if n >= t), None)
+    win = window(model)
+    level = next(((t, msg) for t, msg in THRESHOLDS[win] if n >= t), None)
     state = lib.state_dir()
     marker = os.path.join(state, sid)
+    # The marker holds the threshold sent and the window it was sent on; a
+    # threshold sent on another window's table says nothing about this one's.
     try:
         with open(marker) as f:
-            sent = int(f.read().strip() or 0)
+            fields = f.read().split()
+        stored = int(fields[0]) if fields else 0
+        sent = stored if len(fields) < 2 or int(fields[1]) == win else 0
     except (OSError, ValueError):
-        sent = 0
+        stored = sent = 0
     if level is None:
         # Back under the lowest threshold after a nudge: a compaction ran, so
         # re-arm and let a second climb nudge again.
-        if sent:
+        if stored:
             try:
                 lib.write_state(marker, "0\n")
             except OSError:
@@ -121,7 +126,7 @@ def main():
     # every prompt, so an unwritable directory stays quiet. Then the line, and
     # the prune last, so nothing the prune does can lose the line.
     try:
-        lib.write_state(marker, "%d\n" % level[0])
+        lib.write_state(marker, "%d %d\n" % (level[0], win))
     except OSError:
         lib.crumb("state directory not writable (%s)" % state)
     lib.emit_additional_context("UserPromptSubmit", level[1].format(k=n // 1000))

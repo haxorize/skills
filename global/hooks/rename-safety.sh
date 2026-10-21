@@ -47,9 +47,9 @@
 # fed by `xargs` or `find -exec` — the directory the segment runs in, a
 # glob's literal parent, and each file the list does name are what is judged,
 # and a path no reading expands (a variable unset in the hook's environment,
-# a loop variable among them) runs with a breadcrumb saying the run directory
-# alone was judged. After a `cd` the lib cannot
-# expand (`cd "$(…)"`, a variable unset in the hook's environment) the
+# a loop variable among them; not the `{}` of `find -exec` or `xargs -I`)
+# runs with a breadcrumb saying the run directory alone was judged. After a
+# `cd` the lib cannot expand (`cd "$(…)"`, a variable unset in the hook's environment) the
 # payload's cwd stands in for that directory: an edit judged opted in there
 # is blocked, and one that is not runs with a breadcrumb saying it was not
 # judged where it runs, unless every file it names is absolute. A file named
@@ -297,7 +297,8 @@ def on_command(seg, curdir):
                 rebound += g
                 for x in g:
                     dirs.extend(places(x))
-                unread = unread or not (p or g)
+                # {} under find -exec or xargs -I names the fed files, judged by the run directory: not unread
+                unread = unread or not (p or g or (f == "{}" and fed_by()))
         if not any(opted(d) for d in dirs):
             if unknown:
                 allow_with("%s %s" % (shape, CD))

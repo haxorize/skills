@@ -1,7 +1,8 @@
 # repeat-failure.py — the key and the count of repeat-failure.sh, the
 # PostToolUseFailure hook beside it. Not a hook and not run on its own: the
 # wrapper checks for python3 and for this file, session-hook-lib.py and
-# hook-lib.py, then runs this with the payload on stdin. The contract — the
+# hook-lib.py, then runs this with the payload on stdin; secret-shapes.py, the
+# vendor token shapes, is loaded beside them. The contract — the
 # head, the error class, the count, what is stored, the fail-open rule — is
 # stated once, in repeat-failure.sh's header; this file is where the key is
 # built so the selftest can mutate it as a file.
@@ -26,6 +27,7 @@ def _load(name, file):
 lib = _load("session_hook_lib", "session-hook-lib.py")
 lib.init("repeat-failure")
 scanner = None                       # hook-lib.py, loaded inside main() so a load failure is a breadcrumb
+VENDOR_SECRET = None                 # secret-shapes.py's vendor shapes, compiled inside main() for the same reason
 
 FIRE_AT = 3
 SKIP = {"cd", "pushd", "export", "source", ".", "set", "true", "exit"}
@@ -34,8 +36,8 @@ PROG = re.compile(r"^[A-Za-z0-9._+-]{1,40}$")
 EXIT_CODE = re.compile(r"^Exit code (\d+)$")
 # Token shapes masked out of the stored error line before anything else
 # touches it: a credential the failing tool echoed back never reaches disk.
-# The vendor shapes are hook-lib.py's VENDOR_SECRET, shared with the retro
-# digest; these are this hook's own, wider, generic ones.
+# The vendor shapes are secret-shapes.py's, shared with the retro digest;
+# these are this hook's own, wider, generic ones.
 SECRETS = [
     re.compile(r"(?i)\b(bearer|basic)\s+\S+"),
     re.compile(r"(?i)\b(token|secret|password|passwd|pwd|api[_-]?key|auth)\b(\s*[=:]\s*)\S+"),
@@ -44,7 +46,7 @@ SECRETS = [
 
 
 def mask(line):
-    line = scanner.VENDOR_SECRET.sub("#", line)
+    line = VENDOR_SECRET.sub("#", line)
     for rx in SECRETS:
         if rx.groups == 1:
             line = rx.sub(lambda m: m.group(1) + " #", line)
@@ -107,7 +109,7 @@ def error_class(err):
 
 
 def main():
-    global scanner
+    global scanner, VENDOR_SECRET
     d = lib.read_payload()
     if d.get("tool_name") != "Bash" or d.get("is_interrupt"):
         return
@@ -121,6 +123,7 @@ def main():
     if not isinstance(err, str):
         err = ""
     scanner = _load("hook_lib", "hook-lib.py")
+    VENDOR_SECRET = _load("secret_shapes", "secret-shapes.py").compose()
     eclass = error_class(err)
     key = head(cmd, err) + " :: " + eclass
     state = lib.state_dir()

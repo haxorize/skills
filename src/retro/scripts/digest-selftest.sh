@@ -49,13 +49,18 @@
 # for a crash. Skill fit's content and --surface, from stand-in producers.
 #
 # The program a repeated command is charged to, and a long command's shape,
-# come from hook-lib.py's splitter: the shape row pins its segments.
+# come from hook-lib.py's splitter: the shape row pins its segments. A multi-line
+# command is split raw, so its retry, its shape and its result bytes name one
+# program; every quoted string is Q; masking runs per segment, after the split,
+# so a masked quoted secret never unbalances a quote; a command that will not
+# tokenise is a PARTIAL; program() and mask() load hook-lib.py on first use; and
+# --controls is read once, so the 12 KB re-render adds no second partial reason.
 #
 # Mutation table: each alternative of SIGNALS dropped in turn (21 mutants), and
 # one mutant per graded behaviour above (the list at the foot); every mutant
 # must red its row, and the close line counts them. The vendor secret shapes
-# live in global/hooks/hook-lib.py, so their mutants edit a copy of that file
-# beside an unmutated digest (mutate_lib_and_kill).
+# live in global/hooks/secret-shapes.py, so their mutants edit a copy of that
+# file beside an unmutated digest (mutate_shapes_and_kill).
 #
 # NOT covered, so a clean run here is not a claim about it: core.hooksPath,
 # since neither git call the digest makes runs a hook, so its mutant is
@@ -313,7 +318,7 @@ PY
   expect_row "$out" "a prompt typed in three sessions; a slash command and a short one not" "history_repeats 1"
   expect_row "$out" "a long Bash shape across three sessions" "bash_shapes_repeated 1"
   expect_in "$out" "the shape is the splitter's segments, quoted words and digits flattened" \
-    '`git -C /repo log --oneline --since=N-N-N Q ; grep -v -e Merge -e fixup ; head -n N ; curl -u me:[masked]`'
+    '`git -C /repo log --oneline --since=N-N-N --format=Q ; grep -v -e Merge -e fixup ; head -n N ; curl -u me:[masked]`'
   expect_row "$out" "a repeated command is named by the program the splitter finds" "  - by program: sed 1"
   expect_in "$out" "hook runs and milliseconds from a Stop summary, as a floor" "context-nudge ran 2+ times in 1+ sessions, 100+ ms in all, blocked 0"
   expect_in "$out" "hook runs from a hook_success" "rename-safety ran 1+ times in 1+ sessions, 10+ ms in all, blocked 2"
@@ -441,12 +446,61 @@ open(sys.argv[1], "w").write("\n".join(json.dumps(r) for r in rows) + "\n")
 PY
 grade_variants "$script"
 
+# p4: three sessions, each running a multi-line command twice (a retry) and a
+# short one twice, plus one that will not tokenise; and a Controls-less report.
+mkdir -p "$tmp/p4/-fixture"
+python3 -I - "$tmp/p4/-fixture" <<'PY'
+import json, os, sys
+npm = "cd /repo\nnpm run build --workspace=packages/a-workspace-name-long-enough-to-pass 2>&1 | tail -5"
+for s in ("e1", "e2", "e3"):
+    rows, k = [], 0
+    for cmd, body in ((npm, "n" * 20), (npm, "n" * 20), ("cd /repo\nmake test", "m" * 5), ("cd /repo\nmake test", "m" * 5), ("echo 'oops", "")):
+        k += 1
+        rows.append({"type": "assistant", "message": {"id": "%s%d" % (s, k), "role": "assistant", "content": [{"type": "tool_use", "id": "%st%d" % (s, k), "name": "Bash", "input": {"command": cmd}}]}})
+        rows.append({"type": "user", "message": {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "%st%d" % (s, k), "content": body}]}})
+    open(os.path.join(sys.argv[1], "%s-1111-2222-3333-444444444444.jsonl" % s), "w").write("\n".join(json.dumps(r) for r in rows) + "\n")
+PY
+printf '# a report\n\nno controls here\n' > "$tmp/p4-controls.md"
+
+# grade_splits <script> — the rows a split, a quote, a lazy load and the one Controls read hold
+grade_splits() {
+  local p4args=(--since 2000-01-01 --projects "$tmp/p4" --usage-data "$tmp/usage" --history "$tmp/history.jsonl" --skills "$tmp/skills")
+  out=$(python3 -I "$1" "${p4args[@]}" 2>/dev/null); rc=$?
+  expect_rc "a command that will not tokenise is a PARTIAL" 2 "$rc"
+  expect_in "$out" "the untokenised command is counted in the banner" "1 distinct Bash command(s) would not tokenise, charged to ?"
+  expect_row "$out" "a multi-line retry is charged to the program after the cd" "  - by program: npm 3, make 3"
+  expect_row "$out" "a multi-line command's shape is its segments after the cd" \
+    '  - 6 calls in 3 sessions: `npm run build --workspace=packages/a-workspace-name-long-enough-to-pass N>&N ; tail -N`'
+  expect_in "$out" "a multi-line command's bytes go to the same program" "  - Bash by program: npm 120, make 30"
+  out=$(python3 -I - "$1" "$tmp" "${p4args[@]}" 2>&1 <<'PY'
+import importlib.util, sys
+sp = importlib.util.spec_from_file_location("digest", sys.argv[1]); d = importlib.util.module_from_spec(sp); sp.loader.exec_module(d)
+print("lazy-program", d.program("cd /x && git status"))   # no load_hook_lib() call first
+d2 = importlib.util.module_from_spec(sp); sp.loader.exec_module(d2)
+print("lazy-mask", d2.mask("a  b"))
+print("quoted-single", d.shape("git commit -m 'fix'"), "|", d.shape("git commit -m 'wip'"))
+print("quoted-key", d.shape("curl -H 'token=abcdef123' https://x | head -3"), "|", len(d.UNTOKENISED))
+print("heredoc", d.shape("cat <<'EOF' > f\nhello 'x'\nEOF\nls"))
+a = d.parse_args(sys.argv[3:] + ["--controls", sys.argv[2] + "/p4-controls.md"])
+g = d.Digest(a); g.run(); g.capped()
+print("controls-once", g.partial.count("--controls report has no ## Controls section"))
+PY
+)
+  expect_row "$out" "program() loads hook-lib.py on first use" "lazy-program git"
+  expect_row "$out" "mask() loads hook-lib.py on first use" "lazy-mask a b"
+  expect_row "$out" "a quoted word is Q whether or not it holds a space" "quoted-single git commit -m Q | git commit -m Q"
+  expect_row "$out" "a quoted secret is Q, its quote never unbalanced by the mask" "quoted-key curl -H Q https://x ; head -N | 0"
+  expect_row "$out" "a heredoc's quoted delimiter is kept, so its body drops" "heredoc cat <<EOF > f ; ls"
+  expect_row "$out" "the 12 KB re-render reads --controls no second time" "controls-once 1"
+}
+grade_splits "$script"
+
 # Skill fit's content and --surface, from a tree whose two producer scripts are
 # stand-ins printing a fixed answer.
 fake="$tmp/fake"
 mkdir -p "$fake/scripts" "$fake/src/retro/scripts" "$fake/global/hooks"
 cp "$script" "$fake/src/retro/scripts/digest.py"
-cp global/hooks/hook-lib.py "$fake/global/hooks/"
+cp global/hooks/hook-lib.py global/hooks/secret-shapes.py "$fake/global/hooks/"
 printf '#!/bin/sh\necho %s\nexit 2\n' "'[{\"skill\": \"never\", \"typed\": 0, \"loaded\": 0}, {\"skill\": \"quiet\", \"typed\": 0, \"loaded\": 3}]'" > "$fake/scripts/skill-usage.sh"
 printf '#!/bin/sh\necho "launch-loaded surface: 1234 bytes"\n' > "$fake/scripts/lint-skills.sh"
 run_digest "$fake/src/retro/scripts/digest.py" --surface
@@ -470,13 +524,14 @@ root="$tmp/root"
 mkdir -p "$root/scripts" "$root/src/retro/scripts" "$root/global/hooks"
 cp scripts/skill-usage.sh "$root/scripts/"
 for h in global/hooks/*.sh global/hooks/*.py; do : > "$root/$h"; done   # the hook roster is read by name
-cp global/hooks/hook-lib.py "$root/global/hooks/"   # but the splitter and the vendor shapes are loaded
+cp global/hooks/hook-lib.py global/hooks/secret-shapes.py "$root/global/hooks/"   # but the splitter and the vendor shapes are loaded
 cp src/retro/SKILL.md "$root/src/retro/"
 cp "$script" "$root/src/retro/scripts/digest.py"
 m="$root/src/retro/scripts/mutant.py"
 target="$root/src/retro/scripts/digest.py"
 grade_target() { grade_counts "$target"; }
 variants_target() { grade_variants "$target"; }
+splits_target() { grade_splits "$target"; }
 rows=0
 alts=$(python3 -I -c 'import re,sys; s=open(sys.argv[1]).read(); b=s[s.index("SIGNALS = ["):s.index("]\nSIG =")]; [print(l.strip()) for l in b.splitlines()[1:] if l.strip().startswith("r\"")]' "$script")
 n=0
@@ -489,9 +544,9 @@ while IFS= read -r alt; do
 done <<< "$alts"
 expect_rc "21 SIGNALS alternatives found to mutate" 21 "$n"
 
-mutate_lib_and_kill() {   # <label> <from> <to>: hook-lib.py mutated beside a copy of the digest
+mutate_shapes_and_kill() {   # <label> <from> <to>: secret-shapes.py mutated beside a copy of the digest
   rm -rf "$tmp/libroot"; cp -R "$root" "$tmp/libroot"
-  selftest_mutate global/hooks/hook-lib.py "$tmp/libroot/global/hooks/hook-lib.py" "$2" "$3" || return 0
+  selftest_mutate global/hooks/secret-shapes.py "$tmp/libroot/global/hooks/secret-shapes.py" "$2" "$3" || return 0
   selftest_expect_killed --mutant target "$tmp/libroot/src/retro/scripts/digest.py" "$1" grade_target
   rows=$((rows + 1))
 }
@@ -505,31 +560,40 @@ mutate_and_kill "injected-turn skip" '"<local-command-caveat>", "<command-name>"
 mutate_and_kill "denial prefix" "the user doesn't want to proceed with this tool use" "the user declined"
 mutate_and_kill "repeat threshold" 'if v > 1)' 'if v > 2)'
 mutate_and_kill "message-id dedupe" 'if mid not in seen_msg:' 'if True:'
-mutate_and_kill "counts-only quote guard" 'if quote is not None and not self.args["counts_only"]:' 'if quote is not None:'
+mutate_and_kill "counts-only quote guard" 'if quote is not None and not self.args.counts_only:' 'if quote is not None:'
 mutate_and_kill "held comparison" 'elif now < wasf or' 'elif now > wasf or'
 mutate_and_kill "surface holds level" 'or metric.startswith("surface."))' ')'
-mutate_and_kill "secret mask" 'SECRET.sub("[masked]", text)' 'text'
+mutate_and_kill "secret mask" 'secret().sub("[masked]", text)' 'text'
 mutate_and_kill "key=value mask" 'KEYVAL.sub(r"\1[masked]", ' '('
 mutate_and_kill "key=value: a prefixed name" '(\b[\w-]*?(?:password' '(\b(?:password'
-mutate_lib_and_kill "secret: sk-" 'r"(?i:\b(?:sk|pk|rk)-[a-z0-9_-]{16,}|' 'r"(?i:(?!x)x|'
-mutate_lib_and_kill "secret: AKIA" '|\b(?:AKIA|ASIA)[0-9A-Z]{16}\b' '|(?!x)x'
+mutate_shapes_and_kill "secret: sk-" 'r"(?i:\b(?:sk|pk|rk)-[a-z0-9_-]{16,}|' 'r"(?i:(?!x)x|'
+mutate_shapes_and_kill "secret: AKIA" 'r"\b(?:AKIA|ASIA)[0-9A-Z]{16}\b"' 'r"(?!x)x"'
 mutate_and_kill "secret: bearer" '\bbearer\s+[\w.~+/=-]{12,}|' ''
-mutate_lib_and_kill "secret: a JWT" '|\beyJ[\w-]{8,}\.[\w-]{8,}\.[\w-]*' ''
-mutate_and_kill "the vendor shapes joined" 'SECRET = re.compile(hook_lib.VENDOR_SECRET.pattern + OWN_SECRET)' 'SECRET = re.compile(OWN_SECRET[1:])'
+mutate_shapes_and_kill "secret: a JWT" 'r"\beyJ[\w-]{8,}\.[\w-]{8,}\.[\w-]*"' 'r"(?!x)x"'
+mutate_and_kill "the vendor shapes joined" 'SECRET = load_path("secret_shapes", path).compose(OWN_SECRET)' 'SECRET = re.compile(OWN_SECRET)'
 mutate_and_kill "the splitter's program" 'return os.path.basename(segs[0][0]) if segs else "?"' 'return "?"'
-mutate_and_kill "the shape from the splitter" $'    segs = segments(cmd)\n    c = " ; "' $'    segs = []\n    c = " ; "'
+mutate_and_kill "the shape from the splitter" $'    segs = segments(c)\n    c = " ; "' $'    segs = []\n    c = " ; "'
 mutate_and_kill "secret: 40 hex" '|\b[a-fA-F0-9]{40,}\b' ''
 mutate_and_kill "secret: URL credentials" '|(?<=://)[^/\s:@]+:[^/\s@]+(?=@)' ''
 mutate_and_kill "secret: a 40-character key with a slash" '[A-Za-z0-9+/]{40}(?![\w/.-])' '(?!x)x'
 mutate_and_kill "hook message masked before its cut" 're.sub(r"\d+", "N", mask(msg))[:100]' 'mask(re.sub(r"\d+", "N", msg)[:100])'
-mutate_and_kill "Bash shape masked before it flattens" 'sh = shape(mask(norm))' 'sh = shape(norm)'
+mutate_and_kill "Bash shape masked before it flattens" 'c = " ; ".join(mask(" ".join(' 'c = " ; ".join((" ".join('
+mutate_and_kill "a shape from the raw command" 'sh = shape(inp["command"])' 'sh = shape(norm)' splits_target
+mutate_and_kill "a retry charged from the raw command" 'self.retry_heads[program(inp["command"])]' 'self.retry_heads[program(norm)]' splits_target
+mutate_and_kill "every quoted string as Q" 'c = QUOTED.sub(lambda m: m.group(1) or "Q", cmd)' 'c = cmd' splits_target
+mutate_and_kill "masked after the split" 'or "Q", cmd)' 'or "Q", mask(cmd))' splits_target
+mutate_and_kill "a heredoc's quoted delimiter kept" '(<<-?\s*\\?(['"'"'\"])[A-Za-z_]\w*\2)|' '((?!x)x)|' splits_target
+mutate_and_kill "an untokenised command counted" 'UNTOKENISED.add(cmd)' 'pass' splits_target
+mutate_and_kill "segments loads hook-lib.py" 'lib = load_hook_lib()' 'lib = hook_lib' splits_target
+mutate_and_kill "mask loads hook-lib.py" $'def secret():\n    load_hook_lib()\n' $'def secret():\n' splits_target
+mutate_and_kill "Controls read in compute, not render" $'if self.control_lines is None:\n            return []\n        return ["", "## Controls"] + self.control_lines' $'if not self.args.controls:\n            return []\n        return ["", "## Controls"] + grade_controls(self.args.controls, self.metrics_now, self.partial)' splits_target
 selftest_mutate "$script" "$m.1" '"-c", "log.showSignature=false",' '' && selftest_mutate "$m.1" "$m" '"--no-show-signature", ' '' \
   && { selftest_expect_killed --mutant target "$m" "the signature check off, both guards" grade_target; rows=$((rows + 1)); }
 mutate_and_kill "a Stop gate's blocking error" 'if at.get("type") == "hook_blocking_error":' 'if False:'
 mutate_and_kill "a helper's compaction skipped" 'e.get("subtype") == "compact_boundary" and not e.get("isSidechain")' 'e.get("subtype") == "compact_boundary"'
 mutate_and_kill "workflow helpers a directory deeper" 'recursive=True)]' 'recursive=False)]'
 mutate_and_kill "a typed command is a load only on the roster" 'return (":" in name or name.split(":")[-1] in self.skill_roster' 'return (True'
-mutate_and_kill "the counts-only label seam" 'if not self.args["counts_only"] or name in roster or HOOK_EVENT.match(name):' 'if True:'
+mutate_and_kill "the counts-only label seam" 'if not self.args.counts_only or name in roster or HOOK_EVENT.match(name):' 'if True:'
 mutate_and_kill "reads counted per transcript" 'self.reads[(sid, helper, inp["file_path"])] += 1' 'self.reads[(0, 0, inp["file_path"])] += 1'
 mutate_and_kill "an inline hook's name" '", w)]' '", w) or True]'
 mutate_and_kill "a queued prompt is a human turn" 'at.get("type") == "queued_command"' 'at.get("type") == "queued_x"'
@@ -549,12 +613,12 @@ mutate_and_kill "claims: marked" 'if MARK.search(last.text):' 'if False:'
 mutate_and_kill "claims: the helper side" 'side = "helper" if helper else "main"' 'side = "main"'
 mutate_and_kill "a pointer's line" 'return "%s:%d" % (sid[:8], line)' 'return "%s:%d" % (sid[:8], 0)'
 mutate_and_kill "the per-session key" 'm[k + ".per_session"] = round(self.counts[k] / n, 3)' 'pass'
-mutate_and_kill "--exclude-session on transcripts" '            if sid == self.args["exclude"]:' '            if False:' variants_target
-mutate_and_kill "--exclude-session on history" '                if sid == self.args["exclude"]:' '                if False:' variants_target
-mutate_and_kill "the transcript window" 'if os.path.getmtime(f) < self.args["since_ts"]:' 'if False:' variants_target
-mutate_and_kill "the history window" 'h["timestamp"] / 1000 < self.args["since_ts"]' 'h["timestamp"] / 1000 < 0' variants_target
-mutate_and_kill "git --since from midnight" '"--since=%sT00:00" % self.args["since"]' '"--since=%s" % self.args["since"]' variants_target
-mutate_and_kill "--max-pointers caps" 'if len(self.ptr[key]) < self.args["max_pointers"]:' 'if True:' variants_target
+mutate_and_kill "--exclude-session on transcripts" '            if sid == self.args.exclude:' '            if False:' variants_target
+mutate_and_kill "--exclude-session on history" '                if sid == self.args.exclude:' '                if False:' variants_target
+mutate_and_kill "the transcript window" 'if os.path.getmtime(f) < self.args.since_ts:' 'if False:' variants_target
+mutate_and_kill "the history window" 'h["timestamp"] / 1000 < self.args.since_ts' 'h["timestamp"] / 1000 < 0' variants_target
+mutate_and_kill "git --since from midnight" '"--since=%sT00:00" % since' '"--since=%s" % since' variants_target
+mutate_and_kill "--max-pointers caps" 'if len(self.ptr[key]) < self.args.max_pointers:' 'if True:' variants_target
 mutate_and_kill "facets under half" 'if n and src.facet_n * 2 < n:' 'if False:' variants_target
 mutate_and_kill "every hook's sessions key" '        for name in self.hooks:
             self.counts["hook.%s.sessions"' '        for name in list(self.hooks)[:8]:
@@ -578,6 +642,6 @@ mutate_and_kill "hook context list" 'body = "".join(x for x in body if isinstanc
 mutate_and_kill "result bytes" 'self.result_bytes[name] += len(c.encode("utf-8", "replace"))' 'self.result_bytes[name] += 0'
 mutate_and_kill "compaction subtype" 'e.get("subtype") == "compact_boundary"' 'e.get("subtype") == "compact"'
 mutate_and_kill "token needs mixed case" '(?=[\w+-]*[A-Z])(?=[\w+-]*[a-z])' ''
-mutate_and_kill "memory orphan" '                if b not in linked:' '                if False:'
+mutate_and_kill "memory orphan" '            if b not in linked:' '            if False:'
 
 selftest_close "digest-selftest clean: every counted shape fires, every quiet neighbour stays out, $rows mutants killed" "digest-selftest: PARTIAL"

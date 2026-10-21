@@ -61,8 +61,8 @@
 # repeat-failure.py with the payload on stdin — the head, the class and the
 # count live there — which loads session-hook-lib.py (the payload read,
 # session-id check, 0600 state write, prune and breadcrumb shared with
-# context-nudge) and hook-lib.py (the segmenter and the vendor token shapes).
-# Neither lib is a hook.
+# context-nudge) hook-lib.py (the segmenter) and secret-shapes.py (the vendor token
+# shapes). None of the three libs is a hook.
 #
 # Event: PostToolUseFailure
 # Install note: always on — no opt-in; quiet until the third identical failure.
@@ -83,6 +83,7 @@ hook_name="repeat-failure"
 command -v python3 >/dev/null 2>&1 || hook_allow "python3 not found"
 [ -r "$hook_dir/session-hook-lib.py" ] || hook_allow "session-hook-lib.py is not beside the hook or is not readable"
 [ -r "$hook_dir/hook-lib.py" ] || hook_allow "hook-lib.py is not beside the hook or is not readable"
+[ -r "$hook_dir/secret-shapes.py" ] || hook_allow "secret-shapes.py is not beside the hook or is not readable"
 [ -r "$hook_dir/repeat-failure.py" ] || hook_allow "repeat-failure.py is not beside the hook or is not readable"
 python3 "$hook_dir/repeat-failure.py" || hook_allow "repeat-failure.py failed (rc=$?)"   # stdin is the payload; the Python writes its own breadcrumbs
 exit 0

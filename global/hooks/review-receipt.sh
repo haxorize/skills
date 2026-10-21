@@ -24,7 +24,9 @@
 # `--work-tree`, or a `GIT_DIR=` assignment moves it (hook-lib's split_git),
 # and the repo is the work tree that directory sits in. A `cd` to a value the
 # hook cannot expand (`cd "$X"`) or to a directory that does not exist falls back
-# to the payload's `cwd`. A push from inside `.git` resolves to its work tree.
+# to the payload's `cwd`; a push that passes after a cd it could not expand
+# names the fallback in a breadcrumb, as hook-lib.py's unknown-cd policy asks.
+# A push from inside `.git` resolves to its work tree.
 #
 # Opt-in by repo: the repo top's `CLAUDE.md` alone decides — a `Review
 # required: yes` line gates the push, `no` or no line does not. A push sends
@@ -177,9 +179,10 @@ hook_read_payload
 command -v git >/dev/null 2>&1 || hook_allow "git not found"
 
 # --- the push records: every live `git push` in the command, and where each runs ---
-# Prints one "kind<US>dir<US>remote<US>refspec<US>extra-refspecs<US>all<GS>"
+# Prints one "kind<US>dir<US>remote<US>refspec<US>extra-refspecs<US>all<US>unplaced<GS>"
 # record per push (US = 0x1f, GS = 0x1d, extras RS-separated) — kind is `push`
-# or `delete`; `all` is set for --all/--mirror; any field may be empty —
+# or `delete`; `all` is set for --all/--mirror; `unplaced` is set when a cd
+# the scanner could not expand left dir a stand-in; any field may be empty —
 # nothing otherwise. on_command collects each push and returns no hit, so the
 # scan runs to the end of the command instead of stopping at its first push
 # (`git push origin other && git push origin main` is two pushes); finish()
@@ -193,10 +196,12 @@ def check_git(args, curdir):
     """args = tokens after the git word. Returns (kind, dir, remote, refspec,
     extra refspecs, all) or None. dir is where the repo is: the --git-dir when
     the command names one, else the --work-tree, else where git runs."""
-    d, sub, rest, gd, wt = split_git(args, curdir)
+    split = split_git(args, curdir)
+    d, sub, rest, gd, wt = split
     if sub != "push":
         return None
     d = gd or wt or d
+    rest = drop_redirs(rest)       # `>out.txt`, `2>&1`, `> out.txt`: no refspec (hook-lib.py)
     kind, remote, refspec, flags_done = "push", "", "", False
     refspecs, pushall = [], ""
     j = 0
@@ -227,19 +232,13 @@ def check_git(args, curdir):
                 pushall = "1"     # sends every branch; no refspec appears
             j += 1
             continue
-        if REDIR.match(r) and not REDIR.match(r).group(2):
-            j += 2                 # `> out.txt`: the operator and the target after it (REDIR is hook-lib.py)
-            continue
-        if "<" in r or ">" in r:
-            j += 1                 # `>out.txt`, `2>&1`: a redirection in one word
-            continue
         if not remote:
             remote = r
         else:
             refspecs.append(r)     # every refspec, not just the first
         j += 1
     return (kind, d, remote, refspecs[0] if refspecs else "",
-            "\x1e".join(refspecs[1:]), pushall)
+            "\x1e".join(refspecs[1:]), pushall, "" if split.placed else "1")
 
 
 PUSHES = []
@@ -255,9 +254,9 @@ def finish():
     return list(PUSHES)            # every push, as one hit; empty means none
 
 def emit(pushes):
-    for kind, d, remote, refspec, extras, pushall in pushes:
-        sys.stdout.write("%s\x1f%s\x1f%s\x1f%s\x1f%s\x1f%s\x1d"
-                         % (kind, d or "", remote, refspec, extras, pushall))
+    for kind, d, remote, refspec, extras, pushall, unplaced in pushes:
+        sys.stdout.write("%s\x1f%s\x1f%s\x1f%s\x1f%s\x1f%s\x1f%s\x1d"
+                         % (kind, d or "", remote, refspec, extras, pushall, unplaced))
 '
 records=()
 while IFS= read -r -d $'\x1d' rec; do records+=("$rec"); done < <(printf '%s' "$hook_result")
@@ -301,7 +300,7 @@ hold() {
 }
 
 # landing_call <args>: runs landing.sh once and returns its status, leaving its
-# stdout in landing_out and its stderr, on one line, in landing_why — its
+# stdout in landing_out (its caller declares both outputs local) and its stderr, on one line, in landing_why — its
 # reason for refusing a zone, which the hold carries rather than blaming the
 # install. Its stderr lines are tagged with RS (0x1e) inside the one capture
 # and split out after, so no second run is needed to recover them.
@@ -318,7 +317,8 @@ your own terminal."
 
 # refspec_parts <refspec>: the one place a refspec is split. rs_src is its
 # source with the force `+` dropped; rs_dst its destination as written, ""
-# when the refspec has no `:` (git then updates the source's own name).
+# when the refspec has no `:` (git then updates the source's own name). Each
+# caller declares rs_src and rs_dst local.
 refspec_parts() {
   local r="${1#+}"
   case "$r" in *:*) rs_src="${r%%:*}" rs_dst="${r#*:}" ;; *) rs_src="$r" rs_dst="" ;; esac
@@ -327,8 +327,9 @@ refspec_parts() {
 # is_tag <refspec>: the refspec sends a tag, not branch commits — its source
 # is a tag (refs/tags/…, or a name that is a tag and not a branch) and its
 # destination is absent or under refs/tags/. The destination's name never
-# decides alone: `wip:v1` sends a branch even where a tag v1 exists.
+# decides alone: `wip:v1` sends a branch even where a tag v1 exists. Reads top.
 is_tag() {
+  local rs_src rs_dst
   refspec_parts "$1"
   case "$rs_dst" in ""|refs/tags/*) ;; *) return 1 ;; esac
   case "$rs_src" in refs/tags/?*) return 0 ;; refs/*|"") return 1 ;; esac
@@ -336,9 +337,12 @@ is_tag() {
     && git -C "$top" rev-parse --verify -q "refs/tags/$rs_src" >/dev/null 2>&1
 }
 
-# resolve_repo <push dir>: top (the work tree the push runs in) and repo (its
-# name); returns 1 outside a work tree. The push dir is `git -C`'s, resolved
-# from the payload cwd, which stands in when it is not a directory.
+# resolve_repo <push dir>: sets top (the work tree the push runs in) and repo
+# (its name), the push's context: judge_push declares them local, and every
+# step below reads them rather than taking them as arguments, hold and
+# block_unstamped included. Returns 1 outside a work tree. The push dir is
+# `git -C`'s, resolved from the payload cwd, which stands in when it is not a
+# directory.
 resolve_repo() {
   local start="$cwd" common
   if [ -n "$1" ]; then
@@ -361,10 +365,11 @@ resolve_repo() {
   repo="$(basename "$top")"
 }
 
-# review_required: true when the top's CLAUDE.md says 'Review required: yes',
+# review_required: true (0) when the top's CLAUDE.md says 'Review required: yes',
 # as tree-stamp.sh --review-required reads it (header). The phrase check first
 # is a necessary condition, not a second rule: a file without it has no
-# opt-in line however the reader parses one.
+# opt-in line however the reader parses one. Reads top; holds on a CLAUDE.md
+# or a reader it cannot check.
 review_required() {
   local optin="$top/CLAUDE.md" grc
   [ -e "$optin" ] || return 1
@@ -382,26 +387,25 @@ review_required() {
   esac
 }
 
-# sources <remote> <pushall> <refspec>…: every source the push would send —
-# srcs, and src (the first refspec's source, else HEAD), dst (its
-# destination, else the current branch), branch, wide (several branches) and
-# url_push (the remote is not a configured one). Returns 1 when the push
-# passes, having said why. A second refspec, `--all`/`--mirror`, and a
-# wildcard refspec each reached the remote ungated before (2026-08-22
-# review): the gate derived everything from one token. A remote argument
-# that is not a configured remote is a URL (or a remote this repo does not
-# know): it has no remote-tracking refs, so no range.
+# The judging steps, sources and measure, share one status contract: each
+# returns 0 and means "go on judging", and none of them allows a push. A step
+# that finds the push needs no receipt puts the reason in pass_why and
+# returns; judge_push, the one place a push is allowed, reads it. A status
+# never carries the verdict, so `step || …` cannot be misread. Their other
+# outputs are named at each and declared local by judge_push.
+
+# sources <remote> <pushall> <url_push> <refspec>…: every source the push
+# would send. Sets srcs (one per source; HEAD when no refspec names one) and
+# wide (set when the push walks the local branches: --all/--mirror, a
+# wildcard or the matching refspec), or pass_why (no branch is ahead, or a
+# count failed). A second refspec, `--all`/`--mirror`, and a wildcard refspec
+# each reached the remote ungated before (2026-08-22 review): the gate
+# derived everything from one token. url_push is set when the remote argument
+# is not a configured remote: a URL (or a remote this repo does not know) has
+# no remote-tracking refs, so no branch is "ahead" of it.
 sources() {
-  local remote="$1" pushall="$2" r b ahead rname only_matching matching=""
-  shift 2
-  branch="$(git -C "$top" symbolic-ref --short -q HEAD 2>/dev/null || true)"
-  refspec_parts "${1:-}"
-  src="${rs_src:-HEAD}"
-  dst="${rs_dst:-$rs_src}"
-  [ -n "$dst" ] || dst="$branch"
-  dst="${dst#refs/heads/}"
-  url_push=""
-  if [ -n "$remote" ] && ! git -C "$top" remote 2>/dev/null | grep -qxF -- "$remote"; then url_push=1; fi
+  local remote="$1" pushall="$2" url_push="$3" r b ahead rname only_matching matching="" rs_src rs_dst
+  shift 3
   wide=""
   for r in "$@"; do
     case "$r" in :|+:) matching=1 ;; *'*'*) wide=1 ;; esac
@@ -425,7 +429,7 @@ sources() {
     [ -n "$b" ] || continue
     if [ -z "$url_push" ] && git -C "$top" rev-parse --verify -q "$rname/$b" >/dev/null 2>&1; then
       ahead="$(git -C "$top" rev-list --count "$rname/$b..$b" 2>/dev/null || echo '?')"
-      case "$ahead" in ''|0) continue ;; *[!0-9]*) rec_allow "could not count the commits on $b"; return 1 ;; esac
+      case "$ahead" in ''|0) continue ;; *[!0-9]*) pass_why="could not count the commits on $b"; return 0 ;; esac
     elif [ -n "$only_matching" ]; then
       continue
     fi
@@ -437,18 +441,29 @@ sources() {
     refspec_parts "$r"
     [ -n "$rs_src" ] && srcs+=("$rs_src")
   done
-  [ "${#srcs[@]}" -gt 0 ] || { rec_allow "no branch is ahead of $rname"; return 1; }
+  [ "${#srcs[@]}" -gt 0 ] || pass_why="no branch is ahead of $rname"
+  return 0
 }
 
-# measure <remote>: trees (one per source; every source must be stamped,
-# because git sends them all), range (what the push sends, "" when there is
-# no ref to compare against) and count. Trees resolve before the range, so a
-# source git cannot resolve holds here rather than failing open on the
-# count. Returns 1 when the push passes, having said why.
+# measure <remote> <url_push> <wide> <first refspec> <source>…: sets trees
+# (one per source, in order; every source must be stamped, because git sends
+# them all), range (what the push sends, "" when there is no ref to compare
+# against) and count ("?" unless counted), or pass_why (nothing to push, or
+# the count failed). The range comes from the first refspec's source (else
+# HEAD) and destination (else the current branch). Trees resolve before the
+# range, so a source git cannot resolve holds here rather than failing open
+# on the count.
 measure() {
-  local remote="$1" s t
+  local remote="$1" url_push="$2" wide="$3" s t branch src dst rs_src rs_dst
+  branch="$(git -C "$top" symbolic-ref --short -q HEAD 2>/dev/null || true)"
+  refspec_parts "$4"
+  shift 4
+  src="${rs_src:-HEAD}"
+  dst="${rs_dst:-$rs_src}"
+  [ -n "$dst" ] || dst="$branch"
+  dst="${dst#refs/heads/}"
   trees=()
-  for s in "${srcs[@]}"; do
+  for s in "$@"; do
     t="$(git -C "$top" rev-parse --verify -q "$s^{tree}" 2>/dev/null || true)"
     [ -n "$t" ] || hold "git cannot resolve the tree of $s" "Check the refspec (git would refuse a source it cannot resolve), or push from your own terminal."
     trees+=("$t")
@@ -466,23 +481,26 @@ measure() {
   # no range (a URL, a branch's first push, no remote): every commit is new
   # there, so there is no "nothing to push" shortcut and the receipt decides
   count="?"
-  if [ "${#srcs[@]}" -eq 1 ] && [ -z "$wide" ] && [ -n "$range" ]; then
+  if [ "$#" -eq 1 ] && [ -z "$wide" ] && [ -n "$range" ]; then
     count="$(git -C "$top" rev-list --count "$range" 2>/dev/null || echo '?')"
     case "$count" in
-      ''|0)       rec_allow "nothing to push on this branch"; return 1 ;;
-      *[!0-9]*)   rec_allow "could not count the commits in $range"; return 1 ;;
+      ''|0)       pass_why="nothing to push on this branch" ;;
+      *[!0-9]*)   pass_why="could not count the commits in $range" ;;
     esac
   fi
+  return 0
 }
 
-# stamps_for <repo>: zones, reports (the readable review reports), stamps
-# (one Reviewed-tree a line) and stamp_files ("<tree> <report>" a line), read
-# once per repo: a second push from the same repo reuses them. The zones and
+# stamps_for <repo>: the one cache that outlives a push, so its outputs are
+# globals only it sets — zones, reports (the readable review reports), stamps
+# (one Reviewed-tree a line) and stamp_files ("<tree> <report>" a line), and
+# stamps_repo, the repo they were read for — read once per repo: a second
+# push from the same repo reuses them. The zones and
 # the report list are landing.sh's; a reader that is missing or fails holds
 # the push rather than waving it through.
 stamps_repo=""
 stamps_for() {
-  local f h found
+  local f h found landing_out landing_why
   [ "$stamps_repo" = "$1" ] && return 0
   [ -f "$landing" ] || hold "landing.sh is not at $landing"
   landing_call zones || hold "landing.sh zones failed${landing_why:+ ($landing_why)}" "${landing_why:+$landing_fix}"
@@ -518,10 +536,11 @@ $h $f"
   stamps_repo="$1"
 }
 
-# block_unstamped <source> <tree>: exits 2, naming the unstamped tree, the
-# last stamp read and how the two differ.
+# block_unstamped <source> <tree> <count> <range> <wide>: exits 2, naming the
+# unstamped tree, what the push sends (measure's count and range, sources'
+# wide), the last stamp read (stamps_for's cache) and how the two differ.
 block_unstamped() {
-  local src="$1" tree="$2" sent last_line last
+  local src="$1" tree="$2" count="$3" range="$4" wide="$5" sent last_line last
   sent="$count unpushed commit(s) in $range"
   [ -n "$range" ] || sent="no remote ref to compare against, so every commit is new there"
   [ -z "$wide" ] || sent="one of the branches the push would change"
@@ -554,10 +573,25 @@ block_unstamped() {
   exit 2
 }
 
-# judge <record>: returns when this push passes, exits 2 when it is blocked.
+# judge <record>: judges one push record (judge_push), then names an allow
+# judged from the payload cwd's stand-in. Returns when the push passes; a
+# blocked push has exited 2.
 judge() {
-  local kind pushdir remote refspec extras pushall r i dropped="" rs=() kept=() pushed=()
-  IFS=$'\x1f' read -r kind pushdir remote refspec extras pushall <<< "$1"
+  local kind pushdir remote refspec extras pushall unplaced
+  IFS=$'\x1f' read -r kind pushdir remote refspec extras pushall unplaced <<< "$1"
+  judge_push "$kind" "$pushdir" "$remote" "$refspec" "$extras" "$pushall"
+  # hook-lib.py's unknown-cd policy: an allow judged from the stand-in says so
+  [ -z "$unplaced" ] || rec_allow "the push runs after a cd the hook could not expand, so it was judged from $cwd"
+}
+
+# judge_push <kind> <dir> <remote> <refspec> <extras> <pushall>: the record's
+# fields. Every allow of a push is spelled here (rec_allow, then return 0);
+# every step output is declared local here, so nothing but stamps_for's cache
+# carries from one push to the next.
+judge_push() {
+  local kind="$1" pushdir="$2" remote="$3" refspec="$4" extras="$5" pushall="$6"
+  local r i dropped="" rs=() kept=() pushed=()
+  local top="" repo="" url_push="" wide="" srcs=() trees=() range="" count="" pass_why=""
   [ "$kind" = "delete" ] && { rec_allow "a delete sends no commits"; return 0; }
 
   # every refspec, the first and the extras; a delete refspec (`:dst`) sends no
@@ -581,11 +615,14 @@ judge() {
   for r in ${kept[@]+"${kept[@]}"}; do is_tag "$r" && continue; pushed+=("$r"); done
   [ "${#kept[@]}" -eq 0 ] || [ "${#pushed[@]}" -gt 0 ] || { rec_allow "a tag push sends no branch commits"; return 0; }
 
-  sources "$remote" "$pushall" ${pushed[@]+"${pushed[@]}"} || return 0
-  measure "$remote" || return 0
+  if [ -n "$remote" ] && ! git -C "$top" remote 2>/dev/null | grep -qxF -- "$remote"; then url_push=1; fi
+  sources "$remote" "$pushall" "$url_push" ${pushed[@]+"${pushed[@]}"}
+  [ -z "$pass_why" ] || { rec_allow "$pass_why"; return 0; }
+  measure "$remote" "$url_push" "$wide" "${pushed[0]:-}" "${srcs[@]}"
+  [ -z "$pass_why" ] || { rec_allow "$pass_why"; return 0; }
   stamps_for "$repo"
   for i in "${!trees[@]}"; do
-    printf '%s\n' "$stamps" | grep -qx "${trees[$i]}" || block_unstamped "${srcs[$i]}" "${trees[$i]}"
+    printf '%s\n' "$stamps" | grep -qx "${trees[$i]}" || block_unstamped "${srcs[$i]}" "${trees[$i]}" "$count" "$range" "$wide"
   done
 }
 

@@ -253,6 +253,9 @@ expect_block "$P" "git -C $G push"                             "-C absolute"
 expect_allow "$G" "git -C ../plain push"                       "-C out of the gated repo"
 expect_allow "$G" "cd ../plain && git push"                    "cd out of the gated repo"
 expect_block "$G" 'cd "$SOMEWHERE" && git push'                "unexpandable cd falls back to cwd"
+# ...and an allow judged from that stand-in says so (hook-lib.py's unknown-cd policy)
+expect_crumb "$P" "cd \"\$(echo $G)\" && git push origin main" "could not expand" "an unexpandable cd judged from an un-opted cwd allows with a breadcrumb"
+expect_quiet "$P" "cd ../plain && git push origin main"         "a cd the hook expanded allows quietly"
 expect_block "$G" "cd ../nope && git push"                     "cd to a missing dir falls back to cwd"
 expect_block "$G" "git -C ../nope push"                        "-C to a missing dir falls back to cwd"
 expect_block "$G" "cd .git && git push"                        "push from inside .git"
@@ -482,6 +485,15 @@ fakeco "$work/reader4" "[ \"\$1\" = --reviewed-trees ] && exit 4; exec bash \"$r
 out="$(hook="$work/reader4/global/hooks/review-receipt.sh" crumb "$M" "git push")"
 expect_in "$out" "a report the reader exits 4 on is skipped" 'skipping unreadable report'
 expect_row "$out" "and with no other report the push still holds" 'rc=2'
+# the opt-in read failing: exit 4 is an unreadable CLAUDE.md, any other failure a broken reader; both hold
+fakeco "$work/optin4" "[ \"\$1\" = --review-required ] && exit 4; exec bash \"$real_reader\" \"\$@\"" real
+out="$(hook="$work/optin4/global/hooks/review-receipt.sh" crumb "$M" "git push")"
+expect_in "$out" "a reader exiting 4 on the opt-in names the CLAUDE.md" "could not read $M/CLAUDE.md"
+expect_row "$out" "a reader exiting 4 on the opt-in blocks" 'rc=2'
+fakeco "$work/optin3" "[ \"\$1\" = --review-required ] && exit 3; exec bash \"$real_reader\" \"\$@\"" real
+out="$(hook="$work/optin3/global/hooks/review-receipt.sh" crumb "$M" "git push")"
+expect_in "$out" "a reader failing on the opt-in is named" "the stamp reader failed on $M/CLAUDE.md"
+expect_row "$out" "a reader failing on the opt-in blocks" 'rc=2'
 # a zone landing.sh refuses: the hold carries landing.sh's reason, not the install text
 mkdir -p "$work/wzone"; chmod o+w "$work/wzone"
 # (landing.sh zones exits 4 on it, so this is the zones-failed hold)
@@ -513,6 +525,8 @@ expect_quiet "$MOK" "git push origin main &> out.txt"          "a detached &> ta
 expect_quiet "$MOK" "git push origin main < /dev/null"         "a detached < source is not a refspec"
 expect_quiet "$MOK" "git push origin > out.txt main"           "a refspec after a redirection is still read"
 expect_quiet "$MOK" "git push origin >| out.txt main"          "a detached >| target is not a refspec"
+expect_block "$MOK" "git push origin main nosuch:other>/dev/null" "an attached > ends the refspec's word: the refspec is read"
+expect_block "$MOK" "git push origin main 'nosuch>x'"          "a quoted > is part of a ref name, not a redirection"
 expect_block "$MOK" "git push origin main >| out.txt nosuch:other" "the | of >| is a redirection: the refspec after its target is read"
 expect_block "$MOK" "git push origin main 2> >(cat) nosuch:other"  "a process substitution is one word: the refspec after it is read"
 out="$(crumb "$MOK" "git push origin main nosuch:other > out.txt 2>&1")"
@@ -569,8 +583,10 @@ mutant "a negative refspec is a source" 'case "$r" in ^*) continue ;; esac' ':' 
 mutant "an unresolvable source allows" '[ -n "$t" ] || hold "git cannot resolve' '[ -n "$t" ] || { rec_allow x; return 0; }; : "git cannot resolve' "$MOK" "git push origin main nosuch:other" 0
 mutant "the matching refspec is a delete" 'case "$r" in :|+:) ;; :*|+:*)' 'case "$r" in :*|+:*)' "$G" "git push origin :" 0
 mutant "a URL push takes the upstream range" 'if [ -n "$url_push" ]; then' 'if false; then' "$work/tworemotes" "git push $work/other-remote.git" 0
-mutant "a redirection's target is a refspec" 'if REDIR.match(r) and not REDIR.match(r).group(2):' 'if False:' "$MOK" "git push origin main > out.txt 2>&1" 2
-mutant "no range is nothing to push" '[ -z "$wide" ] && [ -n "$range" ]; then' '[ -z "$wide" ]; then [ -n "$range" ] || { rec_allow x; return 1; };' "$work/norem" "git push" 0
+mutant "a redirection's target is a refspec" '    rest = drop_redirs(rest)' '    pass' "$MOK" "git push origin main > out.txt 2>&1" 2
+selftest_mutate "$hook" "$mdir/global/hooks/review-receipt.sh" '[ -z "$unplaced" ] ||' 'true ||' \
+  && hook="$mdir/global/hooks/review-receipt.sh" selftest_expect_killed "an allow after an unknown cd is silent" crumb_has "$P" "cd \"\$(echo $G)\" && git push origin main" 'could not expand'
+mutant "no range is nothing to push" '[ -z "$wide" ] && [ -n "$range" ]; then' '[ -z "$wide" ]; then [ -n "$range" ] || { pass_why=x; return 0; };' "$work/norem" "git push" 0
 
 # hook-lib.py's REDIR, which the hook reads its operator words through: >| dropped
 # from it, beside an unmutated copy of the hook

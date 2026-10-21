@@ -8,16 +8,14 @@
 #     emit writes it from that argument alone), then
 #     appends `run_scanner(on_command, emit, finish)`, the process entry: it
 #     reads the command from stdin and owns the exit codes below.
-#   - A loader by path (repeat-failure.py, through importlib): it calls
-#     `program_segments(cmd)`, which returns every program segment the command
-#     runs, in order — each one `on_command` would be handed, plus each
-#     segment the scanner reads itself and hands to no hook (a shell given a
-#     script file, a `find` with no `-exec` clause), as written — and raises
+#   - A loader by path (repeat-failure.py and src/retro/scripts/digest.py,
+#     through importlib): it calls `program_segments(cmd)`, which returns every
+#     program segment the command runs, in order — each one `on_command` would
+#     be handed, plus each segment the scanner reads itself and hands to no
+#     hook (a shell given a script file, a `find` with no `-exec` clause), as
+#     written, with no LITERAL marker left in a word — and raises
 #     `TokeniseError` on a tokeniser error. It reads no stdin and never exits.
-#     repeat-failure.py and src/retro/scripts/digest.py also read
-#     `VENDOR_SECRET`, the one table of vendor token shapes both masks share;
-#     each adds its own generic shapes and its own replacement. A vendor shape
-#     is added here, and both selftests grade it.
+#     The vendor token shapes both loaders mask with are secret-shapes.py's.
 # Besides those names, a hook may use `re`, `sys`, `os`, `shlex`, `progname`,
 # `git_args`, `split_git`, `expand`, `joined`, `base`, `stand_in`,
 # `allow_with`, `fed_by`, `REDIR`, and `drop_redirs`; everything else here is
@@ -37,8 +35,10 @@
 # A cd the scanner could not expand is one policy for every hook: curdir is
 # None, and `stand_in(curdir)` gives the payload's cwd in its place (else
 # base() moved by curdir). A hook judges the stand-in, blocks on a hit there,
-# and on a miss calls `allow_with(text)` to say what it could not judge where
-# it runs. `allow_with` records an allow with a breadcrumb: when neither
+# and on a miss says what it could not judge where it runs: by calling
+# `allow_with(text)`, or, where the verdict is reached after the scan
+# (review-receipt.sh, which judges in its shell), in that allow's own
+# breadcrumb. `allow_with` records an allow with a breadcrumb: when neither
 # on_command nor finish() returns a hit, run_scanner writes the first one
 # recorded to stdout and exits `ALLOW_EXIT` (5); hook_scan turns that into
 # hook_allow, so an allow never shares the channel a finding travels in.
@@ -47,7 +47,9 @@
 # shell would (`shlex`), split into segments at `; && || | & ( )` and newlines
 # (the `&` of a redirection — `2>&1`, `>&2`, `&>file` — and the `|` of `>|`
 # are part of its word, unless the `<`/`>` is backslash-escaped, where bash
-# reads it as text and the `&` or `|` as a separator; a `<(…)` /
+# reads it as text and the `&` or `|` as a separator; an unquoted operator
+# mid-word, `-n>x` or `f&>x`, starts a word of its own, the digits of a
+# word that is digits only (`2>x`) staying with it; a `<(…)` /
 # `>(…)` process substitution is the one word `<(…)`, its body scanned as
 # segments of its own after the rest; a `$(…)` or backtick command
 # substitution, bare or in double quotes, is `$(…)` inside its word, its body
@@ -111,14 +113,6 @@
 # allow with a breadcrumb.
 
 import os, re, shlex, sys
-
-# Vendor token shapes (header): an API key, a GitHub, GitLab, npm or Slack
-# token, an AWS or Google key, a JWT, an Azure SAS signature. No capture group.
-VENDOR_SECRET = re.compile(
-    r"(?i:\b(?:sk|pk|rk)-[a-z0-9_-]{16,}|\b(?:sk|pk|rk)_(?:live|test)_[a-z0-9]{16,}"
-    r"|\bgh[pousr]_[a-z0-9]{16,}|\bgithub_pat_\w{16,}|\bglpat-[\w-]{16,}|\bnpm_[a-z0-9]{30,}"
-    r"|\bxox[abposr]-[\w-]{10,}|[?&]sig=[\w%/+=]{20,})"
-    r"|\b(?:AKIA|ASIA)[0-9A-Z]{16}\b|\bAIza[\w-]{30,}|\beyJ[\w-]{8,}\.[\w-]{8,}\.[\w-]*")
 
 SHELL = re.compile(r"(^|[;&|(\s])(bash|sh|zsh|dash|ksh|eval|source|\.)(\s|$)")
 HEREDOC = re.compile(r"<<-?\s*\\?[\x27\"]?([A-Za-z_][A-Za-z0-9_]*)[\x27\"]?[^\n]*\n.*?\n\t*\1(?=\n|$)", re.S)
@@ -244,12 +238,19 @@ def mark_redirs(text):
     drops the quotes, and the bare word would read as a redirection, so it
     gets LITERAL before it, which REDIR refuses and drop_redirs removes. A
     `<(` / `>(` gets PROCSUB between its two characters, so lift_procsubs can
-    tell it from a `> (`."""
+    tell it from a `> (`. An unquoted operator mid-word (`-n>x`, `f&>x`)
+    ends the word before it, as bash reads it: a space goes in first, unless
+    the word so far is digits only (`2>x`, the fd number) or the operator's
+    own first character (`>>`)."""
     out, i, n = [], 0, len(text)
-    quote, lead = None, True          # the open quote; the word so far is digits only
+    quote, lead, op = None, True, False   # the open quote; the word so far is digits only; the last character was an operator's
     while i < n:
         c = text[i]
         nxt = text[i + 1] if i + 1 < n else ""
+        was_op, op = op, False
+        if quote is None and not lead and not was_op and (c in "<>" and nxt != "(" or c == "&" and nxt == ">"):
+            out.append(" "); lead = True              # `x>y`: the word ends here; the operator is read next pass
+            continue
         if quote == "\x27" and c != "\x27" or quote == '"' and c not in '"\\':
             out.append((LITERAL if lead and c in "<>" else "") + c); i += 1
             lead = lead and c.isdigit()
@@ -259,9 +260,10 @@ def mark_redirs(text):
         elif c == "\\":                         # an escaped character is text, never an operator
             out.append((LITERAL if lead and nxt in ("<", ">") else "") + c + nxt); i += 2
             lead = lead and nxt.isdigit()
-        elif c in " \t\r\n;&|()":
+        elif c in META:
             lead = True
             out.append(AMP if c == "&" and nxt == ">" else c); i += 1   # `&&>x`: `&` then `&>x`, which separates the same
+            op = c == "&" and nxt == ">"
         elif c in "<>" and nxt == "&":
             out.append(c + AMP); i += 2
         elif c == ">" and nxt == "|":
@@ -270,6 +272,7 @@ def mark_redirs(text):
             out.append(c + PROCSUB); i += 1
         else:
             lead = lead and c.isdigit()
+            op = c in "<>"
             out.append(c); i += 1
     return "".join(out)
 
@@ -853,7 +856,8 @@ def scan_command(text, on_command):
 def program_segments(cmd):
     """Every program segment cmd runs, in order, with the segments the scanner
     reads itself (a shell given a script file, a find with no -exec clause)
-    as written. Pure: no stdin, no exit. Raises TokeniseError."""
+    as written, a quoted `<`/`>` without the LITERAL marker REDIR reads. Pure:
+    no stdin, no exit. Raises TokeniseError."""
     global _on_opaque
     segs = []
     _on_opaque = segs.append
@@ -861,7 +865,7 @@ def program_segments(cmd):
         scan_command(cmd, lambda seg, curdir: segs.append(seg))
     finally:
         _on_opaque = None
-    return segs
+    return [[t.replace(LITERAL, "") for t in seg] for seg in segs]   # the marker is REDIR's, never a loader's
 
 
 def run_scanner(on_command, emit, finish=None):

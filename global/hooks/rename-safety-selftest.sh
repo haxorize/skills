@@ -18,7 +18,7 @@ hook="$here/rename-safety.sh"
 
 # selftest-lib.sh sources scripts/selftest-lib.sh (selftest_mutate,
 # selftest_expect_killed); the path named here is what queues this selftest
-# when that file is staged (pre-commit's queue_hook_selftests_naming).
+# when that file is staged (pre-commit's queue_selftests_naming).
 . "$here/selftest-lib.sh"
 # Temp-file template and guard: scripts/README.md § Temp files.
 tmp="$(selftest_tmpdir)" || selftest_no_tmpdir rename-safety-selftest
@@ -254,6 +254,11 @@ RS_TARGET="$plain" expect_crumb "$plain" 'for RS_TARGET in "$RS_TARGET"; do sed 
 expect_crumb "$plain" 'for RS_D68 in a ../opted; do sed -i s/a/b/ "$RS_D68/f.txt"; done' "a path the hook cannot expand" "a loop variable unset here is said, not silent"
 expect_crumb "$plain" 'sed -i s/a/b/ "$RS_UNSET_VAR/f.txt"' "a path the hook cannot expand" "an unset variable in a file path is said"
 expect_crumb "$plain" 'sed -i s/a/b/ "$RS_UNSET_VAR"/*.txt' "a path the hook cannot expand" "a glob under an unset variable is said"
+# a feeder's {} names the files it feeds, judged by the run directory: no unread-path breadcrumb (F64)
+expect_quiet "$plain" "find . -name '*.md' -exec sed -i 's/a/b/' {} +"   "find -exec {} outside an opted-in tree runs silently"
+expect_quiet "$plain" "ls | xargs -I{} sed -i 's/a/b/' {}"              "xargs -I {} outside an opted-in tree runs silently"
+# an unknown cd before a glob or a feeder says so too (F29)
+expect_crumb "$plain" 'cd "$RS_UNSET_VAR" && sed -i s/a/b/ *.txt' "after a cd the hook cannot expand" "an unknown cd before a glob is said"
 # a listed file beside a feeder is judged where it lies, not by the run directory alone (D68)
 expect_block "$plain" "echo x | xargs sed -i s/a/b/ $opted/f.txt" "a listed file beside xargs"
 expect_allow "$plain" "echo x | xargs sed -i s/a/b/ $plain/f.txt" "a listed file beside xargs, outside"
@@ -372,6 +377,12 @@ mutant "a fed listed file judged by the run directory only" '                if 
                     pass' "$plain" "echo x | xargs sed -i s/a/b/ $opted/f.txt" 0
 selftest_mutate "$hook" "$mdir/rename-safety.sh" 'unread = unread or not (parent or g)' 'unread = unread' \
   && hook="$mdir/rename-safety.sh" selftest_expect_killed "a glob's unread parent goes unsaid" crumb_has "$plain" 'sed -i s/a/b/ "$RS_UNSET_VAR"/*.txt' "cannot expand"
+cp "$hook" "$mdir/rename-safety.sh"
+selftest_mutate "$hook" "$mdir/rename-safety.sh" $'                allow_with("%s %s" % (shape, CD))\n            elif rebound:' $'                pass\n            elif rebound:' \
+  && hook="$mdir/rename-safety.sh" selftest_expect_killed "an unknown cd before a glob stays silent" crumb_has "$plain" 'cd "$RS_UNSET_VAR" && sed -i s/a/b/ *.txt' "after a cd the hook cannot expand"
+cp "$hook" "$mdir/rename-safety.sh"
+selftest_mutate "$hook" "$mdir/rename-safety.sh" 'not (p or g or (f == "{}" and fed_by()))' 'not (p or g)' \
+  && hook="$mdir/rename-safety.sh" selftest_expect_killed "a find -exec {} reads as unread" expect_quiet "$plain" "find . -name '*.md' -exec sed -i 's/a/b/' {} +"
 cp "$hook" "$mdir/rename-safety.sh"
 selftest_mutate "$here/hook-lib.py" "$mdir/hook-lib.py" '(name in TOUCHED and not rebound)' 'name in TOUCHED' \
   && RS_TARGET="$opted" hook="$mdir/rename-safety.sh" selftest_expect_killed "expand() ignores rebound" hook_rc_not 0 "$plain" 'export RS_TARGET="$RS_TARGET"; sed -i s/a/b/g "$RS_TARGET/f.txt"'

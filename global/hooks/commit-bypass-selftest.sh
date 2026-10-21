@@ -20,7 +20,7 @@ hook="$here/commit-bypass.sh"
 
 # selftest-lib.sh sources scripts/selftest-lib.sh (selftest_mutate,
 # selftest_expect_killed); the path named here is what queues this selftest
-# when that file is staged (pre-commit's queue_hook_selftests_naming).
+# when that file is staged (pre-commit's queue_selftests_naming).
 . "$here/selftest-lib.sh"
 # Temp-file template and guard: scripts/README.md § Temp files.
 tmp="$(selftest_tmpdir)" || selftest_no_tmpdir commit-bypass-selftest
@@ -54,6 +54,16 @@ expect_allow "$D" 'echo \\>& git commit -n -m x'                             "an
 expect_allow "$D" "echo '>&' git commit -n -m x"                               "a quoted >& is text"
 expect_block "$D" "sleep 1 & git commit --no-verify"                           "a bare background & separates"
 expect_block "$D" "git commit -m x >| log --no-verify"                         "the | of >| is a redirection, not a pipe"
+# an unquoted operator mid-word ends the word before it, as bash reads it
+expect_block "$D" "git commit -m x --no-verify>/dev/null"                      "an attached > ends the flag's word"
+expect_block "$D" "git commit -m x --no-verify>>log"                           "an attached >> ends the flag's word"
+expect_block "$D" "git commit -m x -n</dev/null"                               "an attached < ends the flag's word"
+expect_block "$D" "git commit -m x --no-verify&>log"                           "an attached &> ends the flag's word"
+expect_block "$D" "git commit -m x --no-verify>&2"                             "an attached >& ends the flag's word"
+expect_block "$D" "git commit -m x --no-verify>|log"                           "an attached >| ends the flag's word"
+expect_allow "$D" "git commit -m x --no-verify2>/dev/null"                     "the digits before an attached > stay in the word"
+expect_allow "$D" "git commit -m x '--no-verify>x'"                            "a quoted > mid-word is text"
+expect_allow "$D" 'git commit -m x --no-verify\>x'                             "an escaped > mid-word is text"
 expect_block "$D" "git commit -m x 2> >(cat) --no-verify"                      "a >(…) process substitution is one word"
 expect_block "$D" "git commit -m x < <(true) --no-verify"                      "a <(…) process substitution is one word"
 expect_block "$D" "cat <(git commit --no-verify -m x)"                         "a process substitution's body runs"
@@ -228,6 +238,15 @@ fi
 mkdir -p "$tmp/shadow"
 for m in json re shlex os; do printf 'open("%s/PWNED-%s", "w").write("x")\n' "$tmp/shadow" "$m" > "$tmp/shadow/$m.py"; done
 payload="$(_payload "$tmp/shadow" "git commit --no-verify -m x")"
+# program_segments hands a loader the words as written: the scanner's quoted-operator marker never
+# reaches it, and an attached >> is one word, not split again at its second >
+segs_of() { python3 -I -c 'import importlib.util as u, sys
+s = u.spec_from_file_location("hook_lib", sys.argv[1]); m = u.module_from_spec(s); s.loader.exec_module(m)
+print(m.program_segments(sys.argv[2]))' "$1" "$2" 2>&1; }
+segs="$(segs_of "$here/hook-lib.py" "echo '>' x")"
+selftest_check "program_segments returns a quoted > as the word > (got: $segs)" [ "$segs" = "[['echo', '>', 'x']]" ]
+segs="$(segs_of "$here/hook-lib.py" "echo a>>b")"
+selftest_check "program_segments keeps an attached >> whole (got: $segs)" [ "$segs" = "[['echo', 'a', '>>b']]" ]
 rc="$( cd "$tmp/shadow" && printf '%s' "$payload" | bash "$hook" >/dev/null 2>&1; echo $? )"
 [ "$rc" = 2 ] || { echo "FAIL (should block, rc=$rc) [a json.py in the cwd]: git commit --no-verify -m x"; fail=1; }
 ! ls "$tmp/shadow"/PWNED-* >/dev/null 2>&1 || { echo "FAIL: a module in the cwd ran as code: $(ls "$tmp/shadow")"; fail=1; }
@@ -256,6 +275,8 @@ lib_mutant "the & of >& separates"  'elif c in "<>" and nxt == "&":' 'elif False
 lib_mutant "the & of &> separates"  'out.append(AMP if c == "&" and nxt == ">" else c)' 'out.append(c)' "git commit -m x &>log --no-verify" 0
 lib_mutant "the & is not restored in the word" '.append(t.replace(AMP, "&").replace(PIPE, "|"))' '.append(t.replace(PIPE, "|"))' "&> x git commit --no-verify" 0
 lib_mutant "an escaped > is a redirection" 'if c == "\\":' 'if False:' 'echo \>& git commit --no-verify -m x' 0
+lib_mutant "an attached operator stays in its word" 'if quote is None and not lead and not was_op and' 'if False and' "git commit -m x --no-verify>/dev/null" 0
+lib_mutant "an attached &> stays in its word" ' and nxt != "(" or c == "&" and nxt == ">"):' ' and nxt != "("):' "git commit -m x --no-verify&>log" 0
 lib_mutant "the | of >| pipes"      'elif c == ">" and nxt == "|":' 'elif False:' "git commit -m x >| log --no-verify" 0
 lib_mutant "a process substitution splits" 'elif c in "<>" and nxt == "(":' 'elif False:' "git commit -m x 2> >(cat) --no-verify" 0
 lib_mutant "a process substitution body is dropped" '        out += ["\n", "("] + b + [")"]' '        pass' "cat <(git commit --no-verify -m x)" 0

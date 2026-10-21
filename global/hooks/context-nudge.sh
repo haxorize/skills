@@ -6,14 +6,16 @@
 # main-thread assistant entry that carries a `usage` block (sidechain entries
 # and the harness's `<synthetic>` entries skipped) and sums its input,
 # cache-creation, cache-read and output tokens — the context the next request
-# starts from. A main-thread `compact_boundary` entry met first ends the walk
-# with its `compactMetadata.postTokens` (0 when absent or not an integer): a
-# compaction writes no usage entry, so the last one is the pre-compaction
-# figure until the next reply. The thresholds follow the context window:
-# 150k and 200k on a 1M-token window, 120k and 150k on a 200k one. The window
-# is per machine and model, since a deployment can cap a model below its
-# published window: with CONTEXT_NUDGE_1M_MODELS unset every model reads as
-# 1M; a machine that sets it (in settings.json `env`, as `opus-4-8` or a
+# starts from. A main-thread `compact_boundary` entry met first supplies the
+# figure instead, its `compactMetadata.postTokens` (0 when absent or not an
+# integer): a compaction writes no usage entry, so the last one is the
+# pre-compaction figure until the next reply. The walk goes on past the
+# boundary to that usage entry only for its model. The thresholds follow the
+# context window: 150k and 200k on a 1M-token window, 120k and 150k on a
+# 200k one. The window is per machine and model, since a deployment can cap
+# a model below its published window: with CONTEXT_NUDGE_1M_MODELS unset
+# every model reads as 1M; a machine that sets it (in settings.json
+# `env`, as `opus-4-8` or a
 # comma- or space-separated list) names its 1M models, and every other model
 # there is 200k. The model is that entry's `model` (after a compaction, the
 # entry before it). Past the lower threshold it adds one line of
@@ -33,7 +35,9 @@
 #
 # State: one marker file per session under ${HOOK_STATE_DIR:-~/.claude/hook-state}/context-nudge/,
 # named by the session id and holding the highest threshold sent this climb
-# (0 once re-armed).
+# and the window it was sent on (0 once re-armed). A threshold sent on one
+# window does not hold back the other's: a session that moves from a 1M model
+# to a 200k one at 160k gets the 200k table's line to offer it now.
 # Markers are 0600 files in a 0700 directory; markers older than 30 days are
 # removed after a new one is written and its line printed, so a failed prune
 # never costs the nudge. Nothing from the transcript is written there or

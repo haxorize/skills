@@ -46,7 +46,7 @@ hook="$here/staged-secrets.sh"
 
 # selftest-lib.sh sources scripts/selftest-lib.sh (selftest_mutate,
 # selftest_expect_killed); the path named here is what queues this selftest
-# when that file is staged (pre-commit's queue_hook_selftests_naming).
+# when that file is staged (pre-commit's queue_selftests_naming).
 . "$here/selftest-lib.sh"
 # Temp-file template and guard: scripts/README.md § Temp files.
 tmp="$(selftest_tmpdir)" || selftest_no_tmpdir staged-secrets-selftest
@@ -161,6 +161,7 @@ expect_block "$r" "git add -A; git commit -m x" "add -A"
 expect_quiet "$r" "git add other.txt && git commit -m x" "add names another path"
 expect_quiet "$r" "git add other.txt 2> new.txt && git commit -m x" "a detached redirect target is not a pathspec"
 expect_block "$r" "git add 2> log new.txt && git commit -m x" "a pathspec after a redirection is still read"
+expect_block "$r" "git add new.txt>/dev/null && git commit -m x" "an attached > ends the pathspec's word"
 expect_quiet "$r" "git status" "not a commit"
 r="$(newrepo)"; in_fixture "$r"; printf 'id\n' > "$r/id_rsa"
 expect_block "$r" "git add id_rsa && git commit -m x" "untracked key file added in the same command"
@@ -340,7 +341,7 @@ mutant "drop netrc path"  'r"^\.netrc$"' 'r"^\.netrcX$"'      "$(staged .netrc "
 mutant "drop npmrc path"  'r"^\.npmrc$"' 'r"^\.npmrcX$"'      "$(staged .npmrc "x")" "git commit -m x" 0
 mutant "drop id_dsa path" 'id_(rsa|dsa|ecdsa|ed25519)' 'id_(rsa|ecdsa|ed25519)' "$(staged id_dsa "x")" "git commit -m x" 0
 mutant "drop git stage"   'if sub in ("add", "stage"):' 'if sub in ("add",):' "$(r="$(newrepo)" && in_fixture "$r" && printf 'k = %s\n' "$AWS" > "$r/n.txt" && printf '%s' "$r")" "git stage n.txt && git commit -m x" 0
-mutant "narrow on an unexpandable pathspec" 'ADDS.append(Add(d, gd, wt, [] if wide else specs, force, blind))' 'ADDS.append(Add(d, gd, wt, specs, force, blind))' "$(r="$(newrepo)" && in_fixture "$r" && printf 'k = %s\n' "$AWS" > "$r/n.txt" && printf '%s' "$r")" "git add o.txt \"\$F\" && git commit -m x" 0
+mutant "narrow on an unexpandable pathspec" 'ADDS.append(Add(target, [] if wide else specs, force))' 'ADDS.append(Add(target, specs, force))' "$(r="$(newrepo)" && in_fixture "$r" && printf 'k = %s\n' "$AWS" > "$r/n.txt" && printf '%s' "$r")" "git add o.txt \"\$F\" && git commit -m x" 0
 mutant "ignore -f"        '([] if force else ["--exclude-standard"])' '["--exclude-standard"]' "$(r="$(newrepo)" && in_fixture "$r" && printf 's.txt\n' > "$r/.gitignore" && printf 'k = %s\n' "$AWS" > "$r/s.txt" && printf '%s' "$r")" "git add -f s.txt && git commit -m x" 0
 mutant "-A reads only the subdirectory" '(specs or [":/"])' '(specs or [])' "$(r="$(newrepo)" && in_fixture "$r" && mkdir -p "$r/sub" && printf 'k = %s\n' "$AWS" > "$r/top.txt" && printf '%s' "$r/sub")" "git add -A && git commit -m x" 0
 mutant "diff.relative narrows"  '"--no-relative", ' '' "$(r="$(newrepo)" && in_fixture "$r" && mkdir -p "$r/sub" && git -C "$r" config diff.relative true && printf 'k = %s\n' "$AWS" >> "$r/seed.txt" && printf '%s' "$r/sub")" "git add -A && git commit -m x" 0
@@ -357,17 +358,17 @@ mutant "split_git skips -C"  '            if name == "-C":
                 pass' "$tmp" "git -C $(staged c.txt "k = $GHP") commit -m x" 0 hook-lib.py
 r="$(newrepo)"; in_fixture "$r"; printf 'k = %s\n' "$AWS" > "$r/new.txt"; printf 'new.txt\n' > "$r/list.txt"
 mutant "--pathspec-from-file narrows" '                    wide = True             # the pathspecs are in a file' '                    pass             # the pathspecs are in a file' "$r" "git add --pathspec-from-file list.txt && git commit -m x" 0
-mutant "only the first commit" '        COMMITS.append(Commit(d, gd, wt, any(commits_all(a) for a in rest), len(ADDS), blind))' '        COMMITS.append(Commit(d, gd, wt, any(commits_all(a) for a in rest), len(ADDS), blind)) if not COMMITS else None' "$r" "git commit --allow-empty -m a; git add new.txt; git commit -m b" 0
+mutant "only the first commit" '        COMMITS.append(Commit(target, any(commits_all(a) for a in rest), len(ADDS)))' '        COMMITS.append(Commit(target, any(commits_all(a) for a in rest), len(ADDS))) if not COMMITS else None' "$r" "git commit --allow-empty -m a; git add new.txt; git commit -m b" 0
 mutant "an add after the last commit read" 'adds = ADDS[:COMMITS[-1].adds]' 'adds = ADDS' "$r" "git commit --allow-empty -m a; git add new.txt" 2
 r3="$(newrepo)"; in_fixture "$r3"; r2="$(staged c.txt "k = $GHP")"
 r4="$(newrepo)"; in_fixture "$r4"; printf 'k = %s\n' "$AWS" > "$r4/new.txt"
 mutant "a hit in the session repo dropped" 'if blind_found:' 'if False:' "$r2" "cd \"\$(echo $r3)\" && git commit -m x" 0
 mutant "an unknown cd allowed before the placed scan" '    targets = []
-    for c in COMMITS:' '    if any(c.blind for c in COMMITS) or any(a.blind for a in ADDS):
+    for c in COMMITS:' '    if any(c.target.blind for c in COMMITS) or any(a.target.blind for a in ADDS):
         sys.exit(ALLOW_EXIT)
     targets = []
     for c in COMMITS:' "$tmp/plain" "cd \"\$(echo x)\" && git commit -m a; git -C $r2 commit -m b" 0
-mutant "an unknown cd add scanned after the last commit" 'adds = ADDS[:COMMITS[-1].adds]' 'adds = ADDS[:COMMITS[-1].adds] + [a for a in ADDS[COMMITS[-1].adds:] if a.blind]' "$r4" "git -C $r3 commit --allow-empty -m a; cd \"\$(echo x)\" && git add new.txt" 2
+mutant "an unknown cd add scanned after the last commit" 'adds = ADDS[:COMMITS[-1].adds]' 'adds = ADDS[:COMMITS[-1].adds] + [a for a in ADDS[COMMITS[-1].adds:] if a.target.blind]' "$r4" "git -C $r3 commit --allow-empty -m a; cd \"\$(echo x)\" && git add new.txt" 2
 mutant "an absolute --git-dir/--work-tree does not place" 'out.placed = known or (gd_abs and wt_abs)' 'out.placed = known' "$r3" "cd \"\$(echo x)\" && git --git-dir=$r2/.git --work-tree=$r2 commit -m x" 0 hook-lib.py
 mutant "a relative --work-tree places" 'wt_abs = v is not None and os.path.isabs(v)' 'wt_abs = v is not None' "$r3" "cd \"\$(echo x)\" && git --git-dir=$r2/.git --work-tree=. commit -m x" 2 hook-lib.py
 mutant "an absolute --git-dir alone places" 'out.placed = known or (gd_abs and wt_abs)' 'out.placed = known or gd_abs' "$r3" "cd \"\$(echo x)\" && git --git-dir=$r2/.git commit -m x" 2 hook-lib.py

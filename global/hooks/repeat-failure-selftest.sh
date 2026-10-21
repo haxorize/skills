@@ -155,7 +155,7 @@ r_red() { local got; got="$(for i in 1 2 3; do fire "$1" 'make test' "$E1"; done
   case "$got" in *"If this was not the expected red of a test loop"*) ;; *) echo "FAIL [test-loop wording]: the line should name the expected red of a test loop — $got"; fail=1 ;; esac; }
 r_red s21
 # a broken scanner is a breadcrumb naming it, never a key quietly degraded to a hash
-mkdir -p "$tmp/badlib"; cp "$here/repeat-failure.sh" "$here/repeat-failure.py" "$here/hook-lib.sh" "$here/session-hook-lib.py" "$tmp/badlib/"
+mkdir -p "$tmp/badlib"; cp "$here/repeat-failure.sh" "$here/repeat-failure.py" "$here/hook-lib.sh" "$here/secret-shapes.py" "$here/session-hook-lib.py" "$tmp/badlib/"
 selftest_mutate "$here/hook-lib.py" "$tmp/badlib/hook-lib.py" $'def program_segments(cmd):\n' $'def program_segments(cmd):\n    undefined_name\n'
 got="$(mhook="$tmp/badlib/repeat-failure.sh" fire s22 ls "$E1")"
 case "$got" in "rc=0||repeat-failure: crashed (NameError), allowing") ;; *) echo "FAIL [a broken scanner]: should be a crash breadcrumb — $got"; fail=1 ;; esac
@@ -249,12 +249,12 @@ case "$got" in "rc=0||repeat-failure: payload has no usable"*) ;; *) echo "FAIL 
 mkdir -p "$tmp/ro"; chmod a-w "$tmp/ro"
 got="$(HOOK_STATE_DIR="$tmp/ro/x" fire s7 'ls' "$E1")"
 case "$got" in "rc=0||repeat-failure: state directory not writable"*) ;; *) echo "FAIL [unwritable state]: $got"; fail=1 ;; esac
-mkdir -p "$tmp/nopy"; cp "$here/repeat-failure.sh" "$here/hook-lib.sh" "$here/hook-lib.py" "$here/session-hook-lib.py" "$tmp/nopy/"
+mkdir -p "$tmp/nopy"; cp "$here/repeat-failure.sh" "$here/hook-lib.sh" "$here/hook-lib.py" "$here/secret-shapes.py" "$here/session-hook-lib.py" "$tmp/nopy/"
 got="$(mhook="$tmp/nopy/repeat-failure.sh" fire s18 ls "$E1")"
 case "$got" in "rc=0||repeat-failure: repeat-failure.py is not beside the hook"*) ;; *) echo "FAIL [repeat-failure.py missing]: $got"; fail=1 ;; esac
-for gone in session-hook-lib.py hook-lib.py; do   # each lib's own arm, not the crash breadcrumb a load failure would leave
+for gone in session-hook-lib.py hook-lib.py secret-shapes.py; do   # each lib's own arm, not the crash breadcrumb a load failure would leave
   rm -rf "$tmp/nolib"; mkdir -p "$tmp/nolib"
-  cp "$here/repeat-failure.sh" "$here/repeat-failure.py" "$here/hook-lib.sh" "$here/hook-lib.py" "$here/session-hook-lib.py" "$tmp/nolib/"
+  cp "$here/repeat-failure.sh" "$here/repeat-failure.py" "$here/hook-lib.sh" "$here/hook-lib.py" "$here/secret-shapes.py" "$here/session-hook-lib.py" "$tmp/nolib/"
   rm "$tmp/nolib/$gone"
   got="$(mhook="$tmp/nolib/repeat-failure.sh" fire s19 ls "$E1")"
   case "$got" in "rc=0||repeat-failure: $gone is not beside the hook"*) ;; *) echo "FAIL [$gone missing]: $got"; fail=1 ;; esac
@@ -264,7 +264,7 @@ done
 mdir="$tmp/mut"; mkdir -p "$mdir"
 mutant() { # mutant <label> <file> <find> <replace> <row fn> — <file> is mutated on a fresh copy of the hook's files; the row must stop passing
   local label="$1" file="$2"; shift
-  cp "$here/repeat-failure.sh" "$here/repeat-failure.py" "$here/session-hook-lib.py" "$here/hook-lib.sh" "$here/hook-lib.py" "$mdir/"
+  cp "$here/repeat-failure.sh" "$here/repeat-failure.py" "$here/session-hook-lib.py" "$here/hook-lib.sh" "$here/hook-lib.py" "$here/secret-shapes.py" "$mdir/"
   selftest_mutate "$here/$file" "$mdir/$file" "$2" "$3" || return
   rm -rf "$HOOK_STATE_DIR"
   mhook="$mdir/repeat-failure.sh" selftest_expect_killed "$label" $4   # unquoted: a row fn may carry its session id
@@ -289,8 +289,8 @@ mutant "no error-named rule"      $py 'for s in reversed(segs):' 'for s in []:' 
 mutant "scripts hand no segment"  hook-lib.py '            _opaque(seg)
             return None             # `… | bash hook.sh`' '            return None             # `… | bash hook.sh`' 'r_script m13'
 mutant "find hands no segment"    hook-lib.py '            _opaque(seg)            # no clause' '            pass            # no clause' 'r_find m14'
-mutant "drop the SAS mask"        hook-lib.py '|[?&]sig=[\w%/+=]{20,})"' ')"' 'r_families m15'
-mutant "drop the shared vendor table" $py 'line = scanner.VENDOR_SECRET.sub("#", line)' 'pass' 'r_families m17'
+mutant "drop the SAS mask"        secret-shapes.py '|[?&]sig=[\w%/+=]{20,})"' ')"' 'r_families m15'
+mutant "drop the shared vendor table" $py 'line = VENDOR_SECRET.sub("#", line)' 'pass' 'r_families m17'
 mutant "the old environmental line" $py 'If this was not the expected red of a test loop, treat it' 'Treat it' 'r_red m16'
 mutant "a prune error escapes"    $lib $'os.remove(p)\n        except OSError:\n            pass' $'os.remove(p)\n        except OSError:\n            raise' 'r_prune m12'
 

@@ -71,17 +71,20 @@ message, keeping session ids, counts and tool names; a skill or hook name prints
 when it is on the roster (--skills, this checkout's global/hooks/, a hook event name),
 and as `other` otherwise, so the work machine can carry the file.
 
-Commands are split, and vendor token shapes masked, by this checkout's
-global/hooks/hook-lib.py, the hooks' own splitter and table; without it nothing is read.
+Commands are split by this checkout's global/hooks/hook-lib.py, the hooks' own
+splitter, and vendor token shapes masked by its global/hooks/secret-shapes.py, the
+table repeat-failure.py masks with; without either nothing is read.
 
 Exit: 0 a digest; 2 a digest marked PARTIAL, naming each source not fully read (a line
 that would not parse, a source absent, a helper script that failed or was not found);
-3 usage error; 4 the script itself crashed, or hook-lib.py would not load. A missing
+3 usage error; 4 the script itself crashed, or hook-lib.py or secret-shapes.py would
+not load. A missing
 source is never read as zero.
 Past 12 KB the digest re-renders at one pointer per count and says so in its header.
 """
 import ast
 import collections
+import dataclasses
 import datetime
 import functools
 import glob
@@ -91,6 +94,7 @@ import os
 import re
 import subprocess
 import sys
+from typing import Optional
 
 EXIT_OK, EXIT_PARTIAL, EXIT_USAGE, EXIT_CRASH = 0, 2, 3, 4
 SID_RE = re.compile(r"^[A-Za-z0-9._-]+$")
@@ -139,17 +143,20 @@ PASTED = re.compile(r"<pasted_content\b.*?(</pasted_content>|\Z)", re.S)
 RESTORE = re.compile(r"\bgit\s+(checkout\s+--|restore)\b")
 CONCEDE = re.compile(r"^\W*(you'?re (absolutely |quite )?right|my (mistake|bad|apologies)|good catch|i apologi[sz]e|sorry[,.!]? (i|you|that)|i was wrong)\b", re.I)
 COMMAND_NAME = re.compile(r"<command-name>/?([\w:.-]+)</command-name>")
-# The command splitter and the vendor token shapes are global/hooks/hook-lib.py's,
-# loaded by load_hook_lib() before anything is read: program_segments, which the
-# PreToolUse hooks and repeat-failure.py split commands with, and VENDOR_SECRET,
-# which repeat-failure.py masks with too. A digest that cannot mask never prints.
+# The command splitter is global/hooks/hook-lib.py's program_segments, which the
+# PreToolUse hooks and repeat-failure.py split commands with; the vendor token shapes
+# are global/hooks/secret-shapes.py's, which repeat-failure.py masks with too. Both
+# load from this checkout in load_hook_lib(), on first use (main() calls it before
+# anything is read). A digest that cannot mask never prints.
 HOOK_LIB = os.path.join(REPO, "global", "hooks", "hook-lib.py")
-hook_lib = None
+SECRET_SHAPES = os.path.join(REPO, "global", "hooks", "secret-shapes.py")
+hook_lib = None   # set by load_hook_lib(); read through it and secret(), never directly
 SECRET = None
+UNTOKENISED = set()   # distinct commands hook-lib.py's tokeniser refused; compute() reports the count
 # The digest's own secret shapes, after the vendor ones: auth headers, URL
 # credentials, a hex run, and the mixed-case runs a path segment never is.
 OWN_SECRET = (
-    r"|(?i:\bbearer\s+[\w.~+/=-]{12,}|\bbasic\s+(?![a-z]+\b)[\w+/=]{8,}|\bauthorization:\s*\S+(\s+\S+)?)"
+    r"(?i:\bbearer\s+[\w.~+/=-]{12,}|\bbasic\s+(?![a-z]+\b)[\w+/=]{8,}|\bauthorization:\s*\S+(\s+\S+)?)"
     r"|(?<=://)[^/\s:@]+:[^/\s@]+(?=@)"   # the user:password of a URL
     r"|\b[a-fA-F0-9]{40,}\b"
     r"|(?<![\w/.-])(?=[A-Za-z0-9+/]*\d)(?=[A-Za-z0-9+/]*[A-Z])(?=[A-Za-z0-9+/]*[a-z])[A-Za-z0-9+/]{40}(?![\w/.-])"   # a 40-character key with a slash in it
@@ -170,23 +177,39 @@ Result = collections.namedtuple("Result", "id errored")
 Sources = collections.namedtuple("Sources", "meta_n facet_n skill_rows git_reverts surface memory history")
 
 
+def load_path(name, path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
 def load_hook_lib():
-    """hook-lib.py from this checkout, and SECRET built over its vendor shapes;
-    exits 4 when it is missing or will not load, since nothing can be masked."""
+    """hook-lib.py from this checkout, and SECRET composed by its secret-shapes.py
+    from the vendor shapes and OWN_SECRET; exits 4 when either is missing or will
+    not load, since nothing can be masked."""
     global hook_lib, SECRET
+    if hook_lib is not None and SECRET is not None:
+        return hook_lib
+    path = HOOK_LIB
     try:
-        spec = importlib.util.spec_from_file_location("hook_lib", HOOK_LIB)
-        hook_lib = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(hook_lib)
-        SECRET = re.compile(hook_lib.VENDOR_SECRET.pattern + OWN_SECRET)
-    except Exception as ex:   # missing, unreadable, or not the hook-lib.py this reads
-        sys.stderr.write("digest.py: %s did not load (%s); nothing masked, nothing read\n" % (HOOK_LIB, type(ex).__name__))
+        hook_lib = load_path("hook_lib", path)
+        path = SECRET_SHAPES
+        SECRET = load_path("secret_shapes", path).compose(OWN_SECRET)
+    except Exception as ex:   # missing, unreadable, or not the file this reads
+        sys.stderr.write("digest.py: %s did not load (%s); nothing masked, nothing read\n" % (path, type(ex).__name__))
         sys.exit(EXIT_CRASH)
+    return hook_lib
+
+
+def secret():
+    load_hook_lib()
+    return SECRET
 
 
 def mask(text):
     """Secret shapes out first, then whitespace squeezed; the caller cuts after this."""
-    return re.sub(r"\s+", " ", KEYVAL.sub(r"\1[masked]", SECRET.sub("[masked]", text))).strip()
+    return re.sub(r"\s+", " ", KEYVAL.sub(r"\1[masked]", secret().sub("[masked]", text))).strip()
 
 
 def hook_name(command, fallback):
@@ -214,27 +237,39 @@ def pointer(sid, line):
 
 
 def segments(cmd):
-    """The program segments a Bash command runs, by hook-lib.py's splitter (a `cd`,
-    an assignment and a wrapper peeled); [] on a tokeniser error."""
+    """The program segments a raw Bash command runs, by hook-lib.py's splitter (a
+    `cd`, an assignment and a wrapper peeled; newlines separate). [] on a tokeniser
+    error, and the command joins UNTOKENISED for compute()'s PARTIAL note."""
+    lib = load_hook_lib()
     try:
-        return [s for s in hook_lib.program_segments(cmd) if s]
-    except hook_lib.TokeniseError:
+        return [s for s in lib.program_segments(cmd) if s]
+    except lib.TokeniseError:
+        UNTOKENISED.add(cmd)
         return []
 
 
 @functools.lru_cache(maxsize=None)
 def program(cmd):
-    """The first program a Bash command runs."""
+    """The first program a raw Bash command runs."""
     segs = segments(cmd)
     return os.path.basename(segs[0][0]) if segs else "?"
 
 
+# A quoted string on one line, as shape() writes Q; a heredoc's quoted delimiter
+# (`<<'EOF'`, group 1) is kept, so the splitter still finds the body's end.
+QUOTED = re.compile(r"(<<-?\s*\\?(['\"])[A-Za-z_]\w*\2)|'[^'\n]*'|\"[^\"\n]*\"")
+
+
 @functools.lru_cache(maxsize=None)
 def shape(cmd):
-    """A Bash command's segments, a word holding a space (a quoted string) as Q, and
-    digits and hex runs flattened; the text itself where it will not tokenise."""
-    segs = segments(cmd)
-    c = " ; ".join(" ".join("Q" if re.search(r"\s", w) else w for w in s) for s in segs) if segs else cmd
+    """A raw Bash command's shape: every quoted string as Q (one spanning lines is a
+    word holding whitespace once split), split at its segments, newlines included,
+    each segment masked, then digits and hex runs flattened; the masked text itself
+    where it will not tokenise. Masking after the split keeps KEYVAL's \\S+ off a
+    closing quote."""
+    c = QUOTED.sub(lambda m: m.group(1) or "Q", cmd)
+    segs = segments(c)
+    c = " ; ".join(mask(" ".join("Q" if re.search(r"\s", w) else w for w in s)) for s in segs) if segs else mask(c)
     c = re.sub(r"\b[0-9a-f]{7,}\b|\d+", "N", c)
     return " ".join(c.split())
 
@@ -244,15 +279,34 @@ def usage(msg):
     sys.exit(EXIT_USAGE)
 
 
+def _home(path):
+    return dataclasses.field(default_factory=lambda: os.path.expanduser(path))
+
+
+@dataclasses.dataclass
+class Args:
+    """The command line, as parse_args() checks it. Exactly one of session and since
+    is set; since_ts is since's local midnight. files() rewrites a session prefix to
+    the one id it matches, and capped() drops max_pointers to 1."""
+    session: Optional[str] = None
+    since: Optional[str] = None
+    since_ts: Optional[float] = None
+    exclude: Optional[str] = None
+    controls: Optional[str] = None
+    counts_only: bool = False
+    surface: bool = False
+    max_pointers: int = 5
+    projects: str = _home("~/.claude/projects")
+    usage_data: str = _home("~/.claude/usage-data")
+    history: str = _home("~/.claude/history.jsonl")
+    skills: str = _home("~/.claude/skills")
+
+
 def parse_args(argv):
-    a = {"session": None, "since": None, "exclude": None, "controls": None, "counts_only": False,
-         "surface": False, "max_pointers": 5,
-         "projects": os.path.expanduser("~/.claude/projects"),
-         "usage_data": os.path.expanduser("~/.claude/usage-data"),
-         "history": os.path.expanduser("~/.claude/history.jsonl"),
-         "skills": os.path.expanduser("~/.claude/skills")}
+    a = Args()
+    max_pointers = str(a.max_pointers)
     takes = {"--session": "session", "--since": "since", "--exclude-session": "exclude",
-             "--controls": "controls", "--max-pointers": "max_pointers", "--projects": "projects",
+             "--controls": "controls", "--max-pointers": None, "--projects": "projects",
              "--usage-data": "usage_data", "--history": "history", "--skills": "skills"}
     i = 0
     while i < len(argv):
@@ -261,32 +315,35 @@ def parse_args(argv):
             sys.stdout.write(__doc__)
             sys.exit(EXIT_OK)
         if k == "--counts-only":
-            a["counts_only"] = True
+            a.counts_only = True
         elif k == "--surface":
-            a["surface"] = True
+            a.surface = True
         elif k in takes:
             if i + 1 >= len(argv):
                 usage("a flag needs a value: " + k)
-            a[takes[k]] = argv[i + 1]
+            if takes[k] is None:
+                max_pointers = argv[i + 1]
+            else:
+                setattr(a, takes[k], argv[i + 1])
             i += 1
         else:
             usage("unknown argument " + repr(k))
         i += 1
-    if (a["session"] is None) == (a["since"] is None):
+    if (a.session is None) == (a.since is None):
         usage("give exactly one of --session ID or --since YYYY-MM-DD")
-    if a["session"] is not None and not SID_RE.match(a["session"]):
+    if a.session is not None and not SID_RE.match(a.session):
         usage("--session is not a session id")
-    if a["exclude"] is not None and not SID_RE.match(a["exclude"]):
+    if a.exclude is not None and not SID_RE.match(a.exclude):
         usage("--exclude-session is not a session id")
-    if a["since"] is not None:
+    if a.since is not None:
         try:
-            a["since_ts"] = datetime.datetime.strptime(a["since"], "%Y-%m-%d").timestamp()
+            a.since_ts = datetime.datetime.strptime(a.since, "%Y-%m-%d").timestamp()
         except ValueError:
             usage("--since is not YYYY-MM-DD")
-    if not re.fullmatch(r"\d+", str(a["max_pointers"])):
+    if not re.fullmatch(r"\d+", max_pointers):
         usage("--max-pointers is not a whole number")
-    a["max_pointers"] = int(a["max_pointers"])
-    if a["controls"] is not None and not os.path.isfile(a["controls"]):
+    a.max_pointers = int(max_pointers)
+    if a.controls is not None and not os.path.isfile(a.controls):
         usage("--controls is not a file")
     return a
 
@@ -326,7 +383,7 @@ class Digest:
         self.caught = set()
         self.shapes = collections.defaultdict(set)
         self.shape_n = collections.Counter()
-        self.skill_roster = set(os.listdir(args["skills"])) if os.path.isdir(args["skills"]) else set()
+        self.skill_roster = set(os.listdir(args.skills)) if os.path.isdir(args.skills) else set()
         self.hook_roster = {os.path.splitext(f)[0] for f in os.listdir(os.path.join(REPO, "global", "hooks"))
                             if f.endswith((".sh", ".py"))} if os.path.isdir(os.path.join(REPO, "global", "hooks")) else set()
 
@@ -339,7 +396,7 @@ class Digest:
     def label(self, name, roster):
         """The one counts-only seam for a skill or hook name: a name off the roster is
         transcript text, and the carried file holds it as `other`."""
-        if not self.args["counts_only"] or name in roster or HOOK_EVENT.match(name):
+        if not self.args.counts_only or name in roster or HOOK_EVENT.match(name):
             return name
         return "other"
 
@@ -350,35 +407,35 @@ class Digest:
 
     def point(self, key, sid, line, quote=None):
         self.counts[key] += 1
-        if len(self.ptr[key]) < self.args["max_pointers"]:
+        if len(self.ptr[key]) < self.args.max_pointers:
             self.ptr[key].append(pointer(sid, line))
-            if quote is not None and not self.args["counts_only"]:
+            if quote is not None and not self.args.counts_only:
                 self.quotes[key].append(mask(quote)[:120])
 
     # -- transcripts ------------------------------------------------------------
     def files(self):
-        root = self.args["projects"]
+        root = self.args.projects
         if not os.path.isdir(root):
             self.partial.append("projects directory absent")
             return []
         mains = {}
         for f in glob.glob(os.path.join(root, "*", "*.jsonl")):
             mains[os.path.basename(f)[:-6]] = f
-        if self.args["session"] is not None:
-            hits = sorted(s for s in mains if s.startswith(self.args["session"]))
+        if self.args.session is not None:
+            hits = sorted(s for s in mains if s.startswith(self.args.session))
             if len(hits) != 1:
                 usage("--session matches %d sessions%s" % (len(hits), (": " + ", ".join(hits[:10])) if hits else ""))
-            self.args["session"] = hits[0]
+            self.args.session = hits[0]
         keep = []
         for sid, f in mains.items():
-            if sid == self.args["exclude"]:
+            if sid == self.args.exclude:
                 continue
-            if self.args["session"] is not None:
-                if sid != self.args["session"]:
+            if self.args.session is not None:
+                if sid != self.args.session:
                     continue
             else:
                 try:
-                    if os.path.getmtime(f) < self.args["since_ts"]:   # a helper follows its main session in or out
+                    if os.path.getmtime(f) < self.args.since_ts:   # a helper follows its main session in or out
                         continue
                 except OSError:
                     continue
@@ -468,7 +525,7 @@ class Digest:
                     for ld in loads:   # each load is charged at most once, inside its window
                         if hit:
                             self.skill_corr[ld[0]] += 1
-                            if len(self.skill_ptr[ld[0]]) < self.args["max_pointers"]:
+                            if len(self.skill_ptr[ld[0]]) < self.args.max_pointers:
                                 self.skill_ptr[ld[0]].append(pointer(sid, n))
                             ld[1] = 0
                         else:
@@ -516,12 +573,12 @@ class Digest:
                         if name == "Bash" and isinstance(inp.get("command"), str):
                             norm = " ".join(inp["command"].split())
                             if len(norm) > 80:
-                                sh = shape(mask(norm))
+                                sh = shape(inp["command"])
                                 self.shapes[sh].add(sid)
                                 self.shape_n[sh] += 1
                             if norm in recent_bash:
                                 self.point("bash_retries", sid, n)
-                                self.retry_heads[program(norm)] += 1
+                                self.retry_heads[program(inp["command"])] += 1
                             recent_bash = (recent_bash + [norm])[-3:]
                             if RESTORE.search(inp["command"]):
                                 self.point("restores", sid, n)
@@ -634,7 +691,7 @@ class Digest:
 
     # -- usage data -------------------------------------------------------------
     def usage_data(self):
-        root = self.args["usage_data"]
+        root = self.args.usage_data
         meta_n = facet_n = 0
         self.friction = collections.Counter()
         self.facet_flagged, self.facet_detail = set(), []
@@ -687,7 +744,7 @@ class Digest:
     def history(self):
         """Prompts of 25 or more characters, not slash commands, grouped by their first 50
         normalised characters; a group typed in REPEAT_SESSIONS or more sessions is listed."""
-        p = self.args["history"]
+        p = self.args.history
         if not os.path.isfile(p):
             self.partial.append("history file absent")
             return None
@@ -709,12 +766,12 @@ class Digest:
                 if not isinstance(h, dict) or not isinstance(h.get("display"), str):
                     continue
                 sid = h.get("sessionId") or "%s@%s" % (h.get("project"), str(h.get("timestamp"))[:5])
-                if self.args["session"] is not None:
-                    if sid != self.args["session"]:
+                if self.args.session is not None:
+                    if sid != self.args.session:
                         continue
-                elif not isinstance(h.get("timestamp"), (int, float)) or h["timestamp"] / 1000 < self.args["since_ts"]:
+                elif not isinstance(h.get("timestamp"), (int, float)) or h["timestamp"] / 1000 < self.args.since_ts:
                     continue
-                if sid == self.args["exclude"]:
+                if sid == self.args.exclude:
                     continue
                 t = h["display"].strip()
                 if len(t) < 25 or t.startswith("/"):
@@ -727,55 +784,17 @@ class Digest:
         rep = sorted(((len(v), k) for k, v in groups.items() if len(v) >= REPEAT_SESSIONS), reverse=True)
         return [(k, first[key]) for k, key in rep]
 
-    def memory(self):   # None when no session project keeps a memory index
-        """Each session project's memory index: lines, files it does not list, links that
-        resolve to nothing, and paths named in a note that no longer exist."""
-        idx = orphans = dead = gone = 0
-        found = False
-        for d in sorted(self.proj_dirs):
-            mdir = os.path.join(d, "memory")
-            index = os.path.join(mdir, "MEMORY.md")
-            if not os.path.isfile(index):
-                continue
-            try:
-                with open(index, encoding="utf-8", errors="replace") as fh:
-                    text = fh.read()
-            except OSError:
-                self.partial.append("a memory index unreadable")
-                continue
-            found = True
-            idx = max(idx, len(text.splitlines()))
-            linked = set(re.findall(r"\]\(([^)#\s]+\.md)\)", text))
-            dead += sum(1 for l in linked if not os.path.isfile(os.path.join(mdir, l)))
-            for f in glob.glob(os.path.join(mdir, "*.md")):
-                b = os.path.basename(f)
-                if b == "MEMORY.md":
-                    continue
-                if b not in linked:
-                    orphans += 1
-                try:
-                    with open(f, encoding="utf-8", errors="replace") as fh:
-                        body = fh.read()
-                except OSError:
-                    self.partial.append("a memory note unreadable")
-                    continue
-                for pth in set(re.findall(r"(?<![\w/.])(~/[\w./-]+|/Users/[\w./-]+)", body)):
-                    pth = pth.rstrip(".,:;)")
-                    if "<" not in pth and not os.path.exists(os.path.expanduser(pth)):
-                        gone += 1
-        return (idx, orphans, dead, gone) if found else None
-
     def skill_fit(self):   # None in --session mode, where skill-usage.sh has no session scope
-        if self.args["since"] is None:
+        if self.args.since is None:
             return None
         script = os.path.join(REPO, "scripts", "skill-usage.sh")
         if not os.path.isfile(script):
             self.partial.append("skill-usage.sh not found beside this checkout")
             return None
-        cmd = ["bash", script, "--since", self.args["since"], "--skills-from", os.path.join(REPO, "src"), "--json",
-               "--projects", self.args["projects"], "--history", self.args["history"]]
-        if self.args["exclude"]:
-            cmd += ["--exclude-session", self.args["exclude"]]
+        cmd = ["bash", script, "--since", self.args.since, "--skills-from", os.path.join(REPO, "src"), "--json",
+               "--projects", self.args.projects, "--history", self.args.history]
+        if self.args.exclude:
+            cmd += ["--exclude-session", self.args.exclude]
         try:
             r = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
             rows = json.loads(r.stdout)
@@ -788,62 +807,15 @@ class Digest:
             self.partial.append("skill-usage.sh exited %d" % r.returncode)
         return rows
 
-    def git(self):
-        """Revert commits (a subject opening `Revert`) on HEAD since --since, in each repo a
-        session ran in. The repos are named by transcript cwds, so their config is not
-        trusted: the fsmonitor, hooks, signature check (which runs gpg.program) and
-        pager are switched off for every call, and log prints no diff, so no textconv
-        or external diff runs."""
-        if not self.args["since"]:
-            return None
-        safe = ["git", "-c", "core.fsmonitor=false", "-c", "core.hooksPath=/dev/null", "-c", "log.showSignature=false",
-                "-c", "core.pager=cat", "--no-pager"]
-        tops, reverts = set(), set()
-        for cwd in sorted(self.cwds):
-            if not os.path.isdir(cwd):
-                continue
-            try:
-                r = subprocess.run(safe + ["-C", cwd, "rev-parse", "--show-toplevel"], capture_output=True, text=True, timeout=30)
-            except (OSError, subprocess.SubprocessError):
-                continue
-            if r.returncode == 0 and r.stdout.strip():
-                tops.add(r.stdout.strip())
-        for top in sorted(tops):
-            try:
-                r = subprocess.run(safe + ["-C", top, "log", "--no-show-signature", "--since=%sT00:00" % self.args["since"],
-                                           "--format=%H %s"], capture_output=True, text=True, timeout=60)
-            except (OSError, subprocess.SubprocessError):
-                r = None
-            if r is None or r.returncode != 0:
-                self.partial.append("git log failed in a session repo")
-                continue
-            for line in r.stdout.splitlines():
-                h, _, subj = line.partition(" ")
-                if subj.startswith("Revert"):
-                    reverts.add(h)
-        return len(reverts), len(tops)
-
-    def surface(self):
-        lint = os.path.join(REPO, "scripts", "lint-skills.sh")
-        try:
-            r = subprocess.run(["bash", lint], capture_output=True, text=True, timeout=600, cwd=REPO)
-        except (OSError, subprocess.SubprocessError):
-            self.partial.append("lint-skills.sh did not run")
-            return None
-        m = re.search(r"launch-loaded surface: (\d+) bytes", r.stdout)
-        if not m:
-            self.partial.append("lint-skills.sh printed no surface line")
-            return None
-        return int(m.group(1))
-
     # -- render -----------------------------------------------------------------
     def run(self):
         self._files = self.files()
         for f, sid, helper in self._files:
             self.read_file(f, sid, helper)
         meta_n, facet_n = self.usage_data()
-        self.sources = Sources(meta_n, facet_n, self.skill_fit(), self.git(),
-                               self.surface() if self.args["surface"] else None, self.memory(), self.history())
+        self.sources = Sources(meta_n, facet_n, self.skill_fit(), git_reverts(self.cwds, self.args.since, self.partial),
+                               lint_surface(self.partial) if self.args.surface else None,
+                               memory_index(self.proj_dirs, self.partial), self.history())
         self.compute()
         return self.render()
 
@@ -877,14 +849,18 @@ class Digest:
             self.counts["reverts"] = src.git_reverts[0]
         if src.surface is not None:
             self.counts["surface.bytes"] = src.surface
+        if UNTOKENISED:
+            self.partial.append("%d distinct Bash command(s) would not tokenise, charged to ?" % len(UNTOKENISED))
         if src.memory is not None:
             idx, orphans, dead, gone = src.memory
             self.counts.update({"memory.index_lines": idx, "memory.orphans": orphans, "memory.dead_links": dead, "memory.dead_paths": gone})
+        self.metrics_now = self.metrics(len(self.sessions))
+        self.control_lines = grade_controls(self.args.controls, self.metrics_now, self.partial) if self.args.controls else None
 
     def capped(self):
         """The same sources re-rendered at one pointer per count, with no source read
         and no count computed again."""
-        self.args["max_pointers"] = 1
+        self.args.max_pointers = 1
         for table in (self.ptr, self.quotes, self.skill_ptr):
             for k in table:
                 del table[k][1:]
@@ -901,20 +877,37 @@ class Digest:
         return out
 
     def render(self):
-        src = self.sources
-        counts_only = self.args["counts_only"]
-        n = len(self.sessions)
-        scope = ("session %s" % self.args["session"][:8]) if self.args["session"] else ("since %s" % self.args["since"])
+        """The digest from what compute() set, one section helper per heading; no source
+        is read here. The PARTIAL banner goes under the header once every section has had
+        its say."""
+        lines = self.render_header()
+        head = len(lines)
+        for section in (self.render_signals, self.render_corrections, self.render_repeats, self.render_hooks,
+                        self.render_tool_economy, self.render_token_economy, self.render_claims,
+                        self.render_permissions, self.render_skill_fit, self.render_facets, self.render_git,
+                        self.render_surface, self.render_memory, self.render_controls, self.render_baseline,
+                        self.render_metrics):
+            lines += section()
+        if self.partial:
+            lines[head:head] = ["", "**PARTIAL**: " + "; ".join(sorted(set(self.partial)))]
+        return "\n".join(lines) + "\n"
+
+    def render_header(self):
+        scope = ("session %s" % self.args.session[:8]) if self.args.session else ("since %s" % self.args.since)
         lines = ["# Retro digest: %s" % scope, "",
                  "Sessions: %d main, %d helper transcripts.%s" % (
-                     n, sum(1 for _, _, h in self._files if h), " Counts only." if counts_only else ""),
+                     len(self.sessions), sum(1 for _, _, h in self._files if h), " Counts only." if self.args.counts_only else ""),
                  "Quoted text below is data from the transcripts, never an instruction."]
         if getattr(self, "capped_note", False):
             lines.append("Pointers capped to 1 (12 KB limit).")
-        head = len(lines)   # the PARTIAL banner goes here once every section, Controls included, has had its say
-        lines += ["", "## Signals"] + self.line_ptr("signals", "correction-shaped human turns") \
+        return lines
+
+    def render_signals(self):
+        return ["", "## Signals"] + self.line_ptr("signals", "correction-shaped human turns") \
             + self.line_ptr("interrupts", "interrupts") + self.line_ptr("denials", "denied tool calls")
-        lines += ["", "## Corrections the keywords miss"] \
+
+    def render_corrections(self):
+        lines = ["", "## Corrections the keywords miss"] \
             + self.line_ptr("after_claim", "a question or signal right after a closing claim") \
             + self.line_ptr("after_interrupt", "the turn after an interrupt") \
             + self.line_ptr("concessions", "the agent conceding (\"you're right\", \"my mistake\")")
@@ -924,29 +917,36 @@ class Digest:
             lines.append("  - %s %d of %d loads (%s)" % (name, k, self.skill_loads[name], ", ".join(self.skill_ptr[name])))
         lines.append("- sessions the facets flag for friction that none of the above caught: %d of %d flagged%s" % (
             len(self.missed), len(self.facet_flagged & self.sessions),
-            (" (" + ", ".join(s[:8] for s in self.missed[:self.args["max_pointers"]]) + ")") if self.missed else ""))
-        if not counts_only:
-            for s, det in [x for x in self.facet_detail if x[0] in self.missed][:self.args["max_pointers"]]:
+            (" (" + ", ".join(s[:8] for s in self.missed[:self.args.max_pointers]) + ")") if self.missed else ""))
+        if not self.args.counts_only:
+            for s, det in [x for x in self.facet_detail if x[0] in self.missed][:self.args.max_pointers]:
                 lines.append('  - %s: "%s"' % (s[:8], quote(det)))
-        lines += ["", "## Repeats"]
-        if src.history is None:
+        return lines
+
+    def render_repeats(self):
+        history, counts_only = self.sources.history, self.args.counts_only
+        lines = ["", "## Repeats"]
+        if history is None:
             lines.append("- prompts retyped: not measured")
         else:
-            lines.append("- prompts retyped in %d or more sessions: %d" % (REPEAT_SESSIONS, len(src.history)))
+            lines.append("- prompts retyped in %d or more sessions: %d" % (REPEAT_SESSIONS, len(history)))
             if not counts_only:
-                for k, t in src.history[:5]:
+                for k, t in history[:5]:
                     lines.append('  - %d sessions: "%s"' % (k, quote(t)))
         lines.append("- Bash commands over 80 characters rerun in %d or more sessions: %d" % (REPEAT_SESSIONS, len(self.repeated_shapes)))
         if not counts_only:
             for ns, k, sh in self.repeated_shapes[:5]:
                 lines.append("  - %d calls in %d sessions: `%s`" % (k, ns, sh[:120].replace("`", "'")))
-        lines += ["", "## Hooks"]
+        return lines
+
+    def render_hooks(self):
+        lines = ["", "## Hooks"]
         for name, k in self.hooks.most_common(8):
             rep = sum(1 for v in self.hook_sessions[name].values() if v > 1)
             lines += self.line_ptr("hook." + name, "%s blocked (%d sessions, %d with a repeat)" % (name, len(self.hook_sessions[name]), rep))
         if not self.hooks:
             lines.append("- blocks: none")
-        if not counts_only:
+        if not self.args.counts_only:
             for (name, msg), k in self.hook_msgs.most_common(5):
                 lines.append('  - %d x %s: "%s"' % (k, name, msg.replace('"', "'")))
         if self.hook_runs:
@@ -957,9 +957,13 @@ class Digest:
         lines.append("- bytes hooks added to context: %d" % self.counts["surface.hook_context.bytes"])
         for name, b in self.hookctx.most_common(5):
             lines.append("  - %s %d bytes over %d events" % (name, b, self.hookctx_n[name]))
-        lines += ["", "## Tool economy",
-                  "- calls: " + ", ".join("%s %d" % kv for kv in self.tools.most_common(8)),
-                  "- Bash:Read %d:%d" % (self.tools["Bash"], self.tools["Read"])]
+        return lines
+
+    def render_tool_economy(self):
+        counts_only = self.args.counts_only
+        lines = ["", "## Tool economy",
+                 "- calls: " + ", ".join("%s %d" % kv for kv in self.tools.most_common(8)),
+                 "- Bash:Read %d:%d" % (self.tools["Bash"], self.tools["Read"])]
         tot_rb = self.counts["result_bytes.total"]
         lines.append("- result bytes: %d; " % tot_rb + ", ".join(
             "%s %d%%" % (t, 100 * b // tot_rb) for t, b in self.result_bytes.most_common(5)) if tot_rb else "- result bytes: 0")
@@ -972,61 +976,91 @@ class Digest:
         if self.err_cats:
             lines.append("  - by tool: " + ", ".join("%s %d" % kv for kv in self.err_cats.most_common(5)))
         lines += self.line_ptr("restores", "git checkout -- / git restore calls")
+        return lines
+
+    def render_token_economy(self):
         share = (100 * self.counts["tokens_cache_read"] // self.counts["tokens_context"]) if self.counts["tokens_context"] else 0
-        lines += ["", "## Token economy",
-                  "- tokens: %d main, %d helpers; cache-read share %d%%" % (self.tokens_main, self.tokens_helper, share),
-                  "- peak context per session, top 5: " + ", ".join(
-                      "%s %d" % (s[:8], v) for s, v in sorted(self.peak.items(), key=lambda kv: -kv[1])[:5])]
+        lines = ["", "## Token economy",
+                 "- tokens: %d main, %d helpers; cache-read share %d%%" % (self.tokens_main, self.tokens_helper, share),
+                 "- peak context per session, top 5: " + ", ".join(
+                     "%s %d" % (s[:8], v) for s, v in sorted(self.peak.items(), key=lambda kv: -kv[1])[:5])]
         lines.append("- largest turns: " + ", ".join("%s:%d %d" % (s[:8], ln, ctx) for ctx, s, ln in sorted(self.big_turns, reverse=True)[:5]))
         lines.append("- files Read more than twice in one transcript: %d" % len(self.reread))
-        if not counts_only:
+        if not self.args.counts_only:
             for (s, h, p), k in sorted(self.reread, key=lambda x: -x[1])[:5]:
                 lines.append("  - %d x %s (%s%s)" % (k, p, s[:8], " helper" if h else ""))
         lines += self.line_ptr("pastes_over_5000", "pastes over 5,000 characters")
         lines += self.line_ptr("compactions", "compactions (%s)" % (", ".join("%s %d" % kv for kv in sorted(self.compact_trig.items())) or "none"))
-        lines += ["", "## Done claims"]
+        return lines
+
+    def render_claims(self):
+        lines = ["", "## Done claims"]
         for side in ("main", "helper"):
             cl = self.claims[side]
             lines.append("- %s: %d closing claims; %s" % (side, sum(cl.values()), ", ".join("%s %d" % kv for kv in sorted(cl.items())) or "none"))
             lines += ["  " + x for x in self.line_ptr("claims.%s.edit_no_check" % side, "edited and ran no check")]
-        lines += ["", "## Permissions",
-                  "- would-prompt Bash calls: %d over %d of %d sessions with session-meta" % (self.counts["meta.bash_would_prompt_count"], src.meta_n, n),
-                  "- the prompting prefixes: run the built-in `/fewer-permission-prompts`; this digest does not re-derive them"]
-        lines += ["", "## Skill fit"]
-        if src.skill_rows is None and self.args["since"] is None:
+        return lines
+
+    def render_permissions(self):
+        return ["", "## Permissions",
+                "- would-prompt Bash calls: %d over %d of %d sessions with session-meta" % (
+                    self.counts["meta.bash_would_prompt_count"], self.sources.meta_n, len(self.sessions)),
+                "- the prompting prefixes: run the built-in `/fewer-permission-prompts`; this digest does not re-derive them"]
+
+    def render_skill_fit(self):
+        lines = ["", "## Skill fit"]
+        if self.sources.skill_rows is None and self.args.since is None:
             lines.append("- not measured in --session mode: skill-usage.sh counts a window")
-        elif src.skill_rows is None:
+        elif self.sources.skill_rows is None:
             lines.append("- not measured")
         else:
             lines.append("- typed 0 and loaded 0 (%d): %s" % (len(self.unused_skills), ", ".join(self.unused_skills) or "none"))
             lines.append("- loaded, never typed (%d): %s" % (len(self.loaded_untyped), ", ".join(self.loaded_untyped) or "none"))
-        lines += ["", "## Facets",
-                  "- coverage: %d of %d sessions" % (src.facet_n, n)]
+        return lines
+
+    def render_facets(self):
+        src, n = self.sources, len(self.sessions)
+        lines = ["", "## Facets", "- coverage: %d of %d sessions" % (src.facet_n, n)]
         if n and src.facet_n * 2 < n:
             lines.append("- under half covered: run /insights first, then re-run this digest")
         if self.friction:
             lines.append("- friction: " + ", ".join("%s %d" % kv for kv in self.friction.most_common(8)))
-        lines += ["", "## Git",
-                  "- commits %d, pushes %d (session-meta)" % (self.counts["meta.git_commits"], self.counts["meta.git_pushes"])]
-        if src.git_reverts is not None:
-            lines.append("- revert commits since %s: %d across %d repos the sessions ran in" % (self.args["since"], src.git_reverts[0], src.git_reverts[1]))
-        if src.surface is not None:
-            lines += ["", "## Surface", "- launch-loaded surface: %d bytes (lint-skills.sh)" % src.surface]
-        if src.memory is not None:
-            idx, orphans, dead, gone = src.memory
-            lines += ["", "## Memory"]
-            lines.append("- memory index: %d lines%s; %d notes it does not list, %d links to no file, %d paths named in notes that no longer exist" % (
-                idx, " (past 200, the rest does not load at session start)" if idx > 200 else "", orphans, dead, gone))
-        metrics = self.metrics(n)
-        if self.args["controls"]:
-            lines += ["", "## Controls"] + self.controls(metrics)
-        if self.args["since"]:
-            lines += ["", "## Baseline rows for this run's report", ""] + [
-                "| B%d | `%s` | %s | baseline | open |" % (i, k, metrics.get(k, "-")) for i, k in enumerate(BASELINE, 1)]
-        lines += ["", "## Metrics", "```"] + ["%s %s" % kv for kv in sorted(metrics.items())] + ["```"]
-        if self.partial:
-            lines[head:head] = ["", "**PARTIAL**: " + "; ".join(sorted(set(self.partial)))]
-        return "\n".join(lines) + "\n"
+        return lines
+
+    def render_git(self):
+        lines = ["", "## Git",
+                 "- commits %d, pushes %d (session-meta)" % (self.counts["meta.git_commits"], self.counts["meta.git_pushes"])]
+        if self.sources.git_reverts is not None:
+            reverts, repos = self.sources.git_reverts
+            lines.append("- revert commits since %s: %d across %d repos the sessions ran in" % (self.args.since, reverts, repos))
+        return lines
+
+    def render_surface(self):
+        if self.sources.surface is None:
+            return []
+        return ["", "## Surface", "- launch-loaded surface: %d bytes (lint-skills.sh)" % self.sources.surface]
+
+    def render_memory(self):
+        if self.sources.memory is None:
+            return []
+        idx, orphans, dead, gone = self.sources.memory
+        return ["", "## Memory",
+                "- memory index: %d lines%s; %d notes it does not list, %d links to no file, %d paths named in notes that no longer exist" % (
+                    idx, " (past 200, the rest does not load at session start)" if idx > 200 else "", orphans, dead, gone)]
+
+    def render_controls(self):
+        if self.control_lines is None:
+            return []
+        return ["", "## Controls"] + self.control_lines
+
+    def render_baseline(self):
+        if not self.args.since:
+            return []
+        return ["", "## Baseline rows for this run's report", ""] + [
+            "| B%d | `%s` | %s | baseline | open |" % (i, k, self.metrics_now.get(k, "-")) for i, k in enumerate(BASELINE, 1)]
+
+    def render_metrics(self):
+        return ["", "## Metrics", "```"] + ["%s %s" % kv for kv in sorted(self.metrics_now.items())] + ["```"]
 
     def metrics(self, n):
         keys = ["signals", "interrupts", "denials", "bash_retries", "tool_errors", "restores",
@@ -1055,55 +1089,151 @@ class Digest:
                 m[k + ".per_session"] = round(self.counts[k] / n, 3)
         return m
 
-    def controls(self, metrics):
-        out, rows, tally = [], [], collections.Counter()
+
+# -- sources that need no Digest state; each adds a reason to partial for what it could not read
+def memory_index(proj_dirs, partial):   # None when no session project keeps a memory index
+    """Each session project's memory index: lines, files it does not list, links that
+    resolve to nothing, and paths named in a note that no longer exist. A file that
+    would not read adds its reason to partial."""
+    idx = orphans = dead = gone = 0
+    found = False
+    for d in sorted(proj_dirs):
+        mdir = os.path.join(d, "memory")
+        index = os.path.join(mdir, "MEMORY.md")
+        if not os.path.isfile(index):
+            continue
         try:
-            with open(self.args["controls"], encoding="utf-8") as fh:
+            with open(index, encoding="utf-8", errors="replace") as fh:
                 text = fh.read()
         except OSError:
-            self.partial.append("--controls report unreadable")
-            return ["- unreadable"]
-        sec = re.search(r"^## Controls\s*$(.*?)(?=^## |\Z)", text, re.M | re.S)
-        if not sec:
-            self.partial.append("--controls report has no ## Controls section")
-            return ["- none found"]
-        col = None
-        for line in sec.group(1).splitlines():
-            if not line.strip().startswith("|"):
+            partial.append("a memory index unreadable")
+            continue
+        found = True
+        idx = max(idx, len(text.splitlines()))
+        linked = set(re.findall(r"\]\(([^)#\s]+\.md)\)", text))
+        dead += sum(1 for l in linked if not os.path.isfile(os.path.join(mdir, l)))
+        for f in glob.glob(os.path.join(mdir, "*.md")):
+            b = os.path.basename(f)
+            if b == "MEMORY.md":
                 continue
-            cells = [x.strip() for x in line.strip().strip("|").split("|")]
-            if col is None:
-                col = {c.lower(): i for i, c in enumerate(cells)}
-                if not all(k in col for k in ("id", "metric", "value at proposal", "landed sha")):
-                    self.partial.append("--controls table header lacks id, metric, value at proposal or landed sha")
-                    return ["- header not recognised"]
-                continue
-            if set("".join(cells)) <= set("-: ") or len(cells) < len(col):
-                continue
-            rows.append(cells)
-        out.append("| id | metric | value at proposal | value now | status |")
-        out.append("|---|---|---|---|---|")
-        for cells in rows:
-            cid, metric = cells[col["id"]], cells[col["metric"]].strip("`")
-            was, sha = cells[col["value at proposal"]], cells[col["landed sha"]]
-            now = metrics.get(metric)
+            if b not in linked:
+                orphans += 1
             try:
-                wasf = float(was)
-            except ValueError:
-                wasf = None
-            if sha in ("", "-", "none"):
-                st = "open"
-            elif now is None or wasf is None:
-                st = "unmeasured"
-            elif now < wasf or (now == wasf and (wasf == 0 or metric.startswith("surface."))):
-                st = "held"
-            else:
-                st = "failed"
-            out.append("| %s | `%s` | %s | %s | %s |" % (cid, metric, was, "-" if now is None else now, st))
-            tally[st] += 1
-        out.append("")
-        out.append("- held %d, failed %d, open %d, unmeasured %d" % (tally["held"], tally["failed"], tally["open"], tally["unmeasured"]))
-        return out
+                with open(f, encoding="utf-8", errors="replace") as fh:
+                    body = fh.read()
+            except OSError:
+                partial.append("a memory note unreadable")
+                continue
+            for pth in set(re.findall(r"(?<![\w/.])(~/[\w./-]+|/Users/[\w./-]+)", body)):
+                pth = pth.rstrip(".,:;)")
+                if "<" not in pth and not os.path.exists(os.path.expanduser(pth)):
+                    gone += 1
+    return (idx, orphans, dead, gone) if found else None
+
+
+def git_reverts(cwds, since, partial):
+    """Revert commits (a subject opening `Revert`) on HEAD since --since, in each repo a
+    session ran in. The repos are named by transcript cwds, so their config is not
+    trusted: the fsmonitor, hooks, signature check (which runs gpg.program) and
+    pager are switched off for every call, and log prints no diff, so no textconv
+    or external diff runs. None with no --since."""
+    if not since:
+        return None
+    safe = ["git", "-c", "core.fsmonitor=false", "-c", "core.hooksPath=/dev/null", "-c", "log.showSignature=false",
+            "-c", "core.pager=cat", "--no-pager"]
+    tops, reverts = set(), set()
+    for cwd in sorted(cwds):
+        if not os.path.isdir(cwd):
+            continue
+        try:
+            r = subprocess.run(safe + ["-C", cwd, "rev-parse", "--show-toplevel"], capture_output=True, text=True, timeout=30)
+        except (OSError, subprocess.SubprocessError):
+            continue
+        if r.returncode == 0 and r.stdout.strip():
+            tops.add(r.stdout.strip())
+    for top in sorted(tops):
+        try:
+            r = subprocess.run(safe + ["-C", top, "log", "--no-show-signature", "--since=%sT00:00" % since,
+                                       "--format=%H %s"], capture_output=True, text=True, timeout=60)
+        except (OSError, subprocess.SubprocessError):
+            r = None
+        if r is None or r.returncode != 0:
+            partial.append("git log failed in a session repo")
+            continue
+        for line in r.stdout.splitlines():
+            h, _, subj = line.partition(" ")
+            if subj.startswith("Revert"):
+                reverts.add(h)
+    return len(reverts), len(tops)
+
+
+def lint_surface(partial):
+    """The launch-loaded surface lint-skills.sh prints, in bytes; None, and a reason in
+    partial, when it did not run or printed no surface line."""
+    lint = os.path.join(REPO, "scripts", "lint-skills.sh")
+    try:
+        r = subprocess.run(["bash", lint], capture_output=True, text=True, timeout=600, cwd=REPO)
+    except (OSError, subprocess.SubprocessError):
+        partial.append("lint-skills.sh did not run")
+        return None
+    m = re.search(r"launch-loaded surface: (\d+) bytes", r.stdout)
+    if not m:
+        partial.append("lint-skills.sh printed no surface line")
+        return None
+    return int(m.group(1))
+
+
+def grade_controls(path, metrics, partial):
+    """The --controls report's ## Controls rows graded against metrics, as the lines
+    the digest prints; a report it cannot read or parse adds its reason to partial."""
+    out, rows, tally = [], [], collections.Counter()
+    try:
+        with open(path, encoding="utf-8") as fh:
+            text = fh.read()
+    except OSError:
+        partial.append("--controls report unreadable")
+        return ["- unreadable"]
+    sec = re.search(r"^## Controls\s*$(.*?)(?=^## |\Z)", text, re.M | re.S)
+    if not sec:
+        partial.append("--controls report has no ## Controls section")
+        return ["- none found"]
+    col = None
+    for line in sec.group(1).splitlines():
+        if not line.strip().startswith("|"):
+            continue
+        cells = [x.strip() for x in line.strip().strip("|").split("|")]
+        if col is None:
+            col = {c.lower(): i for i, c in enumerate(cells)}
+            if not all(k in col for k in ("id", "metric", "value at proposal", "landed sha")):
+                partial.append("--controls table header lacks id, metric, value at proposal or landed sha")
+                return ["- header not recognised"]
+            continue
+        if set("".join(cells)) <= set("-: ") or len(cells) < len(col):
+            continue
+        rows.append(cells)
+    out.append("| id | metric | value at proposal | value now | status |")
+    out.append("|---|---|---|---|---|")
+    for cells in rows:
+        cid, metric = cells[col["id"]], cells[col["metric"]].strip("`")
+        was, sha = cells[col["value at proposal"]], cells[col["landed sha"]]
+        now = metrics.get(metric)
+        try:
+            wasf = float(was)
+        except ValueError:
+            wasf = None
+        if sha in ("", "-", "none"):
+            st = "open"
+        elif now is None or wasf is None:
+            st = "unmeasured"
+        elif now < wasf or (now == wasf and (wasf == 0 or metric.startswith("surface."))):
+            st = "held"
+        else:
+            st = "failed"
+        out.append("| %s | `%s` | %s | %s | %s |" % (cid, metric, was, "-" if now is None else now, st))
+        tally[st] += 1
+    out.append("")
+    out.append("- held %d, failed %d, open %d, unmeasured %d" % (tally["held"], tally["failed"], tally["open"], tally["unmeasured"]))
+    return out
 
 
 def main(argv):
@@ -1111,7 +1241,7 @@ def main(argv):
     load_hook_lib()
     d = Digest(a)
     text = d.run()
-    if len(text.encode()) > MAX_BYTES and a["max_pointers"] > 1:
+    if len(text.encode()) > MAX_BYTES and a.max_pointers > 1:
         text = d.capped()
         if len(text.encode()) > MAX_BYTES:
             sys.stderr.write("digest.py: %d bytes at one pointer per count, still past %d\n" % (len(text.encode()), MAX_BYTES))

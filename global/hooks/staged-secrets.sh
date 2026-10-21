@@ -125,9 +125,10 @@ command -v git >/dev/null 2>&1 || hook_allow "git not found"
 hook_scan '
 import subprocess
 from collections import namedtuple
-Add = namedtuple("Add", "dir git_dir work_tree specs force blind")
-Commit = namedtuple("Commit", "dir git_dir work_tree all adds blind")   # adds: how many adds come before it
-Target = namedtuple("Target", "dir git_dir work_tree blind")
+Repo = namedtuple("Repo", "dir git_dir work_tree")      # where git runs: -C dir, --git-dir, --work-tree
+Target = namedtuple("Target", "repo blind")              # blind: the repo is unknown; the session directory stands in
+Add = namedtuple("Add", "target specs force")
+Commit = namedtuple("Commit", "target all adds")         # adds: how many adds come before it
 ADDS = []
 COMMITS = []
 ALLOW = "secret-scan: allow"
@@ -168,6 +169,7 @@ def on_command(seg, curdir):
     blind = sub in ("add", "stage", "commit") and not split.placed
     if blind:
         d, gd, wt = base(), None, None      # the repo is unknown: scan the session directory instead
+    target = Target(Repo(d, gd, wt), blind)
     if sub in ("add", "stage"):
         specs, force, wide, dashdash = [], False, False, False
         for a in drop_redirs(rest):
@@ -187,10 +189,10 @@ def on_command(seg, curdir):
                     wide = True             # the pathspecs are in a file this hook does not read: the whole tree
             elif "f" in a[1:]:
                 force = True
-        ADDS.append(Add(d, gd, wt, [] if wide else specs, force, blind))
+        ADDS.append(Add(target, [] if wide else specs, force))
         return None
     if sub == "commit":
-        COMMITS.append(Commit(d, gd, wt, any(commits_all(a) for a in rest), len(ADDS), blind))
+        COMMITS.append(Commit(target, any(commits_all(a) for a in rest), len(ADDS)))
     return None
 
 def finish():
@@ -236,22 +238,21 @@ def scan_all(adds):
     commit targets and the adds."""
     targets = []
     for c in COMMITS:
-        t = Target(c.dir, c.git_dir, c.work_tree, c.blind)
-        if t not in targets:
-            targets.append(t)
+        if c.target not in targets:
+            targets.append(c.target)
     placed, blind, outside = [], Blind(), []
     for t in targets:
-        commit_all = any(c.all for c in COMMITS if Target(c.dir, c.git_dir, c.work_tree, c.blind) == t)
+        commit_all = any(c.all for c in COMMITS if c.target == t)
         top, hits = scan_commit(t, commit_all)
         if t.blind:
             blind.add("commit", top, hits)
         elif hits is None:
-            outside.append(t.dir)
+            outside.append(t.repo.dir)
         else:
             placed.extend(hits)
     for a in adds:
         top, hits = scan_add(a)
-        if a.blind:
+        if a.target.blind:
             blind.add("add", top, hits)
         else:
             placed.extend(hits or [])          # an add outside a work tree fails, and stages nothing
@@ -377,7 +378,7 @@ def toplevel(d, gd, wt):
 def scan_commit(target, commit_all):
     """(top, findings) for the staged lines of one commit target, and with -a its
     unstaged ones; (None, None) when it is not a work tree."""
-    d, gd, wt = target.dir, target.git_dir, target.work_tree
+    d, gd, wt = target.repo
     top = toplevel(d, gd, wt)
     if top is None:
         return None, None
@@ -393,7 +394,7 @@ def scan_add(add):
     """(top, findings) for what one git add would stage: the unstaged lines
     of tracked files and the untracked files its pathspecs name; (None, None)
     when it runs outside a work tree."""
-    ad, agd, awt, specs, force = add.dir, add.git_dir, add.work_tree, add.specs, add.force
+    (ad, agd, awt), specs, force = add.target.repo, add.specs, add.force
     atop = toplevel(ad, agd, awt)
     if atop is None:
         return None, None
