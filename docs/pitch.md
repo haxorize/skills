@@ -36,7 +36,7 @@ First contact is 3 skills, not the whole map. Add a 4-line block like these to a
 
 **A service repo with a tracker**
 Start with `/grill-me`, which stress-tests a plan by interview before you commit to it.
-Publish the plan as a ticket with `/to-story`; pull a ticket into a session and build it with `/implement`.
+Ask in plain words for the plan as a ticket, and `to-story` publishes it; pull a ticket into a session and build it with `/implement`.
 Run `/review-changes` before anything lands; `/ship` proposes the commit split and opens the PR.
 
 **A docs or tooling repo**
