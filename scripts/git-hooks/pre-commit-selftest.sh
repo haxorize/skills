@@ -50,7 +50,8 @@
 # own file, hook .sh or hook .py names its stem, and no other, plus each
 # src/*/scripts/ selftest whose own file or script names its repo path; a staged
 # src/*/scripts/ script, or a scripts/*-lib.sh, runs a hook selftest naming
-# its path; a staged hook
+# its path; a staged src/*/scripts/ script, or a hook with a selftest of its
+# own, also runs each src/*/scripts/ selftest naming its path; a staged hook
 # selftest or a file below global/hooks/ runs nothing extra; a red one
 # blocks — with a mutation table requiring each of those rows to red under a
 # one-place edit of a copy of the hook. NOT covered: the
@@ -243,7 +244,7 @@ cat > "$work/global/hooks/pyhk-selftest.sh" <<'STUB'
 # runs src/bundle/scripts/stamp.sh
 echo pyhk-selftest >> "$RAN"; exit "${SELFTEST_RC:-0}"
 STUB
-# A skill script that loads a hook library by its repo path (digest.py and
+# A skill script that loads a hook-lib file by its repo path (digest.py and
 # hook-lib.py, in the real tree): loader.py beside its stub selftest.
 printf '# loads global/hooks/srclib.py\n' > "$work/src/bundle/scripts/loader.py"
 cat > "$work/src/bundle/scripts/loader-selftest.sh" <<'STUB'
@@ -251,6 +252,17 @@ echo loader-selftest >> "$RAN"; exit "${SELFTEST_RC:-0}"
 STUB
 # stage_existing <path>: stage a file as it stands, on a fresh index.
 stage_existing() { git -C "$work" reset -q 2>/dev/null; git -C "$work" add -- "$1"; }
+# A skill selftest that runs another skill's script and a hook by their repo
+# paths (next-step-selftest.sh, which runs tree-stamp.sh and review-receipt.sh,
+# in the real tree), and the hook it names, beside a selftest of its own.
+cat > "$work/src/bundle/scripts/nextstep-selftest.sh" <<'STUB'
+# runs src/bundle/scripts/stamp.sh and global/hooks/gate.sh
+echo nextstep-selftest >> "$RAN"; exit "${SELFTEST_RC:-0}"
+STUB
+printf '# a hook\n' > "$work/global/hooks/gate.sh"
+cat > "$work/global/hooks/gate-selftest.sh" <<'STUB'
+echo gate-selftest >> "$RAN"; exit "${SELFTEST_RC:-0}"
+STUB
 # expect_existing <label> <path> <expected ran-list>: expect_run without the
 # overwrite.
 expect_existing() {
@@ -269,14 +281,20 @@ row_lib_in_py() { expect_run "a library named only by a hook's .py" "global/hook
 row_lib_in_st() { expect_run "a library named only by a hook selftest" "global/hooks/selflib.sh" "lint-skills hk-selftest "; }
 # A skill script a hook selftest runs (tree-stamp.sh and review-receipt's
 # selftest, in the real tree) queues that selftest.
-row_src_named() { expect_run "a src/*/scripts/ script a hook selftest names" "src/bundle/scripts/stamp.sh" "lint-skills pyhk-selftest "; }
+row_src_named() { expect_run "a src/*/scripts/ script a hook selftest names" "src/bundle/scripts/stamp.sh" "lint-skills pyhk-selftest nextstep-selftest "; }
+# The same script reaches a skill selftest naming it (tree-stamp.sh and
+# next-step-selftest.sh), and so does a hook with a selftest of its own
+# (review-receipt.sh and next-step-selftest.sh): gate.sh is named by no hook
+# selftest but its own.
+row_src_in_src()  { expect_run "a src/*/scripts/ script a skill selftest names" "src/bundle/scripts/stamp.sh" "lint-skills pyhk-selftest nextstep-selftest "; }
+row_hook_in_src() { expect_existing "a hook a skill selftest names" "global/hooks/gate.sh" "lint-skills gate-selftest nextstep-selftest "; }
 # A scripts/ library a hook selftest sources by its repo path queues that
 # selftest beside the scripts/ ones.
-row_scripts_lib() { expect_run "a scripts/*-lib.sh a hook selftest names" "scripts/selftest-lib.sh" "lint-skills foo-selftest some-hook-selftest loader-selftest tool-selftest hk-selftest "; }
-# A hook library a skill script names by repo path queues that script's
+row_scripts_lib() { expect_run "a scripts/*-lib.sh a hook selftest names" "scripts/selftest-lib.sh" "lint-skills foo-selftest some-hook-selftest loader-selftest nextstep-selftest tool-selftest hk-selftest "; }
+# A hook-lib file a skill script names by repo path queues that script's
 # selftest, and only it: srclib.py is named by no hook.
-row_lib_in_src() { expect_run "a hook library a src/*/scripts/ script names" "global/hooks/srclib.py" "lint-skills loader-selftest "; }
-row_hook_sh; row_hook_py; row_lib_sh; row_lib_py; row_lib_in_py; row_lib_in_st; row_src_named; row_scripts_lib; row_lib_in_src
+row_lib_in_src() { expect_run "a hook-lib file a src/*/scripts/ script names" "global/hooks/srclib.py" "lint-skills loader-selftest "; }
+row_hook_sh; row_hook_py; row_lib_sh; row_lib_py; row_lib_in_py; row_lib_in_st; row_src_named; row_scripts_lib; row_lib_in_src; row_src_in_src; row_hook_in_src
 expect_existing "a staged global/hooks/ selftest" "global/hooks/hk-selftest.sh" "lint-skills "
 expect_run "a staged file below global/hooks/" "global/hooks/sub/notes.md" "lint-skills "
 stage_existing "global/hooks/hk.sh"; run 0 0 1
@@ -423,12 +441,14 @@ mutant() {
 }
 mutant "hook pairing dropped"           'queue_selftest "$stem-selftest.sh"' ':' row_hook_sh
 mutant "stem cut only off .sh"          'stem="${p%.*}"' 'stem="${p%.sh}"' row_hook_py
-mutant "library matched by whole name"  'queue_hook_selftests_naming "${stem#global/hooks/}."' 'queue_hook_selftests_naming "${p#global/hooks/}"' row_lib_py
-mutant "library queues every selftest"  'if [ -f "$f" ] && grep -qF -- "$1" "$f"; then' 'if [ -f "$f" ]; then' row_lib_sh
+mutant "library matched by whole name"  'queue_selftests_naming global/hooks "${stem#global/hooks/}."' 'queue_selftests_naming global/hooks "${p#global/hooks/}"' row_lib_py
+mutant "library queues every selftest"  'if [ -f "$f" ] && grep -qF -- "$2" "$f"; then' 'if [ -f "$f" ]; then' row_lib_sh
 mutant "hook .py not read for a name"   'for f in "$st" "$stem.sh" "$stem.py"; do' 'for f in "$st" "$stem.sh"; do' row_lib_in_py
 mutant "selftest not read for a name"   'for f in "$st" "$stem.sh" "$stem.py"; do' 'for f in "$stem.sh" "$stem.py"; do' row_lib_in_st
-mutant "src script names no hook"       '      queue_hook_selftests_naming "$p" ;;' '      ;;' row_src_named
-mutant "scripts lib names no hook"      'done; queue_hook_selftests_naming "$p" ;;' 'done ;;' row_scripts_lib
-mutant "a hook library names no skill script" '        queue_src_selftests_naming "$stem."' '        :' row_lib_in_src
+mutant "src script names no hook"       '      queue_selftests_naming global/hooks "$p"'$'\n' '' row_src_named
+mutant "scripts lib names no hook"      'done; queue_selftests_naming global/hooks "$p" ;;' 'done ;;' row_scripts_lib
+mutant "src script names no skill selftest" '      queue_selftests_naming '"'src/*/scripts'"' "$p" ;;' '      ;;' row_src_in_src
+mutant "a hook names no skill selftest" '        queue_selftest "$stem-selftest.sh"'$'\n''        queue_selftests_naming '"'src/*/scripts'"' "$p"' '        queue_selftest "$stem-selftest.sh"' row_hook_in_src
+mutant "a hook-lib file names no skill script" '        queue_selftests_naming '"'src/*/scripts'"' "$stem."' '        :' row_lib_in_src
 
 selftest_close "pre-commit self-test clean — every mapped class ran its linter under every index status, unmapped paths ran none, red blocked, green allowed, a merge in progress or an unreadable index took its own branch, the selftest map ran each staged pairing once and blocked on red, and the staged-list temp file honoured a writable TMPDIR and blocked when its mktemp failed." "pre-commit self-test PARTIAL"

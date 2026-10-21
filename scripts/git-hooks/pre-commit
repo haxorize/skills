@@ -38,8 +38,12 @@ set -uo pipefail
 # match is by name rather than by a parse of `.` lines, so a hook that only
 # mentions a library in a comment is queued too: over-queuing costs seconds,
 # under-queuing ships a broken tokenizer. A staged src/*/scripts/ script also
-# queues every hook selftest naming its repo path, which is how a staged
-# src/review-changes/scripts/tree-stamp.sh reaches review-receipt-selftest.sh.
+# queues every hook selftest and every src/*/scripts/ selftest naming its repo
+# path, and a staged hook with a selftest of its own queues every
+# src/*/scripts/ selftest naming its repo path. That is how a staged
+# src/review-changes/scripts/tree-stamp.sh reaches review-receipt-selftest.sh
+# and next-step-selftest.sh, and a staged global/hooks/review-receipt.sh
+# reaches next-step-selftest.sh, whose parity rows run the hook.
 #
 # Each queued selftest runs once however many staged paths point at it,
 # through the same wrapper as the linters, so a 127 or a file that vanished
@@ -115,31 +119,17 @@ queue_selftest() {
   case "$selftest_queue" in *" $1 "*) return ;; esac
   selftest_queue="$selftest_queue$1 "
 }
-# queue_hook_selftests_naming <fixed string>: every global/hooks/*-selftest.sh
-# whose own file, or whose hook <stem>.sh / <stem>.py, carries the string.
-queue_hook_selftests_naming() {
+# queue_selftests_naming <root> <fixed string>: every <root>/*-selftest.sh
+# whose own file, or whose <stem>.sh / <stem>.py, carries the string. <root> is
+# a glob relative to the repo root, expanded here: global/hooks for the hook
+# selftests, 'src/*/scripts' for a skill's bundled ones.
+queue_selftests_naming() {
   local st stem f
-  for st in "$repo_root"/global/hooks/*-selftest.sh; do
+  for st in "$repo_root"/$1/*-selftest.sh; do
     [ -f "$st" ] || continue
     stem="${st%-selftest.sh}"
     for f in "$st" "$stem.sh" "$stem.py"; do
-      if [ -f "$f" ] && grep -qF -- "$1" "$f"; then
-        queue_selftest "${st#"$repo_root"/}"
-        break
-      fi
-    done
-  done
-}
-# queue_src_selftests_naming <fixed string>: the same, over src/*/scripts/:
-# every <stem>-selftest.sh whose own file, or whose <stem>.sh / <stem>.py,
-# carries the string.
-queue_src_selftests_naming() {
-  local st stem f
-  for st in "$repo_root"/src/*/scripts/*-selftest.sh; do
-    [ -f "$st" ] || continue
-    stem="${st%-selftest.sh}"
-    for f in "$st" "$stem.sh" "$stem.py"; do
-      if [ -f "$f" ] && grep -qF -- "$1" "$f"; then
+      if [ -f "$f" ] && grep -qF -- "$2" "$f"; then
         queue_selftest "${st#"$repo_root"/}"
         break
       fi
@@ -170,7 +160,7 @@ while IFS= read -r -d '' p; do
       # are in the queue as well.
       for st in "$repo_root"/scripts/*-selftest.sh "$repo_root"/scripts/git-hooks/*-selftest.sh "$repo_root"/src/*/scripts/*-selftest.sh; do
         [ -f "$st" ] && queue_selftest "${st#"$repo_root"/}"
-      done; queue_hook_selftests_naming "$p" ;;
+      done; queue_selftests_naming global/hooks "$p" ;;
     scripts/*-selftest.sh | scripts/setup-hooks.sh | scripts/*/*) ;;
     scripts/*.sh)
       [ -f "$repo_root/${p%.sh}-selftest.sh" ] && queue_selftest "${p%.sh}-selftest.sh" ;;
@@ -188,10 +178,12 @@ while IFS= read -r -d '' p; do
     src/*/scripts/*/*) ;;
     src/*/scripts/*.sh)
       [ -f "$repo_root/${p%.sh}-selftest.sh" ] && queue_selftest "${p%.sh}-selftest.sh"
-      queue_hook_selftests_naming "$p" ;;
+      queue_selftests_naming global/hooks "$p"
+      queue_selftests_naming 'src/*/scripts' "$p" ;;
     src/*/scripts/*.py)
       [ -f "$repo_root/${p%.py}-selftest.sh" ] && queue_selftest "${p%.py}-selftest.sh"
-      queue_hook_selftests_naming "$p" ;;
+      queue_selftests_naming global/hooks "$p"
+      queue_selftests_naming 'src/*/scripts' "$p" ;;
     # The Claude Code hooks (see the header): a selftest queues nothing extra,
     # a subdirectory is not a hook, a hook queues its own selftest, and a file
     # with none is a library, queueing every hook selftest that names it.
@@ -200,9 +192,10 @@ while IFS= read -r -d '' p; do
       stem="${p%.*}"
       if [ -f "$repo_root/$stem-selftest.sh" ]; then
         queue_selftest "$stem-selftest.sh"
+        queue_selftests_naming 'src/*/scripts' "$p"
       else
-        queue_hook_selftests_naming "${stem#global/hooks/}."
-        queue_src_selftests_naming "$stem."
+        queue_selftests_naming global/hooks "${stem#global/hooks/}."
+        queue_selftests_naming 'src/*/scripts' "$stem."
       fi ;;
   esac
 done < "$staged"
