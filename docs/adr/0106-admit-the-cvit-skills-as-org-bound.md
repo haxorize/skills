@@ -17,7 +17,7 @@ Three premises moved since those records:
 ## What lands with them
 
 - **The bucket definitions are local.** `src/triage-cvits/references/buckets.md` carries the six dispositions, the cascade, the resolver interface, and the image key, brought in from the stormworks-playbook's `docs/security/DOMAIN.md` (CVIT Buckets) and its ADR-0020, which superseded its ADR-0018. The skills no longer point at the playbook as their authority.
-- **Every tracker write is one command a human types.** `/to-story` and `/to-tasks` are user-invoked, so each skill prints the exact command per image rather than claiming to call them. `inventory-cvits` owns the image Story's description; `triage-cvits` writes Tasks only, each covering the Story's AC1, so neither skill overwrites the other. This narrows the playbook's ADR-0018, under which triage also enriched the Story body.
+- **Every tracker write goes through a publisher.** Each skill hands its drafts to `to-story` or `to-tasks`, whose Publish gate asks the human before each write ([ADR-0115](0115-the-to-publishers-are-model-invoked.md)). `inventory-cvits` owns the image Story's description; `triage-cvits` writes Tasks only, each covering the Story's AC1, so neither skill overwrites the other. This narrows the playbook's ADR-0018, under which triage also enriched the Story body.
 
 ## Considered Options
 

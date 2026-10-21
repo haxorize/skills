@@ -15,7 +15,7 @@ The destination varies per effort, and naming it is the first act of charting �
 
 ## Plan, don't do
 
-Each ticket resolves a decision; the Chart is done when nothing is left to decide before someone goes and does the thing. The pull to just do the work is usually the signal you've reached the edge of the map and it's time to hand off — a spec-shaped destination exits to `/to-feature` or `/to-story`, a locked decision or in-place change to its final ticket's resolution. An effort can override this in the map's Notes, carrying execution into the map itself; absent that, produce decisions, not deliverables.
+Each ticket resolves a decision; the Chart is done when nothing is left to decide before someone goes and does the thing. The pull to just do the work is usually the signal you've reached the edge of the map and it's time to hand off — a spec-shaped destination exits to `to-feature` or `to-story`, a locked decision or in-place change to its final ticket's resolution. An effort can override this in the map's Notes, carrying execution into the map itself; absent that, produce decisions, not deliverables.
 
 Every run ends the same way, whichever mode it entered by: a map update leaving no frontier, no fog, and no open tickets closes the Chart per [references/closing.md](references/closing.md) — hand off the destination, link both ways with a `Discovery:` line, close the map.
 

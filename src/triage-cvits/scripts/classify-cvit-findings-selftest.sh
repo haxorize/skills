@@ -45,7 +45,7 @@
 #
 # NOT covered, so a clean run here is not a claim about them: the crash path (exit 4); the
 # UTF-8 transcode the skill body runs before this script; the npm ls reduction, the
-# Dockerfile read, and the /to-story and /to-tasks writes the skill body owns.
+# Dockerfile read, and the to-story and to-tasks writes the skill body owns.
 set -uo pipefail
 
 repo_root="$(cd "$(dirname "$0")/../../.." && pwd)"

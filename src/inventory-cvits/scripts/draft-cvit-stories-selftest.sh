@@ -47,7 +47,7 @@
 #
 # NOT covered, so a clean run here is not a claim about them: the UTF-8 transcode
 # the skill body runs before this script (the fixture is already UTF-8); the az
-# reads and /to-story writes the skill body owns (this script makes none); the
+# reads and to-story writes the skill body owns (this script makes none); the
 # zero-manifest and malformed-entry arms other than invalid JSON; and the exit-4
 # crash arm (no fixture crashes the script). The Problem-line "reference service" vs "image" wording is covered
 # through object-img's subject and legacy-img's absence of one.
@@ -128,7 +128,7 @@ expect_in "$dec" "object JSON marker field matches the body stamp" '"marker": "I
 
 # --- Acceptance criteria text ---
 # AC1 carries no live count: a count in AC text changes every run and stops
-# /to-story --update on a changed pre-existing AC.
+# to-story --update on a changed pre-existing AC.
 [ "$(jget "$out" 'd["in_scope"][0]["acceptance_markdown"].splitlines()[0]')" = '- **AC1:** A ServiceNow rescan of `legacy-img` reports zero open CVIT findings.' ] \
   || selftest_fail "AC1 is not the count-free sentence (a live count churns the AC every run)"
 expect_in "$dec" "AC2 names the product image" \

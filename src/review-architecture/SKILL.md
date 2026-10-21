@@ -1,8 +1,8 @@
 ---
 name: review-architecture
-description: Read-only architecture review of a codebase — surface architectural friction and propose deeper, cleaner module interfaces as a prioritized, vetted report, then frame the candidate you pick, grill it, update DOMAIN.md, and hand the result to /to-story to file.
+description: Read-only architecture review of a codebase — surface architectural friction and propose deeper, cleaner module interfaces as a prioritized, vetted report, then frame the candidate you pick, grill it, update DOMAIN.md, and hand the result to to-story to file.
 disable-model-invocation: true
-requires: codebase-design, grilling, writing-for-humans, adr
+requires: codebase-design, grilling, writing-for-humans, adr, to-story
 ---
 
 # Review Architecture
@@ -117,6 +117,6 @@ If grilling in Step 6 disqualified the candidate (e.g., revealed it isn't actual
 
 Before filing, check whether `DOMAIN.md` contains the recommended module's name. If not, add it now (create the file lazily if absent).
 
-Once the user approves, suggest running **`/to-story`** to synthesize and publish the Story — it owns the single issue template, tracker dispatch, and hierarchy handling. If the design was never grilled — the step 6 offer was skipped rather than declined — run a short grill first — call the Skill tool with `grilling`.
+Once the user approves, offer **`to-story`** to synthesize and publish the Story, and on a yes call the Skill tool with `to-story` — it owns the single issue template, tracker dispatch, and hierarchy handling. If the design was never grilled — the step 6 offer was skipped rather than declined — run a short grill first — call the Skill tool with `grilling`.
 
 Open [references/story-synthesis-context.md](references/story-synthesis-context.md) and carry the review's context into the synthesis: the durable home for interface signatures (an ADR via `adr`, or a story comment written with `writing-for-humans`), the replaced-tests list, the `--update` path for an existing item, and the success bar with its keep-or-revert rule — under which **neutral is a revert**, since sunk cost never argues for keeping.

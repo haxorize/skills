@@ -13,8 +13,8 @@ Pure transform: data in (the export CSV and the resolved-tree JSON), data out (J
 stdout). No `az` call, no network, no subprocess. The skill body runs the resolver
 commands (`npm ls --omit=dev --all`, `npm ls --all`), reduces them, and passes both
 trees here inside the resolved-tree JSON; the tracker reads and writes stay in the skill
-body, per the bundled-script boundary (ADR-0103): every tracker write is a command a human
-types (`/to-story`, `/to-tasks`), so this script makes no tracker call. Keeping the resolver reads in the body lets the selftest freeze tree
+body, per the bundled-script boundary (ADR-0103): every tracker write goes through a
+publisher (`to-story`, `to-tasks`), so this script makes no tracker call. Keeping the resolver reads in the body lets the selftest freeze tree
 shapes as fixtures rather than needing a real node_modules on disk.
 
 <utf8-export-csv> is the Twistlock/Prisma export, already transcoded to UTF-8 (the skill
@@ -67,8 +67,7 @@ finding with `confirmed: false`, in any bucket including "?" and null, so it is 
 number to name as "still needs confirmation".
 
 This script emits no markdown: the skill body (step 5) drafts the Story enrichment and
-one Task body per bucket from `findings` and `rollup`, printing the /to-tasks command a
-human types for each, and never re-derives any field here.
+one Task body per bucket from `findings` and `rollup`, handing them to to-tasks, and never re-derives any field here.
 """
 
 import csv

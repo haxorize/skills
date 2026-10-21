@@ -73,4 +73,4 @@ Show the note, set `next: show`, and ask in the same message for the color and e
 ## Notes
 
 - A review-season self-assessment reads the saved notes over its period, evidence sections included; the notes are its source, and writing it is not this skill's.
-- A second intent bundled into the ask ("…and file tickets for the risks") is named back with the skill that owns it, such as `/to-story` or `/to-bug`, not done here.
+- A second intent bundled into the ask ("…and file tickets for the risks") is named back with the skill that owns it, such as `to-story` or `to-bug`, not done here.

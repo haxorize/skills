@@ -1,7 +1,6 @@
 ---
 name: to-bug
-description: Synthesize the current conversation into a Bug work item and publish it to the project's tracker. ADO — creates a first-class Bug work item with native Severity and Repro Steps fields. GitHub — creates an issue with the `bug` label and a severity label. Synthesizes from context — no interviewing.
-disable-model-invocation: true
+description: Publish a Bug — a defect with repro steps and severity — to the project's tracker (an ADO Bug, or a GitHub issue labeled bug). Use when asked to file, log, or write up a bug, a defect, a regression, or a ticket for something broken. Not for asking whether behavior is a bug, or finding its cause (diagnosing-bugs). Not for a feature request or missing capability (to-story).
 requires: writing-for-humans, work-item-shape
 ---
 
@@ -13,7 +12,7 @@ Bugs are *not* parented under Stories — the fix is the slice. They can be file
 
 ## Publication constraints
 
-Call the Skill tool with `writing-for-humans`, then again with `work-item-shape` — if you did not just see a `Launching skill: work-item-shape` line, stop and call it again. Every published sentence follows the first; the body's shape follows the second.
+Call the Skill tool with `writing-for-humans`, then again with `work-item-shape`. Every published sentence follows the first; the body's shape follows the second.
 
 This tier's evidence sections are `## Repro` (on ADO, the `Microsoft.VSTS.TCM.ReproSteps` field instead), `## Expected behavior`, and `## Actual behavior`: exact error messages, stack traces, environment URLs, and observable route names belong there — `work-item-shape`'s internals rule covers the rest.
 

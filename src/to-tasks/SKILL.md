@@ -1,7 +1,6 @@
 ---
 name: to-tasks
-description: Break a parent User Story into child Task work items on the project's tracker. Tracer-bullet style — each Task is a thin vertical slice through every integration layer. ADO — creates Tasks under a User Story. GitHub — creates task-shaped issues under a story-shaped parent issue. Also patches one published Task (`--update`) and re-syncs a whole set against its parent (`--reconcile`).
-disable-model-invocation: true
+description: Break a published User Story into child Task work items on the project's tracker, each a thin vertical slice. Use when asked to break a story down, split it into tasks or subtasks, patch one published Task, or re-sync a story's tasks after the story changed. Not for splitting a Feature into stories (to-story, once per story). Not for talking through slices without filing them.
 requires: writing-for-humans, work-item-shape, adr
 ---
 
@@ -9,11 +8,11 @@ requires: writing-for-humans, work-item-shape, adr
 
 No interviewing — this is a synthesis-only skill. Run `/grill-me` first if context is thin.
 
-Tasks are always children of a User Story — never directly under a Feature. To break a Feature into stories, run `/to-story` repeatedly under the same Feature parent.
+Tasks are always children of a User Story — never directly under a Feature. To break a Feature into stories, use `to-story` once per story, under the same Feature parent.
 
 ## Publication constraints
 
-Call the Skill tool with `writing-for-humans`, then again with `work-item-shape` — if you did not just see a `Launching skill: work-item-shape` line, stop and call it again. Every published sentence follows the first; the body's shape follows the second.
+Call the Skill tool with `writing-for-humans`, then again with `work-item-shape`. Every published sentence follows the first; the body's shape follows the second.
 
 `work-item-shape`'s internals rule covers every section here, `## Layers touched` included. A Task's acceptance criteria live on the parent Story (`## Covers` points at them), so the checkable-criteria rules bind through the parent, not a body section.
 
@@ -34,7 +33,7 @@ On ADO, in no-repo CLI-only mode, save the resolved Story ID to the same memory 
 
 Verify the parent is the right type:
 - **ADO:** `az boards work-item show <id>` should return type `User Story`. Refuse and explain if it's a Feature, Epic, Task, or Bug.
-- **GitHub:** parent issue should look story-shaped (labels / template). Refuse if it looks PRD/feature-shaped — suggest running `/to-story --parent <feature-id>` first to create a Story under it.
+- **GitHub:** parent issue should look story-shaped (labels / template). Refuse if it looks PRD/feature-shaped — suggest `to-story` with `--parent <feature-id>` first to create a Story under it.
 
 ### 3. Read sibling repos
 

@@ -20,7 +20,7 @@ Something members or the business depend on is broken now, and the user is the o
 Refuse, naming the route that fits, when the ask is one of these:
 
 - **An incident already resolved** that owes its review. That is the incident learning `diagnosing-bugs`' learnings reference owns; this skill hands the file to it at the close, and never writes the review.
-- **A defect nobody is harmed by right now** — found in a test, a log, or a report of something that has since stopped. That is `diagnosing-bugs`, and `/to-bug` to file it.
+- **A defect nobody is harmed by right now** — found in a test, a log, or a report of something that has since stopped. That is `diagnosing-bugs`, and `to-bug` to file it.
 - **A number drifting with nobody blocked**, like a conversion rate down a point. That is `diagnosing-bugs`' metric regression.
 
 When the user is not sure, it is live: running this on something that turns out minor costs a few minutes, and the reverse costs the minutes that mattered.
@@ -88,4 +88,4 @@ The header becomes `Incident: resolved` only on the user's word, with the time. 
 ## Notes
 
 - When someone else runs the incident, this skill serves the user's own part of it: their timeline, their moves proposed to whoever decides, and updates drafted for that person to send. It never opens a second channel to the same group.
-- A second intent bundled into the ask ("…and file the follow-ups") is named back with the skill that owns it, such as `/to-bug`, and taken up after the close, not during.
+- A second intent bundled into the ask ("…and file the follow-ups") is named back with the skill that owns it, such as `to-bug`, and taken up after the close, not during.

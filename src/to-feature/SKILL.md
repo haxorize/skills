@@ -1,7 +1,6 @@
 ---
 name: to-feature
-description: Synthesize the current conversation into a Feature-level (PRD-shaped) artifact and publish it to the project's tracker — for scope large enough to need multiple stories underneath. For single-feature scope, reach for `to-story` instead. Where a `/frame-effort` Frame exists, its Fit check columns are the approaches proposed. ADO — creates a Feature work item under a parent Epic. GitHub — creates an issue with a feature/PRD template.
-disable-model-invocation: true
+description: Publish a Feature — a PRD-shaped spec for scope that needs several stories beneath it — to the project's tracker (an ADO Feature under an Epic, or a GitHub issue). Use when asked to file, create, or write up a feature, a PRD, or an epic-sized ticket for work too big for one story. Not for one deliverable (to-story) or a defect (to-bug). Not for drafting or critiquing a body without filing it (work-item-shape).
 requires: writing-for-humans, work-item-shape, diverging
 ---
 
@@ -9,11 +8,11 @@ requires: writing-for-humans, work-item-shape, diverging
 
 No interviewing — this is a synthesis-only skill. Run `/grill-me` first if context is thin.
 
-`to-feature` is for **broad scope** — work that decomposes into multiple stories. The default for single-feature work is `to-story`: if the scope in front of you fits one story, say so and offer `/to-story` instead of publishing a thin Feature.
+`to-feature` is for **broad scope** — work that decomposes into multiple stories. The default for single-feature work is `to-story`: if the scope in front of you fits one story, say so and offer `to-story` instead of publishing a thin Feature.
 
 ## Publication constraints
 
-Call the Skill tool with `writing-for-humans`, then again with `work-item-shape` — if you did not just see a `Launching skill: work-item-shape` line, stop and call it again. Every published sentence follows the first; the body's shape follows the second.
+Call the Skill tool with `writing-for-humans`, then again with `work-item-shape`. Every published sentence follows the first; the body's shape follows the second.
 
 `work-item-shape`'s internals rule covers every section here, `## Approach` included.
 
@@ -68,7 +67,7 @@ Before showing the user, check:
 
 - Placeholders (no TBD/TODO)
 - Contradictions between sections
-- Scope (broad enough to warrant multiple stories — if it shrinks to one, redirect to `/to-story`)
+- Scope (broad enough to warrant multiple stories — if it shrinks to one, redirect to `to-story`)
 - Ambiguity (any requirement readable two ways)
 - Domain language matches `DOMAIN.md`
 - AC IDs: append-only — no reused IDs across active and `## Removed acceptance criteria`; gaps from removals preserved (no renumbering)

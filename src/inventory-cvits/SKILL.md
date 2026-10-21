@@ -1,8 +1,9 @@
 ---
 name: inventory-cvits
-description: Turn a ServiceNow container-vulnerability CSV export into one remediation Story per container image — the inventory pass a product owner runs before an engineer classifies the findings. Scopes the export to the team's image manifest, drafts each image's Story with its findings grouped by risk and target date, and prints the /to-story command a human types to open or update it under the security feature.
+description: Turn a ServiceNow container-vulnerability CSV export into one remediation Story per container image — the inventory pass a product owner runs before an engineer classifies the findings. Scopes the export to the team's image manifest, drafts each image's Story with its findings grouped by risk and target date, and hands each draft to the to-story publisher to open or update it under the security feature.
 argument-hint: "[<path-to-servicenow-cvit-csv>] [--security-feature <id>] [--manifest <path>]"
 disable-model-invocation: true
+requires: to-story
 ---
 
 # Inventory CVITs
@@ -15,7 +16,7 @@ Three invariants hold throughout, and a run that breaks one has failed:
 - **Transcode to UTF-8 on ingest, before parsing.** The export carries a non-UTF-8 byte — a Windows-1252 curly apostrophe in vulnerability text — that breaks UTF-8 tools mid-parse and reads as an empty result. A file that will not transcode stops the run rather than dropping a finding.
 - **One Story per image, idempotent across runs.** A second run against a later export updates the existing image Story, never opens a duplicate. This skill finds the existing Story itself — by enumerating the security feature's child Stories and matching the `Image:` marker stamped as the first line of each body — never by a title-string guess.
 
-The deterministic transform — parsing the export, grouping findings, deriving each field of the Story body — is a bundled script, `scripts/draft-cvit-stories.py`, so two runs over the same export draft the identical Story and the transform's traps are frozen by a selftest beside it. The script makes no `az` call and touches no network. This skill resolves the config, transcodes, runs the script, reads the tracker to match each image to its Story, and prints the publish commands; it writes nothing to the tracker itself, because `/to-story` is user-invoked and only a human can type it.
+The deterministic transform — parsing the export, grouping findings, deriving each field of the Story body — is a bundled script, `scripts/draft-cvit-stories.py`, so two runs over the same export draft the identical Story and the transform's traps are frozen by a selftest beside it. The script makes no `az` call and touches no network. This skill resolves the config, transcodes, runs the script, reads the tracker to match each image to its Story, and hands each draft to `to-story`; it writes nothing to the tracker itself, because `to-story` owns the write and its Publish gate asks the human before each one.
 
 ## Configuration — resolve before parsing
 
@@ -75,22 +76,22 @@ A non-zero exit stops the run: an `az` read that fails or is throttled leaves a 
 
 Cross-check `zero_finding` against the map: an image that has an existing Story but no rows in this export is reported with its Story ID, as a Story a clean rescan should now let the team close — unless its `rejected` count is above 0. This skill closes nothing.
 
-### 4. Write each draft to a file and print its `/to-story` command
+### 4. Write each draft to a file and publish it with `to-story`
 
-For each `in_scope` entry, write the body and acceptance criteria to `$RUN/story-<n>.body.md` and `$RUN/story-<n>.acceptance.md`, where `<n>` is the entry's position in `in_scope` — an export field never becomes a file name. Then print, per image, the command for the human to type in this session, with both file paths beside it:
+For each `in_scope` entry, write the body and acceptance criteria to `$RUN/story-<n>.body.md` and `$RUN/story-<n>.acceptance.md`, where `<n>` is the entry's position in `in_scope` — an export field never becomes a file name. Then, per image, call the Skill tool with `to-story`, passing both file paths and these arguments:
 
-- **No Story in the map** → `/to-story --parent <security-feature> --priority <priority>`.
-- **A Story in the map** → `/to-story --update <story-id>`, plus `--priority <priority>` only when the drafted value is more urgent (a lower number) than the Story's current Priority. Priority only escalates: a re-run never lowers a value someone raised by hand.
+- **No Story in the map** → `--parent <security-feature> --priority <priority>`.
+- **A Story in the map** → `--update <story-id>`, plus `--priority <priority>` only when the drafted value is more urgent (a lower number) than the Story's current Priority. Priority only escalates: a re-run never lowers a value someone raised by hand.
 
-Before printing an `--update`, carry two things forward from the existing Story into the drafted files, since `/to-story --update` replaces the description and the AC field whole: append the Story's `## Removed acceptance criteria` section verbatim to the body file, and append to the acceptance file every active AC beyond the drafted `AC1` and `AC2`, text unchanged. A dropped one breaks the append-only record `to-story`'s update self-review checks.
+Before an `--update`, carry two things forward from the existing Story into the drafted files, since `to-story`'s `--update` replaces the description and the AC field whole: append the Story's `## Removed acceptance criteria` section verbatim to the body file, and append to the acceptance file every active AC beyond the drafted `AC1` and `AC2`, text unchanged. A dropped one breaks the append-only record `to-story`'s update self-review checks.
 
-**Tags are set at creation only.** `/to-story` takes no tag argument: it stamps the drafted title's leading bracket plus the launch repo's `Additional tags:` line, once, on create, and `--update` never touches tags. Print each entry's `tags` beside its command, naming any the title bracket and `Additional tags:` will not produce, minus every tag the launch repo's `Never tag:` line lists, which is never applied. Beside them print the command that adds them after the create, listing every tag the Story should carry, since `System.Tags` is replaced whole: `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py update <story-id> --root <launch repo> --field "System.Tags=<tag1>; <tag2>"`. The script takes `--org` from the launch repo's `## Issue tracker` block.
+**Tags are set at creation only.** `to-story` takes no tag argument: it stamps the drafted title's leading bracket plus the launch repo's `Additional tags:` line, once, on create, and `--update` never touches tags. Print each entry's `tags` beside its image, naming any the title bracket and `Additional tags:` will not produce, minus every tag the launch repo's `Never tag:` line lists, which is never applied. Beside them print the command that adds them after the create, listing every tag the Story should carry, since `System.Tags` is replaced whole: `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py update <story-id> --root <launch repo> --field "System.Tags=<tag1>; <tag2>"`. The script takes `--org` from the launch repo's `## Issue tracker` block.
 
-Tell the human that `/to-story` publishes the drafted files as the Story, and that its own prompts (approach, `## Layers touched`) are answered there. Keep `$RUN` until every printed command has been typed, then `rm -rf "$RUN"`.
+`to-story` publishes the drafted files as the Story, and its own prompts (approach, `## Layers touched`, the Publish gate) are answered there. Keep `$RUN` until every image's `to-story` run has ended, then `rm -rf "$RUN"`.
 
 ### 5. Report the run
 
-Report, for the user to read: each image with its matched Story ID or "new", its drafted priority, and the command printed for it; the zero-finding images, and any with an existing Story; the off-manifest images; every rejected row and mixed-status group; any unmarked child Story or second marker; and any tag drift. The counts are measured from the script's output and the tracker reads, not estimated.
+Report, for the user to read: each image with its matched Story ID or "new", its drafted priority, and the Story `to-story` published or updated for it, or that the user declined it; the zero-finding images, and any with an existing Story; the off-manifest images; every rejected row and mixed-status group; any unmarked child Story or second marker; and any tag drift. The counts are measured from the script's output and the tracker reads, not estimated.
 
 ## Notes
 

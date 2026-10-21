@@ -4,8 +4,8 @@
 
 Pure transform: data in (CSV path, manifest path), data out (JSON on stdout). No `az`
 call, no network — the tracker reads and writes stay in the skill body, per the skill's
-bundled-script boundary (ADR-0103): every tracker write is a command a human types
-(`/to-story`, `/to-tasks`), so this script makes no tracker call.
+bundled-script boundary (ADR-0103): every tracker write goes through a publisher
+(`to-story`, `to-tasks`), so this script makes no tracker call.
 
 Input CSV is the ServiceNow CVIT export, already transcoded to UTF-8 (the skill body runs
 `iconv -f WINDOWS-1252 -t UTF-8` before calling this; a non-UTF-8 byte here fails loudly).
@@ -39,7 +39,7 @@ stdout is pure ASCII JSON (ensure_ascii, the json default and classify's choice)
 JSON reader restores the characters, and no console codec (cp1252) can fail the write.
 
 The skill body matches each in_scope image to an existing Story (by the `marker`) and
-prints the /to-story --parent (create) or --update (update) command a human types.
+hands it to to-story with --parent (create) or --update (update).
 """
 
 import csv
@@ -304,7 +304,7 @@ def group_findings(rows):
 
 
 def draft_body(image, meta, rows):
-    """Author the Story body as Markdown — /to-story converts it to HTML via pandoc."""
+    """Author the Story body as Markdown — to-story converts it to HTML via pandoc."""
     name = meta["name"]
     subject = meta["subject"]
     total = len(rows)
@@ -342,7 +342,7 @@ def draft_body(image, meta, rows):
 
 
 def draft_acceptance(image, meta):
-    # No live count in AC text: it would change on every run, and /to-story --update
+    # No live count in AC text: it would change on every run, and to-story --update
     # stops on a pre-existing AC whose text changed. The count lives in the Problem line.
     name = meta["name"]
     return (

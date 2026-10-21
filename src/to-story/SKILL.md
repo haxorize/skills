@@ -1,7 +1,6 @@
 ---
 name: to-story
-description: Synthesize the current conversation into a Story-level (single-feature spec) artifact and publish it to the project's tracker — most workflows start here. For scope that needs multiple stories beneath it, reach for `to-feature` instead. ADO — creates a User Story under a parent Feature. GitHub — creates an issue with a story-shaped template.
-disable-model-invocation: true
+description: Publish a Story — a single-feature spec synthesized from the conversation — to the project's tracker (an ADO User Story under a Feature, or a GitHub issue). Use when asked to file, create, or open a story, an issue, or a ticket for one deliverable, or to update a published story. Not for scope needing several stories (to-feature), splitting a story into tasks (to-tasks), or a defect (to-bug). Not for drafting or critiquing a body without filing it (work-item-shape).
 argument-hint: "[--parent <feature-id>] [--update <story-id>] [--priority <1-4>]"
 requires: writing-for-humans, work-item-shape, diverging
 ---
@@ -10,11 +9,11 @@ requires: writing-for-humans, work-item-shape, diverging
 
 Synthesize the current conversation into a Story-level artifact (single-feature spec) and publish it to the project's tracker. No interviewing — this is a synthesis-only skill. Run `/grill-me` first if context is thin.
 
-Use `/to-feature` only when scope explicitly needs multiple stories beneath it.
+Use `to-feature` only when scope explicitly needs multiple stories beneath it.
 
 ## Publication constraints
 
-Call the Skill tool with `writing-for-humans`, then again with `work-item-shape` — if you did not just see a `Launching skill: work-item-shape` line, stop and call it again. Every published sentence follows the first; the body's shape follows the second.
+Call the Skill tool with `writing-for-humans`, then again with `work-item-shape`. Every published sentence follows the first; the body's shape follows the second.
 
 `work-item-shape`'s internals rule covers every section here: `## Approach`, `## Layers touched`, `## Tests`, and all others describe behavior and design intent only.
 
@@ -28,7 +27,7 @@ Resolve the tracker per `~/.claude/skills/work-item-shape/references/tracker-res
 
 On ADO, in no-repo CLI-only mode, save the resolved Feature ID to the same memory entry `tracker-resolution.md` keys by tracker context, so the next invocation does not re-look it up.
 
-- **`Hierarchy: required`** (default for ADO): if `--parent <feature-id>` is provided, use it; otherwise interactively prompt for the Feature ID. If no Feature exists, suggest running `/to-feature` first or (only if team config allows top-level Stories) accepting a parentless Story.
+- **`Hierarchy: required`** (default for ADO): if `--parent <feature-id>` is provided, use it; otherwise interactively prompt for the Feature ID. If no Feature exists, suggest `to-feature` first or (only if team config allows top-level Stories) accepting a parentless Story.
 - **`Hierarchy: optional`** (default for GitHub): parent linking is optional; only use `--parent` if provided. Do not prompt.
 
 ### 2a. Snapshot lookup (where `Hierarchy: required`)

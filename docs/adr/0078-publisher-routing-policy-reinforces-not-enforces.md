@@ -26,9 +26,9 @@ The sentence that justified the quote argued against itself: it said the line "h
 
 That is the right behavior, and it is only tolerable because of the ruling below: the line is a **reinforcement**, not the mechanism. `work-item-shape`'s own routing gate is the mechanism, and it binds on the work's shape whether or not any line is present. A repo without the line loses a reminder, never the routing.
 
-## The publishers name the publisher and stop; they do not refuse
+## The routing gate loads the publisher; it does not refuse
 
-Asked to file with raw `gh`/`az`, the routing gate names the right publisher, says what ad-hoc drafting would skip, and waits. It does not refuse the user's stated direction, and no skill is wired to block the call.
+Asked to file with raw `gh`/`az`, the routing gate loads the right publisher, whose Publish gate asks before anything is written ([ADR-0115](0115-the-to-publishers-are-model-invoked.md)). It does not refuse the user's stated direction, and no skill is wired to block the call.
 
 Refusal was rejected on two grounds. It would put a hard stop behind a discipline that is model-invoked, so the stop would be absent exactly when someone bypasses the pipeline deliberately — unenforceable where it matters. And it would override a direction the user gave in their own words, which the recommend-and-proceed rule reserves to the user: the gate's job is to make the cost visible, not to withhold the act.
 

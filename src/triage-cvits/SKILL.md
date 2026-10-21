@@ -1,9 +1,9 @@
 ---
 name: triage-cvits
-description: Classify a container image's Twistlock/Prisma Cloud vulnerability export into six CVIT buckets and draft one remediation Task per bucket under the image's Story — the triage pass an engineer runs after inventory-cvits opens the Story. Routes each finding through a per-ecosystem resolver and prints the /to-tasks command a human types to publish the Tasks.
+description: Classify a container image's Twistlock/Prisma Cloud vulnerability export into six CVIT buckets and draft one remediation Task per bucket under the image's Story — the triage pass an engineer runs after inventory-cvits opens the Story. Routes each finding through a per-ecosystem resolver and hands the drafted Tasks to the to-tasks publisher.
 argument-hint: "[<path-to-twistlock-csv>] [--story <image-story-id>]"
 disable-model-invocation: true
-requires: writing-for-humans
+requires: writing-for-humans, to-tasks
 ---
 
 # Triage CVITs
@@ -15,7 +15,7 @@ Four invariants hold throughout, and a run that breaks one has failed:
 - **Triage stops at the bucket.** It never runs an upgrade, never edits a Dockerfile or build file, and never writes to, closes, or re-states a CVIT work item. CVITs auto-close on the next clean scan. A Bucket F Task carries a ready-to-run `/upgrade-deps` command a human runs separately.
 - **A missing input flags, never asserts.** A wrongly-asserted bucket marks a real vulnerability safe. When the resolved dependency trees are absent or the app Dockerfile was not read, the affected findings are flagged as needing that input, never bucketed on a guess.
 - **Transcode to UTF-8 on ingest, before parsing.** The export carries a non-UTF-8 byte — a Windows-1252 curly apostrophe in vulnerability text — that breaks UTF-8 tools mid-parse and reads as an empty result. A file that will not transcode stops the run rather than dropping a finding.
-- **Tasks only; the Story is `inventory-cvits`'.** This skill never updates the image Story, so an inventory re-run and a triage run never overwrite each other. It writes nothing to the tracker itself: `/to-tasks` is user-invoked, so the skill drafts the Tasks and prints the command a human types.
+- **Tasks only; the Story is `inventory-cvits`'.** This skill never updates the image Story, so an inventory re-run and a triage run never overwrite each other. It writes nothing to the tracker itself: the skill drafts the Tasks and hands them to `to-tasks`, whose Publish gate asks the human before each write.
 
 The classification — the three-tier cascade, the two-tree differential, the version compare — is a bundled script, `scripts/classify-cvit-findings.py`, a pure transform frozen by a selftest beside it, so two runs over the same inputs classify identically. The script makes no `az` call and touches no network. Its header is the authority on its input shape, JSON output, and exit codes — `--help` prints the input shape and exit codes; open the file for the output contract. This body states when to run it, not how it classifies.
 
@@ -78,7 +78,7 @@ Delete `$RUN/export-utf8.csv` once the script exits. A non-zero exit stops the r
 
 Call the Skill tool with `writing-for-humans` before drafting; its rules bind the Task prose.
 
-Check what already exists first. Enumerate the Story's child Tasks (`az boards work-item show <story-id> --output json --expand relations`, then each child's `System.Description`) and read each one's `` `CVIT bucket: <letter>` `` marker, its first line. A bucket with an open Task gets no new Task: report the existing ID, and where its findings changed, draft the revised body and print `/to-tasks --update <task-id>` for it. A bucket whose Task is closed, or that has none, gets a new draft.
+Check what already exists first. Enumerate the Story's child Tasks (`az boards work-item show <story-id> --output json --expand relations`, then each child's `System.Description`) and read each one's `` `CVIT bucket: <letter>` `` marker, its first line. A bucket with an open Task gets no new Task: report the existing ID, and where its findings changed, draft the revised body for a `to-tasks` `--update <task-id>` run. A bucket whose Task is closed, or that has none, gets a new draft.
 
 Each draft opens with the `` `CVIT bucket: <letter>` `` marker line and carries:
 
@@ -89,13 +89,13 @@ Each draft opens with the `` `CVIT bucket: <letter>` `` marker line and carries:
 
 Findings with bucket `?` (`needs_checkout`) or `null` (`unresolved`) get no Task: they are reported for the input that would bucket them. Write each draft to `$RUN/task-<bucket>.md` — the bucket letter, never an export field, names the file.
 
-### 6. Print the `/to-tasks` command
+### 6. Publish with `to-tasks`
 
-Print the one command for the human to type in this session — `/to-tasks --parent <story-id>` — with the drafted file paths, telling them `/to-tasks` publishes the drafted Tasks one per bucket, as drafted, rather than re-slicing them. Print each `/to-tasks --update` from step 5 beside it. Keep `$RUN` until every command has been typed, then `rm -rf "$RUN"`.
+Call the Skill tool with `to-tasks`, passing `--parent <story-id>` and the drafted file paths: it publishes the drafted Tasks one per bucket, as drafted, rather than re-slicing them. Then call it once with `--update <task-id>` for each revised body from step 5. Keep `$RUN` until every `to-tasks` run has ended, then `rm -rf "$RUN"`.
 
 ### 7. Report the run
 
-Report, for the user to read: the image and its Story ID; the per-bucket counts and percentages with the confirmed and unconfirmed split; `unconfirmed_total`, and what input would confirm each flagged finding; the `needs_checkout` and `unresolved` findings and any unresolved ecosystem; the existing Tasks matched, and the new and revised drafts with the commands printed. The counts are measured from the script's output and the tracker reads, not estimated.
+Report, for the user to read: the image and its Story ID; the per-bucket counts and percentages with the confirmed and unconfirmed split; `unconfirmed_total`, and what input would confirm each flagged finding; the `needs_checkout` and `unresolved` findings and any unresolved ecosystem; the existing Tasks matched, and the new and revised drafts with the Task `to-tasks` published for each, or that the user declined it. The counts are measured from the script's output and the tracker reads, not estimated.
 
 ## Notes
 

@@ -1,7 +1,5 @@
 # Model-invoked vs user-invoked skill split
 
-> **Amended by [ADR-0057](0057-rename-table-and-discipline-skill-term.md):** the skills are `review-architecture` and `sweep-domain` as of 2026-08-30, not `improve-design` and `harden-domain`. The roster and the naming ground below stand as this record made them — an ADR is the record as it landed, and a renamed name is never backfilled.
-
 ## Context
 
 Every skill in this repo was historically **model-invoked**: each `SKILL.md` carried a trigger-rich, model-facing `description` ("Use when the user wants…"), so the agent could auto-load any of them. Two problems followed. First, consequential orchestrators — the `to-*` publishers that write real work items to a tracker — could auto-fire without an explicit human go-ahead. Second, there was no clean separation between a skill that **orchestrates a workflow** (something a human deliberately starts) and a skill that holds **reusable discipline** (something the model should reach for mid-task). Matt Pocock's skills repo split exactly this axis, and Claude Code supports it natively via the `disable-model-invocation` frontmatter field.
@@ -15,11 +13,11 @@ Classify every skill on one **invocation** axis:
 - **User-invoked** (`disable-model-invocation: true`) — reachable only by a human. The `description` is **human-facing**: a one-line summary with no trigger list. Job: orchestrate.
 - **Model-invoked** (default) — reachable by model or user. The `description` stays **trigger-rich / model-facing** so auto-invocation fires. Job: hold reusable discipline.
 
-Classification policy: workflow orchestrators and consequential publishers are **user-invoked**; reusable disciplines the model should autonomously reach for are **model-invoked**. The test for staying model-invoked is *"could the model usefully reach for this autonomously?"* — reuse is the reason to **extract** a skill, not the test for its invocation type (see ADR-0016).
+Classification policy: workflow orchestrators are **user-invoked**; reusable disciplines the model should autonomously reach for are **model-invoked**. The `to-*` publishers are model-invoked although they write to a tracker: their safety is the Publish gate's confirming turn, not the invocation type ([ADR-0115](0115-the-to-publishers-are-model-invoked.md)). The test for staying model-invoked is *"could the model usefully reach for this autonomously?"* — reuse is the reason to **extract** a skill, not the test for its invocation type (see ADR-0016).
 
 Because a user-invoked skill's description is hidden, **a user-invoked skill may invoke model-invoked skills (via soft, Claude-mediated prose invocation) but never another user-invoked skill.**
 
-Roster: user-invoked — `grill-me`, `grill-and-record`, `harden-domain`, `improve-design`, `backfill-adrs`, `to-feature`, `to-story`, `to-tasks`, `to-bug`, `glapi-test-pass`, `from-work-item`, `write-skill`, plus new orchestrators `implement` and `review-changes`. Model-invoked — `adr`, `tdd`, plus extracted behaviors `grilling`, `domain-modeling`, `codebase-design`, `feedback-loops`.
+Roster, under the names it was written with (`harden-domain` and `improve-design` are `sweep-domain` and `review-architecture` since [ADR-0057](0057-rename-table-and-discipline-skill-term.md)): user-invoked — `grill-me`, `grill-and-record`, `harden-domain`, `improve-design`, `backfill-adrs`, `glapi-test-pass`, `from-work-item`, `write-skill`, plus new orchestrators `implement` and `review-changes`. Model-invoked — `adr`, `tdd`, the publishers `to-feature`, `to-story`, `to-tasks` and `to-bug`, plus extracted behaviors `grilling`, `domain-modeling`, `codebase-design`, `feedback-loops`.
 
 `write-skill` is **user-invoked**, not model-invoked: it is a deliberately-reached authoring reference. Because the skills are installed globally, a model-invoked description would pay context load every turn in every repo while skill-authoring is rare outside this one; no other skill declares it as a dependency; and the action name `write-skill` is the user-invoked naming form. (Matt's equivalent `writing-great-skills`, which folds into ours, is likewise user-invoked.)
 
@@ -33,7 +31,7 @@ Roster: user-invoked — `grill-me`, `grill-and-record`, `harden-domain`, `impro
 
 ## Consequences
 
-- The `to-*` publishers lose the ability to auto-fire — intentional. The model can still *suggest* them in prose ("this looks ready for /to-story"); only a human triggers the write.
+- A `to-*` publisher can fire on a plain-words ask, and only the human's yes at its Publish gate triggers the write.
 - Every `SKILL.md` description is rewritten to match its invocation type (human-facing vs trigger-rich). `scripts/lint-skills.sh` gains a check for this.
 - `README.md` and any bucket indexes regroup into **User-invoked** / **Model-invoked** sections.
 - A naming convention follows (pairs-only): extracted model-invoked cores take discipline/gerund names; user-invoked orchestrators keep action names; standalone skills are not renamed.

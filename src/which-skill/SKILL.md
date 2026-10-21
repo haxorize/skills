@@ -19,10 +19,10 @@ A **flow** is a path through the skills.
    - **`/frame-effort`** — when a program or feature arrives with no outcome statement: the outcome, the opportunities, the ranked assumptions, the kill evidence, and a pass/fail Fit check of candidate solutions — the page the grill reads first.
    - **`/grill-me`** — relentless interview, opening from a `/frame-effort` Frame where one exists. With a `DOMAIN.md` or ADR log it records as it goes — `DOMAIN.md` as terms resolve, ADRs in `adr`'s format when the gate triggers; `--plain` (or no such docs) saves nothing.
 2. **Decompose into tracked work** (three tiers, top-down as scope warrants):
-   - **`/to-feature`** — a PRD-shaped Feature, when scope spans multiple stories; a Frame's Fit check supplies its approaches.
-   - **`/to-story`** — a single-feature Story. The usual entry point.
-   - **`/to-tasks`** — split a Story into vertical-slice Tasks (one Task = one commit, where the repo maps them that way).
-   - A creation ask ("file a story for this") is caught by the `work-item-shape` discipline: it routes the ask to the owning publisher in a wired repo, drafting the body itself only where its rules license ad-hoc drafting — it never replaces the publishers.
+   - **`to-feature`** — a PRD-shaped Feature, when scope spans multiple stories; a Frame's Fit check supplies its approaches.
+   - **`to-story`** — a single-feature Story. The usual entry point.
+   - **`to-tasks`** — split a Story into vertical-slice Tasks (one Task = one commit, where the repo maps them that way).
+   - A creation ask ("file a story for this") loads the owning publisher, or `work-item-shape` hands it there in a wired repo, drafting the body itself only where its rules license ad-hoc drafting — it never replaces the publishers.
 3. **Load a single ticket back into a cold-start session** — **`/implement <id>`** (or a tracker URL, or `latest`) loads it (type, parent, `DOMAIN.md`, matching ADRs, linked work) before building; `--load-only` stops at the summary, as do `/grill-me` and `/write-skill` given the same argument.
 4. **Build it** — **`/implement`**. Drives one vertical slice end to end: picks the build path (`tdd` if testable, else direct), refactors, closes the loop once via `feedback-loops`, writes the completion audit, and sends fresh helpers (`doc-claims`, `/validate-behavior`). `discoverable-code` rides the refactor beat, and `adr` is offered where the slice turned on a load-bearing decision. One Task per session.
 5. **Review before it lands** — **`/review-changes`**, then **`/address-findings`** to act on its report (see Review gate).
@@ -36,14 +36,14 @@ Keep steps 1–2 in **one unbroken context window** so the grilling, decompositi
 
 ## When the way isn't clear: `/chart-course`
 
-- **`/chart-course`** — a situational on-ramp, not the main entry. For an effort too big for one session and still wrapped in fog: with no outcome statement it stops and sends you to `/frame-effort` first; otherwise it charts a shared map of **decision tickets** on the tracker — questions, not build slices — then each later session works one (`/chart-course <map-url>`). It plans rather than does, delegating interviews to `grilling` and `domain-modeling`, runnable questions to `/prototype`, and ends where step 2 begins: way clear, handed to `/to-feature` or `/to-story`. Ordinary ideas skip it — step 1's grill covers them.
+- **`/chart-course`** — a situational on-ramp, not the main entry. For an effort too big for one session and still wrapped in fog: with no outcome statement it stops and sends you to `/frame-effort` first; otherwise it charts a shared map of **decision tickets** on the tracker — questions, not build slices — then each later session works one (`/chart-course <map-url>`). It plans rather than does, delegating interviews to `grilling` and `domain-modeling`, runnable questions to `/prototype`, and ends where step 2 begins: way clear, handed to `to-feature` or `to-story`. Ordinary ideas skip it — step 1's grill covers them.
 
 ## Detours off the main flow
 
 - **A question needs a runnable answer** (state, business logic, a UI you have to see, a component that has to survive real content — the stress branch) → detour through a prototype, bridged by `/handoff` in both directions: **`/handoff`** out → open a fresh session → **`/prototype`** to answer it with throwaway code → **`/handoff`** the *answer* back, and reference it from the original thread.
-- **A hard bug or unexplained failure mid-build** → the `diagnosing-bugs` discipline takes over (it fires on its own; `implement` reaches for it on an unplanned red). It greps the repo's `docs/solutions/` store for past matches on the way in; when an expensive diagnosis closes, it offers to capture the solved problem there and `adr` the decision the fix turned on. File a found defect with **`/to-bug`**.
+- **A hard bug or unexplained failure mid-build** → the `diagnosing-bugs` discipline takes over (it fires on its own; `implement` reaches for it on an unplanned red). It greps the repo's `docs/solutions/` store for past matches on the way in; when an expensive diagnosis closes, it offers to capture the solved problem there and `adr` the decision the fix turned on. File a found defect with **`to-bug`**.
 - **Work that starts from a number** → it fell: `diagnosing-bugs`; it must move: **`/roll-out`**, which also stages any change members will see; nobody knows which number: **`/frame-effort`**.
-- **A production incident** → live: **`/respond-to-incident`** stops the harm, keeps a timeline, drafts updates; resolved and owing its review: `diagnosing-bugs` captures it as an incident learning in `docs/solutions/` when its rule says one is owed. Its action items are tickets — **`/to-bug`** or **`/to-tasks`** where the repo is wired.
+- **A production incident** → live: **`/respond-to-incident`** stops the harm, keeps a timeline, drafts updates; resolved and owing its review: `diagnosing-bugs` captures it as an incident learning in `docs/solutions/` when its rule says one is owed. Its action items are tickets — **`to-bug`** or **`to-tasks`** where the repo is wired.
 - **A procedure only a human can perform** (credentials, third-party dashboards, a cutover) → **`/wizard`** generates a stage-by-stage bash wizard that drives them through it — or runs the same interview step-by-step in chat when a script isn't wanted — capturing what they copy back.
 - **An email, Teams message, or questionnaire where you need their answers back** — a decision or fact only someone else can supply → **`/ask-for-me`** — it interviews you about the send and drafts a Markdown questionnaire, its one artifact, in the `writing-for-humans` outbound register.
 - **An email or Teams post as yourself that asks nothing back** → nothing to type: say what you are writing, and `writing-for-humans`' outbound register loads itself.
@@ -68,7 +68,7 @@ Keep steps 1–2 in **one unbroken context window** so the grilling, decompositi
 
 ## If you are a PM or a designer
 
-Your entries are **`/frame-effort`** for a program with no outcome yet, **`/grill-me`** for the idea, **`/to-story`** to publish it, **`/prototype`** for a question only a running thing answers, a product description asked for by name (`product-description`, opt-in) for what the product does today, and **`/explain`** when an answer did not land. A design decision needing several reviewers' async comments is a `proposed` ADR opened as a PR on your ask, so comments land on lines (`adr` writes, `/ship` opens); there is no separate RFC.
+Your entries are **`/frame-effort`** for a program with no outcome yet, **`/grill-me`** for the idea, **`to-story`** to publish it, **`/prototype`** for a question only a running thing answers, a product description asked for by name (`product-description`, opt-in) for what the product does today, and **`/explain`** when an answer did not land. A design decision needing several reviewers' async comments is a `proposed` ADR opened as a PR on your ask, so comments land on lines (`adr` writes, `/ship` opens); there is no separate RFC.
 
 ## Standalone
 
@@ -78,7 +78,7 @@ Each route in a line; the blurbs are in the skills repo's `README.md` skill map 
 - **`/teach-me <topic>`** — tutored, multi-session learning of a topic you can name.
 - **`/ask-for-me`** — the questionnaire drafter routed above, usable with no repo.
 - **`/evaluation-ledger`** — a multi-week evaluation kept as a ledger under `docs/evaluation/`.
-- **`/to-bug`** — file a defect as a tracked ticket from the current conversation.
+- **`to-bug`** — file a defect as a tracked ticket from the current conversation.
 - **`/merge-quiz`** (Off-path) — before merging a change you did not watch being built.
 - **`/explain`** — the last explanation didn't land; `/explain <topic>` is the cold branch.
 - **`/glapi-test-pass`** — ADO only; the GLAPI production deployment gate for a Story.
