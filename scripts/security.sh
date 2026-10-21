@@ -378,10 +378,13 @@ _ACCESS = (
 # are one per line, so the report is unchanged, while a line of the word
 # repeated costs linear time, never quadratic (D82). sh-dlexec's
 # fetch-first arm has a second gap a guard cannot close without losing a hit,
-# so it starts only at a line's start and commits, in atomic groups, to the
-# line's first fetch and the first output after it: any later pair finds its
-# chmod inside the first pair's window too.
+# so it starts only at a line's start and commits to the line's first fetch
+# and the first output after it: any later pair finds its chmod inside the
+# first pair's window too. The commit is an atomic group spelled as a
+# lookahead capture and its backreference, `(?=(?P<n>X))(?P=n)`, since
+# `(?>X)` needs Python 3.11 and the macOS /usr/bin/python3 is 3.9.
 _FETCH = r"\b(?:curl|wget)\b"
+_OUT = r"(?:\s-[oO]\s|--output(?:-document)?[ =]|>>?\s*\S|\|\s*tee\b)"
 _CHMODX = r"\b(chmod\s+[+ugoa]*x|chmod\s+0?[0-7]*[1357][0-7]{0,2}\b|install\s+-m\s*0?[0-7]*[1357])"
 _WRITE = r"(>>?|\b(tee|cp|mv|ln|install)\b)"
 
@@ -401,8 +404,8 @@ SCRIPT_RULES = [
     ("sh-dropsite", "HIGH", R(r"https?://(" + _DROP_HOSTS + r"|" + _RAW_IP + r")(?![\w.-])", re.I),
      "Drop-site URL (paste site, file drop, tunnel, request bin, chat webhook, telegram bot, or raw IP)"),
     ("sh-dlexec", "HIGH", R(
-        r"(?<![^\n])(?>[^\n]*?\b(curl|wget)\b)(?>[^\n]*?(\s-[oO]\s|--output(-document)?[ =]|>>?\s*\S|\|\s*tee\b))[^\n]*(\n[^\n]*){0,5}?" + _CHMODX
-        + r"|" + _CHMODX + _upto(_CHMODX) + r"(\n[^\n]*){0,5}?\b(curl|wget)\b" + _upto(_FETCH) + r"(\s-[oO]\s|--output(-document)?[ =]|>>?\s*\S|\|\s*tee\b)"),
+        r"(?<![^\n])(?=(?P<dl_fetch>[^\n]*?" + _FETCH + r"))(?P=dl_fetch)(?=(?P<dl_out>[^\n]*?" + _OUT + r"))(?P=dl_out)[^\n]*(\n[^\n]*){0,5}?" + _CHMODX
+        + r"|" + _CHMODX + _upto(_CHMODX) + r"(\n[^\n]*){0,5}?" + _FETCH + _upto(_FETCH) + _OUT),
      "Download-then-execute (fetches a file and makes it executable, in either order)"),
     ("sh-hexblob", "MEDIUM", R(r"(\\x[0-9a-fA-F]{2}){20,}|(?<![0-9a-fA-F])[0-9a-fA-F]{200,}"),
      "Hex-encoded blob (obfuscated payload)"),

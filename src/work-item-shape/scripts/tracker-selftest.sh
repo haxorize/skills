@@ -60,16 +60,20 @@
 #     planned" and no --reason when none is given, --state refused; ADO's
 #     close by --state with --org and no --project, a missing --state and a
 #     --reason each exit 3 before any call; a refused close exits 1 on both;
-#     assign by --add-assignee and by --assigned-to, --to required; label
-#     creating a missing --add label first, then one gh issue edit with
-#     --add-label and --remove-label, a --remove label starting with "-"
-#     exit 3, and label on ADO exit 3 naming the System.Tags update.
+#     assign by --add-assignee and by --assigned-to (with --org, no
+#     --project), --to required and a --to starting with "-" exit 3; label
+#     creating a missing --add label first and never a --remove one, then one
+#     gh issue edit with --add-label and --remove-label, a --remove label
+#     starting with "-" exit 3, and label on ADO exit 3 naming the System.Tags
+#     update.
+#   az's @file expansion — an ADO --type, title (create and update), close
+#     --state and assign --to starting with "@" each exit 3 before any call.
 #   usage and never-ran — an unknown command, a create with no --title, an
 #     option with no value, a positional count off its command's (update
 #     with none, show with two, search with one), a non-numeric ID in every
 #     ID slot, a label or a field reference starting with "-": exit 3;
-#     `<command> --help` exit 0; no az on PATH (a create with no body, so
-#     no conversion runs first), and no Markdown converter, exit 4.
+#     `<command> --help` exit 0; no az on PATH, exit 4 before any conversion
+#     or file write (a create with a body), and no Markdown converter, exit 4.
 # The mutation table drops or reverts each of those checks; each mutant must
 # turn its row red.
 set -uo pipefail
@@ -187,7 +191,7 @@ mkrepo "$tmp/gh" '# R
 - Visibility: private
 - Default labels: triage
 
-Work items are created only through the `to-*` publishers (`/to-feature`) — never pushed with raw `gh` calls. On a casual ask (file a story), name the publisher.
+Work items are created only through the `to-*` publishers (`to-feature`, `to-story`, `to-tasks`, `to-bug`) — never drafted and pushed with raw `gh`/`az` calls. On a casual ask ('"'"'file a story'"'"'), load the right publisher.
 
 ## Landing
 
@@ -583,7 +587,8 @@ row_close() {
   trkn "$tmp/gh" close 12 --state Done; expect_rc "a GitHub close with --state" 3 "$rc"
   trkn "$tmp/gh" close 12 --reason wontfix; expect_rc "an unknown close --reason" 3 "$rc"
   trkn "$tmp/ado" close 12 --state Removed
-  expect_in "$log" "an ADO close did not set the state" "az|boards|work-item|update|--id|12|--state|Removed|"
+  expect_row "$log" "an ADO close did not send state, --org and --output in full" \
+    "az|boards|work-item|update|--id|12|--state|Removed|--org|https://dev.azure.com/humana|--output|json"
   reject_in "$log" "an ADO close carried --project, which work-item update does not take" "--project"
   trkn "$tmp/ado" close 12; expect_rc "an ADO close with no --state" 3 "$rc"
   [ -z "$log" ] || selftest_fail "an ADO close with no --state still called az: $log"
@@ -596,8 +601,12 @@ row_assign() {
   expect_in "$log" "a GitHub assign did not add the assignee" "gh|issue|edit|12|--add-assignee|@me"
   expect_in "$out" "assign printed no assigned= line" "assigned=12>@me"
   trkn "$tmp/ado" assign 12 --to jo@example.com
-  expect_in "$log" "an ADO assign did not set --assigned-to" "az|boards|work-item|update|--id|12|--assigned-to|jo@example.com|"
+  expect_row "$log" "an ADO assign did not send --assigned-to, --org and --output in full" \
+    "az|boards|work-item|update|--id|12|--assigned-to|jo@example.com|--org|https://dev.azure.com/humana|--output|json"
+  reject_in "$log" "an ADO assign carried --project, which work-item update does not take" "--project"
   trkn "$tmp/ado" assign 12; expect_rc "assign with no --to" 3 "$rc"
+  trkn "$tmp/gh" assign 12 --to -x; expect_rc "a --to starting with -" 3 "$rc"
+  [ -z "$log" ] || selftest_fail "a --to starting with - still reached gh: $log"
   FAKE_FAIL=edit trkn "$tmp/gh" assign 12 --to @me; expect_rc "a refused assign" 1 "$rc"
 }
 row_label() {
@@ -605,6 +614,9 @@ row_label() {
   expect_rc "a GitHub label edit" 0 "$rc"
   expect_in "$log" "a missing --add label was not created first" "gh|label|create|sev:2"
   expect_in "$log" "the label edit did not add and remove" "gh|issue|edit|12|--add-label|sev:2|--remove-label|sev:3"
+  FAKE_LABELS=bug trkn "$tmp/gh" label 12 --remove gone
+  expect_rc "a --remove of a label the repo lacks" 0 "$rc"
+  reject_in "$log" "a --remove label was created before being removed" "label|create|gone"
   trkn "$tmp/gh" label 12; expect_rc "label with nothing to change" 3 "$rc"
   trkn "$tmp/gh" label 12 --remove -x; expect_rc "a --remove label starting with -" 3 "$rc"
   [ -z "$log" ] || selftest_fail "a --remove label starting with - still reached gh: $log"
@@ -642,6 +654,20 @@ row_label_dash() {
   expect_rc "a label starting with -" 3 "$rc"
   [ -z "$log" ] || selftest_fail "a label starting with - still reached gh: $log"
 }
+row_ado_at() {
+  trk "$tmp/ado" create --type Task --title "@$tmp/body.md" --no-prefix --body "$tmp/body.md"
+  expect_rc "an ADO create title starting with @" 3 "$rc"
+  [ -z "$log" ] || selftest_fail "an @ title still reached az create: $log"
+  trk "$tmp/ado" create --type "@$tmp/body.md" --title x --body "$tmp/body.md"
+  expect_rc "an ADO create --type starting with @" 3 "$rc"
+  trk "$tmp/ado" update 12 --title "@$tmp/body.md" --no-prefix
+  expect_rc "an ADO update title starting with @" 3 "$rc"
+  trkn "$tmp/ado" close 12 --state "@$tmp/body.md"
+  expect_rc "an ADO close --state starting with @" 3 "$rc"
+  trkn "$tmp/ado" assign 12 --to @me
+  expect_rc "an ADO assign --to starting with @" 3 "$rc"
+  [ -z "$log" ] || selftest_fail "an @ value still reached az: $log"
+}
 row_field_ref() {
   trk "$tmp/ado" create --type Task --title x --field "-x=1"
   expect_rc "a field reference starting with -" 3 "$rc"
@@ -654,8 +680,12 @@ row_usage() {
   trkn "$tmp/ado" search --terms x extra; expect_rc "search with a positional" 3 "$rc"
   trkn "$tmp/ado" create --type Task; expect_rc "create with no --title" 3 "$rc"
   trkn "$tmp/ado" create --type; expect_rc "an option with no value" 3 "$rc"
-  out=$(cd "$tmp/ado" && PATH="$tmp/nobin" python3 "${TRACKER_MUT:-$TRACKER}" create --type Task --title x 2>&1); rc=$?
+  rm -rf "$tmp/noaz"
+  out=$(cd "$tmp/ado" && PATH="$tmp/nobin" PYTHONPATH="$tmp/fakemd" python3 "${TRACKER_MUT:-$TRACKER}" \
+        create --type Task --title x --body "$tmp/body.md" --workdir "$tmp/noaz" 2>&1); rc=$?
   expect_rc "no az on PATH" 4 "$rc"
+  expect_in "$out" "no az on PATH is not named" "not on PATH, nothing ran: az"
+  [ ! -e "$tmp/noaz" ] || selftest_fail "no az on PATH still converted the body into $tmp/noaz"
   out=$(cd "$tmp/ado" && FAKE_LOG="$tmp/log" FAKE_STATE="$tmp/state.json" PATH="$tmp/nobin:$(dirname "$(command -v bash)")" \
         PYTHONPATH="$tmp/nomd" python3 "${TRACKER_MUT:-$TRACKER}" html "$tmp/body.md" "$tmp/out.html" 2>&1); rc=$?
   expect_rc "no Markdown converter" 4 "$rc"
@@ -667,7 +697,7 @@ rows=(row_resolve row_heading row_subheading row_prose row_two_trackers row_proj
       row_gh_field row_gh_fail row_empty row_ado_create row_keys row_workdir row_state row_convert
       row_tagdeny row_readback row_link_fail row_update row_update_readback row_gh_update
       row_ado_fail row_dry row_search row_search_scope row_gh_search row_gh_repo row_misc
-      row_comment_body row_close row_assign row_label row_html row_help row_ids row_label_dash row_field_ref row_usage)
+      row_comment_body row_close row_assign row_label row_html row_help row_ids row_label_dash row_ado_at row_field_ref row_usage)
 for r in "${rows[@]}"; do "$r"; done
 
 # --- mutation table ---------------------------------------------------------
@@ -681,7 +711,7 @@ mutant "debt tag dropped" row_debt 'tags.append("debt")' 'pass'
 mutant "Feature prefix for every type" row_prefix 'if (item_type or "").lower() == "feature":' 'if True:'
 mutant "read-back dropped" row_readback 'bad = [r for r in rich if' 'bad = [r for r in [] if'
 mutant "tag-refusal retry dropped" row_tagdeny 'if rc != 0 and tags and re.search' 'if False and re.search'
-mutant "apply-tags built with --project" row_tagdeny '"System.Tags=" + tags] + ado_org(fields))' '"System.Tags=" + tags] + ado_scope(fields))'
+mutant "apply-tags built with --project" row_tagdeny '"System.Tags=" + tags] + self.org())' '"System.Tags=" + tags] + self.scope())'
 mutant ".md conversion dropped" row_convert 'if path.endswith(".md"):' 'if False:'
 mutant "empty-file stop dropped" row_empty 'os.path.getsize(path) == 0' 'False'
 mutant "WIQL quote doubling dropped" row_search "t.replace(\"'\", \"''\")" 't'
@@ -698,12 +728,12 @@ mutant "block runs past a ### heading" row_subheading 'r"^#{1,6}\s"' 'r"^#{1,2}\
 mutant "prose read as a field" row_prose '                if key not in KNOWN_KEYS:' '                if False:'
 mutant "two trackers guessed" row_two_trackers 'if len(trackers) > 1 or names_both:' 'if False:'
 mutant "child number for its database id" row_gh_create '"sub_issue_id=%s" % dbid' '"sub_issue_id=%s" % child'
-mutant "the database-id lookup returns the number" row_dbid '    return dbid, ""' '    return number, ""'
-mutant "Repo: not passed to gh" row_gh_repo 'os.environ["GH_REPO"] = fields["repo"]' 'pass'
+mutant "the database-id lookup returns the number" row_dbid '        return dbid' '        return number'
+mutant "Repo: not passed to gh" row_gh_repo 'dict(os.environ, GH_REPO=fields["repo"]) if' 'None if'
 mutant "Repo: not validated" row_badrepo 'not REPO_FORM.match(fields["repo"])' 'False'
 mutant "Organization: not validated" row_badorg 'not (ORG_NAME.match(org) or ORG_URL.match(org))' 'False'
 mutant "ADO Project: not required" row_project 'if kind == "ado" and not fields.get("project"):' 'if False:'
-mutant "a missing block exits 1" row_noblock 'die(2, "no `## Issue tracker` block' 'die(1, "no `## Issue tracker` block'
+mutant "a missing block exits 1" row_noblock 'TrackerError(2, "no `## Issue tracker` block' 'TrackerError(1, "no `## Issue tracker` block'
 mutant "tags reads the block without declared()" row_tags_block \
   '    _, fields = declared(find_root(o["root"]))
     print(derive_tags(' '    _, fields, _, _ = read_block(find_root(o["root"]))
@@ -711,16 +741,18 @@ mutant "tags reads the block without declared()" row_tags_block \
 mutant "GitHub create drops --field" row_gh_field '        no_fields(o)
         if not o["body"]:' '        if not o["body"]:'
 mutant "update read-back dropped" row_update_readback \
-  '        return ["readback:" + r for r in read_back(self.fields, item_id, rich)]' '        return []'
+  '        return ["readback:" + r for r in self.read_back(item_id, rich)]' '        return []'
 mutant "update drops its --field list" row_update '        if flist:
-            cmd += ["--fields"] + flist' '        if False:
-            cmd += ["--fields"] + flist'
+            flags += ["--fields"] + flist' '        if False:
+            flags += ["--fields"] + flist'
 mutant "update --title unprefixed" row_update_prefix '        title = prefixed(o["type"], o["title"], fields, o["no-prefix"])' '        title = o["title"]'
 mutant "update --title needs no --type" row_update_prefix 'and title_prefix("feature", fields) != title_prefix("", fields)):' 'and False):'
 mutant "prefix applied twice" row_prefix_idem 'if not prefix or title.startswith(prefix):' 'if not prefix:'
-mutant "link failure ignored" row_link_fail '    if link_rc != 0:' '    if False:'
+mutant "link failure ignored" row_link_fail '        return False
+    print("linked=' '        pass
+    print("linked='
 mutant "written-but-incomplete exits 1" row_readback 'EXIT_INCOMPLETE = 5' 'EXIT_INCOMPLETE = 1'
-mutant "url= printed only when known" row_keys '        print("url=" + ado_url(fields, item_id))' '        pass'
+mutant "url= printed only when known" row_keys '        print("url=" + self.url(item_id))' '        pass'
 mutant "tags-not-applied= printed only on a refusal" row_keys '        print("tags-not-applied=" + (tags if untagged else ""))' '        pass'
 mutant "a predictable workdir" row_workdir 'tempfile.mkdtemp(prefix="tracker-")' 'tempfile.gettempdir()'
 mutant "comment ignores --body" row_comment_body 'body_opt = o["body"] or o["body-file"]' 'body_opt = o["body-file"]'
@@ -728,20 +760,30 @@ mutant "markdown fallback skipped" row_html 'out.write(markdown.markdown(fh.read
 mutant "per-command --help is a usage error" row_help '        if a in ("-h", "--help"):' '        if False:'
 mutant "IDs not checked as numeric" row_ids '    if not re.match(r"^\d+$", value or ""):' '    if False:'
 mutant "a label starting with - passed" row_label_dash '        if label.startswith("-"):
-            usage(' '        if False:
-            usage('
+            raise UsageError(' '        if False:
+            raise UsageError('
 mutant "not_planned sent unspelled" row_close 'o["reason"].replace("_", " ")' 'o["reason"]'
 mutant "an ADO close guesses no state" row_close '        if not o["state"]:' '        if False:'
 mutant "a GitHub close takes --state" row_close '        if o["state"]:
-            usage("--state is Azure DevOps only' '        if False:
-            usage("--state is Azure DevOps only'
-mutant "an ADO assign by --fields" row_assign '["--assigned-to", user]' '["--fields", "System.AssignedTo=" + user]'
-mutant "a missing --add label not created" row_label '        gh_ensure_labels(add)' '        pass'
+            raise UsageError("--state is Azure DevOps only' '        if False:
+            raise UsageError("--state is Azure DevOps only'
+mutant "an ADO assign by --fields" row_assign '["--assigned-to", at_free(user, "--to")]' '["--fields", "System.AssignedTo=" + user]'
+mutant "a missing --add label not created" row_label '        self.ensure_labels(add)' '        pass'
+mutant "a --remove label created first" row_label '        self.ensure_labels(add)' '        self.ensure_labels(add + remove)'
+mutant "an ADO close and assign drop --org" row_close '        call(["az", "boards", "work-item", "update", "--id", item_id] + flags
+             + self.org()' '        call(["az", "boards", "work-item", "update", "--id", item_id] + flags
+             + []'
+mutant "an ADO assign drops --org" row_assign '        call(["az", "boards", "work-item", "update", "--id", item_id] + flags
+             + self.org()' '        call(["az", "boards", "work-item", "update", "--id", item_id] + flags
+             + []'
+mutant "an ADO assign sends --project" row_assign '["--assigned-to", at_free(user, "--to")]' '["--assigned-to", at_free(user, "--to")] + ["--project", "Proj X"]'
+mutant "a --to starting with - passed" row_assign '    if o["to"].startswith("-"):' '    if False:'
+mutant "an @ value passed to az" row_ado_at '    if value and value.startswith("@"):' '    if False:'
 mutant "a --remove label starting with - passed" row_label 'dash_free(o["remove"])' 'o["remove"]'
-mutant "positional count unchecked" row_usage '    if len(pos) != count:' '    if False:'
-mutant "a missing CLI not caught before its call" row_usage '    need(cmd[0])' '    pass'
+mutant "positional count unchecked" row_usage '    if len(pos) != spec.count:' '    if False:'
+mutant "a missing CLI caught only after the body is converted" row_usage '    need(CLIS[kind])' '    pass'
 mutant "a field reference starting with - passed" row_field_ref '    if not FIELD_REF.match(ref):' '    if False:'
 
 selftest_close \
-  "tracker self-test clean — resolve and the block's end, prose, keys and two-tracker refusal, Repo: and Organization: forms, a missing block's exit 2, tags, title prefix on create and update, GitHub and ADO create with labels, Repo:, conversion, one --fields list, read-back, tag-refusal retry, parent link and the written-but-incomplete exit 5, update, search on both trackers, block, comment, show, close, assign, label, html, help, ID and option checks, usage and never-ran rows pass, and every mutant in the table went red." \
+  "tracker self-test clean — resolve and the block's end, prose, keys and two-tracker refusal, Repo: and Organization: forms, a missing block's exit 2, tags, title prefix on create and update, GitHub and ADO create with labels, Repo:, conversion, one --fields list, read-back, tag-refusal retry, parent link and the written-but-incomplete exit 5, update, search on both trackers, block, comment, show, close, assign, label, az @file refusal, html, help, ID and option checks, usage and never-ran rows pass, and every mutant in the table went red." \
   "tracker self-test: a row was skipped; see the SKIP line above."

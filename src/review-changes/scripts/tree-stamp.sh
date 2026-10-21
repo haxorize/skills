@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # Conventions for this tree: scripts/README.md
 # tree-stamp.sh — print, or check, the 40-hex tree stamp a review report
-# (`Reviewed-tree:`) or a measured report (`Measured-tree:`) carries. The stamp
-# contract is references/tree-stamp.md beside this directory; this file is how
-# the stamp is taken, so the command lives once instead of in every skill that
-# names it.
+# (`Reviewed-tree:`) or a measured report (`Measured-tree:`) carries, and own
+# the one CLAUDE.md key-line reader (`--key`, and `--review-required` on top of
+# it) and the one fence reader the push gate and next-step.sh share. The stamp contract is references/tree-stamp.md
+# beside this directory; this file is how the stamp is taken and read, so the
+# command lives once instead of in every skill that names it.
 #
 #   tree-stamp.sh                      the working tree's stamp
 #   tree-stamp.sh --committed <rev>    <rev>'s tree (`git rev-parse <rev>^{tree}`)
@@ -17,6 +18,10 @@
 #   tree-stamp.sh --reviewed-trees <report>
 #                                      the hash of each `Reviewed-tree` stamp
 #                                      alone, one per line; needs no repo
+#   tree-stamp.sh --key <key> <CLAUDE.md>
+#                                      the value of the first `<key>:` line
+#                                      outside a fence; exit 0 found, 1 absent,
+#                                      4 unreadable, 3 usage
 #   tree-stamp.sh --review-required <CLAUDE.md>
 #                                      exit 0 when its opt-in line says yes,
 #                                      1 when it says no or there is none
@@ -52,27 +57,37 @@
 # `>` fails the pattern's start. Any stamp in the report matching passes
 # --verify, since a fix pass appends one per stamping.
 #
-# The fence rule (FENCE_AWK) and the `Review required:` opt-in pattern
-# (OPT_IN) live here alone. global/hooks/review-receipt.sh and
+# The fence rule (FENCE_AWK) and the CLAUDE.md key-line grammar (KEY_AWK)
+# live here alone. A key line is, case-blind, an optional run of list
+# markers, spaces and `>`, the key `<key>:` with bold or backticks allowed
+# around it, then a non-empty value; one wrapping `**…**` and one wrapping
+# pair of backticks are stripped from the value, and a line inside a fence is
+# never a key line. --key prints the first key line's value. --review-required
+# reads every `Review required:` value through the same grammar and takes the
+# first that is yes or no, so `yes (planned)` is no opt-in and a later bare
+# line still decides. global/hooks/review-receipt.sh and
 # src/committing/scripts/next-step.sh read a CLAUDE.md's opt-in through
-# --review-required, a file outside its fences through --unfenced, and a
-# report's receipts through --reviewed-trees, so the push gate and the
-# script that predicts it hold no copy of either rule to drift. lint-skills.sh's
+# --review-required, its `Deferrals register:` key through --key, a file
+# outside its fences through --unfenced, and a report's receipts through
+# --reviewed-trees, so the push gate and the script that predicts it hold no
+# copy of either rule to drift. lint-skills.sh's
 # FENCE_AWK is a different, older rule (any ``` toggles; ~~~ is not a fence)
 # over skill bodies, and does not read through here.
 #
 # Exit: 0 stamp printed, --verify matched, a read mode found what it reads, or
-# --review-required read yes · 1 --verify found stamps and none matched, or
-# --review-required read no or no opt-in line · 2 --verify, --stamps or
+# --review-required read yes · 1 --verify found stamps and none matched,
+# --key found no such key line, or --review-required read no or no opt-in
+# line · 2 --verify, --stamps or
 # --reviewed-trees found no such stamp line in the report · 3 usage error (bad
-# flag, missing --verify report, unknown rev, a read mode with another flag) ·
+# flag, missing --verify report, unknown rev, a read mode with another flag,
+# --key without a name and a path) ·
 # 4 not inside a git work tree, no usable temp directory, or a file the reader
 # could not read.
 set -uo pipefail
 
 usage() {
-  sed -n '9,24p' "$0" | sed 's/^# \{0,1\}//'
-  echo "Exit: 0 printed, matched, read, or opted in; 1 no stamp matched, or not opted in;"
+  sed -n '10,29p' "$0" | sed 's/^# \{0,1\}//'
+  echo "Exit: 0 printed, matched, read, or opted in; 1 no stamp matched, no such key, or not opted in;"
   echo "2 no stamp line; 3 usage; 4 never ran (no repo, no temp directory, or an unreadable file)."
 }
 
@@ -86,9 +101,27 @@ FENCE_AWK='
     }
     fence != "" { next }
 '
-# The one opt-in pattern (header), matched case-blind against unfenced lines;
-# `yes (…)` fails it, and the first matching line decides.
-OPT_IN='^[-* >]*\**`?Review required:`?\**[[:space:]]*\**`?(yes|no)`?\**[[:space:]]*$'
+# The one key-line grammar (header): append to FENCE_AWK; with -v key=<key> it
+# prints each key line's value, undecorated, in file order, and with
+# -v first=1 only the first.
+KEY_AWK='
+    {
+      s = $0
+      sub(/^[-* >]*/, "", s); sub(/^\*+/, "", s); sub(/^`/, "", s)
+      n = length(key) + 1
+      if (tolower(substr(s, 1, n)) != tolower(key) ":") next
+      v = substr(s, n + 1)
+      sub(/^`/, "", v); sub(/^\*+/, "", v)
+      sub(/^[[:space:]]+/, "", v); sub(/[[:space:]]+$/, "", v)
+      if (v ~ /^\*\*.+\*\*$/) v = substr(v, 3, length(v) - 4)
+      if (v ~ /^`[^`]+`$/) v = substr(v, 2, length(v) - 2)
+      if (v == "") next
+      print v
+      if (first) exit
+    }
+'
+# read_key <name> <file> [first]: the key-line values; awk's status.
+read_key() { awk -v key="$1" -v first="${3:-0}" "$FENCE_AWK$KEY_AWK" "$2"; }
 
 # The one stamp-line reader (header: "One reader"). Prints `<label> <hash>`
 # per stamp outside a fence and returns awk's status.
@@ -105,6 +138,7 @@ committed=""
 report=""
 read_mode=""
 read_path=""
+key_name=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --committed)
@@ -117,6 +151,10 @@ while [ $# -gt 0 ]; do
       [ $# -ge 2 ] || { echo "tree-stamp.sh: $1 needs a file path" >&2; exit 3; }
       [ -z "$read_mode" ] || { echo "tree-stamp.sh: $read_mode and $1 are two read modes; give one" >&2; exit 3; }
       read_mode="$1" read_path="$2"; shift 2 ;;
+    --key)
+      [ $# -ge 3 ] && [ -n "$2" ] || { echo "tree-stamp.sh: --key needs a key name and a file path" >&2; exit 3; }
+      [ -z "$read_mode" ] || { echo "tree-stamp.sh: $read_mode and $1 are two read modes; give one" >&2; exit 3; }
+      read_mode="$1" key_name="$2" read_path="$3"; shift 3 ;;
     -h|--help) usage; exit 0 ;;
     *) echo "tree-stamp.sh: unknown argument: $1" >&2; usage >&2; exit 3 ;;
   esac
@@ -136,18 +174,27 @@ if [ -n "$read_mode" ]; then
       awk "$FENCE_AWK"'{ print }' "$read_path" \
         || { echo "tree-stamp.sh: awk failed reading $read_path — nothing read" >&2; exit 4; }
       exit 0 ;;
+    --key)
+      if ! value="$(read_key "$key_name" "$read_path" 1)"; then
+        echo "tree-stamp.sh: awk failed reading $read_path — key not read" >&2
+        exit 4
+      fi
+      [ -n "$value" ] || { echo "tree-stamp.sh: no $key_name: line in $read_path" >&2; exit 1; }
+      printf '%s\n' "$value"
+      exit 0 ;;
     --review-required)
-      if ! body="$(awk "$FENCE_AWK"'{ print }' "$read_path")"; then
+      if ! values="$(read_key 'Review required' "$read_path")"; then
         echo "tree-stamp.sh: awk failed reading $read_path — opt-in not read" >&2
         exit 4
       fi
-      line="$(printf '%s\n' "$body" | grep -iE "$OPT_IN" | head -1; exit "${PIPESTATUS[1]}")"
-      grc=$?
-      if [ "$grc" -gt 1 ]; then
-        echo "tree-stamp.sh: grep failed scanning $read_path (rc=$grc) — opt-in not read" >&2
-        exit 4
-      fi
-      printf '%s\n' "$line" | grep -qi 'yes' && exit 0
+      # the first value that is yes or no decides (header); decorations the
+      # grammar left unpaired are tolerated
+      while IFS= read -r v; do
+        case "$(printf '%s' "$v" | tr -d '*`' | tr '[:upper:]' '[:lower:]')" in
+          yes) exit 0 ;;
+          no) exit 1 ;;
+        esac
+      done <<< "$values"
       exit 1 ;;
   esac
   if ! found="$(read_stamps "$read_path")"; then

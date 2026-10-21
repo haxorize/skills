@@ -37,7 +37,7 @@
 #     REVIEW_RECEIPT_DIR unset, written by landing.sh path.
 #   round — under a top CLAUDE.md `Deferrals register:` line (bold, or
 #     backticked, run from a subdirectory too; a subdirectory's CLAUDE.md
-#     carrying one is no round), dirty: commit this batch; clean and ahead: the
+#     carrying one, or one inside a ~~~ fence, is no round), dirty: commit this batch; clean and ahead: the
 #     next batch, or /review-changes before the push; a report stamping the
 #     tree still says push; the order line names a commit per batch and the
 #     running round; the retired --mid-family flag exits 3.
@@ -45,7 +45,10 @@
 #     beside it, never one under ~/.claude/skills/; a --reviewed-trees read that fails
 #     exits 4 and names the report, and one that exits 4 skips the report;
 #     landing.sh list failing exits 4 with landing.sh's reason; a world-
-#     writable zone exits 4.
+#     writable zone exits 4; a --review-required exit 4 or 3 is the hook's
+#     hold, named, and exit 1 still pushes; with no opt-in phrase the reader is
+#     not consulted, as in the hook (dropping the 4 and other-code holds reds
+#     the two hold rows).
 #   parity — the review-receipt hook and this script run on one fixture each,
 #     and agree on push or hold: bold, backticked and planned `Review
 #     required:` lines, a fenced line of each kind, a subdirectory under a
@@ -71,6 +74,9 @@
 #   case dropped (the r1 rows); the not-reachable test dropped (the
 #   moved-past row); no upstream treated as not addressable (the no-upstream
 #   row). Run 2026-10-16: round detection disabled (the six round rows red).
+#   Run 2026-10-21: the --key read under a wrong key name (six round rows
+#   red); tree-stamp.sh's --key without its fence reader (the three fence
+#   rows red).
 #   Against the script before `addressable`, the no-finding, fenced,
 #   other-branch and moved-past rows red; the positive and decline-all rows
 #   are green there too (the decline-all fix is address-findings' always-on
@@ -271,6 +277,9 @@ expect_row "$(next_of round)" "a stamped tree under a round still pushes" "push"
 mkrepo ticked '# repo\n\n- Review required: yes\n- `Deferrals register:` reconcile.md\n'
 echo x > "$tmp/ticked/f"
 expect_row "$(next_of ticked)" "a backticked round key" "commit this batch"
+mkrepo fenceround '# repo\n\n- Review required: yes\n\n~~~\n- Deferrals register: reconcile.md\n~~~\n'
+echo x > "$tmp/fenceround/f"
+expect_row "$(next_of fenceround)" "a round line inside a fence is no round" "commit when you like; /review-changes before the push"
 mkrepo nestround "$GATED"; mkdir -p "$tmp/nestround/pkg"
 printf -- '- Deferrals register: reconcile.md\n' > "$tmp/nestround/pkg/CLAUDE.md"
 expect_row "$(line_of next "$tmp/nestround/pkg")" "a subdirectory's round line is no round; the top decides" "commit when you like; /review-changes before the push"
@@ -292,6 +301,7 @@ printf 'touch "%s/installed-used"; exit 1\n' "$tmp" > "$tmp/fakehome/.claude/ski
 printf 'touch "%s/installed-used"; exit 1\n' "$tmp" > "$tmp/fakehome/.claude/skills/handoff/scripts/landing.sh"
 mkco "$tmp/co" "touch \"$tmp/beside-used\"
 [ \"\${1:-}\" = --reviewed-trees ] && [ -n \"\${FAKE_STAMPS_RC:-}\" ] && exit \"\$FAKE_STAMPS_RC\"
+[ \"\${1:-}\" = --review-required ] && [ -n \"\${FAKE_OPTIN_RC:-}\" ] && exit \"\$FAKE_OPTIN_RC\"
 exec bash \"$stamp\" \"\$@\"" real
 co_script="$tmp/co/src/committing/scripts/next-step.sh"
 out="$( cd "$tmp/gated" && HOME="$tmp/fakehome" bash "$co_script" | sed -n 's/^next: //p' )"
@@ -307,6 +317,18 @@ out="$( cd "$tmp/gated" && HOME="$tmp/fakehome" FAKE_STAMPS_RC=4 bash "$co_scrip
 expect_rc "a --reviewed-trees read that exits 4" 0 "$rc"
 expect_in "$out" "skips the report, naming it" "next-step.sh: skipping report tree-stamp.sh --reviewed-trees could not read (exit 4): $REVIEW_RECEIPT_DIR/gated-2026-01-01-"
 expect_in "$out" "and counts no report read" "receipt: none of 0 report(s) stamps it"
+# a --review-required exit the hook holds on (4, or anything but 0 and 1) is
+# that hold, never "not required" and a push; the opt-out exit 1 still pushes
+out="$( cd "$tmp/gated" && HOME="$tmp/fakehome" FAKE_OPTIN_RC=4 bash "$co_script" | sed -n 's/^next: //p' )"
+expect_row "$out" "an opt-in reader exit 4 is the hook's hold" \
+  "none: the review-receipt hook holds the push (could not read $tmp/gated/CLAUDE.md); Make $tmp/gated/CLAUDE.md readable, or push from your own terminal."
+out="$( cd "$tmp/gated" && HOME="$tmp/fakehome" FAKE_OPTIN_RC=3 bash "$co_script" | sed -n 's/^next: //p' )"
+expect_row "$out" "an opt-in reader exit 3 is the hook's hold" \
+  "none: the review-receipt hook holds the push (the stamp reader failed on $tmp/gated/CLAUDE.md (exit 3))"
+out="$( cd "$tmp/gated" && HOME="$tmp/fakehome" FAKE_OPTIN_RC=1 bash "$co_script" | sed -n 's/^next: //p' )"
+expect_row "$out" "an opt-in reader exit 1 is not required" "push"
+out="$( cd "$tmp/plain" && HOME="$tmp/fakehome" FAKE_OPTIN_RC=4 bash "$co_script" | sed -n 's/^next: //p' )"
+expect_row "$out" "no opt-in phrase: the reader is not consulted, as in the hook" "push"
 # landing.sh list failing exits 4, carrying landing.sh's own reason
 mkco "$tmp/co2" real "[ \"\$1\" = list ] && { echo 'landing.sh: list refused here' >&2; exit 4; }; exec bash \"$landing\" \"\$@\""
 out="$( cd "$tmp/gated" && bash "$tmp/co2/src/committing/scripts/next-step.sh" 2>&1 )"; rc=$?

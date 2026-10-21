@@ -17,8 +17,9 @@
 # oaicite; turn0search; a bracketed placeholder ending a line, mid-line,
 # before a paren that opens no URL, path or anchor, before a colon mid-line,
 # before a reference label mid-line, before a parenthetical holding a `.` or
-# `:` and a space, before a space-free dotted parenthetical (`(e.g.)`), and
-# beside a real link; a zero-width space; and a five-line
+# `:` and a space, before a space-free dotted parenthetical (`(e.g.)`,
+# `(e.g.Jane)`, `(e.g)`), before an uppercase word and a colon (`(TBD:fill)`),
+# and beside a real link; a zero-width space; and a five-line
 # draft of those shapes with a tab-indented reference definition. Clean
 # neighbours, each absent from the output: a markdown link whose text is
 # capitalised (inline to a URL, to a URL with a query string, to an anchor, to
@@ -28,23 +29,13 @@
 # space on one side only, an en dash between digits, an em dash inside a code
 # span, an em dash inside a URL path, a lowercase bracket, a bracketed number.
 #
-# Mutations run by hand on 2026-10-13, each red here: dropping `^–` (the
-# line-opening row reds); dropping `([^(]|$)` after the placeholder (the
-# markdown-link neighbour fires); dropping `|$` from it (the line-ending
-# placeholder row reds). On 2026-10-13, after the link exemption narrowed:
-# restoring `([^(]|$)` (the reference-style neighbours fire and the
-# `(optional)` row reds). On 2026-10-15, after the link exemption moved to the
-# target's own characters, F2 of the 0061afe review: `[Design Doc][1]` mid-line
-# became a hit (a placeholder followed by a reference label, which the
-# 0061afe pattern passed), so the hit pin went from 15 to 17 with
-# `Dear [Name]: hello` beside it. On 2026-10-16, F51 of the f7-d66 review,
-# links moved to a sed mask that reduces `[Text](target)` to its text, and the
-# pin went to 20: the HEAD pattern before it reds rows 18-20 and the five-line
-# draft; the tab dropped from the reference-definition boundary reds the
-# tab-indented neighbour; the quoted-title arm dropped reds the titled-link
-# neighbour. On 2026-10-19, D68: a dot target must end on an extension, and
-# the pin went to 21 with `[Your Name](e.g.)`; the HEAD pattern reds row 21,
-# and the extension's `#`/`?` tail dropped fires the `guide.md#intro` neighbour.
+# Mutations, each red here: dropping `^–` (the line-opening row); dropping
+# `|$` after the placeholder (the line-ending placeholder row); the tab dropped
+# from the reference-definition boundary (the tab-indented neighbour); the
+# quoted-title arm dropped (the titled-link neighbour); the extension's `#`/`?`
+# tail dropped (the `guide.md#intro` neighbour); the two-character stem before
+# an extension dropped (the `(e.g.Jane)` and `(e.g)` rows); `:` back in the
+# any-position arm beside `/` and `@` (the `(TBD:fill)` row).
 # Exit codes: 1 with hits, 0 and no output
 # on a clean draft, 3 for no argument, two arguments, an unknown option, a
 # missing file and a directory, 0 for --help.
@@ -89,6 +80,9 @@ em=$'\xe2\x80\x94'; en=$'\xe2\x80\x93'; nb=$'\xc2\xa0'; zw=$'\xe2\x80\x8b'
   printf '%s\n' "On [Insert Date](optional: weekday)"
   printf '%s\n' "See [Docs](docs/x.md), [Your Name]"
   printf '%s\n' "Hi [Your Name](e.g.) there"
+  printf '%s\n' "Hi [Your Name](e.g.Jane) there"
+  printf '%s\n' "On [Insert Date](TBD:fill)"
+  printf '%s\n' "Hi [Your Name](e.g) there"
   printf '%s\n' "clean see [Design Doc](https://x.y/z) now"
   printf '%s\n' "clean see [Design Doc](https://x.y/z?a=1) now"
   printf '%s\n' "[Design Doc]: https://x.y/z clean"
@@ -130,9 +124,12 @@ expect_row "$out" "bracketed placeholder before a parenthetical with a dot and a
 expect_row "$out" "bracketed placeholder before a parenthetical with a colon and a space" "19:On [Insert Date](optional: weekday)"
 expect_row "$out" "a placeholder beside a real link, the link reduced to its text" "20:See Docs, [Your Name]"
 expect_row "$out" "bracketed placeholder before a dotted parenthetical with no space" "21:Hi [Your Name](e.g.) there"
+expect_row "$out" "bracketed placeholder before a dotted parenthetical ending on a capitalised word" "22:Hi [Your Name](e.g.Jane) there"
+expect_row "$out" "bracketed placeholder before an uppercase word and a colon" "23:On [Insert Date](TBD:fill)"
+expect_row "$out" "bracketed placeholder before a one-letter dotted parenthetical" "24:Hi [Your Name](e.g) there"
 reject_in "$out" "a clean neighbour fired" "clean"
 n=$(grep -c . <<< "$out")
-[ "$n" -eq 21 ] || selftest_fail "a draft with hits printed $n lines, not 21"
+[ "$n" -eq 24 ] || selftest_fail "a draft with hits printed $n lines, not 24"
 
 # F51's shapes as one draft: lines 1, 2, 3 and 5 hit; the tab-indented
 # reference definition on line 4 does not
@@ -154,4 +151,4 @@ missing=$(bash "$script" "$tmp/nope.md" 2>&1); expect_rc "a missing file" 3 $?
 expect_in "$missing" "a missing file is named" "not a readable file"
 bash "$script" "$tmp" >/dev/null 2>&1; expect_rc "a directory" 3 $?
 
-selftest_close "dash-sweep: 21 hits pinned by line, 18 clean neighbours quiet, the five-line placeholder draft as pinned, clean draft silent, usage path as pinned" ""
+selftest_close "dash-sweep: 24 hits pinned by line, 18 clean neighbours quiet, the five-line placeholder draft as pinned, clean draft silent, usage path as pinned" ""

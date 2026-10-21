@@ -35,18 +35,29 @@
 #     bare; a Measured stamp alone or a fenced one alone exits 2; several
 #     print each; a missing report, and awk failing, exit 4.
 #   --review-required — yes, a bold key, a backticked value and any case
-#     exit 0; no, no line, `yes (planned)`, a no line before a yes, and a yes
+#     exit 0, as does a yes after a `yes (planned)` line (the first yes or no
+#     value decides); no, no line, `yes (planned)`, a no line before a yes, and a yes
 #     inside a ``` or ~~~ fence exit 1; a yes after a ~~~ fence a ``` line
 #     did not close exits 0; a missing file, and awk failing, exit 4.
+#   --key — a plain, bold, backticked and `>`-quoted key line, any case,
+#     prints its value with one wrapping bold and one wrapping backtick pair
+#     stripped and an inner backtick span kept; an empty value is skipped and
+#     only the first value prints; a key inside a fence, and a longer key
+#     ending in the name, exit 1; a line after a ~~~ fence a ``` line did not
+#     close is read; a missing or unreadable file, and awk failing, exit 4; no
+#     path, an empty name, or --committed beside it exit 3. Its mutation table
+#     (selftest_mutate, run every time) reds a row on each of: the fence
+#     reader dropped, the list-marker strip dropped, every value printed, an
+#     empty value taken, a value's backticks kept.
 #   --unfenced — a fenced line dropped, a live one kept; a missing file
 #     exits 4; two read modes, or one with --committed, exit 3.
 #   usage and never-ran — an unknown flag exits 3; outside a repo exits 4; an
 #     unusable TMPDIR exits 4; a relative TMPDIR from a subdirectory stamps.
 #
-# Mutations run by hand on 2026-10-12, each red here: dropping the fence skip
+# Mutations run by hand, each red here: dropping the fence skip
 #   in the awk filter; removing the `[[:space:]]*$`
 #   anchor; stamping with `git add -u` in place of `-A`; stamping without the
-#   read-tree seed (the tracked-but-ignored row reds). On 2026-10-13: dropping
+#   read-tree seed (the tracked-but-ignored row reds); dropping
 #   `|~~~` from the fence pattern (the tilde rows red); dropping the relative
 #   TMPDIR fix (the relative-TMPDIR row reds); printing every label as
 #   Reviewed-tree (the Measured-tree row reds); toggling the fence on either
@@ -54,11 +65,9 @@
 #   --stamps-with---verify row reds). Dropping `|| [ ! -r "$stamps_of" ]` is
 #   an equivalent mutant on this machine's awk, which exits non-zero on an
 #   unreadable file, so the awk-failed exit 4 catches it; the unreadable rows
-#   pin the 4 whichever guard fires. On 2026-10-20, with the read modes
-#   (D60): --reviewed-trees keeping Measured lines; OPT_IN's end anchor
-#   dropped; its case-blind -i dropped; `head -1` dropped (the first-line
-#   row); --unfenced and --review-required each without FENCE_AWK; the
-#   two-read-modes check dropped.
+#   pin the 4 whichever guard fires. --reviewed-trees keeping Measured
+#   lines; --unfenced without FENCE_AWK; the two-read-modes check dropped.
+#   The key-line grammar's mutants run in the table at key_rows.
 #
 # NOT covered: the review-receipt hook itself (its own selftest calls this
 # script for its expected trees), and the work machine's sandbox.
@@ -222,6 +231,7 @@ optin no '- Review required: no\n';                         expect_rc "--review-
 optin none '# repo\n';                                      expect_rc "--review-required with no opt-in line" 1 $?
 optin planned '- Review required: yes (planned)\n';         expect_rc "--review-required on yes (planned)" 1 $?
 optin first '- Review required: no\n- Review required: yes\n'; expect_rc "--review-required: the first line decides" 1 $?
+optin later '- Review required: yes (planned)\n- **Review required:** yes\n'; expect_rc "--review-required: a later yes decides past yes (planned)" 0 $?
 optin fenced '```\n- Review required: yes\n```\n';          expect_rc "--review-required skips a backtick fence" 1 $?
 optin tilde '~~~\n- Review required: yes\n~~~\n';           expect_rc "--review-required skips a ~~~ fence" 1 $?
 optin mixed '~~~\n```\n~~~\n- Review required: yes\n';     expect_rc "--review-required: a backtick line does not close a ~~~ fence" 0 $?
@@ -229,6 +239,68 @@ stamp --review-required "$tmp/absent.md" >/dev/null 2>&1; rc=$?
 expect_rc "--review-required on a missing file" 4 "$rc"
 ( cd "$tmp/repo" && PATH="$tmp/badawk:$PATH" bash "$script" --review-required "$tmp/optin-yes.md" ) >/dev/null 2>&1; rc=$?
 expect_rc "--review-required when awk fails" 4 "$rc"
+
+# --key: the one key-line grammar --review-required and next-step.sh read
+# through. key_rows runs against ${TS_MUT:-$script}, so a mutant below can
+# swap in a broken copy and require a row to red.
+printf -- '- Deferrals register: reconcile.md\n' > "$tmp/key-plain.md"
+printf -- '- **Deferrals register:** `~/r/reconcile.md` \302\247 Deferrals register\n' > "$tmp/key-bold.md"
+printf -- '* `Deferrals register:` **reconcile.md**\n' > "$tmp/key-ticks.md"
+printf -- '> deferrals REGISTER: `reconcile.md`\n' > "$tmp/key-quoted.md"
+printf -- '- Deferrals register:\n- Deferrals register: second.md\n- Deferrals register: third.md\n' > "$tmp/key-first.md"
+printf '```\n- Deferrals register: fenced.md\n```\n' > "$tmp/key-fenced.md"
+printf '~~~\n```\n~~~\n- Deferrals register: live.md\n' > "$tmp/key-mixed.md"
+printf -- '- Old deferrals register: no.md\n# repo\n' > "$tmp/key-absent.md"
+key_rows() {
+  local ks="${TS_MUT:-$script}" out rc
+  out="$(bash "$ks" --key 'Deferrals register' "$tmp/key-plain.md" 2>/dev/null)"; rc=$?
+  expect_rc "--key on a plain key line" 0 "$rc"
+  expect_row "$out" "--key prints the value" "reconcile.md"
+  out="$(bash "$ks" --key 'Deferrals register' "$tmp/key-bold.md" 2>/dev/null)"
+  expect_row "$out" "--key on a bold key keeps an inner backtick span" "\`~/r/reconcile.md\` § Deferrals register"
+  out="$(bash "$ks" --key 'Deferrals register' "$tmp/key-ticks.md" 2>/dev/null)"
+  expect_row "$out" "--key on a backticked key strips a bold value" "reconcile.md"
+  out="$(bash "$ks" --key 'Deferrals register' "$tmp/key-quoted.md" 2>/dev/null)"
+  expect_row "$out" "--key reads case-blind behind > and strips a backticked value" "reconcile.md"
+  out="$(bash "$ks" --key 'Deferrals register' "$tmp/key-first.md" 2>/dev/null)"
+  selftest_check "--key skips an empty value and prints the first value alone (got: $out)" [ "$out" = second.md ]
+  bash "$ks" --key 'Deferrals register' "$tmp/key-fenced.md" >/dev/null 2>&1; rc=$?
+  expect_rc "--key skips a key line inside a fence" 1 "$rc"
+  out="$(bash "$ks" --key 'Deferrals register' "$tmp/key-mixed.md" 2>/dev/null)"; rc=$?
+  expect_rc "--key: a backtick line does not close a ~~~ fence" 0 "$rc"
+  expect_row "$out" "--key reads the live line after the fence" "live.md"
+  bash "$ks" --key 'Deferrals register' "$tmp/key-absent.md" >/dev/null 2>&1; rc=$?
+  expect_rc "--key with no key line (a longer key does not match)" 1 "$rc"
+  bash "$ks" --key 'Deferrals register' "$tmp/absent.md" >/dev/null 2>&1; rc=$?
+  expect_rc "--key on a missing file" 4 "$rc"
+  ( cd "$tmp/repo" && PATH="$tmp/badawk:$PATH" bash "$ks" --key 'Deferrals register' "$tmp/key-plain.md" ) >/dev/null 2>&1; rc=$?
+  expect_rc "--key when awk fails" 4 "$rc"
+  bash "$ks" --key "$tmp/key-plain.md" >/dev/null 2>&1; rc=$?
+  expect_rc "--key with no file path" 3 "$rc"
+  bash "$ks" --key '' "$tmp/key-plain.md" >/dev/null 2>&1; rc=$?
+  expect_rc "--key with an empty name" 3 "$rc"
+  bash "$ks" --key 'Deferrals register' "$tmp/key-plain.md" --committed HEAD >/dev/null 2>&1; rc=$?
+  expect_rc "--key with --committed" 3 "$rc"
+}
+key_rows
+if [ "$(id -u)" -ne 0 ]; then
+  cp "$tmp/key-plain.md" "$tmp/key-unreadable.md"; chmod 000 "$tmp/key-unreadable.md"
+  stamp --key 'Deferrals register' "$tmp/key-unreadable.md" >/dev/null 2>&1; rc=$?
+  expect_rc "--key on an unreadable file" 4 "$rc"
+  chmod 600 "$tmp/key-unreadable.md"
+fi
+# Mutation table: each mutant of the script must red a key_rows row.
+mut="$tmp/tree-stamp-mutant.sh"
+selftest_mutate "$script" "$mut" '"$FENCE_AWK$KEY_AWK"' '"$KEY_AWK"' \
+  && selftest_expect_killed --mutant TS_MUT "$mut" "--key without the fence reader" key_rows
+selftest_mutate "$script" "$mut" 'sub(/^[-* >]*/, "", s); ' '' \
+  && selftest_expect_killed --mutant TS_MUT "$mut" "--key without the list-marker strip" key_rows
+selftest_mutate "$script" "$mut" 'if (first) exit' '' \
+  && selftest_expect_killed --mutant TS_MUT "$mut" "--key printing every value" key_rows
+selftest_mutate "$script" "$mut" 'if (v == "") next' '' \
+  && selftest_expect_killed --mutant TS_MUT "$mut" "--key taking an empty value" key_rows
+selftest_mutate "$script" "$mut" 'if (v ~ /^`[^`]+`$/) v = substr(v, 2, length(v) - 2)' '' \
+  && selftest_expect_killed --mutant TS_MUT "$mut" "--key keeping a value's backticks" key_rows
 
 # --unfenced: the file with its fenced blocks dropped, by the same rule.
 out="$(stamp --unfenced "$tmp/mixed.md")"; rc=$?

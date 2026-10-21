@@ -4,7 +4,7 @@ Open this only when a stamp is about to be taken or checked — a review's first
 
 ## The stamp command
 
-A stamp of the working tree comes from this skill's `scripts/tree-stamp.sh`, run from anywhere in the repo; `--committed <rev>` prints a commit's tree, and `--verify <report>` says whether any stamp in a report equals the tree now. `--help` carries the exit codes:
+A stamp of the working tree comes from this skill's `scripts/tree-stamp.sh`, run from anywhere in the repo; `--committed <rev>` prints a commit's tree, and `--verify <report>` says whether any stamp in a report equals the tree now. The same script is the one CLAUDE.md key-line reader and the one fence reader. `--key <key> <CLAUDE.md>` prints the value of the first `<key>:` line outside a fence (list marker, `>`, bold and backticks allowed around the key and the value) and exits 0 when it finds one, 1 when there is none, 4 when the file cannot be read, and 3 on a usage error. `--review-required <CLAUDE.md>` reads the `Review required:` key through that grammar and exits 0 on the first yes, 1 on a no or no such line. `--unfenced <file>` drops fenced blocks. So the `review-receipt` hook and `committing`'s `next-step.sh` (which reads `Deferrals register:` through `--key`) carry no copy of either rule. `--help` carries every mode's exit codes:
 
 ```
 bash ~/.claude/skills/review-changes/scripts/tree-stamp.sh

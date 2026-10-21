@@ -8,7 +8,8 @@
 #   next-step.sh                 the order and the next act, from the repo here
 #
 # Output, one `key: value` per line, `next:` always last:
-#   review:  required | not required   (the `Review required:` line)
+#   review:  required | not required   (the `Review required:` line) |
+#            unknown, the opt-in could not be read: <the hook's hold reason>
 #   tree:    <12-hex>, <n> dirty path(s) | <12-hex>, clean
 #   receipt: stamped by <report> | HEAD's tree stamped by <report>, not the
 #            <n> uncommitted path(s) | none of <n> report(s) stamps it
@@ -21,14 +22,16 @@
 # says "push" where the hook blocks: the `Review required:` line of the repo
 # top's CLAUDE.md alone, never a subdirectory's, through tree-stamp.sh
 # --review-required, the one opt-in and fence reader the hook calls too
-# (next-step-selftest.sh's parity section runs both on one fixture); the review reports `landing.sh list --kind review` prints, from
+# (next-step-selftest.sh's parity section runs both on one fixture), and an
+# unreadable file or a reader exit the hook holds on (any but 0 or 1) is named
+# as that hold, never read as "not required"; the review reports `landing.sh list --kind review` prints, from
 # the zones `landing.sh zones` owns (a zone landing.sh refuses fails `list`,
 # and this script exits 4 with landing.sh's reason); and their
 # `Reviewed-tree` lines through tree-stamp.sh --reviewed-trees, the one stamp reader,
 # skipping a report it cannot read (exit 4) as the hook does. A round is
 # running when that same top CLAUDE.md carries a `Deferrals register:` line
-# (the `## Round` block's key, read the same way, never from a subdirectory's
-# CLAUDE.md); then an unreviewed
+# (the `## Round` block's key, read through tree-stamp.sh --key, never from a
+# subdirectory's CLAUDE.md); then an unreviewed
 # close's next act is the batch's commit, since one review covers everything
 # unpushed before the push (ADR-0112). A report
 # answers when it stamps the working-tree stamp (HEAD's tree when the tree is
@@ -91,13 +94,31 @@ landing="$here_real/../../handoff/scripts/landing.sh"
 unfenced() { bash "$stamp" --unfenced "$1" 2>/dev/null; }
 top_phys="$(cd "$top" && pwd -P)"
 
-ROUND='^[-* >]*\**`?Deferrals register:`?\**[[:space:]]*[^[:space:]]'
 # both keys from the repo top's CLAUDE.md alone, never a subdirectory's: the
 # `Landing:` and `## Round` blocks are the repo's (header)
-required="" round=""
-if [ -f "$top_phys/CLAUDE.md" ]; then
-  bash "$stamp" --review-required "$top_phys/CLAUDE.md" 2>/dev/null && required=1
-  round="$(unfenced "$top_phys/CLAUDE.md" | grep -iE "$ROUND" | head -1)"
+# The opt-in is read as review-receipt.sh's review_required reads it, code for
+# code: no phrase, not required; an unreadable file, or a reader exit other than
+# 0 or 1, is a hold there, so it is a hold here, never "not required".
+required="" round="" held="" held_fix=""
+optin="$top_phys/CLAUDE.md"
+if [ -e "$optin" ]; then
+  grep -qi 'review required' "$optin" 2>/dev/null
+  grc=$?
+  if [ "$grc" -gt 1 ]; then
+    held="could not read $optin" held_fix="Make $optin readable, or push from your own terminal."
+  elif [ "$grc" -eq 0 ]; then
+    bash "$stamp" --review-required "$optin" 2>/dev/null
+    rrc=$?
+    case $rrc in
+      0) required=1 ;;
+      1) ;;
+      4) held="could not read $optin" held_fix="Make $optin readable, or push from your own terminal." ;;
+      *) held="the stamp reader failed on $optin (exit $rrc)" ;;
+    esac
+  fi
+  # the round key through tree-stamp.sh --key, the one key-line grammar: any
+  # exit but 0 (1 absent, 4 unreadable) is no round
+  [ -f "$optin" ] && round="$(bash "$stamp" --key 'Deferrals register' "$optin" 2>/dev/null)" || round=""
 fi
 
 # untracked files counted whatever status.showUntrackedFiles says, as the stamp
@@ -196,7 +217,11 @@ addressable() {
 }
 
 # --- the order and the next act -----------------------------------------------
-if [ -z "$required" ]; then
+if [ -n "$held" ]; then
+  reviewline="unknown, the opt-in could not be read: $held"
+  order="unknown until the opt-in line reads"
+  next="none: the review-receipt hook holds the push ($held)${held_fix:+; $held_fix}"
+elif [ -z "$required" ]; then
   reviewline="not required"
   order="commit, then push"
   if [ "$dirty" -gt 0 ]; then next="commit (or /ship for a split or a PR)"
