@@ -21,6 +21,8 @@ Re-run the story-map checks from step 8 (every active Feature AC ID covered by a
 
 ## Patch
 
+Only after `~/.claude/skills/work-item-shape/references/publishing.md` § Publish gate holds for this patch:
+
 - **ADO:** The fetched description is already HTML. Convert **only the new story map section** from Markdown to HTML (`python3 ~/.claude/skills/work-item-shape/scripts/tracker.py html <scratchpad>/map.md <scratchpad>/map.html`), splice the result between the `<!-- BEGIN STORY MAP -->` and `<!-- END STORY MAP -->` markers in the existing HTML, write it to a file, and patch with it — an `.html` file goes through unconverted:
   ```bash
   python3 ~/.claude/skills/work-item-shape/scripts/tracker.py update <feature-id> --body <scratchpad>/description.html --workdir <scratchpad>

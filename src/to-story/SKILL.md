@@ -9,8 +9,6 @@ requires: writing-for-humans, work-item-shape, diverging
 
 Synthesize the current conversation into a Story-level artifact (single-feature spec) and publish it to the project's tracker. No interviewing — this is a synthesis-only skill. Run `/grill-me` first if context is thin.
 
-Use `to-feature` only when scope explicitly needs multiple stories beneath it.
-
 ## Publication constraints
 
 Call the Skill tool with `writing-for-humans`, then again with `work-item-shape`. Every published sentence follows the first; the body's shape follows the second.
@@ -100,6 +98,10 @@ See [references/ado-hierarchy.md](references/ado-hierarchy.md) for full procedur
 ### 11. Materialize dependency relations (ADO only)
 
 Native dependency relations are an ADO feature, so this step runs only on ADO — not on a GitHub project that opted into `Hierarchy: required` for Step 10, where story dependencies stay map-only. See [references/ado-hierarchy.md](references/ado-hierarchy.md) Step 11 for the projection procedure. The Story always publishes regardless.
+
+## When a caller passes drafted files
+
+A caller may pass drafted file paths instead of a conversation to synthesize: `inventory-cvits` passes one body file and one acceptance file per Story. Those files are the draft, published as drafted (in `--update` mode, as the patch): skip steps 3-6 rather than re-draft them. Step 7's self-review, step 8's presentation, and the Publish gate still run; a gap the review finds goes to the user as a question, and the answer is written into the file, never fixed by re-drafting it.
 
 ## Update mode
 

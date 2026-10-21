@@ -22,13 +22,13 @@ The sentence that justified the quote argued against itself: it said the line "h
 
 ## An already-onboarded repo never gains the line, and that is correct
 
-`onboard-repo` step 3 never adds a field to a block that already exists — the skill appends, and leaves what is there for the user to edit. So no repo wired before this change acquires the policy line, and none will.
+`onboard-repo` step 3 never adds a field to a block that already exists — the skill appends, and leaves what is there for the user to edit. So no repo wired before this change acquires the policy line, and none will. Its one edit to an existing block replaces the old wording of a line already there ([ADR-0115](0115-the-to-publishers-are-model-invoked.md)); it never adds a line that is absent.
 
 That is the right behavior, and it is only tolerable because of the ruling below: the line is a **reinforcement**, not the mechanism. `work-item-shape`'s own routing gate is the mechanism, and it binds on the work's shape whether or not any line is present. A repo without the line loses a reminder, never the routing.
 
-## The routing gate loads the publisher; it does not refuse
+## The routing gate loads the publisher on a casual ask, and an explicit ask to bypass it is a decline
 
-Asked to file with raw `gh`/`az`, the routing gate loads the right publisher, whose Publish gate asks before anything is written ([ADR-0115](0115-the-to-publishers-are-model-invoked.md)). It does not refuse the user's stated direction, and no skill is wired to block the call.
+On a casual creation ask, the routing gate loads the right publisher, whose Publish gate asks before anything is written ([ADR-0115](0115-the-to-publishers-are-model-invoked.md)). An explicit ask to file with raw `gh`/`az`, or to skip the publisher, counts as the user declining the publisher. That puts the item on the ad-hoc path of [ADR-0044](0044-work-item-shape-extracted-behavior.md)'s layer three, where the shape rules still bind. The gate never refuses the user's stated direction, and no skill is wired to block the call.
 
 Refusal was rejected on two grounds. It would put a hard stop behind a discipline that is model-invoked, so the stop would be absent exactly when someone bypasses the pipeline deliberately — unenforceable where it matters. And it would override a direction the user gave in their own words, which the recommend-and-proceed rule reserves to the user: the gate's job is to make the cost visible, not to withhold the act.
 
@@ -37,7 +37,7 @@ Refusal was rejected on two grounds. It would put a hard stop behind a disciplin
 - The policy line is registered in `DOMAIN.md` as the **Routing policy line** and in `README.md`'s Conventions list, so a reader of the config contract can learn it exists and a hand-edit has a spelling to match.
 - `work-item-shape/SKILL.md` cites the block rather than quoting it, leaving one authored copy (`onboard-repo`) and one per wired repo.
 - Repos onboarded before 2026-08-31 carry no such line. Nothing backfills them; `work-item-shape`'s routing gate covers them.
-- Because the line reinforces rather than enforces, deleting it from a downstream `CLAUDE.md` costs a reminder and changes no behavior — which is what makes writing it into other people's repos acceptable at all.
+- Because the line reinforces rather than enforces, deleting it from a downstream `CLAUDE.md` costs a reminder, never the routing — which is what makes writing it into other people's repos acceptable at all. Its wording still moves the model: [ADR-0115](0115-the-to-publishers-are-model-invoked.md)'s probe found that the earlier wording, ending "name the right publisher and stop", cut Opus to 6 of 14 creation asks, so the line is not inert while it is present.
 
 ## Deferred
 

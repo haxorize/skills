@@ -30,6 +30,8 @@ Parse:
 
 ### Patch
 
+Only after `~/.claude/skills/work-item-shape/references/publishing.md` § Publish gate holds for this patch:
+
 - **ADO:** `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py update <task-id> --body <scratchpad>/description.md --workdir <scratchpad>`. Tasks have no AC field; do not pass `Microsoft.VSTS.Common.AcceptanceCriteria`.
 - **GitHub:** `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py update <task-number> --body <scratchpad>/<draft>.md --workdir <scratchpad>`.
 
@@ -123,7 +125,7 @@ State conflicts (requires decision, N):
 Healthy Task (N): listed for completeness, no action.
 ```
 
-Iterate per bucket until approved. Apply approved changes — body patches via `tracker.py update`, closures via `tracker.py close` as § Mark, never delete gives them. Publish new Tasks in dependency order so each blocker's real ID is available; on ADO, materialize each in-project blocker as a built-in Predecessor relation, and on GitHub, add each new Task as a native sub-issue of the parent Story, exactly as the create path does — see [../SKILL.md](../SKILL.md) step 8. Reconcile operates on an existing set, so always apply the skip-if-exists guard there. A blocker may be an existing Task in the set, not just a newly published one.
+Iterate per bucket until approved. Apply approved changes once `~/.claude/skills/work-item-shape/references/publishing.md` § Publish gate holds for each — body patches via `tracker.py update`, closures via `tracker.py close` as § Mark, never delete gives them. Publish new Tasks in dependency order so each blocker's real ID is available; on ADO, materialize each in-project blocker as a built-in Predecessor relation, and on GitHub, add each new Task as a native sub-issue of the parent Story, exactly as the create path does — see [../SKILL.md](../SKILL.md) step 8. Reconcile operates on an existing set, so always apply the skip-if-exists guard there. A blocker may be an existing Task in the set, not just a newly published one.
 
 ### Naming drift
 

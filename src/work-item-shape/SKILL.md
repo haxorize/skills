@@ -8,15 +8,15 @@ requires: writing-for-humans
 
 ## Routing gate — before drafting anything
 
-When the ask names a tier a publisher owns — "file a story", "create a feature", "break this into tasks", "write up this bug" — and the repo is wired for the pipeline (`CLAUDE.md` carries an `Issue tracker:` block), stop drafting and call the Skill tool with that tier's publisher: `to-feature`, `to-story`, `to-tasks`, or `to-bug`. An ask that names no tier — "file an issue for this" — routes the same way in a wired repo: infer the tier from the work's shape (a defect is a Bug, one deliverable is a Story, sub-work under a story is Tasks) and call that publisher.
+When the ask names a tier a publisher owns — "file a story", "create a feature", "break this into tasks", "write up this bug" — and the repo is wired for the pipeline (`CLAUDE.md` carries an `Issue tracker:` block), and no publisher is running yet (each one loads this skill at its start), stop drafting and call the Skill tool with that tier's publisher: `to-feature`, `to-story`, `to-tasks`, or `to-bug`. An ask that names no tier — "file an issue for this" — routes the same way in a wired repo: infer the tier from the work's shape (a defect is a Bug, one deliverable is a Story, sub-work under a story is Tasks) and call that publisher.
 
-A `CLAUDE.md` `Issue tracker:` block carrying the **routing policy line** (`onboard-repo` writes it) says the same to a session that never loads this skill; its absence is not a wiring defect, and the gate binds on the work's shape either way.
+A `CLAUDE.md` `Issue tracker:` block carrying the current **routing policy line** (the wording `onboard-repo` writes now) says the same to a session that never loads this skill. An older line that says to name the publisher and stop contradicts this gate: follow the gate, and tell the user the line needs `onboard-repo`'s current wording. The line's absence is not a wiring defect, and the gate binds on the work's shape either way.
 
 Never draft a lookalike beside the publisher: ad-hoc drafting skips parent reconciliation against the story map, `Covers:` wiring, tags, the per-tier template, and update modes. The publisher's own Publish gate asks the user before anything is written. A published lookalike is worse than nothing: it looks done, and the pipeline's bookkeeping never hears about it.
 
 An ask that arrives program- or feature-sized with no outcome statement — nobody can say, asked once, what will be true when it has worked — routes up rather than down: say `/frame-effort` comes first, because its Frame's Outcome is the goal every item under it hangs from.
 
-Ad-hoc drafting is the right path when the repo has no pipeline, the item targets someone else's repo, or the user declines the publisher. Every rule below still binds there — including that the parent question ("what does this hang under?") is answered or explicitly scoped out, never skipped. Ad-hoc prose also follows the human-facing register — call the Skill tool with `writing-for-humans` at the first write if it isn't already live (a publisher has already run it).
+Ad-hoc drafting is the right path when the repo has no pipeline, the item targets someone else's repo, or the user declines the publisher; an explicit ask for raw `gh`/`az` is a decline. Every rule below still binds there — including that the parent question ("what does this hang under?") is answered or explicitly scoped out, never skipped. Ad-hoc prose also follows the human-facing register — call the Skill tool with `writing-for-humans` at the first write if it isn't already live (a publisher has already run it).
 
 ## The goal
 

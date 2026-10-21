@@ -78,7 +78,7 @@ Cross-check `zero_finding` against the map: an image that has an existing Story 
 
 ### 4. Write each draft to a file and publish it with `to-story`
 
-For each `in_scope` entry, write the body and acceptance criteria to `$RUN/story-<n>.body.md` and `$RUN/story-<n>.acceptance.md`, where `<n>` is the entry's position in `in_scope` — an export field never becomes a file name. Then, per image, call the Skill tool with `to-story`, passing both file paths and these arguments:
+For each `in_scope` entry, write the body and acceptance criteria to `$RUN/story-<n>.body.md` and `$RUN/story-<n>.acceptance.md`, where `<n>` is the entry's position in `in_scope` — an export field never becomes a file name. Then, per image, call the Skill tool with `to-story`, passing both file paths and these arguments; if you did not just see a `Launching skill: to-story` line, stop and call it again, because without it the run opens no Story:
 
 - **No Story in the map** → `--parent <security-feature> --priority <priority>`.
 - **A Story in the map** → `--update <story-id>`, plus `--priority <priority>` only when the drafted value is more urgent (a lower number) than the Story's current Priority. Priority only escalates: a re-run never lowers a value someone raised by hand.

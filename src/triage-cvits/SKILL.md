@@ -91,7 +91,7 @@ Findings with bucket `?` (`needs_checkout`) or `null` (`unresolved`) get no Task
 
 ### 6. Publish with `to-tasks`
 
-Call the Skill tool with `to-tasks`, passing `--parent <story-id>` and the drafted file paths: it publishes the drafted Tasks one per bucket, as drafted, rather than re-slicing them. Then call it once with `--update <task-id>` for each revised body from step 5. Keep `$RUN` until every `to-tasks` run has ended, then `rm -rf "$RUN"`.
+Call the Skill tool with `to-tasks`, passing `--parent <story-id>` and the drafted file paths: it publishes the drafted Tasks one per bucket, as drafted, rather than re-slicing them. If you did not just see a `Launching skill: to-tasks` line, stop and call it again, because without it the run files no Task. Then call it once with `--update <task-id>` for each revised body from step 5. Keep `$RUN` until every `to-tasks` run has ended, then `rm -rf "$RUN"`.
 
 ### 7. Report the run
 

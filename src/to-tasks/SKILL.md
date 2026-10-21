@@ -8,7 +8,7 @@ requires: writing-for-humans, work-item-shape, adr
 
 No interviewing — this is a synthesis-only skill. Run `/grill-me` first if context is thin.
 
-Tasks are always children of a User Story — never directly under a Feature. To break a Feature into stories, use `to-story` once per story, under the same Feature parent.
+Tasks are always children of a User Story — never directly under a Feature.
 
 ## Publication constraints
 
@@ -106,6 +106,10 @@ Publish the first Task alone per `~/.claude/skills/work-item-shape/references/pu
 Missing required CLAUDE.md fields, writes blocked on auth or policy (don't loop on auth), and **transport safety** on every create and retry all follow `~/.claude/skills/work-item-shape/references/publishing.md` — `## When a required field is missing`, `## When the write is blocked`, `## Transport safety`.
 
 On publish, run `work-item-shape`'s **Naming drift** rule against sibling Tasks under the same parent.
+
+## When a caller passes drafted files
+
+A caller may pass drafted Task file paths instead of a Story to slice: `triage-cvits` passes `--parent <story-id>` and one file per bucket, then `--update <task-id>` with each revised body. Those files are the Tasks, published as drafted: skip steps 4-5 rather than re-slice or re-draft them. Step 6's walkthrough, step 7's self-review, and the Publish gate still run; a gap the review finds goes to the user as a question, and the answer is written into the file, never fixed by re-slicing.
 
 ## Maintenance modes
 

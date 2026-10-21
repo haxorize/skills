@@ -1,17 +1,20 @@
 # Publishing
 
-The procedure around a tracker create, for the skills that perform one. Tracker *resolution* — the three modes and the required fields — is [tracker-resolution.md](tracker-resolution.md).
+The procedure around a tracker write, for the skills that perform one. Tracker *resolution* — the three modes and the required fields — is [tracker-resolution.md](tracker-resolution.md).
 
-Every create, update and link goes through `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py` — `work-item-shape` owns the one copy. It carries every rule with one right answer — prefix, tags, labels, conversion, read-back, links — and `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py <command> --help` lists them. None is applied by hand, and no raw `gh issue create` or `az boards work-item create` goes out beside it. Claim, close and label edits go through it too (`assign`, `close`, `label`), and a tag apply after a create is `update --field "System.Tags=A; B"`. Pass `--workdir <scratchpad>` on every create and update so the converted files land there.
+Every create, update and link goes through `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py` — `work-item-shape` owns the one copy. It carries every rule with one right answer — prefix, tags, labels, conversion, read-back, links — and `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py <command> --help` lists them. None is applied by hand, and no raw `gh issue create` or `az boards work-item create` goes out beside it. Claim, close and label edits go through it too (`assign`, `close`, `label`), except `implement`'s activation, whose one state, assignee and iteration write is a raw `az boards work-item update` that `assign` cannot express (`~/.claude/skills/implement/references/activation.md`); and a tag apply after a create is `update --field "System.Tags=A; B"`. Pass `--workdir <scratchpad>` on every create and update so the converted files land there.
 
 ## Publish gate
 
-No create call goes out until all four hold:
+No tracker write goes out — `create`, `update`, `comment`, `assign`, `close`, `label`, `link`, `block` — until every condition below holds for that write:
 
-- **A confirming turn exists to cite.** The user approved the draft in a turn you can point to; "looks good" on an earlier version, or approval of the plan the draft came from, is not approval of this body. Never create mid-grill — the grill settling is not the ask.
-- **A dedupe search ran.** Run `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py search --terms "<the title's key terms>"` and show any near match; a match means update or link, not a second item.
-- **The approval ask names the undo.** The ask that seeks the confirming turn names the command that deletes the item it is about to create (`gh issue delete <n>` / `az boards work-item delete --id <n>`), so the cost of a wrong yes is visible before it is given.
-- **The draft shown is the draft published.** Any edit after the confirming turn — a reworded criterion, a changed parent — re-shows the body and waits for a fresh confirmation. The publish report cites the confirming turn.
+- **A confirming turn exists to cite.** The user approved, in a turn you can point to, the exact write about to go out: the drafted body for a create, the new title, body and fields for an update, the command itself for any other write. "looks good" on an earlier version, or approval of the plan the draft came from, is not approval of this write. One confirming turn covers several writes only when its ask showed each of them. Never write mid-grill — the grill settling is not the ask.
+- **A dedupe search ran, for a create.** Run `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py search --terms "<the title's key terms>"` and show any near match; a match means update or link, not a second item. Every other write targets an item that already exists, so it runs no search.
+- **The approval ask names the undo**, so the cost of a wrong yes is visible before it is given:
+  - **Create:** the command that deletes the item (`gh issue delete <n>` / `az boards work-item delete --id <n>`).
+  - **Update:** first run `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py show <id>` and save the prior title and every field the patch replaces to `<scratchpad>/<id>-prior/`, one file per field (ADO rich text is already HTML: save it as `.html`, which `update` passes through unconverted). The ask names the restore: the same `update` with each saved file in place of its new one — `python3 ~/.claude/skills/work-item-shape/scripts/tracker.py update <id> --title '<prior title>' --no-prefix --body <scratchpad>/<id>-prior/<file>`, or `--field "<Reference>=@<scratchpad>/<id>-prior/<file>"` for each field the patch replaced on ADO.
+  - **Any other write:** the inverse command — `gh issue reopen <n>` or an `update` setting `System.State` back for a close; `gh issue edit <n> --remove-assignee <user>` or an `update` restoring `System.AssignedTo` for an assign; `label` with `--add` and `--remove` swapped; deleting the comment for a comment; `az boards work-item relation remove` or the sub-issue's removal for a link or block.
+- **The draft shown is the draft published.** Any edit after the confirming turn — a reworded criterion, a changed parent — re-shows the write and waits for a fresh confirmation. The publish report cites the confirming turn.
 
 ## Flags the script cannot derive
 

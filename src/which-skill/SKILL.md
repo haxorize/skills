@@ -1,11 +1,11 @@
 ---
 name: which-skill
-description: The router over this suite's typed commands and their flow. Use when someone asks which skill or command fits a situation, or which one comes after the step just finished. Not for running the chosen skill — load or type that one.
+description: The router over this suite's commands and their flow. Use when someone asks which skill or command fits a situation, or which one comes after the step just finished. Not for running the chosen skill — load or type that one.
 ---
 
 # Which Skill
 
-This routes over the **user-invoked** skills — the ones you type. The **model-invoked Discipline skills** (`tdd`, `feedback-loops`, `diagnosing-bugs`, `codebase-design`, `discoverable-code`, `grilling`, `diverging`, `adoption-verdict`, `domain-modeling`, `adr`, `committing`, `writing-for-agents`, `writing-for-humans`, `work-item-shape`, `doc-claims`, `product-description`) fire on their own when the work calls for them, or get pulled in by the orchestrators below; four are name-only, loaded only when named. Four **Domain skills** sit beside them — `phi-safe-code`, `health-literacy`, `accessible-ui`, and `aeo` — and their descriptions own the trigger lists, which reach past authoring into review and bug reports.
+This routes over the **user-invoked** skills — the ones you type — and the `to-*` publishers, asked for in plain words. The **model-invoked Discipline skills** (`tdd`, `feedback-loops`, `diagnosing-bugs`, `codebase-design`, `discoverable-code`, `grilling`, `diverging`, `adoption-verdict`, `domain-modeling`, `adr`, `committing`, `writing-for-agents`, `writing-for-humans`, `work-item-shape`, `doc-claims`, `product-description`) fire on their own when the work calls for them, or get pulled in by the orchestrators below; four are name-only, loaded only when named. Four **Domain skills** sit beside them — `phi-safe-code`, `health-literacy`, `accessible-ui`, and `aeo` — and their descriptions own the trigger lists, which reach past authoring into review and bug reports.
 
 An **opt-in** skill exists in a repo only when the repo's `CLAUDE.md` names it on its `Shared skills:` line and `bash <root>/scripts/install.sh --project <repo>` has run. Route to it anyway; when it is missing, name the line and the command, never a neighbor.
 

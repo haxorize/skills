@@ -1,6 +1,6 @@
 ---
 name: to-bug
-description: Publish a Bug — a defect with repro steps and severity — to the project's tracker (an ADO Bug, or a GitHub issue labeled bug). Use when asked to file, log, or write up a bug, a defect, a regression, or a ticket for something broken. Not for asking whether behavior is a bug, or finding its cause (diagnosing-bugs). Not for a feature request or missing capability (to-story).
+description: Publish a Bug — a defect with repro steps and severity — to the project's tracker (an ADO Bug, or a GitHub issue labeled bug). Use when asked to file, log, or write up a bug, a defect, a regression, or a ticket for something broken, or to update a published bug. Not for asking whether behavior is a bug, or finding its cause (diagnosing-bugs). Not for a feature request or missing capability (to-story). Not for drafting or critiquing a bug body without filing it (work-item-shape).
 requires: writing-for-humans, work-item-shape
 ---
 

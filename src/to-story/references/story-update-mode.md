@@ -1,6 +1,6 @@
 # Story — Update mode
 
-`--update <story-id>` patches an existing Story in place. Skips tracker resolution (uses the Story's existing project), parent resolution (already linked), approach selection (already chosen at creation), the parent's map stamp (step 10), and relation projection (step 11) — a re-snapshot of the parent map is `/to-feature --update`'s job, not this one's. Runs codebase exploration only when the proposed change expands scope.
+`--update <story-id>` patches an existing Story in place. Skips tracker resolution (uses the Story's existing project), parent resolution (already linked), approach selection (already chosen at creation), the parent's map stamp (step 10), and relation projection (step 11) — a re-snapshot of the parent map is `to-feature`'s update mode's job, not this one's. Runs codebase exploration only when the proposed change expands scope.
 
 ## Cold-start
 
@@ -31,15 +31,17 @@ Re-run all step 7 checks. Two are additionally load-bearing:
 
 ## Re-snapshot prompt for parent
 
-If the update materially changes scope (added/removed ACs, changed module list, layer reshape visible in the parent's story map), prompt the user to also run `/to-feature --update <parent-feature-id>`. The skill does not auto-cascade.
+If the update materially changes scope (added/removed ACs, changed module list, layer reshape visible in the parent's story map), prompt the user to also ask for an update of the parent Feature `<parent-feature-id>`, which is `to-feature`'s update mode. The skill does not auto-cascade.
 
 Sibling `Covers:` references on the parent's emergent-Story entries are not validated here; they're validated when `to-feature --update` next runs.
 
 ## Reconcile prompt for child tasks
 
-If the update adds or removes ACs, changes the module list, or reshapes layers, prompt the user to also run `/to-tasks --reconcile <story-id>`. Do not prompt for title-only or wording-only updates.
+If the update adds or removes ACs, changes the module list, or reshapes layers, prompt the user to also ask for the Story's tasks to be re-synced, which is `to-tasks`' reconcile mode on `<story-id>`. Do not prompt for title-only or wording-only updates.
 
 ## Patch
+
+Only after `~/.claude/skills/work-item-shape/references/publishing.md` § Publish gate holds for this patch:
 
 - **ADO:** Patch through the script, which converts each `.md` and reads every rich-text field back. Always patch the title — scope changes that trigger `--update` frequently invalidate the prior title. `update` applies the tracker block's `Title prefix:` itself, idempotently, so pass the drafted title without it:
   ```bash

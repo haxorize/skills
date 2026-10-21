@@ -1,6 +1,6 @@
 ---
 name: to-feature
-description: Publish a Feature — a PRD-shaped spec for scope that needs several stories beneath it — to the project's tracker (an ADO Feature under an Epic, or a GitHub issue). Use when asked to file, create, or write up a feature, a PRD, or an epic-sized ticket for work too big for one story. Not for one deliverable (to-story) or a defect (to-bug). Not for drafting or critiquing a body without filing it (work-item-shape).
+description: Publish a Feature — a PRD-shaped spec for scope that needs several stories beneath it — to the project's tracker (an ADO Feature under an Epic, or a GitHub issue). Use when asked to file, create, or write up a feature, a PRD, or an epic-sized ticket for work too big for one story, or to update a published feature. Not for one deliverable (to-story) or a defect (to-bug). Not for drafting or critiquing a body without filing it (work-item-shape).
 requires: writing-for-humans, work-item-shape, diverging
 ---
 
@@ -8,7 +8,7 @@ requires: writing-for-humans, work-item-shape, diverging
 
 No interviewing — this is a synthesis-only skill. Run `/grill-me` first if context is thin.
 
-`to-feature` is for **broad scope** — work that decomposes into multiple stories. The default for single-feature work is `to-story`: if the scope in front of you fits one story, say so and offer `to-story` instead of publishing a thin Feature.
+The default for single-feature work is `to-story`: if the scope in front of you fits one story, say so and offer `to-story` instead of publishing a thin Feature.
 
 ## Publication constraints
 
