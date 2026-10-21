@@ -8,28 +8,7 @@ argument-hint: "[review report path | PR number — default: the newest report f
 
 # Address Findings
 
-One pass over review feedback: every finding gets a disposition, nothing is deferred silently, and the pass ends with a ledger and a re-stamped report rather than another review — the re-stamp is the last step, and without it the `review-receipt` hook blocks the push of the tree the fixes made. An advisory — the ID-less item `review-changes` lists under a lens — is read, not dispositioned: it is outside the `F<n>` count by construction, and the author acts on it or not. The judgment per finding is § Judging each finding below, applied at every step; [references/judging-feedback.md](references/judging-feedback.md) holds the routing, pushback and re-review rules, opened before a finding goes to the Ask set.
-
-## Judging each finding
-
-Review feedback is a set of claims to verify, not orders to follow or occasions for gratitude. Technical correctness over social comfort. This holds whoever produced the findings: your own self-review and a subagent's are claims like any other, a top-level PR comment is judged like an inline thread, and an advisory is verified the same way.
-
-### The response loop
-
-1. **Read** the complete feedback without reacting.
-2. **Restate** each requirement in your own words — or ask what it means.
-3. **Verify** each claim against the codebase before agreeing: does the flagged problem actually exist? Is there a reason the current implementation looks this way (check `docs/adr/` — a behavior an ADR records as deliberate is not a bug)? A multi-claim comment is verified claim by claim — one false sub-claim never dismisses the thread, and a finding is never rejected because a related finding was rejected. An empty search does not refute a claim either: a citation your grep cannot find means never verified, not false, and the claim is overturned only by an attempt under the conditions it names. A finding the user already declined in an earlier round is not new: it is DECLINED again citing that disposition, not re-verified, unless the user reopened it.
-4. **Evaluate** — technically sound *for this codebase*? Does the suggestion break existing behavior, or the platforms/versions this project supports? A true finding can earn no code when its failure would surface before it costs anything and you can name what surfaces it; never when the failure is data loss, a wrong grant of money or access, security, auth, billing, retention, a migration, or an irreversible external effect. Accepting it without code is a deferral you propose in the Ask set: its DEFERRED (proposed) row names the record the fix would go to, and the mechanism that surfaces the failure as the event that picks it up. Accepting it without code accepts the finding as true, so it never counts as invalid toward the zero-accepted tripwire. A finding on code an earlier review fix added takes the same test.
-5. **Respond** — a restated fix, a clarifying question, or reasoned pushback ([references/judging-feedback.md](references/judging-feedback.md) § Pushback).
-6. **Implement** in the suggested order Workflow § 2 opens on, verifying each fix removes the cited deficiency before starting the next; verify no regressions at the end. Each finding gets two separate calls: what happens to this instance, and, for a shape you have seen before, what would prevent the next one — a recurring finding is a process change waiting to be named (if that diagnosis was itself expensive, `~/.claude/skills/diagnosing-bugs/references/learnings.md` § The capture gate may apply).
-
-### Clarify all before implementing any
-
-For multi-item feedback: if any item is unclear, implement nothing until every item is clarified — items may be coupled, and partial understanding yields the wrong implementation. "I understand items 1, 2, 3, and 6; I need clarification on 4 and 5 before starting." "This one's unambiguous and low-risk, I'll land it while I wait" is the rationalization to refuse — whether an item is safe in isolation is exactly what you don't know until the unclear ones resolve.
-
-### The zero-accepted tripwire
-
-If you have verified every finding in a review and classified all of them as invalid, stop — an all-reject pattern is evidence about you, not the review. You may be defending, not verifying. Re-examine the strongest finding as if it were true before sending any response, and then continue the pass.
+One pass over review feedback: every finding gets a disposition, nothing is deferred silently, and the pass ends with a ledger and a re-stamped report rather than another review — the re-stamp is the last step, and without it the `review-receipt` hook blocks the push of the tree the fixes made. An advisory — the ID-less item `review-changes` lists under a lens — is read, not dispositioned: it is outside the `F<n>` count by construction, and the author acts on it or not. The judgment per finding is § Judging each finding below, applied at every step; [references/judging-feedback.md](references/judging-feedback.md) holds the routing, pushback, YAGNI and re-review rules: open it before writing the first Ask entry, DECLINED row or reply, the moments those rules govern.
 
 ## Workflow
 
@@ -50,7 +29,7 @@ Read the report's stamps and compare them to the tree as it is now — but compa
 Sort every finding into one of two sets before touching anything, working from the report's index (`review-changes` § 6), one line per `F<n>`: its tag, causation and `file:line` place most findings and show which share a file. Open a finding's entry in the body where its line cannot decide the set, and always before fixing or asking it. The sort is whole-report first because findings couple, and § Clarify all before implementing any holds here. A report with no index is read whole.
 
 - **Mechanical** — verified real, local to the change, inside its scope, with one obvious fix and no contract fork. Fix without asking.
-- **Ask** — a design call, an escalation, a finding you would push back on, a fix that would outgrow the change it serves, a deferral you want to propose, a finding judging-feedback.md routes away from a local fix (an out-of-scope instruction-file finding, a spec-level defect), or a finding whose claim you could not verify either way. Open [references/judging-feedback.md](references/judging-feedback.md) before placing the first. These go into **one batched question**, each entry carrying a recommendation in the ask-block shape the global recommend-and-proceed rule defines (`~/.claude/rules/recommend-and-proceed.md`) — not one question per finding, and not a question for the mechanical set.
+- **Ask** — a design call, an escalation, a finding you would push back on, a fix that would outgrow the change it serves, a deferral you want to propose, a finding judging-feedback.md routes away from a local fix (an out-of-scope instruction-file finding, a spec-level defect), or a finding whose claim you could not verify either way. These go into **one batched question**, each entry carrying a recommendation in the ask-block shape the global recommend-and-proceed rule defines (`~/.claude/rules/recommend-and-proceed.md`) — not one question per finding, and not a question for the mechanical set.
 
 Open the pass with one line — the file you picked when no path was given, and the order: `suggested order: F3, F1, F7` — blockers, then simple, then complex, by the report's own IDs. It reranks no verdict; it only says where the fixes start.
 
@@ -89,3 +68,24 @@ Re-measure the count at write time — `grep -oE '\bF[0-9]+\b' <report> | sort -
 ### 6. Stop
 
 Stop on the `next:` line `bash ~/.claude/skills/committing/scripts/next-step.sh` prints after the re-stamp, the exact next command. On unstamped input and on a PR-mode report there is no re-stamp: print `re-stamped: none (no tree stamp)` in its place, then run `next-step.sh`. Landing is the user's ask: the `committing` discipline for one commit, `/ship` for a split or a PR. When the findings arrived as PR review threads, [references/pr-threads.md](references/pr-threads.md)'s reply contract runs after the commit is on the remote, not before. The replies are outbound tracker prose: call the Skill tool with `writing-for-humans` before the first.
+
+## Judging each finding
+
+Review feedback is a set of claims to verify, not orders to follow or occasions for gratitude. Technical correctness over social comfort. This holds whoever produced the findings: your own self-review and a subagent's are claims like any other, a top-level PR comment is judged like an inline thread, and an advisory is verified the same way.
+
+### The response loop
+
+1. **Read** the complete feedback without reacting.
+2. **Restate** each requirement in your own words — or ask what it means.
+3. **Verify** each claim against the codebase before agreeing: does the flagged problem actually exist? Is there a reason the current implementation looks this way (check `docs/adr/` — a behavior an ADR records as deliberate is not a bug)? A multi-claim comment is verified claim by claim — one false sub-claim never dismisses the thread, and a finding is never rejected because a related finding was rejected. An empty search does not refute a claim either: a citation your grep cannot find means never verified, not false, and the claim is overturned only by an attempt under the conditions it names. A finding the user already declined in an earlier round is not new: it is DECLINED again citing that disposition, not re-verified, unless the user reopened it.
+4. **Evaluate** — technically sound *for this codebase*? Does the suggestion break existing behavior, or the platforms/versions this project supports? A true finding can earn no code when its failure would surface before it costs anything and you can name what surfaces it; never when the failure is data loss, a wrong grant of money or access, security, auth, billing, retention, a migration, or an irreversible external effect. Accepting it without code is a deferral you propose in the Ask set: its DEFERRED (proposed) row names the record the fix would go to, and the mechanism that surfaces the failure as the event that picks it up. Accepting it without code accepts the finding as true, so it never counts as invalid toward the zero-accepted tripwire. A finding on code an earlier review fix added takes the same test.
+5. **Respond** — a restated fix, a clarifying question, or reasoned pushback ([references/judging-feedback.md](references/judging-feedback.md) § Pushback).
+6. **Implement** in the suggested order Workflow § 2 opens on, verifying each fix removes the cited deficiency before starting the next; verify no regressions at the end. Each finding gets two separate calls: what happens to this instance, and, for a shape you have seen before, what would prevent the next one — a recurring finding is a process change waiting to be named (if that diagnosis was itself expensive, `~/.claude/skills/diagnosing-bugs/references/learnings.md` § The capture gate may apply).
+
+### Clarify all before implementing any
+
+For multi-item feedback: if any item is unclear, implement nothing until every item is clarified — items may be coupled, and partial understanding yields the wrong implementation. "I understand items 1, 2, 3, and 6; I need clarification on 4 and 5 before starting." "This one's unambiguous and low-risk, I'll land it while I wait" is the rationalization to refuse — whether an item is safe in isolation is exactly what you don't know until the unclear ones resolve.
+
+### The zero-accepted tripwire
+
+If you have verified every finding in a review and classified all of them as invalid, stop — an all-reject pattern is evidence about you, not the review. You may be defending, not verifying. Re-examine the strongest finding as if it were true before sending any response, and then continue the pass.

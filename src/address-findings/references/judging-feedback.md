@@ -1,6 +1,6 @@
 # Judging feedback
 
-Open this before a finding goes to the Ask set: it routes a finding by what it indicts, and holds the pushback, re-review, YAGNI and reply rules. The skill body's § Judging each finding holds the rest of the judgment per finding — the response loop, Clarify all before implementing any, and the zero-accepted tripwire — and owns the pass and the table.
+Open this before writing the first Ask entry, DECLINED row or reply: it routes a finding by what it indicts, and holds the pushback, re-review, YAGNI and reply rules. The skill body's § Judging each finding holds the rest of the judgment per finding — the response loop, Clarify all before implementing any, and the zero-accepted tripwire — and owns the pass and the table.
 
 ## Route by what the finding indicts
 
