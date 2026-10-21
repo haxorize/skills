@@ -104,3 +104,14 @@ this prose line follows the fence, so it is not a row.
 | something with a leading pipe
 ---
 prose under the thematic break is not a swallowed row.
+
+Prose pointers that resolve, or that this check does not read:
+
+- A live one: per `house-style`'s `references/sibling-note.md`.
+- Two owners, each carrying the file: per `bulk-cited-dep`'s and `quoted-dep`'s `references/ac-ids.md`.
+- A name that is no skill: per `no-such-owner`'s `references/gone-copy.md`.
+- A repo path after an unrelated possessive: `house-style`'s rotate-first paragraph and `scripts/gone-tool.sh`.
+
+```
+per `house-style`'s `references/fenced-gone.md`
+```

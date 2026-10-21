@@ -300,6 +300,16 @@
 #     the walk. A reference reached only by a link form the extractor above
 #     does not read (reference-style, titled, angle-bracketed) reads as an
 #     orphan here — the two checks share that boundary on purpose.
+#   - Prose pointers: a backticked skill name in the possessive (`X`'s, or
+#     `X`' for a name ending in s), a run of them joined by `,`/`and`/`or`,
+#     directly before a backticked `references/<file>` or `scripts/<file>`,
+#     names a file under each named skill's directory (src/ or
+#     .claude/skills/). Neither link check reads that pair, which is how
+#     pointers to deleted copies shipped green. Scope, stated so a pass isn't
+#     read as more than it is: the path must follow the possessive run with
+#     only a space between, so "`X`'s copy at `references/f.md`" and a pointer
+#     wrapping a line are not read; a name with no skill directory is skipped;
+#     fenced lines are not read.
 #   - Router coverage (CLAUDE.md § Adding, renaming, or removing a skill:
 #     update both in the same change): every skill under
 #     src/ must appear as a backticked code-span (`name` or `/name`) in
@@ -335,7 +345,8 @@
 # all seven), and pass 3's reference checks then run per-reference greps over
 # the owning skill's directory. Pass 4 is a second, separate walk over a
 # different glob — docs/**, global/README.md and the prose READMEs, which no
-# other pass reads. Measured 2026-08-31 over 225 files: ~25s, against ~12s
+# other pass reads (docs/** for spelling and the slash sweep, the rest for
+# spelling alone). Measured 2026-08-31 over 225 files: ~25s, against ~12s
 # before the six house-style checks landed. Measured again 2026-09-01 over
 # 227 files, by pass, before Batch M-scripts: pass 0 0.2 s · pass 1 3.6 s ·
 # pass 2 20.9 s · pass 3 5.4 s · pass 4 1.6 s, 31.7 s in all; 28.3 s after
@@ -411,6 +422,8 @@
 #                              14,400 bytes (ADR-0079; a WARN)
 #     check_rule_pointers      every ~/.claude/skills/<owner>/<path> pointer in
 #                              a walked file resolves under src/
+#     check_prose_pointers     every `X`'s `references/<file>` (or `scripts/`)
+#                              pointer resolves under each named skill
 #     check_global_rule        the DEPENDS entry resolves, and each dependant
 #                              cites back
 #     check_depends_entries    every DEPENDS entry names a rule that exists
@@ -434,6 +447,8 @@
 #                              scripts/README.md, which no other pass walks,
 #                              and over CLAUDE.md with the rest of the
 #                              house-style set
+#     check_slash_form         over docs/** but docs/adr/ and docs/lineage.md,
+#                              records that quote superseded or upstream forms
 #     check_landing_key        every key in the root CLAUDE.md `Landing:` block is one
 #                              of the six, with a value `committing` reads, and
 #                              a block that exists names `Review required:`
@@ -541,6 +556,12 @@ lint_lib="$repo_root/scripts/lint-lib.sh"
 # fence in one file cannot hide (or expose) lines in the next file of an
 # `-exec … +` batch; an indented fence counts as a fence. Prepend to an awk
 # program: awk "$FENCE_AWK"'{ … }'.
+# A second FENCE_AWK lives in src/review-changes/scripts/tree-stamp.sh, the
+# rule the review-receipt hook and next-step.sh read stamps through, and it is
+# the stricter one: it opens on ``` or ~~~ and closes only on a run of the same
+# character at least as long as the opener (CommonMark), where this copy
+# toggles on any line starting ``` and never sees ~~~. The two can disagree on
+# which lines of one file are fenced; neither reads through the other.
 FENCE_AWK='FNR == 1 { fence = 0 }
 /^[[:space:]]*```/ { fence = !fence; next }
 fence { next }
@@ -1271,7 +1292,8 @@ fi
 # ---------------------------------------------------------------------------
 # Pass 2 — every shipped markdown file, read once. The body checks run over
 # src/** and global/rules/; the slash sweep runs over src/**, .claude/skills/**,
-# DOMAIN.md and README.md (see header for why its scope is the wider one).
+# DOMAIN.md and README.md (see header for why its scope is the wider one), and
+# over docs/** from pass 4's walk.
 # ---------------------------------------------------------------------------
 
 check_line_cap() {
@@ -1450,7 +1472,10 @@ check_slash_form() {
           | sed -E 's/<!-- *slash-exempt: *//; s/ *-->//' \
           | tr ',' ' ' | tr -s '[:space:]' ' ') " ;;
     esac
-    for slashed in $(printf '%s\n' "$line" | grep -o '`/[a-z0-9-]*`' | tr -d '`/' | sort -u); do
+    # A slash form is the name alone or the name, a space, and its arguments
+    # (`/to-story --parent {ID}`): the space is required, so a path in the
+    # slash form (`/tmp/x`) never reads as a command named by its first segment.
+    for slashed in $(printf '%s\n' "$line" | grep -oE '`/[a-z0-9-]+( [^`]*)?`' | sed -E 's/^`\/([a-z0-9-]+).*/\1/' | sort -u); do
       case "$seen" in *" $slashed "*) continue ;; esac
       if [ ! -f "src/$slashed/SKILL.md" ] && [ ! -f ".claude/skills/$slashed/SKILL.md" ]; then
         case "$slash_exempt" in *" $slashed "*) continue ;; esac
@@ -2818,6 +2843,39 @@ while IFS= read -r f <&3; do
   [ -n "$f" ] && check_rule_pointers "$f"
 done 3<<<"$graded_md"
 
+# (see header) A prose pointer — "`to-story`'s `references/ac-ids.md`", or
+# "`to-story`'s and `to-feature`'s `references/ac-ids.md`" — names its owner
+# by skill and its file by a skill-relative path, and no other check reads
+# that pair: check_reference_links wants `](…)`, check_rule_pointers wants
+# `~/.claude/skills/`. Deleting the copies such pointers named left them
+# aimed at nothing with every check green (review 2026-10-20 F42). The form
+# is the possessive run directly before the path, so "`X`'s rotate-first
+# paragraph and `scripts/y.sh`" — the repo's path, not X's — is not read; a
+# name with no skill directory is not this check's business. Fenced lines
+# are blanked, numbering kept, so a quoted example stays quiet.
+check_prose_pointers() {
+  local f=$1 hits hit lineno span names path name owner
+  local possessive='`[a-z0-9][a-z0-9-]*`'\''s?'
+  hits=$(awk '/^[[:space:]]*```/ { fence = !fence; print ""; next } fence { print ""; next } { print }' "$f" 2>/dev/null |
+    grep -noE "$possessive((, and|, or|,| and| or) $possessive)* \`(references|scripts)/[A-Za-z0-9_./-]+\`" || true)
+  [ -n "$hits" ] || return 0
+  while IFS= read -r hit; do
+    lineno=${hit%%:*} span=${hit#*:}
+    path=${span##* \`} path=${path%\`}
+    names=$(printf '%s' "${span% \`*}" | grep -oE '`[a-z0-9][a-z0-9-]*`' | tr -d '`')
+    while IFS= read -r name; do
+      if [ -d "src/$name" ]; then owner="src/$name"
+      elif [ -d ".claude/skills/$name" ]; then owner=".claude/skills/$name"
+      else continue
+      fi
+      [ -e "$owner/$path" ] || say_fail "$f points at \`$name\`'s \`$path\` (line $lineno) but $owner/$path does not exist — no session can open the file it names; name the skill that owns the file, or cite it as \`~/.claude/skills/<owner>/$path\`"
+    done <<<"$names"
+  done <<<"$hits"
+}
+while IFS= read -r f <&3; do
+  [ -n "$f" ] && check_prose_pointers "$f"
+done 3<<<"$graded_md"
+
 # Every hook has a selftest (global/README.md § Hooks: "Each hook has a
 # `*-selftest.sh` beside it"): a hook is a global/hooks/*.sh whose header
 # carries `# Install note:` — the marker install.sh and post-merge derive the
@@ -2957,8 +3015,19 @@ done 3<<<"$graded_scripts"
 # NOT in this glob: each is a fixture whose job is to carry a violation for a
 # LINT_ROOT run, so walking them from the repo's own run would report the
 # fixture's deliberate instance as this repo's defect.
+# The slash sweep reads docs/** from this walk too: a pitch or a guide names
+# skills as commands exactly as a body does, and a model-invoked name there
+# sends a reader to type what is not a command. Two docs/ classes are records
+# of what was, not instructions, and stay out: docs/adr/ quotes the forms a
+# decision superseded, and docs/lineage.md names the upstream repos' own
+# commands (`/review`), which no skill here is meant to resolve.
 while IFS= read -r f <&3; do
-  [ -n "$f" ] && check_spelling "$f"
+  [ -n "$f" ] || continue
+  check_spelling "$f"
+  case "$f" in
+    docs/adr/*|docs/lineage.md) ;;
+    docs/*) check_slash_form "$f" ;;
+  esac
 done 3<<<"$graded_spelling"
 
 # (see header) The `Landing:` key. `committing` § Before any outward act reads

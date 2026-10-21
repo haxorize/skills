@@ -25,7 +25,9 @@
 # Run it after changing any check in lint-skills.sh.
 #
 # Covered here: reference-link resolution (both directions, including the
-# backtick-span and fenced-block exemptions), the ADR-citation ban, the
+# backtick-span and fenced-block exemptions), prose pointers (`X`'s
+# `references/f.md`: both possessives, both path arms, a two-owner run, and
+# five quiet forms), the ADR-citation ban, the
 # rich-text transport ban, argument substitution in a skill body (the
 # line-start and mid-line alternatives, a fence, a doubled `\\$`, both skill
 # classes, no frontmatter and one that never closes; the frontmatter, an
@@ -346,6 +348,11 @@ expect "slash-on-model-invoked" "src/slash-on-model-invoked/SKILL.md writes \`/f
 # The check sweeps past src/*/SKILL.md: a references/ template is where the convention
 # regresses unseen, because that is what a publisher writes from.
 expect "slash-on-model-invoked (reference file)" "src/slash-on-model-invoked/references/retired-form.md writes \`/fixture-discipline\`"
+# The form with arguments (`/to-story --parent {ID}`): a pattern that reads only
+# the bare `/name` span misses it, which is how five such sites survived the
+# 2026-10-20 publisher switch. args-form.md carries no bare form, so this row
+# reds if the optional argument tail is dropped from the pattern.
+expect "slash-on-model-invoked (form with arguments)" "src/slash-on-model-invoked/references/args-form.md writes \`/fixture-discipline\`"
 # The dangling arm: a slash form naming no skill in either tree. Its two quiet
 # neighbours are the roster and the line marker, rejected below — without both,
 # the arm could be widened to fire on every unresolved name with this row still
@@ -395,6 +402,9 @@ expect "slash-on-model-invoked (repo-local skill)" ".claude/skills/repo-local/SK
 expect "body checks on a file at depth one under src/" "src/stray-note.md cites a repo ADR by number"
 expect "slash-on-model-invoked (DOMAIN.md)" "DOMAIN.md writes \`/fixture-discipline\`"
 expect "slash-on-model-invoked (README.md)" "README.md writes \`/fixture-discipline\`"
+# Pass 4 reaches docs/** for the slash sweep (docs/pitch.md carried `/to-story`
+# with no gate reading it). Nested, so the row also grades `find docs`.
+expect "slash-on-model-invoked (docs/, from pass 4)" "docs/solutions/nested-note.md writes \`/fixture-discipline\`"
 expect "body checks on a global rule (HTML transport)" "global/rules/body-checked.md passes HTML through the shell"
 # The Landing: key, one row per alternative. Each needle carries the line as the
 # fixture writes it, because the FAIL quotes the raw line: fold the case or strip
@@ -501,6 +511,20 @@ expect "section pointers (a target that is not a file)" "cites '§ Anything' (li
 # The same line draws the installed-path pointer FAIL too: each check names its
 # own repair, and the overlap is pinned in the FAIL count.
 expect "installed-path pointer in a skill body" "src/house-style/SKILL.md points at ~/.claude/skills/fixture-discipline/references/gone.md but src/fixture-discipline/references/gone.md does not exist"
+# Prose pointers: one row per alternative the pattern admits (the `'s and bare
+# `'` possessives, the references/ and scripts/ arms, a two-owner run), and a
+# reject row per quiet form in quiet-forms.md — a live pointer, a two-owner run
+# where both carry the file, a name that is no skill, a repo path after an
+# unrelated possessive, and a fenced example. The two-owner FAIL names only the
+# owner without the file, which is what "check each skill" means; that owner
+# comes first, so a pattern that reads only the possessive touching the path
+# misses it.
+expect "prose pointers (a dead references/ pointer)" "src/house-style/SKILL.md points at \`house-style\`'s \`references/gone-copy.md\` (line 116) but src/house-style/references/gone-copy.md does not exist"
+expect "prose pointers (a bare-apostrophe possessive)" "points at \`broken-links\`'s \`references/gone-copy.md\` (line 117) but src/broken-links/references/gone-copy.md does not exist"
+expect "prose pointers (a dead scripts/ pointer)" "points at \`house-style\`'s \`scripts/gone-tool.sh\` (line 118) but src/house-style/scripts/gone-tool.sh does not exist"
+expect "prose pointers (the first owner of a two-owner run, which only the run reaches)" "points at \`house-style\`'s \`references/ac-ids.md\` (line 119) but src/house-style/references/ac-ids.md does not exist"
+reject "prose pointers (the second owner of a two-owner run, which carries the file)" "points at \`bulk-cited-dep\`'s"
+reject "prose pointers (a pointer that resolves, or a quiet form)" "src/house-style/references/quiet-forms.md points at \`"
 expect "section pointers (an em-dash lead-in before the citation)" "src/house-style/SKILL.md cites '§ No Such Dash Heading' (line 58), and src/house-style/references/quiet-forms.md carries no heading by that name"
 expect "section pointers (a hyphen lead-in before the citation)" "src/house-style/SKILL.md cites '§ No Such Hyphen Heading' (line 59), and src/house-style/references/quiet-forms.md carries no heading by that name"
 # A chained citation names its target once; the name after the second `§`
@@ -597,6 +621,13 @@ reject "ledger vocabulary (an enumeration inside a fenced example)" "fenced-exam
 reject "slash-on-model-invoked" "global/rules/body-checked.md writes"
 reject "slash names no skill (slash_exempt roster)" "writes \`/compact\`"
 reject "slash names no skill (line marker, same line)" "writes \`/checkout-page\`"
+# The argument tail needs its space: `/no-such-dir/notes.md` is a path, and a
+# tail that no longer requires the space reads its first segment as a command.
+reject "slash names no skill (a path in the slash form)" "writes \`/no-such-dir\`"
+# Pass 4's two record classes the slash sweep skips: both carry
+# `/fixture-discipline`, which fires from nested-note.md beside them.
+reject "slash-on-model-invoked (docs/adr/ is a record)" "docs/adr/0001-fixture-record.md writes"
+reject "slash-on-model-invoked (docs/lineage.md is a record)" "docs/lineage.md writes"
 reject "reference-link resolution" "references/real-reference.md"
 reject "reference-link resolution" "references/exempt-single.md"
 reject "reference-link resolution" "references/exempt-double.md"
@@ -749,15 +780,15 @@ fi
 expect_rc "the lint against the fixture tree" 1 "$status"
 # The count of FAIL lines is pinned: a check that begins firing on a fixture
 # it should leave alone reds here even when no substring row names the line.
-# Last moved 2026-10-20: 122 → 123 — broken-links' relative link into
-# house-style, the cross-skill link row.
+# Last moved 2026-10-21: 125 → 129 — the four prose-pointer FAILs appended
+# to src/house-style/SKILL.md (check_prose_pointers).
 # Earlier moves of this pin are in
 # `git log -p -G 'expected exactly [0-9]+ FAIL' -- scripts/lint-skills-selftest.sh` — they describe counts
 # nothing asserts any more, and stacking them here made a changelog out of the
 # one line that has to stay readable. A count that moves is read before it is
 # re-pinned.
 nfail=$(printf '%s\n' "$output" | grep -c '^FAIL: ')
-[ "$nfail" -eq 123 ] || selftest_fail "expected exactly 123 FAIL lines against the fixture tree, got $nfail"
+[ "$nfail" -eq 129 ] || selftest_fail "expected exactly 129 FAIL lines against the fixture tree, got $nfail"
 # The shared-trigger-phrase fixtures are pinned by property, as near_bytes and
 # bulk_bytes are below: every row above them asserts a FAIL that appears or a
 # FAIL that does not, and each of those readings is silently satisfied by a
@@ -894,6 +925,11 @@ quiet_pin "$clean_fixtures/src/clean-skill/SKILL.md" "a citation whose name carr
 quiet_pin "$clean_fixtures/src/clean-skill/references/note.md" "the heading only the comma cut reaches" '## Sizes and shapes'
 quiet_pin "$clean_fixtures/src/clean-skill/SKILL.md" "a chained citation whose first name is cut at the next § (else 'Sizes and § Note' matches no heading)" '§ Sizes and § Note.'
 quiet_pin "$quiet" "an acronym mid-heading" '## The HTML half'
+quiet_pin "$quiet" "a prose pointer that resolves" 'per `house-style`'"'"'s `references/sibling-note.md`'
+quiet_pin "$quiet" "a two-owner prose pointer both owners resolve" 'per `bulk-cited-dep`'"'"'s and `quoted-dep`'"'"'s `references/ac-ids.md`'
+quiet_pin "$quiet" "a possessive on a name that is no skill" 'per `no-such-owner`'"'"'s `references/gone-copy.md`'
+quiet_pin "$quiet" "a repo path after an unrelated possessive" '`house-style`'"'"'s rotate-first paragraph and `scripts/gone-tool.sh`'
+quiet_pin "$quiet" "a fenced prose pointer" 'per `house-style`'"'"'s `references/fenced-gone.md`'
 # check_reference_orphans' `global` scan root. Deleting the line that adds it left
 # this file green: the installed-path arm was graded only from src/, so a
 # reference cited solely from a hoisted rule would have started reading as an

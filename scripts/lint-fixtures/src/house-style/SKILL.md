@@ -110,3 +110,10 @@ mismatch in the direction a wider header takes, and the backslash-run parity a
 - A link between ends the chain: [the quiet forms](references/quiet-forms.md) § The quiet half, then [the sibling note](references/sibling-note.md) and § No Such Linked Heading.
 - A path between ends the chain: [the quiet forms](references/quiet-forms.md) § The quiet half, per `~/.claude/rules/body-checked.md` and § No Such Tilde Heading.
 - An unresolved citation ends the chain: [the quiet forms](references/quiet-forms.md) § The quiet half, then the guide § Mid, § No Such Reset Heading.
+
+Prose pointers, each graded by a row in lint-skills-selftest.sh:
+
+- A dead one: per `house-style`'s `references/gone-copy.md`.
+- A dead one under a name ending in s: per `broken-links`' `references/gone-copy.md`.
+- A dead script: run `house-style`'s `scripts/gone-tool.sh`.
+- Two owners, the first without the file: per `house-style`'s and `bulk-cited-dep`'s `references/ac-ids.md`.

@@ -10,3 +10,5 @@ no fixture, and only the repo's own already-clean tree exercised it.
 
 The run normalises the row before it lands, which is the British form the walk
 must catch outside the skill tree.
+
+A record quotes the superseded `/fixture-discipline` form as history, and the slash sweep must leave docs/adr/ alone.
